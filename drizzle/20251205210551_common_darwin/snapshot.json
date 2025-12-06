@@ -1,0 +1,2667 @@
+{
+  "version": "1",
+  "dialect": "mssql",
+  "id": "26403a24-799c-4b50-9e6a-33fc78abaa27",
+  "prevIds": [
+    "437ba72b-4a84-4cdc-a440-3ee71b08a7cc"
+  ],
+  "ddl": [
+    {
+      "name": "accounts",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "audit_logs",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "branches",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "business_partners",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "inbound_invoice_items",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "inbound_invoices",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "organizations",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "permissions",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "products",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "role_permissions",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "roles",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "sessions",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "user_branches",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "users",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "verificationToken",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "provider",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "providerAccountId",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "refresh_token",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "access_token",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "expires_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "token_type",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "scope",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "id_token",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "session_state",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "accounts"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "organization_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "action",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "entity",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "entity_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "changes",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "ip_address",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "user_agent",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "audit_logs"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "organization_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "trade_name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "document",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "phone",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "ie",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "im",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "c_class_trib",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(1)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "crt",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "zip_code",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "street",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "number",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "complement",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "district",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(7)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "city_code",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "city_name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(2)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "state",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "time_zone",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "logo_url",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "branches"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "organization_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "document",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "trade_name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "phone",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "data_source",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "tax_regime",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "ie",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "im",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "c_class_trib",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(1)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "ind_iedest",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "zip_code",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "street",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "number",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "complement",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "district",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(7)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "city_code",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "city_name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(2)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "state",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "business_partners"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "invoice_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "product_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(60)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "product_code_xml",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(500)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "product_name_xml",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(14)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "ean_xml",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(8)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "ncm",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(4)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "cfop",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "cst",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "decimal(15,4)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "quantity",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "unit",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "decimal(18,6)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "unit_price",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "decimal(18,2)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "total_price",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "item_number",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "organization_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "branch_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "partner_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(44)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "access_key",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "series",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "number",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(2)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "model",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "datetime2",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "issue_date",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "entry_date",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "decimal(18,2)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "total_products",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "decimal(18,2)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "total_nfe",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "xml_content",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(64)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "xml_hash",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "imported_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "inbound_invoices"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "slug",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "document",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "plan",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "stripe_customer_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "organizations"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "permissions"
+    },
+    {
+      "type": "nvarchar(100)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "slug",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "permissions"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "permissions"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "permissions"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "permissions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "organization_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sku",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(10)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "unit",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(8)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "ncm",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(1)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "origin",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "decimal(10,3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "weight_kg",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "decimal(18,2)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "price_cost",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "decimal(18,2)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "price_sale",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_by",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "version",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "nvarchar(20)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "products"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "role_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "role_permissions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "permission_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "role_permissions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": {
+        "seed": 1,
+        "increment": 1
+      },
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "roles"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "roles"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "roles"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "roles"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "roles"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "sessionToken",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "expires",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "sessions"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "user_branches"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "branch_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "user_branches"
+    },
+    {
+      "type": "datetime2",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "user_branches"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "organization_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "emailVerified",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "image",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(max)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "password_hash",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(50)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "role",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "default_branch_id",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": false,
+      "generated": null,
+      "identity": null,
+      "name": "deleted_at",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "identifier",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "verificationToken"
+    },
+    {
+      "type": "nvarchar(255)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "verificationToken"
+    },
+    {
+      "type": "datetime2(3)",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "expires",
+      "schema": "dbo",
+      "entityType": "columns",
+      "table": "verificationToken"
+    },
+    {
+      "columns": [
+        "document",
+        "organization_id"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "branches_document_org_idx",
+      "entityType": "indexes",
+      "table": "branches",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "document",
+        "organization_id"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "business_partners_document_org_idx",
+      "entityType": "indexes",
+      "table": "business_partners",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "access_key",
+        "organization_id"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "inbound_invoices_access_key_idx",
+      "entityType": "indexes",
+      "table": "inbound_invoices",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "slug"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "organizations_slug_idx",
+      "entityType": "indexes",
+      "table": "organizations",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "document"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "organizations_document_idx",
+      "entityType": "indexes",
+      "table": "organizations",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "slug"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "permissions_slug_idx",
+      "entityType": "indexes",
+      "table": "permissions",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "sku",
+        "organization_id"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "products_sku_org_idx",
+      "entityType": "indexes",
+      "table": "products",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "email",
+        "organization_id"
+      ],
+      "isUnique": true,
+      "where": null,
+      "name": "users_email_org_idx",
+      "entityType": "indexes",
+      "table": "users",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "userId"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "accounts_userId_users_id_fk",
+      "entityType": "fks",
+      "table": "accounts",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "audit_logs_organization_id_organizations_id_fk",
+      "entityType": "fks",
+      "table": "audit_logs",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "branches_organization_id_organizations_id_fk",
+      "entityType": "fks",
+      "table": "branches",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "business_partners_organization_id_organizations_id_fk",
+      "entityType": "fks",
+      "table": "business_partners",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "invoice_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "inbound_invoices",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "inbound_invoice_items_invoice_id_inbound_invoices_id_fk",
+      "entityType": "fks",
+      "table": "inbound_invoice_items",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "product_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "products",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "inbound_invoice_items_product_id_products_id_fk",
+      "entityType": "fks",
+      "table": "inbound_invoice_items",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "inbound_invoices_organization_id_organizations_id_fk",
+      "entityType": "fks",
+      "table": "inbound_invoices",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "branch_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "branches",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "inbound_invoices_branch_id_branches_id_fk",
+      "entityType": "fks",
+      "table": "inbound_invoices",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "partner_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "business_partners",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "inbound_invoices_partner_id_business_partners_id_fk",
+      "entityType": "fks",
+      "table": "inbound_invoices",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "products_organization_id_organizations_id_fk",
+      "entityType": "fks",
+      "table": "products",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "userId"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "sessions_userId_users_id_fk",
+      "entityType": "fks",
+      "table": "sessions",
+      "schema": "dbo"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "nameExplicit": false,
+      "schemaTo": "dbo",
+      "tableTo": "organizations",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "users_organization_id_organizations_id_fk",
+      "entityType": "fks",
+      "table": "users",
+      "schema": "dbo"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "provider",
+        "providerAccountId"
+      ],
+      "name": "accounts_pkey",
+      "entityType": "pks",
+      "table": "accounts",
+      "schema": "dbo"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "role_id",
+        "permission_id"
+      ],
+      "name": "role_permissions_pkey",
+      "entityType": "pks",
+      "table": "role_permissions",
+      "schema": "dbo"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "user_id",
+        "branch_id"
+      ],
+      "name": "user_branches_pkey",
+      "entityType": "pks",
+      "table": "user_branches",
+      "schema": "dbo"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "identifier",
+        "token"
+      ],
+      "name": "verificationToken_pkey",
+      "entityType": "pks",
+      "table": "verificationToken",
+      "schema": "dbo"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "audit_logs_pkey",
+      "table": "audit_logs",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "branches_pkey",
+      "table": "branches",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "business_partners_pkey",
+      "table": "business_partners",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "inbound_invoice_items_pkey",
+      "table": "inbound_invoice_items",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "inbound_invoices_pkey",
+      "table": "inbound_invoices",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "organizations_pkey",
+      "table": "organizations",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "permissions_pkey",
+      "table": "permissions",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "products_pkey",
+      "table": "products",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "roles_pkey",
+      "table": "roles",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "sessionToken"
+      ],
+      "name": "sessions_pkey",
+      "table": "sessions",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "id"
+      ],
+      "name": "users_pkey",
+      "table": "users",
+      "schema": "dbo",
+      "entityType": "pks"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "audit_logs_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "audit_logs"
+    },
+    {
+      "column": "crt",
+      "nameExplicit": false,
+      "default": "('1')",
+      "name": "branches_crt_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "branches"
+    },
+    {
+      "column": "time_zone",
+      "nameExplicit": false,
+      "default": "('America/Sao_Paulo')",
+      "name": "branches_time_zone_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "branches"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "branches_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "branches"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "branches_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "branches"
+    },
+    {
+      "column": "version",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "branches_version_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "branches"
+    },
+    {
+      "column": "status",
+      "nameExplicit": false,
+      "default": "('ACTIVE')",
+      "name": "branches_status_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "branches"
+    },
+    {
+      "column": "data_source",
+      "nameExplicit": false,
+      "default": "('MANUAL')",
+      "name": "business_partners_data_source_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "business_partners"
+    },
+    {
+      "column": "ind_iedest",
+      "nameExplicit": false,
+      "default": "('9')",
+      "name": "business_partners_ind_iedest_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "business_partners"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "business_partners_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "business_partners"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "business_partners_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "business_partners"
+    },
+    {
+      "column": "version",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "business_partners_version_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "business_partners"
+    },
+    {
+      "column": "status",
+      "nameExplicit": false,
+      "default": "('ACTIVE')",
+      "name": "business_partners_status_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "business_partners"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "inbound_invoice_items_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "inbound_invoice_items"
+    },
+    {
+      "column": "model",
+      "nameExplicit": false,
+      "default": "('55')",
+      "name": "inbound_invoices_model_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "inbound_invoices"
+    },
+    {
+      "column": "status",
+      "nameExplicit": false,
+      "default": "('DRAFT')",
+      "name": "inbound_invoices_status_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "inbound_invoices"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "inbound_invoices_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "inbound_invoices"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "inbound_invoices_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "inbound_invoices"
+    },
+    {
+      "column": "version",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "inbound_invoices_version_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "inbound_invoices"
+    },
+    {
+      "column": "plan",
+      "nameExplicit": false,
+      "default": "('FREE')",
+      "name": "organizations_plan_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "organizations"
+    },
+    {
+      "column": "status",
+      "nameExplicit": false,
+      "default": "('ACTIVE')",
+      "name": "organizations_status_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "organizations"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.797')",
+      "name": "organizations_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "organizations"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.797')",
+      "name": "organizations_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "organizations"
+    },
+    {
+      "column": "version",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "organizations_version_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "organizations"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "permissions_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "permissions"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "permissions_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "permissions"
+    },
+    {
+      "column": "origin",
+      "nameExplicit": false,
+      "default": "('0')",
+      "name": "products_origin_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "products"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "products_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "products"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "products_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "products"
+    },
+    {
+      "column": "version",
+      "nameExplicit": false,
+      "default": "((1))",
+      "name": "products_version_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "products"
+    },
+    {
+      "column": "status",
+      "nameExplicit": false,
+      "default": "('ACTIVE')",
+      "name": "products_status_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "products"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "roles_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "roles"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.798')",
+      "name": "roles_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "roles"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.797')",
+      "name": "user_branches_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "user_branches"
+    },
+    {
+      "column": "role",
+      "nameExplicit": false,
+      "default": "('USER')",
+      "name": "users_role_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "users"
+    },
+    {
+      "column": "created_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.797')",
+      "name": "users_created_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "users"
+    },
+    {
+      "column": "updated_at",
+      "nameExplicit": false,
+      "default": "('2025-12-05 21:05:51.797')",
+      "name": "users_updated_at_default",
+      "entityType": "defaults",
+      "schema": "dbo",
+      "table": "users"
+    }
+  ],
+  "renames": []
+}
