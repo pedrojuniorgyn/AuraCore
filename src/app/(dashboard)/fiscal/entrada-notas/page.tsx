@@ -115,41 +115,52 @@ export default function InboundInvoicesPage() {
     setImportProgress(null);
 
     try {
-      toast.info("Iniciando consulta na Sefaz...");
+      toast.info("📡 Consultando Sefaz DFe...");
 
-      const response = await fetch("/api/sefaz/import-dfe", {
+      const response = await fetch("/api/sefaz/download-nfes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          branchId: currentBranch.id,
+          branch_id: currentBranch.id,
         }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
+        const processing = data.data?.processing;
+        
         setImportProgress({
-          totalDocuments: data.totalDocuments || 0,
-          imported: data.imported || 0,
-          duplicates: data.duplicates || 0,
-          errors: data.errors || 0,
+          totalDocuments: data.data?.totalDocuments || 0,
+          imported: processing?.imported || 0,
+          duplicates: processing?.duplicates || 0,
+          errors: processing?.errors || 0,
         });
 
-        if (data.imported > 0) {
-          toast.success(`${data.imported} NFe(s) importada(s) com sucesso!`);
+        if (processing?.imported > 0) {
+          toast.success(`✅ ${processing.imported} NFe(s) importada(s) com sucesso!`);
           // Recarregar lista
           await fetchInvoices();
-        } else if (data.duplicates > 0) {
-          toast.info(`${data.duplicates} NFe(s) já estavam importadas`);
+        } else if (processing?.duplicates > 0) {
+          toast.info(`ℹ️ ${processing.duplicates} NFe(s) já estavam importadas`);
+        } else if (data.data?.totalDocuments === 0) {
+          toast.info("📭 Nenhuma NFe nova encontrada na Sefaz");
         } else {
-          toast.info("Nenhuma NFe nova encontrada");
+          toast.success(data.message || "Consulta concluída");
         }
       } else {
-        toast.error(data.error || "Erro ao importar da Sefaz");
+        const errorMsg = data.error || "Erro ao importar da Sefaz";
+        const hint = data.hint;
+        
+        toast.error(errorMsg);
+        
+        if (hint) {
+          toast.info(hint);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao importar da Sefaz:", error);
       toast.error("Erro ao conectar com Sefaz");
     } finally {
