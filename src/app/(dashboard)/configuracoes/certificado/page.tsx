@@ -41,7 +41,8 @@ export default function CertificadoDigitalPage() {
       const response = await fetch(`/api/branches/${currentBranch.id}`);
       
       if (response.ok) {
-        const branch = await response.json();
+        const result = await response.json();
+        const branch = result.data || result; // API retorna { data: branch }
         
         // Se tiver certificado, extrair informações
         if (branch.certificatePfx && branch.certificateExpiry) {
