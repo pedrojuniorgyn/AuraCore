@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
 
 export default function CertificadoDigitalPage() {
-  const { selectedBranchId, selectedBranchName } = useTenant();
+  const { currentBranch } = useTenant();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -23,15 +23,22 @@ export default function CertificadoDigitalPage() {
 
   // Carregar certificado existente ao abrir a página
   useEffect(() => {
-    loadExistingCertificate();
-  }, [selectedBranchId]);
+    if (currentBranch?.id) {
+      loadExistingCertificate();
+    } else {
+      setIsLoading(false);
+    }
+  }, [currentBranch?.id]);
 
   const loadExistingCertificate = async () => {
-    if (!selectedBranchId) return;
+    if (!currentBranch?.id) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/branches/${selectedBranchId}`);
+      const response = await fetch(`/api/branches/${currentBranch.id}`);
       
       if (response.ok) {
         const branch = await response.json();
@@ -47,10 +54,14 @@ export default function CertificadoDigitalPage() {
             serialNumber: "********", // Oculto por segurança
             branchName: branch.name,
           });
+        } else {
+          // Limpar se não tiver certificado
+          setCertificateInfo(null);
         }
       }
     } catch (error) {
       console.error("Erro ao carregar certificado:", error);
+      toast.error("Erro ao carregar informações do certificado");
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +85,7 @@ export default function CertificadoDigitalPage() {
       return;
     }
 
-    if (!selectedBranchId) {
+    if (!currentBranch?.id) {
       toast.error("Selecione uma filial primeiro");
       return;
     }
@@ -86,7 +97,7 @@ export default function CertificadoDigitalPage() {
       formData.append("pfx", certificateFile); // Nome correto do campo
       formData.append("password", password);
 
-      const response = await fetch(`/api/branches/${selectedBranchId}/certificate`, {
+      const response = await fetch(`/api/branches/${currentBranch.id}/certificate`, {
         method: "POST",
         body: formData,
       });
@@ -138,9 +149,9 @@ export default function CertificadoDigitalPage() {
                 <p className="text-zinc-400">
                   Configure o certificado digital para integração com Sefaz
                 </p>
-                {selectedBranchName && (
+                {currentBranch && (
                   <p className="text-sm text-purple-400 mt-2">
-                    📍 Filial: <span className="font-semibold">{selectedBranchName}</span>
+                    📍 Filial: <span className="font-semibold">{currentBranch.name}</span>
                   </p>
                 )}
               </div>
