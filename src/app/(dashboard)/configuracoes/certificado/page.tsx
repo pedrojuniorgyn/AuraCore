@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,50 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Upload, Shield, CheckCircle, XCircle, AlertCircle, FileKey } from "lucide-react";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/tenant-context";
 
 export default function CertificadoDigitalPage() {
+  const { selectedBranchId, selectedBranchName } = useTenant();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [certificateInfo, setCertificateInfo] = useState<any>(null);
+
+  // Carregar certificado existente ao abrir a página
+  useEffect(() => {
+    loadExistingCertificate();
+  }, [selectedBranchId]);
+
+  const loadExistingCertificate = async () => {
+    if (!selectedBranchId) return;
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/branches/${selectedBranchId}`);
+      
+      if (response.ok) {
+        const branch = await response.json();
+        
+        // Se tiver certificado, extrair informações
+        if (branch.certificatePfx && branch.certificateExpiry) {
+          setCertificateInfo({
+            valid: new Date(branch.certificateExpiry) > new Date(),
+            subject: branch.name, // CN da filial
+            validFrom: new Date(branch.createdAt).toLocaleDateString('pt-BR'),
+            validTo: new Date(branch.certificateExpiry).toLocaleDateString('pt-BR'),
+            issuer: "Certificadora (AC)",
+            serialNumber: "********", // Oculto por segurança
+            branchName: branch.name,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar certificado:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,14 +74,19 @@ export default function CertificadoDigitalPage() {
       return;
     }
 
+    if (!selectedBranchId) {
+      toast.error("Selecione uma filial primeiro");
+      return;
+    }
+
     setIsUploading(true);
 
     try {
       const formData = new FormData();
-      formData.append("certificate", certificateFile);
+      formData.append("pfx", certificateFile); // Nome correto do campo
       formData.append("password", password);
 
-      const response = await fetch("/api/admin/upload-certificate", {
+      const response = await fetch(`/api/branches/${selectedBranchId}/certificate`, {
         method: "POST",
         body: formData,
       });
@@ -51,9 +94,12 @@ export default function CertificadoDigitalPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setCertificateInfo(data.certificate);
-        toast.success("Certificado carregado com sucesso!");
+        toast.success("Certificado instalado com sucesso!");
         setPassword("");
+        setCertificateFile(null);
+        
+        // Recarregar informações do certificado
+        await loadExistingCertificate();
       } else {
         toast.error(data.error || "Erro ao carregar certificado");
       }
@@ -92,6 +138,11 @@ export default function CertificadoDigitalPage() {
                 <p className="text-zinc-400">
                   Configure o certificado digital para integração com Sefaz
                 </p>
+                {selectedBranchName && (
+                  <p className="text-sm text-purple-400 mt-2">
+                    📍 Filial: <span className="font-semibold">{selectedBranchName}</span>
+                  </p>
+                )}
               </div>
               <Shield className="h-12 w-12 text-indigo-400 opacity-50" />
             </div>
@@ -194,7 +245,12 @@ export default function CertificadoDigitalPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {certificateInfo ? (
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+                      <p className="text-zinc-500">Carregando certificado...</p>
+                    </div>
+                  ) : certificateInfo ? (
                     <div className="space-y-4">
                       {/* Status */}
                       <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
