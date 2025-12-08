@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,35 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Aura Core specific
+# Certificates (NEVER commit these!)
+*.pfx
+*.p12
+certificates/
+
+# SQL Server connection strings with passwords
+*connection-string.txt
+
+# Temporary files
+*.tmp
+*.log
+*.cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+
+# Test data
+test-data/
+*.test.xml

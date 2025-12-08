@@ -71,12 +71,16 @@ export async function processSefazResponse(
     // Verifica status da resposta
     const cStat = retDistDFeInt.cStat;
     const xMotivo = retDistDFeInt.xMotivo;
+    const ultNSU = retDistDFeInt.ultNSU;
+    const maxNSU = retDistDFeInt.maxNSU;
 
     console.log(`📊 Status Sefaz: ${cStat} - ${xMotivo}`);
+    console.log(`🔢 ultNSU: ${ultNSU}, maxNSU: ${maxNSU}`);
 
     // Status 138: Documentos localizados
     if (cStat !== "138" && cStat !== 138) {
       console.log(`⚠️  Nenhum documento novo (Status: ${cStat})`);
+      console.log(`📋 Retorno completo:`, JSON.stringify(retDistDFeInt, null, 2));
       return result;
     }
 
@@ -114,12 +118,12 @@ export async function processSefazResponse(
         console.log(`✅ XML descompactado (${xmlContent.length} bytes)`);
 
         // Roteamento por tipo de documento
-        if (schema === "resNFe") {
+        if (schema?.startsWith("resNFe")) {
           // RESUMO de NFe - Apenas salva referência (não importa completo)
           result.resumos++;
           console.log("📋 Resumo de NFe detectado (não será importado)");
           // TODO: Salvar em tabela de "NFes Disponíveis para Download Completo"
-        } else if (schema === "procNFe") {
+        } else if (schema?.startsWith("procNFe")) {
           // NFE COMPLETA - Importa automaticamente!
           result.completas++;
           console.log("📥 NFe completa detectada! Importando...");
@@ -127,6 +131,9 @@ export async function processSefazResponse(
           await importNFeAutomatically(xmlContent, organizationId, branchId, userId);
           result.imported++;
           console.log("✅ NFe importada com sucesso!");
+        } else if (schema?.startsWith("resEvento")) {
+          // EVENTO de NFe (Cancelamento, Manifestação, etc) - Ignorar por enquanto
+          console.log("📋 Evento de NFe detectado (será ignorado)");
         } else {
           console.log(`⚠️  Tipo de documento não suportado: ${schema}`);
         }

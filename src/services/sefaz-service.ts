@@ -45,6 +45,7 @@ export class SefazService {
     lastNsu: string;
     environment: string;
     cnpj: string;
+    uf: string;
   }> {
     const [branch] = await db
       .select()
@@ -74,6 +75,7 @@ export class SefazService {
       lastNsu: branch.lastNsu || "0",
       environment: branch.environment || "HOMOLOGATION",
       cnpj: branch.document.replace(/\D/g, ""),
+      uf: branch.state || "GO",
     };
   }
 
@@ -90,27 +92,43 @@ export class SefazService {
 
   /**
    * Monta o Envelope SOAP para DistribuicaoDFe
+   * 
+   * IMPORTANTE: Para consulta por CNPJ, usar cUFAutor = 91 (Ambiente Nacional)
+   * segundo a documentação oficial da Sefaz
    */
-  private buildDistribuicaoEnvelope(cnpj: string, ultNsu: string): string {
+  private buildDistribuicaoEnvelope(cnpj: string, ultNsu: string, environment: string, uf: string): string {
     // Garante que o CNPJ tenha 14 dígitos (preenche com zeros à esquerda)
     const cnpjPadded = cnpj.padStart(14, "0");
     
     // Garante que o NSU tenha 15 dígitos (preenche com zeros à esquerda)
     const nsuPadded = ultNsu.padStart(15, "0");
+    
+    // Define o tipo de ambiente: 1 = Produção, 2 = Homologação
+    const tpAmb = environment === "PRODUCTION" ? "1" : "2";
+    
+    // Mapeia UF para código IBGE (para cUFAutor)
+    const ufMap: Record<string, string> = {
+      "RO": "11", "AC": "12", "AM": "13", "RR": "14", "PA": "15", "AP": "16", "TO": "17",
+      "MA": "21", "PI": "22", "CE": "23", "RN": "24", "PB": "25", "PE": "26", "AL": "27", "SE": "28", "BA": "29",
+      "MG": "31", "ES": "32", "RJ": "33", "SP": "35",
+      "PR": "41", "SC": "42", "RS": "43",
+      "MS": "50", "MT": "51", "GO": "52", "DF": "53"
+    };
+    
+    const cUFAutor = ufMap[uf.toUpperCase()] || "91"; // 91 = Ambiente Nacional (fallback)
 
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
-  <soap12:Body>
-    <nfeDistDFeInteresse xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe">
-      <nfeDadosMsg><distDFeInt xmlns="http://www.portalfiscal.inf.br/nfe" versao="1.01">
-        <tpAmb>2</tpAmb>
-        <cUFAutor>91</cUFAutor>
-        <CNPJ>${cnpjPadded}</CNPJ>
-        <ultNSU>${nsuPadded}</ultNSU>
-      </distDFeInt></nfeDadosMsg>
-    </nfeDistDFeInteresse>
-  </soap12:Body>
-</soap12:Envelope>`;
+    // Limpeza rigorosa dos dados
+    const cleanCnpj = cnpjPadded.replace(/\D/g, '');
+    const cleanUf = cUFAutor.toString();
+    const cleanNsu = nsuPadded.toString().padStart(15, '0');
+    
+    // XML Interno (COM A TAG distNSU ADICIONADA - OBRIGATÓRIA!)
+    const innerXml = `<distDFeInt xmlns="http://www.portalfiscal.inf.br/nfe" versao="1.01"><tpAmb>${tpAmb}</tpAmb><cUFAutor>${cleanUf}</cUFAutor><CNPJ>${cleanCnpj}</CNPJ><distNSU><ultNSU>${cleanNsu}</ultNSU></distNSU></distDFeInt>`;
+    
+    // Envelope SOAP MINIFICADO (SEM QUEBRAS DE LINHA)
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?><soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><nfeDistDFeInteresse xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe"><nfeDadosMsg>${innerXml}</nfeDadosMsg></nfeDistDFeInteresse></soap12:Body></soap12:Envelope>`;
+    
+    return soapRequest;
   }
 
   /**
@@ -147,10 +165,12 @@ export class SefazService {
 
       console.log(`📡 URL Sefaz: ${url}`);
 
-      // Monta envelope SOAP
-      const soapEnvelope = this.buildDistribuicaoEnvelope(cert.cnpj, cert.lastNsu);
+      // Monta envelope SOAP com ambiente e UF corretos
+      const soapEnvelope = this.buildDistribuicaoEnvelope(cert.cnpj, cert.lastNsu, cert.environment, cert.uf);
 
       console.log("📤 Enviando requisição para Sefaz...");
+      console.log("📋 Envelope SOAP (REQUEST):");
+      console.log(soapEnvelope);
 
       // Envia requisição SOAP
       const response = await axios.post(url, soapEnvelope, {
@@ -163,6 +183,7 @@ export class SefazService {
       });
 
       console.log("✅ Resposta recebida da Sefaz");
+      console.log("📄 Tamanho da resposta:", response.data?.length || 0, "bytes");
 
       // Extrai o XML da resposta
       const responseXml = response.data;

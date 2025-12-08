@@ -181,7 +181,7 @@ export default function BranchConfigPage() {
       });
 
       // Atualiza dados locais
-      setBranch(result);
+      setBranch(result.data || result);
       
       // Recarrega dados
       window.location.reload();
@@ -225,7 +225,7 @@ export default function BranchConfigPage() {
       });
 
       // Atualiza dados locais
-      setBranch(result);
+      setBranch(result.data || result);
       setLastNsu("0");
     } catch (error: any) {
       toast.error("Erro ao resetar NSU", {

@@ -9,9 +9,19 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import { ColDef, ModuleRegistry } from "ag-grid-community";
 import { AllCommunityModule } from "ag-grid-community";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { auraTheme } from "@/lib/ag-grid/theme";
+import {
+  StatusCellRenderer,
+  CurrencyCellRenderer,
+  DateCellRenderer,
+  ActionsCellRenderer,
+} from "@/lib/ag-grid/cell-renderers";
+import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
+import { GradientText } from "@/components/ui/magic-components";
+import { GridPattern } from "@/components/ui/animated-background";
 
 // Registra módulos do AG Grid
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -191,23 +201,22 @@ export default function InboundInvoicesPage() {
     {
       headerName: "Data Emissão",
       field: "issueDate",
-      width: 150,
+      width: 140,
       sortable: true,
-      valueFormatter: (params) => {
-        if (!params.value) return "";
-        return new Date(params.value).toLocaleDateString("pt-BR");
-      },
+      cellRenderer: DateCellRenderer,
     },
     {
       headerName: "Fornecedor",
       field: "partnerName",
       flex: 1,
+      minWidth: 200,
       sortable: true,
+      filter: "agTextColumnFilter",
     },
     {
       headerName: "Chave de Acesso",
       field: "accessKey",
-      width: 200,
+      width: 180,
       cellRenderer: (params: any) => {
         const key = params.value || "";
         return (
@@ -225,20 +234,15 @@ export default function InboundInvoicesPage() {
       field: "totalNfe",
       width: 140,
       sortable: true,
-      valueFormatter: (params) => {
-        if (!params.value) return "—";
-        return new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(parseFloat(params.value));
-      },
-      cellStyle: { textAlign: "right", fontWeight: "600" },
+      cellRenderer: CurrencyCellRenderer,
+      type: "numericColumn",
     },
     {
       headerName: "Status",
       field: "status",
-      width: 120,
+      width: 140,
       sortable: true,
+      cellRenderer: StatusCellRenderer,
       cellRenderer: (params: any) => {
         const status = params.value;
         let variant: "default" | "secondary" | "destructive" = "default";
@@ -281,30 +285,26 @@ export default function InboundInvoicesPage() {
     },
   ];
 
-  const darkTheme = themeQuartz.withParams({
-    backgroundColor: "hsl(var(--card))",
-    foregroundColor: "hsl(var(--card-foreground))",
-    borderColor: "hsl(var(--border))",
-    headerBackgroundColor: "hsl(var(--muted))",
-    headerTextColor: "hsl(var(--muted-foreground))",
-    oddRowBackgroundColor: "hsl(var(--card))",
-    rowHoverColor: "hsl(var(--accent))",
-  });
-
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <FileText className="h-8 w-8" />
-            NFe - Notas Fiscais de Entrada
-          </h2>
-          <p className="text-muted-foreground">
-            Filial: {currentBranch?.name || "Carregando..."}
-          </p>
-        </div>
-      </div>
+    <PageTransition>
+      <div className="relative flex-1 space-y-4 p-8 pt-6">
+        {/* Background Pattern */}
+        <GridPattern className="opacity-30" />
+
+        {/* Header */}
+        <FadeIn>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                <FileText className="h-8 w-8" />
+                <GradientText>NFe - Notas Fiscais de Entrada</GradientText>
+              </h2>
+              <p className="text-muted-foreground">
+                Filial: {currentBranch?.name || "Carregando..."}
+              </p>
+            </div>
+          </div>
+        </FadeIn>
 
       {/* Tabs */}
       <Tabs defaultValue="list" className="w-full">
@@ -320,19 +320,39 @@ export default function InboundInvoicesPage() {
               <div style={{ height: 600, width: "100%" }}>
                 <AgGridReact
                   ref={gridRef}
-                  theme={darkTheme}
+                  theme={auraTheme}
                   rowData={invoices}
                   columnDefs={columnDefs}
                   defaultColDef={{
                     sortable: true,
                     resizable: true,
                   }}
-                  pagination={true}
-                  paginationPageSize={20}
-                  loading={isLoading}
-                  animateRows={true}
+                  // 📊 Auto-Size Escalável
+                  autoSizeStrategy={{
+                    type: "fitGridWidth",
+                    defaultMinWidth: 100,
+                  }}
+                  // 🎯 Seleção e Interação
                   rowSelection={{ mode: "multiRow" }}
                   suppressCellFocus={true}
+                  suppressRowClickSelection={true}
+                  // 📊 Paginação
+                  pagination={true}
+                  paginationPageSize={20}
+                  paginationPageSizeSelector={[10, 20, 50, 100]}
+                  // 🎨 Animações
+                  animateRows={true}
+                  loading={isLoading}
+                  // 🌐 Localização
+                  localeText={{
+                    noRowsToShow: "Nenhuma NFe importada",
+                    page: "Página",
+                    of: "de",
+                    to: "até",
+                    more: "mais",
+                    next: "Próxima",
+                    previous: "Anterior",
+                  }}
                 />
               </div>
             </CardContent>
@@ -473,6 +493,7 @@ export default function InboundInvoicesPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </PageTransition>
   );
 }

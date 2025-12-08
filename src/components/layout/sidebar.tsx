@@ -13,6 +13,8 @@ import {
   Settings,
   Map,
   Boxes,
+  Building2,
+  FileText,
 } from "lucide-react";
 import { BranchSwitcher } from "./branch-switcher";
 import { UserMenu } from "./user-menu";
@@ -31,34 +33,106 @@ const sidebarItems = [
     color: "text-purple-500",
   },
   {
+    title: "Filiais",
+    href: "/configuracoes/filiais",
+    icon: Building2,
+    color: "text-indigo-500",
+  },
+  {
     title: "Importar NFe",
     href: "/fiscal/entrada-notas",
     icon: BadgeDollarSign,
     color: "text-green-500",
   },
   {
-    title: "Configurações",
-    href: "/configuracoes/filiais/1",
-    icon: Settings,
-    color: "text-gray-500",
+    title: "Contas a Pagar",
+    href: "/financeiro/contas-pagar",
+    icon: BadgeDollarSign,
+    color: "text-red-500",
   },
   {
-    title: "Financeiro",
-    href: "/financeiro",
+    title: "Contas a Receber",
+    href: "/financeiro/contas-receber",
+    icon: BadgeDollarSign,
+    color: "text-green-500",
+  },
+  {
+    title: "Remessas Bancárias",
+    href: "/financeiro/remessas",
+    icon: BadgeDollarSign,
+    color: "text-purple-500",
+  },
+  {
+    title: "Radar DDA",
+    href: "/financeiro/radar-dda",
+    icon: BadgeDollarSign,
+    color: "text-cyan-500",
+  },
+  {
+    title: "Simulador de Frete",
+    href: "/comercial/simulador",
     icon: BadgeDollarSign,
     color: "text-emerald-500",
   },
   {
-    title: "Gestão de Frota",
-    href: "/frota",
+    title: "Veículos",
+    href: "/frota/veiculos",
     icon: Truck,
     color: "text-blue-500",
   },
   {
-    title: "TMS (Transporte)",
-    href: "/tms",
+    title: "Motoristas",
+    href: "/frota/motoristas",
+    icon: Users,
+    color: "text-indigo-500",
+  },
+  {
+    title: "Centros de Custo",
+    href: "/financeiro/centros-custo",
+    icon: BadgeDollarSign,
+    color: "text-orange-500",
+  },
+  {
+    title: "Plano de Contas",
+    href: "/financeiro/plano-contas",
+    icon: BadgeDollarSign,
+    color: "text-pink-500",
+  },
+  {
+    title: "DRE",
+    href: "/financeiro/dre",
+    icon: BadgeDollarSign,
+    color: "text-yellow-500",
+  },
+  {
+    title: "Matriz Tributária",
+    href: "/fiscal/matriz-tributaria",
+    icon: BadgeDollarSign,
+    color: "text-red-500",
+  },
+  {
+    title: "CTe (Documentos)",
+    href: "/fiscal/cte",
+    icon: FileText,
+    color: "text-purple-500",
+  },
+  {
+    title: "Cotações",
+    href: "/comercial/cotacoes",
+    icon: Map,
+    color: "text-green-500",
+  },
+  {
+    title: "Viagens (TMS)",
+    href: "/tms/viagens",
     icon: Map,
     color: "text-violet-500",
+  },
+  {
+    title: "Dashboard DRE",
+    href: "/financeiro/dre-dashboard",
+    icon: BadgeDollarSign,
+    color: "text-blue-500",
   },
   {
     title: "WMS (Armazém)",
@@ -84,12 +158,6 @@ const sidebarItems = [
     icon: Users,
     color: "text-cyan-500",
   },
-  {
-    title: "Configurações",
-    href: "/configuracoes",
-    icon: Settings,
-    color: "text-gray-500",
-  },
 ];
 
 export function Sidebar() {
@@ -99,7 +167,7 @@ export function Sidebar() {
     <div className="space-y-4 py-4 flex flex-col h-full bg-card text-card-foreground border-r border-border">
       {/* Header com Logo */}
       <div className="px-3 py-2">
-        <Link href="/dashboard" className="flex items-center pl-3 mb-6">
+        <Link href="/" className="flex items-center pl-3 mb-6">
           <div className="relative w-8 h-8 mr-4">
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-lg opacity-75 blur-sm"></div>
             <div className="relative bg-black w-full h-full rounded-lg flex items-center justify-center border border-white/10">

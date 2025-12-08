@@ -192,6 +192,60 @@ export async function POST(request: NextRequest) {
     
     console.log(`✅ NFe criada com ID: ${newInvoice.id}`);
     
+    // 💰 INTEGRAÇÃO FINANCEIRA: Cria Conta a Pagar automaticamente
+    try {
+      const { financialCategories, accountsPayable } = await import("@/lib/db/schema");
+      
+      // Busca categoria "Fornecedores (NFe)" (código 2.01)
+      const [supplierCategory] = await db
+        .select()
+        .from(financialCategories)
+        .where(
+          and(
+            eq(financialCategories.organizationId, ctx.organizationId),
+            eq(financialCategories.code, "2.01"),
+            isNull(financialCategories.deletedAt)
+          )
+        );
+      
+      if (supplierCategory) {
+        // Calcula data de vencimento (emissão + 30 dias)
+        const dueDate = new Date(parsedNFe.issueDate);
+        dueDate.setDate(dueDate.getDate() + 30);
+        
+        await db.insert(accountsPayable).values({
+          organizationId: ctx.organizationId,
+          branchId: ctx.defaultBranchId || 1,
+          partnerId,
+          categoryId: supplierCategory.id,
+          bankAccountId: null, // Será preenchido na baixa
+          description: `NFe ${parsedNFe.number} - ${parsedNFe.issuer.name}`,
+          documentNumber: parsedNFe.accessKey.substring(0, 20), // Primeiros 20 dígitos
+          issueDate: parsedNFe.issueDate,
+          dueDate,
+          payDate: null,
+          amount: parsedNFe.totals.nfe,
+          amountPaid: 0,
+          discount: 0,
+          interest: 0,
+          fine: 0,
+          status: "OPEN",
+          origin: "FISCAL_NFE",
+          notes: `Importação automática - Chave: ${parsedNFe.accessKey}`,
+          createdBy: ctx.userId,
+          updatedBy: ctx.userId,
+          version: 1,
+        });
+        
+        console.log(`💰 Conta a Pagar criada automaticamente! Vencimento: ${dueDate.toLocaleDateString("pt-BR")}`);
+      } else {
+        console.warn("⚠️  Categoria 'Fornecedores (NFe)' não encontrada. Conta a pagar não criada.");
+      }
+    } catch (finError: any) {
+      console.error("⚠️  Erro ao criar conta a pagar (não crítico):", finError.message);
+      // Não falha a importação por causa do financeiro
+    }
+    
     // 📦 PROCESSA ITENS (com vinculação automática de produtos)
     let linkedProducts = 0;
     let newProducts = 0;

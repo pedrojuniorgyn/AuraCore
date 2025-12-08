@@ -99,7 +99,7 @@ export function BranchSwitcher() {
           role="combobox"
           aria-expanded={open}
           aria-label="Selecione uma filial"
-          className="w-[200px] justify-between"
+          className="w-full justify-between hover:bg-accent"
         >
           <div className="flex items-center space-x-2 truncate">
             <Building2 className="h-4 w-4 shrink-0 opacity-50" />
@@ -108,7 +108,7 @@ export function BranchSwitcher() {
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0">
+      <PopoverContent className="w-[280px] p-0 z-[60]" align="start" side="right">
         <Command>
           <CommandInput placeholder="Buscar filial..." />
           <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>

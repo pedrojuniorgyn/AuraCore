@@ -186,7 +186,7 @@ export async function PUT(
     }
 
     // Atualiza com Enterprise Base Pattern
-    const [updatedBranch] = await db
+    await db
       .update(branches)
       .set({
         ...dataToUpdate,
@@ -201,8 +201,18 @@ export async function PUT(
           eq(branches.organizationId, ctx.organizationId),
           eq(branches.version, currentBranch.version) // Double-check de versão
         )
-      )
-      .returning();
+      );
+
+    // 🔍 SQL Server não suporta .returning(), então fazemos SELECT depois
+    const [updatedBranch] = await db
+      .select()
+      .from(branches)
+      .where(
+        and(
+          eq(branches.id, id),
+          eq(branches.organizationId, ctx.organizationId)
+        )
+      );
 
     if (!updatedBranch) {
       return NextResponse.json(
@@ -211,7 +221,7 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(updatedBranch);
+    return NextResponse.json({ data: updatedBranch });
   } catch (error: any) {
     if (error instanceof Response) {
       return error;
@@ -292,7 +302,7 @@ export async function DELETE(
     }
 
     // 🗑️ SOFT DELETE: Marca como deletado (não exclui fisicamente)
-    const [deletedBranch] = await db
+    await db
       .update(branches)
       .set({
         deletedAt: new Date(), // 🗑️ Marca timestamp de exclusão
@@ -306,19 +316,11 @@ export async function DELETE(
           eq(branches.id, id),
           eq(branches.organizationId, ctx.organizationId)
         )
-      )
-      .returning();
-
-    if (!deletedBranch) {
-      return NextResponse.json(
-        { error: "Falha ao excluir filial." },
-        { status: 500 }
       );
-    }
 
     return NextResponse.json({
       message: "Filial excluída com sucesso.",
-      data: deletedBranch,
+      data: { id, name: currentBranch.name },
     });
   } catch (error: any) {
     if (error instanceof Response) {

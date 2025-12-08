@@ -69,5 +69,106 @@
   }
 }
 
+/* Ocultar indicadores do Next.js que possam sobrepor a UI */
+#__next-build-watcher,
+nextjs-portal,
+[data-nextjs-scroll-focus-boundary],
+.__next-error-overlay__,
+[class*="turbopack"] {
+  z-index: 9999 !important;
+}
 
+/* Garantir que dropdowns e popovers fiquem acima de tudo */
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
+}
 
+/* ============================================ */
+/* AURA GLASS SIDEBAR - CUSTOM STYLES */
+/* ============================================ */
+
+/* Scrollbar customizada (thin, gradient) */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(139, 92, 246, 0.3),
+    rgba(236, 72, 153, 0.3)
+  );
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(139, 92, 246, 0.5),
+    rgba(236, 72, 153, 0.5)
+  );
+}
+
+/* Glow text effect */
+.glow-text {
+  text-shadow: 0 0 10px currentColor;
+}
+
+/* Shimmer effect keyframe (background) */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Shimmer Button Animation */
+@keyframes shimmer-button {
+  0% {
+    transform: translate(-150%, -150%) rotate(calc(270deg - (var(--spread, 90deg) * 0.5)));
+  }
+  100% {
+    transform: translate(50%, 50%) rotate(calc(270deg - (var(--spread, 90deg) * 0.5)));
+  }
+}
+
+/* Pulse glow effect */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Smooth transitions for all interactive elements */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

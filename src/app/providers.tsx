@@ -8,6 +8,9 @@ import { TenantProvider } from "@/contexts/tenant-context";
 import { RefineProvider } from "@/providers/refine-provider";
 import { Toaster } from "@/components/ui/toaster";
 
+// Configurar AG Grid globalmente (registrar módulos Community)
+import "@/lib/ag-grid-config";
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>

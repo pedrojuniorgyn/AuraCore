@@ -2,6 +2,7 @@
 
 import { LogOut, User, Settings } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useTenant } from "@/contexts/tenant-context";
 import {
   DropdownMenu,
@@ -25,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function UserMenu() {
   const { user, isLoading } = useTenant();
+  const router = useRouter();
 
   if (isLoading || !user) {
     return null;
@@ -40,6 +42,14 @@ export function UserMenu() {
       .substring(0, 2);
   };
 
+  const handleProfile = () => {
+    router.push("/perfil");
+  };
+
+  const handleSettings = () => {
+    router.push("/configuracoes");
+  };
+
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/login" });
   };
@@ -47,11 +57,10 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="w-full justify-start p-2">
+        <Button variant="ghost" className="w-full justify-start p-2 hover:bg-accent">
           <div className="flex items-center space-x-3 w-full">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
-              <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold">
                 {getInitials(user.name)}
               </AvatarFallback>
             </Avatar>
@@ -66,7 +75,7 @@ export function UserMenu() {
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 z-[60]">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
@@ -77,16 +86,16 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
           <User className="mr-2 h-4 w-4" />
           <span>Perfil</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSettings} className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           <span>Configurações</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+        <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sair</span>
         </DropdownMenuItem>
@@ -94,6 +103,7 @@ export function UserMenu() {
     </DropdownMenu>
   );
 }
+
 
 
 
