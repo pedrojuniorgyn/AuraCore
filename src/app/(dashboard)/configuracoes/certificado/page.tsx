@@ -19,7 +19,13 @@ export default function CertificadoDigitalPage() {
   const [password, setPassword] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTesting, setIsTesting] = useState(false);
   const [certificateInfo, setCertificateInfo] = useState<any>(null);
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+    details?: string;
+  } | null>(null);
 
   // Carregar certificado existente ao abrir a página
   useEffect(() => {
@@ -120,6 +126,62 @@ export default function CertificadoDigitalPage() {
       console.error(error);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    if (!currentBranch?.id) {
+      toast.error("Selecione uma filial primeiro");
+      return;
+    }
+
+    if (!certificateInfo) {
+      toast.error("Nenhum certificado configurado para esta filial");
+      return;
+    }
+
+    setIsTesting(true);
+    setTestResult(null);
+
+    try {
+      // Fazer requisição de teste para Sefaz
+      const response = await fetch(`/api/sefaz/test-connection`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          branchId: currentBranch.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setTestResult({
+          success: true,
+          message: "Conexão estabelecida com sucesso!",
+          details: data.details || "Certificado válido e aceito pela Sefaz",
+        });
+        toast.success("Conexão com Sefaz estabelecida!");
+      } else {
+        setTestResult({
+          success: false,
+          message: "Falha ao conectar com Sefaz",
+          details: data.error || data.details || "Verifique o certificado e tente novamente",
+        });
+        toast.error("Falha na conexão com Sefaz");
+      }
+    } catch (error: any) {
+      setTestResult({
+        success: false,
+        message: "Erro ao testar conexão",
+        details: error.message || "Erro de rede ou servidor indisponível",
+      });
+      toast.error("Erro ao testar conexão");
+      console.error(error);
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -328,6 +390,89 @@ export default function CertificadoDigitalPage() {
               </Card>
             </FadeIn>
           </div>
+
+          {/* Test Connection Card */}
+          {certificateInfo && (
+            <FadeIn delay={0.25}>
+              <Card className="border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-green-400" />
+                    Testar Conexão com Sefaz
+                  </CardTitle>
+                  <CardDescription>
+                    Verifique se o certificado está funcionando corretamente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <ShimmerButton
+                      onClick={handleTestConnection}
+                      disabled={isTesting || !certificateInfo.valid}
+                      background="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                      className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isTesting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Testando...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="h-4 w-4 mr-2" />
+                          Testar Conexão
+                        </>
+                      )}
+                    </ShimmerButton>
+
+                    {!certificateInfo.valid && (
+                      <p className="text-sm text-amber-400 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Certificado expirado, não é possível testar
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Test Result */}
+                  {testResult && (
+                    <div
+                      className={`p-4 rounded-lg border ${
+                        testResult.success
+                          ? "bg-green-500/10 border-green-500/30"
+                          : "bg-red-500/10 border-red-500/30"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {testResult.success ? (
+                          <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <p
+                            className={`font-semibold mb-1 ${
+                              testResult.success ? "text-green-300" : "text-red-300"
+                            }`}
+                          >
+                            {testResult.message}
+                          </p>
+                          {testResult.details && (
+                            <p
+                              className={`text-sm ${
+                                testResult.success ? "text-green-400/80" : "text-red-400/80"
+                              }`}
+                            >
+                              {testResult.details}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </FadeIn>
+          )}
 
           {/* Usage Info */}
           <FadeIn delay={0.3}>
