@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Plus } from "lucide-react";
+import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Plus, Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,15 @@ export default function InboundInvoicesPage() {
   // List state
   const [invoices, setInvoices] = useState<IInboundInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Sefaz DFe import state
+  const [isImportingSefaz, setIsImportingSefaz] = useState(false);
+  const [importProgress, setImportProgress] = useState<{
+    totalDocuments: number;
+    imported: number;
+    duplicates: number;
+    errors: number;
+  } | null>(null);
 
   // Busca NFes importadas
   const fetchInvoices = async () => {
@@ -94,6 +103,59 @@ export default function InboundInvoicesPage() {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  // Importar NFes da Sefaz via DFe
+  const handleImportFromSefaz = async () => {
+    if (!currentBranch?.id) {
+      toast.error("Selecione uma filial primeiro");
+      return;
+    }
+
+    setIsImportingSefaz(true);
+    setImportProgress(null);
+
+    try {
+      toast.info("Iniciando consulta na Sefaz...");
+
+      const response = await fetch("/api/sefaz/import-dfe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          branchId: currentBranch.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setImportProgress({
+          totalDocuments: data.totalDocuments || 0,
+          imported: data.imported || 0,
+          duplicates: data.duplicates || 0,
+          errors: data.errors || 0,
+        });
+
+        if (data.imported > 0) {
+          toast.success(`${data.imported} NFe(s) importada(s) com sucesso!`);
+          // Recarregar lista
+          await fetchInvoices();
+        } else if (data.duplicates > 0) {
+          toast.info(`${data.duplicates} NFe(s) já estavam importadas`);
+        } else {
+          toast.info("Nenhuma NFe nova encontrada");
+        }
+      } else {
+        toast.error(data.error || "Erro ao importar da Sefaz");
+      }
+    } catch (error) {
+      console.error("Erro ao importar da Sefaz:", error);
+      toast.error("Erro ao conectar com Sefaz");
+    } finally {
+      setIsImportingSefaz(false);
+    }
+  };
 
   // Upload handlers
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -303,8 +365,69 @@ export default function InboundInvoicesPage() {
                 Filial: {currentBranch?.name || "Carregando..."}
               </p>
             </div>
+            
+            {/* Botão Importar da Sefaz */}
+            <Button
+              onClick={handleImportFromSefaz}
+              disabled={isImportingSefaz}
+              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg shadow-emerald-500/20"
+            >
+              {isImportingSefaz ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Importando...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Importar da Sefaz
+                </>
+              )}
+            </Button>
           </div>
         </FadeIn>
+
+        {/* Progress Card */}
+        {importProgress && (
+          <FadeIn delay={0.1}>
+            <Card className="border-white/10 bg-gradient-to-br from-emerald-500/10 to-green-500/10 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  Resultado da Importação Sefaz
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">
+                      {importProgress.totalDocuments}
+                    </p>
+                    <p className="text-xs text-zinc-400">Total Consultado</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-400">
+                      {importProgress.imported}
+                    </p>
+                    <p className="text-xs text-zinc-400">Importadas</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-amber-400">
+                      {importProgress.duplicates}
+                    </p>
+                    <p className="text-xs text-zinc-400">Duplicadas</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-red-400">
+                      {importProgress.errors}
+                    </p>
+                    <p className="text-xs text-zinc-400">Erros</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        )}
 
       {/* Tabs */}
       <Tabs defaultValue="list" className="w-full">
