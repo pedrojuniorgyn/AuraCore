@@ -397,10 +397,9 @@ export default function ChartOfAccountsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }}>
+            <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }} className="ag-theme-quartz-dark">
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
                 rowData={accounts}
                 columnDefs={columnDefs}
                 defaultColDef={{

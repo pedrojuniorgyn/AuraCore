@@ -426,10 +426,10 @@ export default function RadarDdaPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div style={{ height: 600, width: "100%" }}>
+              <div style={{ height: 600, width: "100%" </div>
                 <AgGridReact
                   ref={gridRef}
-                  theme={auraTheme}
+                  
                   rowData={ddaItems}
                   columnDefs={columnDefs}
                   defaultColDef={{

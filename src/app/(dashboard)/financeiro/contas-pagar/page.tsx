@@ -140,7 +140,7 @@ function DetailCellRenderer(props: IDetailCellRendererParams) {
       <h4 className="text-sm font-semibold text-purple-300 mb-3">
         📦 Itens da NFe #{props.data.documentNumber} ({items.length} {items.length === 1 ? "item" : "itens"})
       </h4>
-      <div className="ag-theme-quartz-dark" style={{ height: Math.min(items.length * 42 + 50, 300) }}>
+      <div className="ag-theme-quartz-dark" style={{ height: Math.min(items.length * 42 + 50, 300) </div>
         <AgGridReact
           rowData={items}
           columnDefs={detailColDefs}
@@ -525,9 +525,9 @@ export default function ContasPagarPage() {
 
         {/* AG Grid */}
         <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
-          <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 300px)" }}>
+          <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 300px)" </div>
             <AgGridReact
-              theme={auraTheme}
+              
               ref={gridRef}
               rowData={payables}
               columnDefs={columnDefs}

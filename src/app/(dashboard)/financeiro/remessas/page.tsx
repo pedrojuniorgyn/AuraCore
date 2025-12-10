@@ -446,10 +446,10 @@ export default function RemittancesPage() {
                     </div>
 
                     {/* Grid de Títulos */}
-                    <div style={{ height: 'calc(100vh - 650px)', width: "100%", minHeight: '350px' }}>
+                    <div style={{ height: 'calc(100vh - 650px)', width: "100%", minHeight: '350px' </div>
                       <AgGridReact
                         ref={gridRef}
-                        theme={auraTheme}
+                        
                         rowData={payables}
                         columnDefs={payableColumns}
                         defaultColDef={{
@@ -522,10 +522,10 @@ export default function RemittancesPage() {
                     <CardDescription>Histórico de remessas CNAB 240</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div style={{ height: 'calc(100vh - 450px)', width: "100%", minHeight: '400px' }}>
+                    <div style={{ height: 'calc(100vh - 450px)', width: "100%", minHeight: '400px' </div>
                       <AgGridReact
                         ref={historyGridRef}
-                        theme={auraTheme}
+                        
                         rowData={remittances}
                         columnDefs={remittanceColumns}
                         defaultColDef={{

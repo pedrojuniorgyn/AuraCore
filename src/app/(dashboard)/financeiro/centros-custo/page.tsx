@@ -321,10 +321,10 @@ export default function CostCentersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div style={{ height: 'calc(100vh - 550px)', width: "100%", minHeight: '400px' }}>
+            <div style={{ height: 'calc(100vh - 550px)', width: "100%", minHeight: '400px' </div>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={costCenters}
                 columnDefs={columnDefs}
                 defaultColDef={{
