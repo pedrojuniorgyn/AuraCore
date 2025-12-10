@@ -220,7 +220,7 @@ export default function IntercompanyPage() {
               </RippleButton>
             </div>
 
-            <div className="ag-theme-quartz-dark" style={{ height: 250, width: '100%' </div>
+            <div className="ag-theme-quartz-dark" style={{ height: 250, width: '100%' }}>
               <AgGridReact
                 ref={gridRef}
                 rowData={rules}
@@ -318,7 +318,7 @@ export default function IntercompanyPage() {
               </button>
             </div>
 
-            <div className="ag-theme-quartz-dark" style={{ height: 300, width: '100%' </div>
+            <div className="ag-theme-quartz-dark" style={{ height: 300, width: '100%' }}>
               <AgGridReact
                 rowData={history}
                 columnDefs={historyColumnDefs}

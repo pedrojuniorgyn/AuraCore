@@ -3,10 +3,11 @@ import { generateDACTE } from "@/services/fiscal/dacte-generator";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cteId = parseInt(params.id);
+    const resolvedParams = await params;
+    const cteId = parseInt(resolvedParams.id);
     const pdf = await generateDACTE(cteId);
 
     return new NextResponse(pdf, {

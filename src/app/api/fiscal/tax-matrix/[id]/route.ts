@@ -4,9 +4,10 @@ import { sql } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     const { cstCode, icmsRate, fcpRate, legalBasis } = body;
 
@@ -16,7 +17,7 @@ export async function PUT(
           icms_rate = ${icmsRate},
           fcp_rate = ${fcpRate},
           legal_basis = ${legalBasis || ''}
-      WHERE id = ${params.id}
+      WHERE id = ${resolvedParams.id}
     `);
 
     return NextResponse.json({
@@ -33,13 +34,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     await db.execute(sql`
       UPDATE fiscal_tax_matrix 
       SET is_active = 0
-      WHERE id = ${params.id}
+      WHERE id = ${resolvedParams.id}
     `);
 
     return NextResponse.json({

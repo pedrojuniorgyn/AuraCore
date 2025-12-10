@@ -11,10 +11,10 @@ import { cteAuthorizationService } from "@/services/fiscal/cte-authorization-ser
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(request, async (user, ctx) => {
-    const cteId = parseInt(params.id);
+    const cteId = parseInt(resolvedParams.id);
 
     if (isNaN(cteId)) {
       return NextResponse.json(
@@ -44,6 +44,7 @@ export async function GET(
     }
 
     try {
+    const resolvedParams = await params;
       // Extrair UF da chave
       const uf = cte.cteKey.substring(0, 2);
 

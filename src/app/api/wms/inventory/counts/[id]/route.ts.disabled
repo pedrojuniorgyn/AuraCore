@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/context";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { proposals } from "@/lib/db/schema";
+import { inventoryCounts } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
-// GET - Buscar proposta específica
+// GET - Buscar contagem de inventário específica
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -15,41 +15,41 @@ export async function GET(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const proposalId = parseInt(params.id);
-    if (isNaN(proposalId)) {
+    const countId = parseInt(params.id);
+    if (isNaN(countId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const proposal = await db
+    const count = await db
       .select()
-      .from(proposals)
+      .from(inventoryCounts)
       .where(
         and(
-          eq(proposals.id, proposalId),
-          eq(proposals.organizationId, session.user.organizationId),
-          isNull(proposals.deletedAt)
+          eq(inventoryCounts.id, countId),
+          eq(inventoryCounts.organizationId, session.user.organizationId),
+          isNull(inventoryCounts.deletedAt)
         )
       )
       .limit(1);
 
-    if (proposal.length === 0) {
+    if (count.length === 0) {
       return NextResponse.json(
-        { error: "Proposta não encontrada" },
+        { error: "Contagem de inventário não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: proposal[0] });
+    return NextResponse.json({ success: true, data: count[0] });
   } catch (error) {
-    console.error("Erro ao buscar proposta:", error);
+    console.error("Erro ao buscar contagem:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar proposta" },
+      { error: "Erro ao buscar contagem" },
       { status: 500 }
     );
   }
 }
 
-// PUT - Atualizar proposta
+// PUT - Atualizar contagem de inventário
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -60,82 +60,75 @@ export async function PUT(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const proposalId = parseInt(params.id);
-    if (isNaN(proposalId)) {
+    const countId = parseInt(params.id);
+    if (isNaN(countId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
     const body = await req.json();
 
     // Validações básicas
-    if (!body.customerId || !body.validUntil) {
+    if (!body.warehouseId || !body.countType) {
       return NextResponse.json(
-        { error: "Cliente e validade são obrigatórios" },
+        { error: "Armazém e tipo de contagem são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se proposta existe
+    // Verificar se contagem existe
     const existing = await db
       .select()
-      .from(proposals)
+      .from(inventoryCounts)
       .where(
         and(
-          eq(proposals.id, proposalId),
-          eq(proposals.organizationId, session.user.organizationId),
-          isNull(proposals.deletedAt)
+          eq(inventoryCounts.id, countId),
+          eq(inventoryCounts.organizationId, session.user.organizationId),
+          isNull(inventoryCounts.deletedAt)
         )
       )
       .limit(1);
 
     if (existing.length === 0) {
       return NextResponse.json(
-        { error: "Proposta não encontrada" },
+        { error: "Contagem não encontrada" },
         { status: 404 }
       );
     }
 
-    // Validar mudança de status
-    if (body.status === "APPROVED" && existing[0].status === "REJECTED") {
+    // Validar se já foi finalizada
+    if (existing[0].status === "COMPLETED") {
       return NextResponse.json(
-        { error: "Não é possível aprovar proposta rejeitada" },
-        { status: 400 }
-      );
-    }
-
-    if (existing[0].status === "APPROVED" || existing[0].status === "REJECTED") {
-      return NextResponse.json(
-        { error: "Não é possível editar proposta aprovada ou rejeitada" },
+        { error: "Não é possível editar contagem já finalizada" },
         { status: 400 }
       );
     }
 
     // Atualizar
     const updated = await db
-      .update(proposals)
+      .update(inventoryCounts)
       .set({
         ...body,
         updatedBy: session.user.id,
         updatedAt: new Date(),
       })
-      .where(eq(proposals.id, proposalId))
+      .where(eq(inventoryCounts.id, countId))
       .returning();
 
     return NextResponse.json({
       success: true,
-      message: "Proposta atualizada com sucesso",
+      message: "Contagem atualizada com sucesso",
       data: updated[0],
     });
   } catch (error) {
-    console.error("Erro ao atualizar proposta:", error);
+    console.error("Erro ao atualizar contagem:", error);
     return NextResponse.json(
-      { error: "Erro ao atualizar proposta" },
+      { error: "Erro ao atualizar contagem" },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Soft delete da proposta
+// DELETE - Soft delete da contagem
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -146,56 +139,56 @@ export async function DELETE(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const proposalId = parseInt(params.id);
-    if (isNaN(proposalId)) {
+    const countId = parseInt(params.id);
+    if (isNaN(countId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    // Verificar se proposta existe
+    // Verificar se contagem existe
     const existing = await db
       .select()
-      .from(proposals)
+      .from(inventoryCounts)
       .where(
         and(
-          eq(proposals.id, proposalId),
-          eq(proposals.organizationId, session.user.organizationId),
-          isNull(proposals.deletedAt)
+          eq(inventoryCounts.id, countId),
+          eq(inventoryCounts.organizationId, session.user.organizationId),
+          isNull(inventoryCounts.deletedAt)
         )
       )
       .limit(1);
 
     if (existing.length === 0) {
       return NextResponse.json(
-        { error: "Proposta não encontrada" },
+        { error: "Contagem não encontrada" },
         { status: 404 }
       );
     }
 
-    // Validar status antes de excluir
-    if (existing[0].status === "APPROVED") {
+    // Validar se já foi finalizada
+    if (existing[0].status === "COMPLETED") {
       return NextResponse.json(
-        { error: "Não é possível excluir proposta aprovada" },
+        { error: "Não é possível excluir contagem já finalizada. Os ajustes de estoque já foram aplicados." },
         { status: 400 }
       );
     }
 
     // Soft delete
     await db
-      .update(proposals)
+      .update(inventoryCounts)
       .set({
         deletedAt: new Date(),
         deletedBy: session.user.id,
       })
-      .where(eq(proposals.id, proposalId));
+      .where(eq(inventoryCounts.id, countId));
 
     return NextResponse.json({
       success: true,
-      message: "Proposta excluída com sucesso",
+      message: "Contagem excluída com sucesso",
     });
   } catch (error) {
-    console.error("Erro ao excluir proposta:", error);
+    console.error("Erro ao excluir contagem:", error);
     return NextResponse.json(
-      { error: "Erro ao excluir proposta" },
+      { error: "Erro ao excluir contagem" },
       { status: 500 }
     );
   }

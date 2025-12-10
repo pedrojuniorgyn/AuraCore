@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/context";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { vehicles } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -7,15 +7,16 @@ import { eq, and, isNull } from "drizzle-orm";
 // GET - Buscar veículo específico
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const vehicleId = parseInt(params.id);
+    const vehicleId = parseInt(resolvedParams.id);
     if (isNaN(vehicleId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
@@ -49,15 +50,16 @@ export async function GET(
 // PUT - Atualizar veículo
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const vehicleId = parseInt(params.id);
+    const vehicleId = parseInt(resolvedParams.id);
     if (isNaN(vehicleId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
@@ -142,15 +144,16 @@ export async function PUT(
 // DELETE - Soft delete do veículo
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const vehicleId = parseInt(params.id);
+    const vehicleId = parseInt(resolvedParams.id);
     if (isNaN(vehicleId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }

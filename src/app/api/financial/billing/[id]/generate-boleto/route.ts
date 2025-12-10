@@ -13,10 +13,10 @@ import { boletoGenerator } from "@/services/financial/boleto-generator";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "financial.billing.create", async (user, ctx) => {
-    const billingId = parseInt(params.id);
+    const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
       return NextResponse.json(
@@ -26,6 +26,7 @@ export async function POST(
     }
 
     try {
+    const resolvedParams = await params;
       // Buscar fatura + cliente
       const [billing] = await db
         .select({

@@ -11,9 +11,10 @@ import { createPickupOrderFromQuote } from "@/services/tms/workflow-automator";
  */
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -21,7 +22,7 @@ export async function POST(
 
     const organizationId = session.user.organizationId;
     const approvedBy = session.user.email || "system";
-    const id = parseInt(params.id);
+    const id = parseInt(resolvedParams.id);
 
     const body = await req.json();
     const { quotedPrice, discountPercent, discountReason } = body;
@@ -70,6 +71,7 @@ export async function POST(
 
     // Criar Ordem de Coleta automaticamente
     try {
+    const resolvedParams = await params;
       const pickupOrder = await createPickupOrderFromQuote(id, approvedBy);
 
       return NextResponse.json({

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useCreate } from "@refinedev/core";
 import { useRouter } from "next/navigation";
 import { PartnerForm } from "@/components/forms/partner-form";
@@ -15,9 +16,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function CreateBusinessPartnerPage() {
   const router = useRouter();
-  const { mutate: create, isLoading } = useCreate();
+  const { mutate: create } = useCreate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (values: any) => {
+    setIsLoading(true);
     // Remove máscaras antes de enviar
     const cleanedData = {
       ...values,
@@ -33,7 +36,11 @@ export default function CreateBusinessPartnerPage() {
       },
       {
         onSuccess: () => {
+          setIsLoading(false);
           router.push("/cadastros/parceiros");
+        },
+        onError: () => {
+          setIsLoading(false);
         },
       }
     );

@@ -6,11 +6,12 @@ import { eq, and } from "drizzle-orm";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const ctx = await getTenantContext();
-    const leadId = parseInt(params.id);
+    const leadId = parseInt(resolvedParams.id);
     const body = await request.json();
 
     const [lead] = await db
@@ -41,11 +42,12 @@ export async function PUT(
 // DELETE - Soft delete do lead
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const ctx = await getTenantContext();
-    const leadId = parseInt(params.id);
+    const leadId = parseInt(resolvedParams.id);
 
     // Verificar se lead existe
     const [existing] = await db

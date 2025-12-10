@@ -13,10 +13,10 @@ import path from "path";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(request, async (user, ctx) => {
-    const billingId = parseInt(params.id);
+    const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
       return NextResponse.json(
@@ -26,6 +26,7 @@ export async function GET(
     }
 
     try {
+    const resolvedParams = await params;
       console.log(`📄 Gerando PDF da fatura #${billingId}...`);
 
       // Gerar PDF
@@ -36,6 +37,7 @@ export async function GET(
       const filePath = path.join(process.cwd(), "public", "billing", fileName);
       
       try {
+    const resolvedParams = await params;
         await writeFile(filePath, pdfBuffer);
         
         // Atualizar URL no banco

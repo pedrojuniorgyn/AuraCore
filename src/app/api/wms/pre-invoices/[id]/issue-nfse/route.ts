@@ -3,12 +3,13 @@ import { WMSBillingEngine } from "@/services/wms-billing-engine";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const invoiceNumber = `NFS-${Date.now().toString().slice(-8)}`;
     
-    await WMSBillingEngine.issueNFSe(parseInt(params.id), invoiceNumber);
+    await WMSBillingEngine.issueNFSe(parseInt(resolvedParams.id), invoiceNumber);
 
     return NextResponse.json({
       success: true,

@@ -10,10 +10,10 @@ import { cteAuthorizationService } from "@/services/fiscal/cte-authorization-ser
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "fiscal.cte.cancel", async (user, ctx) => {
-    const cteId = parseInt(params.id);
+    const cteId = parseInt(resolvedParams.id);
 
     if (isNaN(cteId)) {
       return NextResponse.json(
@@ -40,6 +40,7 @@ export async function POST(
     }
 
     try {
+    const resolvedParams = await params;
       const resultado = await cteAuthorizationService.cancelarCTe(
         cteId,
         justificativa,

@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error": "Não autorizado" }, { status: 401 });
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const organizationId = session.user.organizationId;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/context";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -7,15 +7,16 @@ import { eq, and, isNull } from "drizzle-orm";
 // GET - Buscar usuário específico
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const userId = params.id;
+    const userId = resolvedParams.id;
 
     const user = await db
       .select({
@@ -59,9 +60,10 @@ export async function GET(
 // PUT - Atualizar usuário
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -75,7 +77,7 @@ export async function PUT(
       );
     }
 
-    const userId = params.id;
+    const userId = resolvedParams.id;
     const body = await req.json();
 
     // Validações básicas
@@ -171,9 +173,10 @@ export async function PUT(
 // DELETE - Soft delete do usuário
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -187,7 +190,7 @@ export async function DELETE(
       );
     }
 
-    const userId = params.id;
+    const userId = resolvedParams.id;
 
     // Não permitir que usuário exclua a si mesmo
     if (session.user.id === userId) {

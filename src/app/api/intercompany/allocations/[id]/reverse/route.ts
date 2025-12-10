@@ -3,10 +3,11 @@ import { IntercompanyAllocationEngine } from "@/services/intercompany-allocation
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await IntercompanyAllocationEngine.reverseAllocation(parseInt(params.id));
+    const resolvedParams = await params;
+    await IntercompanyAllocationEngine.reverseAllocation(parseInt(resolvedParams.id));
 
     return NextResponse.json({
       success: true,

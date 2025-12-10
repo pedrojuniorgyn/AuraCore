@@ -5,10 +5,11 @@ import { WMSBillingEngine } from "@/services/wms-billing-engine";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await WMSBillingEngine.sendForApproval(parseInt(params.id));
+    const resolvedParams = await params;
+    await WMSBillingEngine.sendForApproval(parseInt(resolvedParams.id));
 
     return NextResponse.json({
       success: true,

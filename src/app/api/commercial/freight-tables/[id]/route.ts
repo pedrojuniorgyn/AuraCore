@@ -10,10 +10,11 @@ import { and, eq, isNull } from "drizzle-orm";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tableId = Number(params.id);
+    const resolvedParams = await params;
+    const tableId = Number(resolvedParams.id);
 
     // Buscar tabela
     const [table] = await db
@@ -75,10 +76,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tableId = Number(params.id);
+    const resolvedParams = await params;
+    const tableId = Number(resolvedParams.id);
     const body = await request.json();
 
     const {
@@ -181,10 +183,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tableId = Number(params.id);
+    const resolvedParams = await params;
+    const tableId = Number(resolvedParams.id);
 
     // Soft delete
     await db

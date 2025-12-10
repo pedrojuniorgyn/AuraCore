@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/context";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { vehicleDocuments } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -7,15 +7,16 @@ import { eq, and, isNull } from "drizzle-orm";
 // GET - Buscar documento de veículo específico
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const documentId = parseInt(params.id);
+    const documentId = parseInt(resolvedParams.id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
@@ -52,15 +53,16 @@ export async function GET(
 // PUT - Atualizar documento de veículo
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const documentId = parseInt(params.id);
+    const documentId = parseInt(resolvedParams.id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
@@ -136,15 +138,16 @@ export async function PUT(
 // DELETE - Soft delete do documento
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const documentId = parseInt(params.id);
+    const documentId = parseInt(resolvedParams.id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }

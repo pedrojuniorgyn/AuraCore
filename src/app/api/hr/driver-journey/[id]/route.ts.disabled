@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/context";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ciapAssets } from "@/lib/db/schema";
+import { driverJourney } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
-// GET - Buscar ativo CIAP específico
+// GET - Buscar jornada de motorista específica
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -15,41 +15,41 @@ export async function GET(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const ciapId = parseInt(params.id);
-    if (isNaN(ciapId)) {
+    const journeyId = parseInt(params.id);
+    if (isNaN(journeyId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const ciap = await db
+    const journey = await db
       .select()
-      .from(ciapAssets)
+      .from(driverJourney)
       .where(
         and(
-          eq(ciapAssets.id, ciapId),
-          eq(ciapAssets.organizationId, session.user.organizationId),
-          isNull(ciapAssets.deletedAt)
+          eq(driverJourney.id, journeyId),
+          eq(driverJourney.organizationId, session.user.organizationId),
+          isNull(driverJourney.deletedAt)
         )
       )
       .limit(1);
 
-    if (ciap.length === 0) {
+    if (journey.length === 0) {
       return NextResponse.json(
-        { error: "Ativo CIAP não encontrado" },
+        { error: "Jornada não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: ciap[0] });
+    return NextResponse.json({ success: true, data: journey[0] });
   } catch (error) {
-    console.error("Erro ao buscar ativo CIAP:", error);
+    console.error("Erro ao buscar jornada:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar ativo CIAP" },
+      { error: "Erro ao buscar jornada" },
       { status: 500 }
     );
   }
 }
 
-// PUT - Atualizar ativo CIAP
+// PUT - Atualizar jornada de motorista
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -60,75 +60,66 @@ export async function PUT(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const ciapId = parseInt(params.id);
-    if (isNaN(ciapId)) {
+    const journeyId = parseInt(params.id);
+    if (isNaN(journeyId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
     const body = await req.json();
 
     // Validações básicas
-    if (!body.description || !body.acquisitionDate) {
+    if (!body.driverId || !body.eventType) {
       return NextResponse.json(
-        { error: "Descrição e data de aquisição são obrigatórios" },
+        { error: "Motorista e tipo de evento são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se ativo existe
+    // Verificar se jornada existe
     const existing = await db
       .select()
-      .from(ciapAssets)
+      .from(driverJourney)
       .where(
         and(
-          eq(ciapAssets.id, ciapId),
-          eq(ciapAssets.organizationId, session.user.organizationId),
-          isNull(ciapAssets.deletedAt)
+          eq(driverJourney.id, journeyId),
+          eq(driverJourney.organizationId, session.user.organizationId),
+          isNull(driverJourney.deletedAt)
         )
       )
       .limit(1);
 
     if (existing.length === 0) {
       return NextResponse.json(
-        { error: "Ativo CIAP não encontrado" },
+        { error: "Jornada não encontrada" },
         { status: 404 }
-      );
-    }
-
-    // Validar se já foi finalizado o período de crédito
-    if (existing[0].remainingMonths === 0 && existing[0].status === "COMPLETED") {
-      return NextResponse.json(
-        { error: "Não é possível editar ativo com crédito já finalizado" },
-        { status: 400 }
       );
     }
 
     // Atualizar
     const updated = await db
-      .update(ciapAssets)
+      .update(driverJourney)
       .set({
         ...body,
-        updatedBy: session.user.id,
         updatedAt: new Date(),
       })
-      .where(eq(ciapAssets.id, ciapId))
+      .where(eq(driverJourney.id, journeyId))
       .returning();
 
     return NextResponse.json({
       success: true,
-      message: "Ativo CIAP atualizado com sucesso",
+      message: "Jornada atualizada com sucesso",
       data: updated[0],
     });
   } catch (error) {
-    console.error("Erro ao atualizar ativo CIAP:", error);
+    console.error("Erro ao atualizar jornada:", error);
     return NextResponse.json(
-      { error: "Erro ao atualizar ativo CIAP" },
+      { error: "Erro ao atualizar jornada" },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Soft delete do ativo CIAP
+// DELETE - Soft delete da jornada
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -139,56 +130,60 @@ export async function DELETE(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const ciapId = parseInt(params.id);
-    if (isNaN(ciapId)) {
+    const journeyId = parseInt(params.id);
+    if (isNaN(journeyId)) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    // Verificar se ativo existe
+    // Verificar se jornada existe
     const existing = await db
       .select()
-      .from(ciapAssets)
+      .from(driverJourney)
       .where(
         and(
-          eq(ciapAssets.id, ciapId),
-          eq(ciapAssets.organizationId, session.user.organizationId),
-          isNull(ciapAssets.deletedAt)
+          eq(driverJourney.id, journeyId),
+          eq(driverJourney.organizationId, session.user.organizationId),
+          isNull(driverJourney.deletedAt)
         )
       )
       .limit(1);
 
     if (existing.length === 0) {
       return NextResponse.json(
-        { error: "Ativo CIAP não encontrado" },
+        { error: "Jornada não encontrada" },
         { status: 404 }
       );
     }
 
-    // Validar se já houve apropriação de crédito
-    if (existing[0].appropriatedMonths > 0) {
+    // Validar: jornadas são registros legais (Lei 13.103/2015)
+    // Em produção, considere não permitir exclusão, apenas correção
+    const daysSinceCreated = Math.floor(
+      (new Date().getTime() - existing[0].createdAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSinceCreated > 7) {
       return NextResponse.json(
-        { error: "Não é possível excluir ativo com créditos já apropriados" },
+        { error: "Não é possível excluir registros de jornada com mais de 7 dias (requisito legal)" },
         { status: 400 }
       );
     }
 
     // Soft delete
     await db
-      .update(ciapAssets)
+      .update(driverJourney)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
       })
-      .where(eq(ciapAssets.id, ciapId));
+      .where(eq(driverJourney.id, journeyId));
 
     return NextResponse.json({
       success: true,
-      message: "Ativo CIAP excluído com sucesso",
+      message: "Registro de jornada excluído com sucesso",
     });
   } catch (error) {
-    console.error("Erro ao excluir ativo CIAP:", error);
+    console.error("Erro ao excluir jornada:", error);
     return NextResponse.json(
-      { error: "Erro ao excluir ativo CIAP" },
+      { error: "Erro ao excluir jornada" },
       { status: 500 }
     );
   }

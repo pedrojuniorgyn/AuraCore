@@ -273,7 +273,6 @@ export default function CertificadoDigitalPage() {
                   <RippleButton
                     onClick={handleUpload}
                     disabled={!certificateFile || !password || isUploading}
-                    background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                     className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUploading ? (
@@ -409,7 +408,6 @@ export default function CertificadoDigitalPage() {
                     <RippleButton
                       onClick={handleTestConnection}
                       disabled={isTesting || !certificateInfo.valid}
-                      background="linear-gradient(135deg, #10b981 0%, #059669 100%)"
                       className="disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isTesting ? (

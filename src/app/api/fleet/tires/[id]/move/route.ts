@@ -6,11 +6,12 @@ import { eq, and } from "drizzle-orm";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const ctx = await getTenantContext();
-    const tireId = parseInt(params.id);
+    const tireId = parseInt(resolvedParams.id);
     const body = await request.json();
 
     const { movementType, toVehicleId, toPosition, mileageAtMovement } = body;

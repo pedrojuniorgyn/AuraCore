@@ -3,13 +3,14 @@ import { ClaimsWorkflowEngine } from "@/services/claims-workflow-engine";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     const { decision, amount, notes } = body;
 
-    await ClaimsWorkflowEngine.decideAction(parseInt(params.id), {
+    await ClaimsWorkflowEngine.decideAction(parseInt(resolvedParams.id), {
       decision,
       amount,
       notes

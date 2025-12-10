@@ -4,9 +4,10 @@ import { sql } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     const { quantity, unitPrice, notes } = body;
     const subtotal = quantity * unitPrice;
@@ -17,7 +18,7 @@ export async function PUT(
           unit_price = ${unitPrice},
           subtotal = ${subtotal},
           notes = ${notes || ''}
-      WHERE id = ${params.id}
+      WHERE id = ${resolvedParams.id}
     `);
 
     return NextResponse.json({
@@ -34,12 +35,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     await db.execute(sql`
       DELETE FROM wms_billing_events 
-      WHERE id = ${params.id}
+      WHERE id = ${resolvedParams.id}
         AND billing_status = 'PENDING'
     `);
 

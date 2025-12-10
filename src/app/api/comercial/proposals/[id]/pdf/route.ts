@@ -6,10 +6,11 @@ import { proposalPdfGenerator } from "@/services/commercial/proposal-pdf-generat
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const proposalId = parseInt(params.id);
+    const resolvedParams = await params;
+    const proposalId = parseInt(resolvedParams.id);
 
     const [proposal] = await db
       .select()

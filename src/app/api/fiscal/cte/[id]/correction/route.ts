@@ -12,10 +12,10 @@ import { eq } from "drizzle-orm";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "fiscal.cte.create", async (user, ctx) => {
-    const cteId = parseInt(params.id);
+    const cteId = parseInt(resolvedParams.id);
 
     if (isNaN(cteId)) {
       return NextResponse.json(
@@ -25,6 +25,7 @@ export async function POST(
     }
 
     try {
+    const resolvedParams = await params;
       const body = await request.json();
       const { corrections } = body;
 

@@ -32,7 +32,8 @@ export default function BranchesPage() {
   const gridRef = useRef<AgGridReact>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
-  const { organizationId } = useTenant();
+  const { user } = useTenant();
+  const organizationId = user?.organizationId;
 
   useEffect(() => {
     fetchBranches();
@@ -169,7 +170,6 @@ export default function BranchesPage() {
               </div>
               <RippleButton
                 onClick={() => toast.info("Funcionalidade em desenvolvimento")}
-                background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Filial

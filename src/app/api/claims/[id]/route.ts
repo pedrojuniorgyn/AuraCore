@@ -4,9 +4,10 @@ import { sql } from "drizzle-orm";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     const { estimatedDamage, notes } = body;
 
@@ -14,7 +15,7 @@ export async function PUT(
       UPDATE claims_management 
       SET estimated_damage = ${estimatedDamage},
           notes = ${notes || ''}
-      WHERE id = ${params.id}
+      WHERE id = ${resolvedParams.id}
     `);
 
     return NextResponse.json({
@@ -31,12 +32,13 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     await db.execute(sql`
       DELETE FROM claims_management 
-      WHERE id = ${params.id}
+      WHERE id = ${resolvedParams.id}
         AND claim_status = 'OPENED'
     `);
 

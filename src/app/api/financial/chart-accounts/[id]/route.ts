@@ -10,16 +10,17 @@ import { logChartAccountChange } from "@/services/audit-logger";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const organizationId = session.user.organizationId;
-    const id = parseInt(params.id);
+    const id = parseInt(resolvedParams.id);
 
     const result = await db
       .select()
@@ -54,9 +55,10 @@ export async function GET(
  */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -64,7 +66,7 @@ export async function PUT(
 
     const organizationId = session.user.organizationId;
     const updatedBy = session.user.email || "system";
-    const id = parseInt(params.id);
+    const id = parseInt(resolvedParams.id);
 
     const body = await req.json();
     const {
@@ -219,9 +221,10 @@ export async function PUT(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -229,7 +232,7 @@ export async function DELETE(
 
     const organizationId = session.user.organizationId;
     const updatedBy = session.user.email || "system";
-    const id = parseInt(params.id);
+    const id = parseInt(resolvedParams.id);
 
     // Verificar se existe
     const existing = await db

@@ -10,14 +10,15 @@ import { eq, and, isNull } from "drizzle-orm";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const cargoId = parseInt(params.id);
+    const cargoId = parseInt(resolvedParams.id);
 
     const [cargo] = await db
       .select()
@@ -54,14 +55,15 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const cargoId = parseInt(params.id);
+    const cargoId = parseInt(resolvedParams.id);
     const body = await request.json();
 
     // Validar que a carga existe e pertence à organização
@@ -114,14 +116,15 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const cargoId = parseInt(params.id);
+    const cargoId = parseInt(resolvedParams.id);
 
     // Soft delete
     await db

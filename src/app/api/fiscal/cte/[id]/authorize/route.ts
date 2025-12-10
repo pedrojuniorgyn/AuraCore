@@ -14,10 +14,10 @@ import { buildCteXml } from "@/services/fiscal/cte-builder";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "fiscal.cte.authorize", async (user, ctx) => {
-    const cteId = parseInt(params.id);
+    const cteId = parseInt(resolvedParams.id);
 
     if (isNaN(cteId)) {
       return NextResponse.json(
@@ -60,6 +60,7 @@ export async function POST(
     }
 
     try {
+    const resolvedParams = await params;
       // 4. Gerar XML (se não existir)
       let xmlSemAssinatura = "";
 
