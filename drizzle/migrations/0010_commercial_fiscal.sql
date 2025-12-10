@@ -137,3 +137,9 @@ CREATE TABLE freight_extra_components (
 CREATE INDEX idx_freight_extra_components_table ON freight_extra_components(freight_table_id);
 CREATE INDEX idx_freight_extra_components_active ON freight_extra_components(is_active);
 
+
+
+
+
+
+

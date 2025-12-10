@@ -2,13 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { AllEnterpriseModule } from "ag-grid-enterprise";
+
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { toast } from "sonner";
@@ -35,6 +38,7 @@ export default function QuotesPage() {
       field: "quoteNumber",
       headerName: "Cotação",
       width: 150,
+      filter: "agTextColumnFilter",
       cellRenderer: (params: any) => (
         <span className="font-semibold">{params.value}</span>
       ),
@@ -73,6 +77,7 @@ export default function QuotesPage() {
       field: "status",
       headerName: "Status",
       width: 140,
+      filter: "agSetColumnFilter",
       cellRenderer: (params: any) => {
         const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
           NEW: { label: "Nova", color: "bg-gray-100 text-gray-700", icon: Clock },
@@ -200,10 +205,10 @@ export default function QuotesPage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
-              Torre de Controle Comercial
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent animate-gradient">
+              🎯 Torre de Controle Comercial
+            </h1>
+            <p className="text-sm text-slate-400">
               Cotações em Tempo Real - Aceitar/Recusar
             </p>
           </div>
@@ -293,9 +298,37 @@ export default function QuotesPage() {
                 defaultColDef={{
                   sortable: true,
                   resizable: true,
+                  filter: true,
+                  floatingFilter: true,
+                  enableRowGroup: true,
+                  enablePivot: true,
+                  enableValue: true,
                 }}
+                sideBar={{
+                  toolPanels: [
+                    {
+                      id: "columns",
+                      labelDefault: "Colunas",
+                      labelKey: "columns",
+                      iconKey: "columns",
+                      toolPanel: "agColumnsToolPanel",
+                    },
+                    {
+                      id: "filters",
+                      labelDefault: "Filtros",
+                      labelKey: "filters",
+                      iconKey: "filter",
+                      toolPanel: "agFiltersToolPanel",
+                    },
+                  ],
+                  defaultToolPanel: "",
+                }}
+                enableRangeSelection={true}
+                rowGroupPanelShow="always"
+                groupDisplayType="groupRows"
                 pagination={true}
                 paginationPageSize={20}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
                 domLayout="normal"
               />
             </div>
@@ -305,4 +338,6 @@ export default function QuotesPage() {
     </PageTransition>
   );
 }
+
+
 

@@ -1,93 +1,132 @@
-/**
- * API TEMPORÁRIA: Executar Migration DDA
- * DELETE APÓS EXECUTAR!
- */
-
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { sql as drizzleSql } from "drizzle-orm";
+import { pool, ensureConnection } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST() {
   try {
-    console.log("📄 Executando migration DDA inbox...");
+    console.log("🏦 Iniciando Migração DDA BTG...");
 
-    // Criar tabela financial_dda_inbox
-    await db.execute(drizzleSql.raw(`
+    await ensureConnection();
+
+    // Tabela: Financial DDA Inbox (Principal)
+    await pool.request().query(`
+      IF EXISTS (SELECT * FROM sys.tables WHERE name = 'financial_dda_inbox')
+      BEGIN
+        DROP TABLE financial_dda_inbox;
+        PRINT '🗑️ Tabela financial_dda_inbox removida para recriação';
+      END
+      
       CREATE TABLE financial_dda_inbox (
-        id int IDENTITY(1,1) PRIMARY KEY,
-        organization_id int NOT NULL,
-        bank_account_id int NOT NULL,
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        organization_id INT NOT NULL,
+        bank_account_id INT NOT NULL,
         
-        external_id nvarchar(255) NOT NULL,
-        beneficiary_name nvarchar(255) NOT NULL,
-        beneficiary_document nvarchar(20) NOT NULL,
+        -- Dados do Boleto (vindo do banco)
+        external_id NVARCHAR(255) NOT NULL,
+        beneficiary_name NVARCHAR(255) NOT NULL,
+        beneficiary_document NVARCHAR(20) NOT NULL,
         
-        amount decimal(18, 2) NOT NULL,
-        due_date datetime2 NOT NULL,
-        issue_date datetime2,
+        -- Valores e Datas
+        amount DECIMAL(18,2) NOT NULL,
+        due_date DATETIME2 NOT NULL,
+        issue_date DATETIME2,
         
-        barcode nvarchar(100) NOT NULL,
-        digitable_line nvarchar(100),
+        -- Código de Barras
+        barcode NVARCHAR(100) NOT NULL,
+        digitable_line NVARCHAR(100),
         
-        status nvarchar(20) DEFAULT 'PENDING',
-        matched_payable_id int,
-        match_score int DEFAULT 0,
+        -- Vinculação e Status
+        status NVARCHAR(20) DEFAULT 'PENDING',
+        matched_payable_id INT,
+        match_score INT DEFAULT 0,
         
-        notes nvarchar(max),
-        dismissed_reason nvarchar(255),
+        -- Observações
+        notes NVARCHAR(MAX),
+        dismissed_reason NVARCHAR(255),
         
-        created_at datetime2 DEFAULT GETDATE(),
-        updated_at datetime2 DEFAULT GETDATE(),
-        deleted_at datetime2,
-        
-        CONSTRAINT FK_financial_dda_inbox_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-        CONSTRAINT FK_financial_dda_inbox_bank_account FOREIGN KEY (bank_account_id) REFERENCES bank_accounts(id),
-        CONSTRAINT FK_financial_dda_inbox_payable FOREIGN KEY (matched_payable_id) REFERENCES accounts_payable(id)
+        -- Enterprise Base
+        created_at DATETIME2 DEFAULT GETDATE(),
+        updated_at DATETIME2 DEFAULT GETDATE(),
+        deleted_at DATETIME2
       );
-    `));
+      PRINT '✅ Tabela financial_dda_inbox criada com TODAS as colunas';
+    `);
 
-    // Criar índices
-    await db.execute(drizzleSql.raw(`
-      CREATE UNIQUE INDEX idx_dda_external_id ON financial_dda_inbox(external_id, bank_account_id) WHERE deleted_at IS NULL;
-    `));
-    await db.execute(drizzleSql.raw(`
-      CREATE INDEX idx_dda_status ON financial_dda_inbox(status);
-    `));
-    await db.execute(drizzleSql.raw(`
-      CREATE INDEX idx_dda_due_date ON financial_dda_inbox(due_date);
-    `));
-    await db.execute(drizzleSql.raw(`
-      CREATE INDEX idx_dda_org_bank ON financial_dda_inbox(organization_id, bank_account_id);
-    `));
-    await db.execute(drizzleSql.raw(`
-      CREATE INDEX idx_dda_beneficiary_doc ON financial_dda_inbox(beneficiary_document);
-    `));
+    // Tabela: DDAs Autorizados
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'btg_dda_authorized')
+      BEGIN
+        CREATE TABLE btg_dda_authorized (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          organization_id INT NOT NULL,
+          
+          btg_dda_id NVARCHAR(100) NOT NULL UNIQUE,
+          btg_company_id NVARCHAR(50) NOT NULL,
+          
+          creditor_name NVARCHAR(255) NOT NULL,
+          creditor_document NVARCHAR(18) NOT NULL,
+          
+          status NVARCHAR(20) DEFAULT 'ACTIVE',
+          auto_payment BIT DEFAULT 0,
+          
+          created_at DATETIME2 DEFAULT GETDATE(),
+          updated_at DATETIME2 DEFAULT GETDATE()
+        );
+        PRINT '✅ Tabela btg_dda_authorized criada';
+      END
+    `);
 
-    // Adicionar campo barcode à accounts_payable (se não existir)
-    try {
-      await db.execute(drizzleSql.raw(`
-        ALTER TABLE accounts_payable ADD barcode nvarchar(100);
-      `));
-    } catch (e) {
-      console.log("Campo barcode já existe, pulando...");
-    }
+    // Tabela: Débitos DDA
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'btg_dda_debits')
+      BEGIN
+        CREATE TABLE btg_dda_debits (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          organization_id INT NOT NULL,
+          
+          btg_debit_id NVARCHAR(100) NOT NULL UNIQUE,
+          btg_dda_id NVARCHAR(100) NOT NULL,
+          
+          barcode NVARCHAR(100),
+          digitable_line NVARCHAR(100),
+          
+          amount DECIMAL(18,2) NOT NULL,
+          due_date DATETIME2 NOT NULL,
+          
+          creditor_name NVARCHAR(255),
+          creditor_document NVARCHAR(18),
+          
+          description NVARCHAR(500),
+          
+          status NVARCHAR(20) DEFAULT 'PENDING',
+          
+          accounts_payable_id INT,
+          
+          imported_at DATETIME2 DEFAULT GETDATE(),
+          paid_at DATETIME2,
+          
+          created_at DATETIME2 DEFAULT GETDATE(),
+          updated_at DATETIME2 DEFAULT GETDATE()
+        );
+        PRINT '✅ Tabela btg_dda_debits criada';
+      END
+    `);
 
-    console.log("✅ Migration DDA executada com sucesso!");
+    console.log("✅ Migração DDA BTG concluída!");
 
     return NextResponse.json({
       success: true,
-      message: "Migration DDA executada com sucesso!",
+      message: "Migração DDA BTG executada com sucesso! 🎉",
+      tables: ["financial_dda_inbox", "btg_dda_authorized", "btg_dda_debits"],
     });
-  } catch (error: any) {
-    console.error("❌ Erro na migration:", error);
+  } catch (error: unknown) {
+    console.error("❌ Erro na Migração DDA BTG:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message,
-      },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
 }
-
-

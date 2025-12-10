@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     const createdBy = session.user.email || "system";
 
     const body = await req.json();
-    const { code, name, type, parentId, linkedVehicleId } = body;
+    const { code, name, type, parentId, linkedVehicleId, ccClass } = body;
 
     // Validações
     if (!code || !name || !type) {
@@ -138,6 +138,7 @@ export async function POST(req: Request) {
         level,
         linkedVehicleId: linkedVehicleId || null,
         isAnalytical: type === "ANALYTIC",
+        class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
         status: "ACTIVE",
         createdBy,
       })
@@ -156,4 +157,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
+
+
 

@@ -10,13 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Truck, Cog, CheckCircle2, AlertCircle, Wrench } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
-import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
+import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
-import { ShimmerButton } from "@/components/ui/magic-components";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
-import { HoverCard } from "@/components/ui/glassmorphism-card";
+import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { LicensePlate } from "@/components/fleet/LicensePlate";
 import { getStatusConfig } from "@/lib/utils/status-colors";
+import Link from "next/link";
 
 // === TYPES ===
 interface IVehicle {
@@ -164,72 +165,106 @@ export default function VehiclesPage() {
         <FadeIn delay={0.1}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                <GradientText>Gestão de Veículos</GradientText>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent animate-gradient">
+                🚛 Gestão de Veículos
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-slate-400 mt-1">
                 Controle de frota e manutenção
               </p>
             </div>
-            <ShimmerButton>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Veículo
-            </ShimmerButton>
+            <Link href="/frota/veiculos/novo">
+              <RippleButton className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Veículo
+              </RippleButton>
+            </Link>
           </div>
         </FadeIn>
 
-        {/* Stats Cards */}
-        <FadeIn delay={0.2}>
-          <div className="grid gap-4 md:grid-cols-4">
-            <HoverCard className="backdrop-blur-sm bg-card/80 border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Veículos</CardTitle>
-                <Truck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  <NumberCounter value={stats.total} />
+        {/* Stats Cards Premium */}
+        <StaggerContainer>
+          <div className="grid gap-6 md:grid-cols-4">
+            {/* Total Veículos */}
+            <FadeIn delay={0.15}>
+              <GlassmorphismCard className="border-blue-500/30 hover:border-blue-400/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
+                <div className="p-6 bg-gradient-to-br from-blue-900/10 to-blue-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl shadow-inner">
+                      <Truck className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <span className="text-xs text-blue-300 font-semibold px-3 py-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full border border-blue-400/30">
+                      Total
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total de Veículos</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.total} />
+                  </div>
                 </div>
-              </CardContent>
-            </HoverCard>
+              </GlassmorphismCard>
+            </FadeIn>
 
-            <HoverCard className="backdrop-blur-sm bg-card/80 border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Disponíveis</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-500">
-                  <NumberCounter value={stats.available} />
+            {/* Disponíveis */}
+            <FadeIn delay={0.2}>
+              <GlassmorphismCard className="border-green-500/30 hover:border-green-400/50 transition-all hover:shadow-lg hover:shadow-green-500/20">
+                <div className="p-6 bg-gradient-to-br from-green-900/10 to-green-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl shadow-inner">
+                      <CheckCircle2 className="h-6 w-6 text-green-400" />
+                    </div>
+                    <span className="text-xs text-green-300 font-semibold px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-full border border-green-400/30">
+                      ✅ OK
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Veículos Disponíveis</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.available} />
+                  </div>
                 </div>
-              </CardContent>
-            </HoverCard>
+              </GlassmorphismCard>
+            </FadeIn>
 
-            <HoverCard className="backdrop-blur-sm bg-card/80 border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Em Viagem</CardTitle>
-                <Truck className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-500">
-                  <NumberCounter value={stats.inTransit} />
+            {/* Em Viagem */}
+            <FadeIn delay={0.25}>
+              <GlassmorphismCard className="border-cyan-500/30 hover:border-cyan-400/50 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
+                <div className="p-6 bg-gradient-to-br from-cyan-900/10 to-cyan-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl shadow-inner">
+                      <Truck className="h-6 w-6 text-cyan-400" />
+                    </div>
+                    <span className="text-xs text-cyan-300 font-semibold px-3 py-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full border border-cyan-400/30">
+                      🚚 Viagem
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Em Viagem</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.inTransit} />
+                  </div>
                 </div>
-              </CardContent>
-            </HoverCard>
+              </GlassmorphismCard>
+            </FadeIn>
 
-            <HoverCard className="backdrop-blur-sm bg-card/80 border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Manutenção</CardTitle>
-                <Wrench className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-500">
-                  <NumberCounter value={stats.maintenance} />
+            {/* Manutenção */}
+            <FadeIn delay={0.3}>
+              <GlassmorphismCard className="border-orange-500/30 hover:border-orange-400/50 transition-all hover:shadow-lg hover:shadow-orange-500/20">
+                <div className="p-6 bg-gradient-to-br from-orange-900/10 to-orange-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-orange-500/20 to-amber-500/20 rounded-xl shadow-inner">
+                      <Wrench className="h-6 w-6 text-orange-400" />
+                    </div>
+                    <span className="text-xs text-orange-300 font-semibold px-3 py-1 bg-gradient-to-r from-orange-500/20 to-amber-500/20 rounded-full border border-orange-400/30">
+                      🔧 Manutenção
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Em Manutenção</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.maintenance} />
+                  </div>
                 </div>
-              </CardContent>
-            </HoverCard>
+              </GlassmorphismCard>
+            </FadeIn>
           </div>
-        </FadeIn>
+        </StaggerContainer>
 
         {/* Grid */}
         <FadeIn delay={0.3}>
@@ -265,9 +300,25 @@ export default function VehiclesPage() {
                   defaultColDef={{
                     sortable: true,
                     resizable: true,
+                    filter: true,
+                    floatingFilter: true,
+                    enableRowGroup: true,
+                    enablePivot: true,
+                    enableValue: true,
                   }}
+                  sideBar={{
+                    toolPanels: [
+                      { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                      { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                    ],
+                    defaultToolPanel: "",
+                  }}
+                  enableRangeSelection={true}
+                  rowGroupPanelShow="always"
+                  groupDisplayType="groupRows"
                   pagination={true}
                   paginationPageSize={20}
+                  paginationPageSizeSelector={[10, 20, 50, 100]}
                   paginationPageSizeSelector={[10, 20, 50]}
                   animateRows={true}
                   localeText={{

@@ -10,3 +10,9 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 // Export para garantir que o arquivo seja importado
 export const agGridConfigured = true;
 
+
+
+
+
+
+

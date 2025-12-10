@@ -36,7 +36,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 import { CurrencyCellRenderer, DateCellRenderer } from "@/lib/ag-grid/cell-renderers";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
-import { ShimmerButton } from "@/components/ui/magic-components";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
 import { HoverCard } from "@/components/ui/glassmorphism-card";
 
@@ -345,17 +345,17 @@ export default function RadarDdaPage() {
         <FadeIn delay={0.1}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                <GradientText>Radar DDA - Boletos Eletrônicos</GradientText>
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                🎯 Radar DDA - Boletos Eletrônicos
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-slate-400 mt-1">
                 Débito Direto Autorizado - Integração BTG Pactual
               </p>
             </div>
-            <ShimmerButton onClick={handleSync} disabled={syncMutation.isPending}>
+            <RippleButton onClick={handleSync} disabled={syncMutation.isPending}>
               <RefreshCw className={`h-4 w-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
               {syncMutation.isPending ? "Sincronizando..." : "Sincronizar com Banco"}
-            </ShimmerButton>
+            </RippleButton>
           </div>
         </FadeIn>
 
@@ -435,9 +435,25 @@ export default function RadarDdaPage() {
                   defaultColDef={{
                     sortable: true,
                     resizable: true,
+                    filter: true,
+                    floatingFilter: true,
+                    enableRowGroup: true,
+                    enablePivot: true,
+                    enableValue: true,
                   }}
+                  sideBar={{
+                    toolPanels: [
+                      { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                      { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                    ],
+                    defaultToolPanel: "",
+                  }}
+                  enableRangeSelection={true}
+                  rowGroupPanelShow="always"
+                  groupDisplayType="groupRows"
                   pagination={true}
                   paginationPageSize={20}
+                  paginationPageSizeSelector={[10, 20, 50, 100]}
                   paginationPageSizeSelector={[10, 20, 50]}
                   animateRows={true}
                   localeText={{
@@ -511,5 +527,7 @@ export default function RadarDdaPage() {
     </PageTransition>
   );
 }
+
+
 
 

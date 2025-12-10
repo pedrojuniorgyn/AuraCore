@@ -181,3 +181,9 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
 };
 
 
+
+
+
+
+
+

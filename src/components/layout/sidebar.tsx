@@ -39,10 +39,22 @@ const sidebarItems = [
     color: "text-indigo-500",
   },
   {
-    title: "Importar NFe",
-    href: "/fiscal/entrada-notas",
+    title: "Monitor de Documentos Fiscais",
+    href: "/fiscal/documentos",
+    icon: FileText,
+    color: "text-blue-500",
+  },
+  {
+    title: "Centros de Custo",
+    href: "/financeiro/centros-custo",
     icon: BadgeDollarSign,
-    color: "text-green-500",
+    color: "text-orange-500",
+  },
+  {
+    title: "Plano de Contas",
+    href: "/financeiro/plano-contas",
+    icon: BadgeDollarSign,
+    color: "text-pink-500",
   },
   {
     title: "Contas a Pagar",
@@ -85,18 +97,6 @@ const sidebarItems = [
     href: "/frota/motoristas",
     icon: Users,
     color: "text-indigo-500",
-  },
-  {
-    title: "Centros de Custo",
-    href: "/financeiro/centros-custo",
-    icon: BadgeDollarSign,
-    color: "text-orange-500",
-  },
-  {
-    title: "Plano de Contas",
-    href: "/financeiro/plano-contas",
-    icon: BadgeDollarSign,
-    color: "text-pink-500",
   },
   {
     title: "DRE",

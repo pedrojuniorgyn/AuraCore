@@ -104,3 +104,9 @@ CREATE INDEX idx_vehicles_status ON vehicles(status);
 CREATE INDEX idx_vehicles_type ON vehicles(type);
 
 
+
+
+
+
+
+

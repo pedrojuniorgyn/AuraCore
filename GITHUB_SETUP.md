@@ -510,3 +510,9 @@ Agora você tem:
 
 **Dúvidas?** Abra uma [Discussion](https://github.com/pedrojuniorgyn/AuraCore/discussions) ou issue!
 
+
+
+
+
+
+

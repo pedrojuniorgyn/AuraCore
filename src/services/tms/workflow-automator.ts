@@ -273,3 +273,9 @@ async function getNextCteNumber(branchId: number): Promise<number> {
   return lastNumber + 1;
 }
 
+
+
+
+
+
+

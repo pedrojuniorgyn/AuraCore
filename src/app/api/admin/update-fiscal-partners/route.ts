@@ -1,0 +1,66 @@
+import { NextResponse } from "next/server";
+import { sql as rawSql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { parseNFeXML } from "@/services/nfe-parser";
+
+/**
+ * 🔄 Atualizar nomes de parceiros em fiscal_documents
+ * 
+ * Extrai o nome do emitente/remetente dos XMLs armazenados
+ */
+export async function GET() {
+  try {
+    console.log("\n🔄 Atualizando nomes de parceiros em fiscal_documents...\n");
+
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+
+    let updated = 0;
+
+    // 1️⃣ ATUALIZAR NFes
+    console.log("1️⃣ Processando NFes...");
+    
+    const result: any = await db.execute(rawSql`
+      SELECT TOP 50 id, document_type, xml_content, partner_name
+      FROM fiscal_documents
+      WHERE document_type = 'NFE' 
+        AND xml_content IS NOT NULL
+    `);
+    
+    const nfes = Array.isArray(result) ? result : (result.recordset || []);
+    
+    for (const doc of nfes) {
+      try {
+        if (!doc.xml_content) continue;
+        
+        const parsed = parseNFeXML(doc.xml_content);
+        
+        await db.execute(rawSql`
+          UPDATE fiscal_documents
+          SET 
+            partner_name = ${parsed.issuer.name},
+            partner_document = ${parsed.issuer.cnpj}
+          WHERE id = ${doc.id}
+        `);
+        
+        updated++;
+        console.log(`  ✅ NFe ${doc.id}: ${parsed.issuer.name} (${parsed.issuer.cnpj})`);
+      } catch (error) {
+        console.log(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${error}`);
+      }
+    }
+    
+    console.log(`\n✅ ${updated} NFes atualizadas!\n`);
+
+    return NextResponse.json({
+      success: true,
+      message: "Parceiros atualizados com sucesso",
+      nfes: updated,
+      total: updated,
+    });
+  } catch (error: any) {
+    console.error("❌ Erro ao atualizar parceiros:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+

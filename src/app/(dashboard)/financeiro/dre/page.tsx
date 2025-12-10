@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import {
   TrendingUp,
   TrendingDown,
@@ -82,10 +82,10 @@ export default function DREPage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
-              DRE - Demonstração de Resultado
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+              📊 DRE - Demonstração de Resultado
+            </h1>
+            <p className="text-sm text-slate-400">
               Relatórios gerenciais multi-dimensionais
             </p>
           </div>
@@ -138,14 +138,14 @@ export default function DREPage() {
               </div>
 
               <div className="flex items-end">
-                <ShimmerButton
+                <RippleButton
                   onClick={handleGenerate}
                   disabled={isLoading}
                   className="w-full"
                 >
                   <BarChart3 className="mr-2 h-4 w-4" />
                   {isLoading ? "Processando..." : "Gerar DRE"}
-                </ShimmerButton>
+                </RippleButton>
               </div>
             </div>
           </CardContent>

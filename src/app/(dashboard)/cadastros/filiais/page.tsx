@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Building2, MapPin, Phone, Mail } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid-theme";
 import { useTenant } from "@/contexts/tenant-context";
@@ -138,8 +138,12 @@ export default function BranchesPage() {
   const defaultColDef: ColDef = {
     sortable: true,
     filter: true,
+    floatingFilter: true,
     resizable: true,
     minWidth: 100,
+    enableRowGroup: true,
+    enablePivot: true,
+    enableValue: true,
   };
 
   return (
@@ -155,20 +159,20 @@ export default function BranchesPage() {
           <FadeIn>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-bold mb-2">
-                  <GradientText>Gestão de Filiais</GradientText>
+                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 via-cyan-400 to-slate-400 bg-clip-text text-transparent animate-gradient">
+                  🏢 Gestão de Filiais
                 </h1>
-                <p className="text-zinc-400">
+                <p className="text-slate-400">
                   Gerencie as filiais da sua organização
                 </p>
               </div>
-              <ShimmerButton
+              <RippleButton
                 onClick={() => toast.info("Funcionalidade em desenvolvimento")}
                 background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Filial
-              </ShimmerButton>
+              </RippleButton>
             </div>
           </FadeIn>
 
@@ -258,8 +262,19 @@ export default function BranchesPage() {
                     rowData={branches}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}
+                    sideBar={{
+                      toolPanels: [
+                        { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                        { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                      ],
+                      defaultToolPanel: "",
+                    }}
+                    enableRangeSelection={true}
+                    rowGroupPanelShow="always"
+                    groupDisplayType="groupRows"
                     pagination={true}
                     paginationPageSize={20}
+                    paginationPageSizeSelector={[10, 20, 50, 100]}
                     rowHeight={60}
                     loading={loading}
                     animateRows={true}

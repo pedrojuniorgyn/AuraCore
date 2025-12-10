@@ -15,7 +15,7 @@ import {
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { NumberCounter } from "@/components/ui/magic-components";
 import { TrendingUp, TrendingDown, DollarSign, Truck, Calendar } from "lucide-react";
 import { toast } from "sonner";
@@ -92,10 +92,10 @@ export default function DreDashboardPage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
               Dashboard DRE (Demonstração de Resultados)
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            </h1>
+            <p className="text-sm text-slate-400">
               Análise Gerencial Completa - Visão 360°
             </p>
           </div>
@@ -147,9 +147,9 @@ export default function DreDashboardPage() {
               </div>
 
               <div className="flex items-end">
-                <ShimmerButton onClick={fetchDre} className="w-full">
+                <RippleButton onClick={fetchDre} className="w-full">
                   {loading ? "Carregando..." : "Atualizar"}
-                </ShimmerButton>
+                </RippleButton>
               </div>
             </div>
           </CardContent>
@@ -338,4 +338,6 @@ export default function DreDashboardPage() {
     </PageTransition>
   );
 }
+
+
 

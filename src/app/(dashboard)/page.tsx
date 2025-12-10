@@ -53,8 +53,8 @@ export default function DashboardPage() {
         {/* Header */}
         <FadeIn>
           <div className="relative z-10 mb-8">
-            <h2 className="text-4xl font-bold tracking-tight">
-              <GradientText animate>Dashboard</GradientText>
+            <h2 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+              🏠 Dashboard
             </h2>
             <p className="mt-2 text-lg text-slate-400">
               Visão geral da operação logística - Aura Core Enterprise

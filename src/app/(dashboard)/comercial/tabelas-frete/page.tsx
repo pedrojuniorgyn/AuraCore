@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { AllEnterpriseModule } from "ag-grid-enterprise";
+
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Edit, Trash2, Table2, Route as RouteIcon } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
@@ -285,17 +288,17 @@ export default function FreightTablesPage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
-              Tabelas de Frete
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent animate-gradient">
+              💰 Tabelas de Frete
+            </h1>
+            <p className="text-sm text-slate-400">
               Gestão de Preços e Rotas Geográficas
             </p>
           </div>
-          <ShimmerButton onClick={handleCreate}>
+          <RippleButton onClick={handleCreate}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Tabela
-          </ShimmerButton>
+          </RippleButton>
         </div>
       </FadeIn>
 
@@ -317,9 +320,37 @@ export default function FreightTablesPage() {
                 defaultColDef={{
                   sortable: true,
                   resizable: true,
+                  filter: true,
+                  floatingFilter: true,
+                  enableRowGroup: true,
+                  enablePivot: true,
+                  enableValue: true,
                 }}
+                sideBar={{
+                  toolPanels: [
+                    {
+                      id: "columns",
+                      labelDefault: "Colunas",
+                      labelKey: "columns",
+                      iconKey: "columns",
+                      toolPanel: "agColumnsToolPanel",
+                    },
+                    {
+                      id: "filters",
+                      labelDefault: "Filtros",
+                      labelKey: "filters",
+                      iconKey: "filter",
+                      toolPanel: "agFiltersToolPanel",
+                    },
+                  ],
+                  defaultToolPanel: "",
+                }}
+                enableRangeSelection={true}
+                rowGroupPanelShow="always"
+                groupDisplayType="groupRows"
                 pagination={true}
                 paginationPageSize={20}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
                 domLayout="normal"
               />
             </div>
@@ -643,4 +674,6 @@ export default function FreightTablesPage() {
     </PageTransition>
   );
 }
+
+
 

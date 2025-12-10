@@ -59,6 +59,19 @@ export interface ParsedNFe {
     name: string;
   };
   
+  // Dados da Operação (para classificação fiscal)
+  operation: {
+    naturezaOperacao: string; // "VENDA", "DEVOLUÇÃO", etc
+    cfop: string; // CFOP principal da NFe
+    tipoNFe: string; // 0=Entrada, 1=Saída
+  };
+  
+  // Transportador (para identificar se somos nós)
+  transporter?: {
+    cnpj?: string;
+    name?: string;
+  };
+  
   // Totais
   totals: {
     products: number; // Total dos Produtos
@@ -80,9 +93,22 @@ export interface ParsedNFe {
     totalPrice: number;
   }>;
   
+  // Pagamento (Novo!)
+  payment?: {
+    type: string; // Tipo de pagamento (01=Dinheiro, 15=Boleto, etc)
+    indicator: string; // 0=À vista, 1=A prazo
+    installments: Array<{
+      number: string; // '001', '002', etc
+      dueDate: Date;
+      amount: number;
+    }>;
+  };
+  
   // Metadados
   xmlHash: string; // SHA-256 do XML
   xmlContent: string; // XML original
+  // Dados XML brutos (para classificação)
+  nfeData: any; // Objeto XML parseado
 }
 
 /**
@@ -183,6 +209,26 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       };
     });
     
+    // Dados da Operação (para classificação fiscal)
+    const operation = {
+      naturezaOperacao: ide.natOp || "",
+      cfop: items[0]?.cfop || "", // CFOP do primeiro item (geralmente todos iguais)
+      tipoNFe: ide.tpNF ? String(ide.tpNF) : "0", // 0=Entrada, 1=Saída
+    };
+    
+    // Transportador (para identificar se somos nós)
+    const transp = infNFe.transp;
+    let transporter = undefined;
+    if (transp?.transporta) {
+      transporter = {
+        cnpj: String(transp.transporta.CNPJ || transp.transporta.CPF || ""),
+        name: transp.transporta.xNome || "",
+      };
+    }
+    
+    // Extrai informações de pagamento (novo!)
+    const payment = extractPaymentInfo(infNFe);
+    
     // Calcula hash do XML
     const xmlHash = crypto
       .createHash("sha256")
@@ -197,10 +243,14 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       issueDate,
       issuer,
       recipient,
+      operation,
+      transporter,
       totals,
       items,
+      payment,
       xmlHash,
       xmlContent: xmlString,
+      nfeData: infNFe, // Dados brutos para classificação
     };
   } catch (error: any) {
     console.error("❌ Erro ao fazer parse do XML:", error);
@@ -238,6 +288,73 @@ export function isValidNFeXML(xmlString: string): boolean {
     return !!nfe?.infNFe;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Extrai informações de pagamento da NFe
+ */
+function extractPaymentInfo(infNFe: any): ParsedNFe['payment'] | undefined {
+  try {
+    // Tag <pag> - Formas de Pagamento
+    const pag = infNFe.pag;
+    if (!pag) {
+      return undefined;
+    }
+    
+    // <detPag> pode ser array ou objeto único
+    let detPagArray = pag.detPag;
+    if (!Array.isArray(detPagArray)) {
+      detPagArray = [detPagArray];
+    }
+    
+    const firstPag = detPagArray[0];
+    if (!firstPag) {
+      return undefined;
+    }
+    
+    const paymentType = firstPag.tPag?.toString() || "99";
+    const paymentIndicator = firstPag.indPag?.toString() || "0";
+    
+    // Tag <cobr><dup> - Duplicatas/Parcelas
+    const cobr = infNFe.cobr;
+    const installments: Array<{ number: string; dueDate: Date; amount: number }> = [];
+    
+    if (cobr && cobr.dup) {
+      let dupArray = cobr.dup;
+      if (!Array.isArray(dupArray)) {
+        dupArray = [dupArray];
+      }
+      
+      for (const dup of dupArray) {
+        if (dup.nDup && dup.dVenc && dup.vDup) {
+          installments.push({
+            number: dup.nDup.toString(),
+            dueDate: new Date(dup.dVenc),
+            amount: parseFloat(dup.vDup),
+          });
+        }
+      }
+    }
+    
+    // Se não há duplicatas mas há pagamento, cria 1 parcela (à vista)
+    if (installments.length === 0 && firstPag.vPag) {
+      const issueDate = new Date(infNFe.ide.dhEmi || infNFe.ide.dEmi);
+      installments.push({
+        number: "001",
+        dueDate: issueDate, // Vence no mesmo dia (à vista)
+        amount: parseFloat(firstPag.vPag),
+      });
+    }
+    
+    return {
+      type: paymentType,
+      indicator: paymentIndicator,
+      installments,
+    };
+  } catch (error: any) {
+    console.error("⚠️  Erro ao extrair informações de pagamento:", error.message);
+    return undefined;
   }
 }
 

@@ -15,9 +15,12 @@ import {
   CurrencyCellRenderer,
   ActionsCellRenderer,
 } from "@/lib/ag-grid/cell-renderers";
-import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
-import { GradientText, ShimmerButton } from "@/components/ui/magic-components";
+import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
+import { GradientText, NumberCounter } from "@/components/ui/magic-components";
+import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
+import { Package, CheckCircle, Tag, DollarSign } from "lucide-react";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -181,22 +184,119 @@ export default function ProductsPage() {
     });
   }, []);
 
+  const stats = useMemo(() => {
+    const active = rowData.filter(p => p.status === 'ACTIVE').length;
+    const avgPrice = rowData.length > 0 
+      ? rowData.reduce((sum, p) => sum + (parseFloat(p.priceSale) || 0), 0) / rowData.length 
+      : 0;
+    return {
+      total: rowData.length,
+      active,
+      avgPrice,
+    };
+  }, [rowData]);
+
   return (
     <PageTransition>
       <div className="relative flex flex-col gap-6 p-6">
         {/* Background Pattern */}
         <GridPattern className="opacity-30" />
 
+        {/* KPI Cards */}
+        <StaggerContainer>
+          <div className="grid gap-6 md:grid-cols-4">
+            {/* Total Produtos */}
+            <FadeIn delay={0.1}>
+              <GlassmorphismCard className="border-blue-500/30 hover:border-blue-400/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
+                <div className="p-6 bg-gradient-to-br from-blue-900/10 to-blue-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl shadow-inner">
+                      <Package className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <span className="text-xs text-blue-300 font-semibold px-3 py-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full border border-blue-400/30">
+                      Total
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total de Produtos</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.total} />
+                  </div>
+                </div>
+              </GlassmorphismCard>
+            </FadeIn>
+
+            {/* Ativos */}
+            <FadeIn delay={0.15}>
+              <GlassmorphismCard className="border-green-500/30 hover:border-green-400/50 transition-all hover:shadow-lg hover:shadow-green-500/20">
+                <div className="p-6 bg-gradient-to-br from-green-900/10 to-green-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl shadow-inner">
+                      <CheckCircle className="h-6 w-6 text-green-400" />
+                    </div>
+                    <span className="text-xs text-green-300 font-semibold px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-full border border-green-400/30">
+                      ✅ Ativos
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Produtos Ativos</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.active} />
+                  </div>
+                </div>
+              </GlassmorphismCard>
+            </FadeIn>
+
+            {/* Inativos */}
+            <FadeIn delay={0.2}>
+              <GlassmorphismCard className="border-slate-500/30 hover:border-slate-400/50 transition-all hover:shadow-lg hover:shadow-slate-500/20">
+                <div className="p-6 bg-gradient-to-br from-slate-900/10 to-slate-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-slate-500/20 to-gray-500/20 rounded-xl shadow-inner">
+                      <Tag className="h-6 w-6 text-slate-400" />
+                    </div>
+                    <span className="text-xs text-slate-300 font-semibold px-3 py-1 bg-gradient-to-r from-slate-500/20 to-gray-500/20 rounded-full border border-slate-400/30">
+                      Inativos
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Produtos Inativos</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-slate-400 to-gray-400 bg-clip-text text-transparent">
+                    <NumberCounter value={stats.total - stats.active} />
+                  </div>
+                </div>
+              </GlassmorphismCard>
+            </FadeIn>
+
+            {/* Preço Médio */}
+            <FadeIn delay={0.25}>
+              <GlassmorphismCard className="border-purple-500/30 hover:border-purple-400/50 transition-all hover:shadow-lg hover:shadow-purple-500/20">
+                <div className="p-6 bg-gradient-to-br from-purple-900/10 to-purple-800/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl shadow-inner">
+                      <DollarSign className="h-6 w-6 text-purple-400" />
+                    </div>
+                    <span className="text-xs text-purple-300 font-semibold px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-400/30">
+                      Média
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Preço Médio</h3>
+                  <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    R$ <NumberCounter value={stats.avgPrice} decimals={2} />
+                  </div>
+                </div>
+              </GlassmorphismCard>
+            </FadeIn>
+          </div>
+        </StaggerContainer>
+
         {/* 📋 Grid de Produtos */}
-        <FadeIn delay={0.2}>
+        <FadeIn delay={0.3}>
           <Card className="border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold">
-                    <GradientText>Produtos</GradientText>
+                  <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-slate-400 bg-clip-text text-transparent animate-gradient">
+                    📦 Produtos
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-slate-400 mt-1">
                     Catálogo completo de produtos e mercadorias
                   </p>
                 </div>
@@ -209,20 +309,39 @@ export default function ProductsPage() {
                     <Download className="mr-2 h-4 w-4" />
                     Exportar Excel
                   </Button>
-                  <ShimmerButton onClick={() => router.push("/cadastros/produtos/create")}>
+                  <RippleButton onClick={() => router.push("/cadastros/produtos/create")}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Novo Produto
-                  </ShimmerButton>
+                  </RippleButton>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div style={{ height: 600, width: "100%" }}>
+              <div style={{ height: 'calc(100vh - 650px)', width: "100%", minHeight: '400px' }}>
                 <AgGridReact
                   ref={gridRef}
                   rowData={rowData}
                   columnDefs={columnDefs}
                   theme={auraTheme}
+                  defaultColDef={{
+                    sortable: true,
+                    resizable: true,
+                    filter: true,
+                    floatingFilter: true,
+                    enableRowGroup: true,
+                    enablePivot: true,
+                    enableValue: true,
+                  }}
+                  sideBar={{
+                    toolPanels: [
+                      { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                      { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                    ],
+                    defaultToolPanel: "",
+                  }}
+                  enableRangeSelection={true}
+                  rowGroupPanelShow="always"
+                  groupDisplayType="groupRows"
                   autoSizeStrategy={{
                     type: "fitGridWidth",
                     defaultMinWidth: 100,

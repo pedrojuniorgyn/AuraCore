@@ -7,10 +7,18 @@ const connectionConfig = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_HOST || "localhost",
   database: process.env.DB_NAME,
+  pool: {
+    max: 50, // Máximo de 50 conexões simultâneas
+    min: 5,  // Mínimo de 5 conexões mantidas
+    idleTimeoutMillis: 30000, // Fecha conexões ociosas após 30s
+  },
   options: {
     encrypt: false,
     trustServerCertificate: true,
+    enableArithAbort: true, // Recomendado para SQL Server
   },
+  connectionTimeout: 30000, // 30 segundos para conectar
+  requestTimeout: 60000,    // 60 segundos para executar queries
 };
 
 // Singleton pattern para evitar múltiplas conexões em hot-reload

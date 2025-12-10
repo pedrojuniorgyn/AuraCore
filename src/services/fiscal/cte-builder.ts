@@ -5,10 +5,48 @@
  */
 
 import { db } from "@/lib/db";
-import { cteHeader, pickupOrders, businessPartners, branches } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { 
+  cteHeader, 
+  pickupOrders, 
+  businessPartners, 
+  branches,
+  cargoDocuments,
+  cteCargoDocuments,
+  fiscalSettings 
+} from "@/lib/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import { calculateTax, calculateIcmsValue } from "./tax-calculator";
 import { create } from "xmlbuilder2";
+
+/**
+ * ⚙️ Busca ambiente do CTe (banco de dados ou .env como fallback)
+ */
+async function getCteEnvironment(organizationId: number, branchId: number): Promise<string> {
+  try {
+    const [settings] = await db
+      .select()
+      .from(fiscalSettings)
+      .where(
+        and(
+          eq(fiscalSettings.organizationId, organizationId),
+          eq(fiscalSettings.branchId, branchId)
+        )
+      );
+    
+    if (settings) {
+      const env = settings.cteEnvironment === "production" ? "1" : "2";
+      console.log(`✅ CTe Ambiente (DB): ${settings.cteEnvironment} (tpAmb=${env})`);
+      return env;
+    }
+  } catch (error) {
+    console.log("⚠️  Erro ao buscar configurações, usando .env");
+  }
+  
+  // Fallback para .env
+  const env = process.env.CTE_ENVIRONMENT === "production" ? "1" : "2";
+  console.log(`✅ CTe Ambiente (.env): ${process.env.CTE_ENVIRONMENT} (tpAmb=${env})`);
+  return env;
+}
 
 export interface CteBuilderParams {
   pickupOrderId: number;
@@ -88,7 +126,7 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
           .ele("dhEmi").txt(new Date().toISOString()).up()
           .ele("tpImp").txt("1").up() // 1=Retrato
           .ele("tpEmis").txt("1").up() // 1=Normal
-          .ele("tpAmb").txt(process.env.SEFAZ_ENVIRONMENT === "production" ? "1" : "2").up()
+          .ele("tpAmb").txt(await getCteEnvironment(organizationId, order.branchId)).up() // 1=Produção, 2=Homologação
           .ele("tpCTe").txt("0").up() // 0=Normal
           .ele("procEmi").txt("0").up() // 0=Emissão CTe com aplicativo do contribuinte
           .ele("verProc").txt("AuraCore 1.0").up()
@@ -276,4 +314,71 @@ async function getNextCteNumber(branchId: number): Promise<string> {
   const lastNumber = lastCte.length > 0 ? lastCte[lastCte.length - 1].cteNumber : 0;
   return (lastNumber + 1).toString();
 }
+
+/**
+ * ✅ OPÇÃO A - BLOCO 3: Vincula NFes do repositório de cargas ao CTe
+ * 
+ * Busca cargas vinculadas a uma trip e cria os registros de rastreabilidade
+ */
+export async function linkCargosToCte(
+  cteId: number,
+  tripId: number
+): Promise<number> {
+  try {
+    // Buscar cargas vinculadas à viagem
+    const cargos = await db
+      .select()
+      .from(cargoDocuments)
+      .where(
+        and(
+          eq(cargoDocuments.tripId, tripId),
+          isNull(cargoDocuments.deletedAt)
+        )
+      );
+    
+    if (cargos.length === 0) {
+      console.log(`⚠️  Nenhuma carga vinculada à viagem ${tripId}`);
+      return 0;
+    }
+    
+    console.log(`📦 Vinculando ${cargos.length} cargas ao CTe ${cteId}...`);
+    
+    // Inserir cada cargo como documento do CTe
+    for (const cargo of cargos) {
+      await db.insert(cteCargoDocuments).values({
+        cteHeaderId: cteId,
+        documentType: "NFE",
+        documentKey: cargo.accessKey,
+        documentNumber: cargo.nfeNumber || "",
+        documentSerie: cargo.nfeSeries || "",
+        documentValue: cargo.cargoValue,
+        
+        // ✅ OPÇÃO A - BLOCO 3: Rastreabilidade
+        sourceInvoiceId: cargo.nfeInvoiceId,
+        sourceCargoId: cargo.id,
+        
+        createdAt: new Date(),
+      });
+      
+      // Atualizar cargo com CTe ID
+      await db
+        .update(cargoDocuments)
+        .set({
+          cteId,
+          status: "IN_TRANSIT",
+          updatedAt: new Date(),
+        })
+        .where(eq(cargoDocuments.id, cargo.id));
+      
+      console.log(`  ↳ NFe ${cargo.accessKey} vinculada ao CTe`);
+    }
+    
+    return cargos.length;
+    
+  } catch (error: any) {
+    console.error(`❌ Erro ao vincular cargas ao CTe:`, error.message);
+    throw error;
+  }
+}
+
 

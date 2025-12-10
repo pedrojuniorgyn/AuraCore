@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { AllEnterpriseModule } from "ag-grid-enterprise";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Registrar módulos Enterprise
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +26,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
-import { GradientText } from "@/components/ui/magic-components";
+import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
+import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
-import { Plus, Edit, Trash2, BookOpen } from "lucide-react";
+import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
+import { RippleButton } from "@/components/ui/ripple-button";
+import { Plus, Edit, Trash2, BookOpen, TrendingUp, TrendingDown, Landmark, DollarSign } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
 import { toast } from "sonner";
@@ -61,6 +66,51 @@ export default function ChartOfAccountsPage() {
     requiresCostCenter: false,
   });
 
+  // ✅ CELL RENDERERS - MESMO PADRÃO DE CATEGORIAS
+  const ActionCellRenderer = (props: any) => {
+    return (
+      <div className="flex gap-2 h-full items-center justify-center">
+        <button
+          onClick={() => handleEdit(props.data)}
+          className="text-blue-400 hover:text-blue-300 transition-colors"
+          title="Editar"
+        >
+          <Edit className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => handleDelete(props.data.id)}
+          className="text-red-400 hover:text-red-300 transition-colors"
+          title="Excluir"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  };
+
+  const TypeCellRenderer = (props: any) => {
+    const colors: Record<string, string> = {
+      REVENUE: "bg-green-500/20 text-green-400 border-green-500/30",
+      EXPENSE: "bg-red-500/20 text-red-400 border-red-500/30",
+      ASSET: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+      LIABILITY: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+      EQUITY: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${colors[props.value] || "bg-gray-500/20 text-gray-400 border-gray-500/30"}`}>
+        {props.value}
+      </span>
+    );
+  };
+
+  const RequiresCCCellRenderer = (props: any) => {
+    return props.value ? (
+      <span className="text-red-400 font-semibold">Sim</span>
+    ) : (
+      <span className="text-gray-500">-</span>
+    );
+  };
+
   const columnDefs: ColDef[] = [
     {
       field: "code",
@@ -81,66 +131,49 @@ export default function ChartOfAccountsPage() {
     {
       field: "type",
       headerName: "Tipo",
-      width: 120,
-      cellRenderer: (params: any) => {
-        const colors: Record<string, string> = {
-          REVENUE: "bg-green-100 text-green-700",
-          EXPENSE: "bg-red-100 text-red-700",
-          ASSET: "bg-blue-100 text-blue-700",
-          LIABILITY: "bg-orange-100 text-orange-700",
-          EQUITY: "bg-purple-100 text-purple-700",
-        };
-        return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${colors[params.value] || ""}`}>
-            {params.value}
-          </span>
-        );
+      width: 140,
+      filter: "agSetColumnFilter",
+      filterParams: {
+        buttons: ["apply", "reset"],
+        closeOnApply: true,
+        excelMode: "windows", // ✅ Ativa search nativo!
       },
+      cellRenderer: TypeCellRenderer,
     },
     {
       field: "category",
       headerName: "Categoria",
       width: 180,
-      cellRenderer: (params: any) => params.value || "-",
+      filter: "agTextColumnFilter",
+      valueFormatter: (params) => params.value || "-",
     },
     {
       field: "requiresCostCenter",
       headerName: "Exige CC",
       width: 100,
-      cellRenderer: (params: any) =>
-        params.value ? (
-          <span className="text-red-600 font-semibold">Sim</span>
-        ) : (
-          "-"
-        ),
+      filter: "agSetColumnFilter",
+      cellRenderer: RequiresCCCellRenderer,
     },
     {
       field: "status",
       headerName: "Status",
       width: 120,
+      filter: "agSetColumnFilter",
+      filterParams: {
+        buttons: ["apply", "reset"],
+        closeOnApply: true,
+        excelMode: "windows", // ✅ Ativa search nativo!
+      },
       cellRenderer: StatusCellRenderer,
     },
     {
       headerName: "Ações",
-      width: 120,
-      cellRenderer: (params: any) => (
-        <div className="flex gap-2 items-center h-full">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(params.data)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(params.data.id)}
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-        </div>
-      ),
+      width: 90,
+      pinned: "right",
+      suppressMenu: true,
+      sortable: false,
+      filter: false,
+      cellRenderer: ActionCellRenderer,
     },
   ];
 
@@ -253,21 +286,109 @@ export default function ChartOfAccountsPage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
-              Plano de Contas
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+              📊 Plano de Contas
+            </h1>
+            <p className="text-sm text-slate-400">
               Estrutura contábil hierárquica
             </p>
           </div>
-          <ShimmerButton onClick={handleCreate}>
+          <RippleButton 
+            onClick={handleCreate}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Nova Conta
-          </ShimmerButton>
+          </RippleButton>
         </div>
       </FadeIn>
 
-      <FadeIn delay={0.2}>
+      {/* KPI Cards */}
+      <StaggerContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total Contas */}
+          <FadeIn delay={0.15}>
+            <GlassmorphismCard className="border-blue-500/30 hover:border-blue-400/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
+              <div className="p-6 bg-gradient-to-br from-blue-900/10 to-blue-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl shadow-inner">
+                    <BookOpen className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <span className="text-xs text-blue-300 font-semibold px-3 py-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full border border-blue-400/30">
+                    Total
+                  </span>
+                </div>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Total de Contas</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  <NumberCounter value={accounts.length} />
+                </div>
+              </div>
+            </GlassmorphismCard>
+          </FadeIn>
+
+          {/* Receitas */}
+          <FadeIn delay={0.2}>
+            <GlassmorphismCard className="border-green-500/30 hover:border-green-400/50 transition-all hover:shadow-lg hover:shadow-green-500/20">
+              <div className="p-6 bg-gradient-to-br from-green-900/10 to-green-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl shadow-inner">
+                    <TrendingUp className="h-6 w-6 text-green-400" />
+                  </div>
+                  <span className="text-xs text-green-300 font-semibold px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-full border border-green-400/30">
+                    Receitas
+                  </span>
+                </div>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Contas de Receita</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                  <NumberCounter value={accounts.filter(a => a.type === 'REVENUE').length} />
+                </div>
+              </div>
+            </GlassmorphismCard>
+          </FadeIn>
+
+          {/* Despesas */}
+          <FadeIn delay={0.25}>
+            <GlassmorphismCard className="border-red-500/30 hover:border-red-400/50 transition-all hover:shadow-lg hover:shadow-red-500/20">
+              <div className="p-6 bg-gradient-to-br from-red-900/10 to-red-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-red-500/20 to-rose-500/20 rounded-xl shadow-inner">
+                    <TrendingDown className="h-6 w-6 text-red-400" />
+                  </div>
+                  <span className="text-xs text-red-300 font-semibold px-3 py-1 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-full border border-red-400/30">
+                    Despesas
+                  </span>
+                </div>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Contas de Despesa</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
+                  <NumberCounter value={accounts.filter(a => a.type === 'EXPENSE').length} />
+                </div>
+              </div>
+            </GlassmorphismCard>
+          </FadeIn>
+
+          {/* Ativos */}
+          <FadeIn delay={0.3}>
+            <GlassmorphismCard className="border-purple-500/30 hover:border-purple-400/50 transition-all hover:shadow-lg hover:shadow-purple-500/20">
+              <div className="p-6 bg-gradient-to-br from-purple-900/10 to-purple-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl shadow-inner">
+                    <Landmark className="h-6 w-6 text-purple-400" />
+                  </div>
+                  <span className="text-xs text-purple-300 font-semibold px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-400/30">
+                    Ativos
+                  </span>
+                </div>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Ativos/Passivos</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  <NumberCounter value={accounts.filter(a => ['ASSET', 'LIABILITY', 'EQUITY'].includes(a.type)).length} />
+                </div>
+              </div>
+            </GlassmorphismCard>
+          </FadeIn>
+        </div>
+      </StaggerContainer>
+
+      <FadeIn delay={0.35}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -276,7 +397,7 @@ export default function ChartOfAccountsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div style={{ height: 600, width: "100%" }}>
+            <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }}>
               <AgGridReact
                 ref={gridRef}
                 theme={auraTheme}
@@ -285,9 +406,25 @@ export default function ChartOfAccountsPage() {
                 defaultColDef={{
                   sortable: true,
                   resizable: true,
+                  filter: true,
+                  floatingFilter: true,
+                  enableRowGroup: true,
+                  enablePivot: true,
+                  enableValue: true,
                 }}
+                sideBar={{
+                  toolPanels: [
+                    { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                    { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                  ],
+                  defaultToolPanel: "",
+                }}
+                enableRangeSelection={true}
+                rowGroupPanelShow="always"
+                groupDisplayType="groupRows"
                 pagination={true}
                 paginationPageSize={20}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
                 domLayout="normal"
               />
             </div>
@@ -454,4 +591,6 @@ export default function ChartOfAccountsPage() {
     </PageTransition>
   );
 }
+
+
 

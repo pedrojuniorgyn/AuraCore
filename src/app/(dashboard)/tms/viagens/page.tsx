@@ -22,7 +22,7 @@ import {
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Truck, MapPin, CheckCircle, Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -184,17 +184,17 @@ export default function TripsPage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
-              Gestão de Viagens (TMS)
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent animate-gradient">
+              🚚 Gestão de Viagens (TMS)
+            </h1>
+            <p className="text-sm text-slate-400">
               Kanban Visual - Controle Total de Operações
             </p>
           </div>
-          <ShimmerButton onClick={() => setIsDialogOpen(true)}>
+          <RippleButton onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Viagem
-          </ShimmerButton>
+          </RippleButton>
         </div>
       </FadeIn>
 
@@ -399,4 +399,6 @@ export default function TripsPage() {
     </PageTransition>
   );
 }
+
+
 

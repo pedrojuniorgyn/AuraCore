@@ -9,6 +9,7 @@ import {
   Truck,
   BadgeDollarSign,
   Package,
+  Upload,
   Wrench,
   Users,
   Map,
@@ -24,9 +25,21 @@ import {
   FileSpreadsheet,
   AlertCircle,
   ChevronDown,
+  DollarSign,
+  BookOpen,
+  BarChart3,
+  Layers,
+  Leaf,
+  Scale,
+  Shield,
+  UserCheck,
+  Settings,
+  Fuel,
+  Droplets,
 } from "lucide-react";
 import { BranchSwitcher } from "./branch-switcher";
 import { UserMenu } from "./user-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState } from "react";
 import { SpotlightEffect } from "@/components/ui/spotlight-effect";
 import { GlowBorder } from "@/components/ui/glow-border";
@@ -69,9 +82,16 @@ const menuGroups: MenuGroup[] = [
     gradientFrom: "from-blue-500/20",
     gradientTo: "to-cyan-500/20",
     items: [
-      { title: "Importar NFe (Sefaz)", href: "/fiscal/entrada-notas", icon: Package },
+      { title: "Monitor de Documentos", href: "/fiscal/documentos", icon: FileText },
+      { title: "Upload de XMLs", href: "/fiscal/upload-xml", icon: Upload },
+      { title: "Categorias de NCM", href: "/fiscal/ncm-categorias", icon: FileSpreadsheet },
       { title: "CTe (Documentos)", href: "/fiscal/cte", icon: FileText, badge: 0 },
       { title: "Matriz Tributária", href: "/fiscal/matriz-tributaria", icon: FileSpreadsheet },
+      { title: "CIAP - Créditos ICMS Ativo", href: "/fiscal/ciap", icon: Calculator },
+      { title: "Créditos Fiscais PIS/COFINS", href: "/fiscal/creditos-tributarios", icon: DollarSign },
+      { title: "Central SPED", href: "/fiscal/sped", icon: FileSpreadsheet },
+      { title: "Centros de Custo", href: "/financeiro/centros-custo", icon: Target },
+      { title: "Plano de Contas", href: "/financeiro/plano-contas", icon: FileSpreadsheet },
     ],
   },
   {
@@ -84,11 +104,18 @@ const menuGroups: MenuGroup[] = [
       { title: "Dashboard DRE", href: "/financeiro/dre-dashboard", icon: TrendingUp },
       { title: "Contas a Pagar", href: "/financeiro/contas-pagar", icon: Receipt },
       { title: "Contas a Receber", href: "/financeiro/contas-receber", icon: Banknote },
+      { title: "Categorias Financeiras", href: "/financeiro/categorias", icon: Target },
       { title: "Remessas Bancárias", href: "/financeiro/remessas", icon: Banknote },
       { title: "Radar DDA", href: "/financeiro/radar-dda", icon: AlertCircle },
-      { title: "Centros de Custo", href: "/financeiro/centros-custo", icon: Target },
-      { title: "Plano de Contas", href: "/financeiro/plano-contas", icon: FileSpreadsheet },
       { title: "DRE", href: "/financeiro/dre", icon: TrendingUp },
+      { title: "Faturamento Agrupado", href: "/financeiro/faturamento", icon: Receipt },
+      { title: "Impostos Recuperáveis", href: "/financeiro/impostos-recuperaveis", icon: Calculator },
+      { title: "Conciliação Bancária", href: "/financeiro/conciliacao", icon: Banknote },
+      { title: "Fluxo de Caixa", href: "/financeiro/fluxo-caixa", icon: TrendingUp },
+      { title: "BTG Pactual Banking", href: "/financeiro/btg-dashboard", icon: Banknote },
+      { title: "BTG - Testes", href: "/financeiro/btg-testes", icon: Banknote },
+      { title: "📋 DDA - Débitos", href: "/financeiro/dda", icon: FileText },
+      { title: "Intercompany - Rateio", href: "/financeiro/intercompany", icon: Building2 },
     ],
   },
   {
@@ -99,6 +126,22 @@ const menuGroups: MenuGroup[] = [
     gradientTo: "to-rose-500/20",
     items: [
       { title: "Viagens (Kanban)", href: "/tms/viagens", icon: Map },
+      { title: "Repositório de Cargas", href: "/tms/repositorio-cargas", icon: Package },
+      { title: "Ocorrências", href: "/tms/ocorrencias", icon: AlertCircle },
+      { title: "Análise Margem por CTe", href: "/operacional/margem-cte", icon: BarChart3 },
+      { title: "Gestão de Sinistros", href: "/operacional/sinistros", icon: Shield },
+    ],
+  },
+  {
+    title: "Gerencial",
+    icon: BarChart3,
+    color: "text-violet-400",
+    gradientFrom: "from-violet-500/20",
+    gradientTo: "to-purple-500/20",
+    items: [
+      { title: "Dashboard DRE Gerencial", href: "/gerencial/dre", icon: TrendingUp },
+      { title: "Plano de Contas Gerencial (PCG)", href: "/gerencial/plano-contas", icon: BookOpen },
+      { title: "Centros de Custo 3D", href: "/gerencial/centros-custo-3d", icon: Layers },
     ],
   },
   {
@@ -110,7 +153,50 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Veículos", href: "/frota/veiculos", icon: Truck },
       { title: "Motoristas", href: "/frota/motoristas", icon: Users },
-      { title: "Manutenção", href: "/manutencao", icon: Wrench },
+      { title: "Documentação", href: "/frota/documentacao", icon: FileText },
+      { title: "Pneus", href: "/frota/pneus", icon: Wrench },
+      { title: "Planos de Manutenção", href: "/frota/manutencao/planos", icon: Wrench },
+      { title: "Ordens de Serviço", href: "/frota/manutencao/ordens", icon: Wrench },
+    ],
+  },
+  {
+    title: "Backoffice",
+    icon: Building2,
+    color: "text-orange-400",
+    gradientFrom: "from-orange-500/20",
+    gradientTo: "to-red-500/20",
+    items: [
+      { title: "Dashboard Backoffice", href: "/configuracoes/backoffice", icon: Building2 },
+    ],
+  },
+  {
+    title: "RH Especializado",
+    icon: UserCheck,
+    color: "text-cyan-400",
+    gradientFrom: "from-cyan-500/20",
+    gradientTo: "to-blue-500/20",
+    items: [
+      { title: "Jornadas de Motoristas", href: "/rh/motoristas/jornadas", icon: UserCheck },
+    ],
+  },
+  {
+    title: "WMS & Armazenagem",
+    icon: Package,
+    color: "text-teal-400",
+    gradientFrom: "from-teal-500/20",
+    gradientTo: "to-emerald-500/20",
+    items: [
+      { title: "Billing Engine - Faturamento", href: "/wms/faturamento", icon: DollarSign },
+    ],
+  },
+  {
+    title: "Sustentabilidade (ESG)",
+    icon: Leaf,
+    color: "text-green-400",
+    gradientFrom: "from-green-500/20",
+    gradientTo: "to-emerald-500/20",
+    items: [
+      { title: "Dashboard de Carbono", href: "/sustentabilidade/carbono", icon: Leaf },
     ],
   },
   {
@@ -132,8 +218,11 @@ const menuGroups: MenuGroup[] = [
     gradientFrom: "from-indigo-500/20",
     gradientTo: "to-purple-500/20",
     items: [
+      { title: "Certificações Fiscais", href: "/configuracoes/fiscal", icon: FileText },
       { title: "Certificado Digital", href: "/configuracoes/certificado", icon: FileText },
+      { title: "Usuários e Permissões", href: "/configuracoes/usuarios", icon: Users },
       { title: "Preferências", href: "/configuracoes", icon: Wrench },
+      { title: "Central Enterprise", href: "/configuracoes/enterprise", icon: Settings },
     ],
   },
   {
@@ -143,7 +232,9 @@ const menuGroups: MenuGroup[] = [
     gradientFrom: "from-slate-500/20",
     gradientTo: "to-gray-500/20",
     items: [
-      { title: "WMS (Armazém)", href: "/wms", icon: Boxes },
+      { title: "WMS - Endereços", href: "/wms/enderecos", icon: Boxes },
+      { title: "WMS - Movimentação", href: "/wms/movimentacao", icon: Package },
+      { title: "WMS - Inventário", href: "/wms/inventario", icon: Package },
       { title: "Almoxarifado", href: "/almoxarifado", icon: Package },
       { title: "Recursos Humanos", href: "/rh", icon: Users },
     ],
@@ -157,6 +248,11 @@ export function AuraGlassSidebar() {
     "Fiscal",
     "Financeiro",
     "TMS (Operação)",
+    "Gerencial",
+    "Backoffice",
+    "RH Especializado",
+    "WMS & Armazenagem",
+    "Sustentabilidade (ESG)",
   ]);
 
   const toggleGroup = (groupTitle: string) => {
@@ -407,7 +503,12 @@ export function AuraGlassSidebar() {
         >
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-purple-500/5 rounded-lg blur-sm" />
-            <UserMenu />
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <div className="flex-1">
+                <UserMenu />
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

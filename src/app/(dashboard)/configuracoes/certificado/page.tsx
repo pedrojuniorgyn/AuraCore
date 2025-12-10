@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { Upload, Shield, CheckCircle, XCircle, AlertCircle, FileKey } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
@@ -206,14 +206,14 @@ export default function CertificadoDigitalPage() {
           <FadeIn>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-bold mb-2">
-                  <GradientText>Certificado Digital A1</GradientText>
+                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-slate-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                  🔐 Certificado Digital A1
                 </h1>
-                <p className="text-zinc-400">
+                <p className="text-slate-400">
                   Configure o certificado digital para integração com Sefaz
                 </p>
                 {currentBranch && (
-                  <p className="text-sm text-purple-400 mt-2">
+                  <p className="text-sm text-cyan-400 mt-2">
                     📍 Filial: <span className="font-semibold">{currentBranch.name}</span>
                   </p>
                 )}
@@ -270,7 +270,7 @@ export default function CertificadoDigitalPage() {
                   </div>
 
                   {/* Upload Button */}
-                  <ShimmerButton
+                  <RippleButton
                     onClick={handleUpload}
                     disabled={!certificateFile || !password || isUploading}
                     background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
@@ -286,7 +286,7 @@ export default function CertificadoDigitalPage() {
                         Enviar Certificado
                       </>
                     )}
-                  </ShimmerButton>
+                  </RippleButton>
 
                   {/* Info Box */}
                   <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
@@ -406,7 +406,7 @@ export default function CertificadoDigitalPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <ShimmerButton
+                    <RippleButton
                       onClick={handleTestConnection}
                       disabled={isTesting || !certificateInfo.valid}
                       background="linear-gradient(135deg, #10b981 0%, #059669 100%)"
@@ -423,7 +423,7 @@ export default function CertificadoDigitalPage() {
                           Testar Conexão
                         </>
                       )}
-                    </ShimmerButton>
+                    </RippleButton>
 
                     {!certificateInfo.valid && (
                       <p className="text-sm text-amber-400 flex items-center gap-2">

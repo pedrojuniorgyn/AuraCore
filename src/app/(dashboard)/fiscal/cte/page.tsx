@@ -2,13 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { AllEnterpriseModule } from "ag-grid-enterprise";
+
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
-import { GradientText } from "@/components/ui/magic-components";
+import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
+import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
+import { RippleButton } from "@/components/ui/ripple-button";
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Download } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { toast } from "sonner";
@@ -26,6 +30,9 @@ interface Cte {
   status: string;
   protocolNumber?: string;
   rejectionMessage?: string;
+  // ✅ OPÇÃO A - BLOCO 4
+  cteOrigin?: string; // INTERNAL ou EXTERNAL
+  externalEmitter?: string;
 }
 
 export default function CtePage() {
@@ -37,6 +44,7 @@ export default function CtePage() {
       field: "cteNumber",
       headerName: "Número",
       width: 100,
+      filter: "agNumberColumnFilter",
       cellRenderer: (params: any) => (
         <span className="font-semibold">{params.value}</span>
       ),
@@ -50,6 +58,7 @@ export default function CtePage() {
       field: "cteKey",
       headerName: "Chave de Acesso",
       width: 200,
+      filter: "agTextColumnFilter",
       cellRenderer: (params: any) => (
         <span className="font-mono text-xs">{params.value || "-"}</span>
       ),
@@ -92,9 +101,32 @@ export default function CtePage() {
       ),
     },
     {
+      field: "cteOrigin",
+      headerName: "Origem",
+      width: 140,
+      cellRenderer: (params: any) => {
+        const origin = params.value || "INTERNAL";
+        
+        if (origin === "EXTERNAL") {
+          return (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300">
+              🌐 Externo (Multicte)
+            </span>
+          );
+        }
+        
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 border border-blue-300">
+            🏢 Interno (Aura)
+          </span>
+        );
+      },
+    },
+    {
       field: "status",
       headerName: "Status SEFAZ",
       width: 150,
+      filter: "agSetColumnFilter",
       cellRenderer: (params: any) => {
         const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
           DRAFT: { label: "Rascunho", color: "bg-gray-100 text-gray-700", icon: Clock },
@@ -202,76 +234,100 @@ export default function CtePage() {
       <FadeIn delay={0.1}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <GradientText className="text-3xl font-bold mb-2">
-              Conhecimentos de Transporte Eletrônico (CTe)
-            </GradientText>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-slate-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+              📄 Conhecimentos de Transporte Eletrônico (CTe)
+            </h1>
+            <p className="text-sm text-slate-400">
               Gestão de Documentos Fiscais de Saída
             </p>
           </div>
         </div>
       </FadeIn>
 
-      {/* KPIs */}
-      <FadeIn delay={0.15}>
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <FileText className="h-6 w-6 text-blue-600" />
+      {/* KPI Cards Premium */}
+      <StaggerContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total CTes */}
+          <FadeIn delay={0.15}>
+            <GlassmorphismCard className="border-blue-500/30 hover:border-blue-400/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
+              <div className="p-6 bg-gradient-to-br from-blue-900/10 to-blue-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl shadow-inner">
+                    <FileText className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <span className="text-xs text-blue-300 font-semibold px-3 py-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full border border-blue-400/30">
+                    Total
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total CTes</p>
-                  <p className="text-2xl font-bold">{statusCounts.total}</p>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Total de CTes</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  <NumberCounter value={statusCounts.total} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </GlassmorphismCard>
+          </FadeIn>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-gray-100 rounded-full">
-                  <Clock className="h-6 w-6 text-gray-600" />
+          {/* Autorizados */}
+          <FadeIn delay={0.2}>
+            <GlassmorphismCard className="border-green-500/30 hover:border-green-400/50 transition-all hover:shadow-lg hover:shadow-green-500/20">
+              <div className="p-6 bg-gradient-to-br from-green-900/10 to-green-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl shadow-inner">
+                    <CheckCircle className="h-6 w-6 text-green-400" />
+                  </div>
+                  <span className="text-xs text-green-300 font-semibold px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-full border border-green-400/30">
+                    ✅ OK
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Rascunhos</p>
-                  <p className="text-2xl font-bold">{statusCounts.draft}</p>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">CTes Autorizados</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                  <NumberCounter value={statusCounts.authorized} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </GlassmorphismCard>
+          </FadeIn>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
+          {/* Rascunhos */}
+          <FadeIn delay={0.25}>
+            <GlassmorphismCard className="border-amber-500/30 hover:border-amber-400/50 transition-all hover:shadow-lg hover:shadow-amber-500/20">
+              <div className="p-6 bg-gradient-to-br from-amber-900/10 to-amber-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-amber-500/20 to-yellow-500/20 rounded-xl shadow-inner">
+                    <Clock className="h-6 w-6 text-amber-400" />
+                  </div>
+                  <span className="text-xs text-amber-300 font-semibold px-3 py-1 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-full border border-amber-400/30">
+                    ⏰ Pendente
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Autorizados</p>
-                  <p className="text-2xl font-bold">{statusCounts.authorized}</p>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Rascunhos</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">
+                  <NumberCounter value={statusCounts.draft} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </GlassmorphismCard>
+          </FadeIn>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-100 rounded-full">
-                  <XCircle className="h-6 w-6 text-red-600" />
+          {/* Rejeitados */}
+          <FadeIn delay={0.3}>
+            <GlassmorphismCard className="border-red-500/30 hover:border-red-400/50 transition-all hover:shadow-lg hover:shadow-red-500/20">
+              <div className="p-6 bg-gradient-to-br from-red-900/10 to-red-800/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-gradient-to-br from-red-500/20 to-rose-500/20 rounded-xl shadow-inner animate-pulse">
+                    <XCircle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <span className="text-xs text-red-300 font-semibold px-3 py-1 bg-gradient-to-r from-red-500/20 to-rose-500/20 rounded-full border border-red-400/30 animate-pulse">
+                    ❌ Erro
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Rejeitados</p>
-                  <p className="text-2xl font-bold">{statusCounts.rejected}</p>
+                <h3 className="text-sm font-medium text-slate-400 mb-2">Rejeitados</h3>
+                <div className="text-2xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
+                  <NumberCounter value={statusCounts.rejected} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </GlassmorphismCard>
+          </FadeIn>
         </div>
-      </FadeIn>
+      </StaggerContainer>
 
       {/* Grid */}
       <FadeIn delay={0.2}>
@@ -283,7 +339,7 @@ export default function CtePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div style={{ height: 600, width: "100%" }}>
+            <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }}>
               <AgGridReact
                 ref={gridRef}
                 theme={auraTheme}
@@ -292,9 +348,25 @@ export default function CtePage() {
                 defaultColDef={{
                   sortable: true,
                   resizable: true,
+                  filter: true,
+                  floatingFilter: true,
+                  enableRowGroup: true,
+                  enablePivot: true,
+                  enableValue: true,
                 }}
+                sideBar={{
+                  toolPanels: [
+                    { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                    { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                  ],
+                  defaultToolPanel: "",
+                }}
+                enableRangeSelection={true}
+                rowGroupPanelShow="always"
+                groupDisplayType="groupRows"
                 pagination={true}
                 paginationPageSize={20}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
                 domLayout="normal"
               />
             </div>
@@ -304,4 +376,5 @@ export default function CtePage() {
     </PageTransition>
   );
 }
+
 

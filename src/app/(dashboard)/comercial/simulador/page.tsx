@@ -16,10 +16,10 @@ export default function FreightSimulatorPage() {
         <FadeIn delay={0.1}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                <GradientText>Simulador de Frete</GradientText>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent animate-gradient">
+                🧮 Simulador de Frete
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-slate-400 mt-1">
                 Calcule valores de frete em tempo real
               </p>
             </div>
@@ -34,4 +34,6 @@ export default function FreightSimulatorPage() {
     </PageTransition>
   );
 }
+
+
 

@@ -42,3 +42,9 @@ CREATE INDEX idx_freight_table_routes_table ON freight_table_routes(freight_tabl
 CREATE INDEX idx_freight_table_routes_origin ON freight_table_routes(origin_uf);
 CREATE INDEX idx_freight_table_routes_destination ON freight_table_routes(destination_uf);
 
+
+
+
+
+
+

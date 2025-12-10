@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
+import { logChartAccountChange } from "@/services/audit-logger";
 
 /**
  * GET /api/financial/chart-accounts/:id
@@ -96,8 +97,31 @@ export async function PUT(
       );
     }
 
-    // Verificar código duplicado
+    // ✅ VALIDAÇÃO: Bloqueio de edição de código após lançamentos
     if (code && code !== existing[0].code) {
+      // Verificar se tem lançamentos contábeis
+      const hasEntriesResult = await db.execute(sql`
+        SELECT COUNT(*) as count 
+        FROM journal_entry_lines 
+        WHERE chart_account_id = ${id}
+          AND deleted_at IS NULL
+      `);
+      const hasEntries = (hasEntriesResult[0]?.count || 0) > 0;
+
+      if (hasEntries) {
+        return NextResponse.json(
+          {
+            error: `❌ Código não pode ser alterado. Conta "${existing[0].code} - ${existing[0].name}" possui ${hasEntriesResult[0].count} lançamento(s) contábil(is).`,
+            code: "CODE_LOCKED",
+            count: hasEntriesResult[0].count,
+            suggestion: "Você pode editar nome, descrição ou status, mas não o código.",
+            reason: "Integridade de auditoria (NBC TG 26)"
+          },
+          { status: 400 }
+        );
+      }
+
+      // Verificar código duplicado
       const duplicate = await db
         .select()
         .from(chartOfAccounts)
@@ -165,6 +189,16 @@ export async function PUT(
       .where(eq(chartOfAccounts.id, id))
       .returning();
 
+    // ✅ Registrar auditoria
+    await logChartAccountChange({
+      entityType: "CHART_ACCOUNT",
+      entityId: id,
+      operation: "UPDATE",
+      oldData: existing[0],
+      newData: updated,
+      changedBy: updatedBy,
+    }).catch(console.error);
+
     return NextResponse.json({
       success: true,
       message: "Conta atualizada com sucesso!",
@@ -181,7 +215,7 @@ export async function PUT(
 
 /**
  * DELETE /api/financial/chart-accounts/:id
- * Soft delete
+ * Soft delete com validações de integridade
  */
 export async function DELETE(
   req: Request,
@@ -216,7 +250,31 @@ export async function DELETE(
       );
     }
 
-    // Verificar se tem filhos
+    const account = existing[0];
+
+    // ✅ VALIDAÇÃO 1: Verificar lançamentos contábeis
+    const journalEntriesResult = await db.execute(sql`
+      SELECT COUNT(*) as count 
+      FROM journal_entry_lines 
+      WHERE chart_account_id = ${id}
+        AND deleted_at IS NULL
+    `);
+    const journalEntriesCount = journalEntriesResult[0]?.count || 0;
+
+    if (journalEntriesCount > 0) {
+      return NextResponse.json(
+        {
+          error: `❌ Conta "${account.code} - ${account.name}" possui ${journalEntriesCount} lançamento(s) contábil(is).`,
+          code: "HAS_JOURNAL_ENTRIES",
+          count: journalEntriesCount,
+          suggestion: "Não é possível excluir. Alternativa: Desativar a conta (Status = INACTIVE).",
+          reason: "Integridade contábil e auditoria (NBC TG 26)"
+        },
+        { status: 400 }
+      );
+    }
+
+    // ✅ VALIDAÇÃO 2: Verificar se tem contas filhas
     const children = await db
       .select()
       .from(chartOfAccounts)
@@ -228,22 +286,57 @@ export async function DELETE(
       );
 
     if (children.length > 0) {
+      const childCodes = children.map(c => c.code).join(', ');
       return NextResponse.json(
         {
-          error: "Não é possível excluir. Esta conta possui contas filhas.",
+          error: `❌ Conta "${account.code} - ${account.name}" possui ${children.length} conta(s) filha(s): ${childCodes}`,
+          code: "HAS_CHILDREN",
+          count: children.length,
+          suggestion: "Exclua ou mova as contas filhas primeiro."
         },
         { status: 400 }
       );
     }
 
-    // Soft delete
+    // ✅ VALIDAÇÃO 3: Verificar uso em itens de documentos fiscais
+    const fiscalItemsResult = await db.execute(sql`
+      SELECT COUNT(*) as count 
+      FROM fiscal_document_items 
+      WHERE chart_account_id = ${id}
+        AND deleted_at IS NULL
+    `);
+    const fiscalItemsCount = fiscalItemsResult[0]?.count || 0;
+
+    if (fiscalItemsCount > 0) {
+      return NextResponse.json(
+        {
+          error: `❌ Conta "${account.code} - ${account.name}" está vinculada a ${fiscalItemsCount} item(ns) de documento(s) fiscal(is).`,
+          code: "HAS_FISCAL_ITEMS",
+          count: fiscalItemsCount,
+          suggestion: "Não é possível excluir. Alternativa: Desativar a conta."
+        },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Se passou em todas validações, permite soft delete
     await db
       .update(chartOfAccounts)
       .set({
         deletedAt: new Date(),
+        status: "INACTIVE",
         updatedBy,
       })
       .where(eq(chartOfAccounts.id, id));
+
+    // ✅ Registrar auditoria
+    await logChartAccountChange({
+      entityType: "CHART_ACCOUNT",
+      entityId: id,
+      operation: "DELETE",
+      oldData: account,
+      changedBy: updatedBy,
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,
@@ -257,4 +350,7 @@ export async function DELETE(
     );
   }
 }
+
+
+
 

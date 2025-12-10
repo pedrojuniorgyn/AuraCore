@@ -440,3 +440,9 @@ CREATE TABLE trip_documents (
 -- ATUALIZAR accounts_payable e accounts_receivable com cost_center_id e chart_account_id
 -- (Já foi feito na migration anterior de controladoria)
 
+
+
+
+
+
+

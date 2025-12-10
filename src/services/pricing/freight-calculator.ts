@@ -368,3 +368,9 @@ export async function simulateFreightScenarios(
   return results;
 }
 
+
+
+
+
+
+

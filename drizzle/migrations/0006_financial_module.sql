@@ -189,3 +189,9 @@ CREATE INDEX idx_accounts_receivable_status ON accounts_receivable(status);
 CREATE INDEX idx_accounts_receivable_due_date ON accounts_receivable(due_date);
 
 
+
+
+
+
+
+

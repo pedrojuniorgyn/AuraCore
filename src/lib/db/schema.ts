@@ -1,6 +1,7 @@
 import { defineRelations, sql } from "drizzle-orm";
 import {
   int,
+  bigint,
   nvarchar,
   datetime2,
   decimal,
@@ -164,8 +165,20 @@ export const rolePermissions = mssqlTable(
   ])
 );
 
-// Pivot: Users <-> Roles (Removemos pois agora user_roles está fora deste escopo inicial)
-// Será tratado no módulo de RBAC avançado
+// Pivot: Users <-> Roles
+export const userRoles = mssqlTable(
+  "user_roles",
+  {
+    userId: nvarchar("user_id", { length: 255 }).notNull(),
+    roleId: int("role_id").notNull(),
+    organizationId: int("organization_id").notNull(),
+    branchId: int("branch_id"),
+    createdAt: datetime2("created_at").default(new Date()),
+  },
+  (t) => ([
+    primaryKey({ columns: [t.userId, t.roleId] }),
+  ])
+);
 
 // --- MASTER DATA (Cadastros Gerais) ---
 
@@ -290,6 +303,12 @@ export const products = mssqlTable("products", {
   priceCost: decimal("price_cost", { precision: 18, scale: 2 }), // Preço de Custo
   priceSale: decimal("price_sale", { precision: 18, scale: 2 }), // Preço de Venda
   
+  // Conversão de Unidade (ONDA 5.3)
+  unitConversionEnabled: nvarchar("unit_conversion_enabled", { length: 1 }).default("N"),
+  unitConversionFactor: decimal("unit_conversion_factor", { precision: 10, scale: 4 }),
+  primaryUnit: nvarchar("primary_unit", { length: 10 }),
+  secondaryUnit: nvarchar("secondary_unit", { length: 10 }),
+  
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }), // FK removida para evitar dependência circular
   updatedBy: nvarchar("updated_by", { length: 255 }), // FK removida para evitar dependência circular
@@ -346,6 +365,23 @@ export const inboundInvoices = mssqlTable("inbound_invoices", {
   // Controle de Processamento
   status: nvarchar("status", { length: 20 }).default("DRAFT"), // DRAFT, IMPORTED, CANCELED
   importedBy: nvarchar("imported_by", { length: 255 }), // Usuário que importou
+  
+  // ✅ CLASSIFICAÇÃO AUTOMÁTICA (OPÇÃO A - Bloco 1)
+  nfeType: nvarchar("nfe_type", { length: 20 }).default("PURCHASE"),
+  // 'PURCHASE' - NFe de compra (somos destinatário)
+  // 'CARGO'    - NFe de carga para transporte (somos transportador)
+  // 'RETURN'   - NFe de devolução (somos remetente)
+  // 'OTHER'    - Outros casos
+  
+  // Dados do Transportador (se nfeType = 'CARGO')
+  carrierCnpj: nvarchar("carrier_cnpj", { length: 14 }),
+  carrierName: nvarchar("carrier_name", { length: 255 }),
+  
+  // Dados do Destinatário (para identificar rota de carga)
+  recipientCnpj: nvarchar("recipient_cnpj", { length: 14 }),
+  recipientName: nvarchar("recipient_name", { length: 255 }),
+  recipientCity: nvarchar("recipient_city", { length: 100 }),
+  recipientUf: nvarchar("recipient_uf", { length: 2 }),
   
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }),
@@ -616,6 +652,8 @@ export const accountsPayable = mssqlTable("accounts_payable", {
   partnerId: int("partner_id"), // FK business_partners (Fornecedor)
   categoryId: int("category_id"), // FK financial_categories (Categoria de Despesa)
   bankAccountId: int("bank_account_id"), // FK bank_accounts (Conta de Baixa - Nullable até baixar)
+  inboundInvoiceId: int("inbound_invoice_id"), // FK inbound_invoices (NFe de compra) - DEPRECATED
+  fiscalDocumentId: bigint("fiscal_document_id", { mode: "number" }), // FK fiscal_documents (Novo)
   
   // Controladoria Gerencial
   costCenterId: int("cost_center_id"), // FK cost_centers (Obrigatório ao pagar)
@@ -665,6 +703,8 @@ export const accountsReceivable = mssqlTable("accounts_receivable", {
   partnerId: int("partner_id"), // FK business_partners (Cliente)
   categoryId: int("category_id"), // FK financial_categories (Categoria de Receita)
   bankAccountId: int("bank_account_id"), // FK bank_accounts (Conta de Recebimento - Nullable até receber)
+  cteDocumentId: int("cte_document_id"), // FK cte_documents (CTe emitido) - DEPRECATED
+  fiscalDocumentId: bigint("fiscal_document_id", { mode: "number" }), // FK fiscal_documents (Novo)
   
   // Controladoria Gerencial
   costCenterId: int("cost_center_id"), // FK cost_centers (Obrigatório ao receber)
@@ -700,6 +740,77 @@ export const accountsReceivable = mssqlTable("accounts_receivable", {
   updatedAt: datetime2("updated_at").default(new Date()),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
+});
+
+// --- ITENS DAS CONTAS A PAGAR (Detalhamento por NCM) ---
+
+export const payableItems = mssqlTable("payable_items", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(), // FK organizations
+  payableId: int("payable_id").notNull(), // FK accounts_payable
+  
+  // Dados do Item da NFe
+  itemNumber: int("item_number").notNull(), // Número do item na NFe (1, 2, 3...)
+  ncm: nvarchar("ncm", { length: 10 }).notNull(), // NCM do produto
+  productCode: nvarchar("product_code", { length: 100 }), // Código do fornecedor
+  productName: nvarchar("product_name", { length: 255 }).notNull(), // Descrição
+  ean: nvarchar("ean", { length: 20 }), // Código de barras
+  cfop: nvarchar("cfop", { length: 10 }), // CFOP
+  cst: nvarchar("cst", { length: 10 }), // CST/CSOSN
+  
+  // Quantidades e Valores
+  unit: nvarchar("unit", { length: 10 }).notNull(), // UN, KG, LT, etc
+  quantity: decimal("quantity", { precision: 18, scale: 4 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 18, scale: 4 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 18, scale: 2 }).notNull(),
+  
+  // Enterprise Base
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// --- MATRIZ DE CLASSIFICAÇÃO AUTOMÁTICA (NCM → Categoria Contábil) ---
+
+export const autoClassificationRules = mssqlTable("auto_classification_rules", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(), // FK organizations
+  
+  // Prioridade (menor = mais importante)
+  priority: int("priority").default(100).notNull(),
+  
+  // Regras de Match
+  matchType: nvarchar("match_type", { length: 30 }).notNull(), 
+  // 'NCM', 'NCM_WILDCARD', 'CFOP', 'SUPPLIER', 'NCM_CFOP', 'KEYWORD'
+  
+  // Valores de Match
+  ncmCode: nvarchar("ncm_code", { length: 10 }), // Ex: "2710.12.51" ou "2710.*"
+  cfopCode: nvarchar("cfop_code", { length: 10 }), // Ex: "1.102"
+  supplierId: int("supplier_id"), // FK business_partners
+  keyword: nvarchar("keyword", { length: 100 }), // Ex: "COMBUSTIVEL", "DIESEL"
+  
+  // Tipo de Operação
+  operationType: nvarchar("operation_type", { length: 20 }).notNull(),
+  // 'PURCHASE', 'SALE', 'RETURN', 'TRANSPORT'
+  
+  // Classificação Resultante
+  categoryId: int("category_id").notNull(), // FK financial_categories
+  chartAccountId: int("chart_account_id").notNull(), // FK chart_of_accounts
+  costCenterId: int("cost_center_id"), // FK cost_centers (opcional)
+  
+  // Descrição
+  name: nvarchar("name", { length: 255 }).notNull(),
+  description: nvarchar("description", { length: "max" }),
+  
+  // Status
+  isActive: nvarchar("is_active", { length: 10 }).default("true"),
+  
+  // Enterprise Base
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
 });
 
 // ============================================================================
@@ -1128,6 +1239,9 @@ export const costCenters = mssqlTable("cost_centers", {
   linkedPartnerId: int("linked_partner_id"), // FK business_partners
   linkedBranchId: int("linked_branch_id"), // FK branches
   
+  // Classe (Receita/Despesa/Ambos) - ✅ FASE 2: MEL-4
+  class: nvarchar("class", { length: 20 }).default("BOTH"), // 'REVENUE', 'EXPENSE', 'BOTH'
+  
   // Status
   status: nvarchar("status", { length: 20 }).default("ACTIVE"),
   
@@ -1516,6 +1630,17 @@ export const cteHeader = mssqlTable("cte_header", {
   rejectionCode: nvarchar("rejection_code", { length: 10 }),
   rejectionMessage: nvarchar("rejection_message", { length: 500 }),
   
+  // ✅ ORIGEM DO CTe (OPÇÃO A - Bloco 4: Multicte)
+  cteOrigin: nvarchar("cte_origin", { length: 20 }).notNull().default("INTERNAL"),
+  // 'INTERNAL' - Emitido pelo Aura Core
+  // 'EXTERNAL' - Emitido por cliente (Multicte/bsoft)
+  
+  externalEmitter: nvarchar("external_emitter", { length: 255 }),
+  // Ex: "Sistema Multicte - Unilever"
+  
+  importedAt: datetime2("imported_at"),
+  // Data de importação (se CTe externo)
+  
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
@@ -1537,6 +1662,13 @@ export const cteCargoDocuments = mssqlTable("cte_cargo_documents", {
   documentSerie: nvarchar("document_serie", { length: 3 }),
   documentDate: datetime2("document_date"),
   documentValue: decimal("document_value", { precision: 18, scale: 2 }),
+  
+  // ✅ RASTREABILIDADE (OPÇÃO A - Bloco 3)
+  sourceInvoiceId: int("source_invoice_id").references(() => inboundInvoices.id),
+  // Rastreabilidade: De qual NFe importada veio este documento
+  
+  sourceCargoId: int("source_cargo_id").references(() => cargoDocuments.id),
+  // Rastreabilidade: De qual cargo do repositório veio este documento
   
   createdAt: datetime2("created_at").default(new Date()),
   updatedAt: datetime2("updated_at").default(new Date()),
@@ -1674,6 +1806,27 @@ export const trips = mssqlTable("trips", {
   version: int("version").default(1).notNull(),
 });
 
+// --- TRIPS: CHECKPOINTS (Timeline de Eventos) ---
+
+export const tripCheckpoints = mssqlTable("trip_checkpoints", {
+  id: int("id").primaryKey().identity(),
+  tripId: int("trip_id").notNull(),
+  
+  checkpointType: nvarchar("checkpoint_type", { length: 50 }).notNull(),
+  // 'ORDER_CREATED', 'PICKED', 'IN_TRANSIT', 'DELIVERED', 'DELAYED', 'ISSUE'
+  
+  description: nvarchar("description", { length: 500 }),
+  
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  locationAddress: nvarchar("location_address", { length: 500 }),
+  
+  recordedAt: datetime2("recorded_at").notNull(),
+  recordedBy: nvarchar("recorded_by", { length: 255 }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
 // --- TRIPS: STOPS (Paradas de Coleta/Entrega) ---
 
 export const tripStops = mssqlTable("trip_stops", {
@@ -1722,4 +1875,1158 @@ export const tripDocuments = mssqlTable("trip_documents", {
   createdAt: datetime2("created_at").default(new Date()),
   deletedAt: datetime2("deleted_at"),
 });
+
+// ==========================================
+// ✅ CARGO DOCUMENTS (REPOSITÓRIO DE CARGAS)
+// OPÇÃO A - Bloco 2
+// ==========================================
+
+/**
+ * 📦 CARGO DOCUMENTS (Repositório de Cargas)
+ * 
+ * Tabela intermediária para gerenciar NFes de carga (clientes).
+ * Workflow: NFe importada → Classificada como CARGO → Entra aqui → 
+ *           Operador aloca em viagem → Gera CTe → Entrega
+ * 
+ * Status workflow:
+ * PENDING           - Aguardando alocação em viagem
+ * ASSIGNED_TO_TRIP  - Vinculada a viagem, aguarda CTe
+ * IN_TRANSIT        - CTe emitido, em trânsito
+ * DELIVERED         - Entregue
+ * CANCELED          - Cancelada
+ */
+export const cargoDocuments = mssqlTable("cargo_documents", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  
+  // ✅ Vínculo com NFe Original
+  nfeInvoiceId: int("nfe_invoice_id").references(() => inboundInvoices.id),
+  
+  // ✅ Dados Resumidos da Carga (cache para performance)
+  accessKey: nvarchar("access_key", { length: 44 }).notNull(),
+  nfeNumber: nvarchar("nfe_number", { length: 20 }),
+  nfeSeries: nvarchar("nfe_series", { length: 10 }),
+  
+  issuerCnpj: nvarchar("issuer_cnpj", { length: 14 }).notNull(),
+  issuerName: nvarchar("issuer_name", { length: 255 }).notNull(),
+  
+  recipientCnpj: nvarchar("recipient_cnpj", { length: 14 }).notNull(),
+  recipientName: nvarchar("recipient_name", { length: 255 }).notNull(),
+  
+  // ✅ Rota (para agrupar por região)
+  originUf: nvarchar("origin_uf", { length: 2 }),
+  originCity: nvarchar("origin_city", { length: 100 }),
+  destinationUf: nvarchar("destination_uf", { length: 2 }),
+  destinationCity: nvarchar("destination_city", { length: 100 }),
+  
+  // ✅ Valores
+  cargoValue: decimal("cargo_value", { precision: 18, scale: 2 }),
+  weight: decimal("weight", { precision: 10, scale: 3 }),
+  volume: decimal("volume", { precision: 10, scale: 3 }),
+  
+  // ✅ Status no Workflow
+  status: nvarchar("status", { length: 20 }).notNull().default("PENDING"),
+  
+  // ✅ Prazo
+  issueDate: datetime2("issue_date").notNull(),
+  deliveryDeadline: datetime2("delivery_deadline"),
+  
+  // ✅ Vínculos TMS/Fiscal
+  tripId: int("trip_id").references(() => trips.id),
+  cteId: int("cte_id").references(() => cteHeader.id),
+  
+  // ✅ Flag CTe Externo (Multicte) - Bloco 4
+  hasExternalCte: nvarchar("has_external_cte", { length: 1 }).default("N"),
+  // 'S' = Cliente já emitiu CTe (Multicte/bsoft)
+  // 'N' = TCL precisa emitir CTe
+  
+  // ✅ Enterprise Base
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+});
+
+// ==========================================
+// 📊 BILLING (FATURAMENTO AGRUPADO)
+// SPRINT 2
+// ==========================================
+
+/**
+ * 💰 BILLING INVOICES (Faturas Agrupadas)
+ * 
+ * Agrupa múltiplos CTes em uma única fatura para grandes clientes.
+ * 
+ * Workflow:
+ * 1. Período fecha (semanal/quinzenal/mensal)
+ * 2. Sistema agrupa CTes autorizados do cliente
+ * 3. Gera fatura consolidada
+ * 4. Cria título no Contas a Receber
+ * 5. Gera boleto bancário
+ */
+export const billingInvoices = mssqlTable("billing_invoices", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  
+  // Identificação
+  invoiceNumber: nvarchar("invoice_number", { length: 50 }).notNull(),
+  
+  // Cliente
+  customerId: int("customer_id").notNull().references(() => businessPartners.id),
+  
+  // Período
+  periodStart: datetime2("period_start").notNull(),
+  periodEnd: datetime2("period_end").notNull(),
+  
+  // Frequência
+  billingFrequency: nvarchar("billing_frequency", { length: 20 }).notNull(),
+  
+  // Valores
+  totalCtes: int("total_ctes").notNull(),
+  grossValue: decimal("gross_value", { precision: 18, scale: 2 }).notNull(),
+  discountValue: decimal("discount_value", { precision: 18, scale: 2 }).default("0.00"),
+  netValue: decimal("net_value", { precision: 18, scale: 2 }).notNull(),
+  
+  // Vencimento
+  issueDate: datetime2("issue_date").notNull(),
+  dueDate: datetime2("due_date").notNull(),
+  
+  // Status
+  status: nvarchar("status", { length: 20 }).notNull().default("DRAFT"),
+  
+  // Integração Financeira
+  accountsReceivableId: int("accounts_receivable_id"),
+  
+  // Boleto
+  barcodeNumber: nvarchar("barcode_number", { length: 54 }),
+  pixKey: nvarchar("pix_key", { length: 500 }),
+  
+  // Documentos
+  pdfUrl: nvarchar("pdf_url", { length: 500 }),
+  
+  // Envio
+  sentAt: datetime2("sent_at"),
+  sentTo: nvarchar("sent_to", { length: 255 }),
+  
+  // Observações
+  notes: nvarchar("notes", { length: "max" }),
+  
+  // Enterprise Base
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+});
+
+export const billingItems = mssqlTable("billing_items", {
+  id: int("id").primaryKey().identity(),
+  
+  billingInvoiceId: int("billing_invoice_id").notNull().references(() => billingInvoices.id, { onDelete: "cascade" }),
+  cteId: int("cte_id").notNull().references(() => cteHeader.id),
+  
+  // Cache
+  cteNumber: int("cte_number").notNull(),
+  cteSeries: nvarchar("cte_series", { length: 3 }),
+  cteKey: nvarchar("cte_key", { length: 44 }),
+  cteIssueDate: datetime2("cte_issue_date").notNull(),
+  cteValue: decimal("cte_value", { precision: 18, scale: 2 }).notNull(),
+  
+  originUf: nvarchar("origin_uf", { length: 2 }),
+  destinationUf: nvarchar("destination_uf", { length: 2 }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 📄 FLEET DOCUMENTATION
+// SPRINT 3
+// ==========================================
+
+export const vehicleDocuments = mssqlTable("vehicle_documents", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  vehicleId: int("vehicle_id").notNull(),
+  documentType: nvarchar("document_type", { length: 50 }).notNull(),
+  documentNumber: nvarchar("document_number", { length: 100 }),
+  issueDate: datetime2("issue_date"),
+  expiryDate: datetime2("expiry_date").notNull(),
+  insuranceCompany: nvarchar("insurance_company", { length: 255 }),
+  policyNumber: nvarchar("policy_number", { length: 100 }),
+  insuredValue: decimal("insured_value", { precision: 18, scale: 2 }),
+  fileUrl: nvarchar("file_url", { length: 500 }),
+  status: nvarchar("status", { length: 20 }).default("VALID"),
+  alertSentAt: datetime2("alert_sent_at"),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+});
+
+export const driverDocuments = mssqlTable("driver_documents", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  driverId: int("driver_id").notNull(),
+  documentType: nvarchar("document_type", { length: 50 }).notNull(),
+  documentNumber: nvarchar("document_number", { length: 100 }),
+  issueDate: datetime2("issue_date"),
+  expiryDate: datetime2("expiry_date").notNull(),
+  cnhCategory: nvarchar("cnh_category", { length: 5 }),
+  fileUrl: nvarchar("file_url", { length: 500 }),
+  status: nvarchar("status", { length: 20 }).default("VALID"),
+  alertSentAt: datetime2("alert_sent_at"),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+});
+
+export const tripOccurrences = mssqlTable("trip_occurrences", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  tripId: int("trip_id").notNull(),
+  occurrenceType: nvarchar("occurrence_type", { length: 50 }).notNull(),
+  severity: nvarchar("severity", { length: 20 }).notNull(),
+  title: nvarchar("title", { length: 255 }).notNull(),
+  description: nvarchar("description", { length: "max" }).notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  address: nvarchar("address", { length: 500 }),
+  photosUrls: nvarchar("photos_urls", { length: "max" }),
+  documentsUrls: nvarchar("documents_urls", { length: "max" }),
+  responsibleParty: nvarchar("responsible_party", { length: 50 }),
+  actionsTaken: nvarchar("actions_taken", { length: "max" }),
+  estimatedLoss: decimal("estimated_loss", { precision: 18, scale: 2 }),
+  insuranceClaim: nvarchar("insurance_claim", { length: 1 }).default("N"),
+  insuranceClaimNumber: nvarchar("insurance_claim_number", { length: 100 }),
+  status: nvarchar("status", { length: 20 }).default("OPEN"),
+  resolvedAt: datetime2("resolved_at"),
+  resolutionNotes: nvarchar("resolution_notes", { length: "max" }),
+  clientNotified: nvarchar("client_notified", { length: 1 }).default("N"),
+  clientNotifiedAt: datetime2("client_notified_at"),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+});
+
+export const taxCredits = mssqlTable("tax_credits", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  invoiceId: int("invoice_id").notNull(),
+  taxType: nvarchar("tax_type", { length: 20 }).notNull(),
+  taxBase: decimal("tax_base", { precision: 18, scale: 2 }).notNull(),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull(),
+  taxValue: decimal("tax_value", { precision: 18, scale: 2 }).notNull(),
+  isRecoverable: nvarchar("is_recoverable", { length: 1 }).default("S"),
+  recoverabilityReason: nvarchar("recoverability_reason", { length: 500 }),
+  recoveredAt: datetime2("recovered_at"),
+  recoveredInPeriod: nvarchar("recovered_in_period", { length: 7 }),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+});
+
+// ==========================================
+// 📄 CTe INUTILIZAÇÃO
+// ==========================================
+
+export const cteInutilization = mssqlTable("cte_inutilization", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  
+  serie: nvarchar("serie", { length: 3 }).notNull(),
+  numberFrom: int("number_from").notNull(),
+  numberTo: int("number_to").notNull(),
+  year: int("year").notNull(),
+  justification: nvarchar("justification", { length: 500 }).notNull(),
+  
+  // Sefaz
+  protocolNumber: nvarchar("protocol_number", { length: 20 }),
+  status: nvarchar("status", { length: 20 }).default("PENDING"),
+  sefazReturnMessage: nvarchar("sefaz_return_message", { length: 500 }),
+  
+  inutilizedAt: datetime2("inutilized_at"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 📄 CTe CARTA DE CORREÇÃO (CCe)
+// ==========================================
+
+export const cteCorrectionLetters = mssqlTable("cte_correction_letters", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  cteHeaderId: int("cte_header_id").notNull(),
+  
+  sequenceNumber: int("sequence_number").notNull(), // Pode haver múltiplas CCe
+  corrections: nvarchar("corrections", { length: "max" }).notNull(), // JSON
+  
+  // Sefaz
+  protocolNumber: nvarchar("protocol_number", { length: 20 }),
+  status: nvarchar("status", { length: 20 }).default("PENDING"),
+  sefazReturnMessage: nvarchar("sefaz_return_message", { length: 500 }),
+  
+  xmlEvent: nvarchar("xml_event", { length: "max" }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 🎯 CRM COMERCIAL (ONDA 3)
+// ==========================================
+
+export const crmLeads = mssqlTable("crm_leads", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  companyName: nvarchar("company_name", { length: 255 }).notNull(),
+  cnpj: nvarchar("cnpj", { length: 18 }),
+  contactName: nvarchar("contact_name", { length: 255 }),
+  contactEmail: nvarchar("contact_email", { length: 255 }),
+  contactPhone: nvarchar("contact_phone", { length: 20 }),
+  
+  segment: nvarchar("segment", { length: 50 }),
+  source: nvarchar("source", { length: 50 }),
+  
+  stage: nvarchar("stage", { length: 50 }).notNull().default("PROSPECTING"),
+  score: int("score").default(0),
+  
+  estimatedValue: decimal("estimated_value", { precision: 18, scale: 2 }),
+  estimatedMonthlyShipments: int("estimated_monthly_shipments"),
+  expectedCloseDate: datetime2("expected_close_date"),
+  probability: int("probability"),
+  
+  ownerId: nvarchar("owner_id", { length: 255 }).notNull(),
+  
+  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
+  lostReason: nvarchar("lost_reason", { length: 500 }),
+  wonDate: datetime2("won_date"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+});
+
+export const crmActivities = mssqlTable("crm_activities", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  leadId: int("lead_id"),
+  partnerId: int("partner_id"),
+  
+  type: nvarchar("type", { length: 50 }).notNull(),
+  subject: nvarchar("subject", { length: 255 }).notNull(),
+  description: nvarchar("description", { length: "max" }),
+  
+  scheduledAt: datetime2("scheduled_at"),
+  completedAt: datetime2("completed_at"),
+  status: nvarchar("status", { length: 20 }).default("PENDING"),
+  
+  assignedTo: nvarchar("assigned_to", { length: 255 }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const commercialProposals = mssqlTable("commercial_proposals", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  proposalNumber: nvarchar("proposal_number", { length: 20 }).notNull(),
+  leadId: int("lead_id"),
+  partnerId: int("partner_id"),
+  
+  status: nvarchar("status", { length: 20 }).default("DRAFT"),
+  
+  routes: nvarchar("routes", { length: "max" }),
+  prices: nvarchar("prices", { length: "max" }),
+  conditions: nvarchar("conditions", { length: "max" }),
+  validityDays: int("validity_days").default(15),
+  
+  pdfUrl: nvarchar("pdf_url", { length: 500 }),
+  
+  sentAt: datetime2("sent_at"),
+  sentToEmail: nvarchar("sent_to_email", { length: 255 }),
+  
+  acceptedAt: datetime2("accepted_at"),
+  rejectedAt: datetime2("rejected_at"),
+  rejectionReason: nvarchar("rejection_reason", { length: 500 }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 🚗 GESTÃO DE PNEUS (ONDA 4.1)
+// ==========================================
+
+export const tires = mssqlTable("tires", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  serialNumber: nvarchar("serial_number", { length: 50 }).notNull(),
+  brandId: int("brand_id"),
+  model: nvarchar("model", { length: 100 }),
+  size: nvarchar("size", { length: 20 }),
+  
+  purchaseDate: datetime2("purchase_date"),
+  purchasePrice: decimal("purchase_price", { precision: 18, scale: 2 }),
+  
+  status: nvarchar("status", { length: 20 }).default("STOCK"),
+  
+  currentVehicleId: int("current_vehicle_id"),
+  position: nvarchar("position", { length: 20 }),
+  
+  initialMileage: int("initial_mileage"),
+  currentMileage: int("current_mileage"),
+  totalKmUsed: int("total_km_used"),
+  
+  recappingCount: int("recapping_count").default(0),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+});
+
+export const tireMovements = mssqlTable("tire_movements", {
+  id: int("id").primaryKey().identity(),
+  tireId: int("tire_id").notNull(),
+  
+  movementType: nvarchar("movement_type", { length: 20 }).notNull(),
+  
+  fromVehicleId: int("from_vehicle_id"),
+  fromPosition: nvarchar("from_position", { length: 20 }),
+  toVehicleId: int("to_vehicle_id"),
+  toPosition: nvarchar("to_position", { length: 20 }),
+  
+  mileageAtMovement: int("mileage_at_movement"),
+  
+  notes: nvarchar("notes", { length: 500 }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const fuelTransactions = mssqlTable("fuel_transactions", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  vehicleId: int("vehicle_id").notNull(),
+  driverId: int("driver_id"),
+  
+  transactionDate: datetime2("transaction_date").notNull(),
+  
+  fuelType: nvarchar("fuel_type", { length: 20 }),
+  liters: decimal("liters", { precision: 10, scale: 2 }).notNull(),
+  pricePerLiter: decimal("price_per_liter", { precision: 10, scale: 2 }),
+  totalValue: decimal("total_value", { precision: 18, scale: 2 }).notNull(),
+  
+  odometer: int("odometer"),
+  
+  stationName: nvarchar("station_name", { length: 255 }),
+  stationCnpj: nvarchar("station_cnpj", { length: 18 }),
+  
+  source: nvarchar("source", { length: 20 }),
+  nfeKey: nvarchar("nfe_key", { length: 44 }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 👨‍🔧 JORNADA MOTORISTA (ONDA 5.1)
+// ==========================================
+
+export const driverWorkShifts = mssqlTable("driver_work_shifts", {
+  id: int("id").primaryKey().identity(),
+  driverId: int("driver_id").notNull(),
+  tripId: int("trip_id"),
+  
+  shiftDate: datetime2("shift_date").notNull(),
+  
+  startedAt: datetime2("started_at"),
+  endedAt: datetime2("ended_at"),
+  
+  totalDrivingHours: decimal("total_driving_hours", { precision: 5, scale: 2 }),
+  totalRestHours: decimal("total_rest_hours", { precision: 5, scale: 2 }),
+  totalWaitingHours: decimal("total_waiting_hours", { precision: 5, scale: 2 }),
+  
+  status: nvarchar("status", { length: 20 }).default("IN_PROGRESS"),
+  
+  violations: nvarchar("violations", { length: "max" }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const driverShiftEvents = mssqlTable("driver_shift_events", {
+  id: int("id").primaryKey().identity(),
+  workShiftId: int("work_shift_id").notNull(),
+  
+  eventType: nvarchar("event_type", { length: 20 }).notNull(),
+  
+  eventTime: datetime2("event_time").notNull(),
+  
+  source: nvarchar("source", { length: 20 }).default("MANUAL"),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 📦 WMS (ONDA 6)
+// ==========================================
+
+export const warehouseZones = mssqlTable("warehouse_zones", {
+  id: int("id").primaryKey().identity(),
+  warehouseId: int("warehouse_id").notNull(),
+  zoneName: nvarchar("zone_name", { length: 100 }).notNull(),
+  zoneType: nvarchar("zone_type", { length: 20 }),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const warehouseLocations = mssqlTable("warehouse_locations", {
+  id: int("id").primaryKey().identity(),
+  zoneId: int("zone_id").notNull(),
+  
+  code: nvarchar("code", { length: 20 }).notNull(),
+  
+  locationType: nvarchar("location_type", { length: 20 }),
+  maxWeightKg: decimal("max_weight_kg", { precision: 10, scale: 2 }),
+  
+  status: nvarchar("status", { length: 20 }).default("AVAILABLE"),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const stockLocations = mssqlTable("stock_locations", {
+  id: int("id").primaryKey().identity(),
+  locationId: int("location_id").notNull(),
+  productId: int("product_id").notNull(),
+  
+  quantity: decimal("quantity", { precision: 18, scale: 4 }).notNull(),
+  lotNumber: nvarchar("lot_number", { length: 50 }),
+  expiryDate: datetime2("expiry_date"),
+  
+  receivedAt: datetime2("received_at"),
+});
+
+export const warehouseMovements = mssqlTable("warehouse_movements", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  movementType: nvarchar("movement_type", { length: 20 }).notNull(),
+  
+  productId: int("product_id").notNull(),
+  quantity: decimal("quantity", { precision: 18, scale: 4 }).notNull(),
+  
+  fromLocationId: int("from_location_id"),
+  toLocationId: int("to_location_id"),
+  
+  referenceType: nvarchar("reference_type", { length: 50 }),
+  referenceId: int("reference_id"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 💰 CONCILIAÇÃO BANCÁRIA (ONDA 2.3)
+// ==========================================
+
+export const bankTransactions = mssqlTable("bank_transactions", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  bankAccountId: int("bank_account_id").notNull(),
+  
+  transactionDate: datetime2("transaction_date").notNull(),
+  description: nvarchar("description", { length: 500 }),
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  balance: decimal("balance", { precision: 18, scale: 2 }),
+  
+  transactionType: nvarchar("transaction_type", { length: 20 }),
+  
+  // Conciliação
+  reconciled: nvarchar("reconciled", { length: 1 }).default("N"),
+  reconciledAt: datetime2("reconciled_at"),
+  reconciledBy: nvarchar("reconciled_by", { length: 255 }),
+  
+  accountsPayableId: int("accounts_payable_id"),
+  accountsReceivableId: int("accounts_receivable_id"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+});
+
+// ==========================================
+// 🔧 PLANO DE MANUTENÇÃO (ONDA 4.2)
+// ==========================================
+
+export const vehicleMaintenancePlans = mssqlTable("vehicle_maintenance_plans", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  vehicleModel: nvarchar("vehicle_model", { length: 100 }),
+  
+  serviceName: nvarchar("service_name", { length: 255 }).notNull(),
+  serviceDescription: nvarchar("service_description", { length: 500 }),
+  
+  triggerType: nvarchar("trigger_type", { length: 20 }).notNull(),
+  
+  mileageInterval: int("mileage_interval"),
+  timeIntervalMonths: int("time_interval_months"),
+  
+  advanceWarningKm: int("advance_warning_km"),
+  advanceWarningDays: int("advance_warning_days"),
+  
+  isActive: nvarchar("is_active", { length: 1 }).default("S"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+});
+
+export const maintenanceAlerts = mssqlTable("maintenance_alerts", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  vehicleId: int("vehicle_id").notNull(),
+  maintenancePlanId: int("maintenance_plan_id").notNull(),
+  
+  alertType: nvarchar("alert_type", { length: 20 }).notNull(),
+  alertMessage: nvarchar("alert_message", { length: 500 }).notNull(),
+  
+  currentOdometer: int("current_odometer"),
+  nextServiceOdometer: int("next_service_odometer"),
+  
+  currentCheckDate: datetime2("current_check_date"),
+  nextServiceDate: datetime2("next_service_date"),
+  
+  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
+  
+  dismissedAt: datetime2("dismissed_at"),
+  dismissedBy: nvarchar("dismissed_by", { length: 255 }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 🛠️ ORDENS DE SERVIÇO (ONDA 4.4)
+// ==========================================
+
+export const mechanics = mssqlTable("mechanics", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  name: nvarchar("name", { length: 255 }).notNull(),
+  specialty: nvarchar("specialty", { length: 100 }),
+  
+  hourlyRate: decimal("hourly_rate", { precision: 18, scale: 2 }),
+  
+  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+});
+
+export const maintenanceProviders = mssqlTable("maintenance_providers", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  name: nvarchar("name", { length: 255 }).notNull(),
+  cnpj: nvarchar("cnpj", { length: 18 }),
+  contactName: nvarchar("contact_name", { length: 255 }),
+  phone: nvarchar("phone", { length: 20 }),
+  
+  specialty: nvarchar("specialty", { length: 100 }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+});
+
+export const maintenanceWorkOrders = mssqlTable("maintenance_work_orders", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  woNumber: nvarchar("wo_number", { length: 20 }).notNull(),
+  
+  vehicleId: int("vehicle_id").notNull(),
+  
+  woType: nvarchar("wo_type", { length: 20 }).notNull(),
+  
+  priority: nvarchar("priority", { length: 20 }).default("NORMAL"),
+  
+  reportedByDriverId: int("reported_by_driver_id"),
+  reportedIssue: nvarchar("reported_issue", { length: 500 }),
+  
+  odometer: int("odometer"),
+  
+  status: nvarchar("status", { length: 20 }).default("OPEN"),
+  
+  providerType: nvarchar("provider_type", { length: 20 }),
+  providerId: int("provider_id"),
+  
+  openedAt: datetime2("opened_at").default(new Date()),
+  startedAt: datetime2("started_at"),
+  completedAt: datetime2("completed_at"),
+  
+  totalLaborCost: decimal("total_labor_cost", { precision: 18, scale: 2 }),
+  totalPartsCost: decimal("total_parts_cost", { precision: 18, scale: 2 }),
+  totalCost: decimal("total_cost", { precision: 18, scale: 2 }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+});
+
+export const workOrderItems = mssqlTable("work_order_items", {
+  id: int("id").primaryKey().identity(),
+  workOrderId: int("work_order_id").notNull(),
+  
+  itemType: nvarchar("item_type", { length: 20 }).notNull(),
+  
+  productId: int("product_id"),
+  serviceDescription: nvarchar("service_description", { length: 255 }),
+  
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitCost: decimal("unit_cost", { precision: 18, scale: 2 }),
+  totalCost: decimal("total_cost", { precision: 18, scale: 2 }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const workOrderMechanics = mssqlTable("work_order_mechanics", {
+  id: int("id").primaryKey().identity(),
+  workOrderId: int("work_order_id").notNull(),
+  mechanicId: int("mechanic_id").notNull(),
+  
+  assignedAt: datetime2("assigned_at").default(new Date()),
+  startedAt: datetime2("started_at"),
+  completedAt: datetime2("completed_at"),
+  
+  hoursWorked: decimal("hours_worked", { precision: 5, scale: 2 }),
+  laborCost: decimal("labor_cost", { precision: 18, scale: 2 }),
+  
+  notes: nvarchar("notes", { length: 500 }),
+});
+
+// ==========================================
+// 📜 MANIFESTAÇÃO NFE (ONDA 5.2)
+// ==========================================
+
+export const nfeManifestationEvents = mssqlTable("nfe_manifestation_events", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  inboundInvoiceId: int("inbound_invoice_id").notNull(),
+  
+  eventType: nvarchar("event_type", { length: 10 }).notNull(),
+  eventDescription: nvarchar("event_description", { length: 100 }),
+  justification: nvarchar("justification", { length: 500 }),
+  
+  protocolNumber: nvarchar("protocol_number", { length: 20 }),
+  status: nvarchar("status", { length: 20 }).default("PENDING"),
+  sefazReturnCode: nvarchar("sefaz_return_code", { length: 10 }),
+  sefazReturnMessage: nvarchar("sefaz_return_message", { length: 500 }),
+  
+  sentAt: datetime2("sent_at"),
+  confirmedAt: datetime2("confirmed_at"),
+  
+  xmlEvent: nvarchar("xml_event", { length: "max" }),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+});
+
+// ==========================================
+// 📐 CONVERSÃO DE UNIDADE (ONDA 5.3)
+// ==========================================
+
+export const productUnitConversions = mssqlTable("product_unit_conversions", {
+  id: int("id").primaryKey().identity(),
+  productId: int("product_id").notNull(),
+  
+  fromUnit: nvarchar("from_unit", { length: 10 }).notNull(),
+  toUnit: nvarchar("to_unit", { length: 10 }).notNull(),
+  factor: decimal("factor", { precision: 10, scale: 4 }).notNull(),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// 📦 INVENTÁRIO WMS (ONDA 6.3)
+// ==========================================
+
+export const warehouseInventoryCounts = mssqlTable("warehouse_inventory_counts", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  warehouseId: int("warehouse_id").notNull(),
+  
+  countNumber: nvarchar("count_number", { length: 20 }).notNull(),
+  countDate: datetime2("count_date").notNull(),
+  
+  countType: nvarchar("count_type", { length: 20 }).notNull(),
+  
+  status: nvarchar("status", { length: 20 }).default("IN_PROGRESS"),
+  
+  notes: nvarchar("notes", { length: 500 }),
+  
+  startedBy: nvarchar("started_by", { length: 255 }).notNull(),
+  startedAt: datetime2("started_at").default(new Date()),
+  completedAt: datetime2("completed_at"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+});
+
+export const inventoryCountItems = mssqlTable("inventory_count_items", {
+  id: int("id").primaryKey().identity(),
+  countId: int("count_id").notNull(),
+  
+  locationId: int("location_id"),
+  productId: int("product_id").notNull(),
+  
+  systemQuantity: decimal("system_quantity", { precision: 18, scale: 4 }),
+  countedQuantity: decimal("counted_quantity", { precision: 18, scale: 4 }),
+  difference: decimal("difference", { precision: 18, scale: 4 }),
+  
+  lotNumber: nvarchar("lot_number", { length: 50 }),
+  expiryDate: datetime2("expiry_date"),
+  
+  countedBy: nvarchar("counted_by", { length: 255 }),
+  countedAt: datetime2("counted_at"),
+  
+  notes: nvarchar("notes", { length: 500 }),
+  
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  countId: int("count_id"),
+  
+  adjustmentNumber: nvarchar("adjustment_number", { length: 20 }).notNull(),
+  adjustmentDate: datetime2("adjustment_date").notNull(),
+  
+  productId: int("product_id").notNull(),
+  locationId: int("location_id"),
+  
+  quantityBefore: decimal("quantity_before", { precision: 18, scale: 4 }),
+  quantityAdjusted: decimal("quantity_adjusted", { precision: 18, scale: 4 }),
+  quantityAfter: decimal("quantity_after", { precision: 18, scale: 4 }),
+  
+  reason: nvarchar("reason", { length: 20 }).notNull(),
+  
+  notes: nvarchar("notes", { length: 500 }),
+  
+  approvedBy: nvarchar("approved_by", { length: 255 }),
+  approvedAt: datetime2("approved_at"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// ⚙️ CONFIGURAÇÕES FISCAIS
+// ==========================================
+
+export const fiscalSettings = mssqlTable("fiscal_settings", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  
+  // Ambiente NFe (Importação Sefaz)
+  nfeEnvironment: nvarchar("nfe_environment", { length: 20 }).notNull().default("production"),
+  // "production" ou "homologacao"
+  
+  // Ambiente CTe (Emissão)
+  cteEnvironment: nvarchar("cte_environment", { length: 20 }).notNull().default("homologacao"),
+  // "production" ou "homologacao"
+  
+  // Série CTe
+  cteSeries: nvarchar("cte_series", { length: 3 }).default("1"),
+  
+  // Importação Automática
+  autoImportEnabled: nvarchar("auto_import_enabled", { length: 1 }).default("S"),
+  // "S" = Ativo, "N" = Desativado
+  autoImportInterval: int("auto_import_interval").default(1),
+  // Intervalo em horas (1, 2, 4, 6, 12, 24)
+  lastAutoImport: datetime2("last_auto_import"),
+  // Última importação automática
+  
+  // Empresa de auditoria
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  version: int("version").default(1).notNull(),
+});
+
+// ==========================================
+// 🏦 BTG PACTUAL INTEGRATION
+// ==========================================
+
+// Boletos BTG
+export const btgBoletos = mssqlTable("btg_boletos", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  // Identificação
+  nossoNumero: nvarchar("nosso_numero", { length: 20 }).notNull(),
+  seuNumero: nvarchar("seu_numero", { length: 20 }),
+  
+  // Pagador
+  customerId: int("customer_id"),
+  payerName: nvarchar("payer_name", { length: 255 }).notNull(),
+  payerDocument: nvarchar("payer_document", { length: 18 }).notNull(),
+  
+  // Valores
+  valorNominal: decimal("valor_nominal", { precision: 18, scale: 2 }).notNull(),
+  valorDesconto: decimal("valor_desconto", { precision: 18, scale: 2 }),
+  valorMulta: decimal("valor_multa", { precision: 18, scale: 2 }),
+  valorJuros: decimal("valor_juros", { precision: 18, scale: 2 }),
+  valorPago: decimal("valor_pago", { precision: 18, scale: 2 }),
+  
+  // Datas
+  dataEmissao: datetime2("data_emissao").notNull(),
+  dataVencimento: datetime2("data_vencimento").notNull(),
+  dataPagamento: datetime2("data_pagamento"),
+  
+  // Status
+  status: nvarchar("status", { length: 20 }).default("PENDING"),
+  
+  // Dados BTG
+  btgId: nvarchar("btg_id", { length: 50 }),
+  linhaDigitavel: nvarchar("linha_digitavel", { length: 100 }),
+  codigoBarras: nvarchar("codigo_barras", { length: 100 }),
+  pdfUrl: nvarchar("pdf_url", { length: 500 }),
+  
+  // Vinculação
+  accountsReceivableId: int("accounts_receivable_id"),
+  billingInvoiceId: int("billing_invoice_id"),
+  
+  // Webhook
+  webhookReceivedAt: datetime2("webhook_received_at"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+});
+
+// Pix Cobranças BTG
+export const btgPixCharges = mssqlTable("btg_pix_charges", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  txid: nvarchar("txid", { length: 50 }).notNull(),
+  
+  // Pagador
+  customerId: int("customer_id"),
+  payerName: nvarchar("payer_name", { length: 255 }),
+  payerDocument: nvarchar("payer_document", { length: 18 }),
+  
+  // Cobrança
+  valor: decimal("valor", { precision: 18, scale: 2 }).notNull(),
+  chavePix: nvarchar("chave_pix", { length: 100 }),
+  
+  // QR Code
+  qrCode: nvarchar("qr_code", { length: "max" }),
+  qrCodeImageUrl: nvarchar("qr_code_image_url", { length: 500 }),
+  
+  // Status
+  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
+  
+  // Datas
+  dataCriacao: datetime2("data_criacao").default(new Date()),
+  dataExpiracao: datetime2("data_expiracao"),
+  dataPagamento: datetime2("data_pagamento"),
+  
+  // Vinculação
+  accountsReceivableId: int("accounts_receivable_id"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// Pagamentos BTG (Pix/TED/DOC)
+export const btgPayments = mssqlTable("btg_payments", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  paymentType: nvarchar("payment_type", { length: 10 }).notNull(),
+  
+  // Favorecido
+  beneficiaryName: nvarchar("beneficiary_name", { length: 255 }).notNull(),
+  beneficiaryDocument: nvarchar("beneficiary_document", { length: 18 }).notNull(),
+  beneficiaryBank: nvarchar("beneficiary_bank", { length: 10 }),
+  beneficiaryAgency: nvarchar("beneficiary_agency", { length: 10 }),
+  beneficiaryAccount: nvarchar("beneficiary_account", { length: 20 }),
+  beneficiaryPixKey: nvarchar("beneficiary_pix_key", { length: 100 }),
+  
+  // Valor
+  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+  
+  // Status
+  status: nvarchar("status", { length: 20 }).default("PENDING"),
+  
+  btgTransactionId: nvarchar("btg_transaction_id", { length: 50 }),
+  errorMessage: nvarchar("error_message", { length: 500 }),
+  
+  scheduledDate: datetime2("scheduled_date"),
+  processedAt: datetime2("processed_at"),
+  
+  // Vinculação
+  accountsPayableId: int("accounts_payable_id"),
+  
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+/**
+ * ============================================================================
+ * 🚚 FISCAL - CTe EXTERNO (MULTICTE/BSOFT)
+ * ============================================================================
+ * 
+ * Armazena CTes emitidos por terceiros (Multicte, bsoft, etc) que foram
+ * importados automaticamente via SEFAZ DistribuicaoDFe
+ */
+export const externalCtes = mssqlTable("external_ctes", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  
+  branchId: int("branch_id")
+    .notNull()
+    .references(() => branches.id),
+  
+  // Dados do CTe
+  accessKey: nvarchar("access_key", { length: 44 }).notNull(), // Chave de Acesso
+  cteNumber: nvarchar("cte_number", { length: 20 }),
+  series: nvarchar("series", { length: 10 }),
+  model: nvarchar("model", { length: 2 }).default("57"), // 57=CTe
+  issueDate: datetime2("issue_date").notNull(),
+  
+  // Emitente (Transportadora externa)
+  issuerCnpj: nvarchar("issuer_cnpj", { length: 14 }).notNull(),
+  issuerName: nvarchar("issuer_name", { length: 255 }).notNull(),
+  issuerIe: nvarchar("issuer_ie", { length: 20 }),
+  
+  // Remetente
+  senderCnpj: nvarchar("sender_cnpj", { length: 14 }),
+  senderName: nvarchar("sender_name", { length: 255 }),
+  
+  // Destinatário
+  recipientCnpj: nvarchar("recipient_cnpj", { length: 14 }),
+  recipientName: nvarchar("recipient_name", { length: 255 }),
+  
+  // Expedidor (se diferente do remetente)
+  shipperCnpj: nvarchar("shipper_cnpj", { length: 14 }),
+  shipperName: nvarchar("shipper_name", { length: 255 }),
+  
+  // Recebedor (se diferente do destinatário)
+  receiverCnpj: nvarchar("receiver_cnpj", { length: 14 }),
+  receiverName: nvarchar("receiver_name", { length: 255 }),
+  
+  // Origem e Destino
+  originCity: nvarchar("origin_city", { length: 100 }),
+  originUf: nvarchar("origin_uf", { length: 2 }),
+  destinationCity: nvarchar("destination_city", { length: 100 }),
+  destinationUf: nvarchar("destination_uf", { length: 2 }),
+  
+  // Valores
+  totalValue: decimal("total_value", { precision: 18, scale: 2 }),
+  cargoValue: decimal("cargo_value", { precision: 18, scale: 2 }),
+  icmsValue: decimal("icms_value", { precision: 18, scale: 2 }),
+  
+  // Carga
+  weight: decimal("weight", { precision: 10, scale: 3 }),
+  volume: decimal("volume", { precision: 10, scale: 3 }),
+  
+  // NFe vinculada (chave de acesso da NFe)
+  linkedNfeKey: nvarchar("linked_nfe_key", { length: 44 }),
+  
+  // Vínculo com cargo_documents (se encontrado)
+  cargoDocumentId: int("cargo_document_id").references(() => cargoDocuments.id),
+  
+  // XML Original
+  xmlContent: nvarchar("xml_content", { length: "max" }),
+  xmlHash: nvarchar("xml_hash", { length: 64 }),
+  
+  // Status
+  status: nvarchar("status", { length: 20 }).default("IMPORTED"), // IMPORTED, LINKED, ERROR
+  
+  // Origem da importação
+  importSource: nvarchar("import_source", { length: 50 }).default("SEFAZ_AUTO"), // SEFAZ_AUTO, UPLOAD_MANUAL
+  
+  // Enterprise Base
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1),
+});
+
+// --- NOTIFICATIONS (Sistema de Notificações) ---
+
+export const notifications = mssqlTable("notifications", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id"),
+  userId: nvarchar("user_id", { length: 255 }), // NULL = todos usuários
+
+  // Tipo e Evento
+  type: nvarchar("type", { length: 20 }).notNull(), // SUCCESS, ERROR, WARNING, INFO
+  event: nvarchar("event", { length: 100 }).notNull(),
+
+  // Conteúdo
+  title: nvarchar("title", { length: 200 }).notNull(),
+  message: nvarchar("message", { length: "max" }),
+
+  // Dados extras (JSON)
+  data: nvarchar("data", { length: "max" }),
+
+  // Link para ação
+  actionUrl: nvarchar("action_url", { length: 500 }),
+
+  // Controle
+  isRead: int("is_read").default(0), // 0 = não lido, 1 = lido
+  readAt: datetime2("read_at"),
+
+  // Auditoria
+  createdAt: datetime2("created_at").default(new Date()),
+});
+
+// ==========================================
+// ACCOUNTING MODULE (Fiscal → Contábil → Financeiro)
+// ==========================================
+export * from "./schema/accounting";
 

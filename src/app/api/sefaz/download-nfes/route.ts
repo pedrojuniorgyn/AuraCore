@@ -36,6 +36,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`📦 Documentos recebidos: ${downloadResult.totalDocuments}`);
 
+    // Verifica se houve erro (ex: 656 - Consumo Indevido)
+    if (downloadResult.error) {
+      console.log(`⚠️  Erro SEFAZ: ${downloadResult.error.code} - ${downloadResult.error.message}`);
+      
+      return NextResponse.json({
+        success: false,
+        message: downloadResult.error.message,
+        error: downloadResult.error,
+        data: {
+          totalDocuments: 0,
+          maxNsu: downloadResult.maxNsu,
+        },
+      });
+    }
+
     // Se houver documentos, processa automaticamente
     let processResult = null;
 
@@ -61,6 +76,8 @@ export async function POST(request: NextRequest) {
       success: downloadResult.success,
       message: processResult
         ? `${processResult.imported} NFe(s) importada(s) automaticamente!`
+        : downloadResult.totalDocuments === 0
+        ? "Nenhum documento novo disponível"
         : `${downloadResult.totalDocuments} documento(s) retornado(s) pela Sefaz`,
       data: {
         totalDocuments: downloadResult.totalDocuments,

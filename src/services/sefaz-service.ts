@@ -144,6 +144,12 @@ export class SefazService {
     xml: string;
     maxNsu: string;
     totalDocuments: number;
+    error?: {
+      code: string;
+      message: string;
+      nextNsu?: string;
+      waitMinutes?: number;
+    };
   }> {
     try {
       console.log("🤖 Iniciando consulta DistribuicaoDFe na Sefaz...");
@@ -188,24 +194,31 @@ export class SefazService {
       // Extrai o XML da resposta
       const responseXml = response.data;
 
-      // Parse básico para extrair informações (sem processar os documentos ainda)
-      // Em produção, fazer parse completo do retDistDFeInt
-      const maxNsuMatch = responseXml.match(/<maxNSU>(\d+)<\/maxNSU>/);
-      const maxNsu = maxNsuMatch ? maxNsuMatch[1] : cert.lastNsu;
+      // Parse completo para extrair status e NSUs
+      const cStatMatch = responseXml.match(/<cStat>(\d+)<\/cStat>/);
+      const xMotivoMatch = responseXml.match(/<xMotivo>(.*?)<\/xMotivo>/);
+      const ultNSUMatch = responseXml.match(/<ultNSU>(\d+)<\/ultNSU>/);
+      const maxNSUMatch = responseXml.match(/<maxNSU>(\d+)<\/maxNSU>/);
 
-      // Conta quantos documentos vieram
-      const docZipMatches = responseXml.match(/<docZip/g);
-      const totalDocuments = docZipMatches ? docZipMatches.length : 0;
+      const cStat = cStatMatch ? cStatMatch[1] : null;
+      const xMotivo = xMotivoMatch ? xMotivoMatch[1] : "Sem motivo";
+      const ultNSU = ultNSUMatch ? ultNSUMatch[1] : cert.lastNsu;
+      const maxNSU = maxNSUMatch ? maxNSUMatch[1] : "000000000000000";
 
-      console.log(`📊 Documentos retornados: ${totalDocuments}`);
-      console.log(`🔢 Novo maxNSU: ${maxNsu}`);
+      console.log(`📊 Status SEFAZ: ${cStat} - ${xMotivo}`);
+      console.log(`🔢 ultNSU: ${ultNSU} | maxNSU: ${maxNSU}`);
 
-      // Atualiza o lastNsu da filial (se houver novos documentos)
-      if (totalDocuments > 0 && maxNsu !== cert.lastNsu) {
+      // Tratamento de erro 656 (Consumo Indevido)
+      if (cStat === "656") {
+        console.log("⚠️  ERRO 656 - Consumo Indevido detectado!");
+        console.log("📋 Motivo:", xMotivo);
+        console.log(`🔧 Atualizando NSU para ultNSU: ${ultNSU}`);
+
+        // Atualiza NSU com o ultNSU informado pela SEFAZ
         await db
           .update(branches)
           .set({
-            lastNsu: maxNsu,
+            lastNsu: ultNSU,
             updatedAt: new Date(),
           })
           .where(
@@ -215,13 +228,80 @@ export class SefazService {
             )
           );
 
-        console.log(`✅ NSU atualizado: ${cert.lastNsu} → ${maxNsu}`);
+        console.log(`✅ NSU atualizado para: ${ultNSU}`);
+        console.log("⏰ Aguarde 1 hora antes de nova consulta");
+
+        return {
+          success: false,
+          xml: responseXml,
+          maxNsu: ultNSU, // Retorna ultNSU como próximo NSU
+          totalDocuments: 0,
+          error: {
+            code: "656",
+            message: xMotivo,
+            nextNsu: ultNSU,
+            waitMinutes: 60,
+          },
+        };
+      }
+
+      // Status 137: Nenhum documento localizado (normal)
+      if (cStat === "137") {
+        console.log("ℹ️  Nenhum documento novo disponível");
+        console.log(`🔢 Mantendo NSU: ${ultNSU}`);
+
+        return {
+          success: true,
+          xml: responseXml,
+          maxNsu: ultNSU,
+          totalDocuments: 0,
+        };
+      }
+
+      // Status 138: Documentos localizados
+      if (cStat !== "138") {
+        console.log(`⚠️  Status inesperado: ${cStat} - ${xMotivo}`);
+        return {
+          success: false,
+          xml: responseXml,
+          maxNsu: ultNSU,
+          totalDocuments: 0,
+          error: {
+            code: cStat || "unknown",
+            message: xMotivo,
+          },
+        };
+      }
+
+      // Conta quantos documentos vieram
+      const docZipMatches = responseXml.match(/<docZip/g);
+      const totalDocuments = docZipMatches ? docZipMatches.length : 0;
+
+      console.log(`📊 Documentos retornados: ${totalDocuments}`);
+      console.log(`🔢 Novo maxNSU: ${maxNSU}`);
+
+      // Atualiza o lastNsu da filial (apenas se maxNSU for válido)
+      if (maxNSU !== "000000000000000" && maxNSU !== cert.lastNsu) {
+        await db
+          .update(branches)
+          .set({
+            lastNsu: maxNSU,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(branches.id, this.branchId),
+              eq(branches.organizationId, this.organizationId)
+            )
+          );
+
+        console.log(`✅ NSU atualizado: ${cert.lastNsu} → ${maxNSU}`);
       }
 
       return {
         success: true,
         xml: responseXml,
-        maxNsu,
+        maxNsu: maxNSU, // ✅ Corrigido: maxNSU (maiúscula)
         totalDocuments,
       };
 
@@ -267,5 +347,57 @@ export class SefazService {
  */
 export function createSefazService(branchId: number, organizationId: number): SefazService {
   return new SefazService(branchId, organizationId);
+}
+
+/**
+ * 🤖 Função auxiliar para download e processamento automático de NFes
+ * Usada pelo cron job de importação automática
+ */
+export async function downloadNFesFromSefaz(
+  organizationId: number,
+  branchId: number,
+  cnpj: string,
+  userId: string
+): Promise<{ success: boolean; imported: number; totalDocuments: number; error?: string }> {
+  try {
+    const { processSefazResponse } = await import("@/services/sefaz-processor");
+    const sefazService = createSefazService(branchId, organizationId);
+    const downloadResult = await sefazService.getDistribuicaoDFe();
+
+    console.log(`📦 Documentos recebidos da SEFAZ: ${downloadResult.totalDocuments}`);
+
+    if (downloadResult.error) {
+      console.log(`⚠️  Erro SEFAZ: ${downloadResult.error.code} - ${downloadResult.error.message}`);
+      return {
+        success: false,
+        imported: 0,
+        totalDocuments: 0,
+        error: `${downloadResult.error.code} - ${downloadResult.error.message}`,
+      };
+    }
+
+    let imported = 0;
+    if (downloadResult.totalDocuments > 0) {
+      console.log("🤖 Processando documentos automaticamente...");
+      try {
+        const processResult = await processSefazResponse(
+          downloadResult.xml,
+          organizationId,
+          branchId,
+          userId
+        );
+        imported = processResult.imported || 0;
+        console.log(`✅ ${imported} documento(s) importado(s) com sucesso!`);
+      } catch (error: any) {
+        console.error("❌ Erro ao processar documentos:", error.message);
+        return { success: false, imported: 0, totalDocuments: downloadResult.totalDocuments, error: `Erro no processamento: ${error.message}` };
+      }
+    }
+
+    return { success: true, imported, totalDocuments: downloadResult.totalDocuments };
+  } catch (error: any) {
+    console.error("❌ Erro ao baixar NFes da SEFAZ:", error.message);
+    return { success: false, imported: 0, totalDocuments: 0, error: error.message };
+  }
 }
 
