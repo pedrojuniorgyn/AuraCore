@@ -344,8 +344,7 @@ export default function CostCentersPage() {
                 domLayout="normal"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
       </FadeIn>
 
       {/* Dialog de Criação/Edição */}

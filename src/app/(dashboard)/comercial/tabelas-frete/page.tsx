@@ -304,7 +304,7 @@ export default function FreightTablesPage() {
       </FadeIn>
 
       <FadeIn delay={0.15}>
-        <Card>
+        <div>
           <div className="space-y-4 mb-4">
             <h2 className="flex items-center gap-2">
               <Table2 className="h-5 w-5" />
@@ -356,7 +356,7 @@ export default function FreightTablesPage() {
               />
             </div>
           </div>
-          </div>
+        </div>
       </FadeIn>
 
       {/* Dialog Master-Detail */}
@@ -488,12 +488,12 @@ export default function FreightTablesPage() {
 
                 {routes.map((route, routeIndex) => (
                   <Card key={routeIndex}>
-                    <div className="space-y-4 mb-4">
-                      <h2 className="text-sm flex items-center gap-2">
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
                         <RouteIcon className="h-4 w-4" />
                         Rota #{routeIndex + 1}
-                      </h2>
-                    </div>
+                      </CardTitle>
+                    </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -610,8 +610,8 @@ export default function FreightTablesPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
-          </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </TabsContent>
 

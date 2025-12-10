@@ -182,9 +182,9 @@ export default function BranchesPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="border-white/10 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <h2 className="text-sm font-medium text-zinc-400">
+                  <CardTitle className="text-sm font-medium text-zinc-400">
                     Total de Filiais
-                  </h2>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -193,7 +193,8 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? branches.length : 0}
                     </span>
                   </div>
-          </div>
+                </CardContent>
+              </Card>
 
               <Card className="border-white/10 bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-green-500/20 transition-all">
                 <CardHeader className="pb-2">
@@ -208,13 +209,14 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? branches.filter((b) => b.active).length : 0}
                     </span>
                   </div>
-          </div>
+                </CardContent>
+              </Card>
 
               <Card className="border-white/10 bg-gradient-to-br from-red-500/10 to-rose-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-red-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <h2 className="text-sm font-medium text-zinc-400">
+                  <CardTitle className="text-sm font-medium text-zinc-400">
                     Filiais Inativas
-                  </h2>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -223,13 +225,14 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? branches.filter((b) => !b.active).length : 0}
                     </span>
                   </div>
-          </div>
+                </CardContent>
+              </Card>
 
               <Card className="border-white/10 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-purple-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <h2 className="text-sm font-medium text-zinc-400">
+                  <CardTitle className="text-sm font-medium text-zinc-400">
                     Estados
-                  </h2>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -238,7 +241,8 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? new Set(branches.map((b) => b.state)).size : 0}
                     </span>
                   </div>
-          </div>
+                </CardContent>
+              </Card>
             </div>
           </FadeIn>
 

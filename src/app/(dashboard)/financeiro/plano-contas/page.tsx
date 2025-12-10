@@ -420,8 +420,7 @@ export default function ChartOfAccountsPage() {
                 domLayout="normal"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
       </FadeIn>
 
       {/* Dialog de Criação/Edição */}

@@ -289,8 +289,7 @@ export default function ProductsPage() {
 
         {/* 📋 Grid de Produtos */}
         <FadeIn delay={0.3}>
-          <Card className="border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
-            <div className="space-y-4 mb-4">
+          <div className="space-y-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-slate-400 bg-clip-text text-transparent animate-gradient">
@@ -389,8 +388,8 @@ export default function ProductsPage() {
                 />
               </div>
             </div>
-        </FadeIn>
-      </div>
+          </FadeIn>
+        </div>
     </PageTransition>
   );
 }
