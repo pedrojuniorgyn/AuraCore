@@ -27,7 +27,6 @@ import {
   PiggyBank,
   TrendingDown
 } from "lucide-react";
-import { auraTheme } from "@/lib/ag-grid/theme";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -260,7 +259,6 @@ export default function DREGerencialPage() {
             <div className="ag-theme-quartz-dark" style={{ height: '600px', width: '100%' }}>
               <AgGridReact
                 ref={gridRef}
-                
                 rowData={dreData}
                 columnDefs={columnDefs}
                 defaultColDef={{

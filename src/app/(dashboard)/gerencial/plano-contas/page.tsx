@@ -20,7 +20,6 @@ import {
   ActionCellRenderer
 } from "@/components/ag-grid/renderers/aurora-renderers";
 import { Plus, FileText, BookOpen, Settings } from "lucide-react";
-import { auraTheme } from "@/lib/ag-grid/theme";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);

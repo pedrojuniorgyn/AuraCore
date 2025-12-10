@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { ActionCellRenderer, BooleanCellRenderer } from "@/components/ag-grid/renderers/aurora-renderers";
 import { Plus, Layers, Target, Truck, Building2 } from "lucide-react";
-import { auraTheme } from "@/lib/ag-grid/theme";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
