@@ -11,7 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef } from "ag-grid-community";

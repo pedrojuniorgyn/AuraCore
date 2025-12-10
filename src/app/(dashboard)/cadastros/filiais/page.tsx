@@ -11,7 +11,6 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Building2, MapPin, Phone, Mail, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid-theme";
 import { useTenant } from "@/contexts/tenant-context";
 import { toast } from "sonner";
