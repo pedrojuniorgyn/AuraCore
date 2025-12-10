@@ -138,7 +138,7 @@ export async function POST(req: Request) {
         level,
         linkedVehicleId: linkedVehicleId || null,
         isAnalytical: type === "ANALYTIC",
-        // class: ccClass || "BOTH", // TODO: Adicionar após migration
+        class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
         status: "ACTIVE",
         createdBy,
       })

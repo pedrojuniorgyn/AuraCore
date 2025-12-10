@@ -163,7 +163,7 @@ export async function PUT(
         parentId: parentId !== undefined ? parentId : existing[0].parentId,
         level,
         isAnalytical: type === "ANALYTIC" || existing[0].isAnalytical,
-        // class: ccClass !== undefined ? ccClass : existing[0].class, // TODO: Adicionar após migration
+        class: ccClass !== undefined ? ccClass : existing[0].class, // ✅ CLASSE
         status: status || existing[0].status,
         updatedBy,
         updatedAt: new Date(),

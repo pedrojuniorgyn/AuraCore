@@ -1240,8 +1240,7 @@ export const costCenters = mssqlTable("cost_centers", {
   linkedBranchId: int("linked_branch_id"), // FK branches
 
   // Classe (Receita/Despesa/Ambos) - ✅ FASE 2: MEL-4
-  // TODO: Descomentar após executar migration para adicionar coluna no banco
-  // class: nvarchar("class", { length: 20 }).default("BOTH"), // 'REVENUE', 'EXPENSE', 'BOTH'
+  class: nvarchar("class", { length: 20 }).default("BOTH"), // 'REVENUE', 'EXPENSE', 'BOTH'
 
   // Status
   status: nvarchar("status", { length: 20 }).default("ACTIVE"),
