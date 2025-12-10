@@ -487,13 +487,11 @@ export default function CargoRepositoryPage() {
 
         {/* Grid */}
         <FadeIn delay={0.3}>
-          <Card className="border-white/10">
-            <CardContent className="p-0">
-              <div style={{ height: 600, width: "100%" }}>
-                <AgGridReact
-                  ref={gridRef}
-                  
-                  rowData={cargos}
+          <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+            <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 450px)", width: "100%", minHeight: '500px' }}>
+              <AgGridReact
+                ref={gridRef}
+                rowData={cargos}
                   columnDefs={columnDefs}
                   defaultColDef={{
                     sortable: true,
@@ -541,9 +539,8 @@ export default function CargoRepositoryPage() {
                     of: "de",
                   }}
                 />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </FadeIn>
       </div>
     </PageTransition>
