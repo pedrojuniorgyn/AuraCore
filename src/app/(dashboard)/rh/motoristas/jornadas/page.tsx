@@ -8,7 +8,7 @@ import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { auraTheme } from "@/lib/ag-grid/theme";
-import { AlertTriangle, Clock, DollarSign, Moon, FileDown, Settings } , Edit, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock, DollarSign, Moon, FileDown, Settings, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 

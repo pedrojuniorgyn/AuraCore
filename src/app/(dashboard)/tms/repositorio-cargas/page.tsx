@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Package, MapPin, Calendar, TrendingUp, AlertCircle, Truck, Settings, RotateCcw } , Edit, Trash2 } from "lucide-react";
+import { Package, MapPin, Calendar, TrendingUp, AlertCircle, Truck, Settings, RotateCcw, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

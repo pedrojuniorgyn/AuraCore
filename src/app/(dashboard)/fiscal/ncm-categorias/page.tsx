@@ -9,7 +9,7 @@ import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animat
 import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
-import { Plus, Download, RefreshCw, Save } , Edit, Trash2 } from "lucide-react";
+import { Plus, Download, RefreshCw, Save, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
