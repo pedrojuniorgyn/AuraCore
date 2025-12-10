@@ -30,11 +30,26 @@ interface NCMCategory {
 }
 
 export default function NCMCategoriasPage() {
+  const router = useRouter();
   const [rowData, setRowData] = useState<NCMCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [chartAccounts, setChartAccounts] = useState<any[]>([]);
   const gridRef = useRef<AgGridReact>(null);
+
+  const handleEdit = (data: NCMCategory) => {
+    router.push(`/fiscal/ncm-categorias/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta categoria?")) return;
+    try {
+      const res = await fetch(`/api/fiscal/ncm-categories/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      fetchData();
+    } catch (error) { toast.error("Erro ao excluir"); }
+  };
 
   useEffect(() => {
     fetchData();

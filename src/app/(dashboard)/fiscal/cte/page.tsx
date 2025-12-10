@@ -38,8 +38,23 @@ interface Cte {
 }
 
 export default function CtePage() {
+  const router = useRouter();
   const gridRef = useRef<AgGridReact>(null);
   const [ctes, setCtes] = useState<Cte[]>([]);
+
+  const handleEdit = (data: Cte) => {
+    router.push(`/fiscal/cte/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este CTe?")) return;
+    try {
+      const res = await fetch(`/api/fiscal/cte/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      fetchCtes();
+    } catch (error) { toast.error("Erro ao excluir"); }
+  };
 
   const columnDefs: ColDef[] = [
     {

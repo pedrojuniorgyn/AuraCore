@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, AlertCircle, Calendar, Gauge } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, AlertCircle, Calendar, Gauge, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -19,9 +20,29 @@ interface MaintenancePlan {
 }
 
 export default function MaintenancePlansPage() {
+  const router = useRouter();
   const [plans, setPlans] = useState<MaintenancePlan[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const handleEdit = (data: MaintenancePlan) => {
+    router.push(`/frota/manutencao/planos/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este plano?")) return;
+    try {
+      const res = await fetch(`/api/fleet/maintenance-plans/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Sucesso", description: "Excluído com sucesso!" });
+      fetchPlans();
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     fetchPlans();

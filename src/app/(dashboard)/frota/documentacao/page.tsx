@@ -1,12 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Edit, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
 
 export default function FleetDocsPage() {
+  const router = useRouter();
   const [vehicleDocs, setVehicleDocs] = useState([]);
   const [driverDocs, setDriverDocs] = useState([]);
+
+  const handleEdit = (data: any) => {
+    router.push(`/frota/documentacao/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este documento?")) return;
+    try {
+      const res = await fetch(`/api/fleet/documents/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      // Recarregar dados
+      fetch("/api/fleet/documents?type=vehicle").then(r => r.json()).then(d => setVehicleDocs(d.data || []));
+      fetch("/api/fleet/documents?type=driver").then(r => r.json()).then(d => setDriverDocs(d.data || []));
+    } catch (error) { toast.error("Erro ao excluir"); }
+  };
 
   useEffect(() => {
     fetch("/api/fleet/documents?type=vehicle").then(r => r.json()).then(d => setVehicleDocs(d.data || []));

@@ -19,7 +19,22 @@ interface Tire {
 }
 
 export default function PneusPage() {
+  const router = useRouter();
   const [tires, setTires] = useState<Tire[]>([]);
+
+  const handleEdit = (data: Tire) => {
+    router.push(`/frota/pneus/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este pneu?")) return;
+    try {
+      const res = await fetch(`/api/fleet/tires/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      loadTires();
+    } catch (error) { toast.error("Erro ao excluir"); }
+  };
 
   useEffect(() => {
     loadTires();

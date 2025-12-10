@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Wrench, AlertTriangle, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Wrench, AlertTriangle, CheckCircle, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
@@ -47,10 +48,30 @@ const STATUS_LABELS: { [key: string]: string } = {
 };
 
 export default function WorkOrdersPage() {
+  const router = useRouter();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
+
+  const handleEdit = (data: WorkOrder) => {
+    router.push(`/frota/manutencao/ordens/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta ordem?")) return;
+    try {
+      const res = await fetch(`/api/fleet/maintenance/work-orders/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Sucesso", description: "Excluído com sucesso!" });
+      fetchOrders();
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     fetchWorkOrders();

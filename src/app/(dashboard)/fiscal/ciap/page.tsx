@@ -16,9 +16,24 @@ import { toast } from "sonner";
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 export default function CIAPPage() {
+  const router = useRouter();
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
+
+  const handleEdit = (data: any) => {
+    router.push(`/fiscal/ciap/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este ativo?")) return;
+    try {
+      const res = await fetch(`/api/ciap/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      loadData();
+    } catch (error) { toast.error("Erro ao excluir"); }
+  };
 
   const kpis = useMemo(() => ({
     assets: 28,

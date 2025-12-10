@@ -16,10 +16,25 @@ import { toast } from "sonner";
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 export default function WMSFaturamentoPage() {
+  const router = useRouter();
   const [events, setEvents] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
+
+  const handleEdit = (data: any) => {
+    router.push(`/wms/faturamento/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este faturamento?")) return;
+    try {
+      const res = await fetch(`/api/financial/billing/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      loadData();
+    } catch (error) { toast.error("Erro ao excluir"); }
+  };
 
   const kpis = useMemo(() => ({
     storage: 185000,
