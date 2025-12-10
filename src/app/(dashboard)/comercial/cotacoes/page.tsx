@@ -16,7 +16,6 @@ import { FileText, CheckCircle, XCircle, Clock, Edit, Trash2 } from "lucide-reac
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
-import { toast } from "sonner";
 
 interface Quote {
   id: number;

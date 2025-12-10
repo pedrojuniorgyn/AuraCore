@@ -34,7 +34,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
-import { toast } from "sonner";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
