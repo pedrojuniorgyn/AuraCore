@@ -100,7 +100,7 @@ export default function TaxCreditsPage() {
             </div>
           </div>
 
-      <div className="ag-theme-alpine-dark flex-1 w-full min-h-[500px]">
+      <div className="ag-theme-quartz-dark">
         <AgGridReact
           columnDefs={columnDefs}
           rowData={credits}

@@ -182,9 +182,9 @@ export default function BranchesPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="border-white/10 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-blue-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400">
+                  <h2 className="text-sm font-medium text-zinc-400">
                     Total de Filiais
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -193,14 +193,13 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? branches.length : 0}
                     </span>
                   </div>
-                </CardContent>
-              </Card>
+          </div>
 
               <Card className="border-white/10 bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-green-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400">
+                  <h2 className="text-sm font-medium text-zinc-400">
                     Filiais Ativas
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -209,14 +208,13 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? branches.filter((b) => b.active).length : 0}
                     </span>
                   </div>
-                </CardContent>
-              </Card>
+          </div>
 
               <Card className="border-white/10 bg-gradient-to-br from-red-500/10 to-rose-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-red-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400">
+                  <h2 className="text-sm font-medium text-zinc-400">
                     Filiais Inativas
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -225,14 +223,13 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? branches.filter((b) => !b.active).length : 0}
                     </span>
                   </div>
-                </CardContent>
-              </Card>
+          </div>
 
               <Card className="border-white/10 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-sm hover:shadow-lg hover:shadow-purple-500/20 transition-all">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-400">
+                  <h2 className="text-sm font-medium text-zinc-400">
                     Estados
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -241,21 +238,22 @@ export default function BranchesPage() {
                       {Array.isArray(branches) ? new Set(branches.map((b) => b.state)).size : 0}
                     </span>
                   </div>
-                </CardContent>
-              </Card>
+          </div>
             </div>
           </FadeIn>
 
           {/* Data Grid */}
           <FadeIn delay={0.2}>
-            <Card className="border-white/10 bg-slate-900/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <div className="space-y-4 mb-4">
+          <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-blue-400" />
                   Lista de Filiais
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                </h2>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
                 <div style={{ height: 600, width: "100%" }}>
                   <AgGridReact
                     ref={gridRef}
@@ -283,8 +281,7 @@ export default function BranchesPage() {
                     className="ag-theme-aura"
                   />
                 </div>
-              </CardContent>
-            </Card>
+          </div>
           </FadeIn>
         </div>
       </div>

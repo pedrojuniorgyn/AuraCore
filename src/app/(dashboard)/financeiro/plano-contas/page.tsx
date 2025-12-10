@@ -389,15 +389,8 @@ export default function ChartOfAccountsPage() {
       </StaggerContainer>
 
       <FadeIn delay={0.35}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Árvore de Contas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }} className="ag-theme-quartz-dark">
+        <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+          <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }} className="ag-theme-quartz-dark">
               <AgGridReact
                 ref={gridRef}
                 rowData={accounts}

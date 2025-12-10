@@ -276,13 +276,13 @@ export default function BranchesPage() {
 
         {/* 📋 Grid de Filiais */}
         <FadeIn delay={0.3}>
-          <Card className="border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
-            <CardHeader>
+          <div className="space-y-4 mb-4">
+          <div className="flex items-center justify-between">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-4xl font-bold bg-gradient-to-r from-slate-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                  <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
                     ⚙️ Filiais
-                  </CardTitle>
+                  </h2>
                   <p className="text-sm text-slate-400 mt-1">
                     Gerencie filiais e configurações Sefaz
                   </p>
@@ -302,8 +302,10 @@ export default function BranchesPage() {
                   </RippleButton>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
               <div style={{ height: 'calc(100vh - 650px)', width: "100%", minHeight: '400px' }}>
                 <AgGridReact
                   ref={gridRef}
@@ -355,8 +357,7 @@ export default function BranchesPage() {
                   loading={isLoading}
                 />
               </div>
-            </CardContent>
-          </Card>
+          </div>
         </FadeIn>
       </div>
     </PageTransition>

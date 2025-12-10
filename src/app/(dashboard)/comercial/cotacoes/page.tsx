@@ -300,12 +300,13 @@ export default function QuotesPage() {
 
       {/* Grid */}
       <FadeIn delay={0.2}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Cotações ({quotes.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div style={{ height: 600, width: "100%" }}>
+        <div>
+          <div className="space-y-4 mb-4">
+            <h2 className="text-2xl font-bold">Cotações ({quotes.length})</h2>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+            <div style={{ height: 600, width: "100%" }} className="ag-theme-quartz-dark">
               <AgGridReact
                 ref={gridRef}
                 
@@ -348,8 +349,8 @@ export default function QuotesPage() {
                 domLayout="normal"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </FadeIn>
     </PageTransition>
   );

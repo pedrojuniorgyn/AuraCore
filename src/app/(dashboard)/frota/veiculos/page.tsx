@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -335,14 +334,14 @@ export default function VehiclesPage() {
 
         {/* Grid */}
         <FadeIn delay={0.3}>
-          <Card className="backdrop-blur-sm bg-card/80 border-border/50">
-            <CardHeader>
+          <div>
+            <div className="space-y-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Frota de Veículos</CardTitle>
-                  <CardDescription>
+                  <h2>Frota de Veículos</h2>
+                  <p className="text-sm text-slate-400">
                     Gerenciamento completo da sua frota
-                  </CardDescription>
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -356,9 +355,9 @@ export default function VehiclesPage() {
                   </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div style={{ height: 600, width: "100%" }}>
+            </div>
+            <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+            <div style={{ height: 600, width: "100%" }} className="ag-theme-quartz-dark">
                 <AgGridReact
                   ref={gridRef}
                   
@@ -393,8 +392,8 @@ export default function VehiclesPage() {
                   }}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </FadeIn>
 
         {/* Delete Confirmation Dialog */}

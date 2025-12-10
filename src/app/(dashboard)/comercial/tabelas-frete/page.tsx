@@ -305,14 +305,14 @@ export default function FreightTablesPage() {
 
       <FadeIn delay={0.15}>
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <div className="space-y-4 mb-4">
+            <h2 className="flex items-center gap-2">
               <Table2 className="h-5 w-5" />
               Tabelas Cadastradas ({tables.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div style={{ height: 600, width: "100%" }}>
+            </h2>
+          </div>
+          <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+            <div style={{ height: 600, width: "100%" }} className="ag-theme-quartz-dark">
               <AgGridReact
                 ref={gridRef}
                 
@@ -355,8 +355,8 @@ export default function FreightTablesPage() {
                 domLayout="normal"
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          </div>
       </FadeIn>
 
       {/* Dialog Master-Detail */}
@@ -488,12 +488,12 @@ export default function FreightTablesPage() {
 
                 {routes.map((route, routeIndex) => (
                   <Card key={routeIndex}>
-                    <CardHeader>
-                      <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="space-y-4 mb-4">
+                      <h2 className="text-sm flex items-center gap-2">
                         <RouteIcon className="h-4 w-4" />
                         Rota #{routeIndex + 1}
-                      </CardTitle>
-                    </CardHeader>
+                      </h2>
+                    </div>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -610,8 +610,8 @@ export default function FreightTablesPage() {
                           </div>
                         ))}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+          </div>
                 ))}
               </TabsContent>
 

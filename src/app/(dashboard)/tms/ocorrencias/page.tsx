@@ -190,7 +190,7 @@ export default function OccurrencesPage() {
 
         {/* Grid */}
         <FadeIn delay={0.35}>
-          <div className="ag-theme-quartz-dark flex-1 w-full" style={{ height: 'calc(100vh - 550px)', minHeight: '400px' }}>
+          <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 550px)', minHeight: '400px' }}>
             <AgGridReact
               
               columnDefs={columnDefs}

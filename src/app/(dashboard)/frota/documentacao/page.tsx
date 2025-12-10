@@ -85,7 +85,7 @@ export default function FleetDocsPage() {
           <TabsTrigger value="drivers">Motoristas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="vehicles" className="ag-theme-alpine-dark h-[600px]">
+        <TabsContent value="vehicles" className="ag-theme-quartz-dark">
           <AgGridReact 
             columnDefs={vehicleColumns} 
             rowData={vehicleDocs} 
@@ -113,7 +113,7 @@ export default function FleetDocsPage() {
           />
         </TabsContent>
 
-        <TabsContent value="drivers" className="ag-theme-alpine-dark h-[600px]">
+        <TabsContent value="drivers" className="ag-theme-quartz-dark">
           <AgGridReact 
             columnDefs={driverColumns} 
             rowData={driverDocs} 

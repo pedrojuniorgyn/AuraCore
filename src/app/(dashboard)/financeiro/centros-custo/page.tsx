@@ -313,15 +313,8 @@ export default function CostCentersPage() {
       </StaggerContainer>
 
       <FadeIn delay={0.3}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FolderTree className="h-5 w-5" />
-              Árvore de Centros de Custo
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 550px)', width: "100%", minHeight: '400px' }}>
+        <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+          <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 550px)', width: "100%", minHeight: '400px' }}>
               <AgGridReact
                 ref={gridRef}
                 rowData={costCenters}
