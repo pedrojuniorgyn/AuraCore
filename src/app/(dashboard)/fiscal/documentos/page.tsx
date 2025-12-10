@@ -500,7 +500,7 @@ export default function FiscalDocumentsPage() {
           <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
             <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 380px)" }}>
               <AgGridReact
-                theme={auraTheme}
+                
                 ref={gridRef}
                 rowData={documents}
                 columnDefs={columnDefs}

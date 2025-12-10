@@ -192,7 +192,7 @@ export default function OccurrencesPage() {
         <FadeIn delay={0.35}>
           <div className="ag-theme-quartz-dark flex-1 w-full" style={{ height: 'calc(100vh - 550px)', minHeight: '400px' }}>
             <AgGridReact
-              theme={auraTheme}
+              
               columnDefs={columnDefs}
               rowData={occurrences}
               defaultColDef={{

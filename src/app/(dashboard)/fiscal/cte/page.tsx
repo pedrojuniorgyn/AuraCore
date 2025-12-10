@@ -358,7 +358,7 @@ export default function CtePage() {
             <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={ctes}
                 columnDefs={columnDefs}
                 defaultColDef={{

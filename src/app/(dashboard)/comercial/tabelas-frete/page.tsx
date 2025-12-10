@@ -315,7 +315,7 @@ export default function FreightTablesPage() {
             <div style={{ height: 600, width: "100%" }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={tables}
                 columnDefs={columnDefs}
                 defaultColDef={{

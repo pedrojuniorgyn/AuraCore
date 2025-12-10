@@ -199,7 +199,7 @@ export default function GestaoPCGPage() {
             <div className="ag-theme-quartz-dark" style={{ height: '600px', width: '100%' }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={accounts}
                 columnDefs={columnDefs}
                 defaultColDef={{
@@ -213,7 +213,7 @@ export default function GestaoPCGPage() {
                 enableRangeSelection={true}
                 pagination={true}
                 paginationPageSize={50}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

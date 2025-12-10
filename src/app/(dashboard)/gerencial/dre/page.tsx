@@ -260,7 +260,7 @@ export default function DREGerencialPage() {
             <div className="ag-theme-quartz-dark" style={{ height: '600px', width: '100%' }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={dreData}
                 columnDefs={columnDefs}
                 defaultColDef={{
@@ -283,7 +283,7 @@ export default function DREGerencialPage() {
                     }
                   ]
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

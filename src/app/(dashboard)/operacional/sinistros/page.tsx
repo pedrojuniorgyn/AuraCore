@@ -305,7 +305,7 @@ export default function SinistrosPage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
                 onRowClicked={(event) => {
                   console.log('Sinistro selecionado:', event.data);

@@ -189,7 +189,7 @@ export default function CreditosFiscaisPage() {
             <div className="ag-theme-quartz-dark" style={{ height: '600px' }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={credits}
                 columnDefs={columnDefs}
                 defaultColDef={{ sortable: true, resizable: true, filter: true }}

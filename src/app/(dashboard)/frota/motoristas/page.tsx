@@ -329,7 +329,7 @@ export default function DriversPage() {
               <div style={{ height: 600, width: "100%" }}>
                 <AgGridReact
                   ref={gridRef}
-                  theme={auraTheme}
+                  
                   rowData={drivers}
                   columnDefs={columnDefs}
                   defaultColDef={{

@@ -259,7 +259,7 @@ export default function BranchesPage() {
                 <div style={{ height: 600, width: "100%" }}>
                   <AgGridReact
                     ref={gridRef}
-                    theme={auraTheme}
+                    
                     rowData={branches}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}

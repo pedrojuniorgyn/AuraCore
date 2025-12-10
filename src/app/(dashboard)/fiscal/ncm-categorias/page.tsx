@@ -199,7 +199,7 @@ export default function NCMCategoriasPage() {
                 filter: true,
                 floatingFilter: true,
               }}
-              theme={auraTheme}
+              
               modules={[AllEnterpriseModule]}
               pagination={true}
               paginationPageSize={50}

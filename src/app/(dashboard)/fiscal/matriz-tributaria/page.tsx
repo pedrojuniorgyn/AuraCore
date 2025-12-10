@@ -292,7 +292,7 @@ export default function MatrizTributariaPage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

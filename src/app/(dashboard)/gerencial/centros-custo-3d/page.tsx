@@ -141,7 +141,7 @@ export default function GestaoCC3DPage() {
             <div className="ag-theme-quartz-dark" style={{ height: '600px' }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={costCenters}
                 columnDefs={columnDefs}
                 defaultColDef={{ sortable: true, resizable: true, filter: true }}
@@ -149,7 +149,7 @@ export default function GestaoCC3DPage() {
                 enableRangeSelection={true}
                 pagination={true}
                 paginationPageSize={50}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

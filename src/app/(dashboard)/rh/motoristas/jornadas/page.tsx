@@ -253,7 +253,7 @@ export default function JornadasPage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

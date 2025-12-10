@@ -308,7 +308,7 @@ export default function QuotesPage() {
             <div style={{ height: 600, width: "100%" }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={quotes}
                 columnDefs={columnDefs}
                 defaultColDef={{

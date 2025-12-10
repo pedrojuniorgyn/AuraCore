@@ -309,7 +309,7 @@ export default function BusinessPartnersPage() {
                   ref={gridRef}
                   rowData={rowData}
                   columnDefs={columnDefs}
-                  theme={auraTheme}
+                  
                   defaultColDef={{
                     sortable: true,
                     resizable: true,

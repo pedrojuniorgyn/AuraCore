@@ -304,7 +304,7 @@ export default function BackofficePage() {
                 }}
                 pagination={true}
                 paginationPageSize={10}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>
@@ -339,7 +339,7 @@ export default function BackofficePage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

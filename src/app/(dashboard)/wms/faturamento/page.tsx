@@ -335,7 +335,7 @@ export default function WMSFaturamentoPage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>
@@ -383,7 +383,7 @@ export default function WMSFaturamentoPage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

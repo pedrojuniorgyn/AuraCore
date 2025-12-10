@@ -309,7 +309,7 @@ export default function BranchesPage() {
                   ref={gridRef}
                   rowData={rowData}
                   columnDefs={columnDefs}
-                  theme={auraTheme}
+                  
                   autoSizeStrategy={{
                     type: "fitGridWidth",
                     defaultMinWidth: 100,

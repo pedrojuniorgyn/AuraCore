@@ -121,7 +121,7 @@ export default function MargemCtePage() {
             <div className="ag-theme-quartz-dark" style={{ height: '600px' }}>
               <AgGridReact
                 ref={gridRef}
-                theme={auraTheme}
+                
                 rowData={ctes}
                 columnDefs={columnDefs}
                 defaultColDef={{ sortable: true, resizable: true, filter: true }}
@@ -129,7 +129,7 @@ export default function MargemCtePage() {
                 enableRangeSelection={true}
                 pagination={true}
                 paginationPageSize={50}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

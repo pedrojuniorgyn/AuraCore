@@ -244,7 +244,7 @@ export default function CIAPPage() {
                   filter: true,
                   resizable: true,
                 }}
-                theme={auraTheme}
+                
                 loading={loading}
               />
             </div>

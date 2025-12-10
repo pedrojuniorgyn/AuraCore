@@ -361,7 +361,7 @@ export default function VehiclesPage() {
               <div style={{ height: 600, width: "100%" }}>
                 <AgGridReact
                   ref={gridRef}
-                  theme={auraTheme}
+                  
                   rowData={vehicles}
                   columnDefs={columnDefs}
                   defaultColDef={{
