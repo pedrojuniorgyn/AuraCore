@@ -12,9 +12,11 @@ import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animat
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
-import { Plus, Download, RefreshCw, DollarSign, TrendingUp, AlertCircle, Clock } from "lucide-react";
+import { Plus, Download, RefreshCw, DollarSign, TrendingUp, AlertCircle, Clock, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -79,6 +81,28 @@ export default function ContasReceberPage() {
       setLoading(false);
     }
   };
+
+  const handleEdit = useCallback((data: Receivable) => {
+    router.push(`/financeiro/contas-receber/editar/${data.id}`);
+  }, [router]);
+
+  const handleDelete = useCallback(async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta conta a receber?")) return;
+    try {
+      const res = await fetch(`/api/financial/receivables/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const error = await res.json();
+        toast.error(error.error || "Erro ao excluir");
+        return;
+      }
+      toast.success("Excluído com sucesso!");
+      fetchReceivables();
+    } catch (error) {
+      toast.error("Erro ao excluir");
+    }
+  }, []);
+
+  const gridContext = useMemo(() => ({ onEdit: handleEdit, onDelete: handleDelete }), [handleEdit, handleDelete]);
 
   useEffect(() => {
     fetchReceivables();
@@ -222,7 +246,24 @@ export default function ContasReceberPage() {
       flex: 1,
       filter: "agTextColumnFilter",
     },
-  ], []);
+    {
+      headerName: "Ações",
+      width: 120,
+      pinned: "right",
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: ICellRendererParams) => (
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(params.data)} title="Editar">
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(params.data.id)} title="Excluir">
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
+      ),
+    },
+  ], [handleEdit, handleDelete]);
 
   const defaultColDef: ColDef = useMemo(() => ({
     sortable: true,

@@ -12,7 +12,9 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { FileText, CheckCircle, XCircle, Clock } , Edit, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { toast } from "sonner";
 
@@ -30,8 +32,23 @@ interface Quote {
 }
 
 export default function QuotesPage() {
+  const router = useRouter();
   const gridRef = useRef<AgGridReact>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+
+  const handleEdit = (data: Quote) => {
+    router.push(`/comercial/cotacoes/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta cotação?")) return;
+    try {
+      const res = await fetch(`/api/commercial/quotes/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      fetchQuotes();
+    } catch (error) { toast.error("Erro"); }
+  };
 
   const columnDefs: ColDef[] = [
     {

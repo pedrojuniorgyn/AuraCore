@@ -1,0 +1,195 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth/context";
+import { db } from "@/lib/db";
+import { tripOccurrences } from "@/lib/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
+
+// GET - Buscar ocorrência específica
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const occurrenceId = parseInt(params.id);
+    if (isNaN(occurrenceId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    const occurrence = await db
+      .select()
+      .from(tripOccurrences)
+      .where(
+        and(
+          eq(tripOccurrences.id, occurrenceId),
+          eq(tripOccurrences.organizationId, session.user.organizationId),
+          isNull(tripOccurrences.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (occurrence.length === 0) {
+      return NextResponse.json(
+        { error: "Ocorrência não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: occurrence[0] });
+  } catch (error) {
+    console.error("Erro ao buscar ocorrência:", error);
+    return NextResponse.json(
+      { error: "Erro ao buscar ocorrência" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Atualizar ocorrência
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const occurrenceId = parseInt(params.id);
+    if (isNaN(occurrenceId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    const body = await req.json();
+
+    // Validações básicas
+    if (!body.tripId || !body.occurrenceType || !body.title) {
+      return NextResponse.json(
+        { error: "Viagem, tipo e título são obrigatórios" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se ocorrência existe
+    const existing = await db
+      .select()
+      .from(tripOccurrences)
+      .where(
+        and(
+          eq(tripOccurrences.id, occurrenceId),
+          eq(tripOccurrences.organizationId, session.user.organizationId),
+          isNull(tripOccurrences.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json(
+        { error: "Ocorrência não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // Validar mudança de status
+    if (body.status === "CLOSED" && existing[0].status !== "IN_PROGRESS") {
+      return NextResponse.json(
+        { error: "Apenas ocorrências em andamento podem ser fechadas" },
+        { status: 400 }
+      );
+    }
+
+    // Atualizar
+    const updated = await db
+      .update(tripOccurrences)
+      .set({
+        ...body,
+        updatedBy: session.user.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(tripOccurrences.id, occurrenceId))
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      message: "Ocorrência atualizada com sucesso",
+      data: updated[0],
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar ocorrência:", error);
+    return NextResponse.json(
+      { error: "Erro ao atualizar ocorrência" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Soft delete da ocorrência
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const occurrenceId = parseInt(params.id);
+    if (isNaN(occurrenceId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    // Verificar se ocorrência existe
+    const existing = await db
+      .select()
+      .from(tripOccurrences)
+      .where(
+        and(
+          eq(tripOccurrences.id, occurrenceId),
+          eq(tripOccurrences.organizationId, session.user.organizationId),
+          isNull(tripOccurrences.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json(
+        { error: "Ocorrência não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // Validar se ocorrência está vinculada a sinistro
+    if (existing[0].insuranceClaim === "S") {
+      return NextResponse.json(
+        { error: "Não é possível excluir ocorrência com sinistro registrado" },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete
+    await db
+      .update(tripOccurrences)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: session.user.id,
+      })
+      .where(eq(tripOccurrences.id, occurrenceId));
+
+    return NextResponse.json({
+      success: true,
+      message: "Ocorrência excluída com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro ao excluir ocorrência:", error);
+    return NextResponse.json(
+      { error: "Erro ao excluir ocorrência" },
+      { status: 500 }
+    );
+  }
+}

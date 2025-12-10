@@ -15,6 +15,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { Plus, Download, RefreshCw, Filter, DollarSign, TrendingUp, AlertCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -174,6 +175,38 @@ export default function ContasPagarPage() {
       setLoading(false);
     }
   };
+
+  // Handler para editar
+  const handleEdit = useCallback((data: Payable) => {
+    router.push(`/financeiro/contas-pagar/editar/${data.id}`);
+  }, [router]);
+
+  // Handler para excluir
+  const handleDelete = useCallback(async (id: number, data: Payable) => {
+    try {
+      const response = await fetch(`/api/financial/payables/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        toast.error(error.error || "Erro ao excluir conta a pagar");
+        return;
+      }
+
+      toast.success("Conta a pagar excluída com sucesso!");
+      fetchPayables(); // Recarregar dados
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      toast.error("Erro ao excluir conta a pagar");
+    }
+  }, []);
+
+  // Context para o AG Grid (passa handlers para PremiumActionCell)
+  const gridContext = useMemo(() => ({
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+  }), [handleEdit, handleDelete]);
 
   useEffect(() => {
     fetchPayables();
@@ -499,6 +532,7 @@ export default function ContasPagarPage() {
               rowData={payables}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
+              context={gridContext}
               masterDetail={true}
               detailCellRenderer={DetailCellRenderer}
               detailRowAutoHeight={true}

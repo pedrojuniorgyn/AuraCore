@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Package, MapPin, Calendar, TrendingUp, AlertCircle, Truck, Settings, RotateCcw } from "lucide-react";
+import { Package, MapPin, Calendar, TrendingUp, AlertCircle, Truck, Settings, RotateCcw } , Edit, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,12 +67,27 @@ const COLUMN_LABELS: Record<string, string> = {
 };
 
 export default function CargoRepositoryPage() {
+  const router = useRouter();
   const { currentBranch } = useTenant();
   const gridRef = useRef<any>(null);
-  
+
   const [cargos, setCargos] = useState<ICargo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("PENDING");
+
+  const handleEdit = (data: ICargo) => {
+    router.push(`/tms/repositorio-cargas/editar/${data.id}`);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta carga?")) return;
+    try {
+      const res = await fetch(`/api/tms/cargo-repository/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      fetchCargos();
+    } catch (error) { toast.error("Erro"); }
+  };
   const [kpis, setKpis] = useState({
     totalPending: 0,
     totalValue: 0,

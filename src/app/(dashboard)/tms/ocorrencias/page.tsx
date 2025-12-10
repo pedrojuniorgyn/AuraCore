@@ -7,7 +7,9 @@ import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animat
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { AlertTriangle, AlertCircle, CheckCircle, FileText } from "lucide-react";
+import { AlertTriangle, AlertCircle, CheckCircle, FileText } , Edit, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
 
 export default function OccurrencesPage() {

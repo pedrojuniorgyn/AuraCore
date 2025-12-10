@@ -37,7 +37,7 @@ import {
   DollarSign,
   FileCheck,
   Receipt
-} from "lucide-react";
+} , Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DocumentDetailModal } from "@/components/fiscal/document-detail-modal";
 

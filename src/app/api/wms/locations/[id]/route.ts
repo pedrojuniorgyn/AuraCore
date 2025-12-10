@@ -1,0 +1,210 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth/context";
+import { db } from "@/lib/db";
+import { wmsLocations } from "@/lib/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
+
+// GET - Buscar endereço WMS específico
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const locationId = parseInt(params.id);
+    if (isNaN(locationId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    const location = await db
+      .select()
+      .from(wmsLocations)
+      .where(
+        and(
+          eq(wmsLocations.id, locationId),
+          eq(wmsLocations.organizationId, session.user.organizationId),
+          isNull(wmsLocations.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (location.length === 0) {
+      return NextResponse.json(
+        { error: "Endereço WMS não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: location[0] });
+  } catch (error) {
+    console.error("Erro ao buscar endereço WMS:", error);
+    return NextResponse.json(
+      { error: "Erro ao buscar endereço WMS" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Atualizar endereço WMS
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const locationId = parseInt(params.id);
+    if (isNaN(locationId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    const body = await req.json();
+
+    // Validações básicas
+    if (!body.warehouseId || !body.code) {
+      return NextResponse.json(
+        { error: "Armazém e código são obrigatórios" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se endereço existe
+    const existing = await db
+      .select()
+      .from(wmsLocations)
+      .where(
+        and(
+          eq(wmsLocations.id, locationId),
+          eq(wmsLocations.organizationId, session.user.organizationId),
+          isNull(wmsLocations.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json(
+        { error: "Endereço WMS não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Verificar código duplicado
+    if (body.code !== existing[0].code) {
+      const duplicateCode = await db
+        .select()
+        .from(wmsLocations)
+        .where(
+          and(
+            eq(wmsLocations.code, body.code),
+            eq(wmsLocations.warehouseId, body.warehouseId),
+            eq(wmsLocations.organizationId, session.user.organizationId),
+            isNull(wmsLocations.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (duplicateCode.length > 0 && duplicateCode[0].id !== locationId) {
+        return NextResponse.json(
+          { error: "Já existe um endereço com este código neste armazém" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Atualizar
+    const updated = await db
+      .update(wmsLocations)
+      .set({
+        ...body,
+        updatedBy: session.user.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(wmsLocations.id, locationId))
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      message: "Endereço WMS atualizado com sucesso",
+      data: updated[0],
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar endereço WMS:", error);
+    return NextResponse.json(
+      { error: "Erro ao atualizar endereço WMS" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Soft delete do endereço WMS
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const locationId = parseInt(params.id);
+    if (isNaN(locationId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    // Verificar se endereço existe
+    const existing = await db
+      .select()
+      .from(wmsLocations)
+      .where(
+        and(
+          eq(wmsLocations.id, locationId),
+          eq(wmsLocations.organizationId, session.user.organizationId),
+          isNull(wmsLocations.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json(
+        { error: "Endereço WMS não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Validar se tem estoque
+    if (existing[0].currentQuantity > 0) {
+      return NextResponse.json(
+        { error: "Não é possível excluir endereço com estoque" },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete
+    await db
+      .update(wmsLocations)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: session.user.id,
+      })
+      .where(eq(wmsLocations.id, locationId));
+
+    return NextResponse.json({
+      success: true,
+      message: "Endereço WMS excluído com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro ao excluir endereço WMS:", error);
+    return NextResponse.json(
+      { error: "Erro ao excluir endereço WMS" },
+      { status: 500 }
+    );
+  }
+}

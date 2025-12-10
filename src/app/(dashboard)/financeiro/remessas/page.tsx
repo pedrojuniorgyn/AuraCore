@@ -17,7 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download, FileText, Send, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Download, FileText, Send, CheckCircle2, XCircle, Clock, Edit, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import {
   StatusCellRenderer,
@@ -70,12 +71,27 @@ interface IBankAccount {
 }
 
 export default function RemittancesPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const gridRef = useRef<AgGridReact>(null);
   const historyGridRef = useRef<AgGridReact>(null);
 
   const [selectedPayableIds, setSelectedPayableIds] = useState<number[]>([]);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<number | null>(null);
+
+  const handleEdit = useCallback((data: IRemittance) => {
+    router.push(`/financeiro/remessas/editar/${data.id}`);
+  }, [router]);
+
+  const handleDelete = useCallback(async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta remessa?")) return;
+    try {
+      const res = await fetch(`/api/financial/remittances/${id}`, { method: "DELETE" });
+      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      toast.success("Excluído com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["remittances"] });
+    } catch (error) { toast.error("Erro ao excluir"); }
+  }, [queryClient]);
 
   // === QUERIES ===
   const { data: payables = [], isLoading: loadingPayables } = useQuery({

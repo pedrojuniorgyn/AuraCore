@@ -288,7 +288,14 @@ export function PremiumActionCell(props: ICellRendererParams) {
         title="Editar"
         onMouseEnter={(e) => handleMouseEnter(e, "#8B5CF6")}
         onMouseLeave={handleMouseLeave}
-        onClick={() => alert(`Editar #${props.data.id}`)}
+        onClick={() => {
+          // Chama handler customizado se fornecido via context
+          if (props.context?.onEdit) {
+            props.context.onEdit(props.data);
+          } else {
+            alert(`Editar #${props.data.id} - Configure onEdit no context do AG Grid`);
+          }
+        }}
       >
         <Edit className="h-4 w-4" />
       </button>
@@ -298,7 +305,13 @@ export function PremiumActionCell(props: ICellRendererParams) {
         title="Download"
         onMouseEnter={(e) => handleMouseEnter(e, "#10B981")}
         onMouseLeave={handleMouseLeave}
-        onClick={() => alert(`Download #${props.data.id}`)}
+        onClick={() => {
+          if (props.context?.onDownload) {
+            props.context.onDownload(props.data);
+          } else {
+            alert(`Download #${props.data.id}`);
+          }
+        }}
       >
         <Download className="h-4 w-4" />
       </button>
@@ -309,8 +322,13 @@ export function PremiumActionCell(props: ICellRendererParams) {
         onMouseEnter={(e) => handleMouseEnter(e, "#EF4444")}
         onMouseLeave={handleMouseLeave}
         onClick={() => {
-          if (confirm("Confirma exclusão?")) {
-            alert(`Excluir #${props.data.id}`);
+          if (confirm("Tem certeza que deseja excluir este registro?")) {
+            // Chama handler customizado se fornecido via context
+            if (props.context?.onDelete) {
+              props.context.onDelete(props.data.id, props.data);
+            } else {
+              alert(`Excluir #${props.data.id} - Configure onDelete no context do AG Grid`);
+            }
           }
         }}
       >

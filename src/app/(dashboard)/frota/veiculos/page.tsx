@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Truck, Cog, CheckCircle2, AlertCircle, Wrench } from "lucide-react";
+import { Plus, Truck, Cog, CheckCircle2, AlertCircle, Wrench, Edit, Trash2 } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
@@ -17,7 +17,18 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { LicensePlate } from "@/components/fleet/LicensePlate";
 import { getStatusConfig } from "@/lib/utils/status-colors";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // === TYPES ===
 interface IVehicle {
@@ -35,7 +46,11 @@ interface IVehicle {
 
 export default function VehiclesPage() {
   const gridRef = useRef<AgGridReact>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // === QUERY ===
   const { data: vehicles = [], isLoading } = useQuery({
@@ -48,6 +63,40 @@ export default function VehiclesPage() {
       return json.data || [];
     },
   });
+
+  // === HANDLERS ===
+  const handleEdit = (vehicle: IVehicle) => {
+    router.push(`/frota/veiculos/editar/${vehicle.id}`);
+  };
+
+  const handleDelete = (id: number) => {
+    setDeleteId(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      const res = await fetch(`/api/fleet/vehicles/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        toast.error(error.error || "Erro ao excluir veículo");
+        return;
+      }
+
+      toast.success("Veículo excluído com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      setShowDeleteDialog(false);
+      setDeleteId(null);
+    } catch (error) {
+      console.error("Erro ao excluir veículo:", error);
+      toast.error("Erro ao excluir veículo");
+    }
+  };
 
   // === STATS ===
   const stats = {
@@ -145,11 +194,29 @@ export default function VehiclesPage() {
     },
     {
       headerName: "Ações",
-      width: 100,
+      width: 120,
+      pinned: "right",
+      sortable: false,
+      filter: false,
       cellRenderer: (params: any) => (
-        <Button variant="outline" size="sm">
-          <Cog className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(params.data)}
+            title="Editar"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(params.data.id)}
+            title="Excluir"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -329,6 +396,29 @@ export default function VehiclesPage() {
             </CardContent>
           </Card>
         </FadeIn>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este veículo? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   );
