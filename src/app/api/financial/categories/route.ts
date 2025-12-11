@@ -55,6 +55,18 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
+    // Mapeia tipo: INCOME → ENTRADA, EXPENSE → SAIDA
+    const tipoMovimento = body.type === 'INCOME' ? 'ENTRADA' : 'SAIDA';
+    
+    // Determina grupo_dfc (padrão: OPERACIONAL)
+    let grupoDfc = 'OPERACIONAL';
+    const name = (body.name || '').toLowerCase();
+    if (name.includes('ativo') || name.includes('imobilizado')) {
+      grupoDfc = 'INVESTIMENTO';
+    } else if (name.includes('empréstimo') || name.includes('financiamento') || name.includes('lucro')) {
+      grupoDfc = 'FINANCIAMENTO';
+    }
+
     await db.insert(financialCategories).values({
       organizationId: ctx.organizationId,
       name: body.name,
@@ -62,6 +74,10 @@ export async function POST(request: NextRequest) {
       type: body.type,
       description: body.description || null,
       status: "ACTIVE",
+      codigoEstruturado: body.code || null, // ✅ DFC
+      tipoMovimento: tipoMovimento, // ✅ DFC
+      grupoDfc: grupoDfc, // ✅ DFC
+      permiteLancamento: 1, // ✅ DFC
       createdBy: ctx.userId,
       updatedBy: ctx.userId,
       version: 1,

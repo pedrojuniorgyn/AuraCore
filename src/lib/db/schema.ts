@@ -531,6 +531,12 @@ export const financialCategories = mssqlTable("financial_categories", {
   type: nvarchar("type", { length: 20 }).notNull(), // 'INCOME', 'EXPENSE'
   description: nvarchar("description", { length: "max" }),
   
+  // DFC (Demonstrativo de Fluxo de Caixa) - NOVOS CAMPOS ✅
+  codigoEstruturado: nvarchar("codigo_estruturado", { length: 20 }),
+  tipoMovimento: nvarchar("tipo_movimento", { length: 20 }), // 'ENTRADA', 'SAIDA', 'TRANSFERENCIA'
+  grupoDfc: nvarchar("grupo_dfc", { length: 20 }), // 'OPERACIONAL', 'INVESTIMENTO', 'FINANCIAMENTO'
+  permiteLancamento: int("permite_lancamento").default(1),
+  
   // Enterprise Base
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
   createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
