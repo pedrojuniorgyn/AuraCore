@@ -3032,6 +3032,134 @@ export const externalCtes = mssqlTable("external_ctes", {
   version: int("version").default(1),
 });
 
+// ==========================================
+// TABELAS TRANSACIONAIS (THE ENGINE)
+// ==========================================
+// Tabelas que registram operações diárias e geram lançamentos contábeis
+
+// 1. DIÁRIO CONTÁBIL (Journal/Ledger) - Coração do Sistema Financeiro
+export const lancamentosContabeis = mssqlTable("lancamentos_contabeis", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  
+  // Datas
+  dataLancamento: datetime2("data_lancamento").notNull().default(new Date()),
+  dataCompetencia: datetime2("data_competencia").notNull(),
+  
+  // Vínculos Obrigatórios com Master Data
+  idPlanoContas: int("id_plano_contas").notNull(),
+  idPlanoContasGerencial: int("id_plano_contas_gerencial"),
+  idCentroCusto: int("id_centro_custo").notNull(),
+  
+  // Informações do Lançamento
+  historico: nvarchar("historico", { length: 500 }).notNull(),
+  valor: decimal("valor", { precision: 15, scale: 2 }).notNull(),
+  tipoLancamento: nvarchar("tipo_lancamento", { length: 1 }).notNull(),
+  
+  // Rastreabilidade
+  origemModulo: nvarchar("origem_modulo", { length: 20 }),
+  idOrigemExterna: bigint("id_origem_externa", { mode: "bigint" }),
+  loteContabil: nvarchar("lote_contabil", { length: 50 }),
+  
+  // Status
+  status: nvarchar("status", { length: 20 }).default("PENDENTE"),
+  
+  // Enterprise Base
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  createdBy: nvarchar("created_by", { length: 255 }),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  deletedAt: datetime2("deleted_at"),
+});
+
+// 2. COMPRAS - ITENS (Detalhamento de NF de Compra)
+export const comprasEntradaItem = mssqlTable("compras_entrada_item", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  // Header
+  idHeader: bigint("id_header", { mode: "bigint" }).notNull(),
+  
+  // Produto
+  descricaoProduto: nvarchar("descricao_produto", { length: 255 }).notNull(),
+  ncmUtilizado: nvarchar("ncm_utilizado", { length: 10 }).notNull(),
+  
+  // Classificação Gerencial
+  idPcgItem: int("id_pcg_item").notNull(),
+  idCentroCustoAplicacao: int("id_centro_custo_aplicacao").notNull(),
+  
+  // Valores
+  quantidade: decimal("quantidade", { precision: 12, scale: 4 }).notNull(),
+  valorUnitario: decimal("valor_unitario", { precision: 15, scale: 4 }).notNull(),
+  valorTotalItem: decimal("valor_total_item", { precision: 15, scale: 2 }).notNull(),
+  
+  // Flags Fiscais
+  isMonofasico: int("is_monofasico").default(0),
+  isIcmsSt: int("is_icms_st").default(0),
+  isIcmsDiferimento: int("is_icms_diferimento").default(0),
+  isIpiSuspenso: int("is_ipi_suspenso").default(0),
+  
+  // Impostos
+  valorIcms: decimal("valor_icms", { precision: 15, scale: 2 }),
+  valorIpi: decimal("valor_ipi", { precision: 15, scale: 2 }),
+  valorPis: decimal("valor_pis", { precision: 15, scale: 2 }),
+  valorCofins: decimal("valor_cofins", { precision: 15, scale: 2 }),
+  
+  // Enterprise Base
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  createdBy: nvarchar("created_by", { length: 255 }),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  deletedAt: datetime2("deleted_at"),
+});
+
+// 3. FROTA - ABASTECIMENTOS
+export const frotaAbastecimentos = mssqlTable("frota_abastecimentos", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull(),
+  
+  // Data e Localização
+  dataAbastecimento: datetime2("data_abastecimento").notNull().default(new Date()),
+  localAbastecimento: nvarchar("local_abastecimento", { length: 255 }),
+  
+  // Vínculos
+  idAtivo: int("id_ativo").notNull(),
+  idMotorista: int("id_motorista"),
+  
+  // Classificação
+  idPcgCombustivel: int("id_pcg_combustivel").notNull(),
+  
+  // Volumes
+  litros: decimal("litros", { precision: 10, scale: 3 }).notNull(),
+  hodometroAtual: int("hodometro_atual").notNull(),
+  hodometroAnterior: int("hodometro_anterior"),
+  
+  // Valores
+  valorLitro: decimal("valor_litro", { precision: 10, scale: 4 }).notNull(),
+  valorTotal: decimal("valor_total", { precision: 15, scale: 2 }).notNull(),
+  
+  // Performance
+  kmRodados: int("km_rodados"),
+  mediaKmL: decimal("media_km_l", { precision: 5, scale: 2 }),
+  
+  // Tipo
+  tipoAbastecimento: nvarchar("tipo_abastecimento", { length: 20 }).default("INTERNO"),
+  numeroCupomFiscal: nvarchar("numero_cupom_fiscal", { length: 50 }),
+  
+  // Controle
+  validado: int("validado").default(0),
+  observacoes: nvarchar("observacoes", { length: 500 }),
+  
+  // Enterprise Base
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  createdBy: nvarchar("created_by", { length: 255 }),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  deletedAt: datetime2("deleted_at"),
+});
+
 // --- NOTIFICATIONS (Sistema de Notificações) ---
 
 export const notifications = mssqlTable("notifications", {
