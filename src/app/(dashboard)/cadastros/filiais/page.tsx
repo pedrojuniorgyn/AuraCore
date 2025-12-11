@@ -258,13 +258,12 @@ export default function BranchesPage() {
         </div>
 
         <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
-                <div style={{ height: 600, width: "100%" }}>
-                  <AgGridReact
-                    ref={gridRef}
-                    
-                    rowData={branches}
-                    columnDefs={columnDefs}
-                    defaultColDef={defaultColDef}
+          <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 300px)', width: "100%" }}>
+            <AgGridReact
+              ref={gridRef}
+              rowData={branches}
+              columnDefs={columnDefs}
+              defaultColDef={defaultColDef}
                     sideBar={{
                       toolPanels: [
                         { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
@@ -282,10 +281,9 @@ export default function BranchesPage() {
                     loading={loading}
                     animateRows={true}
                     enableCellTextSelection={true}
-                    className="ag-theme-aura"
                   />
-                </div>
           </div>
+        </div>
           </FadeIn>
         </div>
       </div>

@@ -170,3 +170,4 @@ ALTER TABLE management_chart_of_accounts ADD updated_by NVARCHAR(255) NULL;
 **Data:** 10/12/2025  
 **Status:** ✅ 100% COMPLETO
 
+

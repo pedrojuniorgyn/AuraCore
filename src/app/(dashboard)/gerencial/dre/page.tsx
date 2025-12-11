@@ -256,7 +256,7 @@ export default function DREGerencialPage() {
               </div>
             </div>
 
-            <div className="ag-theme-quartz-dark" style={{ height: '600px', width: '100%' }}>
+            <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 300px)", width: '100%' }}>
               <AgGridReact
                 ref={gridRef}
                 rowData={dreData}

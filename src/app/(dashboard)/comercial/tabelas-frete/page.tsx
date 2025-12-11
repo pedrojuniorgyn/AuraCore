@@ -312,7 +312,7 @@ export default function FreightTablesPage() {
             </h2>
           </div>
           <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
-            <div style={{ height: 600, width: "100%" }} className="ag-theme-quartz-dark">
+            <div style={{ height: "calc(100vh - 300px)", width: "100%" }} className="ag-theme-quartz-dark">
               <AgGridReact
                 ref={gridRef}
                 

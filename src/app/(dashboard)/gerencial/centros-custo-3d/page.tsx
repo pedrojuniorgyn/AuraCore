@@ -137,7 +137,7 @@ export default function GestaoCC3DPage() {
           <GlassmorphismCard>
             <GradientText className="text-2xl mb-4">Centros de Custo Tridimensionais</GradientText>
             
-            <div className="ag-theme-quartz-dark" style={{ height: '600px' }}>
+            <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 300px)" }}>
               <AgGridReact
                 ref={gridRef}
                 

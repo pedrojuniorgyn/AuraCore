@@ -109,3 +109,4 @@ WHERE organization_id = 1 AND deleted_at IS NULL;
 **Data:** 10/12/2025  
 **Status:** ✅ OPERACIONAL
 
+

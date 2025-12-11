@@ -186,7 +186,7 @@ export default function CreditosFiscaisPage() {
               </RippleButton>
             </div>
 
-            <div className="ag-theme-quartz-dark" style={{ height: '600px' }}>
+            <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 300px)" }}>
               <AgGridReact
                 ref={gridRef}
                 

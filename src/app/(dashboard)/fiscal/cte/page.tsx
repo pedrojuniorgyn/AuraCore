@@ -347,16 +347,16 @@ export default function CtePage() {
 
       {/* Grid */}
       <FadeIn delay={0.2}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              CTes Emitidos ({ctes.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div style={{ height: 'calc(100vh - 600px)', width: "100%", minHeight: '400px' }}>
-              <AgGridReact
+        <div className="space-y-4 mb-4">
+          <h2 className="flex items-center gap-2 text-xl font-semibold">
+            <FileText className="h-5 w-5 text-blue-400" />
+            CTes Emitidos ({ctes.length})
+          </h2>
+        </div>
+        
+        <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
+          <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 300px)', width: "100%" }}>
+            <AgGridReact
                 ref={gridRef}
                 
                 rowData={ctes}
@@ -385,9 +385,8 @@ export default function CtePage() {
                 paginationPageSizeSelector={[10, 20, 50, 100]}
                 domLayout="normal"
               />
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </FadeIn>
     </PageTransition>
   );

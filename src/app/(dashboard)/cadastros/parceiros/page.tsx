@@ -306,8 +306,8 @@ export default function BusinessPartnersPage() {
         </div>
 
         <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
-              <div style={{ height: 'calc(100vh - 650px)', width: "100%", minHeight: '400px' }}>
-                <AgGridReact
+          <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 300px)', width: "100%" }}>
+            <AgGridReact
                   ref={gridRef}
                   rowData={rowData}
                   columnDefs={columnDefs}
@@ -375,9 +375,9 @@ export default function BusinessPartnersPage() {
                   }}
                   loading={isLoading}
                 />
-              </div>
           </div>
-        </FadeIn>
+        </div>
+      </FadeIn>
       </div>
     </PageTransition>
   );
