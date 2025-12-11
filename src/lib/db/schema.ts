@@ -1258,6 +1258,43 @@ export const costCenters = mssqlTable("cost_centers", {
     .where(sql`deleted_at IS NULL`),
 ]));
 
+// --- PCG NCM RULES (Relacionamento Gerencial x Fiscal) ---
+
+export const pcgNcmRules = mssqlTable("pcg_ncm_rules", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+  
+  // Vinculação
+  pcgId: int("pcg_id").notNull(), // FK management_chart_of_accounts
+  ncmCode: nvarchar("ncm_code", { length: 10 }).notNull(),
+  ncmDescription: nvarchar("ncm_description", { length: 255 }),
+  
+  // Flags de Inteligência Fiscal
+  flagPisCofinsMono: int("flag_pis_cofins_monofasico").default(0).notNull(),
+  flagIcmsSt: int("flag_icms_st").default(0).notNull(),
+  flagIcmsDif: int("flag_icms_diferimento").default(0).notNull(),
+  flagIpiSuspenso: int("flag_ipi_suspenso").default(0).notNull(),
+  flagImportacao: int("flag_importacao").default(0).notNull(),
+  
+  // Prioridade
+  priority: int("priority").default(100).notNull(),
+  
+  // Status
+  isActive: int("is_active").default(1).notNull(),
+  
+  // Enterprise Base
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  createdBy: nvarchar("created_by", { length: 255 }),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+}, (table) => ([
+  uniqueIndex("pcg_ncm_rules_org_pcg_ncm_idx")
+    .on(table.organizationId, table.pcgId, table.ncmCode)
+    .where(sql`deleted_at IS NULL`),
+]));
+
 // --- PLANO DE CONTAS GERENCIAL (Dimensional) ---
 
 export const chartOfAccounts = mssqlTable("chart_of_accounts", {
