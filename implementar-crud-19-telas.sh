@@ -219,3 +219,5 @@ echo "💾 Para reverter (se necessário):"
 echo "  find src -name '*.backup' -exec sh -c 'mv \"\$1\" \"\${1%.backup}\"' _ {} \;"
 echo ""
 echo "🎉 PRONTO!"
+
+

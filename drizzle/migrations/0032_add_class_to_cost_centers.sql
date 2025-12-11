@@ -29,3 +29,5 @@ GO
 
 PRINT 'Migration 0032 executada com sucesso!';
 GO
+
+

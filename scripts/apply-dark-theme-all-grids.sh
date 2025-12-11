@@ -56,3 +56,5 @@ echo "📊 Total: $count arquivos encontrados"
 echo ""
 echo "🎨 Aplicando tema ESCURO (Monitor Fiscal)..."
 echo ""
+
+

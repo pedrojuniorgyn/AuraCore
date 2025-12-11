@@ -252,3 +252,5 @@ SELECT COUNT(*) as total FROM cost_centers WHERE organization_id = 1;
 **Autor:** Sistema Aura Core  
 **Data:** 10/12/2025  
 **Status:** ✅ PRONTO PARA PRODUÇÃO
+
+

@@ -186,3 +186,5 @@ O tema correto do Monitor de Documentos Fiscais foi replicado para todas as 33 t
 **Autor:** Sistema Aura Core  
 **Data:** 10/12/2025  
 **Status:** ✅ PRONTO
+
+

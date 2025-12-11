@@ -161,3 +161,5 @@ npx tsx run-migration-0032.ts
 **🎉 SISTEMA FUNCIONANDO NORMALMENTE MESMO SEM A COLUNA! 🎉**
 
 **TODO:** Executar migration SQL quando tiver acesso ao banco.
+
+

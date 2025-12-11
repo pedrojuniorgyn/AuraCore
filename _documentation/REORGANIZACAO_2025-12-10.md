@@ -291,3 +291,5 @@ A estrutura do projeto AuraCore foi completamente reorganizada seguindo as melho
 **Versão do Projeto:** AuraCore v1.0
 
 🎉 **Projeto agora com estrutura enterprise-grade!** 🎉
+
+

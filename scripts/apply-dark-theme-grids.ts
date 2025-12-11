@@ -124,3 +124,5 @@ console.log(`  ✅ Processados: ${processedCount}`);
 console.log(`  ⏭️  Ignorados: ${files.length - processedCount - errorCount}`);
 console.log(`  ❌ Erros: ${errorCount}`);
 console.log(`\n✅ Tema escuro aplicado com sucesso!\n`);
+
+

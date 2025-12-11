@@ -121,3 +121,5 @@ Os seguintes arquivos essenciais permanecem na raiz do projeto:
 **Organizado por:** Arquiteto de Software  
 **Data:** Dezembro 2025  
 **Versão:** 1.0
+
+
