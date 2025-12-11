@@ -163,3 +163,4 @@ npx tsx run-migration-0032.ts
 **TODO:** Executar migration SQL quando tiver acesso ao banco.
 
 
+

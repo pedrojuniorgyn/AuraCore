@@ -342,3 +342,4 @@ adicionar-colunas-acoes.sh ℹ️ INSTRUÇÕES
 🎉 **HANDLERS 100% COMPLETOS! APENAS COLUNAS FALTAM!** 🎉
 
 
+

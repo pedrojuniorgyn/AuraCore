@@ -296,3 +296,4 @@ Conforme solicitado, o **mesmo padrão visual e técnico de Contas a Pagar** foi
 **Próxima vez:** ✅ **SEMPRE TUDO DE UMA VEZ!**
 
 
+

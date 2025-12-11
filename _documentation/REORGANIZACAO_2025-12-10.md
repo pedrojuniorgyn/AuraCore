@@ -293,3 +293,4 @@ A estrutura do projeto AuraCore foi completamente reorganizada seguindo as melho
 🎉 **Projeto agora com estrutura enterprise-grade!** 🎉
 
 
+

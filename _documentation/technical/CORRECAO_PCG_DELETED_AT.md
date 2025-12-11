@@ -108,3 +108,4 @@ WHERE organization_id = 1 AND deleted_at IS NULL;
 **Autor:** Sistema Aura Core  
 **Data:** 10/12/2025  
 **Status:** ✅ OPERACIONAL
+

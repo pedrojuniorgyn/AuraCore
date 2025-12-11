@@ -81,3 +81,4 @@ for (const file of files) {
 console.log(`\n✅ ${count} arquivos corrigidos!\n`);
 
 
+
