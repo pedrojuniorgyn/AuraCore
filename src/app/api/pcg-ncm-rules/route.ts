@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { organizationId } = await getTenantContext();
+    const { organizationId } = getTenantContext();
     const { searchParams } = new URL(request.url);
     const pcgId = searchParams.get("pcg_id");
 
@@ -96,59 +96,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se já existe
+    // ✅ FIX: Remover verificação duplicada para evitar race condition
+    // O banco já tem constraint UNIQUE em (organization_id, ncm_code)
+    // Deixar o banco tratar e capturar o erro adequadamente
+    
     const pool = await ensureConnection();
-    const existing = await pool
-      .request()
-      .input("organizationId", sql.Int, organizationId)
-      .input("ncmCode", sql.NVarChar, body.ncmCode)
-      .query(`
-        SELECT id FROM pcg_ncm_rules
-        WHERE organization_id = @organizationId
-          AND ncm_code = @ncmCode
-          AND deleted_at IS NULL
-      `);
 
-    if (existing.recordset.length > 0) {
-      return NextResponse.json(
-        { error: "Já existe uma regra para este NCM" },
-        { status: 400 }
-      );
+    try {
+      // Inserir diretamente, sem verificação prévia
+      await pool
+        .request()
+        .input("organizationId", sql.Int, organizationId)
+        .input("pcgId", sql.Int, body.pcgId)
+        .input("ncmCode", sql.NVarChar, body.ncmCode)
+        .input("ncmDescription", sql.NVarChar, body.ncmDescription || null)
+        .input("flagPisCofinsMono", sql.Bit, body.flagPisCofinsMono ? 1 : 0)
+        .input("flagIcmsSt", sql.Bit, body.flagIcmsSt ? 1 : 0)
+        .input("flagIcmsDif", sql.Bit, body.flagIcmsDif ? 1 : 0)
+        .input("flagIpiSuspenso", sql.Bit, body.flagIpiSuspenso ? 1 : 0)
+        .input("flagImportacao", sql.Bit, body.flagImportacao ? 1 : 0)
+        .input("priority", sql.Int, body.priority || 100)
+        .input("createdBy", sql.NVarChar, userId)
+        .query(`
+          INSERT INTO pcg_ncm_rules (
+            organization_id, pcg_id, ncm_code, ncm_description,
+            flag_pis_cofins_monofasico, flag_icms_st, flag_icms_diferimento,
+            flag_ipi_suspenso, flag_importacao, priority, is_active,
+            created_by, created_at, updated_at, version
+          )
+          VALUES (
+            @organizationId, @pcgId, @ncmCode, @ncmDescription,
+            @flagPisCofinsMono, @flagIcmsSt, @flagIcmsDif,
+            @flagIpiSuspenso, @flagImportacao, @priority, 1,
+            @createdBy, GETDATE(), GETDATE(), 1
+          )
+        `);
+
+      return NextResponse.json({
+        success: true,
+        message: "Regra criada com sucesso",
+      });
+    } catch (dbError: any) {
+      // Capturar erro de violação de constraint UNIQUE
+      if (dbError.number === 2627 || dbError.message?.includes('duplicate') || dbError.message?.includes('UNIQUE')) {
+        return NextResponse.json(
+          { error: "Já existe uma regra para este NCM" },
+          { status: 400 }
+        );
+      }
+      // Re-lançar outros erros
+      throw dbError;
     }
-
-    // Inserir
-    await pool
-      .request()
-      .input("organizationId", sql.Int, organizationId)
-      .input("pcgId", sql.Int, body.pcgId)
-      .input("ncmCode", sql.NVarChar, body.ncmCode)
-      .input("ncmDescription", sql.NVarChar, body.ncmDescription || null)
-      .input("flagPisCofinsMono", sql.Bit, body.flagPisCofinsMono ? 1 : 0)
-      .input("flagIcmsSt", sql.Bit, body.flagIcmsSt ? 1 : 0)
-      .input("flagIcmsDif", sql.Bit, body.flagIcmsDif ? 1 : 0)
-      .input("flagIpiSuspenso", sql.Bit, body.flagIpiSuspenso ? 1 : 0)
-      .input("flagImportacao", sql.Bit, body.flagImportacao ? 1 : 0)
-      .input("priority", sql.Int, body.priority || 100)
-      .input("createdBy", sql.NVarChar, userId)
-      .query(`
-        INSERT INTO pcg_ncm_rules (
-          organization_id, pcg_id, ncm_code, ncm_description,
-          flag_pis_cofins_monofasico, flag_icms_st, flag_icms_diferimento,
-          flag_ipi_suspenso, flag_importacao, priority, is_active,
-          created_by, created_at, updated_at, version
-        )
-        VALUES (
-          @organizationId, @pcgId, @ncmCode, @ncmDescription,
-          @flagPisCofinsMono, @flagIcmsSt, @flagIcmsDif,
-          @flagIpiSuspenso, @flagImportacao, @priority, 1,
-          @createdBy, GETDATE(), GETDATE(), 1
-        )
-      `);
-
-    return NextResponse.json({
-      success: true,
-      message: "Regra criada com sucesso",
-    });
   } catch (error: any) {
     console.error("Erro ao criar regra:", error);
     return NextResponse.json(
