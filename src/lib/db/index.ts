@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-mssql";
 import sql from "mssql";
-import * as schema from "./schema";
+import * as schema from "./schema.ts";
 
 const connectionConfig = {
   user: process.env.DB_USER,
