@@ -1,7 +1,6 @@
 /**
  * 📊 ACCOUNTING SCHEMA - Estrutura Contábil do Aura Core
- * 
- * Implementa o padrão Fiscal → Contábil → Financeiro
+ * * Implementa o padrão Fiscal → Contábil → Financeiro
  * conforme benchmarks de Totvs, SAP e Oracle NetSuite
  */
 
@@ -19,8 +18,7 @@ import { sqlServerTable } from "./base";
 
 /**
  * 🗂️ FISCAL DOCUMENTS (Unificada)
- * 
- * Centraliza TODOS os documentos fiscais e não-fiscais:
+ * * Centraliza TODOS os documentos fiscais e não-fiscais:
  * - NFe (entrada)
  * - CTe (saída)
  * - NFSe
@@ -100,8 +98,7 @@ export const fiscalDocuments = sqlServerTable("fiscal_documents", {
 
 /**
  * 📦 FISCAL DOCUMENT ITEMS (Itens dos Documentos)
- * 
- * Detalhamento por item/produto de cada documento fiscal
+ * * Detalhamento por item/produto de cada documento fiscal
  */
 export const fiscalDocumentItems = sqlServerTable("fiscal_document_items", {
   id: bigint("id", { mode: "number" }).primaryKey().identity(),
@@ -157,8 +154,7 @@ export const fiscalDocumentItems = sqlServerTable("fiscal_document_items", {
 
 /**
  * 📚 JOURNAL ENTRIES (Lançamentos Contábeis)
- * 
- * Cabeçalho dos lançamentos contábeis
+ * * Cabeçalho dos lançamentos contábeis
  */
 export const journalEntries = sqlServerTable("journal_entries", {
   id: bigint("id", { mode: "number" }).primaryKey().identity(),
@@ -210,8 +206,7 @@ export const journalEntries = sqlServerTable("journal_entries", {
 
 /**
  * 📝 JOURNAL ENTRY LINES (Linhas dos Lançamentos)
- * 
- * Partidas dobradas (débito/crédito)
+ * * Partidas dobradas (débito/crédito)
  */
 export const journalEntryLines = sqlServerTable("journal_entry_lines", {
   id: bigint("id", { mode: "number" }).primaryKey().identity(),
@@ -246,8 +241,7 @@ export const journalEntryLines = sqlServerTable("journal_entry_lines", {
 
 /**
  * 💰 FINANCIAL TRANSACTIONS (Transações Financeiras)
- * 
- * Detalhamento de baixas com juros, multa, IOF, tarifas
+ * * Detalhamento de baixas com juros, multa, IOF, tarifas
  */
 export const financialTransactions = sqlServerTable("financial_transactions", {
   id: bigint("id", { mode: "number" }).primaryKey().identity(),
@@ -294,15 +288,3 @@ export const financialTransactions = sqlServerTable("financial_transactions", {
   updatedBy: bigint("updated_by", { mode: "number" }).notNull(),
   version: int("version").notNull().default(1),
 });
-
-
-
-
-
-
-
-
-
-
-
-

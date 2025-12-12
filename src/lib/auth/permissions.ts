@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { userRoles, rolePermissions, permissions } from "@/lib/db/schema";
+import { userRoles, rolePermissions, permissions, roles } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -15,13 +15,19 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
     await ensureConnection();
 
     const result = await db
-      .select({ code: permissions.code })
+      // ✅ No schema, o identificador da permissão é "slug" (não existe "code")
+      .select({ slug: permissions.slug })
       .from(permissions)
       .innerJoin(rolePermissions, eq(rolePermissions.permissionId, permissions.id))
       .innerJoin(userRoles, eq(userRoles.roleId, rolePermissions.roleId))
       .where(eq(userRoles.userId, userId));
 
-    return result.some((p) => p.code === permissionCode);
+    // ✅ Super-permissão: se o usuário tem admin.full, ele pode tudo
+    if (result.some((p) => p.slug === "admin.full")) {
+      return true;
+    }
+
+    return result.some((p) => p.slug === permissionCode);
   } catch (error) {
     console.error("❌ Erro ao verificar permissão:", error);
     return false;
@@ -38,13 +44,14 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
     await ensureConnection();
 
     const result = await db
-      .select({ code: permissions.code })
+      // ✅ No schema, o identificador da permissão é "slug" (não existe "code")
+      .select({ slug: permissions.slug })
       .from(permissions)
       .innerJoin(rolePermissions, eq(rolePermissions.permissionId, permissions.id))
       .innerJoin(userRoles, eq(userRoles.roleId, rolePermissions.roleId))
       .where(eq(userRoles.userId, userId));
 
-    return result.map((p) => p.code);
+    return result.map((p) => p.slug);
   } catch (error) {
     console.error("❌ Erro ao obter permissões:", error);
     return [];
@@ -87,9 +94,10 @@ export async function getUserRoles(userId: string) {
     const result = await db
       .select({
         roleId: userRoles.roleId,
-        roleName: permissions.code, // Temporário - ajustar join
+        roleName: roles.name,
       })
       .from(userRoles)
+      .innerJoin(roles, eq(roles.id, userRoles.roleId))
       .where(eq(userRoles.userId, userId));
 
     return result;

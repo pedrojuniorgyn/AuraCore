@@ -1,14 +1,18 @@
-import { defineRelations, sql } from "drizzle-orm";
-import {
-  int,
-  bigint,
-  nvarchar,
-  datetime2,
-  decimal,
-  mssqlTable,
-  uniqueIndex,
-  primaryKey,
+// Coisas genéricas (sql, relations) vêm de "drizzle-orm"
+import { relations, sql } from "drizzle-orm"; 
+
+// Coisas específicas do SQL Server (tabelas, tipos) vêm de "drizzle-orm/mssql-core"
+import { 
+  int, 
+  bigint, 
+  nvarchar, 
+  datetime2, 
+  decimal, 
+  mssqlTable, 
+  uniqueIndex, 
+  primaryKey 
 } from "drizzle-orm/mssql-core";
+
 import { type AdapterAccount } from "next-auth/adapters";
 
 // ==========================================
@@ -3193,7 +3197,7 @@ export const notifications = mssqlTable("notifications", {
   readAt: datetime2("read_at"),
 
   // Auditoria
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
 // ==========================================
@@ -3201,3 +3205,4 @@ export const notifications = mssqlTable("notifications", {
 // ==========================================
 export * from "./schema/accounting";
 
+// 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑

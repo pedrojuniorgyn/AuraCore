@@ -1,79 +1,68 @@
 import { drizzle } from "drizzle-orm/node-mssql";
 import sql from "mssql";
-import * as schema from "./schema.ts";
+import * as schema from "./schema";
+import { isIP } from "node:net";
 
-const connectionConfig = {
+const dbHost = process.env.DB_HOST || "localhost";
+const dbPort = Number(process.env.DB_PORT ?? "1433");
+const dbEncrypt = (process.env.DB_ENCRYPT ?? "false") === "true";
+const dbTrustServerCertificate = (process.env.DB_TRUST_CERT ?? "true") === "true";
+const dbServerName = process.env.DB_SERVERNAME; // hostname do certificado/SNI (obrigatório se DB_HOST for IP + encrypt=true)
+
+// Tedious (via mssql) não permite SNI usando IP quando encrypt=true.
+if (dbEncrypt && isIP(dbHost) && !dbServerName) {
+  throw new Error(
+    `Config inválida: DB_ENCRYPT=true com DB_HOST em IP (${dbHost}). ` +
+      `Defina DB_SERVERNAME=<hostname do certificado/SNI> ou desligue TLS com DB_ENCRYPT=false.`
+  );
+}
+
+// 1. Configuração Robusta do Banco
+const connectionConfig: sql.config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  server: process.env.DB_HOST || "localhost",
+  server: dbHost,
+  port: dbPort,
   database: process.env.DB_NAME,
-  pool: {
-    max: 50, // Máximo de 50 conexões simultâneas
-    min: 5,  // Mínimo de 5 conexões mantidas
-    idleTimeoutMillis: 30000, // Fecha conexões ociosas após 30s
-  },
   options: {
-    encrypt: false,
-    trustServerCertificate: true,
-    enableArithAbort: true, // Recomendado para SQL Server
+    encrypt: dbEncrypt,
+    trustServerCertificate: dbTrustServerCertificate,
+    enableArithAbort: true,
+    ...(dbServerName ? { serverName: dbServerName } : {}),
   },
-  connectionTimeout: 30000, // 30 segundos para conectar
-  requestTimeout: 60000,    // 60 segundos para executar queries
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  }
 };
 
-// Singleton pattern para evitar múltiplas conexões em hot-reload
-const globalForDb = global as unknown as { 
-  conn: sql.ConnectionPool;
-  isConnecting: boolean;
+// 2. Singleton Global para evitar múltiplas conexões no Hot Reload
+const globalForDb = globalThis as unknown as {
+  conn: sql.ConnectionPool | undefined;
 };
 
-export const pool = globalForDb.conn || new sql.ConnectionPool(connectionConfig);
+let conn: sql.ConnectionPool;
 
-if (process.env.NODE_ENV !== "production") globalForDb.conn = pool;
+if (!globalForDb.conn) {
+  // Cria o pool apenas uma vez
+  globalForDb.conn = new sql.ConnectionPool(connectionConfig);
+}
+conn = globalForDb.conn;
 
-// Função para garantir conexão antes de usar
+// 3. Conexão Assíncrona (Não bloqueia o app, mas loga o sucesso/erro)
+if (!conn.connected && !conn.connecting) {
+    conn.connect()
+      .then(() => console.log("✅ [SQL Server] Conectado com sucesso!"))
+      .catch((err) => console.error("❌ [SQL Server] Falha fatal ao conectar:", err));
+}
+
+// 4. Exports de Compatibilidade (Para não quebrar seus Cron Jobs antigos)
+export const pool = conn;
 export const ensureConnection = async () => {
-  if (pool.connected) {
-    return pool;
-  }
-
-  if (pool.connecting || globalForDb.isConnecting) {
-    // Aguarda a conexão em andamento
-    let attempts = 0;
-    while ((pool.connecting || globalForDb.isConnecting) && attempts < 50) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      attempts++;
-    }
-    if (pool.connected) {
-      return pool;
-    }
-  }
-
-  // Inicia nova conexão
-  globalForDb.isConnecting = true;
-  try {
-    await pool.connect();
-    console.log("✅ Database connected successfully");
-  } catch (error) {
-    console.error("❌ Database connection failed:", error);
-    throw error;
-  } finally {
-    globalForDb.isConnecting = false;
-  }
-
-  return pool;
+    if (!conn.connected) await conn.connect();
+    return conn;
 };
 
-// SOLUÇÃO SIMPLES: Criar db síncrono para versão beta antiga do Drizzle
-// Esta versão beta do Drizzle não suporta lazy initialization complexa
-
-// Criar pool MAS SEM conectar ainda
-export const db = drizzle(pool);
-
-// Conectar pool DEPOIS de criar drizzle (para esta versão beta específica)
-ensureConnection().catch((err) => console.error("Falha na conexão DB inicial:", err));
-
-export const getDb = async () => {
-  await ensureConnection();
-  return db;
-};
+// 5. Instância do Drizzle
+export const db = drizzle({ client: conn, schema });
