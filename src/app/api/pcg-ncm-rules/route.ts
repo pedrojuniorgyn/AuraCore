@@ -1,83 +1,158 @@
-/**
- * API: PCG NCM RULES
- * 
- * Endpoint para sugerir NCMs baseado na conta gerencial selecionada.
- * Usado em formulários de entrada de mercadoria, produtos, etc.
- */
-
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getTenantContext } from "@/lib/auth/context";
-import { suggestNcmsByPcg, listActivePcgs } from "@/services/accounting/pcg-ncm-classifier";
+import { ensureConnection } from "@/lib/db";
+import sql from "mssql";
+
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/pcg-ncm-rules
- * 
- * Query Params:
- * - pcg_id: ID da conta gerencial (opcional)
- * - list_pcgs: "true" para listar todas as contas gerenciais
- * 
- * Exemplos:
- * - GET /api/pcg-ncm-rules?pcg_id=1
- *   → Retorna NCMs sugeridos para PCG ID 1
- * 
- * - GET /api/pcg-ncm-rules?list_pcgs=true
- *   → Retorna todas as contas gerenciais ativas
+ * Lista todas as regras PCG-NCM
  */
 export async function GET(request: NextRequest) {
   try {
+    await ensureConnection();
     const session = await auth();
+
     if (!session?.user) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
     const { organizationId } = getTenantContext();
     const { searchParams } = new URL(request.url);
-    
-    // Opção 1: Listar PCGs
-    const listPcgs = searchParams.get("list_pcgs");
-    if (listPcgs === "true") {
-      const pcgs = await listActivePcgs(organizationId);
-      return NextResponse.json({
-        success: true,
-        data: pcgs,
-        total: pcgs.length,
-      });
+    const pcgId = searchParams.get("pcg_id");
+
+    let query = `
+      SELECT 
+        r.id,
+        r.ncm_code as ncmCode,
+        r.ncm_description as ncmDescription,
+        r.pcg_id as pcgId,
+        r.flag_pis_cofins_monofasico as flagPisCofinsMono,
+        r.flag_icms_st as flagIcmsSt,
+        r.flag_icms_diferimento as flagIcmsDif,
+        r.flag_ipi_suspenso as flagIpiSuspenso,
+        r.flag_importacao as flagImportacao,
+        r.priority,
+        r.is_active as isActive,
+        r.created_at as createdAt,
+        p.code as pcgCode,
+        p.name as pcgName
+      FROM pcg_ncm_rules r
+      LEFT JOIN management_chart_of_accounts p ON r.pcg_id = p.id
+      WHERE r.organization_id = @organizationId
+        AND r.deleted_at IS NULL
+    `;
+
+    if (pcgId) {
+      query += ` AND r.pcg_id = @pcgId`;
     }
 
-    // Opção 2: Sugerir NCMs por PCG
-    const pcgId = searchParams.get("pcg_id");
-    if (!pcgId) {
+    query += ` ORDER BY r.priority ASC, r.ncm_code ASC`;
+
+    const pool = await ensureConnection();
+    const result = await pool
+      .request()
+      .input("organizationId", sql.Int, organizationId)
+      .input("pcgId", sql.Int, pcgId ? parseInt(pcgId) : null)
+      .query(query);
+
+    return NextResponse.json({
+      success: true,
+      data: result.recordset,
+      total: result.recordset.length,
+    });
+  } catch (error: any) {
+    console.error("Erro ao buscar regras PCG-NCM:", error);
+    return NextResponse.json(
+      { error: error.message || "Erro ao buscar regras" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/pcg-ncm-rules
+ * Cria uma nova regra PCG-NCM
+ */
+export async function POST(request: NextRequest) {
+  try {
+    await ensureConnection();
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const { organizationId, userId } = getTenantContext();
+    const body = await request.json();
+
+    // Validações
+    if (!body.ncmCode || !body.pcgId) {
       return NextResponse.json(
-        { 
-          error: "Query parameter 'pcg_id' ou 'list_pcgs=true' é obrigatório",
-          usage: {
-            suggestions: "/api/pcg-ncm-rules?pcg_id=1",
-            listPcgs: "/api/pcg-ncm-rules?list_pcgs=true",
-          }
-        },
+        { error: "NCM e PCG são obrigatórios" },
         { status: 400 }
       );
     }
 
-    const suggestions = await suggestNcmsByPcg(
-      parseInt(pcgId),
-      organizationId
-    );
+    // Verificar se já existe
+    const pool = await ensureConnection();
+    const existing = await pool
+      .request()
+      .input("organizationId", sql.Int, organizationId)
+      .input("ncmCode", sql.NVarChar, body.ncmCode)
+      .query(`
+        SELECT id FROM pcg_ncm_rules
+        WHERE organization_id = @organizationId
+          AND ncm_code = @ncmCode
+          AND deleted_at IS NULL
+      `);
+
+    if (existing.recordset.length > 0) {
+      return NextResponse.json(
+        { error: "Já existe uma regra para este NCM" },
+        { status: 400 }
+      );
+    }
+
+    // Inserir
+    await pool
+      .request()
+      .input("organizationId", sql.Int, organizationId)
+      .input("pcgId", sql.Int, body.pcgId)
+      .input("ncmCode", sql.NVarChar, body.ncmCode)
+      .input("ncmDescription", sql.NVarChar, body.ncmDescription || null)
+      .input("flagPisCofinsMono", sql.Bit, body.flagPisCofinsMono ? 1 : 0)
+      .input("flagIcmsSt", sql.Bit, body.flagIcmsSt ? 1 : 0)
+      .input("flagIcmsDif", sql.Bit, body.flagIcmsDif ? 1 : 0)
+      .input("flagIpiSuspenso", sql.Bit, body.flagIpiSuspenso ? 1 : 0)
+      .input("flagImportacao", sql.Bit, body.flagImportacao ? 1 : 0)
+      .input("priority", sql.Int, body.priority || 100)
+      .input("createdBy", sql.NVarChar, userId)
+      .query(`
+        INSERT INTO pcg_ncm_rules (
+          organization_id, pcg_id, ncm_code, ncm_description,
+          flag_pis_cofins_monofasico, flag_icms_st, flag_icms_diferimento,
+          flag_ipi_suspenso, flag_importacao, priority, is_active,
+          created_by, created_at, updated_at, version
+        )
+        VALUES (
+          @organizationId, @pcgId, @ncmCode, @ncmDescription,
+          @flagPisCofinsMono, @flagIcmsSt, @flagIcmsDif,
+          @flagIpiSuspenso, @flagImportacao, @priority, 1,
+          @createdBy, GETDATE(), GETDATE(), 1
+        )
+      `);
 
     return NextResponse.json({
       success: true,
-      data: suggestions,
-      total: suggestions.length,
-      pcgId: parseInt(pcgId),
+      message: "Regra criada com sucesso",
     });
   } catch (error: any) {
-    console.error("❌ Erro em /api/pcg-ncm-rules:", error);
+    console.error("Erro ao criar regra:", error);
     return NextResponse.json(
-      { 
-        error: error.message || "Erro interno ao buscar regras PCG-NCM",
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined,
-      },
+      { error: error.message || "Erro ao criar regra" },
       { status: 500 }
     );
   }

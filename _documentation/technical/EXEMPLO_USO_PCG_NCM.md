@@ -441,3 +441,4 @@ expect(flags).toBeNull();
 **Status:** ✅ Refatoração Completa e Documentada  
 **Autor:** Sistema Aura Core  
 **Data:** 11/12/2025
+

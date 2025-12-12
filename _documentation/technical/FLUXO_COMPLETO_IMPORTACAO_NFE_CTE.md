@@ -1361,3 +1361,4 @@ const itemFinalValue = itemValue + itemIpi + itemFreight + itemInsurance;
 **Data:** 11/12/2025  
 **Versão:** 2.0 (Análise Completa)  
 **Status:** ✅ DOCUMENTADO
+

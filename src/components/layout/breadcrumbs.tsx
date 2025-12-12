@@ -178,3 +178,4 @@ export function Breadcrumbs({ className }: BreadcrumbsProps) {
     </nav>
   );
 }
+
