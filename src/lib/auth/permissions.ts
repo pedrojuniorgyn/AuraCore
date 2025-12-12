@@ -33,6 +33,10 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
  */
 export async function getUserPermissions(userId: string): Promise<string[]> {
   try {
+    // ✅ Garantir conexão antes de usar db
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+
     const result = await db
       .select({ code: permissions.code })
       .from(permissions)
@@ -76,6 +80,10 @@ export async function hasAllPermissions(userId: string, permissionCodes: string[
  */
 export async function getUserRoles(userId: string) {
   try {
+    // ✅ Garantir conexão antes de usar db
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+
     const result = await db
       .select({
         roleId: userRoles.roleId,
