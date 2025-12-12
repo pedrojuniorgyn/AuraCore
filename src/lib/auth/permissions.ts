@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { userRoles, rolePermissions, permissions } from "@/lib/db/schema";
+import { userRoles, rolePermissions, permissions } from "@/lib/db/schema.ts";
 import { eq } from "drizzle-orm";
 
 /**
