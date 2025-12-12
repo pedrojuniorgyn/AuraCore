@@ -78,3 +78,6 @@ files.forEach((filePath) => {
 console.log(`\n✅ ${totalFixed} arquivos atualizados!`);
 console.log(`📊 Altura padrão: ${targetHeight}\n`);
 
+
+
+

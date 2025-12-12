@@ -240,3 +240,6 @@ export async function createReceivablesFromCTe(
 
 
 
+
+
+

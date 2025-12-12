@@ -289,3 +289,6 @@ O Git guarda tudo em `.git/` localmente.
 
 **Última atualização:** 13/12/2025  
 **Status:** Pronto para fechar com segurança
+
+
+

@@ -1362,3 +1362,6 @@ const itemFinalValue = itemValue + itemIpi + itemFreight + itemInsurance;
 **Versão:** 2.0 (Análise Completa)  
 **Status:** ✅ DOCUMENTADO
 
+
+
+

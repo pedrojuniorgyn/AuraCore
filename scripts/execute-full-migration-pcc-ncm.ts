@@ -265,3 +265,6 @@ run().catch((error) => {
   console.error("Erro fatal:", error);
   process.exit(1);
 });
+
+
+

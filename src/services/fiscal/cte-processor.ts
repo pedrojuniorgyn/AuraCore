@@ -238,3 +238,6 @@ export async function parseCTeXML(xmlContent: string): Promise<ParsedCTe> {
 
 
 
+
+
+

@@ -523,3 +523,6 @@ npx tsx scripts/migrate-missing-ncms.ts
 **Auditor:** Sistema Aura Core  
 **Data:** 12 de Dezembro de 2025  
 **Status:** ✅ AUDITORIA NCM COMPLETA - AGUARDANDO DECISÃO
+
+
+
