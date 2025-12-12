@@ -67,7 +67,8 @@ export const ensureConnection = async () => {
 // Conecta no startup (sem await para não bloquear)
 ensureConnection().catch((err) => console.error("Falha na conexão DB inicial:", err));
 
-export const db = drizzle({ client: pool, schema });
+// API correta para drizzle-orm/node-mssql com esta versão beta
+export const db = drizzle(pool, { schema });
 
 export const getDb = async () => {
   await ensureConnection();
