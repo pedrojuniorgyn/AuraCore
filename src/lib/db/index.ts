@@ -64,22 +64,39 @@ export const ensureConnection = async () => {
   return pool;
 };
 
-// Conecta no startup (sem await para não bloquear)
-ensureConnection().catch((err) => console.error("Falha na conexão DB inicial:", err));
-
-// Criar db de forma lazy para evitar erro com pool undefined
+// Criar db de forma lazy, garantindo que pool está conectado
 let _db: ReturnType<typeof drizzle> | undefined;
 
+const initDb = async () => {
+  if (_db) return _db;
+  
+  // Garante que pool está conectado antes de criar drizzle
+  await ensureConnection();
+  
+  // Agora sim podemos criar o drizzle com pool conectado
+  _db = drizzle(pool, { schema });
+  return _db;
+};
+
+// Proxy que garante init assíncrono do db
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
   get(target, prop) {
-    if (!_db) {
-      _db = drizzle(pool, { schema });
-    }
-    return (_db as any)[prop];
+    // Para métodos assíncronos, retorna uma função que primeiro inicializa
+    return function(...args: any[]) {
+      return initDb().then(db => {
+        const method = (db as any)[prop];
+        if (typeof method === 'function') {
+          return method.apply(db, args);
+        }
+        return method;
+      });
+    };
   }
 });
 
 export const getDb = async () => {
-  await ensureConnection();
-  return db;
+  return await initDb();
 };
+
+// Conecta no startup (mas não bloqueia)
+ensureConnection().catch((err) => console.error("Falha na conexão DB inicial:", err));
