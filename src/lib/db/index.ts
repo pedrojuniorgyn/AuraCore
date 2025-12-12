@@ -64,39 +64,16 @@ export const ensureConnection = async () => {
   return pool;
 };
 
-// Criar db de forma lazy, garantindo que pool está conectado
-let _db: ReturnType<typeof drizzle> | undefined;
+// SOLUÇÃO SIMPLES: Criar db síncrono para versão beta antiga do Drizzle
+// Esta versão beta do Drizzle não suporta lazy initialization complexa
 
-const initDb = async () => {
-  if (_db) return _db;
-  
-  // Garante que pool está conectado antes de criar drizzle
-  await ensureConnection();
-  
-  // Agora sim podemos criar o drizzle com pool conectado
-  _db = drizzle(pool, { schema });
-  return _db;
-};
+// Criar pool MAS SEM conectar ainda
+export const db = drizzle(pool);
 
-// Proxy que garante init assíncrono do db
-export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get(target, prop) {
-    // Para métodos assíncronos, retorna uma função que primeiro inicializa
-    return function(...args: any[]) {
-      return initDb().then(db => {
-        const method = (db as any)[prop];
-        if (typeof method === 'function') {
-          return method.apply(db, args);
-        }
-        return method;
-      });
-    };
-  }
-});
+// Conectar pool DEPOIS de criar drizzle (para esta versão beta específica)
+ensureConnection().catch((err) => console.error("Falha na conexão DB inicial:", err));
 
 export const getDb = async () => {
-  return await initDb();
+  await ensureConnection();
+  return db;
 };
-
-// Conecta no startup (mas não bloqueia)
-ensureConnection().catch((err) => console.error("Falha na conexão DB inicial:", err));
