@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -14,12 +15,44 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { UserPlus, Shield, Edit, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface User {
   id: string;
   name: string | null;
   email: string | null;
   roles: { id: number; name: string }[];
+  googleLinked?: boolean;
+}
+
+interface RoleOption {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+interface BranchOption {
+  id: number;
+  name: string;
+  tradeName: string;
+  document: string;
 }
 
 export default function UsersManagementPage() {
@@ -27,9 +60,30 @@ export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteRoleId, setInviteRoleId] = useState<string>("");
+  const [inviteBranchIds, setInviteBranchIds] = useState<number[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [inviting, setInviting] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editRoleIds, setEditRoleIds] = useState<number[]>([]);
+  const [editBranchIds, setEditBranchIds] = useState<number[]>([]);
+  const [savingAccess, setSavingAccess] = useState(false);
+
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (!inviteOpen) return;
+    loadInviteData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteOpen]);
 
   const fetchUsers = async () => {
     try {
@@ -42,6 +96,141 @@ export default function UsersManagementPage() {
       console.error("Erro ao carregar usuários:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadInviteData = async () => {
+    try {
+      const [rolesRes, branchesRes] = await Promise.all([
+        fetch("/api/admin/roles", { credentials: "include" }),
+        fetch("/api/branches", { credentials: "include" }),
+      ]);
+
+      if (rolesRes.ok) {
+        const data = await rolesRes.json();
+        setRoles(data.data || []);
+      }
+
+      if (branchesRes.ok) {
+        const data = await branchesRes.json();
+        setBranches(data.data || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados do convite:", error);
+    }
+  };
+
+  const toggleBranch = (branchId: number) => {
+    setInviteBranchIds((prev) =>
+      prev.includes(branchId) ? prev.filter((id) => id !== branchId) : [...prev, branchId]
+    );
+  };
+
+  const toggleEditBranch = (branchId: number) => {
+    setEditBranchIds((prev) =>
+      prev.includes(branchId) ? prev.filter((id) => id !== branchId) : [...prev, branchId]
+    );
+  };
+
+  const toggleEditRole = (roleId: number) => {
+    setEditRoleIds((prev) =>
+      prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]
+    );
+  };
+
+  const openEdit = async (u: User) => {
+    setEditingUser(u);
+    setEditOpen(true);
+    setSavingAccess(false);
+
+    try {
+      // garante opções carregadas
+      if (roles.length === 0 || branches.length === 0) {
+        await loadInviteData();
+      }
+
+      const res = await fetch(`/api/admin/users/${u.id}/access`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Falha ao carregar acessos");
+
+      setEditRoleIds(data.data.roleIds || []);
+      setEditBranchIds(data.data.branchIds || []);
+    } catch (err: any) {
+      toast.error("Erro ao carregar acessos", { description: err?.message });
+    }
+  };
+
+  const submitAccessUpdate = async () => {
+    if (!editingUser) return;
+    if (editRoleIds.length === 0) {
+      toast.error("Selecione ao menos 1 role");
+      return;
+    }
+
+    setSavingAccess(true);
+    try {
+      const res = await fetch(`/api/admin/users/${editingUser.id}/access`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          roleIds: editRoleIds,
+          branchIds: editBranchIds,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Falha ao atualizar acessos");
+
+      toast.success("Acessos atualizados");
+      setEditOpen(false);
+      setEditingUser(null);
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error("Erro ao atualizar acessos", { description: err?.message });
+    } finally {
+      setSavingAccess(false);
+    }
+  };
+
+  const submitInvite = async () => {
+    if (!inviteEmail || !inviteRoleId) {
+      toast.error("Preencha email e role");
+      return;
+    }
+
+    setInviting(true);
+    try {
+      const res = await fetch("/api/admin/users/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: inviteEmail,
+          name: inviteName || undefined,
+          roleId: Number(inviteRoleId),
+          branchIds: inviteBranchIds,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Falha ao convidar usuário");
+      }
+
+      toast.success("Usuário convidado", {
+        description: "Ele já pode logar com Google Workspace (email corporativo).",
+      });
+
+      setInviteOpen(false);
+      setInviteEmail("");
+      setInviteName("");
+      setInviteRoleId("");
+      setInviteBranchIds([]);
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error("Erro ao convidar usuário", { description: err?.message });
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -80,11 +269,100 @@ export default function UsersManagementPage() {
             Controle de acesso e permissões (RBAC)
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setInviteOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Convidar Usuário
         </Button>
       </div>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="sm:max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle>Convidar usuário (Google Workspace)</DialogTitle>
+            <DialogDescription>
+              Modelo A: o colaborador só consegue logar com Google se o e-mail já estiver pré-cadastrado aqui.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="inviteEmail">Email *</Label>
+              <Input
+                id="inviteEmail"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="colaborador@suaempresa.com.br"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="inviteName">Nome (opcional)</Label>
+              <Input
+                id="inviteName"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                placeholder="Nome do colaborador"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Role *</Label>
+              <Select value={inviteRoleId} onValueChange={setInviteRoleId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o perfil..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={String(r.id)}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Dica: para admins, selecione o role <code>ADMIN</code>.
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Filiais permitidas</Label>
+              {branches.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Nenhuma filial encontrada.</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {branches.map((b) => (
+                    <label
+                      key={b.id}
+                      className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30"
+                    >
+                      <Checkbox
+                        checked={inviteBranchIds.includes(b.id)}
+                        onCheckedChange={() => toggleBranch(b.id)}
+                      />
+                      <div className="leading-tight">
+                        <div className="font-medium">{b.tradeName || b.name}</div>
+                        <div className="text-xs text-muted-foreground">{b.document}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Se não selecionar filiais, o usuário pode ficar sem acesso a telas que exigem Data Scoping.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteOpen(false)} disabled={inviting}>
+              Cancelar
+            </Button>
+            <Button onClick={submitInvite} disabled={inviting}>
+              {inviting ? "Convidando..." : "Convidar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -99,6 +377,7 @@ export default function UsersManagementPage() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Roles</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
@@ -106,7 +385,7 @@ export default function UsersManagementPage() {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     Nenhum usuário encontrado
                   </TableCell>
                 </TableRow>
@@ -115,6 +394,13 @@ export default function UsersManagementPage() {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name || "—"}</TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      {user.googleLinked ? (
+                        <Badge variant="secondary">Ativo</Badge>
+                      ) : (
+                        <Badge variant="outline">Pendente (1º login)</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {user.roles.length === 0 ? (
@@ -130,7 +416,7 @@ export default function UsersManagementPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="sm">
@@ -145,6 +431,89 @@ export default function UsersManagementPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>Editar acessos</DialogTitle>
+            <DialogDescription>
+              Ajuste roles e filiais permitidas do usuário selecionado.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!editingUser ? (
+            <div className="text-sm text-muted-foreground">Nenhum usuário selecionado.</div>
+          ) : (
+            <div className="grid gap-4">
+              <div className="rounded-md border p-3">
+                <div className="text-sm font-medium">{editingUser.name || "—"}</div>
+                <div className="text-xs text-muted-foreground">{editingUser.email}</div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Roles *</Label>
+                {roles.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">Carregando roles...</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {roles.map((r) => (
+                      <label
+                        key={r.id}
+                        className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30"
+                      >
+                        <Checkbox
+                          checked={editRoleIds.includes(r.id)}
+                          onCheckedChange={() => toggleEditRole(r.id)}
+                        />
+                        <div className="leading-tight">
+                          <div className="font-medium">{r.name}</div>
+                          {r.description ? (
+                            <div className="text-xs text-muted-foreground">{r.description}</div>
+                          ) : null}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Filiais permitidas</Label>
+                {branches.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">Carregando filiais...</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {branches.map((b) => (
+                      <label
+                        key={b.id}
+                        className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/30"
+                      >
+                        <Checkbox
+                          checked={editBranchIds.includes(b.id)}
+                          onCheckedChange={() => toggleEditBranch(b.id)}
+                        />
+                        <div className="leading-tight">
+                          <div className="font-medium">{b.tradeName || b.name}</div>
+                          <div className="text-xs text-muted-foreground">{b.document}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={savingAccess}>
+              Fechar
+            </Button>
+            <Button onClick={submitAccessUpdate} disabled={savingAccess || !editingUser}>
+              {savingAccess ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>

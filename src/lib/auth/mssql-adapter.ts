@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema";
 import { type Adapter } from "next-auth/adapters";
@@ -6,20 +6,27 @@ import { type Adapter } from "next-auth/adapters";
 export function MSSQLDrizzleAdapter(): Adapter {
   return {
     async createUser(data) {
-      const id = crypto.randomUUID();
-      await db.insert(users).values({
-        ...data,
-        id,
-      });
-      const [user] = await db.select().from(users).where(eq(users.id, id));
-      return user;
+      /**
+       * 🔐 MODELO A (Enterprise):
+       * Não permitimos auto-provisionamento via OAuth.
+       * O usuário deve ser pré-cadastrado (invite) com organization_id + roles/filiais.
+       */
+      throw new Error(
+        "AUTO_PROVISION_DISABLED: Usuário não pré-cadastrado. Peça ao administrador para convidar este email antes do primeiro login."
+      );
     },
     async getUser(id) {
-      const [user] = await db.select().from(users).where(eq(users.id, id));
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.id, id), isNull(users.deletedAt)));
       return user ?? null;
     },
     async getUserByEmail(email) {
-      const [user] = await db.select().from(users).where(eq(users.email, email));
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.email, email), isNull(users.deletedAt)));
       return user ?? null;
     },
     async getUserByAccount({ providerAccountId, provider }) {
@@ -38,7 +45,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
       const [user] = await db
         .select()
         .from(users)
-        .where(eq(users.id, account.userId));
+        .where(and(eq(users.id, account.userId), isNull(users.deletedAt)));
       
       return user ?? null;
     },

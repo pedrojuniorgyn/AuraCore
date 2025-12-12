@@ -5,7 +5,7 @@ import * as schema from "@/lib/db/schema";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, and } from "drizzle-orm";
 import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -15,6 +15,65 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
+    /**
+     * 🔐 MODELO A (Enterprise): Google Workspace só pode logar se:
+     * - email for de domínio permitido (env AUTH_GOOGLE_ALLOWED_DOMAINS)
+     * - usuário já existir pré-cadastrado no banco (whitelist)
+     */
+    async signIn({ user, account, profile }) {
+      try {
+        if (account?.provider !== "google") {
+          return true;
+        }
+
+        const email = (user?.email || (profile as any)?.email || "").toString().trim().toLowerCase();
+        if (!email || !email.includes("@")) {
+          return false;
+        }
+
+        // 1) Validar domínio permitido (opcional)
+        const allowedDomainsRaw =
+          process.env.AUTH_GOOGLE_ALLOWED_DOMAINS ||
+          process.env.AUTH_ALLOWED_EMAIL_DOMAINS ||
+          "";
+        const allowedDomains = allowedDomainsRaw
+          .split(",")
+          .map((d) => d.trim().toLowerCase())
+          .filter(Boolean);
+
+        if (allowedDomains.length > 0) {
+          const domain = email.split("@")[1]?.toLowerCase();
+          if (!domain || !allowedDomains.includes(domain)) {
+            return false;
+          }
+        }
+
+        // 2) Validar email verificado (se vier do Google)
+        const emailVerified = (profile as any)?.email_verified;
+        if (emailVerified === false) {
+          return false;
+        }
+
+        // 3) Whitelist: só permite login se usuário já existir (pré-cadastro)
+        const { ensureConnection } = await import("@/lib/db");
+        await ensureConnection();
+
+        const existing = await db
+          .select({ id: schema.users.id, organizationId: schema.users.organizationId })
+          .from(schema.users)
+          .where(and(eq(schema.users.email, email), isNull(schema.users.deletedAt)));
+
+        // Segurança multi-tenant: se email existir em >1 organização, é ambíguo -> bloqueia
+        if (existing.length !== 1) {
+          return false;
+        }
+
+        return true;
+      } catch (err) {
+        console.error("❌ Google signIn guard error:", err);
+        return false;
+      }
+    },
     async jwt({ token, user, trigger }) {
       // Ao fazer login (user existe)
       if (user) {
@@ -62,21 +121,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const email = credentials.email as string;
+        const email = (credentials.email as string).trim().toLowerCase();
         
         const usersFound = await db
           .select()
           .from(schema.users)
-          .where(eq(schema.users.email, email));
+          .where(and(eq(schema.users.email, email), isNull(schema.users.deletedAt)));
         
-        const user = usersFound[0];
-
-        if (!user || !user.passwordHash) {
+        // Segurança multi-tenant: sem contexto de org no login por email/senha,
+        // bloqueia emails duplicados em mais de uma organização.
+        if (usersFound.length !== 1) {
           return null;
         }
 
-        // Verifica se o usuário está deletado (soft delete)
-        if (user.deletedAt) {
+        const user = usersFound[0];
+
+        if (!user || !user.passwordHash) {
           return null;
         }
 
