@@ -6,6 +6,14 @@ import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
+/**
+ * HOMOLOGAÇÃO/DEPLOY:
+ * Evita pré-render (SSG) no build para rotas que dependem de search params/CSR bailout.
+ * Isso elimina erros do tipo:
+ * "useSearchParams() should be wrapped in a suspense boundary ..."
+ */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Aura Core | Enterprise Logistics",
   description: "Sistema de Gestão Logística Avançada",
