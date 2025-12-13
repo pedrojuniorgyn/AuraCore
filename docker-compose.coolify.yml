@@ -4,9 +4,17 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       # ✅ Importante: usar aspas para não quebrar com caracteres especiais
-      # ✅ Se DB_PASSWORD não estiver definido no Coolify Runtime, falha com erro explícito
-      MSSQL_SA_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD é obrigatório (mín. 8 chars)}"
+      # ⚠️ Coolify roda `docker compose build` com um env-file de BUILD.
+      # Se DB_PASSWORD estiver "Runtime only", ele não existe no build e a interpolação quebra.
+      # Por isso usamos fallback e validamos no runtime via `command`.
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-__MISSING_DB_PASSWORD__}"
       MSSQL_PID: "Developer"
+    command:
+      [
+        "bash",
+        "-lc",
+        "if [ \"$MSSQL_SA_PASSWORD\" = \"__MISSING_DB_PASSWORD__\" ] || [ ${#MSSQL_SA_PASSWORD} -lt 8 ]; then echo \"❌ DB_PASSWORD ausente/curto no runtime (mín. 8 chars). Ajuste as env vars no Coolify.\"; exit 1; fi; /opt/mssql/bin/sqlservr",
+      ]
     volumes:
       - sql_data:/var/opt/mssql
     healthcheck:
@@ -32,7 +40,7 @@ services:
       DB_HOST: "sql"
       DB_PORT: "${DB_PORT:-1433}"
       DB_USER: "${DB_USER:-sa}"
-      DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD é obrigatório (mín. 8 chars)}"
+      DB_PASSWORD: "${DB_PASSWORD:-__MISSING_DB_PASSWORD__}"
       DB_NAME: "${DB_NAME:-AuraCore}"
       # Pass-through úteis (defina no Coolify Environment Variables)
       NODE_ENV: "${NODE_ENV:-production}"
