@@ -10,7 +10,7 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 # Garante que o código reconheça "fase de build" (Coolify/Next às vezes não setam isso)
 ENV NEXT_PHASE=phase-production-build
 # Coolify às vezes não exibe o erro completo do build.
