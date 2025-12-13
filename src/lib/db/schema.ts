@@ -1305,7 +1305,50 @@ export const pcgNcmRules = mssqlTable("pcg_ncm_rules", {
     .where(sql`deleted_at IS NULL`),
 ]));
 
-// --- PLANO DE CONTAS GERENCIAL (Dimensional) ---
+// --- PLANO DE CONTAS GERENCIAL (PCG) ---
+
+export const managementChartOfAccounts = mssqlTable("management_chart_of_accounts", {
+  id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(),
+
+  // Identificação
+  code: nvarchar("code", { length: 50 }).notNull(),
+  name: nvarchar("name", { length: 255 }).notNull(),
+  description: nvarchar("description", { length: "max" }),
+
+  // Classificação
+  type: nvarchar("type", { length: 20 }).notNull(), // REVENUE, COST, EXPENSE, ASSET, LIABILITY
+  category: nvarchar("category", { length: 100 }),
+
+  // Hierarquia
+  parentId: int("parent_id"),
+  level: int("level").default(0),
+  isAnalytical: int("is_analytical").default(0),
+
+  // Link com PCC
+  legalAccountId: int("legal_account_id"),
+
+  // Regras de rateio
+  allocationRule: nvarchar("allocation_rule", { length: 50 }),
+  allocationBase: nvarchar("allocation_base", { length: 50 }),
+
+  // Controle
+  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
+
+  // Enterprise Base
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }),
+  createdAt: datetime2("created_at").default(new Date()),
+  updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"),
+  version: int("version").default(1).notNull(),
+}, (table) => ([
+  uniqueIndex("management_chart_of_accounts_code_org_idx")
+    .on(table.organizationId, table.code)
+    .where(sql`deleted_at IS NULL`),
+]));
+
+// --- PLANO DE CONTAS CONTÁBIL (PCC) ---
 
 export const chartOfAccounts = mssqlTable("chart_of_accounts", {
   id: int("id").primaryKey().identity(),

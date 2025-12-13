@@ -64,5 +64,11 @@ export const ensureConnection = async () => {
     return conn;
 };
 
+// Compat: alguns pontos do app esperam getDb()
+export const getDb = async () => {
+  await ensureConnection();
+  return db;
+};
+
 // 5. Instância do Drizzle
 export const db = drizzle({ client: conn, schema });
