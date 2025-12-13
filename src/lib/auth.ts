@@ -8,6 +8,17 @@ import { compare } from "bcryptjs";
 import { eq, isNull, and } from "drizzle-orm";
 import { authConfig } from "./auth.config";
 
+const isBuildPhase =
+  process.env.NEXT_PHASE === "phase-production-build" ||
+  process.env.NEXT_PHASE === "phase-development-server";
+
+// Em produção, AUTH_SECRET deve existir. Em build (Coolify/Next) pode não estar resolvido:
+// evitamos quebrar o build gerando um fallback apenas para essa fase.
+const authSecret =
+  process.env.AUTH_SECRET ||
+  process.env.NEXTAUTH_SECRET ||
+  (isBuildPhase ? "build-secret-placeholder" : undefined);
+
 function googleProviderOrNull() {
   const clientId = process.env.AUTH_GOOGLE_ID;
   const clientSecret = process.env.AUTH_GOOGLE_SECRET;
@@ -30,6 +41,7 @@ const googleProvider = googleProviderOrNull();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  secret: authSecret,
   adapter: MSSQLDrizzleAdapter(),
   session: {
     strategy: "jwt",
