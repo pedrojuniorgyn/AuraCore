@@ -1,12 +1,16 @@
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+# Coolify pode injetar NODE_ENV=production em build-time.
+# Para o Next build funcionar, precisamos de devDependencies neste stage.
+ENV NODE_ENV=development
+RUN npm ci --legacy-peer-deps --include=dev
 
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV NODE_ENV=development
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runner
@@ -28,4 +32,5 @@ COPY --from=builder /app/src ./src
 
 EXPOSE 3000
 CMD ["npm","run","start","--","-p","3000"]
+
 
