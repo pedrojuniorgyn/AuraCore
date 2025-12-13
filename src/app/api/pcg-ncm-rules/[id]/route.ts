@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await ensureConnection();
@@ -22,12 +22,13 @@ export async function GET(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { organizationId } = getTenantContext();
+    const { id } = await context.params;
+    const { organizationId } = await getTenantContext();
     const pool = await ensureConnection();
 
     const result = await pool
       .request()
-      .input("id", sql.Int, parseInt(params.id))
+      .input("id", sql.Int, parseInt(id, 10))
       .input("organizationId", sql.Int, organizationId)
       .query(`
         SELECT 
@@ -75,7 +76,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await ensureConnection();
@@ -85,14 +86,15 @@ export async function PUT(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { organizationId, userId } = getTenantContext();
+    const { id } = await context.params;
+    const { organizationId, userId } = await getTenantContext();
     const body = await request.json();
     const pool = await ensureConnection();
 
     // Verificar se existe
     const existing = await pool
       .request()
-      .input("id", sql.Int, parseInt(params.id))
+      .input("id", sql.Int, parseInt(id, 10))
       .input("organizationId", sql.Int, organizationId)
       .query(`
         SELECT id, version FROM pcg_ncm_rules
@@ -108,7 +110,7 @@ export async function PUT(
     // Atualizar
     await pool
       .request()
-      .input("id", sql.Int, parseInt(params.id))
+      .input("id", sql.Int, parseInt(id, 10))
       .input("organizationId", sql.Int, organizationId)
       .input("pcgId", sql.Int, body.pcgId)
       .input("ncmCode", sql.NVarChar, body.ncmCode)
@@ -160,7 +162,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await ensureConnection();
@@ -170,12 +172,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { organizationId, userId } = getTenantContext();
+    const { id } = await context.params;
+    const { organizationId, userId } = await getTenantContext();
     const pool = await ensureConnection();
 
     await pool
       .request()
-      .input("id", sql.Int, parseInt(params.id))
+      .input("id", sql.Int, parseInt(id, 10))
       .input("organizationId", sql.Int, organizationId)
       .input("deletedBy", sql.NVarChar, userId)
       .query(`
@@ -201,6 +204,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 
