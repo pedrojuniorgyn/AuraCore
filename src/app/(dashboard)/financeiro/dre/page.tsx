@@ -171,7 +171,8 @@ export default function DREPage() {
                       <NumberCounter
                         value={dreData.data.totalRevenue}
                         className="text-2xl font-bold text-green-600"
-                        format="currency"
+                        prefix="R$ "
+                        decimals={2}
                       />
                     </div>
                   </CardContent>
@@ -189,7 +190,8 @@ export default function DREPage() {
                       <NumberCounter
                         value={dreData.data.totalExpense}
                         className="text-2xl font-bold text-red-600"
-                        format="currency"
+                        prefix="R$ "
+                        decimals={2}
                       />
                     </div>
                   </CardContent>
@@ -217,7 +219,8 @@ export default function DREPage() {
                             ? "text-green-600"
                             : "text-red-600"
                         }`}
-                        format="currency"
+                        prefix="R$ "
+                        decimals={2}
                       />
                     </div>
                   </CardContent>
