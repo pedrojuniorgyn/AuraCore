@@ -173,7 +173,7 @@ export default function ContasReceberPage() {
           width: 140,
           type: "numericColumn",
           filter: "agNumberColumnFilter",
-          valueFormatter: (params) =>
+          valueFormatter: (params: any) =>
             `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
           aggFunc: "sum",
         },
@@ -182,7 +182,7 @@ export default function ContasReceberPage() {
           headerName: "Recebido",
           width: 140,
           type: "numericColumn",
-          valueFormatter: (params) =>
+          valueFormatter: (params: any) =>
             `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
           aggFunc: "sum",
         },
@@ -203,7 +203,7 @@ export default function ContasReceberPage() {
           headerName: "Emissão",
           width: 130,
           filter: "agDateColumnFilter",
-          valueFormatter: (params) =>
+          valueFormatter: (params: any) =>
             params.value ? new Date(params.value).toLocaleDateString("pt-BR") : "",
         },
         {
@@ -211,9 +211,9 @@ export default function ContasReceberPage() {
           headerName: "Vencimento",
           width: 130,
           filter: "agDateColumnFilter",
-          valueFormatter: (params) =>
+          valueFormatter: (params: any) =>
             params.value ? new Date(params.value).toLocaleDateString("pt-BR") : "",
-          cellStyle: (params) => {
+          cellStyle: (params: any) => {
             if (!params.value) return {};
             const dueDate = new Date(params.value);
             const today = new Date();
@@ -228,7 +228,7 @@ export default function ContasReceberPage() {
           headerName: "Recebimento",
           width: 130,
           filter: "agDateColumnFilter",
-          valueFormatter: (params) =>
+          valueFormatter: (params: any) =>
             params.value ? new Date(params.value).toLocaleDateString("pt-BR") : "-",
         },
       ],
