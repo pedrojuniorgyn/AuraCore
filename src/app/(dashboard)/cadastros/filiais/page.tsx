@@ -12,49 +12,41 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Building2, MapPin, Phone, Mail, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auraTheme } from "@/lib/ag-grid-theme";
-import { useTenant } from "@/contexts/tenant-context";
 import { toast } from "sonner";
 
 interface Branch {
   id: number;
   name: string;
-  cnpj: string;
-  address: string;
-  city: string;
+  tradeName: string;
+  document: string;
+  cityName: string;
   state: string;
-  zipcode: string;
   phone: string;
   email: string;
-  active: boolean;
+  status: string; // ACTIVE | INACTIVE
 }
 
 export default function BranchesPage() {
+  const router = useRouter();
   const gridRef = useRef<AgGridReact>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useTenant();
-  const organizationId = user?.organizationId;
 
   useEffect(() => {
     fetchBranches();
-  }, [organizationId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchBranches = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/branches?organizationId=${organizationId}`);
+      // API já filtra por tenant via sessão (não precisa organizationId na query)
+      const response = await fetch("/api/branches", { credentials: "include" });
       
       if (!response.ok) throw new Error("Erro ao carregar filiais");
       
-      const data = await response.json();
-      
-      // Garantir que data seja um array
-      if (Array.isArray(data)) {
-        setBranches(data);
-      } else {
-        console.warn("API retornou dados não-array:", data);
-        setBranches([]);
-      }
+      const result = await response.json();
+      setBranches(result?.data || []);
     } catch (error) {
       console.error("Erro ao buscar filiais:", error);
       toast.error("Erro ao carregar filiais");
@@ -78,7 +70,7 @@ export default function BranchesPage() {
     },
     {
       headerName: "CNPJ",
-      field: "cnpj",
+      field: "document",
       flex: 1,
       valueFormatter: (params) => {
         const cnpj = params.value;
@@ -88,12 +80,12 @@ export default function BranchesPage() {
     },
     {
       headerName: "Cidade/UF",
-      field: "city",
+      field: "cityName",
       flex: 1.5,
       cellRenderer: (params: any) => (
         <div className="flex items-center gap-2 h-full">
           <MapPin className="h-4 w-4 text-emerald-400" />
-          <span>{params.data.city} - {params.data.state}</span>
+          <span>{params.data.cityName} - {params.data.state}</span>
         </div>
       ),
     },
@@ -121,17 +113,17 @@ export default function BranchesPage() {
     },
     {
       headerName: "Status",
-      field: "active",
+      field: "status",
       flex: 0.8,
       cellRenderer: (params: any) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            params.value
+            params.value === "ACTIVE"
               ? "bg-green-500/20 text-green-400 border border-green-500/30"
               : "bg-red-500/20 text-red-400 border border-red-500/30"
           }`}
         >
-          {params.value ? "Ativa" : "Inativa"}
+          {params.value === "ACTIVE" ? "Ativa" : "Inativa"}
         </span>
       ),
     },
@@ -169,7 +161,7 @@ export default function BranchesPage() {
                 </p>
               </div>
               <RippleButton
-                onClick={() => toast.info("Funcionalidade em desenvolvimento")}
+                onClick={() => router.push("/configuracoes/filiais/create")}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Filial
@@ -206,7 +198,7 @@ export default function BranchesPage() {
                   <div className="flex items-center gap-3">
                     <Building2 className="h-8 w-8 text-green-400" />
                     <span className="text-3xl font-bold text-white">
-                      {Array.isArray(branches) ? branches.filter((b) => b.active).length : 0}
+                      {Array.isArray(branches) ? branches.filter((b) => b.status === "ACTIVE").length : 0}
                     </span>
                   </div>
                 </CardContent>
@@ -222,7 +214,7 @@ export default function BranchesPage() {
                   <div className="flex items-center gap-3">
                     <Building2 className="h-8 w-8 text-red-400" />
                     <span className="text-3xl font-bold text-white">
-                      {Array.isArray(branches) ? branches.filter((b) => !b.active).length : 0}
+                      {Array.isArray(branches) ? branches.filter((b) => b.status !== "ACTIVE").length : 0}
                     </span>
                   </div>
                 </CardContent>
