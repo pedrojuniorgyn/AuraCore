@@ -11,9 +11,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV=development
+# Garante que o código reconheça "fase de build" (Coolify/Next às vezes não setam isso)
+ENV NEXT_PHASE=phase-production-build
 # Coolify às vezes não exibe o erro completo do build.
 # Gravamos o log e imprimimos em caso de falha para diagnóstico.
-RUN npm run build > /tmp/next-build.log 2>&1 || (cat /tmp/next-build.log && exit 1)
+RUN npm run build > /tmp/next-build.log 2>&1 || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
