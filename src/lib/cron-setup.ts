@@ -52,8 +52,5 @@ export function initializeCronJobs() {
   }
 }
 
-// ✅ Auto-inicializar no runtime do servidor, mas NUNCA no build
-// (a checagem de NEXT_PHASE acima garante isso).
-if (typeof window === "undefined") {
-  initializeCronJobs();
-}
+// ⚠️ Não auto-inicializar aqui.
+// A inicialização deve ser feita pelo `src/instrumentation.ts` (startup do Next).
