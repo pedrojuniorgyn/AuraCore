@@ -452,7 +452,6 @@ export default function RadarDdaPage() {
                   groupDisplayType="groupRows"
                   pagination={true}
                   paginationPageSize={20}
-                  paginationPageSizeSelector={[10, 20, 50, 100]}
                   paginationPageSizeSelector={[10, 20, 50]}
                   animateRows={true}
                   localeText={{
