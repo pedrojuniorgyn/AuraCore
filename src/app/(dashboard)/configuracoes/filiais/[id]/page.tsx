@@ -14,6 +14,7 @@ import { Building2, Shield, CheckCircle2, XCircle, AlertCircle, RefreshCw } from
 
 interface Branch {
   id: number;
+  version?: number;
   name: string;
   document: string;
   certificateExpiry?: string | null;
