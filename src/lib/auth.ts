@@ -8,6 +8,26 @@ import { compare } from "bcryptjs";
 import { eq, isNull, and } from "drizzle-orm";
 import { authConfig } from "./auth.config";
 
+function googleProviderOrNull() {
+  const clientId = process.env.AUTH_GOOGLE_ID;
+  const clientSecret = process.env.AUTH_GOOGLE_SECRET;
+  if (!clientId || !clientSecret) {
+    // Importante: em ambientes de build (Coolify), essas vars podem não estar presentes.
+    // Não falhar o build por causa disso.
+    console.warn(
+      "⚠️ Google OAuth desabilitado: defina AUTH_GOOGLE_ID e AUTH_GOOGLE_SECRET para habilitar login Google."
+    );
+    return null;
+  }
+  return Google({
+    clientId,
+    clientSecret,
+    allowDangerousEmailAccountLinking: true,
+  });
+}
+
+const googleProvider = googleProviderOrNull();
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: MSSQLDrizzleAdapter(),
@@ -105,11 +125,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    ...(googleProvider ? [googleProvider] : []),
     Credentials({
       name: "Credentials",
       credentials: {
