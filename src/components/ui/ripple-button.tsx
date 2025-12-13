@@ -14,6 +14,12 @@ interface RippleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
    * Importante: não é repassada para o DOM como atributo.
    */
   variant?: RippleButtonVariant;
+
+  /**
+   * Compat com padrão "asChild" do shadcn/radix.
+   * Aqui é apenas para compatibilidade de API (não altera o elemento renderizado).
+   */
+  asChild?: boolean;
 }
 
 interface Ripple {
@@ -26,6 +32,8 @@ export function RippleButton({
   className,
   children,
   variant = "default",
+  // compat: não repassar ao DOM
+  asChild,
   ...props
 }: RippleButtonProps) {
   const [ripples, setRipples] = useState<Ripple[]>([]);
