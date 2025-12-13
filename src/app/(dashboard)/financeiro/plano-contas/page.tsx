@@ -170,7 +170,7 @@ export default function ChartOfAccountsPage() {
       headerName: "Ações",
       width: 90,
       pinned: "right",
-      suppressMenu: true,
+      suppressHeaderMenuButton: true,
       sortable: false,
       filter: false,
       cellRenderer: ActionCellRenderer,
