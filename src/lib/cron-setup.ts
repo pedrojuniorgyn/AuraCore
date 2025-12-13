@@ -16,6 +16,16 @@ export function initializeCronJobs() {
     return;
   }
 
+  /**
+   * ✅ Next.js: não iniciar CRON durante o build.
+   * Durante `next build`, alguns módulos podem ser importados para análise/pré-render.
+   * Se iniciarmos CRON aqui, criamos side-effects e podemos quebrar o build.
+   */
+  const phase = process.env.NEXT_PHASE;
+  if (phase === "phase-production-build") {
+    return;
+  }
+
   // ✅ Em homologação/produção, só inicia se explicitamente habilitado
   // (evita rodar durante `next build`/pré-render e evitar efeitos colaterais)
   if (process.env.ENABLE_CRON !== "true") {
@@ -42,5 +52,8 @@ export function initializeCronJobs() {
   }
 }
 
-// ⚠️ Importante: não auto-inicializar no load do módulo.
-// Em Next.js App Router, imports podem ocorrer durante build/pré-render.
+// ✅ Auto-inicializar no runtime do servidor, mas NUNCA no build
+// (a checagem de NEXT_PHASE acima garante isso).
+if (typeof window === "undefined") {
+  initializeCronJobs();
+}
