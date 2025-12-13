@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AgGridReact } from "ag-grid-react";
+import type { ColDef } from "ag-grid-community";
 
 interface KPIs {
   totalRecoverable: string;
@@ -10,8 +11,17 @@ interface KPIs {
   totalCofins: string;
 }
 
+interface TaxCredit {
+  invoiceKey: string;
+  taxType: "ICMS" | "PIS" | "COFINS" | "IPI" | string;
+  taxValue: number | string;
+  isRecoverable: "S" | "N" | string;
+  recoveredInPeriod?: string | null;
+  createdAt?: string | null;
+}
+
 export default function TaxCreditsPage() {
-  const [credits, setCredits] = useState([]);
+  const [credits, setCredits] = useState<TaxCredit[]>([]);
   const [kpis, setKpis] = useState<KPIs>({
     totalRecoverable: "0",
     totalIcms: "0",
@@ -26,7 +36,7 @@ export default function TaxCreditsPage() {
     });
   }, []);
 
-  const columnDefs = [
+  const columnDefs: ColDef<TaxCredit>[] = [
     { field: "invoiceKey", headerName: "Chave NFe", width: 200 },
     { 
       field: "taxType", 
@@ -101,7 +111,7 @@ export default function TaxCreditsPage() {
           </div>
 
       <div className="ag-theme-quartz-dark">
-        <AgGridReact
+        <AgGridReact<TaxCredit>
           columnDefs={columnDefs}
           rowData={credits}
           pagination
