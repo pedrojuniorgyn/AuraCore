@@ -13,7 +13,7 @@ services:
       [
         "bash",
         "-lc",
-        "if [ \"$MSSQL_SA_PASSWORD\" = \"__MISSING_DB_PASSWORD__\" ] || [ ${#MSSQL_SA_PASSWORD} -lt 8 ]; then echo \"❌ DB_PASSWORD ausente/curto no runtime (mín. 8 chars). Ajuste as env vars no Coolify.\"; exit 1; fi; /opt/mssql/bin/sqlservr",
+        "if [ \"$$MSSQL_SA_PASSWORD\" = \"__MISSING_DB_PASSWORD__\" ]; then echo \"❌ DB_PASSWORD ausente no runtime. Ajuste as env vars no Coolify.\"; exit 1; fi; LEN=$$(printf %s \"$$MSSQL_SA_PASSWORD\" | wc -c); if [ \"$$LEN\" -lt 8 ]; then echo \"❌ DB_PASSWORD curto no runtime (mín. 8 chars). Ajuste as env vars no Coolify.\"; exit 1; fi; exec /opt/mssql/bin/sqlservr",
       ]
     volumes:
       - sql_data:/var/opt/mssql
@@ -21,7 +21,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" > /dev/null || exit 1",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" > /dev/null || exit 1",
         ]
       interval: 10s
       timeout: 5s
