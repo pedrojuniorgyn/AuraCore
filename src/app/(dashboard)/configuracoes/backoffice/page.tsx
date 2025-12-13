@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
+import type { ColDef } from "ag-grid-community";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -113,7 +114,7 @@ export default function BackofficePage() {
     }
   };
 
-  const accountsColumnDefs = [
+  const accountsColumnDefs: ColDef<BackofficeAccount>[] = [
     { field: 'code', headerName: 'Código', width: 150, pinned: 'left' as const },
     { field: 'name', headerName: 'Nome da Conta', width: 300 },
     { field: 'description', headerName: 'Descrição', width: 250 },
@@ -139,7 +140,7 @@ export default function BackofficePage() {
     }
   ];
 
-  const costCentersColumnDefs = [
+  const costCentersColumnDefs: ColDef<CostCenter>[] = [
     { field: 'code', headerName: 'Código', width: 120, pinned: 'left' as const },
     { field: 'name', headerName: 'Nome', width: 250 },
     { field: 'department', headerName: 'Departamento', width: 180 },
