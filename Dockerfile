@@ -11,7 +11,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV=development
-RUN npm run build
+# Coolify às vezes não exibe o erro completo do build.
+# Gravamos o log e imprimimos em caso de falha para diagnóstico.
+RUN npm run build > /tmp/next-build.log 2>&1 || (cat /tmp/next-build.log && exit 1)
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
