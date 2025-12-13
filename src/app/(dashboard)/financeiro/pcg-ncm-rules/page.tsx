@@ -421,7 +421,7 @@ export default function PcgNcmRulesPage() {
                       Total de Regras
                     </p>
                     <p className="text-3xl font-bold mt-2">
-                      <NumberCounter end={stats.total} />
+                      <NumberCounter value={stats.total} />
                     </p>
                   </div>
                   <div className="p-3 bg-blue-500/10 rounded-lg">
@@ -439,7 +439,7 @@ export default function PcgNcmRulesPage() {
                       Monofásicas
                     </p>
                     <p className="text-3xl font-bold mt-2">
-                      <NumberCounter end={stats.monofasico} />
+                      <NumberCounter value={stats.monofasico} />
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {stats.total > 0 ? Math.round((stats.monofasico / stats.total) * 100) : 0}% do total
@@ -460,7 +460,7 @@ export default function PcgNcmRulesPage() {
                       Com ICMS-ST
                     </p>
                     <p className="text-3xl font-bold mt-2">
-                      <NumberCounter end={stats.icmsSt} />
+                      <NumberCounter value={stats.icmsSt} />
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {stats.total > 0 ? Math.round((stats.icmsSt / stats.total) * 100) : 0}% do total
@@ -481,7 +481,7 @@ export default function PcgNcmRulesPage() {
                       Regras Ativas
                     </p>
                     <p className="text-3xl font-bold mt-2">
-                      <NumberCounter end={stats.active} />
+                      <NumberCounter value={stats.active} />
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}% do total
@@ -711,6 +711,7 @@ export default function PcgNcmRulesPage() {
     </PageTransition>
   );
 }
+
 
 
 

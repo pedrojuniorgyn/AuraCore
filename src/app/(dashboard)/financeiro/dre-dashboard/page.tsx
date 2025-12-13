@@ -169,7 +169,7 @@ export default function DreDashboardPage() {
                       Receitas Totais
                     </div>
                     <div className="text-3xl font-bold">
-                      <NumberCounter end={dreData.revenues} duration={2000} decimals={0} prefix="R$ " />
+                      <NumberCounter value={dreData.revenues} duration={2} decimals={0} prefix="R$ " />
                     </div>
                     <div className="text-xs opacity-75">
                       {formatCurrency(dreData.revenues)}
@@ -186,7 +186,7 @@ export default function DreDashboardPage() {
                       Custos Operacionais
                     </div>
                     <div className="text-3xl font-bold">
-                      <NumberCounter end={dreData.operationalCosts} duration={2000} decimals={0} prefix="R$ " />
+                      <NumberCounter value={dreData.operationalCosts} duration={2} decimals={0} prefix="R$ " />
                     </div>
                     <div className="text-xs opacity-75">
                       {formatCurrency(dreData.operationalCosts)}
@@ -203,7 +203,7 @@ export default function DreDashboardPage() {
                       Lucro Líquido
                     </div>
                     <div className="text-3xl font-bold">
-                      <NumberCounter end={dreData.netProfit} duration={2000} decimals={0} prefix="R$ " />
+                      <NumberCounter value={dreData.netProfit} duration={2} decimals={0} prefix="R$ " />
                     </div>
                     <div className="text-xs opacity-75">
                       {formatCurrency(dreData.netProfit)}
@@ -220,7 +220,7 @@ export default function DreDashboardPage() {
                       Margem Líquida
                     </div>
                     <div className="text-3xl font-bold">
-                      <NumberCounter end={dreData.profitMargin} duration={2000} decimals={1} suffix="%" />
+                      <NumberCounter value={dreData.profitMargin} duration={2} decimals={1} suffix="%" />
                     </div>
                     <div className="text-xs opacity-75">
                       Rentabilidade
