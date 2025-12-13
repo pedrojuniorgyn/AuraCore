@@ -13,14 +13,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-
-  /**
-   * Necessário para o `src/instrumentation.ts` rodar no boot do servidor.
-   * (Sem isso, o CRON não inicializa no `next start`.)
-   */
-  experimental: {
-    instrumentationHook: true,
-  },
 };
 
 export default nextConfig;
