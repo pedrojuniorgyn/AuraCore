@@ -4,9 +4,16 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+type RippleButtonVariant = "default" | "secondary" | "outline" | "ghost";
+
 interface RippleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
   children?: React.ReactNode;
+  /**
+   * Variante visual (compat com uso em telas).
+   * Importante: não é repassada para o DOM como atributo.
+   */
+  variant?: RippleButtonVariant;
 }
 
 interface Ripple {
@@ -18,6 +25,7 @@ interface Ripple {
 export function RippleButton({
   className,
   children,
+  variant = "default",
   ...props
 }: RippleButtonProps) {
   const [ripples, setRipples] = useState<Ripple[]>([]);
@@ -51,10 +59,28 @@ export function RippleButton({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative px-6 py-3 rounded-lg font-semibold text-white overflow-hidden",
-        "bg-gradient-to-r from-purple-600 to-pink-600",
-        "border border-white/10",
+        "relative px-6 py-3 rounded-lg font-semibold overflow-hidden",
         "shadow-lg hover:shadow-xl transition-shadow duration-300",
+        variant === "default" && [
+          "text-white",
+          "bg-gradient-to-r from-purple-600 to-pink-600",
+          "border border-white/10",
+        ],
+        variant === "secondary" && [
+          "text-white",
+          "bg-white/10 hover:bg-white/20",
+          "border border-white/10",
+        ],
+        variant === "outline" && [
+          "text-white",
+          "bg-transparent hover:bg-white/5",
+          "border border-white/20",
+        ],
+        variant === "ghost" && [
+          "text-white",
+          "bg-transparent hover:bg-white/10",
+          "border border-transparent",
+        ],
         className
       )}
       {...props}
@@ -85,6 +111,7 @@ export function RippleButton({
     </motion.button>
   );
 }
+
 
 
 
