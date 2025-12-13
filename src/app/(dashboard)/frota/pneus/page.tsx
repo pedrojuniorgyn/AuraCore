@@ -8,6 +8,9 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+// Evita pré-render em build (dependências usam hooks de URL / CSR bailout)
+export const dynamic = "force-dynamic";
+
 interface Tire {
   id: number;
   serialNumber: string;

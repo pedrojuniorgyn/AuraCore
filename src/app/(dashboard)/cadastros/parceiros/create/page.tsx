@@ -14,6 +14,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
  * Página de criação que reutiliza o PartnerForm
  */
 
+// Evita pré-render em build (dependências usam hooks de URL / CSR bailout)
+export const dynamic = "force-dynamic";
+
 export default function CreateBusinessPartnerPage() {
   const router = useRouter();
   const { mutate: create } = useCreate();
@@ -86,6 +89,7 @@ export default function CreateBusinessPartnerPage() {
     </div>
   );
 }
+
 
 
 

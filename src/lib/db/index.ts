@@ -50,13 +50,6 @@ if (!globalForDb.conn) {
 }
 conn = globalForDb.conn;
 
-// 3. Conexão Assíncrona (Não bloqueia o app, mas loga o sucesso/erro)
-if (!conn.connected && !conn.connecting) {
-    conn.connect()
-      .then(() => console.log("✅ [SQL Server] Conectado com sucesso!"))
-      .catch((err) => console.error("❌ [SQL Server] Falha fatal ao conectar:", err));
-}
-
 // 4. Exports de Compatibilidade (Para não quebrar seus Cron Jobs antigos)
 export const pool = conn;
 export const ensureConnection = async () => {

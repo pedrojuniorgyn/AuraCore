@@ -16,6 +16,12 @@ export function initializeCronJobs() {
     return;
   }
 
+  // ✅ Em homologação/produção, só inicia se explicitamente habilitado
+  // (evita rodar durante `next build`/pré-render e evitar efeitos colaterais)
+  if (process.env.ENABLE_CRON !== "true") {
+    return;
+  }
+
   if (typeof window === "undefined") {
     // Apenas no servidor
     console.log("🤖 Inicializando Cron Jobs...");
@@ -36,7 +42,5 @@ export function initializeCronJobs() {
   }
 }
 
-// Auto-inicializar quando o módulo for carregado
-initializeCronJobs();
-
-
+// ⚠️ Importante: não auto-inicializar no load do módulo.
+// Em Next.js App Router, imports podem ocorrer durante build/pré-render.

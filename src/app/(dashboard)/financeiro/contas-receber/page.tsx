@@ -24,6 +24,9 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 // Registrar TODOS os módulos Enterprise de uma vez
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+// Evita pré-render em build (esta página depende de hooks de URL / CSR bailout)
+export const dynamic = "force-dynamic";
+
 interface Receivable {
   id: number;
   documentNumber: string;
