@@ -25,6 +25,24 @@ const config: sql.config = {
   port: Number(process.env.DB_PORT ?? "1433"),
 };
 
+async function ensureUserRolesTable(pool: sql.ConnectionPool) {
+  // `drizzle-kit migrate` pode não ter gerado a tabela `user_roles` dependendo do histórico.
+  // Garantimos aqui de forma idempotente para não bloquear o seed.
+  await pool.request().query(`
+    IF OBJECT_ID(N'dbo.user_roles', N'U') IS NULL
+    BEGIN
+      CREATE TABLE dbo.user_roles (
+        user_id NVARCHAR(255) NOT NULL,
+        role_id INT NOT NULL,
+        organization_id INT NOT NULL,
+        branch_id INT NULL,
+        created_at DATETIME2 NULL CONSTRAINT DF_user_roles_created_at DEFAULT (GETDATE()),
+        CONSTRAINT PK_user_roles PRIMARY KEY (user_id, role_id)
+      );
+    END
+  `);
+}
+
 async function run() {
   console.log("\n🔐 SEED: Permissões e Roles\n");
 
@@ -32,6 +50,9 @@ async function run() {
 
   try {
     const adminEmail = process.env.ADMIN_EMAIL || "admin@auracore.com";
+
+    // 0. Garantir pré-requisitos mínimos
+    await ensureUserRolesTable(pool);
 
     // 1. Estado atual
     const check = await pool.request().query(`
