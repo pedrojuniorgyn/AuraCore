@@ -1,11 +1,17 @@
 import { eq, and, isNull } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, ensureConnection } from "@/lib/db";
 import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema";
 import { type Adapter } from "next-auth/adapters";
 
 export function MSSQLDrizzleAdapter(): Adapter {
+  async function ensureDb() {
+    // Evita race condition de pool desconectado no runtime do NextAuth
+    await ensureConnection();
+  }
+
   return {
     async createUser(data) {
+      await ensureDb();
       /**
        * 🔐 MODELO A (Enterprise):
        * Não permitimos auto-provisionamento via OAuth.
@@ -16,6 +22,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
       );
     },
     async getUser(id) {
+      await ensureDb();
       const [user] = await db
         .select()
         .from(users)
@@ -23,6 +30,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
       return user ?? null;
     },
     async getUserByEmail(email) {
+      await ensureDb();
       const [user] = await db
         .select()
         .from(users)
@@ -30,6 +38,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
       return user ?? null;
     },
     async getUserByAccount({ providerAccountId, provider }) {
+      await ensureDb();
       const [account] = await db
         .select()
         .from(accounts)
@@ -50,6 +59,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
       return user ?? null;
     },
     async updateUser(data) {
+      await ensureDb();
       if (!data.id) throw new Error("User ID is required for update");
       
       await db
@@ -61,14 +71,17 @@ export function MSSQLDrizzleAdapter(): Adapter {
       return user;
     },
     async linkAccount(data) {
+      await ensureDb();
       await db.insert(accounts).values(data);
       return data; // Auth.js doesn't require full return here usually
     },
     async createSession(data) {
+      await ensureDb();
       await db.insert(sessions).values(data);
       return data;
     },
     async getSessionAndUser(sessionToken) {
+      await ensureDb();
       const [session] = await db
         .select()
         .from(sessions)
@@ -86,6 +99,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
       return { session, user };
     },
     async updateSession(data) {
+      await ensureDb();
       await db
         .update(sessions)
         .set(data)
@@ -99,13 +113,16 @@ export function MSSQLDrizzleAdapter(): Adapter {
       return session;
     },
     async deleteSession(sessionToken) {
+      await ensureDb();
       await db.delete(sessions).where(eq(sessions.sessionToken, sessionToken));
     },
     async createVerificationToken(data) {
+      await ensureDb();
       await db.insert(verificationTokens).values(data);
       return data;
     },
     async useVerificationToken({ identifier, token }) {
+      await ensureDb();
       const [vt] = await db
         .select()
         .from(verificationTokens)

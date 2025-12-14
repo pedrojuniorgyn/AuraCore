@@ -109,6 +109,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger }) {
       // Ao fazer login (user existe)
       if (user) {
+        // ✅ Garantir conexão antes de usar Drizzle (evita erro 500 no callback de login)
+        const { ensureConnection } = await import("@/lib/db");
+        await ensureConnection();
+
         token.id = user.id;
         token.role = user.role;
         token.organizationId = user.organizationId;
@@ -148,6 +152,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        // ✅ Garantir conexão antes de queries no login por senha
+        // Sem isso, o pool pode estar desconectado e o NextAuth cai em /login?error=Configuration
+        const { ensureConnection } = await import("@/lib/db");
+        await ensureConnection();
 
         const email = (credentials.email as string).trim().toLowerCase();
         
