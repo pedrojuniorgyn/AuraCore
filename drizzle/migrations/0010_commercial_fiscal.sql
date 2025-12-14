@@ -151,3 +151,4 @@ CREATE INDEX idx_freight_extra_components_active ON freight_extra_components(is_
 
 
 
+

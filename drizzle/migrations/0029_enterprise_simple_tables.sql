@@ -413,3 +413,4 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_carbon_date' AND obje
 
 
 
+

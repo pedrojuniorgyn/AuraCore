@@ -623,3 +623,4 @@ Ver arquivo: `drizzle/migrations/0023_tms_chart_of_accounts_seed.sql`
 
 
 
+

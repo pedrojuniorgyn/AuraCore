@@ -36,3 +36,4 @@ networks:
   auracore:
     driver: bridge
 
+
