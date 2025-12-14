@@ -43,6 +43,38 @@ async function run() {
   const pool = await sql.connect(config);
 
   try {
+    // 0) Garantir tabela base do PCC (alguns ambientes ainda não têm essa migration aplicada)
+    await pool.request().query(`
+      IF OBJECT_ID(N'dbo.chart_of_accounts', N'U') IS NULL
+      BEGIN
+        CREATE TABLE dbo.chart_of_accounts (
+          id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+          organization_id INT NOT NULL,
+          code NVARCHAR(50) NOT NULL,
+          name NVARCHAR(255) NOT NULL,
+          description NVARCHAR(MAX) NULL,
+          type NVARCHAR(30) NOT NULL,
+          category NVARCHAR(50) NOT NULL,
+          parent_id INT NULL,
+          level INT NOT NULL CONSTRAINT DF_chart_of_accounts_level DEFAULT (0),
+          is_analytical NVARCHAR(10) NOT NULL CONSTRAINT DF_chart_of_accounts_is_analytical DEFAULT ('false'),
+          accepts_cost_center NVARCHAR(10) NOT NULL CONSTRAINT DF_chart_of_accounts_accepts_cc DEFAULT ('false'),
+          requires_cost_center NVARCHAR(10) NOT NULL CONSTRAINT DF_chart_of_accounts_requires_cc DEFAULT ('false'),
+          status NVARCHAR(20) NOT NULL CONSTRAINT DF_chart_of_accounts_status DEFAULT ('ACTIVE'),
+          created_by NVARCHAR(255) NOT NULL,
+          updated_by NVARCHAR(255) NULL,
+          created_at DATETIME2 NULL CONSTRAINT DF_chart_of_accounts_created_at DEFAULT (GETDATE()),
+          updated_at DATETIME2 NULL CONSTRAINT DF_chart_of_accounts_updated_at DEFAULT (GETDATE()),
+          deleted_at DATETIME2 NULL,
+          version INT NOT NULL CONSTRAINT DF_chart_of_accounts_version DEFAULT (1)
+        );
+
+        CREATE UNIQUE INDEX chart_of_accounts_code_org_idx
+          ON dbo.chart_of_accounts(code, organization_id)
+          WHERE deleted_at IS NULL;
+      END
+    `);
+
     // Definir as 73 contas manualmente (baseado na migration 0023)
     const accounts = [
       // GRUPO 3: RECEITAS OPERACIONAIS (8)
