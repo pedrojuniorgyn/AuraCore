@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, ensureConnection } from "@/lib/db";
 import { financialCategories } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
+import { ensureFinancialData } from "@/lib/services/financial-init";
 import { eq, and, isNull } from "drizzle-orm";
 
 /**
@@ -15,6 +16,9 @@ export async function GET(request: NextRequest) {
     const ctx = await getTenantContext();
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type"); // 'INCOME' ou 'EXPENSE'
+
+    // 🌱 Seed idempotente: garante categorias padrão no primeiro acesso
+    await ensureFinancialData(ctx.organizationId, ctx.userId);
 
     const conditions: any[] = [
       eq(financialCategories.organizationId, ctx.organizationId),

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { db, ensureConnection } from "@/lib/db";
+import { financialCategories } from "@/lib/db/schema";
+import { getTenantContext } from "@/lib/auth/context";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 /**
  * PUT /api/financial/categories/[id]
@@ -12,30 +13,57 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
-
+    await ensureConnection();
+    const ctx = await getTenantContext();
     const { id } = await context.params;
     const body = await request.json();
-    const { name, categoryType, description, isActive } = body;
+    const { name, code, type, description, status, isActive } = body ?? {};
 
-    await db.execute(sql`
-      UPDATE financial_categories
-      SET 
-        name = ${name},
-        category_type = ${categoryType},
-        description = ${description || null},
-        is_active = ${isActive ? 1 : 0},
-        updated_at = GETDATE(),
-        updated_by = ${parseInt(session.user.id, 10)}
-      WHERE id = ${parseInt(id, 10)}
-        AND organization_id = ${session.user.organizationId}
-    `);
+    const categoryId = Number.parseInt(id, 10);
+    if (!Number.isFinite(categoryId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    const nextStatus =
+      typeof status === "string"
+        ? status
+        : typeof isActive === "boolean"
+          ? (isActive ? "ACTIVE" : "INACTIVE")
+          : undefined;
+
+    const setPayload: Record<string, any> = {
+      updatedBy: ctx.userId,
+      updatedAt: new Date(),
+      version: sql<number>`${financialCategories.version} + 1`,
+    };
+
+    if (typeof name === "string") setPayload.name = name;
+    if (typeof code === "string") setPayload.code = code || null;
+    if (typeof type === "string") setPayload.type = type;
+    if (typeof description === "string") setPayload.description = description || null;
+    if (typeof nextStatus === "string") setPayload.status = nextStatus;
+
+    const result = await db
+      .update(financialCategories)
+      .set(setPayload)
+      .where(
+        and(
+          eq(financialCategories.id, categoryId),
+          eq(financialCategories.organizationId, ctx.organizationId),
+          isNull(financialCategories.deletedAt)
+        )
+      );
+
+    const rows = (result as any)?.rowsAffected?.[0] ?? 0;
+    if (rows === 0) {
+      return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao atualizar categoria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -50,11 +78,8 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
-
+    await ensureConnection();
+    const ctx = await getTenantContext();
     const { id } = await context.params;
     const categoryId = parseInt(id, 10);
 
@@ -63,7 +88,7 @@ export async function DELETE(
       SELECT name, code 
       FROM financial_categories 
       WHERE id = ${categoryId}
-        AND organization_id = ${session.user.organizationId}
+        AND organization_id = ${ctx.organizationId}
         AND deleted_at IS NULL
     `);
 
@@ -145,13 +170,16 @@ export async function DELETE(
       SET 
         deleted_at = GETDATE(),
         status = 'INACTIVE',
-        updated_by = ${parseInt(session.user.id, 10)}
+        updated_by = ${ctx.userId}
       WHERE id = ${categoryId}
-        AND organization_id = ${session.user.organizationId}
+        AND organization_id = ${ctx.organizationId}
     `);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao excluir categoria:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

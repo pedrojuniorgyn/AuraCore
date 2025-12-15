@@ -51,6 +51,7 @@ export default function CategoriasPage() {
   const gridRef = useRef<AgGridReact>(null);
   const [categories, setCategories] = useState<FinancialCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<FinancialCategory | null>(null);
   const [quickFilterText, setQuickFilterText] = useState(""); // ✅ Quick Filter
@@ -76,23 +77,36 @@ export default function CategoriasPage() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const response = await fetch("/api/financial/categories");
-      if (response.ok) {
-        const json = await response.json();
-        const data = json.data || json;
-        const catArray = Array.isArray(data) ? data : [];
-        setCategories(catArray);
+      const json = await response.json().catch(() => null);
 
-        // Calcular KPIs
-        setStats({
-          total: catArray.length,
-          income: catArray.filter((c: any) => c.type === "INCOME" || c.type === "REVENUE").length,
-          expense: catArray.filter((c: any) => c.type === "EXPENSE").length,
-          active: catArray.filter((c: any) => c.status === "ACTIVE").length,
-        });
+      if (!response.ok) {
+        const msg =
+          json?.message ||
+          json?.error ||
+          `Falha ao carregar categorias (HTTP ${response.status})`;
+        setLoadError(msg);
+        console.error("Erro ao buscar categorias:", msg, json);
+        setCategories([]);
+        setStats({ total: 0, income: 0, expense: 0, active: 0 });
+        return;
       }
+
+      const data = json?.data ?? json;
+      const catArray = Array.isArray(data) ? data : [];
+      setCategories(catArray);
+
+      // Calcular KPIs
+      setStats({
+        total: catArray.length,
+        income: catArray.filter((c: any) => c.type === "INCOME" || c.type === "REVENUE").length,
+        expense: catArray.filter((c: any) => c.type === "EXPENSE").length,
+        active: catArray.filter((c: any) => c.status === "ACTIVE").length,
+      });
     } catch (error) {
       console.error("Erro ao buscar categorias:", error);
+      setLoadError("Erro inesperado ao carregar categorias.");
     } finally {
       setLoading(false);
     }
@@ -117,8 +131,8 @@ export default function CategoriasPage() {
         closeModal();
         fetchCategories();
       } else {
-        const error = await response.json();
-        alert("❌ " + (error.message || "Erro ao salvar categoria"));
+        const error = await response.json().catch(() => ({}));
+        alert("❌ " + (error.message || error.error || "Erro ao salvar categoria"));
       }
     } catch (error) {
       console.error("Erro:", error);
@@ -149,8 +163,8 @@ export default function CategoriasPage() {
         alert("✅ Categoria excluída!");
         fetchCategories();
       } else {
-        const error = await response.json();
-        alert("❌ " + (error.message || "Erro ao excluir categoria"));
+        const error = await response.json().catch(() => ({}));
+        alert("❌ " + (error.message || error.error || "Erro ao excluir categoria"));
       }
     } catch (error) {
       console.error("Erro:", error);
@@ -344,6 +358,15 @@ export default function CategoriasPage() {
             </RippleButton>
           </div>
         </div>
+
+        {/* Erro de carregamento */}
+        {loadError && (
+          <GlassmorphismCard className="p-4 border-red-500/30 bg-red-900/10">
+            <div className="text-sm text-red-300">
+              ❌ {loadError}
+            </div>
+          </GlassmorphismCard>
+        )}
 
         {/* KPI Cards - MESMO PADRÃO DO MONITOR FISCAL */}
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
