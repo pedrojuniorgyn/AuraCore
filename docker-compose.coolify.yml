@@ -32,15 +32,19 @@ services:
       retries: 60
       start_period: 90s
     restart: unless-stopped
+    networks:
+      - auracore
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - sql
+      sql:
+        condition: service_healthy
     environment:
-      DB_HOST: "sql"
+      # Permite override no Coolify; por padrão usa o serviço "sql" do compose
+      DB_HOST: "${DB_HOST:-sql}"
       DB_PORT: "${DB_PORT:-1433}"
       DB_USER: "${DB_USER:-sa}"
       DB_PASSWORD: "${DB_PASSWORD:-__MISSING_DB_PASSWORD__}"
@@ -74,6 +78,12 @@ services:
       retries: 30
       start_period: 30s
     restart: unless-stopped
+    networks:
+      - auracore
 
 volumes:
   sql_data:
+
+networks:
+  auracore:
+    driver: bridge
