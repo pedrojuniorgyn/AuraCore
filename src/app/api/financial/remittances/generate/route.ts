@@ -9,9 +9,28 @@ import { bankAccounts, accountsPayable, bankRemittances, branches } from "@/lib/
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { generateCNAB240, type CNAB240Options } from "@/services/banking/cnab-generator";
 import { format } from "date-fns";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await getTenantContext();
+
+    // branchId vem do header e precisa ser validado contra allowedBranches
+    const branchHeader = request.headers.get("x-branch-id");
+    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
+        { status: 400 }
+      );
+    }
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial informada" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { bankAccountId, payableIds } = body;
 
@@ -30,6 +49,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(bankAccounts.id, bankAccountId),
+          eq(bankAccounts.organizationId, ctx.organizationId),
           isNull(bankAccounts.deletedAt)
         )
       );
@@ -47,7 +67,8 @@ export async function POST(request: NextRequest) {
       .from(branches)
       .where(
         and(
-          eq(branches.organizationId, bankAccount.organizationId),
+          eq(branches.organizationId, ctx.organizationId),
+          eq(branches.id, branchId),
           isNull(branches.deletedAt)
         )
       )
@@ -69,7 +90,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           inArray(accountsPayable.id, payableIds),
-          eq(accountsPayable.organizationId, bankAccount.organizationId),
+          eq(accountsPayable.organizationId, ctx.organizationId),
           eq(accountsPayable.status, "OPEN"),
           isNull(accountsPayable.deletedAt)
         )
@@ -127,7 +148,7 @@ export async function POST(request: NextRequest) {
     const [remittance] = await db
       .insert(bankRemittances)
       .values({
-        organizationId: bankAccount.organizationId,
+        organizationId: ctx.organizationId,
         bankAccountId: bankAccount.id,
         fileName,
         content: cnabContent,
@@ -136,7 +157,7 @@ export async function POST(request: NextRequest) {
         status: "GENERATED",
         totalRecords: payables.length,
         totalAmount: totalAmount.toString(),
-        createdBy: "system", // TODO: Pegar usuário logado
+        createdBy: ctx.userId,
       })
       .$returningId();
 
@@ -156,7 +177,12 @@ export async function POST(request: NextRequest) {
         status: "PROCESSING",
         updatedAt: new Date(),
       })
-      .where(inArray(accountsPayable.id, payableIds));
+      .where(
+        and(
+          inArray(accountsPayable.id, payableIds),
+          eq(accountsPayable.organizationId, ctx.organizationId)
+        )
+      );
 
     // === RETORNAR RESULTADO ===
     return NextResponse.json({

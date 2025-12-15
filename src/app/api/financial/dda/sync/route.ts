@@ -5,21 +5,31 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { BtgDdaService } from "@/services/banking/btg-dda-service";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { organizationId, bankAccountId } = body;
-
-    if (!organizationId || !bankAccountId) {
+    const ctx = await getTenantContext();
+    if (!ctx.isAdmin) {
       return NextResponse.json(
-        { error: "Informe a organização e conta bancária" },
+        { error: "Forbidden", message: "Apenas ADMIN pode executar sincronização DDA" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { bankAccountId } = body as { bankAccountId?: number };
+
+    if (!bankAccountId) {
+      return NextResponse.json(
+        { error: "Informe a conta bancária" },
         { status: 400 }
       );
     }
 
     // === EXECUTAR SINCRONIZAÇÃO ===
-    const ddaService = new BtgDdaService(organizationId, bankAccountId);
+    // Segurança: organizationId vem da sessão (tenant context), nunca do body.
+    const ddaService = new BtgDdaService(ctx.organizationId, bankAccountId);
     const imported = await ddaService.syncDdaInbox();
 
     return NextResponse.json({

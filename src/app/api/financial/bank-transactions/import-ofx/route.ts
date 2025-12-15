@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
+import sql from "mssql";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,9 +19,10 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const bankAccountId = parseInt(formData.get("bankAccountId") as string);
+    const bankAccountIdRaw = formData.get("bankAccountId") as string;
+    const bankAccountId = Number(bankAccountIdRaw);
 
-    if (!file || !bankAccountId) {
+    if (!file || !Number.isFinite(bankAccountId) || bankAccountId <= 0) {
       return NextResponse.json(
         { error: "Arquivo OFX e conta bancária são obrigatórios" },
         { status: 400 }
@@ -36,19 +38,55 @@ export async function POST(request: NextRequest) {
 
     await ensureConnection();
 
+    // Validar conta bancária pertence ao tenant
+    const bankAccountCheck = await pool
+      .request()
+      .input("orgId", sql.Int, Number(session.user.organizationId))
+      .input("bankAccountId", sql.Int, Math.trunc(bankAccountId))
+      .query(
+        `
+        SELECT TOP 1 id
+        FROM bank_accounts
+        WHERE id = @bankAccountId
+          AND organization_id = @orgId
+          AND deleted_at IS NULL
+      `
+      );
+
+    if (!bankAccountCheck.recordset?.length) {
+      return NextResponse.json(
+        { error: "Conta bancária não encontrada" },
+        { status: 404 }
+      );
+    }
+
     // Inserir transações
     for (const tx of transactions) {
-      await pool.request().query(`
-        INSERT INTO bank_transactions (
-          organization_id, bank_account_id, transaction_date,
-          description, amount, transaction_type,
-          created_by, created_at
-        ) VALUES (
-          ${session.user.organizationId}, ${bankAccountId}, '${tx.date}',
-          '${tx.description}', ${tx.amount}, '${tx.type}',
-          '${session.user.id}', GETDATE()
-        )
-      `);
+      const amount = Number(tx.amount);
+      if (!tx.date || !Number.isFinite(amount)) continue;
+
+      await pool
+        .request()
+        .input("orgId", sql.Int, Number(session.user.organizationId))
+        .input("bankAccountId", sql.Int, Math.trunc(bankAccountId))
+        .input("txDate", sql.DateTime2, new Date(tx.date))
+        .input("description", sql.NVarChar(500), String(tx.description ?? ""))
+        .input("amount", sql.Decimal(18, 2), amount)
+        .input("type", sql.NVarChar(50), String(tx.type ?? "UNKNOWN"))
+        .input("createdBy", sql.NVarChar(255), String(session.user.id))
+        .query(
+          `
+          INSERT INTO bank_transactions (
+            organization_id, bank_account_id, transaction_date,
+            description, amount, transaction_type,
+            created_by, created_at
+          ) VALUES (
+            @orgId, @bankAccountId, @txDate,
+            @description, @amount, @type,
+            @createdBy, GETDATE()
+          )
+        `
+        );
     }
 
     return NextResponse.json({
