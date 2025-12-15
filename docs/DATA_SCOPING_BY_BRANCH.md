@@ -1,5 +1,11 @@
 # 🏢 AuraCore - Data Scoping por Filial
 
+> **Nota de governança (Fonte de verdade):** este documento é complementar/histórico.  
+> A especificação canônica do sistema está em `docs/architecture/INDEX.md` e nos Contracts/ADRs.  
+> - Índice: `docs/architecture/INDEX.md`  
+> - Contracts: `docs/architecture/contracts/*`  
+> - ADRs: `docs/architecture/adr/*`
+
 ## 📋 Visão Geral
 
 Além do **Multi-Tenant** (isolamento por organização), o AuraCore implementa **Data Scoping por Filial**, permitindo controlar quais filiais cada usuário pode acessar dentro da sua organização.

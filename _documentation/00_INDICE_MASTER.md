@@ -34,6 +34,33 @@
 
 ---
 
+## 🏗️ **ARQUITETURA FORMAL (CONTRATOS + ADR + RUNBOOKS):**
+
+### **📌 START AQUI (Fonte de verdade técnica):**
+
+- **docs/architecture/INDEX.md** ⭐ **ARQUITETURA CANÔNICA**
+  - Contratos (Tenant/Branch/RBAC/API/Erros/Transações/Performance)
+  - ADRs (decisões arquiteturais)
+  - Diagramas Mermaid (C4 + sequências + estados)
+  - Runbooks (Coolify/SQL Server/migrações/incidentes)
+  - Link: `../docs/architecture/INDEX.md`
+
+### **🧭 Domínios (visão rápida):**
+- Financeiro: `../docs/architecture/domains/FINANCEIRO.md`
+- Contábil: `../docs/architecture/domains/CONTABIL.md`
+- Admin: `../docs/architecture/domains/ADMIN.md`
+- TMS: `../docs/architecture/domains/TMS.md`
+
+### **🛠️ Runbooks (operação):**
+- Deploy Coolify: `../docs/architecture/runbooks/RUNBOOK_COOLIFY_DEPLOY.md`
+- Migrations/Seeds: `../docs/architecture/runbooks/RUNBOOK_MIGRATIONS_SEEDS.md`
+- SQL Server 2022: `../docs/architecture/runbooks/RUNBOOK_SQLSERVER_2022.md`
+- Incidentes: `../docs/architecture/runbooks/RUNBOOK_INCIDENTS.md`
+
+### **🧩 Portal (Backstage / TechDocs) — opcional:**
+- Manifesto do catálogo: `../catalog-info.yaml`
+- Fonte dos docs renderizados: `../docs/architecture/`
+
 ## 🏦 **INTEGRAÇÃO BTG PACTUAL:**
 
 ### **📋 GUIAS DE CONFIGURAÇÃO:**

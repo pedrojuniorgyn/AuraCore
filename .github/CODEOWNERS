@@ -1,0 +1,16 @@
+## CODEOWNERS — AuraCore
+##
+## Ajuste os @users conforme seu GitHub.
+
+* @pedrojuniorgyn
+
+docs/architecture/ @pedrojuniorgyn
+docs/architecture/** @pedrojuniorgyn
+
+docs/ @pedrojuniorgyn
+_documentation/ @pedrojuniorgyn
+
+src/app/api/financial/ @pedrojuniorgyn
+src/app/api/accounting/ @pedrojuniorgyn
+src/app/api/admin/ @pedrojuniorgyn
+src/app/api/tms/ @pedrojuniorgyn

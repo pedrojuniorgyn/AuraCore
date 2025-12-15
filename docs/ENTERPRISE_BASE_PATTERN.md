@@ -1,5 +1,11 @@
 # 🏢 AuraCore Enterprise Base Pattern
 
+> **Nota de governança (Fonte de verdade):** este documento é complementar/histórico.  
+> A especificação canônica do sistema está em `docs/architecture/INDEX.md` e nos Contracts/ADRs.  
+> - Índice: `docs/architecture/INDEX.md`  
+> - Contracts: `docs/architecture/contracts/*`  
+> - ADRs: `docs/architecture/adr/*`
+
 ## 📋 Visão Geral
 
 O **AuraCore** segue um padrão arquitetural rigoroso chamado **"Enterprise Base Pattern"**, que garante:

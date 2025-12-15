@@ -1,5 +1,11 @@
 # 🏢 AuraCore - Arquitetura Multi-Tenant SaaS
 
+> **Nota de governança (Fonte de verdade):** este documento é complementar/histórico.  
+> A especificação canônica do sistema está em `docs/architecture/INDEX.md` e nos Contracts/ADRs.  
+> - Índice: `docs/architecture/INDEX.md`  
+> - Contracts: `docs/architecture/contracts/*`  
+> - ADRs: `docs/architecture/adr/*`
+
 ## 🎯 Visão Geral
 
 O **AuraCore** foi refatorado para ser um **SaaS Multi-Tenant**, permitindo que múltiplas empresas (organizações) usem o mesmo sistema com **isolamento total de dados**.

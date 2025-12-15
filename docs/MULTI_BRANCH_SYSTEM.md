@@ -1,5 +1,11 @@
 # 🏢 AuraCore - Sistema Multi-Filial
 
+> **Nota de governança (Fonte de verdade):** este documento é complementar/histórico.  
+> A especificação canônica do sistema está em `docs/architecture/INDEX.md` e nos Contracts/ADRs.  
+> - Índice: `docs/architecture/INDEX.md`  
+> - Contracts: `docs/architecture/contracts/*`  
+> - ADRs: `docs/architecture/adr/*`
+
 ## 📋 Visão Geral
 
 O **AuraCore** agora é um **ERP Multi-Filial** completo, preparado para gerenciar Matriz e Filiais desde o início, evitando refatorações futuras custosas.

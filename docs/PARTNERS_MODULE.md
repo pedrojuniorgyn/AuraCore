@@ -1,5 +1,11 @@
 # 🤝 Módulo de Parceiros de Negócio - Documentação Completa
 
+> **Nota de governança (Fonte de verdade):** este documento é complementar/histórico.  
+> A especificação canônica do sistema está em `docs/architecture/INDEX.md` e nos Contracts/ADRs.  
+> - Índice: `docs/architecture/INDEX.md`  
+> - Contracts: `docs/architecture/contracts/*`  
+> - ADRs: `docs/architecture/adr/*`
+
 ## 📋 Visão Geral
 
 O **Módulo de Parceiros de Negócio** é o primeiro CRUD funcional completo do AuraCore, implementando listagem, criação e edição de Clientes, Fornecedores e Transportadoras com integração total ao sistema SaaS.
