@@ -16,6 +16,12 @@
 
 ---
 
+## 🏗️ Arquitetura (fonte de verdade)
+
+A documentação canônica de arquitetura (contracts, ADRs, diagramas e runbooks) está em:
+
+- `docs/architecture/INDEX.md`
+
 ## 🎯 Visão Geral
 
 O **Aura Core** é um sistema completo de **Transport Management System (TMS)** desenvolvido para transportadoras brasileiras, com foco em:

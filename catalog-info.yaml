@@ -1,0 +1,92 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: auracore
+  description: ERP Enterprise (TMS/WMS/Financeiro/Contábil)
+spec:
+  owner: group:auracore-core
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: auracore-web
+  description: Monorepo Next.js (UI + API Route Handlers) com SQL Server 2022
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  lifecycle: production
+  owner: group:auracore-core
+  system: auracore
+  dependsOn:
+    - resource:auracore-sqlserver
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: auracore-sqlserver
+  description: SQL Server 2022 (Linux)
+spec:
+  type: database
+  owner: group:auracore-core
+  system: auracore
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: auracore-financial-api
+  description: Endpoints Financeiro (/api/financial)
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:auracore-core
+  system: auracore
+  definition: |
+    openapi: 3.0.0
+    info: { title: "AuraCore Financial API", version: "0.1" }
+    paths: {}
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: auracore-accounting-api
+  description: Endpoints Contábil (/api/accounting)
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:auracore-core
+  system: auracore
+  definition: |
+    openapi: 3.0.0
+    info: { title: "AuraCore Accounting API", version: "0.1" }
+    paths: {}
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: auracore-admin-api
+  description: Endpoints Admin (/api/admin)
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:auracore-core
+  system: auracore
+  definition: |
+    openapi: 3.0.0
+    info: { title: "AuraCore Admin API", version: "0.1" }
+    paths: {}
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: auracore-tms-api
+  description: Endpoints TMS (/api/tms)
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:auracore-core
+  system: auracore
+  definition: |
+    openapi: 3.0.0
+    info: { title: "AuraCore TMS API", version: "0.1" }
+    paths: {}
