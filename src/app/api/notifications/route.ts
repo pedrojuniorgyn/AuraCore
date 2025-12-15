@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notifications } from "@/lib/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/notifications
@@ -10,32 +10,27 @@ import { eq, and, desc, sql } from "drizzle-orm";
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get("unread") === "true";
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const limitParam = Number(searchParams.get("limit") || "50");
+    const limit = Number.isFinite(limitParam)
+      ? Math.min(Math.max(Math.trunc(limitParam), 1), 200)
+      : 50;
 
-    // SQL Server não suporta .limit(), usar TOP
-    const userId = parseInt(session.user.id);
-    
-    let query = `
-      SELECT TOP ${limit} *
-      FROM notifications
-      WHERE user_id = '${userId}'
-    `;
-    
-    if (unreadOnly) {
-      query += ` AND is_read = 0`;
-    }
-    
-    query += ` ORDER BY created_at DESC`;
-
-    const results = await db.execute(sql.raw(query)) as any[];
-    const resultsArray = Array.isArray(results) ? results : [];
+    const resultsArray = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.organizationId, ctx.organizationId),
+          eq(notifications.userId, ctx.userId),
+          ...(unreadOnly ? [eq(notifications.isRead, 0)] : [])
+        )
+      )
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
 
     // Parse JSON data
     const parsed = resultsArray.map((notif) => ({
@@ -70,28 +65,24 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const body = await request.json();
     const { notificationId, markAll } = body;
-
-    const userId = parseInt(session.user.id);
 
     if (markAll) {
       // Marcar todas como lidas
       await db
         .update(notifications)
         .set({
-          isRead: sql`1`,
-          readAt: sql`GETDATE()`,
+          isRead: 1,
+          readAt: new Date(),
         })
         .where(
           and(
-            eq(notifications.userId, userId),
-            eq(notifications.isRead, sql`0`)
+            eq(notifications.organizationId, ctx.organizationId),
+            eq(notifications.userId, ctx.userId),
+            eq(notifications.isRead, 0)
           )
         );
 
@@ -101,13 +92,14 @@ export async function POST(request: NextRequest) {
       await db
         .update(notifications)
         .set({
-          isRead: sql`1`,
-          readAt: sql`GETDATE()`,
+          isRead: 1,
+          readAt: new Date(),
         })
         .where(
           and(
             eq(notifications.id, notificationId),
-            eq(notifications.userId, userId)
+            eq(notifications.organizationId, ctx.organizationId),
+            eq(notifications.userId, ctx.userId)
           )
         );
 

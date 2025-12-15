@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 import { generateBTGBoleto } from "@/services/btg/btg-boleto";
+import sql from "mssql";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,21 +23,30 @@ export async function POST(
 
     const resolvedParams = await params;
     const billingId = parseInt(resolvedParams.id);
+    if (!Number.isFinite(billingId) || billingId <= 0) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
 
     await ensureConnection();
 
     // Buscar fatura
-    const billingResult = await pool.request().query(`
-      SELECT 
-        b.*,
-        p.company_name as customer_name,
-        p.document as customer_document,
-        p.email as customer_email
-      FROM billing_invoices b
-      LEFT JOIN business_partners p ON p.id = b.customer_id
-      WHERE b.id = ${billingId}
-      AND b.organization_id = ${session.user.organizationId}
-    `);
+    const billingResult = await pool
+      .request()
+      .input("billingId", sql.Int, billingId)
+      .input("orgId", sql.Int, Number(session.user.organizationId))
+      .query(
+        `
+        SELECT
+          b.*,
+          p.company_name as customer_name,
+          p.document as customer_document,
+          p.email as customer_email
+        FROM billing_invoices b
+        LEFT JOIN business_partners p ON p.id = b.customer_id
+        WHERE b.id = @billingId
+          AND b.organization_id = @orgId
+      `
+      );
 
     if (billingResult.recordset.length === 0) {
       return NextResponse.json({ error: "Fatura não encontrada" }, { status: 404 });
@@ -45,11 +55,16 @@ export async function POST(
     const billing = billingResult.recordset[0];
 
     // Verificar se já tem boleto BTG
-    const existingResult = await pool.request().query(`
-      SELECT * FROM btg_boletos
-      WHERE billing_invoice_id = ${billingId}
-      AND status NOT IN ('CANCELLED')
-    `);
+    const existingResult = await pool
+      .request()
+      .input("billingId", sql.Int, billingId)
+      .query(
+        `
+        SELECT * FROM btg_boletos
+        WHERE billing_invoice_id = @billingId
+          AND status NOT IN ('CANCELLED')
+      `
+      );
 
     if (existingResult.recordset.length > 0) {
       return NextResponse.json({
@@ -72,46 +87,71 @@ export async function POST(
     });
 
     // Salvar no banco
-    const result = await pool.request().query(`
-      INSERT INTO btg_boletos (
-        organization_id, nosso_numero, seu_numero,
-        customer_id, payer_name, payer_document,
-        valor_nominal, data_emissao, data_vencimento,
-        status, btg_id, linha_digitavel, codigo_barras, pdf_url,
-        billing_invoice_id,
-        created_by, created_at
-      )
-      OUTPUT INSERTED.*
-      VALUES (
-        ${session.user.organizationId},
-        '${btgBoleto.nosso_numero}',
-        '${billing.invoice_number}',
-        ${billing.customer_id},
-        '${billing.customer_name}',
-        '${billing.customer_document}',
-        ${billing.total_amount},
-        GETDATE(),
-        '${billing.due_date.toISOString()}',
-        'REGISTERED',
-        '${btgBoleto.id}',
-        '${btgBoleto.linha_digitavel}',
-        '${btgBoleto.codigo_barras}',
-        '${btgBoleto.pdf_url}',
-        ${billingId},
-        '${session.user.id}',
-        GETDATE()
-      )
-    `);
+    const result = await pool
+      .request()
+      .input("orgId", sql.Int, Number(session.user.organizationId))
+      .input("nossoNumero", sql.NVarChar(100), String(btgBoleto.nosso_numero))
+      .input("seuNumero", sql.NVarChar(100), String(billing.invoice_number))
+      .input("customerId", sql.Int, Number(billing.customer_id))
+      .input("payerName", sql.NVarChar(255), String(billing.customer_name ?? ""))
+      .input("payerDocument", sql.NVarChar(50), String(billing.customer_document ?? ""))
+      .input("valorNominal", sql.Decimal(18, 2), Number(billing.total_amount))
+      .input("dataVenc", sql.DateTime2, new Date(billing.due_date))
+      .input("btgId", sql.NVarChar(100), String(btgBoleto.id))
+      .input("linhaDigitavel", sql.NVarChar(200), String(btgBoleto.linha_digitavel))
+      .input("codigoBarras", sql.NVarChar(200), String(btgBoleto.codigo_barras))
+      .input("pdfUrl", sql.NVarChar(500), String(btgBoleto.pdf_url))
+      .input("billingId", sql.Int, billingId)
+      .input("createdBy", sql.NVarChar(255), String(session.user.id))
+      .query(
+        `
+        INSERT INTO btg_boletos (
+          organization_id, nosso_numero, seu_numero,
+          customer_id, payer_name, payer_document,
+          valor_nominal, data_emissao, data_vencimento,
+          status, btg_id, linha_digitavel, codigo_barras, pdf_url,
+          billing_invoice_id,
+          created_by, created_at
+        )
+        OUTPUT INSERTED.*
+        VALUES (
+          @orgId,
+          @nossoNumero,
+          @seuNumero,
+          @customerId,
+          @payerName,
+          @payerDocument,
+          @valorNominal,
+          GETDATE(),
+          @dataVenc,
+          'REGISTERED',
+          @btgId,
+          @linhaDigitavel,
+          @codigoBarras,
+          @pdfUrl,
+          @billingId,
+          @createdBy,
+          GETDATE()
+        )
+      `
+      );
 
     // Atualizar fatura com boleto
-    await pool.request().query(`
-      UPDATE billing_invoices
-      SET 
-        boleto_url = '${btgBoleto.pdf_url}',
-        boleto_linha_digitavel = '${btgBoleto.linha_digitavel}',
-        updated_at = GETDATE()
-      WHERE id = ${billingId}
-    `);
+    await pool
+      .request()
+      .input("billingId", sql.Int, billingId)
+      .input("boletoUrl", sql.NVarChar(500), String(btgBoleto.pdf_url))
+      .input("linhaDigitavel", sql.NVarChar(200), String(btgBoleto.linha_digitavel))
+      .query(
+        `
+        UPDATE billing_invoices
+        SET
+          boleto_url = @boletoUrl,
+          boleto_linha_digitavel = @linhaDigitavel,
+          updated_at = GETDATE()
+        WHERE id = @billingId
+      `
+      );
 
     return NextResponse.json({
       success: true,
