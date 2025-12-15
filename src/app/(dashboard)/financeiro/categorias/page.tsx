@@ -83,8 +83,9 @@ export default function CategoriasPage() {
 
       if (!response.ok) {
         const msg =
-          json?.message ||
-          json?.error ||
+          (json?.details
+            ? `${json?.error || json?.message || "Falha"}: ${json.details}`
+            : json?.message || json?.error) ||
           `Falha ao carregar categorias (HTTP ${response.status})`;
         setLoadError(msg);
         console.error("Erro ao buscar categorias:", msg, json);

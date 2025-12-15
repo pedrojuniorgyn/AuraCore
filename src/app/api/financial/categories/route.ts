@@ -20,6 +20,24 @@ export async function GET(request: NextRequest) {
     // 🌱 Seed idempotente: garante categorias padrão no primeiro acesso
     await ensureFinancialData(ctx.organizationId, ctx.userId);
 
+    // ✅ Seleciona apenas colunas "core" para evitar quebra caso o banco ainda não tenha
+    // colunas novas que existam no schema Drizzle.
+    const categorySelect = {
+      id: financialCategories.id,
+      organizationId: financialCategories.organizationId,
+      name: financialCategories.name,
+      code: financialCategories.code,
+      type: financialCategories.type,
+      description: financialCategories.description,
+      status: financialCategories.status,
+      createdBy: financialCategories.createdBy,
+      updatedBy: financialCategories.updatedBy,
+      createdAt: financialCategories.createdAt,
+      updatedAt: financialCategories.updatedAt,
+      deletedAt: financialCategories.deletedAt,
+      version: financialCategories.version,
+    };
+
     const conditions: any[] = [
       eq(financialCategories.organizationId, ctx.organizationId),
       isNull(financialCategories.deletedAt),
@@ -30,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     const categories = await db
-      .select()
+      .select(categorySelect)
       .from(financialCategories)
       .where(and(...conditions))
       .orderBy(financialCategories.code);
@@ -59,18 +77,6 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    // Mapeia tipo: INCOME → ENTRADA, EXPENSE → SAIDA
-    const tipoMovimento = body.type === 'INCOME' ? 'ENTRADA' : 'SAIDA';
-    
-    // Determina grupo_dfc (padrão: OPERACIONAL)
-    let grupoDfc = 'OPERACIONAL';
-    const name = (body.name || '').toLowerCase();
-    if (name.includes('ativo') || name.includes('imobilizado')) {
-      grupoDfc = 'INVESTIMENTO';
-    } else if (name.includes('empréstimo') || name.includes('financiamento') || name.includes('lucro')) {
-      grupoDfc = 'FINANCIAMENTO';
-    }
-
     await db.insert(financialCategories).values({
       organizationId: ctx.organizationId,
       name: body.name,
@@ -78,10 +84,6 @@ export async function POST(request: NextRequest) {
       type: body.type,
       description: body.description || null,
       status: "ACTIVE",
-      codigoEstruturado: body.code || null, // ✅ DFC
-      tipoMovimento: tipoMovimento, // ✅ DFC
-      grupoDfc: grupoDfc, // ✅ DFC
-      permiteLancamento: 1, // ✅ DFC
       createdBy: ctx.userId,
       updatedBy: ctx.userId,
       version: 1,
@@ -89,7 +91,21 @@ export async function POST(request: NextRequest) {
 
     // Busca o registro criado
     const [newCategory] = await db
-      .select()
+      .select({
+        id: financialCategories.id,
+        organizationId: financialCategories.organizationId,
+        name: financialCategories.name,
+        code: financialCategories.code,
+        type: financialCategories.type,
+        description: financialCategories.description,
+        status: financialCategories.status,
+        createdBy: financialCategories.createdBy,
+        updatedBy: financialCategories.updatedBy,
+        createdAt: financialCategories.createdAt,
+        updatedAt: financialCategories.updatedAt,
+        deletedAt: financialCategories.deletedAt,
+        version: financialCategories.version,
+      })
       .from(financialCategories)
       .where(
         and(

@@ -35,7 +35,7 @@ export async function ensureFinancialData(organizationId: number, userId: string
   try {
     // Verifica categorias
     const existingCats = await db
-      .select()
+      .select({ id: financialCategories.id })
       .from(financialCategories)
       .where(
         and(
@@ -79,7 +79,7 @@ export async function ensureFinancialData(organizationId: number, userId: string
 
     // Verifica contas bancárias
     const existingBanks = await db
-      .select()
+      .select({ id: bankAccounts.id })
       .from(bankAccounts)
       .where(
         and(
