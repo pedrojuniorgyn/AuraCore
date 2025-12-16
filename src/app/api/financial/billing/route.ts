@@ -47,6 +47,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+
     const ctx = await getTenantContext();
     const branchHeader = request.headers.get("x-branch-id");
     const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
