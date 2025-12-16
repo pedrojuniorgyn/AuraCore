@@ -79,6 +79,9 @@ export async function GET(req: Request) {
       suggestedCode,
     });
   } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao sugerir código:", error);
     return NextResponse.json(
       { error: "Erro ao sugerir código" },
