@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function POST(request: NextRequest) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+
+    const ctx = await getTenantContext();
+    if (!ctx.isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Apenas ADMIN pode exportar relatórios" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { type, format = 'csv', filters = {} } = body;
 
@@ -12,25 +24,33 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'wms_events':
-        const events = await db.execute(sql`SELECT * FROM wms_billing_events WHERE organization_id = 1`);
+        const events = await db.execute(
+          sql`SELECT * FROM wms_billing_events WHERE organization_id = ${ctx.organizationId}`
+        );
         data = events.recordset || events;
         filename = `wms_events_${Date.now()}`;
         break;
 
       case 'ciap':
-        const ciap = await db.execute(sql`SELECT * FROM ciap_control WHERE organization_id = 1`);
+        const ciap = await db.execute(
+          sql`SELECT * FROM ciap_control WHERE organization_id = ${ctx.organizationId}`
+        );
         data = ciap.recordset || ciap;
         filename = `ciap_${Date.now()}`;
         break;
 
       case 'esg':
-        const esg = await db.execute(sql`SELECT * FROM carbon_emissions WHERE organization_id = 1`);
+        const esg = await db.execute(
+          sql`SELECT * FROM carbon_emissions WHERE organization_id = ${ctx.organizationId}`
+        );
         data = esg.recordset || esg;
         filename = `esg_emissions_${Date.now()}`;
         break;
 
       case 'claims':
-        const claims = await db.execute(sql`SELECT * FROM claims_management WHERE organization_id = 1`);
+        const claims = await db.execute(
+          sql`SELECT * FROM claims_management WHERE organization_id = ${ctx.organizationId}`
+        );
         data = claims.recordset || claims;
         filename = `claims_${Date.now()}`;
         break;
@@ -48,6 +68,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({
       success: false,
       error: error.message

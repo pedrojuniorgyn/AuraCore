@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { billingInvoices, billingItems, cteHeader, businessPartners } from "@/lib/db/schema";
-import { getTenantContext } from "@/lib/auth/context";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
+import sql from "mssql";
 import { eq, and, isNull, between, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -36,18 +38,45 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: invoices });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { ensureConnection } = await import("@/lib/db");
-    await ensureConnection();
     const ctx = await getTenantContext();
+    const branchHeader = request.headers.get("x-branch-id");
+    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
+        { status: 400 }
+      );
+    }
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial informada" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const { customerId, periodStart, periodEnd, billingFrequency } = body;
+    if (!customerId || !periodStart || !periodEnd || !billingFrequency) {
+      return NextResponse.json(
+        { error: "Campos obrigatórios: customerId, periodStart, periodEnd, billingFrequency" },
+        { status: 400 }
+      );
+    }
+    const startDt = new Date(periodStart);
+    const endDt = new Date(periodEnd);
+    if (Number.isNaN(startDt.getTime()) || Number.isNaN(endDt.getTime())) {
+      return NextResponse.json({ error: "periodStart/periodEnd inválidos" }, { status: 400 });
+    }
 
     // Buscar CTes do período
     const ctes = await db
@@ -55,9 +84,11 @@ export async function POST(request: NextRequest) {
       .from(cteHeader)
       .where(
         and(
+          eq(cteHeader.organizationId, ctx.organizationId),
+          eq(cteHeader.branchId, branchId),
           eq(cteHeader.takerId, customerId),
           eq(cteHeader.status, "AUTHORIZED"),
-          between(cteHeader.issueDate, new Date(periodStart), new Date(periodEnd)),
+          between(cteHeader.issueDate, startDt, endDt),
           isNull(cteHeader.deletedAt)
         )
       );
@@ -72,53 +103,121 @@ export async function POST(request: NextRequest) {
     const grossValue = ctes.reduce((acc, cte) => acc + parseFloat(cte.totalValue || "0"), 0);
     const netValue = grossValue;
 
-    const [invoice] = await db
-      .insert(billingInvoices)
-      .values({
-        organizationId: ctx.organizationId,
-        branchId: ctx.branchId,
-        invoiceNumber: await generateBillingNumber(ctx.branchId),
-        customerId,
-        periodStart: new Date(periodStart),
-        periodEnd: new Date(periodEnd),
-        billingFrequency,
-        totalCtes: ctes.length,
-        grossValue: grossValue.toString(),
-        netValue: netValue.toString(),
-        issueDate: new Date(),
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        status: "DRAFT",
-        createdBy: ctx.userId,
-        updatedBy: ctx.userId,
-        version: 1,
-      })
-      .returning();
+    const created = await withMssqlTransaction(async (tx) => {
+      const yearMonth = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+      const tmpNumber = `FAT-${yearMonth}-TMP-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 
-    // Inserir itens
-    for (const cte of ctes) {
-      await db.insert(billingItems).values({
-        billingInvoiceId: invoice.id,
-        cteId: cte.id,
-        cteNumber: cte.cteNumber,
-        cteSeries: cte.serie,
-        cteKey: cte.cteKey,
-        cteIssueDate: cte.issueDate,
-        cteValue: cte.totalValue,
-        originUf: cte.originUf,
-        destinationUf: cte.destinationUf,
-      });
-    }
+      const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const insertRes = await tx
+        .request()
+        .input("orgId", sql.Int, ctx.organizationId)
+        .input("branchId", sql.Int, branchId)
+        .input("invoiceNumber", sql.NVarChar(50), tmpNumber)
+        .input("customerId", sql.Int, Number(customerId))
+        .input("periodStart", sql.DateTime2, startDt)
+        .input("periodEnd", sql.DateTime2, endDt)
+        .input("billingFrequency", sql.NVarChar(20), String(billingFrequency))
+        .input("totalCtes", sql.Int, ctes.length)
+        .input("grossValue", sql.Decimal(18, 2), grossValue)
+        .input("netValue", sql.Decimal(18, 2), netValue)
+        .input("issueDate", sql.DateTime2, new Date())
+        .input("dueDate", sql.DateTime2, dueDate)
+        .input("createdBy", sql.NVarChar(255), ctx.userId)
+        .input("updatedBy", sql.NVarChar(255), ctx.userId)
+        .query(
+          `
+          INSERT INTO billing_invoices (
+            organization_id, branch_id,
+            invoice_number,
+            customer_id,
+            period_start, period_end,
+            billing_frequency,
+            total_ctes,
+            gross_value, net_value,
+            issue_date, due_date,
+            status,
+            created_at, updated_at, deleted_at,
+            created_by, updated_by, version
+          )
+          OUTPUT INSERTED.id
+          VALUES (
+            @orgId, @branchId,
+            @invoiceNumber,
+            @customerId,
+            @periodStart, @periodEnd,
+            @billingFrequency,
+            @totalCtes,
+            @grossValue, @netValue,
+            @issueDate, @dueDate,
+            'DRAFT',
+            GETDATE(), GETDATE(), NULL,
+            @createdBy, @updatedBy, 1
+          )
+        `
+        );
 
-    return NextResponse.json({ success: true, data: invoice });
+      const invoiceId = insertRes.recordset?.[0]?.id as number | undefined;
+      if (!invoiceId) throw new Error("Falha ao criar billing_invoice");
+
+      const finalNumber = `FAT-${yearMonth}-${String(invoiceId).padStart(6, "0")}`;
+      await tx
+        .request()
+        .input("orgId", sql.Int, ctx.organizationId)
+        .input("invoiceId", sql.Int, invoiceId)
+        .input("finalNumber", sql.NVarChar(50), finalNumber)
+        .input("updatedBy", sql.NVarChar(255), ctx.userId)
+        .query(
+          `
+          UPDATE billing_invoices
+          SET invoice_number = @finalNumber, updated_at = GETDATE(), updated_by = @updatedBy
+          WHERE id = @invoiceId AND organization_id = @orgId
+        `
+        );
+
+      for (const cte of ctes) {
+        await tx
+          .request()
+          .input("invoiceId", sql.Int, invoiceId)
+          .input("cteId", sql.Int, Number(cte.id))
+          .input("cteNumber", sql.Int, Number(cte.cteNumber))
+          .input("cteSeries", sql.NVarChar(3), cte.serie ? String(cte.serie) : null)
+          .input("cteKey", sql.NVarChar(44), cte.cteKey ? String(cte.cteKey) : null)
+          .input("cteIssueDate", sql.DateTime2, new Date(cte.issueDate))
+          .input("cteValue", sql.Decimal(18, 2), Number(cte.totalValue ?? 0))
+          .input("originUf", sql.NVarChar(2), cte.originUf ? String(cte.originUf) : null)
+          .input("destinationUf", sql.NVarChar(2), cte.destinationUf ? String(cte.destinationUf) : null)
+          .query(
+            `
+            INSERT INTO billing_items (
+              billing_invoice_id,
+              cte_id,
+              cte_number, cte_series, cte_key,
+              cte_issue_date, cte_value,
+              origin_uf, destination_uf,
+              created_at
+            )
+            VALUES (
+              @invoiceId,
+              @cteId,
+              @cteNumber, @cteSeries, @cteKey,
+              @cteIssueDate, @cteValue,
+              @originUf, @destinationUf,
+              GETDATE()
+            )
+          `
+          );
+      }
+
+      return { id: invoiceId, invoiceNumber: finalNumber };
+    });
+
+    return NextResponse.json({ success: true, data: created }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
-
-async function generateBillingNumber(branchId: number): Promise<string> {
-  const year = new Date().getFullYear();
-  const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
-  return `FAT-${year}${month}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 }
 
 
