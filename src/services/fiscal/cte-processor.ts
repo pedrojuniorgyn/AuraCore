@@ -87,7 +87,7 @@ export async function importExternalCTe(
     }
     
     // 2. Inserir CTe como EXTERNO
-    const [newCte] = await db
+    const [createdId] = await db
       .insert(cteHeader)
       .values({
         organizationId,
@@ -145,9 +145,9 @@ export async function importExternalCTe(
         updatedBy: userId,
         version: 1,
       })
-      .returning();
-    
-    const cteId = newCte.id;
+      .$returningId();
+
+    const cteId = Number((createdId as any)?.id);
     
     console.log(`✅ CTe externo ${parsedCTe.cteKey} importado com ID ${cteId}`);
     
@@ -227,6 +227,7 @@ export async function parseCTeXML(xmlContent: string): Promise<ParsedCTe> {
   
   throw new Error("Parser de CTe ainda não implementado completamente");
 }
+
 
 
 

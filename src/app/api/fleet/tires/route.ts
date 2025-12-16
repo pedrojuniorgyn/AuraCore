@@ -6,6 +6,8 @@ import { eq, and, isNull } from "drizzle-orm";
 
 export async function GET() {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const ctx = await getTenantContext();
 
     const allTires = await db
@@ -21,34 +23,62 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: allTires });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    const [tire] = await db
+    // Evitar override de campos sensíveis via spread
+    const {
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
+    const [createdId] = await db
       .insert(tires)
       .values({
+        ...safeBody,
         organizationId: ctx.organizationId,
-        serialNumber: body.serialNumber,
-        brandId: body.brandId,
-        model: body.model,
-        size: body.size,
-        purchaseDate: body.purchaseDate ? new Date(body.purchaseDate) : null,
-        purchasePrice: body.purchasePrice,
+        purchaseDate: (safeBody as any)?.purchaseDate
+          ? new Date((safeBody as any).purchaseDate as any)
+          : null,
         status: "STOCK",
       })
-      .returning();
+      .$returningId();
+
+    const tireId = (createdId as any)?.id;
+    const [tire] = tireId
+      ? await db
+          .select()
+          .from(tires)
+          .where(and(eq(tires.id, Number(tireId)), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
+          .limit(1)
+      : [];
 
     return NextResponse.json({ success: true, data: tire });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

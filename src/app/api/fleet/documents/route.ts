@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vehicleDocuments, driverDocuments } from "@/lib/db/schema";
-import { getTenantContext } from "@/lib/auth/context";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, lte } from "drizzle-orm";
 
 // GET - Lista documentos vencendo
@@ -37,6 +37,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: [] });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -49,33 +52,96 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
+    const branchIdCandidate = (body as any)?.branchId ?? ctx.defaultBranchId;
+    if (branchIdCandidate === null || branchIdCandidate === undefined) {
+      return NextResponse.json(
+        { error: "branchId é obrigatório", code: "BRANCH_REQUIRED" },
+        { status: 400 }
+      );
+    }
+    const branchId = Number(branchIdCandidate);
+    if (!Number.isFinite(branchId)) {
+      return NextResponse.json(
+        { error: "branchId inválido", code: "BRANCH_INVALID" },
+        { status: 400 }
+      );
+    }
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Sem permissão para a filial", code: "BRANCH_FORBIDDEN" },
+        { status: 403 }
+      );
+    }
+
+    // Evitar override de campos sensíveis via spread
+    const {
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
     if (body.type === "vehicle") {
-      const [doc] = await db.insert(vehicleDocuments).values({
-        organizationId: ctx.organizationId,
-        branchId: ctx.branchId,
-        ...body,
-        createdBy: ctx.userId,
-        version: 1,
-      }).returning();
+      const [createdId] = await db
+        .insert(vehicleDocuments)
+        .values({
+          ...safeBody,
+          organizationId: ctx.organizationId,
+          branchId,
+          createdBy: ctx.userId,
+          version: 1,
+        })
+        .$returningId();
+
+      const docId = (createdId as any)?.id;
+      const [doc] = docId
+        ? await db
+            .select()
+            .from(vehicleDocuments)
+            .where(and(eq(vehicleDocuments.id, Number(docId)), eq(vehicleDocuments.organizationId, ctx.organizationId)))
+            .limit(1)
+        : [];
+
       return NextResponse.json({ success: true, data: doc });
     }
 
     if (body.type === "driver") {
-      const [doc] = await db.insert(driverDocuments).values({
-        organizationId: ctx.organizationId,
-        branchId: ctx.branchId,
-        ...body,
-        createdBy: ctx.userId,
-        version: 1,
-      }).returning();
+      const [createdId] = await db
+        .insert(driverDocuments)
+        .values({
+          ...safeBody,
+          organizationId: ctx.organizationId,
+          branchId,
+          createdBy: ctx.userId,
+          version: 1,
+        })
+        .$returningId();
+
+      const docId = (createdId as any)?.id;
+      const [doc] = docId
+        ? await db
+            .select()
+            .from(driverDocuments)
+            .where(and(eq(driverDocuments.id, Number(docId)), eq(driverDocuments.organizationId, ctx.organizationId)))
+            .limit(1)
+        : [];
+
       return NextResponse.json({ success: true, data: doc });
     }
 
     return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

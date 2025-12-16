@@ -1,20 +1,18 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { mdfeHeader, mdfeDocuments, trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/fiscal/mdfe
  */
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
 
     const mdfes = await db
       .select()
@@ -32,6 +30,9 @@ export async function GET(req: Request) {
       data: mdfes,
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar MDFes:", error);
     return NextResponse.json(
       { error: "Erro ao buscar MDFes", details: error.message },
@@ -46,13 +47,12 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
-    const organizationId = session.user.organizationId;
-    const createdBy = session.user.email || "system";
+    const organizationId = ctx.organizationId;
+    const createdBy = ctx.userId;
 
     const body = await req.json();
     const { tripId, cteIds = [] } = body;
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     const [trip] = await db
       .select()
       .from(trips)
-      .where(eq(trips.id, tripId));
+      .where(and(eq(trips.id, tripId), eq(trips.organizationId, organizationId), isNull(trips.deletedAt)));
 
     if (!trip) {
       return NextResponse.json(
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     const mdfeNumber = lastMdfes.length + 1;
 
     // Criar MDFe
-    const [newMdfe] = await db
+    const [createdId] = await db
       .insert(mdfeHeader)
       .values({
         organizationId,
@@ -112,13 +112,22 @@ export async function POST(req: Request) {
         issueDate: new Date(),
         createdBy,
       })
-      .returning();
+      .$returningId();
+
+    const mdfeId = (createdId as any)?.id;
+    const [newMdfe] = mdfeId
+      ? await db
+          .select()
+          .from(mdfeHeader)
+          .where(and(eq(mdfeHeader.id, Number(mdfeId)), eq(mdfeHeader.organizationId, organizationId), isNull(mdfeHeader.deletedAt)))
+          .limit(1)
+      : [];
 
     // Vincular CTes
     if (cteIds.length > 0) {
       await db.insert(mdfeDocuments).values(
         cteIds.map((cteId: number) => ({
-          mdfeHeaderId: newMdfe.id,
+          mdfeHeaderId: Number(mdfeId),
           cteHeaderId: cteId,
         }))
       );
@@ -130,6 +139,9 @@ export async function POST(req: Request) {
       data: newMdfe,
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar MDFe:", error);
     return NextResponse.json(
       { error: "Erro ao criar MDFe", details: error.message },
@@ -137,6 +149,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
 

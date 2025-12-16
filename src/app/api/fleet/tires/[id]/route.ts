@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tires } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 // GET - Buscar pneu específico
 export async function GET(
@@ -11,10 +11,9 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const tireId = parseInt(resolvedParams.id);
     if (isNaN(tireId)) {
@@ -27,7 +26,7 @@ export async function GET(
       .where(
         and(
           eq(tires.id, tireId),
-          eq(tires.organizationId, session.user.organizationId),
+          eq(tires.organizationId, ctx.organizationId),
           isNull(tires.deletedAt)
         )
       )
@@ -38,7 +37,10 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: tire[0] });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar pneu:", error);
     return NextResponse.json(
       { error: "Erro ao buscar pneu" },
@@ -54,10 +56,9 @@ export async function PUT(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const tireId = parseInt(resolvedParams.id);
     if (isNaN(tireId)) {
@@ -81,7 +82,7 @@ export async function PUT(
       .where(
         and(
           eq(tires.id, tireId),
-          eq(tires.organizationId, session.user.organizationId),
+          eq(tires.organizationId, ctx.organizationId),
           isNull(tires.deletedAt)
         )
       )
@@ -102,7 +103,7 @@ export async function PUT(
         .where(
           and(
             eq(tires.serialNumber, body.serialNumber),
-            eq(tires.organizationId, session.user.organizationId),
+            eq(tires.organizationId, ctx.organizationId),
             isNull(tires.deletedAt)
           )
         )
@@ -117,22 +118,52 @@ export async function PUT(
     }
 
     // Atualizar
-    const updated = await db
+    const {
+      id: _id,
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      createdAt: _createdAt,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      updatedAt: _updatedAt,
+      updatedBy: _updatedBy,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
+    const updateResult = await db
       .update(tires)
       .set({
-        ...body,
-        updatedBy: session.user.id,
+        ...safeBody,
+        updatedBy: ctx.userId,
         updatedAt: new Date(),
       })
-      .where(eq(tires.id, tireId))
-      .returning();
+      .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId)));
+
+    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffected = Array.isArray(rowsAffectedRaw)
+      ? Number(rowsAffectedRaw[0] ?? 0)
+      : Number(rowsAffectedRaw ?? 0);
+    if (!rowsAffected) {
+      return NextResponse.json({ error: "Pneu não encontrado" }, { status: 404 });
+    }
+
+    const [updated] = await db
+      .select()
+      .from(tires)
+      .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Pneu atualizado com sucesso",
-      data: updated[0],
+      data: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar pneu:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar pneu" },
@@ -148,10 +179,9 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const tireId = parseInt(resolvedParams.id);
     if (isNaN(tireId)) {
@@ -165,7 +195,7 @@ export async function DELETE(
       .where(
         and(
           eq(tires.id, tireId),
-          eq(tires.organizationId, session.user.organizationId),
+          eq(tires.organizationId, ctx.organizationId),
           isNull(tires.deletedAt)
         )
       )
@@ -191,15 +221,18 @@ export async function DELETE(
       .update(tires)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
+        deletedBy: ctx.userId,
       })
-      .where(eq(tires.id, tireId));
+      .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId)));
 
     return NextResponse.json({
       success: true,
       message: "Pneu excluído com sucesso",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir pneu:", error);
     return NextResponse.json(
       { error: "Erro ao excluir pneu" },
@@ -207,6 +240,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 

@@ -15,16 +15,14 @@ import {
   freightExtraComponents 
 } from "@/lib/db/schema";
 import { and, eq, isNull, desc } from "drizzle-orm";
-import { auth } from "@/lib/auth";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
 
     // Buscar tabelas
     const tables = await db
@@ -99,6 +97,9 @@ export async function GET(request: NextRequest) {
       data: tablesWithDetails 
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar tabelas de frete:", error);
     return NextResponse.json(
       { error: "Falha ao listar tabelas de frete", details: error.message },
@@ -109,13 +110,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const createdBy = session.user.email || "system";
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
+    const createdBy = ctx.userId;
 
     const body = await request.json();
     const {
@@ -149,75 +148,85 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar tabela
-    const [newTable] = await db
-      .insert(freightTables)
-      .values({
-        organizationId,
-        name,
-        code,
-        type,
-        transportType,
-        calculationType: calculationType || "WEIGHT_RANGE",
-        customerId: customerId || null,
-        minFreightValue: minFreightValue || "0.00",
-        validFrom: new Date(validFrom),
-        validTo: validTo ? new Date(validTo) : null,
-        status,
-        description,
-        createdBy,
-      })
-      .returning();
-
-    const tableId = newTable.id;
-
-    // Criar rotas e seus preços
-    for (const route of routes) {
-      const [newRoute] = await db
-        .insert(freightTableRoutes)
+    const tableId = await db.transaction(async (tx) => {
+      // Criar tabela (SQL Server: sem .returning())
+      const [createdTableId] = await tx
+        .insert(freightTables)
         .values({
-          freightTableId: tableId,
-          originUf: route.originUf,
-          destinationUf: route.destinationUf,
-          originCityId: route.originCityId || null,
-          destinationCityId: route.destinationCityId || null,
-          notes: route.notes || null,
-          displayOrder: route.displayOrder || 0,
+          organizationId,
+          name,
+          code,
+          type,
+          transportType,
+          calculationType: calculationType || "WEIGHT_RANGE",
+          customerId: customerId || null,
+          minFreightValue: minFreightValue || "0.00",
+          validFrom: new Date(validFrom),
+          validTo: validTo ? new Date(validTo) : null,
+          status,
+          description,
+          createdBy,
         })
-        .returning();
+        .$returningId();
 
-      // Criar preços para esta rota
-      if (route.prices && route.prices.length > 0) {
-        await db.insert(freightTablePrices).values(
-          route.prices.map((price: any) => ({
-            freightTableRouteId: newRoute.id,
-            minWeight: price.minWeight?.toString() || null,
-            maxWeight: price.maxWeight?.toString() || null,
-            vehicleTypeId: price.vehicleTypeId || null,
-            price: price.price.toString(),
-            excessPrice: price.excessPrice?.toString() || "0.00",
+      const tableId = (createdTableId as any)?.id;
+      if (!tableId) {
+        throw new Error("Falha ao criar tabela de frete");
+      }
+
+      // Criar rotas e seus preços
+      for (const route of routes) {
+        const [createdRouteId] = await tx
+          .insert(freightTableRoutes)
+          .values({
+            freightTableId: Number(tableId),
+            originUf: route.originUf,
+            destinationUf: route.destinationUf,
+            originCityId: route.originCityId || null,
+            destinationCityId: route.destinationCityId || null,
+            notes: route.notes || null,
+            displayOrder: route.displayOrder || 0,
+          })
+          .$returningId();
+
+        const routeId = (createdRouteId as any)?.id;
+
+        // Criar preços para esta rota
+        if (routeId && route.prices && route.prices.length > 0) {
+          await tx.insert(freightTablePrices).values(
+            route.prices.map((price: any) => ({
+              freightTableRouteId: Number(routeId),
+              minWeight: price.minWeight?.toString() || null,
+              maxWeight: price.maxWeight?.toString() || null,
+              vehicleTypeId: price.vehicleTypeId || null,
+              price: price.price.toString(),
+              excessPrice: price.excessPrice?.toString() || "0.00",
+            }))
+          );
+        }
+      }
+
+      // Criar generalidades
+      if (generalities.length > 0) {
+        await tx.insert(freightGeneralities).values(
+          generalities.map((gen: any, index: number) => ({
+            freightTableId: Number(tableId),
+            name: gen.name,
+            code: gen.code || null,
+            type: gen.type,
+            value: gen.value.toString(),
+            minValue: gen.minValue?.toString() || "0.00",
+            maxValue: gen.maxValue?.toString() || null,
+            incidence: gen.incidence || "ALWAYS",
+            isActive:
+              gen.isActive !== undefined ? gen.isActive.toString() : "true",
+            applyOrder: index,
           }))
         );
       }
-    }
 
-    // Criar generalidades
-    if (generalities.length > 0) {
-      await db.insert(freightGeneralities).values(
-        generalities.map((gen: any, index: number) => ({
-          freightTableId: tableId,
-          name: gen.name,
-          code: gen.code || null,
-          type: gen.type,
-          value: gen.value.toString(),
-          minValue: gen.minValue?.toString() || "0.00",
-          maxValue: gen.maxValue?.toString() || null,
-          incidence: gen.incidence || "ALWAYS",
-          isActive: gen.isActive !== undefined ? gen.isActive.toString() : "true",
-          applyOrder: index,
-        }))
-      );
-    }
+      return Number(tableId);
+    });
 
     return NextResponse.json({
       success: true,
@@ -225,6 +234,9 @@ export async function POST(request: NextRequest) {
       data: { id: tableId },
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar tabela de frete:", error);
     return NextResponse.json(
       { error: error.message || "Falha ao criar tabela de frete" },

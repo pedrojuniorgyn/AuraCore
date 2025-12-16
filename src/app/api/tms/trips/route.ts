@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { shouldRequireCiot } from "@/services/validators/ciot-validator";
+import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
 
 /**
  * GET /api/tms/trips
@@ -12,12 +12,8 @@ export async function GET(req: Request) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
 
     const allTrips = await db
       .select()
@@ -25,7 +21,8 @@ export async function GET(req: Request) {
       .where(
         and(
           eq(trips.organizationId, organizationId),
-          isNull(trips.deletedAt)
+          isNull(trips.deletedAt),
+          ...getBranchScopeFilter(ctx, trips.branchId)
         )
       )
       .orderBy(desc(trips.createdAt));
@@ -35,6 +32,9 @@ export async function GET(req: Request) {
       data: allTrips,
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar viagens:", error);
     return NextResponse.json(
       { error: "Erro ao buscar viagens", details: error.message },
@@ -50,17 +50,13 @@ export async function POST(req: Request) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const createdBy = session.user.email || "system";
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
+    const createdBy = ctx.userId;
 
     const body = await req.json();
     const {
-      branchId = 1,
+      branchId: branchIdRaw,
       vehicleId,
       driverId,
       driverType,
@@ -69,6 +65,27 @@ export async function POST(req: Request) {
       ciotNumber,
       ciotValue,
     } = body;
+
+    const branchIdCandidate = branchIdRaw ?? ctx.defaultBranchId;
+    if (branchIdCandidate === null || branchIdCandidate === undefined) {
+      return NextResponse.json(
+        { error: "branchId é obrigatório", code: "BRANCH_REQUIRED" },
+        { status: 400 }
+      );
+    }
+    const branchId = Number(branchIdCandidate);
+    if (!Number.isFinite(branchId)) {
+      return NextResponse.json(
+        { error: "branchId inválido", code: "BRANCH_INVALID" },
+        { status: 400 }
+      );
+    }
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Sem permissão para a filial", code: "BRANCH_FORBIDDEN" },
+        { status: 403 }
+      );
+    }
 
     // Validações
     if (!vehicleId || !driverId) {
@@ -131,6 +148,9 @@ export async function POST(req: Request) {
       data: newTrip,
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar viagem:", error);
     return NextResponse.json(
       { error: "Erro ao criar viagem", details: error.message },

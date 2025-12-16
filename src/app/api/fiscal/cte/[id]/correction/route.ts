@@ -15,17 +15,20 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "fiscal.cte.create", async (user, ctx) => {
-    const cteId = parseInt(resolvedParams.id);
-
-    if (isNaN(cteId)) {
-      return NextResponse.json(
-        { error: "ID de CTe inválido" },
-        { status: 400 }
-      );
-    }
-
     try {
-    const resolvedParams = await params;
+      const { ensureConnection } = await import("@/lib/db");
+      await ensureConnection();
+
+      const resolvedParams = await params;
+      const cteId = parseInt(resolvedParams.id);
+
+      if (isNaN(cteId)) {
+        return NextResponse.json(
+          { error: "ID de CTe inválido" },
+          { status: 400 }
+        );
+      }
+
       const body = await request.json();
       const { corrections } = body;
 
@@ -65,7 +68,7 @@ export async function POST(
       const sequenceNumber = existingCCe.length + 1;
 
       // Registrar CCe (implementação simplificada)
-      const [cce] = await db
+      const [createdId] = await db
         .insert(cteCorrectionLetters)
         .values({
           organizationId: ctx.organizationId,
@@ -75,7 +78,9 @@ export async function POST(
           status: "PENDING", // TODO: Enviar para Sefaz
           createdBy: ctx.user.id,
         })
-        .returning();
+        .$returningId();
+
+      const cceId = (createdId as any)?.id;
 
       // TODO: Implementar envio real para Sefaz
       console.log("⚠️  CCe registrada localmente. Envio para Sefaz pendente de implementação.");
@@ -83,7 +88,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         message: "Carta de Correção registrada (envio para Sefaz pendente)",
-        data: { cceId: cce.id, sequenceNumber },
+        data: { cceId, sequenceNumber },
       });
     } catch (error: any) {
       console.error("❌ Erro ao processar CCe:", error);
@@ -94,6 +99,7 @@ export async function POST(
     }
   });
 }
+
 
 
 
