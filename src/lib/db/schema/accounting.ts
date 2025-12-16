@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   varchar,
+  nvarchar,
   decimal,
   datetime,
   text,
@@ -84,15 +85,15 @@ export const fiscalDocuments = sqlServerTable("fiscal_documents", {
   
   // Auditoria
   postedAt: datetime("posted_at"), // Data de contabilização
-  postedBy: bigint("posted_by", { mode: "number" }), // Usuário que contabilizou
+  postedBy: nvarchar("posted_by", { length: 255 }), // Usuário que contabilizou (UUID string)
   reversedAt: datetime("reversed_at"), // Data de reversão
-  reversedBy: bigint("reversed_by", { mode: "number" }), // Usuário que reverteu
+  reversedBy: nvarchar("reversed_by", { length: 255 }), // Usuário que reverteu (UUID string)
   
   createdAt: datetime("created_at").notNull().default(sql`GETDATE()`),
   updatedAt: datetime("updated_at").notNull().default(sql`GETDATE()`),
   deletedAt: datetime("deleted_at"),
-  createdBy: bigint("created_by", { mode: "number" }).notNull(),
-  updatedBy: bigint("updated_by", { mode: "number" }).notNull(),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }).notNull(),
   version: int("version").notNull().default(1),
 });
 
@@ -192,15 +193,15 @@ export const journalEntries = sqlServerTable("journal_entries", {
   
   // Auditoria
   postedAt: datetime("posted_at"),
-  postedBy: bigint("posted_by", { mode: "number" }),
+  postedBy: nvarchar("posted_by", { length: 255 }),
   reversedAt: datetime("reversed_at"),
-  reversedByUser: bigint("reversed_by_user", { mode: "number" }),
+  reversedByUser: nvarchar("reversed_by_user", { length: 255 }),
   
   createdAt: datetime("created_at").notNull().default(sql`GETDATE()`),
   updatedAt: datetime("updated_at").notNull().default(sql`GETDATE()`),
   deletedAt: datetime("deleted_at"),
-  createdBy: bigint("created_by", { mode: "number" }).notNull(),
-  updatedBy: bigint("updated_by", { mode: "number" }).notNull(),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }).notNull(),
   version: int("version").notNull().default(1),
 });
 
@@ -273,7 +274,7 @@ export const financialTransactions = sqlServerTable("financial_transactions", {
   
   // Conciliação Bancária
   reconciledAt: datetime("reconciled_at"),
-  reconciledBy: bigint("reconciled_by", { mode: "number" }),
+  reconciledBy: nvarchar("reconciled_by", { length: 255 }),
   bankStatementId: bigint("bank_statement_id", { mode: "number" }), // FK para bank_statements (futuro)
   
   // Observações
@@ -284,7 +285,7 @@ export const financialTransactions = sqlServerTable("financial_transactions", {
   createdAt: datetime("created_at").notNull().default(sql`GETDATE()`),
   updatedAt: datetime("updated_at").notNull().default(sql`GETDATE()`),
   deletedAt: datetime("deleted_at"),
-  createdBy: bigint("created_by", { mode: "number" }).notNull(),
-  updatedBy: bigint("updated_by", { mode: "number" }).notNull(),
+  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
+  updatedBy: nvarchar("updated_by", { length: 255 }).notNull(),
   version: int("version").notNull().default(1),
 });

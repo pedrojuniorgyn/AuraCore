@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { accountsPayable } from "@/lib/db/schema";
-import { financialTransactions, journalEntries, journalEntryLines } from "@/lib/db/schema/accounting";
-import { auth } from "@/lib/auth";
-import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
+import sql from "mssql";
 
 /**
  * 💰 POST /api/financial/payables/:id/pay
@@ -16,19 +14,27 @@ export async function POST(
 ) {
   const resolvedParams = await params;
   try {
-    const { ensureConnection } = await import("@/lib/db");
-    await ensureConnection();
-    
-    const session = await auth();
-    
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    const ctx = await getTenantContext();
+
+    const branchHeader = request.headers.get("x-branch-id");
+    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
+        { status: 400 }
+      );
     }
-    
-    const organizationId = session.user.organizationId;
-    const userId = parseInt(session.user.id);
-    const branchId = parseInt(request.headers.get("x-branch-id") || "1");
-    const payableId = parseInt(resolvedParams.id);
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial informada" },
+        { status: 403 }
+      );
+    }
+
+    const payableId = Number(resolvedParams.id);
+    if (!Number.isFinite(payableId) || payableId <= 0) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
     
     const body = await request.json();
     const {
@@ -46,199 +52,437 @@ export async function POST(
       autoPost = true, // Gerar lançamento contábil automaticamente
     } = body;
     
-    // Buscar conta a pagar
-    const [payable] = await db
-      .select()
-      .from(accountsPayable)
-      .where(
-        and(
-          eq(accountsPayable.id, payableId),
-          eq(accountsPayable.organizationId, organizationId),
-          isNull(accountsPayable.deletedAt)
-        )
-      );
-    
-    if (!payable) {
-      return NextResponse.json({ error: "Conta a pagar não encontrada" }, { status: 404 });
+    const paymentDt = new Date(paymentDate);
+    if (Number.isNaN(paymentDt.getTime())) {
+      return NextResponse.json({ error: "paymentDate inválido" }, { status: 400 });
     }
-    
-    if (payable.status === "PAID") {
-      return NextResponse.json({ error: "Conta já paga" }, { status: 400 });
-    }
-    
-    const originalAmount = parseFloat(payable.amount as any);
-    const netAmount = originalAmount + interestAmount + fineAmount - discountAmount + iofAmount + bankFeeAmount + otherFeesAmount;
-    
-    // Criar transação financeira
-    await db.insert(financialTransactions).values({
-      organizationId,
-      branchId,
-      transactionType: "PAYMENT",
-      payableId,
-      transactionDate: new Date(paymentDate),
-      paymentMethod,
-      bankAccountId: bankAccountId || null,
-      originalAmount: originalAmount.toString(),
-      interestAmount: interestAmount.toString(),
-      fineAmount: fineAmount.toString(),
-      discountAmount: discountAmount.toString(),
-      iofAmount: iofAmount.toString(),
-      bankFeeAmount: bankFeeAmount.toString(),
-      otherFeesAmount: otherFeesAmount.toString(),
-      netAmount: netAmount.toString(),
-      notes,
-      documentNumber,
-      createdBy: userId,
-      updatedBy: userId,
+
+    const interest = Number(interestAmount) || 0;
+    const fine = Number(fineAmount) || 0;
+    const discount = Number(discountAmount) || 0;
+    const iof = Number(iofAmount) || 0;
+    const bankFee = Number(bankFeeAmount) || 0;
+    const otherFees = Number(otherFeesAmount) || 0;
+
+    const result = await withMssqlTransaction(async (tx) => {
+      // 1) Buscar título com lock para evitar dupla baixa
+      const payableResult = await tx
+        .request()
+        .input("orgId", sql.Int, ctx.organizationId)
+        .input("payableId", sql.Int, Math.trunc(payableId))
+        .query(
+          `
+          SELECT TOP 1 *
+          FROM accounts_payable WITH (UPDLOCK, ROWLOCK)
+          WHERE id = @payableId
+            AND organization_id = @orgId
+            AND deleted_at IS NULL
+        `
+        );
+
+      const payable = payableResult.recordset?.[0];
+      if (!payable) {
+        return { status: 404 as const, payload: { error: "Conta a pagar não encontrada" } };
+      }
+      if (payable.status === "PAID") {
+        return { status: 400 as const, payload: { error: "Conta já paga" } };
+      }
+
+      const originalAmount = Number(payable.amount);
+      if (!Number.isFinite(originalAmount)) {
+        return { status: 500 as const, payload: { error: "Valor do título inválido" } };
+      }
+
+      const netAmount =
+        originalAmount + interest + fine - discount + iof + bankFee + otherFees;
+
+      // 2) Inserir transação financeira (auditoria: userId UUID string)
+      const txInsert = await tx
+        .request()
+        .input("orgId", sql.BigInt, ctx.organizationId)
+        .input("branchId", sql.BigInt, branchId)
+        .input("payableId", sql.BigInt, Math.trunc(payableId))
+        .input("txDate", sql.DateTime, paymentDt)
+        .input("paymentMethod", sql.VarChar(50), String(paymentMethod))
+        .input("bankAccountId", sql.BigInt, bankAccountId ? Number(bankAccountId) : null)
+        .input("originalAmount", sql.Decimal(18, 2), originalAmount)
+        .input("interestAmount", sql.Decimal(18, 2), interest)
+        .input("fineAmount", sql.Decimal(18, 2), fine)
+        .input("discountAmount", sql.Decimal(18, 2), discount)
+        .input("iofAmount", sql.Decimal(18, 2), iof)
+        .input("bankFeeAmount", sql.Decimal(18, 2), bankFee)
+        .input("otherFeesAmount", sql.Decimal(18, 2), otherFees)
+        .input("netAmount", sql.Decimal(18, 2), netAmount)
+        .input("notes", sql.NVarChar(sql.MAX), notes ?? null)
+        .input("documentNumber", sql.VarChar(50), documentNumber ?? null)
+        .input("createdBy", sql.NVarChar(255), ctx.userId)
+        .input("updatedBy", sql.NVarChar(255), ctx.userId)
+        .query(
+          `
+          INSERT INTO financial_transactions (
+            organization_id, branch_id,
+            transaction_type, payable_id,
+            transaction_date, payment_method, bank_account_id,
+            original_amount, interest_amount, fine_amount, discount_amount,
+            iof_amount, bank_fee_amount, other_fees_amount, net_amount,
+            notes, document_number,
+            created_at, updated_at, deleted_at,
+            created_by, updated_by, version
+          )
+          OUTPUT INSERTED.id
+          VALUES (
+            @orgId, @branchId,
+            'PAYMENT', @payableId,
+            @txDate, @paymentMethod, @bankAccountId,
+            @originalAmount, @interestAmount, @fineAmount, @discountAmount,
+            @iofAmount, @bankFeeAmount, @otherFeesAmount, @netAmount,
+            @notes, @documentNumber,
+            GETDATE(), GETDATE(), NULL,
+            @createdBy, @updatedBy, 1
+          )
+        `
+        );
+
+      const financialTransactionId = txInsert.recordset?.[0]?.id;
+
+      // 3) Atualizar título a pagar
+      await tx
+        .request()
+        .input("orgId", sql.Int, ctx.organizationId)
+        .input("payableId", sql.Int, Math.trunc(payableId))
+        .input("payDate", sql.DateTime2, paymentDt)
+        .input("amountPaid", sql.Decimal(18, 2), netAmount)
+        .input("interest", sql.Decimal(18, 2), interest)
+        .input("fine", sql.Decimal(18, 2), fine)
+        .input("discount", sql.Decimal(18, 2), discount)
+        .query(
+          `
+          UPDATE accounts_payable
+          SET
+            status = 'PAID',
+            pay_date = @payDate,
+            amount_paid = @amountPaid,
+            interest = @interest,
+            fine = @fine,
+            discount = @discount,
+            updated_at = GETDATE()
+          WHERE id = @payableId
+            AND organization_id = @orgId
+        `
+        );
+
+      let journalEntryId: number | null = null;
+
+      // 4) Contabilização automática (opcional)
+      if (autoPost) {
+        const now = new Date();
+        const entryNumber = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-PAY-${payableId}`;
+
+        const entryInsert = await tx
+          .request()
+          .input("orgId", sql.BigInt, ctx.organizationId)
+          .input("branchId", sql.BigInt, branchId)
+          .input("entryNumber", sql.VarChar(20), entryNumber)
+          .input("entryDate", sql.DateTime, paymentDt)
+          .input("sourceId", sql.BigInt, Math.trunc(payableId))
+          .input(
+            "description",
+            sql.VarChar(500),
+            `Pagamento - ${payable.description || "Sem descrição"}`
+          )
+          .input("total", sql.Decimal(18, 2), netAmount)
+          .input("postedBy", sql.NVarChar(255), ctx.userId)
+          .input("createdBy", sql.NVarChar(255), ctx.userId)
+          .input("updatedBy", sql.NVarChar(255), ctx.userId)
+          .query(
+            `
+            INSERT INTO journal_entries (
+              organization_id, branch_id,
+              entry_number, entry_date,
+              source_type, source_id,
+              description,
+              total_debit, total_credit,
+              status,
+              posted_at, posted_by,
+              created_at, updated_at, deleted_at,
+              created_by, updated_by, version
+            )
+            OUTPUT INSERTED.id
+            VALUES (
+              @orgId, @branchId,
+              @entryNumber, @entryDate,
+              'PAYMENT', @sourceId,
+              @description,
+              @total, @total,
+              'POSTED',
+              GETDATE(), @postedBy,
+              GETDATE(), GETDATE(), NULL,
+              @createdBy, @updatedBy, 1
+            )
+          `
+          );
+
+        journalEntryId = entryInsert.recordset?.[0]?.id ?? null;
+
+        // Linhas do lançamento
+        let lineNum = 1;
+        const partnerId = payable.partner_id ?? payable.partnerId ?? null;
+
+        // DÉBITO: Fornecedor
+        await tx
+          .request()
+          .input("journalEntryId", sql.BigInt, journalEntryId)
+          .input("orgId", sql.BigInt, ctx.organizationId)
+          .input("lineNumber", sql.Int, lineNum++)
+          .input("chartAccountId", sql.BigInt, 100)
+          .input("debit", sql.Decimal(18, 2), originalAmount)
+          .input("credit", sql.Decimal(18, 2), 0)
+          .input("desc", sql.VarChar(500), "Fornecedor - Baixa de pagamento")
+          .input("partnerId", sql.BigInt, partnerId)
+          .query(
+            `
+            INSERT INTO journal_entry_lines (
+              journal_entry_id, organization_id,
+              line_number, chart_account_id,
+              debit_amount, credit_amount,
+              description, partner_id
+            )
+            VALUES (
+              @journalEntryId, @orgId,
+              @lineNumber, @chartAccountId,
+              @debit, @credit,
+              @desc, @partnerId
+            )
+          `
+          );
+
+        // DÉBITO: Juros
+        if (interest > 0) {
+          await tx
+            .request()
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .input("orgId", sql.BigInt, ctx.organizationId)
+            .input("lineNumber", sql.Int, lineNum++)
+            .input("chartAccountId", sql.BigInt, 300)
+            .input("debit", sql.Decimal(18, 2), interest)
+            .input("credit", sql.Decimal(18, 2), 0)
+            .input("desc", sql.VarChar(500), "Juros de Atraso")
+            .query(
+              `
+              INSERT INTO journal_entry_lines (
+                journal_entry_id, organization_id,
+                line_number, chart_account_id,
+                debit_amount, credit_amount,
+                description
+              )
+              VALUES (
+                @journalEntryId, @orgId,
+                @lineNumber, @chartAccountId,
+                @debit, @credit,
+                @desc
+              )
+            `
+            );
+        }
+
+        // DÉBITO: Multa
+        if (fine > 0) {
+          await tx
+            .request()
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .input("orgId", sql.BigInt, ctx.organizationId)
+            .input("lineNumber", sql.Int, lineNum++)
+            .input("chartAccountId", sql.BigInt, 301)
+            .input("debit", sql.Decimal(18, 2), fine)
+            .input("credit", sql.Decimal(18, 2), 0)
+            .input("desc", sql.VarChar(500), "Multa por Atraso")
+            .query(
+              `
+              INSERT INTO journal_entry_lines (
+                journal_entry_id, organization_id,
+                line_number, chart_account_id,
+                debit_amount, credit_amount,
+                description
+              )
+              VALUES (
+                @journalEntryId, @orgId,
+                @lineNumber, @chartAccountId,
+                @debit, @credit,
+                @desc
+              )
+            `
+            );
+        }
+
+        // DÉBITO: IOF
+        if (iof > 0) {
+          await tx
+            .request()
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .input("orgId", sql.BigInt, ctx.organizationId)
+            .input("lineNumber", sql.Int, lineNum++)
+            .input("chartAccountId", sql.BigInt, 302)
+            .input("debit", sql.Decimal(18, 2), iof)
+            .input("credit", sql.Decimal(18, 2), 0)
+            .input("desc", sql.VarChar(500), "IOF")
+            .query(
+              `
+              INSERT INTO journal_entry_lines (
+                journal_entry_id, organization_id,
+                line_number, chart_account_id,
+                debit_amount, credit_amount,
+                description
+              )
+              VALUES (
+                @journalEntryId, @orgId,
+                @lineNumber, @chartAccountId,
+                @debit, @credit,
+                @desc
+              )
+            `
+            );
+        }
+
+        // DÉBITO: Tarifas
+        if (bankFee > 0) {
+          await tx
+            .request()
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .input("orgId", sql.BigInt, ctx.organizationId)
+            .input("lineNumber", sql.Int, lineNum++)
+            .input("chartAccountId", sql.BigInt, 303)
+            .input("debit", sql.Decimal(18, 2), bankFee)
+            .input("credit", sql.Decimal(18, 2), 0)
+            .input("desc", sql.VarChar(500), "Tarifa Bancária")
+            .query(
+              `
+              INSERT INTO journal_entry_lines (
+                journal_entry_id, organization_id,
+                line_number, chart_account_id,
+                debit_amount, credit_amount,
+                description
+              )
+              VALUES (
+                @journalEntryId, @orgId,
+                @lineNumber, @chartAccountId,
+                @debit, @credit,
+                @desc
+              )
+            `
+            );
+        }
+
+        // CRÉDITO: Banco
+        await tx
+          .request()
+          .input("journalEntryId", sql.BigInt, journalEntryId)
+          .input("orgId", sql.BigInt, ctx.organizationId)
+          .input("lineNumber", sql.Int, lineNum++)
+          .input("chartAccountId", sql.BigInt, 10)
+          .input("debit", sql.Decimal(18, 2), 0)
+          .input("credit", sql.Decimal(18, 2), netAmount)
+          .input("desc", sql.VarChar(500), `Pagamento via ${paymentMethod}`)
+          .query(
+            `
+            INSERT INTO journal_entry_lines (
+              journal_entry_id, organization_id,
+              line_number, chart_account_id,
+              debit_amount, credit_amount,
+              description
+            )
+            VALUES (
+              @journalEntryId, @orgId,
+              @lineNumber, @chartAccountId,
+              @debit, @credit,
+              @desc
+            )
+          `
+          );
+
+        // CRÉDITO: Desconto
+        if (discount > 0) {
+          await tx
+            .request()
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .input("orgId", sql.BigInt, ctx.organizationId)
+            .input("lineNumber", sql.Int, lineNum++)
+            .input("chartAccountId", sql.BigInt, 400)
+            .input("debit", sql.Decimal(18, 2), 0)
+            .input("credit", sql.Decimal(18, 2), discount)
+            .input("desc", sql.VarChar(500), "Desconto Obtido")
+            .query(
+              `
+              INSERT INTO journal_entry_lines (
+                journal_entry_id, organization_id,
+                line_number, chart_account_id,
+                debit_amount, credit_amount,
+                description
+              )
+              VALUES (
+                @journalEntryId, @orgId,
+                @lineNumber, @chartAccountId,
+                @debit, @credit,
+                @desc
+              )
+            `
+            );
+        }
+
+        // Vincular transação financeira ao lançamento
+        if (journalEntryId && financialTransactionId) {
+          await tx
+            .request()
+            .input("ftId", sql.BigInt, financialTransactionId)
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .query(
+              `
+              UPDATE financial_transactions
+              SET journal_entry_id = @journalEntryId, updated_at = GETDATE()
+              WHERE id = @ftId
+            `
+            );
+        }
+
+        // Vincular título a pagar ao lançamento (FK existe via migration admin)
+        if (journalEntryId) {
+          await tx
+            .request()
+            .input("orgId", sql.Int, ctx.organizationId)
+            .input("payableId", sql.Int, Math.trunc(payableId))
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .query(
+              `
+              UPDATE accounts_payable
+              SET journal_entry_id = @journalEntryId, updated_at = GETDATE()
+              WHERE id = @payableId AND organization_id = @orgId
+            `
+            );
+        }
+      }
+
+      return {
+        status: 200 as const,
+        payload: {
+          success: true,
+          message: "Pagamento registrado com sucesso",
+          payment: {
+            originalAmount,
+            interestAmount: interest,
+            fineAmount: fine,
+            discountAmount: discount,
+            iofAmount: iof,
+            bankFeeAmount: bankFee,
+            otherFeesAmount: otherFees,
+            netAmount,
+          },
+        },
+      };
     });
     
-    // Atualizar conta a pagar
-    await db
-      .update(accountsPayable)
-      .set({
-        status: "PAID",
-        paidAt: new Date(paymentDate),
-        updatedAt: new Date(),
-      })
-      .where(eq(accountsPayable.id, payableId));
-    
-    // Se autoPost, gerar lançamento contábil da baixa
-    if (autoPost) {
-      const entryNumber = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}-PAY-${payableId}`;
-      
-      await db.insert(journalEntries).values({
-        organizationId,
-        branchId,
-        entryNumber,
-        entryDate: new Date(paymentDate),
-        sourceType: "PAYMENT",
-        sourceId: payableId,
-        description: `Pagamento - ${payable.description || "Sem descrição"}`,
-        totalDebit: netAmount.toString(),
-        totalCredit: netAmount.toString(),
-        status: "POSTED",
-        postedAt: new Date(),
-        postedBy: userId,
-        createdBy: userId,
-        updatedBy: userId,
-      });
-      
-      const [newEntry] = await db
-        .select()
-        .from(journalEntries)
-        .where(eq(journalEntries.entryNumber, entryNumber));
-      
-      // Linhas do lançamento
-      let lineNum = 1;
-      
-      // DÉBITO: Fornecedor (baixa do passivo)
-      await db.insert(journalEntryLines).values({
-        journalEntryId: newEntry.id,
-        organizationId,
-        lineNumber: lineNum++,
-        chartAccountId: 100, // Fornecedor - TODO: configurável
-        debitAmount: originalAmount.toString(),
-        creditAmount: "0",
-        description: "Fornecedor - Baixa de pagamento",
-        partnerId: payable.partnerId,
-      });
-      
-      // DÉBITO: Juros (se houver)
-      if (interestAmount > 0) {
-        await db.insert(journalEntryLines).values({
-          journalEntryId: newEntry.id,
-          organizationId,
-          lineNumber: lineNum++,
-          chartAccountId: 300, // Juros Passivos - TODO: configurável
-          debitAmount: interestAmount.toString(),
-          creditAmount: "0",
-          description: "Juros de Atraso",
-        });
-      }
-      
-      // DÉBITO: Multa (se houver)
-      if (fineAmount > 0) {
-        await db.insert(journalEntryLines).values({
-          journalEntryId: newEntry.id,
-          organizationId,
-          lineNumber: lineNum++,
-          chartAccountId: 301, // Multas Passivas - TODO: configurável
-          debitAmount: fineAmount.toString(),
-          creditAmount: "0",
-          description: "Multa por Atraso",
-        });
-      }
-      
-      // DÉBITO: IOF (se houver)
-      if (iofAmount > 0) {
-        await db.insert(journalEntryLines).values({
-          journalEntryId: newEntry.id,
-          organizationId,
-          lineNumber: lineNum++,
-          chartAccountId: 302, // IOF - TODO: configurável
-          debitAmount: iofAmount.toString(),
-          creditAmount: "0",
-          description: "IOF",
-        });
-      }
-      
-      // DÉBITO: Tarifas Bancárias (se houver)
-      if (bankFeeAmount > 0) {
-        await db.insert(journalEntryLines).values({
-          journalEntryId: newEntry.id,
-          organizationId,
-          lineNumber: lineNum++,
-          chartAccountId: 303, // Tarifas Bancárias - TODO: configurável
-          debitAmount: bankFeeAmount.toString(),
-          creditAmount: "0",
-          description: "Tarifa Bancária",
-        });
-      }
-      
-      // CRÉDITO: Banco (saída de caixa)
-      await db.insert(journalEntryLines).values({
-        journalEntryId: newEntry.id,
-        organizationId,
-        lineNumber: lineNum++,
-        chartAccountId: 10, // Banco - TODO: configurável
-        debitAmount: "0",
-        creditAmount: netAmount.toString(),
-        description: `Pagamento via ${paymentMethod}`,
-      });
-      
-      // CRÉDITO: Descontos (se houver)
-      if (discountAmount > 0) {
-        await db.insert(journalEntryLines).values({
-          journalEntryId: newEntry.id,
-          organizationId,
-          lineNumber: lineNum++,
-          chartAccountId: 400, // Descontos Obtidos - TODO: configurável
-          debitAmount: "0",
-          creditAmount: discountAmount.toString(),
-          description: "Desconto Obtido",
-        });
-      }
-      
-      // Atualizar FK
-      await db
-        .update(accountsPayable)
-        .set({ journalEntryId: newEntry.id })
-        .where(eq(accountsPayable.id, payableId));
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: "Pagamento registrado com sucesso",
-      payment: {
-        originalAmount,
-        interestAmount,
-        fineAmount,
-        discountAmount,
-        iofAmount,
-        bankFeeAmount,
-        netAmount,
-      },
-    });
+    return NextResponse.json(result.payload, { status: result.status });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
