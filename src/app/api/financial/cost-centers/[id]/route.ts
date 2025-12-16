@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/financial/cost-centers/:id
@@ -12,13 +12,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const ctx = await getTenantContext();
     const id = parseInt(resolvedParams.id);
 
     const result = await db
@@ -27,7 +24,7 @@ export async function GET(
       .where(
         and(
           eq(costCenters.id, id),
-          eq(costCenters.organizationId, organizationId),
+          eq(costCenters.organizationId, ctx.organizationId),
           isNull(costCenters.deletedAt)
         )
       );
@@ -40,7 +37,10 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: result[0] });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao buscar centro de custo" },
@@ -57,14 +57,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const updatedBy = session.user.email || "system";
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
+    const updatedBy = ctx.userId;
     const id = parseInt(resolvedParams.id);
 
     const body = await req.json();
@@ -142,7 +140,13 @@ export async function PUT(
         const parent = await db
           .select()
           .from(costCenters)
-          .where(eq(costCenters.id, parentId));
+          .where(
+            and(
+              eq(costCenters.id, parentId),
+              eq(costCenters.organizationId, organizationId),
+              isNull(costCenters.deletedAt)
+            )
+          );
 
         if (parent.length === 0) {
           return NextResponse.json(
@@ -156,7 +160,7 @@ export async function PUT(
     }
 
     // Atualizar
-    const [updated] = await db
+    await db
       .update(costCenters)
       .set({
         code: code || existing[0].code,
@@ -171,15 +175,23 @@ export async function PUT(
         updatedAt: new Date(),
         version: existing[0].version + 1,
       })
-      .where(eq(costCenters.id, id))
-      .returning();
+      .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)));
+
+    const [updated] = await db
+      .select()
+      .from(costCenters)
+      .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)))
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Centro de custo atualizado com sucesso!",
       data: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao atualizar centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar centro de custo" },
@@ -197,14 +209,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const updatedBy = session.user.email || "system";
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
+    const updatedBy = ctx.userId;
     const id = parseInt(resolvedParams.id);
 
     // Verificar se existe
@@ -319,6 +329,7 @@ export async function DELETE(
       .where(
         and(
           eq(costCenters.parentId, id),
+          eq(costCenters.organizationId, organizationId),
           isNull(costCenters.deletedAt)
         )
       );
@@ -344,13 +355,16 @@ export async function DELETE(
         status: "INACTIVE",
         updatedBy,
       })
-      .where(eq(costCenters.id, id));
+      .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)));
 
     return NextResponse.json({
       success: true,
       message: "Centro de custo excluído com sucesso!",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao excluir centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao excluir centro de custo" },

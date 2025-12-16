@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { accountsPayable } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 // GET - Buscar conta a pagar específica
 export async function GET(
@@ -10,11 +10,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const payableId = parseInt(resolvedParams.id);
     if (isNaN(payableId)) {
@@ -27,7 +26,7 @@ export async function GET(
       .where(
         and(
           eq(accountsPayable.id, payableId),
-          eq(accountsPayable.organizationId, session.user.organizationId),
+          eq(accountsPayable.organizationId, ctx.organizationId),
           isNull(accountsPayable.deletedAt)
         )
       )
@@ -41,7 +40,10 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: payable[0] });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar conta a pagar:", error);
     return NextResponse.json(
       { error: "Erro ao buscar conta a pagar" },
@@ -56,11 +58,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const payableId = parseInt(resolvedParams.id);
     if (isNaN(payableId)) {
@@ -84,7 +85,7 @@ export async function PUT(
       .where(
         and(
           eq(accountsPayable.id, payableId),
-          eq(accountsPayable.organizationId, session.user.organizationId),
+          eq(accountsPayable.organizationId, ctx.organizationId),
           isNull(accountsPayable.deletedAt)
         )
       )
@@ -114,22 +115,30 @@ export async function PUT(
     }
 
     // Atualizar
-    const updated = await db
+    await db
       .update(accountsPayable)
       .set({
         ...body,
-        updatedBy: session.user.id,
+        updatedBy: ctx.userId,
         updatedAt: new Date(),
       })
-      .where(eq(accountsPayable.id, payableId))
-      .returning();
+      .where(and(eq(accountsPayable.id, payableId), eq(accountsPayable.organizationId, ctx.organizationId)));
+
+    const [updated] = await db
+      .select()
+      .from(accountsPayable)
+      .where(and(eq(accountsPayable.id, payableId), eq(accountsPayable.organizationId, ctx.organizationId)))
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Conta a pagar atualizada com sucesso",
-      data: updated[0],
+      data: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar conta a pagar:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar conta a pagar" },
@@ -144,11 +153,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const payableId = parseInt(resolvedParams.id);
     if (isNaN(payableId)) {
@@ -162,7 +170,7 @@ export async function DELETE(
       .where(
         and(
           eq(accountsPayable.id, payableId),
-          eq(accountsPayable.organizationId, session.user.organizationId),
+          eq(accountsPayable.organizationId, ctx.organizationId),
           isNull(accountsPayable.deletedAt)
         )
       )
@@ -200,15 +208,18 @@ export async function DELETE(
       .update(accountsPayable)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
+        deletedBy: ctx.userId,
       })
-      .where(eq(accountsPayable.id, payableId));
+      .where(and(eq(accountsPayable.id, payableId), eq(accountsPayable.organizationId, ctx.organizationId)));
 
     return NextResponse.json({
       success: true,
       message: "Conta a pagar excluída com sucesso",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir conta a pagar:", error);
     return NextResponse.json(
       { error: "Erro ao excluir conta a pagar" },

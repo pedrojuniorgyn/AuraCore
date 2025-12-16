@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/financial/cost-centers
@@ -10,12 +10,9 @@ import { eq, and, isNull, desc } from "drizzle-orm";
  */
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     // Buscar todos os centros de custo
     const allCostCenters = await db
@@ -23,7 +20,7 @@ export async function GET(req: Request) {
       .from(costCenters)
       .where(
         and(
-          eq(costCenters.organizationId, organizationId),
+          eq(costCenters.organizationId, ctx.organizationId),
           isNull(costCenters.deletedAt)
         )
       )
@@ -48,7 +45,10 @@ export async function GET(req: Request) {
         tree, // Árvore (para visualização)
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar centros de custo:", error);
     return NextResponse.json(
       { error: "Erro ao buscar centros de custo" },
@@ -63,13 +63,9 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const createdBy = session.user.email || "system";
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const body = await req.json();
     const { code, name, type, parentId, linkedVehicleId, ccClass } = body;
@@ -95,7 +91,7 @@ export async function POST(req: Request) {
       .from(costCenters)
       .where(
         and(
-          eq(costCenters.organizationId, organizationId),
+          eq(costCenters.organizationId, ctx.organizationId),
           eq(costCenters.code, code),
           isNull(costCenters.deletedAt)
         )
@@ -114,7 +110,13 @@ export async function POST(req: Request) {
       const parent = await db
         .select()
         .from(costCenters)
-        .where(eq(costCenters.id, parentId));
+        .where(
+          and(
+            eq(costCenters.id, parentId),
+            eq(costCenters.organizationId, ctx.organizationId),
+            isNull(costCenters.deletedAt)
+          )
+        );
 
       if (parent.length === 0) {
         return NextResponse.json(
@@ -127,10 +129,10 @@ export async function POST(req: Request) {
     }
 
     // Criar
-    const [newCostCenter] = await db
+    const [createdId] = await db
       .insert(costCenters)
       .values({
-        organizationId,
+        organizationId: ctx.organizationId,
         code,
         name,
         type,
@@ -140,16 +142,33 @@ export async function POST(req: Request) {
         isAnalytical: type === "ANALYTIC",
         class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
         status: "ACTIVE",
-        createdBy,
+        createdBy: ctx.userId,
       })
-      .returning();
+      .$returningId();
+
+    const newCostCenterId = (createdId as any)?.id;
+    const [newCostCenter] = newCostCenterId
+      ? await db
+          .select()
+          .from(costCenters)
+          .where(
+            and(
+              eq(costCenters.id, Number(newCostCenterId)),
+              eq(costCenters.organizationId, ctx.organizationId)
+            )
+          )
+          .limit(1)
+      : [];
 
     return NextResponse.json({
       success: true,
       message: "Centro de custo criado com sucesso!",
       data: newCostCenter,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao criar centro de custo" },
