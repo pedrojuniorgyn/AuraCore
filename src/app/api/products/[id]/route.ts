@@ -199,7 +199,8 @@ export async function PUT(
           details:
             "O produto foi alterado por outro usuário durante a atualização. Recarregue a página e tente novamente.",
           currentVersion: currentProduct.version,
-          sentVersion: body.version,
+          // version é opcional neste endpoint (compat). Evitar retornar undefined.
+          sentVersion: body?.version ?? null,
         },
         { status: 409 }
       );
