@@ -176,10 +176,10 @@ export async function POST(
       // 4) Contabilização automática (opcional)
       if (autoPost) {
         const now = new Date();
-        const entryNumber = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-PAY-${payableId}`;
+        // IMPORTANTE: a coluna/param é VARCHAR(20). Evitar truncamento silencioso.
+        // Formato: YYYYMM-PAY-XXXXXXXX (<= 19 chars)
+        const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const entryNumber = `${yearMonth}-PAY-${String(payableId).slice(-8)}`;
 
         const entryInsert = await tx
           .request()
@@ -375,6 +375,36 @@ export async function POST(
             );
         }
 
+        // DÉBITO: Outras despesas (otherFees)
+        // Sem esta linha, o crédito do banco fica maior que os débitos (lançamento desbalanceado).
+        if (otherFees > 0) {
+          await tx
+            .request()
+            .input("journalEntryId", sql.BigInt, journalEntryId)
+            .input("orgId", sql.BigInt, ctx.organizationId)
+            .input("lineNumber", sql.Int, lineNum++)
+            .input("chartAccountId", sql.BigInt, 304)
+            .input("debit", sql.Decimal(18, 2), otherFees)
+            .input("credit", sql.Decimal(18, 2), 0)
+            .input("desc", sql.VarChar(500), "Outras Despesas (Pagamento)")
+            .query(
+              `
+              INSERT INTO journal_entry_lines (
+                journal_entry_id, organization_id,
+                line_number, chart_account_id,
+                debit_amount, credit_amount,
+                description
+              )
+              VALUES (
+                @journalEntryId, @orgId,
+                @lineNumber, @chartAccountId,
+                @debit, @credit,
+                @desc
+              )
+            `
+            );
+        }
+
         // CRÉDITO: Banco
         await tx
           .request()
@@ -484,6 +514,9 @@ export async function POST(
     
     return NextResponse.json(result.payload, { status: result.status });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
