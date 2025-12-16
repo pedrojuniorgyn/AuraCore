@@ -10,6 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -56,6 +58,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -68,6 +72,18 @@ export async function PUT(
     }
 
     const body = await req.json();
+    // Evitar override de campos sensíveis via spread
+    const {
+      organizationId: _orgId,
+      branchId: _branchId,
+      tripNumber: _tripNumber,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
 
     // Validações básicas
     if (!body.vehicleId || !body.driverId) {
@@ -113,20 +129,37 @@ export async function PUT(
     }
 
     // Atualizar
-    const updated = await db
+    await db
       .update(trips)
       .set({
-        ...body,
+        ...safeBody,
         updatedBy: session.user.id,
         updatedAt: new Date(),
       })
-      .where(eq(trips.id, tripId))
-      .returning();
+      .where(
+        and(
+          eq(trips.id, tripId),
+          eq(trips.organizationId, session.user.organizationId),
+          isNull(trips.deletedAt)
+        )
+      );
+
+    const [updated] = await db
+      .select()
+      .from(trips)
+      .where(
+        and(
+          eq(trips.id, tripId),
+          eq(trips.organizationId, session.user.organizationId),
+          isNull(trips.deletedAt)
+        )
+      )
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Viagem atualizada com sucesso",
-      data: updated[0],
+      data: updated,
     });
   } catch (error) {
     console.error("Erro ao atualizar viagem:", error);
@@ -143,6 +176,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -205,7 +240,7 @@ export async function DELETE(
         deletedAt: new Date(),
         deletedBy: session.user.id,
       })
-      .where(eq(trips.id, tripId));
+      .where(and(eq(trips.id, tripId), eq(trips.organizationId, session.user.organizationId), isNull(trips.deletedAt)));
 
     return NextResponse.json({
       success: true,

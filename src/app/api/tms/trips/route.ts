@@ -10,6 +10,8 @@ import { shouldRequireCiot } from "@/services/validators/ciot-validator";
  */
 export async function GET(req: Request) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -46,6 +48,8 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -93,7 +97,7 @@ export async function POST(req: Request) {
 
     const tripNumber = `VIA-${year}-${String(lastTrips.length + 1).padStart(4, "0")}`;
 
-    const [newTrip] = await db
+    const [createdId] = await db
       .insert(trips)
       .values({
         organizationId,
@@ -110,7 +114,16 @@ export async function POST(req: Request) {
         status: "DRAFT",
         createdBy,
       })
-      .returning();
+      .$returningId();
+
+    const tripId = (createdId as any)?.id;
+    const [newTrip] = tripId
+      ? await db
+          .select()
+          .from(trips)
+          .where(and(eq(trips.id, Number(tripId)), eq(trips.organizationId, organizationId), isNull(trips.deletedAt)))
+          .limit(1)
+      : [];
 
     return NextResponse.json({
       success: true,
