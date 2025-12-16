@@ -72,7 +72,7 @@ export class CTeInutilizationService {
       );
 
       // 6. Registrar no banco
-      const [record] = await db
+      await db
         .insert(cteInutilization)
         .values({
           organizationId: data.organizationId,
@@ -88,7 +88,7 @@ export class CTeInutilizationService {
           inutilizedAt: resultado.success ? new Date() : null,
           createdBy: data.userId,
         })
-        .returning();
+        .$returningId();
 
       console.log(resultado.success ? "✅ Inutilização confirmada!" : "❌ Inutilização rejeitada");
 
@@ -134,6 +134,7 @@ export class CTeInutilizationService {
 
 // Singleton
 export const cteInutilizationService = new CTeInutilizationService();
+
 
 
 

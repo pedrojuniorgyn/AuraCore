@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { vehicleDocuments } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 // GET - Buscar documento de veículo específico
 export async function GET(
@@ -11,10 +11,9 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const documentId = parseInt(resolvedParams.id);
     if (isNaN(documentId)) {
@@ -27,7 +26,7 @@ export async function GET(
       .where(
         and(
           eq(vehicleDocuments.id, documentId),
-          eq(vehicleDocuments.organizationId, session.user.organizationId),
+          eq(vehicleDocuments.organizationId, ctx.organizationId),
           isNull(vehicleDocuments.deletedAt)
         )
       )
@@ -41,7 +40,10 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: document[0] });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar documento:", error);
     return NextResponse.json(
       { error: "Erro ao buscar documento" },
@@ -57,10 +59,9 @@ export async function PUT(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const documentId = parseInt(resolvedParams.id);
     if (isNaN(documentId)) {
@@ -84,7 +85,7 @@ export async function PUT(
       .where(
         and(
           eq(vehicleDocuments.id, documentId),
-          eq(vehicleDocuments.organizationId, session.user.organizationId),
+          eq(vehicleDocuments.organizationId, ctx.organizationId),
           isNull(vehicleDocuments.deletedAt)
         )
       )
@@ -110,23 +111,62 @@ export async function PUT(
     }
 
     // Atualizar
-    const updated = await db
+    const {
+      id: _id,
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      createdAt: _createdAt,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      updatedAt: _updatedAt,
+      updatedBy: _updatedBy,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
+    const updateResult = await db
       .update(vehicleDocuments)
       .set({
-        ...body,
+        ...safeBody,
         status,
-        updatedBy: session.user.id,
+        updatedBy: ctx.userId,
         updatedAt: new Date(),
       })
-      .where(eq(vehicleDocuments.id, documentId))
-      .returning();
+      .where(and(eq(vehicleDocuments.id, documentId), eq(vehicleDocuments.organizationId, ctx.organizationId)));
+
+    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffected = Array.isArray(rowsAffectedRaw)
+      ? Number(rowsAffectedRaw[0] ?? 0)
+      : Number(rowsAffectedRaw ?? 0);
+    if (!rowsAffected) {
+      return NextResponse.json(
+        { error: "Documento não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    const [updated] = await db
+      .select()
+      .from(vehicleDocuments)
+      .where(
+        and(
+          eq(vehicleDocuments.id, documentId),
+          eq(vehicleDocuments.organizationId, ctx.organizationId),
+          isNull(vehicleDocuments.deletedAt)
+        )
+      )
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Documento atualizado com sucesso",
-      data: updated[0],
+      data: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar documento:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar documento" },
@@ -142,10 +182,9 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const documentId = parseInt(resolvedParams.id);
     if (isNaN(documentId)) {
@@ -159,7 +198,7 @@ export async function DELETE(
       .where(
         and(
           eq(vehicleDocuments.id, documentId),
-          eq(vehicleDocuments.organizationId, session.user.organizationId),
+          eq(vehicleDocuments.organizationId, ctx.organizationId),
           isNull(vehicleDocuments.deletedAt)
         )
       )
@@ -177,15 +216,18 @@ export async function DELETE(
       .update(vehicleDocuments)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
+        deletedBy: ctx.userId,
       })
-      .where(eq(vehicleDocuments.id, documentId));
+      .where(and(eq(vehicleDocuments.id, documentId), eq(vehicleDocuments.organizationId, ctx.organizationId)));
 
     return NextResponse.json({
       success: true,
       message: "Documento excluído com sucesso",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir documento:", error);
     return NextResponse.json(
       { error: "Erro ao excluir documento" },
@@ -193,6 +235,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 

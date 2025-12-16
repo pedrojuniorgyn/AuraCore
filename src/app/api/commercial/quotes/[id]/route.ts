@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { freightQuotes } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/commercial/quotes/:id
@@ -13,12 +13,10 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
     const id = parseInt(resolvedParams.id);
 
     const [quote] = await db
@@ -41,6 +39,9 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: quote });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar cotação:", error);
     return NextResponse.json(
       { error: "Erro ao buscar cotação", details: error.message },
@@ -58,13 +59,12 @@ export async function PUT(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
-    const organizationId = session.user.organizationId;
-    const updatedBy = session.user.email || "system";
+    const organizationId = ctx.organizationId;
+    const updatedBy = ctx.userId;
     const id = parseInt(resolvedParams.id);
 
     const body = await req.json();
@@ -88,17 +88,48 @@ export async function PUT(
       );
     }
 
+    // Evitar override de campos sensíveis via spread
+    const {
+      id: _id,
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      createdAt: _createdAt,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      updatedAt: _updatedAt,
+      updatedBy: _updatedBy,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
     // Atualizar
-    const [updated] = await db
+    const updateResult = await db
       .update(freightQuotes)
       .set({
-        ...body,
+        ...safeBody,
         updatedBy,
         updatedAt: new Date(),
         version: existing.version + 1,
       })
-      .where(eq(freightQuotes.id, id))
-      .returning();
+      .where(and(eq(freightQuotes.id, id), eq(freightQuotes.organizationId, organizationId)));
+
+    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffected = Array.isArray(rowsAffectedRaw)
+      ? Number(rowsAffectedRaw[0] ?? 0)
+      : Number(rowsAffectedRaw ?? 0);
+    if (!rowsAffected) {
+      return NextResponse.json(
+        { error: "Cotação não encontrada", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    const [updated] = await db
+      .select()
+      .from(freightQuotes)
+      .where(and(eq(freightQuotes.id, id), eq(freightQuotes.organizationId, organizationId), isNull(freightQuotes.deletedAt)))
+      .limit(1);
 
     return NextResponse.json({
       success: true,
@@ -106,6 +137,9 @@ export async function PUT(
       data: updated,
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao atualizar cotação:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar cotação", details: error.message },
@@ -123,13 +157,12 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
-    const organizationId = session.user.organizationId;
-    const updatedBy = session.user.email || "system";
+    const organizationId = ctx.organizationId;
+    const updatedBy = ctx.userId;
     const id = parseInt(resolvedParams.id);
 
     // Soft delete
@@ -151,6 +184,9 @@ export async function DELETE(
       message: "Cotação excluída!",
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao excluir cotação:", error);
     return NextResponse.json(
       { error: "Erro ao excluir cotação", details: error.message },
@@ -158,6 +194,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 

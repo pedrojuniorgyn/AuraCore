@@ -10,20 +10,37 @@ export async function PUT(
 ) {
   try {
     const resolvedParams = await params;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const ctx = await getTenantContext();
     const leadId = parseInt(resolvedParams.id);
     const body = await request.json();
 
-    const [lead] = await db
+    if (isNaN(leadId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    // Evitar override de campos sensíveis via spread
+    const {
+      id: _id,
+      organizationId: _orgId,
+      createdBy: _createdBy,
+      createdAt: _createdAt,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      updatedAt: _updatedAt,
+      updatedBy: _updatedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
+    const updateResult = await db
       .update(crmLeads)
       .set({
-        stage: body.stage,
-        status: body.status,
-        score: body.score,
-        estimatedValue: body.estimatedValue,
-        probability: body.probability,
-        wonDate: body.wonDate ? new Date(body.wonDate) : null,
-        lostReason: body.lostReason,
+        ...safeBody,
+        wonDate: (safeBody as any)?.wonDate ? new Date((safeBody as any).wonDate as any) : null,
+        updatedBy: ctx.userId,
+        updatedAt: new Date(),
       })
       .where(
         and(
@@ -31,10 +48,27 @@ export async function PUT(
           eq(crmLeads.organizationId, ctx.organizationId)
         )
       )
-      .returning();
+      ;
+
+    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffected = Array.isArray(rowsAffectedRaw)
+      ? Number(rowsAffectedRaw[0] ?? 0)
+      : Number(rowsAffectedRaw ?? 0);
+    if (!rowsAffected) {
+      return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
+    }
+
+    const [lead] = await db
+      .select()
+      .from(crmLeads)
+      .where(and(eq(crmLeads.id, leadId), eq(crmLeads.organizationId, ctx.organizationId)))
+      .limit(1);
 
     return NextResponse.json({ success: true, data: lead });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -46,8 +80,14 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await params;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const ctx = await getTenantContext();
     const leadId = parseInt(resolvedParams.id);
+
+    if (isNaN(leadId)) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
 
     // Verificar se lead existe
     const [existing] = await db
@@ -89,10 +129,14 @@ export async function DELETE(
       message: "Lead excluído com sucesso",
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir lead:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

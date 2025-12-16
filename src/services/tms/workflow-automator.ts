@@ -47,7 +47,7 @@ export async function createPickupOrderFromQuote(
   const orderNumber = await generateOrderNumber(quote.branchId);
 
   // Criar Ordem de Coleta
-  const [pickupOrder] = await db
+  const [createdOrderId] = await db
     .insert(pickupOrders)
     .values({
       organizationId: quote.organizationId,
@@ -70,7 +70,15 @@ export async function createPickupOrderFromQuote(
       status: "PENDING_ALLOCATION",
       createdBy,
     })
-    .returning();
+    .$returningId();
+
+  const pickupOrderId = Number((createdOrderId as any)?.id);
+  const [pickupOrder] = pickupOrderId
+    ? await db.select().from(pickupOrders).where(eq(pickupOrders.id, pickupOrderId)).limit(1)
+    : [];
+  if (!pickupOrder) {
+    throw new Error("Falha ao criar ordem de coleta");
+  }
 
   // Atualizar cotação com link para a ordem
   await db
@@ -117,7 +125,7 @@ export async function createCteFromPickupOrder(
   // Criar CTe (simplificado por enquanto)
   const cteNumber = await getNextCteNumber(order.branchId);
 
-  const [cte] = await db
+  const [createdCteId] = await db
     .insert(cteHeader)
     .values({
       organizationId: order.organizationId,
@@ -140,13 +148,19 @@ export async function createCteFromPickupOrder(
       status: "DRAFT",
       createdBy,
     })
-    .returning();
+    .$returningId();
+
+  const cteId = Number((createdCteId as any)?.id);
+  const [cte] = cteId ? await db.select().from(cteHeader).where(eq(cteHeader.id, cteId)).limit(1) : [];
+  if (!cte) {
+    throw new Error("Falha ao criar CTe");
+  }
 
   // Atualizar ordem com link para CTe
   await db
     .update(pickupOrders)
     .set({
-      cteId: cte.id,
+      cteId,
       status: "CTE_ISSUED",
     })
     .where(eq(pickupOrders.id, orderId));
@@ -272,6 +286,7 @@ async function getNextCteNumber(branchId: number): Promise<number> {
   const lastNumber = lastCtes.length > 0 ? lastCtes[lastCtes.length - 1].cteNumber : 0;
   return lastNumber + 1;
 }
+
 
 
 

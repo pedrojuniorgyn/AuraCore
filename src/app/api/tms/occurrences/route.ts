@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { tripOccurrences } from "@/lib/db/schema";
-import { getTenantContext } from "@/lib/auth/context";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -35,6 +35,34 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
+    const branchIdCandidate = (body as any)?.branchId ?? ctx.defaultBranchId;
+    if (branchIdCandidate === null || branchIdCandidate === undefined) {
+      return NextResponse.json(
+        {
+          error: "branchId é obrigatório",
+          code: "BRANCH_REQUIRED",
+          details:
+            "Informe branchId no payload ou defina uma filial padrão para o usuário.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const branchId = Number(branchIdCandidate);
+    if (!Number.isFinite(branchId)) {
+      return NextResponse.json(
+        { error: "branchId inválido", code: "BRANCH_INVALID" },
+        { status: 400 }
+      );
+    }
+
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Sem permissão para a filial", code: "BRANCH_FORBIDDEN" },
+        { status: 403 }
+      );
+    }
+
     // Evitar override de campos sensíveis via spread
     const {
       organizationId: _orgId,
@@ -52,7 +80,7 @@ export async function POST(request: NextRequest) {
       .values({
         ...safeBody,
         organizationId: ctx.organizationId,
-        branchId: ctx.defaultBranchId ?? 1,
+        branchId,
         createdBy: ctx.userId,
         version: 1,
       })
