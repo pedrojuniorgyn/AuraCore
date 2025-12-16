@@ -73,12 +73,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ⚠️ Segurança: impedir override via spread do body
+    // (última chave vence em object literals)
+    const {
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
+
     const [createdId] = await db
       .insert(taxCredits)
       .values({
+        ...safeBody,
         organizationId: ctx.organizationId,
         branchId,
-        ...body,
         createdBy: ctx.userId,
         version: 1,
       })
