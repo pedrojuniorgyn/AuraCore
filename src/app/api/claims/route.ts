@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get("organizationId") || "1";
+    const ctx = await getTenantContext();
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "100");
     const offset = (page - 1) * limit;
@@ -16,14 +17,14 @@ export async function GET(request: NextRequest) {
         vehicle_id, estimated_damage, insurance_coverage as coverage,
         franchise_amount as franchise, claim_status as status
       FROM claims_management
-      WHERE organization_id = ${organizationId}
+      WHERE organization_id = ${ctx.organizationId}
       ORDER BY claim_date DESC
       OFFSET ${offset} ROWS
       FETCH NEXT ${limit} ROWS ONLY
     `);
 
     const countResult = await db.execute(sql`
-      SELECT COUNT(*) as total FROM claims_management WHERE organization_id = ${organizationId}
+      SELECT COUNT(*) as total FROM claims_management WHERE organization_id = ${ctx.organizationId}
     `);
     const total = countResult.recordset?.[0]?.total || countResult[0]?.total || 0;
 
@@ -44,8 +45,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await getTenantContext();
     const body = await request.json();
-    const { organizationId = 1, claimType, vehicleId, estimatedDamage, description } = body;
+    const { claimType, vehicleId, estimatedDamage, description } = body;
 
     const claimNumber = `SIN-${Date.now().toString().slice(-6)}`;
 
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
       INSERT INTO claims_management 
         (organization_id, claim_number, claim_date, claim_type, vehicle_id, estimated_damage, claim_status, notes)
       VALUES 
-        (${organizationId}, ${claimNumber}, GETDATE(), ${claimType}, ${vehicleId}, ${estimatedDamage}, 'OPENED', ${description})
+        (${ctx.organizationId}, ${claimNumber}, GETDATE(), ${claimType}, ${vehicleId}, ${estimatedDamage}, 'OPENED', ${description})
     `);
 
     return NextResponse.json({ 

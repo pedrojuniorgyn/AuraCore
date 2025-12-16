@@ -150,6 +150,7 @@ export async function PUT(
       accountingStatus,
       financialStatus,
       notes,
+      version,
     } = body ?? {};
     
     // Buscar documento
@@ -182,6 +183,25 @@ export async function PUT(
         { status: 400 }
       );
     }
+
+    // Optimistic Lock obrigatório para evitar "last write wins"
+    if (version === undefined || version === null) {
+      return NextResponse.json(
+        { error: "Informe version para atualizar (optimistic lock)" },
+        { status: 400 }
+      );
+    }
+    if (Number(version) !== Number(document.version)) {
+      return NextResponse.json(
+        {
+          error: "Conflito de versão",
+          code: "VERSION_CONFLICT",
+          currentVersion: document.version,
+          sentVersion: version,
+        },
+        { status: 409 }
+      );
+    }
     
     // Atualizar documento
     await db
@@ -196,7 +216,7 @@ export async function PUT(
         updatedAt: new Date(),
         version: document.version + 1,
       })
-      .where(eq(fiscalDocuments.id, documentId));
+      .where(and(eq(fiscalDocuments.id, documentId), eq(fiscalDocuments.version, document.version)));
     
     // Buscar documento atualizado
     const [updated] = await db

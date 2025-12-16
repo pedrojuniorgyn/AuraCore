@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
+import { getTenantContext } from "@/lib/auth/context";
+import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
+import sql from "mssql";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,18 +13,20 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     await ensureConnection();
 
-    const result = await pool.request().query(`
-      SELECT * FROM warehouse_inventory_counts
-      WHERE organization_id = ${session.user.organizationId}
-      ORDER BY started_at DESC
-    `);
+    const result = await pool
+      .request()
+      .input("orgId", sql.Int, ctx.organizationId)
+      .query(
+        `
+        SELECT * FROM warehouse_inventory_counts
+        WHERE organization_id = @orgId
+        ORDER BY started_at DESC
+      `
+      );
 
     return NextResponse.json({
       success: true,
@@ -44,10 +48,7 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const body = await request.json();
     const { warehouseId, countType, notes } = body;
@@ -62,34 +63,57 @@ export async function POST(request: NextRequest) {
 
     await ensureConnection();
 
-    // Gerar número da contagem
-    const numberResult = await pool.request().query(`
-      SELECT ISNULL(MAX(CAST(SUBSTRING(count_number, 11, 10) AS INT)), 0) + 1 as next_number
-      FROM warehouse_inventory_counts
-      WHERE organization_id = ${session.user.organizationId}
-      AND count_number LIKE 'INV-${new Date().getFullYear()}-%'
-    `);
+    const created = await withMssqlTransaction(
+      async (tx) => {
+        const year = new Date().getFullYear();
+        const numberResult = await tx
+          .request()
+          .input("orgId", sql.Int, ctx.organizationId)
+          .input("prefix", sql.NVarChar(20), `INV-${year}-%`)
+          .query(
+            `
+            SELECT ISNULL(MAX(CAST(SUBSTRING(count_number, 11, 10) AS INT)), 0) + 1 as next_number
+            FROM warehouse_inventory_counts WITH (UPDLOCK, HOLDLOCK)
+            WHERE organization_id = @orgId
+              AND count_number LIKE @prefix
+          `
+          );
 
-    const nextNumber = numberResult.recordset[0].next_number;
-    const countNumber = `INV-${new Date().getFullYear()}-${String(nextNumber).padStart(6, "0")}`;
+        const nextNumber = numberResult.recordset?.[0]?.next_number ?? 1;
+        const countNumber = `INV-${year}-${String(nextNumber).padStart(6, "0")}`;
 
-    const result = await pool.request().query(`
-      INSERT INTO warehouse_inventory_counts (
-        organization_id, warehouse_id, count_number, count_date,
-        count_type, notes, started_by, created_by, created_at
-      )
-      OUTPUT INSERTED.*
-      VALUES (
-        ${session.user.organizationId}, ${warehouseId}, '${countNumber}', GETDATE(),
-        '${countType}', ${notes ? `'${notes}'` : "NULL"},
-        '${session.user.id}', '${session.user.id}', GETDATE()
-      )
-    `);
+        const result = await tx
+          .request()
+          .input("orgId", sql.Int, ctx.organizationId)
+          .input("warehouseId", sql.Int, Number(warehouseId))
+          .input("countNumber", sql.NVarChar(30), countNumber)
+          .input("countType", sql.NVarChar(20), String(countType))
+          .input("notes", sql.NVarChar(sql.MAX), notes ?? null)
+          .input("userId", sql.NVarChar(255), ctx.userId)
+          .query(
+            `
+            INSERT INTO warehouse_inventory_counts (
+              organization_id, warehouse_id, count_number, count_date,
+              count_type, notes, started_by, created_by, created_at
+            )
+            OUTPUT INSERTED.*
+            VALUES (
+              @orgId, @warehouseId, @countNumber, GETDATE(),
+              @countType, @notes,
+              @userId, @userId, GETDATE()
+            )
+          `
+          );
+
+        return result.recordset?.[0];
+      },
+      { isolationLevel: sql.ISOLATION_LEVEL.SERIALIZABLE }
+    );
 
     return NextResponse.json({
       success: true,
       message: "Contagem iniciada com sucesso",
-      count: result.recordset[0],
+      count: created,
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao iniciar contagem:", error);

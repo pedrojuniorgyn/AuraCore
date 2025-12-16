@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
+import { getTenantContext } from "@/lib/auth/context";
+import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
+import sql from "mssql";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -11,34 +13,30 @@ export const runtime = "nodejs";
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
     await ensureConnection();
 
-    let query = `
-      SELECT 
+    const reqq = pool.request().input("orgId", sql.Int, ctx.organizationId);
+    if (status) reqq.input("status", sql.NVarChar(50), status);
+
+    const result = await reqq.query(
+      `
+      SELECT
         wo.*,
         v.plate,
         v.model as vehicle_model_name
       FROM maintenance_work_orders wo
       LEFT JOIN vehicles v ON v.id = wo.vehicle_id
-      WHERE wo.organization_id = ${session.user.organizationId}
-      AND wo.deleted_at IS NULL
-    `;
-
-    if (status) {
-      query += ` AND wo.status = '${status}'`;
-    }
-
-    query += ` ORDER BY wo.opened_at DESC`;
-
-    const result = await pool.request().query(query);
+      WHERE wo.organization_id = @orgId
+        AND wo.deleted_at IS NULL
+        ${status ? "AND wo.status = @status" : ""}
+      ORDER BY wo.opened_at DESC
+    `
+    );
 
     return NextResponse.json({
       success: true,
@@ -60,10 +58,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const body = await request.json();
     const {
@@ -77,45 +72,77 @@ export async function POST(request: NextRequest) {
 
     await ensureConnection();
 
-    // Gerar número da O.S.
-    const numberResult = await pool.request().query(`
-      SELECT ISNULL(MAX(CAST(SUBSTRING(wo_number, 9, 10) AS INT)), 0) + 1 as next_number
-      FROM maintenance_work_orders
-      WHERE organization_id = ${session.user.organizationId}
-      AND wo_number LIKE 'OS-${new Date().getFullYear()}-%'
-    `);
+    const created = await withMssqlTransaction(
+      async (tx) => {
+        const year = new Date().getFullYear();
 
-    const nextNumber = numberResult.recordset[0].next_number;
-    const woNumber = `OS-${new Date().getFullYear()}-${String(nextNumber).padStart(6, "0")}`;
+        // SERIALIZABLE + HOLDLOCK garante que 2 requisições não gerem o mesmo número
+        const numberResult = await tx
+          .request()
+          .input("orgId", sql.Int, ctx.organizationId)
+          .input("prefix", sql.NVarChar(20), `OS-${year}-%`)
+          .query(
+            `
+            SELECT ISNULL(MAX(CAST(SUBSTRING(wo_number, 9, 10) AS INT)), 0) + 1 as next_number
+            FROM maintenance_work_orders WITH (UPDLOCK, HOLDLOCK)
+            WHERE organization_id = @orgId
+              AND wo_number LIKE @prefix
+          `
+          );
 
-    const result = await pool.request().query(`
-      INSERT INTO maintenance_work_orders (
-        organization_id, wo_number, vehicle_id, wo_type, priority,
-        reported_by_driver_id, reported_issue, odometer,
-        created_by, created_at
-      )
-      OUTPUT INSERTED.*
-      VALUES (
-        ${session.user.organizationId}, '${woNumber}', ${vehicleId}, '${woType}', '${priority}',
-        ${reportedByDriverId || "NULL"}, ${reportedIssue ? `'${reportedIssue}'` : "NULL"},
-        ${odometer || "NULL"},
-        '${session.user.id}', GETDATE()
-      )
-    `);
+        const nextNumber = numberResult.recordset?.[0]?.next_number ?? 1;
+        const woNumber = `OS-${year}-${String(nextNumber).padStart(6, "0")}`;
 
-    // Se O.S. é crítica, bloquear veículo
-    if (priority === "URGENT" || priority === "HIGH") {
-      await pool.request().query(`
-        UPDATE vehicles
-        SET status = 'MAINTENANCE'
-        WHERE id = ${vehicleId}
-        AND organization_id = ${session.user.organizationId}
-      `);
-    }
+        const result = await tx
+          .request()
+          .input("orgId", sql.Int, ctx.organizationId)
+          .input("woNumber", sql.NVarChar(30), woNumber)
+          .input("vehicleId", sql.Int, Number(vehicleId))
+          .input("woType", sql.NVarChar(50), String(woType))
+          .input("priority", sql.NVarChar(20), String(priority))
+          .input("reportedByDriverId", sql.Int, reportedByDriverId ? Number(reportedByDriverId) : null)
+          .input("reportedIssue", sql.NVarChar(sql.MAX), reportedIssue ?? null)
+          .input("odometer", sql.Int, odometer ? Number(odometer) : null)
+          .input("createdBy", sql.NVarChar(255), ctx.userId)
+          .query(
+            `
+            INSERT INTO maintenance_work_orders (
+              organization_id, wo_number, vehicle_id, wo_type, priority,
+              reported_by_driver_id, reported_issue, odometer,
+              created_by, created_at
+            )
+            OUTPUT INSERTED.*
+            VALUES (
+              @orgId, @woNumber, @vehicleId, @woType, @priority,
+              @reportedByDriverId, @reportedIssue, @odometer,
+              @createdBy, GETDATE()
+            )
+          `
+          );
+
+        if (priority === "URGENT" || priority === "HIGH") {
+          await tx
+            .request()
+            .input("orgId", sql.Int, ctx.organizationId)
+            .input("vehicleId", sql.Int, Number(vehicleId))
+            .query(
+              `
+              UPDATE vehicles
+              SET status = 'MAINTENANCE'
+              WHERE id = @vehicleId
+                AND organization_id = @orgId
+            `
+            );
+        }
+
+        return result.recordset?.[0];
+      },
+      { isolationLevel: sql.ISOLATION_LEVEL.SERIALIZABLE }
+    );
 
     return NextResponse.json({
       success: true,
-      workOrder: result.recordset[0],
+      workOrder: created,
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao criar O.S.:", error);

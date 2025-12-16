@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { createProductSchema } from "@/lib/validators/product";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, and, isNull, or, ilike, desc } from "drizzle-orm";
+import { eq, and, isNull, or, ilike, desc, sql } from "drizzle-orm";
 
 /**
  * GET /api/products
@@ -29,42 +29,34 @@ export async function GET(request: NextRequest) {
 
     // Filtros
     const search = searchParams.get("q") || searchParams.get("search");
-    
-    // Query Base: Multi-Tenant + Soft Delete
-    let query = db
-      .select()
-      .from(products)
-      .where(
-        and(
-          eq(products.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO
-          isNull(products.deletedAt) // 🗑️ NÃO DELETADO
-        )
-      )
-      .orderBy(desc(products.createdAt));
-
-    // Filtro de Busca (SKU ou Nome)
-    if (search) {
-      query = db
-        .select()
-        .from(products)
-        .where(
-          and(
-            eq(products.organizationId, ctx.organizationId),
-            isNull(products.deletedAt),
+    const where = and(
+      eq(products.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO
+      isNull(products.deletedAt), // 🗑️ NÃO DELETADO
+      ...(search
+        ? [
             or(
               ilike(products.sku, `%${search}%`),
               ilike(products.name, `%${search}%`)
-            )
-          )
-        )
-        .orderBy(desc(products.createdAt));
-    }
+            ),
+          ]
+        : [])
+    );
+    
+    // Total (COUNT no banco)
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)`.as("count") })
+      .from(products)
+      .where(where);
+    const total = Number(count ?? 0);
 
-    const allProducts = await query;
-    const total = allProducts.length;
-
-    // Aplica paginação manual
-    const paginatedProducts = allProducts.slice(_start, _end);
+    // Página (LIMIT/OFFSET no banco)
+    const paginatedProducts = await db
+      .select()
+      .from(products)
+      .where(where)
+      .orderBy(desc(products.createdAt))
+      .offset(_start)
+      .limit(limit);
 
     return NextResponse.json(
       {

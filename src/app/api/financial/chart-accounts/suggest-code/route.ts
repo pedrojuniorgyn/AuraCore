@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/financial/chart-accounts/suggest-code?parentId=123
@@ -9,10 +9,7 @@ import { sql } from "drizzle-orm";
  */
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const { searchParams } = new URL(req.url);
     const parentIdParam = searchParams.get("parentId");
@@ -27,7 +24,7 @@ export async function GET(req: Request) {
         FROM chart_of_accounts
         WHERE parent_id IS NULL
           AND deleted_at IS NULL
-          AND organization_id = ${session.user.organizationId}
+          AND organization_id = ${ctx.organizationId}
           AND code NOT LIKE '%.%'
           AND ISNUMERIC(code) = 1
       `);
@@ -37,7 +34,11 @@ export async function GET(req: Request) {
     } else {
       // Com pai: buscar código do pai e último filho
       const parentResult = await db.execute(sql`
-        SELECT code FROM chart_of_accounts WHERE id = ${parentId}
+        SELECT code
+        FROM chart_of_accounts
+        WHERE id = ${parentId}
+          AND organization_id = ${ctx.organizationId}
+          AND deleted_at IS NULL
       `);
 
       if (!parentResult[0]) {
@@ -55,6 +56,7 @@ export async function GET(req: Request) {
         FROM chart_of_accounts
         WHERE parent_id = ${parentId}
           AND deleted_at IS NULL
+          AND organization_id = ${ctx.organizationId}
       `);
 
       const maxChildCode = childrenResult[0]?.max_code;
