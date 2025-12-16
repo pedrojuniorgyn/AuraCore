@@ -204,7 +204,7 @@ export async function PUT(
     }
     
     // Atualizar documento
-    await db
+    const updateResult = await db
       .update(fiscalDocuments)
       .set({
         fiscalClassification: fiscalClassification ?? document.fiscalClassification,
@@ -217,6 +217,23 @@ export async function PUT(
         version: document.version + 1,
       })
       .where(and(eq(fiscalDocuments.id, documentId), eq(fiscalDocuments.version, document.version)));
+
+    // Detectar corrida (TOCTOU): se outra requisição atualizou antes, nosso UPDATE afeta 0 linhas.
+    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffected = Array.isArray(rowsAffectedRaw)
+      ? Number(rowsAffectedRaw[0] ?? 0)
+      : Number(rowsAffectedRaw ?? 0);
+    if (!rowsAffected) {
+      return NextResponse.json(
+        {
+          error: "Conflito de versão",
+          code: "VERSION_CONFLICT",
+          currentVersion: document.version,
+          sentVersion: version,
+        },
+        { status: 409 }
+      );
+    }
     
     // Buscar documento atualizado
     const [updated] = await db
@@ -229,6 +246,9 @@ export async function PUT(
       document: updated,
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao atualizar documento:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -168,7 +168,7 @@ export async function PUT(
     }
 
     // Atualiza com Enterprise Base Pattern
-    await db
+    const updateResult = await db
       .update(products)
       .set({
         ...dataToUpdate,
@@ -184,6 +184,26 @@ export async function PUT(
           eq(products.version, currentProduct.version) // Double-check de versão
         )
       );
+
+    // Se houve corrida entre SELECT e UPDATE, o UPDATE pode afetar 0 linhas.
+    // Precisamos detectar e retornar 409 (em vez de "sucesso" silencioso).
+    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffected = Array.isArray(rowsAffectedRaw)
+      ? Number(rowsAffectedRaw[0] ?? 0)
+      : Number(rowsAffectedRaw ?? 0);
+    if (!rowsAffected) {
+      return NextResponse.json(
+        {
+          error: "Conflito de versão",
+          code: "VERSION_CONFLICT",
+          details:
+            "O produto foi alterado por outro usuário durante a atualização. Recarregue a página e tente novamente.",
+          currentVersion: currentProduct.version,
+          sentVersion: body.version,
+        },
+        { status: 409 }
+      );
+    }
 
     // Busca o registro atualizado
     const [updatedProduct] = await db

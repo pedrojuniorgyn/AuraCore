@@ -43,6 +43,9 @@ export async function GET(request: NextRequest) {
       workOrders: result.recordset,
     });
   } catch (error: unknown) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar O.S.:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
@@ -145,6 +148,9 @@ export async function POST(request: NextRequest) {
       workOrder: created,
     });
   } catch (error: unknown) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar O.S.:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(

@@ -33,6 +33,9 @@ export async function GET() {
       counts: result.recordset,
     });
   } catch (error: unknown) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar contagens:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
@@ -116,6 +119,9 @@ export async function POST(request: NextRequest) {
       count: created,
     });
   } catch (error: unknown) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao iniciar contagem:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
