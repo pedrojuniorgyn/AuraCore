@@ -31,14 +31,20 @@ export async function PUT(
       updatedAt: _updatedAt,
       updatedBy: _updatedBy,
       version: _version,
+      wonDate: wonDateRaw,
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
+
+    // wonDate só deve ser alterado se vier explicitamente no payload
+    const hasWonDate = Object.prototype.hasOwnProperty.call(body ?? {}, "wonDate");
 
     const updateResult = await db
       .update(crmLeads)
       .set({
         ...safeBody,
-        wonDate: (safeBody as any)?.wonDate ? new Date((safeBody as any).wonDate as any) : null,
+        ...(hasWonDate
+          ? { wonDate: wonDateRaw ? new Date(wonDateRaw as any) : null }
+          : {}),
         updatedBy: ctx.userId,
         updatedAt: new Date(),
       })
