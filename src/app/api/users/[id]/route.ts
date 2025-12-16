@@ -10,6 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -48,7 +50,10 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: user[0] });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar usuário:", error);
     return NextResponse.json(
       { error: "Erro ao buscar usuário" },
@@ -63,6 +68,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -141,27 +148,48 @@ export async function PUT(
     // Atualizar (sem password)
     const { password, ...dataToUpdate } = body;
     
-    const updated = await db
+    await db
       .update(users)
       .set({
         ...dataToUpdate,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, userId))
-      .returning({
+      .where(
+        and(
+          eq(users.id, userId),
+          eq(users.organizationId, session.user.organizationId),
+          isNull(users.deletedAt)
+        )
+      );
+
+    // SQL Server: buscar após update (sem returning)
+    const [updated] = await db
+      .select({
         id: users.id,
         name: users.name,
         email: users.email,
         role: users.role,
         status: users.status,
-      });
+      })
+      .from(users)
+      .where(
+        and(
+          eq(users.id, userId),
+          eq(users.organizationId, session.user.organizationId),
+          isNull(users.deletedAt)
+        )
+      )
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Usuário atualizado com sucesso",
-      data: updated[0],
+      data: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar usuário:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar usuário" },
@@ -176,6 +204,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -227,13 +257,22 @@ export async function DELETE(
         deletedAt: new Date(),
         status: "INACTIVE",
       })
-      .where(eq(users.id, userId));
+      .where(
+        and(
+          eq(users.id, userId),
+          eq(users.organizationId, session.user.organizationId),
+          isNull(users.deletedAt)
+        )
+      );
 
     return NextResponse.json({
       success: true,
       message: "Usuário excluído com sucesso",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir usuário:", error);
     return NextResponse.json(
       { error: "Erro ao excluir usuário" },

@@ -10,6 +10,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -56,6 +58,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -68,6 +72,17 @@ export async function PUT(
     }
 
     const body = await req.json();
+    // Evitar override de campos sensíveis via spread
+    const {
+      organizationId: _orgId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
 
     // Validações básicas
     if (!body.tripId || !body.occurrenceType || !body.title) {
@@ -106,20 +121,37 @@ export async function PUT(
     }
 
     // Atualizar
-    const updated = await db
+    await db
       .update(tripOccurrences)
       .set({
-        ...body,
+        ...safeBody,
         updatedBy: session.user.id,
         updatedAt: new Date(),
       })
-      .where(eq(tripOccurrences.id, occurrenceId))
-      .returning();
+      .where(
+        and(
+          eq(tripOccurrences.id, occurrenceId),
+          eq(tripOccurrences.organizationId, session.user.organizationId),
+          isNull(tripOccurrences.deletedAt)
+        )
+      );
+
+    const [updated] = await db
+      .select()
+      .from(tripOccurrences)
+      .where(
+        and(
+          eq(tripOccurrences.id, occurrenceId),
+          eq(tripOccurrences.organizationId, session.user.organizationId),
+          isNull(tripOccurrences.deletedAt)
+        )
+      )
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Ocorrência atualizada com sucesso",
-      data: updated[0],
+      data: updated,
     });
   } catch (error) {
     console.error("Erro ao atualizar ocorrência:", error);
@@ -136,6 +168,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -182,7 +216,13 @@ export async function DELETE(
         deletedAt: new Date(),
         deletedBy: session.user.id,
       })
-      .where(eq(tripOccurrences.id, occurrenceId));
+      .where(
+        and(
+          eq(tripOccurrences.id, occurrenceId),
+          eq(tripOccurrences.organizationId, session.user.organizationId),
+          isNull(tripOccurrences.deletedAt)
+        )
+      );
 
     return NextResponse.json({
       success: true,

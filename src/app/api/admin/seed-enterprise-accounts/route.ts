@@ -1,19 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function POST(request: NextRequest) {
   try {
     console.log("🌱 Iniciando seed de contas contábeis Enterprise");
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+
+    const ctx = await getTenantContext();
+    if (!ctx.isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Apenas ADMIN pode executar seed enterprise" },
+        { status: 403 }
+      );
+    }
+    const orgId = ctx.organizationId;
     
     const accounts = `
       -- BACKOFFICE CONTAS
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT 1, '4.3', 'CUSTOS DE APOIO OPERACIONAL', 'Custos dos departamentos de suporte', 'EXPENSE', 0, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3' AND organization_id = 1);
+      SELECT __ORG_ID__, '4.3', 'CUSTOS DE APOIO OPERACIONAL', 'Custos dos departamentos de suporte', 'EXPENSE', 0, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3' AND organization_id = __ORG_ID__);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT 1, '4.3.1', 'OFICINA MECÂNICA INTERNA', 'Custos para manter oficina', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3' AND organization_id = 1), 0, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = 1);
+      SELECT __ORG_ID__, '4.3.1', 'OFICINA MECÂNICA INTERNA', 'Custos para manter oficina', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3' AND organization_id = __ORG_ID__), 0, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = __ORG_ID__);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
       SELECT 1, '4.3.1.01.001', 'Ferramental e Utensílios', 'Ferramentas oficina', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = 1), 1, 'ACTIVE'
@@ -89,13 +101,17 @@ export async function POST(request: NextRequest) {
       WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '2.1.9.01.001' AND organization_id = 1);
     `;
 
-    await pool.query(accounts);
+    const accountsSql = accounts
+      .replaceAll("organization_id = 1", "organization_id = __ORG_ID__")
+      .replaceAll("SELECT 1,", "SELECT __ORG_ID__,")
+      .replaceAll("__ORG_ID__", String(orgId));
+    await pool.query(accountsSql);
 
     // Seed Centros de Custo Departamentais
     const costCenters = `
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
-      SELECT 1, 'CC-901', 'OFICINA MECÂNICA', 'Manutenção frota', 'EXPENSE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-901' AND organization_id = 1);
+      SELECT __ORG_ID__, 'CC-901', 'OFICINA MECÂNICA', 'Manutenção frota', 'EXPENSE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-901' AND organization_id = __ORG_ID__);
 
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
       SELECT 1, 'CC-902', 'POSTO INTERNO', 'Abastecimento', 'EXPENSE', 1, 'ACTIVE'
@@ -118,13 +134,17 @@ export async function POST(request: NextRequest) {
       WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-940' AND organization_id = 1);
     `;
 
-    await pool.query(costCenters);
+    const costCentersSql = costCenters
+      .replaceAll("organization_id = 1", "organization_id = __ORG_ID__")
+      .replaceAll("SELECT 1,", "SELECT __ORG_ID__,")
+      .replaceAll("__ORG_ID__", String(orgId));
+    await pool.query(costCentersSql);
 
     // Seed Matriz Tributária
     const taxMatrix = `
       INSERT INTO fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, legal_basis)
-      SELECT 1, 'SP', 'RJ', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
-      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = 1 AND uf_origin = 'SP' AND uf_destination = 'RJ' AND cargo_type = 'GERAL');
+      SELECT __ORG_ID__, 'SP', 'RJ', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
+      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'RJ' AND cargo_type = 'GERAL');
 
       INSERT INTO fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, legal_basis)
       SELECT 1, 'SP', 'MG', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
@@ -143,7 +163,11 @@ export async function POST(request: NextRequest) {
       WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = 1 AND uf_origin = 'SP' AND uf_destination = 'PR' AND cargo_type = 'GERAL');
     `;
 
-    await pool.query(taxMatrix);
+    const taxMatrixSql = taxMatrix
+      .replaceAll("organization_id = 1", "organization_id = __ORG_ID__")
+      .replaceAll("SELECT 1,", "SELECT __ORG_ID__,")
+      .replaceAll("__ORG_ID__", String(orgId));
+    await pool.query(taxMatrixSql);
 
     return NextResponse.json({
       success: true,
@@ -155,6 +179,9 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro no seed:", error);
     return NextResponse.json({
       success: false,

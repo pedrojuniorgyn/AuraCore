@@ -9,6 +9,8 @@ import { eq, and, isNull, desc } from "drizzle-orm";
  */
 export async function GET(req: Request) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -45,6 +47,8 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -54,6 +58,17 @@ export async function POST(req: Request) {
     const createdBy = session.user.email || "system";
 
     const body = await req.json();
+    // Evitar override de campos sensíveis via spread
+    const {
+      organizationId: _orgId,
+      branchId: _branchId,
+      orderNumber: _orderNumber,
+      status: _status,
+      createdBy: _createdBy,
+      deletedAt: _deletedAt,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
 
     // Gerar número
     const year = new Date().getFullYear();
@@ -65,16 +80,25 @@ export async function POST(req: Request) {
 
     const orderNumber = `OC-${year}-${String(lastOrders.length + 1).padStart(4, "0")}`;
 
-    const [newOrder] = await db
+    const [createdId] = await db
       .insert(pickupOrders)
       .values({
-        ...body,
+        ...safeBody,
         organizationId,
         orderNumber,
         status: "PENDING_ALLOCATION",
         createdBy,
       })
-      .returning();
+      .$returningId();
+
+    const orderId = (createdId as any)?.id;
+    const [newOrder] = orderId
+      ? await db
+          .select()
+          .from(pickupOrders)
+          .where(and(eq(pickupOrders.id, Number(orderId)), eq(pickupOrders.organizationId, organizationId), isNull(pickupOrders.deletedAt)))
+          .limit(1)
+      : [];
 
     return NextResponse.json({
       success: true,
