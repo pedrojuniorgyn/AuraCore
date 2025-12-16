@@ -148,6 +148,11 @@ export async function importExternalCTe(
       .$returningId();
 
     const cteId = Number((createdId as any)?.id);
+    if (!Number.isFinite(cteId) || cteId <= 0) {
+      throw new Error(
+        "Falha ao importar CTe externo: ID não retornado pelo banco"
+      );
+    }
     
     console.log(`✅ CTe externo ${parsedCTe.cteKey} importado com ID ${cteId}`);
     
