@@ -70,6 +70,18 @@ export async function POST(req: Request) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
+    // branchId é NOT NULL no schema: usar body.branchId (se vier) ou defaultBranchId da sessão
+    const sessionDefaultBranchId =
+      Number((session.user as any)?.defaultBranchId ?? (session.user as any)?.branchId ?? 0) || null;
+    const branchIdRaw = (body as any)?.branchId ?? sessionDefaultBranchId;
+    const branchId = branchIdRaw ? Number(branchIdRaw) : NaN;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "branchId é obrigatório (ou defina defaultBranchId no usuário)" },
+        { status: 400 }
+      );
+    }
+
     // Gerar número
     const year = new Date().getFullYear();
     const lastOrders = await db
@@ -85,6 +97,7 @@ export async function POST(req: Request) {
       .values({
         ...safeBody,
         organizationId,
+        branchId,
         orderNumber,
         status: "PENDING_ALLOCATION",
         createdBy,

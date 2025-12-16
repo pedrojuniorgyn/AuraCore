@@ -146,12 +146,25 @@ export async function PUT(
     }
 
     // Atualizar (sem password)
-    const { password, ...dataToUpdate } = body;
+    const {
+      password,
+      // ⚠️ Campos sensíveis (não devem ser alterados via request body)
+      organizationId: _organizationId,
+      branchId: _branchId,
+      createdBy: _createdBy,
+      updatedBy: _updatedBy,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      deletedAt: _deletedAt,
+      deletedBy: _deletedBy,
+      version: _version,
+      ...safeBody
+    } = (body ?? {}) as Record<string, unknown>;
     
     await db
       .update(users)
       .set({
-        ...dataToUpdate,
+        ...safeBody,
         updatedAt: new Date(),
       })
       .where(
