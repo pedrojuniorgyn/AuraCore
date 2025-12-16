@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader, cteCorrectionLetters } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 /**
  * POST /api/fiscal/cte/:id/correction
@@ -43,7 +43,7 @@ export async function POST(
       const [cte] = await db
         .select()
         .from(cteHeader)
-        .where(eq(cteHeader.id, cteId));
+        .where(and(eq(cteHeader.id, cteId), eq(cteHeader.organizationId, ctx.organizationId)));
 
       if (!cte) {
         return NextResponse.json(
@@ -63,7 +63,12 @@ export async function POST(
       const existingCCe = await db
         .select()
         .from(cteCorrectionLetters)
-        .where(eq(cteCorrectionLetters.cteHeaderId, cteId));
+        .where(
+          and(
+            eq(cteCorrectionLetters.cteHeaderId, cteId),
+            eq(cteCorrectionLetters.organizationId, ctx.organizationId)
+          )
+        );
 
       const sequenceNumber = existingCCe.length + 1;
 

@@ -128,7 +128,7 @@ export async function DELETE(
         deletedAt: new Date(),
         deletedBy: ctx.userId,
       })
-      .where(eq(crmLeads.id, leadId));
+      .where(and(eq(crmLeads.id, leadId), eq(crmLeads.organizationId, ctx.organizationId)));
 
     return NextResponse.json({
       success: true,
