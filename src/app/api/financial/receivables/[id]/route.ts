@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { accountsReceivable } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 // GET - Buscar conta a receber específica
 export async function GET(
@@ -10,11 +10,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const receivableId = parseInt(resolvedParams.id);
     if (isNaN(receivableId)) {
@@ -27,7 +26,7 @@ export async function GET(
       .where(
         and(
           eq(accountsReceivable.id, receivableId),
-          eq(accountsReceivable.organizationId, session.user.organizationId),
+          eq(accountsReceivable.organizationId, ctx.organizationId),
           isNull(accountsReceivable.deletedAt)
         )
       )
@@ -41,7 +40,10 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: receivable[0] });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar conta a receber:", error);
     return NextResponse.json(
       { error: "Erro ao buscar conta a receber" },
@@ -56,11 +58,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const receivableId = parseInt(resolvedParams.id);
     if (isNaN(receivableId)) {
@@ -84,7 +85,7 @@ export async function PUT(
       .where(
         and(
           eq(accountsReceivable.id, receivableId),
-          eq(accountsReceivable.organizationId, session.user.organizationId),
+          eq(accountsReceivable.organizationId, ctx.organizationId),
           isNull(accountsReceivable.deletedAt)
         )
       )
@@ -114,22 +115,30 @@ export async function PUT(
     }
 
     // Atualizar
-    const updated = await db
+    await db
       .update(accountsReceivable)
       .set({
         ...body,
-        updatedBy: session.user.id,
+        updatedBy: ctx.userId,
         updatedAt: new Date(),
       })
-      .where(eq(accountsReceivable.id, receivableId))
-      .returning();
+      .where(and(eq(accountsReceivable.id, receivableId), eq(accountsReceivable.organizationId, ctx.organizationId)));
+
+    const [updated] = await db
+      .select()
+      .from(accountsReceivable)
+      .where(and(eq(accountsReceivable.id, receivableId), eq(accountsReceivable.organizationId, ctx.organizationId)))
+      .limit(1);
 
     return NextResponse.json({
       success: true,
       message: "Conta a receber atualizada com sucesso",
-      data: updated[0],
+      data: updated,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar conta a receber:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar conta a receber" },
@@ -144,11 +153,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const receivableId = parseInt(resolvedParams.id);
     if (isNaN(receivableId)) {
@@ -162,7 +170,7 @@ export async function DELETE(
       .where(
         and(
           eq(accountsReceivable.id, receivableId),
-          eq(accountsReceivable.organizationId, session.user.organizationId),
+          eq(accountsReceivable.organizationId, ctx.organizationId),
           isNull(accountsReceivable.deletedAt)
         )
       )
@@ -200,15 +208,18 @@ export async function DELETE(
       .update(accountsReceivable)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
+        deletedBy: ctx.userId,
       })
-      .where(eq(accountsReceivable.id, receivableId));
+      .where(and(eq(accountsReceivable.id, receivableId), eq(accountsReceivable.organizationId, ctx.organizationId)));
 
     return NextResponse.json({
       success: true,
       message: "Conta a receber excluída com sucesso",
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir conta a receber:", error);
     return NextResponse.json(
       { error: "Erro ao excluir conta a receber" },

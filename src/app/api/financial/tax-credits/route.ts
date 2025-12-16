@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { taxCredits, inboundInvoices } from "@/lib/db/schema";
-import { getTenantContext } from "@/lib/auth/context";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: credits, kpis: kpis[0] });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -55,16 +58,46 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    const [credit] = await db.insert(taxCredits).values({
-      organizationId: ctx.organizationId,
-      branchId: ctx.branchId,
-      ...body,
-      createdBy: ctx.userId,
-      version: 1,
-    }).returning();
+    const branchHeader = request.headers.get("x-branch-id");
+    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
+        { status: 400 }
+      );
+    }
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial informada" },
+        { status: 403 }
+      );
+    }
+
+    const [createdId] = await db
+      .insert(taxCredits)
+      .values({
+        organizationId: ctx.organizationId,
+        branchId,
+        ...body,
+        createdBy: ctx.userId,
+        version: 1,
+      })
+      .$returningId();
+
+    const creditId = (createdId as any)?.id;
+    const [credit] = creditId
+      ? await db
+          .select()
+          .from(taxCredits)
+          .where(and(eq(taxCredits.id, Number(creditId)), eq(taxCredits.organizationId, ctx.organizationId)))
+          .limit(1)
+      : [];
 
     return NextResponse.json({ success: true, data: credit });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

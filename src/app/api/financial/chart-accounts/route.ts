@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { getTenantContext } from "@/lib/auth/context";
 
 /**
  * GET /api/financial/chart-accounts
@@ -10,12 +10,9 @@ import { eq, and, isNull } from "drizzle-orm";
  */
 export async function GET(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     // Buscar todas as contas
     const allAccounts = await db
@@ -23,7 +20,7 @@ export async function GET(req: Request) {
       .from(chartOfAccounts)
       .where(
         and(
-          eq(chartOfAccounts.organizationId, organizationId),
+          eq(chartOfAccounts.organizationId, ctx.organizationId),
           isNull(chartOfAccounts.deletedAt)
         )
       )
@@ -48,7 +45,10 @@ export async function GET(req: Request) {
         tree, // Árvore (para visualização)
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar plano de contas:", error);
     return NextResponse.json(
       { error: "Erro ao buscar plano de contas" },
@@ -63,13 +63,9 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const createdBy = session.user.email || "system";
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
+    const ctx = await getTenantContext();
 
     const body = await req.json();
     const {
@@ -118,7 +114,7 @@ export async function POST(req: Request) {
       .from(chartOfAccounts)
       .where(
         and(
-          eq(chartOfAccounts.organizationId, organizationId),
+          eq(chartOfAccounts.organizationId, ctx.organizationId),
           eq(chartOfAccounts.code, code),
           isNull(chartOfAccounts.deletedAt)
         )
@@ -137,7 +133,13 @@ export async function POST(req: Request) {
       const parent = await db
         .select()
         .from(chartOfAccounts)
-        .where(eq(chartOfAccounts.id, parentId));
+        .where(
+          and(
+            eq(chartOfAccounts.id, parentId),
+            eq(chartOfAccounts.organizationId, ctx.organizationId),
+            isNull(chartOfAccounts.deletedAt)
+          )
+        );
 
       if (parent.length === 0) {
         return NextResponse.json(
@@ -153,10 +155,10 @@ export async function POST(req: Request) {
     const isAnalytical = level > 0; // Simplificado: contas de nível 1+ são analíticas por padrão
 
     // Criar
-    const [newAccount] = await db
+    const [createdId] = await db
       .insert(chartOfAccounts)
       .values({
-        organizationId,
+        organizationId: ctx.organizationId,
         code,
         name,
         type,
@@ -167,16 +169,33 @@ export async function POST(req: Request) {
         acceptsCostCenter: acceptsCostCenter || false,
         requiresCostCenter: requiresCostCenter || false,
         status: "ACTIVE",
-        createdBy,
+        createdBy: ctx.userId,
       })
-      .returning();
+      .$returningId();
+
+    const newAccountId = (createdId as any)?.id;
+    const [newAccount] = newAccountId
+      ? await db
+          .select()
+          .from(chartOfAccounts)
+          .where(
+            and(
+              eq(chartOfAccounts.id, Number(newAccountId)),
+              eq(chartOfAccounts.organizationId, ctx.organizationId)
+            )
+          )
+          .limit(1)
+      : [];
 
     return NextResponse.json({
       success: true,
       message: "Conta criada com sucesso!",
       data: newAccount,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar conta:", error);
     return NextResponse.json(
       { error: "Erro ao criar conta" },
