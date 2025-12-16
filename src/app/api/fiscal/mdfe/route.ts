@@ -115,6 +115,12 @@ export async function POST(req: Request) {
       .$returningId();
 
     const mdfeId = (createdId as any)?.id;
+    if (mdfeId === null || mdfeId === undefined || !Number.isFinite(Number(mdfeId))) {
+      return NextResponse.json(
+        { error: "Falha ao criar MDFe (ID não retornado)" },
+        { status: 500 }
+      );
+    }
     const [newMdfe] = mdfeId
       ? await db
           .select()

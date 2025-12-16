@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fuelTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -60,7 +60,12 @@ export async function POST(request: Request) {
       ? await db
           .select()
           .from(fuelTransactions)
-          .where(eq(fuelTransactions.id, Number(txId)))
+          .where(
+            and(
+              eq(fuelTransactions.id, Number(txId)),
+              eq(fuelTransactions.organizationId, ctx.organizationId)
+            )
+          )
           .limit(1)
       : [];
 
