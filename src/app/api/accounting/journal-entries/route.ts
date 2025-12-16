@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { journalEntries, journalEntryLines } from "@/lib/db/schema/accounting";
-import { auth } from "@/lib/auth";
-import { eq, and, desc, isNull } from "drizzle-orm";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
+import sql from "mssql";
 
 /**
  * 📚 GET /api/accounting/journal-entries
@@ -11,31 +10,41 @@ import { eq, and, desc, isNull } from "drizzle-orm";
  */
 export async function GET(request: NextRequest) {
   try {
-    const { ensureConnection } = await import("@/lib/db");
-    await ensureConnection();
-    
-    const session = await auth();
-    
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    const ctx = await getTenantContext();
+    const branchHeader = request.headers.get("x-branch-id");
+    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
+        { status: 400 }
+      );
     }
-    
-    const organizationId = session.user.organizationId;
-    const branchId = parseInt(request.headers.get("x-branch-id") || "1");
-    
-    const entries = await db
-      .select()
-      .from(journalEntries)
-      .where(
-        and(
-          eq(journalEntries.organizationId, organizationId),
-          eq(journalEntries.branchId, branchId),
-          isNull(journalEntries.deletedAt)
-        )
-      )
-      .orderBy(desc(journalEntries.entryDate));
-    
-    return NextResponse.json({ data: entries });
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial informada" },
+        { status: 403 }
+      );
+    }
+
+    const { ensureConnection, pool } = await import("@/lib/db");
+    await ensureConnection();
+
+    const result = await pool
+      .request()
+      .input("orgId", sql.BigInt, ctx.organizationId)
+      .input("branchId", sql.BigInt, branchId)
+      .query(
+        `
+        SELECT *
+        FROM journal_entries
+        WHERE organization_id = @orgId
+          AND branch_id = @branchId
+          AND deleted_at IS NULL
+        ORDER BY entry_date DESC
+      `
+      );
+
+    return NextResponse.json({ data: result.recordset ?? [] });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -48,19 +57,22 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { ensureConnection } = await import("@/lib/db");
-    await ensureConnection();
-    
-    const session = await auth();
-    
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    const ctx = await getTenantContext();
+    const branchHeader = request.headers.get("x-branch-id");
+    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
+    if (!branchId || Number.isNaN(branchId)) {
+      return NextResponse.json(
+        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
+        { status: 400 }
+      );
     }
-    
-    const organizationId = session.user.organizationId;
-    const userId = session.user.id;
-    const branchId = parseInt(request.headers.get("x-branch-id") || "1");
-    
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial informada" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { entryDate, description, lines } = body;
     
@@ -83,51 +95,93 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
     const entryNumber = `${yearMonth}-MANUAL-${Date.now()}`;
-    
-    // Criar entry
-    await db.insert(journalEntries).values({
-      organizationId,
-      branchId,
-      entryNumber,
-      entryDate: new Date(entryDate),
-      sourceType: "MANUAL",
-      description,
-      totalDebit: totalDebit.toString(),
-      totalCredit: totalCredit.toString(),
-      status: "DRAFT",
-      createdBy: parseInt(userId),
-      updatedBy: parseInt(userId),
-    });
-    
-    // Buscar criado
-    const [newEntry] = await db
-      .select()
-      .from(journalEntries)
-      .where(
-        and(
-          eq(journalEntries.organizationId, organizationId),
-          eq(journalEntries.entryNumber, entryNumber)
-        )
-      );
-    
-    // Criar lines
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      await db.insert(journalEntryLines).values({
-        journalEntryId: newEntry.id,
-        organizationId,
-        lineNumber: i + 1,
-        chartAccountId: line.chartAccountId,
-        debitAmount: (line.debitAmount || 0).toString(),
-        creditAmount: (line.creditAmount || 0).toString(),
-        description: line.description,
-        costCenterId: line.costCenterId || null,
-        categoryId: line.categoryId || null,
-        partnerId: line.partnerId || null,
-      });
+
+    const entryDt = new Date(entryDate);
+    if (Number.isNaN(entryDt.getTime())) {
+      return NextResponse.json({ error: "entryDate inválido" }, { status: 400 });
     }
-    
-    return NextResponse.json({ success: true, entry: newEntry }, { status: 201 });
+
+    const created = await withMssqlTransaction(async (tx) => {
+      const entryInsert = await tx
+        .request()
+        .input("orgId", sql.BigInt, ctx.organizationId)
+        .input("branchId", sql.BigInt, branchId)
+        .input("entryNumber", sql.VarChar(20), entryNumber)
+        .input("entryDate", sql.DateTime, entryDt)
+        .input("description", sql.VarChar(500), String(description ?? ""))
+        .input("totalDebit", sql.Decimal(18, 2), totalDebit)
+        .input("totalCredit", sql.Decimal(18, 2), totalCredit)
+        .input("createdBy", sql.NVarChar(255), ctx.userId)
+        .input("updatedBy", sql.NVarChar(255), ctx.userId)
+        .query(
+          `
+          INSERT INTO journal_entries (
+            organization_id, branch_id,
+            entry_number, entry_date,
+            source_type, source_id,
+            description,
+            total_debit, total_credit,
+            status,
+            created_at, updated_at, deleted_at,
+            created_by, updated_by, version,
+            book_type
+          )
+          OUTPUT INSERTED.*
+          VALUES (
+            @orgId, @branchId,
+            @entryNumber, @entryDate,
+            'MANUAL', NULL,
+            @description,
+            @totalDebit, @totalCredit,
+            'DRAFT',
+            GETDATE(), GETDATE(), NULL,
+            @createdBy, @updatedBy, 1,
+            'GENERAL'
+          )
+        `
+        );
+
+      const newEntry = entryInsert.recordset?.[0];
+      if (!newEntry?.id) {
+        throw new Error("Falha ao criar journal_entry");
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        await tx
+          .request()
+          .input("journalEntryId", sql.BigInt, newEntry.id)
+          .input("orgId", sql.BigInt, ctx.organizationId)
+          .input("lineNumber", sql.Int, i + 1)
+          .input("chartAccountId", sql.BigInt, Number(line.chartAccountId))
+          .input("debit", sql.Decimal(18, 2), Number(line.debitAmount || 0))
+          .input("credit", sql.Decimal(18, 2), Number(line.creditAmount || 0))
+          .input("description", sql.VarChar(500), line.description ?? null)
+          .input("costCenterId", sql.BigInt, line.costCenterId ? Number(line.costCenterId) : null)
+          .input("categoryId", sql.BigInt, line.categoryId ? Number(line.categoryId) : null)
+          .input("partnerId", sql.BigInt, line.partnerId ? Number(line.partnerId) : null)
+          .query(
+            `
+            INSERT INTO journal_entry_lines (
+              journal_entry_id, organization_id,
+              line_number, chart_account_id,
+              debit_amount, credit_amount,
+              description, cost_center_id, category_id, partner_id
+            )
+            VALUES (
+              @journalEntryId, @orgId,
+              @lineNumber, @chartAccountId,
+              @debit, @credit,
+              @description, @costCenterId, @categoryId, @partnerId
+            )
+          `
+          );
+      }
+
+      return newEntry;
+    });
+
+    return NextResponse.json({ success: true, entry: created }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -80,15 +80,15 @@ export async function GET() {
           
           -- Auditoria
           posted_at DATETIME,
-          posted_by BIGINT,
+          posted_by NVARCHAR(255),
           reversed_at DATETIME,
-          reversed_by BIGINT,
+          reversed_by NVARCHAR(255),
           
           created_at DATETIME NOT NULL DEFAULT GETDATE(),
           updated_at DATETIME NOT NULL DEFAULT GETDATE(),
           deleted_at DATETIME,
-          created_by BIGINT NOT NULL,
-          updated_by BIGINT NOT NULL,
+          created_by NVARCHAR(255) NOT NULL,
+          updated_by NVARCHAR(255) NOT NULL,
           version INT NOT NULL DEFAULT 1
         );
         
@@ -204,15 +204,15 @@ export async function GET() {
           
           -- Auditoria
           posted_at DATETIME,
-          posted_by BIGINT,
+          posted_by NVARCHAR(255),
           reversed_at DATETIME,
-          reversed_by_user BIGINT,
+          reversed_by_user NVARCHAR(255),
           
           created_at DATETIME NOT NULL DEFAULT GETDATE(),
           updated_at DATETIME NOT NULL DEFAULT GETDATE(),
           deleted_at DATETIME,
-          created_by BIGINT NOT NULL,
-          updated_by BIGINT NOT NULL,
+          created_by NVARCHAR(255) NOT NULL,
+          updated_by NVARCHAR(255) NOT NULL,
           version INT NOT NULL DEFAULT 1
         );
         
@@ -306,7 +306,7 @@ export async function GET() {
           
           -- Conciliação
           reconciled_at DATETIME,
-          reconciled_by BIGINT,
+          reconciled_by NVARCHAR(255),
           bank_statement_id BIGINT,
           
           -- Observações
@@ -317,8 +317,8 @@ export async function GET() {
           created_at DATETIME NOT NULL DEFAULT GETDATE(),
           updated_at DATETIME NOT NULL DEFAULT GETDATE(),
           deleted_at DATETIME,
-          created_by BIGINT NOT NULL,
-          updated_by BIGINT NOT NULL,
+          created_by NVARCHAR(255) NOT NULL,
+          updated_by NVARCHAR(255) NOT NULL,
           version INT NOT NULL DEFAULT 1
         );
         

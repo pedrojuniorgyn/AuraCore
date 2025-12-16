@@ -7,7 +7,7 @@ import {
   journalEntryLines,
 } from "@/lib/db/schema/accounting";
 import { accountsPayable, accountsReceivable } from "@/lib/db/schema";
-import { auth } from "@/lib/auth";
+import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
 
 /**
@@ -26,14 +26,8 @@ export async function GET(
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    
-    const session = await auth();
-    
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
-    
-    const organizationId = session.user.organizationId;
+
+    const ctx = await getTenantContext();
     const resolvedParams = await params;
     const documentId = parseInt(resolvedParams.id);
     
@@ -44,13 +38,21 @@ export async function GET(
       .where(
         and(
           eq(fiscalDocuments.id, documentId),
-          eq(fiscalDocuments.organizationId, organizationId),
+          eq(fiscalDocuments.organizationId, ctx.organizationId),
           isNull(fiscalDocuments.deletedAt)
         )
       );
     
     if (!document) {
       return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
+    }
+
+    // Data scoping por filial do próprio documento
+    if (!hasAccessToBranch(ctx, Number(document.branchId))) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial do documento" },
+        { status: 403 }
+      );
     }
     
     // 2. Buscar itens
@@ -136,19 +138,19 @@ export async function PUT(
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    
-    const session = await auth();
-    
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
-    
-    const organizationId = session.user.organizationId;
-    const userId = session.user.id;
+
+    const ctx = await getTenantContext();
     const resolvedParams = await params;
     const documentId = parseInt(resolvedParams.id);
     
     const body = await request.json();
+    const {
+      fiscalClassification,
+      fiscalStatus,
+      accountingStatus,
+      financialStatus,
+      notes,
+    } = body ?? {};
     
     // Buscar documento
     const [document] = await db
@@ -157,13 +159,20 @@ export async function PUT(
       .where(
         and(
           eq(fiscalDocuments.id, documentId),
-          eq(fiscalDocuments.organizationId, organizationId),
+          eq(fiscalDocuments.organizationId, ctx.organizationId),
           isNull(fiscalDocuments.deletedAt)
         )
       );
     
     if (!document) {
       return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
+    }
+
+    if (!hasAccessToBranch(ctx, Number(document.branchId))) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial do documento" },
+        { status: 403 }
+      );
     }
     
     // Validar se pode editar
@@ -178,30 +187,16 @@ export async function PUT(
     await db
       .update(fiscalDocuments)
       .set({
-        ...body,
-        updatedBy: parseInt(userId),
+        fiscalClassification: fiscalClassification ?? document.fiscalClassification,
+        fiscalStatus: fiscalStatus ?? document.fiscalStatus,
+        accountingStatus: accountingStatus ?? document.accountingStatus,
+        financialStatus: financialStatus ?? document.financialStatus,
+        notes: notes ?? document.notes,
+        updatedBy: ctx.userId,
         updatedAt: new Date(),
         version: document.version + 1,
       })
       .where(eq(fiscalDocuments.id, documentId));
-    
-    // Atualizar itens (se fornecidos)
-    if (body.items && Array.isArray(body.items)) {
-      for (const item of body.items) {
-        if (item.id) {
-          // Atualizar item existente
-          await db
-            .update(fiscalDocumentItems)
-            .set({
-              chartAccountId: item.chartAccountId,
-              categoryId: item.categoryId,
-              costCenterId: item.costCenterId,
-              updatedAt: new Date(),
-            })
-            .where(eq(fiscalDocumentItems.id, item.id));
-        }
-      }
-    }
     
     // Buscar documento atualizado
     const [updated] = await db
@@ -231,14 +226,8 @@ export async function DELETE(
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    
-    const session = await auth();
-    
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-    }
-    
-    const organizationId = session.user.organizationId;
+
+    const ctx = await getTenantContext();
     const resolvedParams = await params;
     const documentId = parseInt(resolvedParams.id);
     
@@ -249,13 +238,20 @@ export async function DELETE(
       .where(
         and(
           eq(fiscalDocuments.id, documentId),
-          eq(fiscalDocuments.organizationId, organizationId),
+          eq(fiscalDocuments.organizationId, ctx.organizationId),
           isNull(fiscalDocuments.deletedAt)
         )
       );
     
     if (!document) {
       return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
+    }
+
+    if (!hasAccessToBranch(ctx, Number(document.branchId))) {
+      return NextResponse.json(
+        { error: "Forbidden", message: "Sem acesso à filial do documento" },
+        { status: 403 }
+      );
     }
     
     // Validar se pode excluir
