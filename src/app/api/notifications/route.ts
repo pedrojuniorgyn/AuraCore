@@ -35,22 +35,25 @@ export async function GET(request: NextRequest) {
     // Parse JSON data
     const parsed = resultsArray.map((notif) => ({
       id: notif.id,
-      organizationId: notif.organization_id,
-      branchId: notif.branch_id,
-      userId: notif.user_id,
+      organizationId: notif.organizationId,
+      branchId: notif.branchId,
+      userId: notif.userId,
       type: notif.type,
       event: notif.event,
       title: notif.title,
       message: notif.message,
-      data: notif.data ? JSON.parse(notif.data) : null,
-      actionUrl: notif.action_url,
-      isRead: notif.is_read,
-      readAt: notif.read_at,
-      createdAt: notif.created_at,
+      data: notif.data ? JSON.parse(String(notif.data)) : null,
+      actionUrl: notif.actionUrl,
+      isRead: notif.isRead,
+      readAt: notif.readAt,
+      createdAt: notif.createdAt,
     }));
 
     return NextResponse.json(parsed);
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Error fetching notifications:", error);
     return NextResponse.json(
       { error: error.message },
@@ -111,6 +114,9 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Error marking notification as read:", error);
     return NextResponse.json(
       { error: error.message },

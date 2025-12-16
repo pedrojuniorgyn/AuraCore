@@ -46,6 +46,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: result.recordset ?? [] });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -94,7 +97,10 @@ export async function POST(request: NextRequest) {
     // Gerar número
     const now = new Date();
     const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const entryNumber = `${yearMonth}-MANUAL-${Date.now()}`;
+    // IMPORTANTE: a coluna/param é VARCHAR(20). Evitar truncamento silencioso.
+    // Formato: YYYYMM-MAN-XXXXXXXX (<= 19 chars)
+    const suffix = Date.now().toString(36).toUpperCase().slice(-8);
+    const entryNumber = `${yearMonth}-MAN-${suffix}`;
 
     const entryDt = new Date(entryDate);
     if (Number.isNaN(entryDt.getTime())) {
@@ -183,6 +189,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, entry: created }, { status: 201 });
   } catch (error: any) {
+    if (error instanceof Response) {
+      return error;
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

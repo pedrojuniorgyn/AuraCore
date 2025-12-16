@@ -61,9 +61,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Inserir transações
+    let insertedCount = 0;
+    let skippedCount = 0;
     for (const tx of transactions) {
       const amount = Number(tx.amount);
-      if (!tx.date || !Number.isFinite(amount)) continue;
+      if (!tx.date || !Number.isFinite(amount)) {
+        skippedCount++;
+        continue;
+      }
 
       await pool
         .request()
@@ -87,12 +92,15 @@ export async function POST(request: NextRequest) {
           )
         `
         );
+      insertedCount++;
     }
 
     return NextResponse.json({
       success: true,
-      message: `${transactions.length} transações importadas com sucesso`,
-      count: transactions.length,
+      message: `${insertedCount} transações importadas com sucesso`,
+      count: insertedCount,
+      skipped: skippedCount,
+      parsed: transactions.length,
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao importar OFX:", error);
