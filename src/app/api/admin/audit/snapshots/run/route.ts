@@ -37,6 +37,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
+  const debugRequested = req.headers.get("x-audit-debug") === "1";
+
   const json = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(json ?? {});
   if (!parsed.success) {
@@ -100,7 +102,10 @@ export async function POST(req: Request) {
     const isProd = process.env.NODE_ENV === "production";
     const message = err instanceof Error ? err.message : "Erro interno desconhecido";
     return NextResponse.json(
-      { error: "Falha ao executar snapshot", ...(isProd ? {} : { debug: { message } }) },
+      {
+        error: "Falha ao executar snapshot",
+        ...(isProd && !debugRequested ? {} : { debug: { message } }),
+      },
       { status: 500 }
     );
   }
