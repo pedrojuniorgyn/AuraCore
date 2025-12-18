@@ -47,7 +47,7 @@ const dockItems: DockItem[] = [
   {
     title: "NFes",
     icon: FileText,
-    href: "/fiscal/entrada-notas",
+    href: "/fiscal/documentos",
   },
   {
     title: "Financeiro",
