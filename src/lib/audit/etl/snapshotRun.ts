@@ -267,7 +267,8 @@ async function extractRawContaBancaria(legacy: MssqlPool) {
       CAST(cb.descricao as nvarchar(255)) as descricao,
       CAST(cb.nome_banco as nvarchar(255)) as nome_banco,
       CAST(cb.agencia as nvarchar(50)) as agencia,
-      CAST(cb.numero_conta as nvarchar(50)) as numero_conta,
+      -- No GlobalTCL (legado) a coluna é numero_conta_bancaria
+      CAST(cb.numero_conta_bancaria as nvarchar(50)) as numero_conta,
       CAST(cb.nome_titular as nvarchar(255)) as nome_titular,
       CAST(cb.IsAtivo as bit) as is_ativo
     FROM dbo.conta_bancaria cb
