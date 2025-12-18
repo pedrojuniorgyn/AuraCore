@@ -31,31 +31,13 @@ function todayUtcDate(): Date {
 export async function POST(req: Request) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
 
-  // Autorização: token (preferencial para automação) OU sessão admin (fallback)
+  // Autorização: token (preferencial para automação) OU sessão admin
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const headerToken = req.headers.get("x-audit-token");
   let requestedBy = { userId: "system", email: "system" };
 
-  if (token) {
-    if (!headerToken || headerToken !== token) {
-      const isProd = process.env.NODE_ENV === "production";
-      return NextResponse.json(
-        {
-          error: "Não autorizado",
-          ...(isProd || !debugRequested
-            ? {}
-            : {
-                debug: {
-                  tokenConfigured: true,
-                  headerTokenPresent: Boolean(headerToken),
-                  headerTokenLength: headerToken ? headerToken.length : 0,
-                },
-              }),
-        },
-        { status: 401 }
-      );
-    }
-  } else {
+  const tokenOk = token && headerToken && headerToken === token;
+  if (!tokenOk) {
     const session = await auth();
     if (!session?.user) {
       const isProd = process.env.NODE_ENV === "production";

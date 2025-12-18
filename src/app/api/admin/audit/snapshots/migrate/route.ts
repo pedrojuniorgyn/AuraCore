@@ -5,14 +5,12 @@ import { getAuditFinPool } from "@/lib/audit/db";
 export const runtime = "nodejs";
 
 async function ensureAuthorized(req: Request): Promise<{ userId: string; email: string } | null> {
-  // Autorização: token (preferencial para automação) OU sessão admin (fallback)
+  // Autorização: token (preferencial para automação) OU sessão admin
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const headerToken = req.headers.get("x-audit-token");
 
-  if (token) {
-    if (!headerToken || headerToken !== token) return null;
-    return { userId: "system", email: "system" };
-  }
+  const tokenOk = token && headerToken && headerToken === token;
+  if (tokenOk) return { userId: "system", email: "system" };
 
   const session = await auth();
   if (!session?.user) return null;
