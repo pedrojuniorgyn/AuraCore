@@ -5,12 +5,22 @@ import { getAuditFinPool } from "@/lib/audit/db";
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-  if (session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+  // Autorização: token (preferencial para automação) OU sessão admin (fallback)
+  const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+  const headerToken = req.headers.get("x-audit-token");
+
+  if (token) {
+    if (!headerToken || headerToken !== token) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+  } else {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
   }
 
   const debugRequested = req.headers.get("x-audit-debug") === "1";

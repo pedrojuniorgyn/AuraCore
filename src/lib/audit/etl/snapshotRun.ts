@@ -21,6 +21,54 @@ function addDaysUtc(d: Date, days: number): Date {
 }
 
 async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
+  // Migrações idempotentes (schema evolution) para não depender de execução manual/SSH.
+  // Se a credencial do banco não tiver permissão de DDL, a execução falhará aqui e
+  // o erro será propagado com contexto.
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+    BEGIN
+      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') IS NULL
+        ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_id_inferida bigint NULL;
+
+      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_regra') IS NULL
+        ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_inferida_regra nvarchar(50) NULL;
+
+      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_confidence') IS NULL
+        ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_inferida_confidence tinyint NULL;
+
+      IF COL_LENGTH('dbo.audit_fact_parcelas', 'is_conta_bancaria_inferida') IS NULL
+        ALTER TABLE dbo.audit_fact_parcelas ADD is_conta_bancaria_inferida bit NULL;
+
+      -- Coluna "efetiva" para relatórios/dashboards (real quando existe, senão inferida).
+      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') IS NULL
+        ALTER TABLE dbo.audit_fact_parcelas
+          ADD conta_bancaria_id_efetiva AS (COALESCE(conta_bancaria_id, conta_bancaria_id_inferida)) PERSISTED;
+
+      -- Índice auxiliar para análises por conta inferida (opcional, mas barato e ajuda no dashboard)
+      IF NOT EXISTS (
+        SELECT 1
+        FROM sys.indexes
+        WHERE name = 'IX_audit_fact_parcelas_run_conta_inferida'
+          AND object_id = OBJECT_ID('dbo.audit_fact_parcelas')
+      )
+      BEGIN
+        CREATE INDEX IX_audit_fact_parcelas_run_conta_inferida
+          ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_inferida);
+      END
+
+      IF NOT EXISTS (
+        SELECT 1
+        FROM sys.indexes
+        WHERE name = 'IX_audit_fact_parcelas_run_conta_efetiva'
+          AND object_id = OBJECT_ID('dbo.audit_fact_parcelas')
+      )
+      BEGIN
+        CREATE INDEX IX_audit_fact_parcelas_run_conta_efetiva
+          ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_efetiva);
+      END
+    END
+  `);
+
   const r = await audit.request().query(`
     SELECT
       OBJECT_ID('dbo.audit_snapshot_runs','U') as snapshot_runs,
@@ -39,7 +87,13 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
       COL_LENGTH('dbo.audit_raw_movimentos', 'plano_contas_contabil_codigo_tipo_operacao') as col_tipo_operacao,
       COL_LENGTH('dbo.audit_raw_movimentos', 'codigo_empresa_filial') as col_mov_filial,
       COL_LENGTH('dbo.audit_raw_movimentos', 'centro_custo_id') as col_mov_cc,
-      COL_LENGTH('dbo.audit_raw_movimento_bancario', 'tipo_movimento_bancario') as col_mb_tipo
+      COL_LENGTH('dbo.audit_raw_movimento_bancario', 'tipo_movimento_bancario') as col_mb_tipo,
+      -- Projeção por conta: rastreia inferência (não sobrescreve o dado real)
+      COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') as col_fact_conta_inferida_id,
+      COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_regra') as col_fact_conta_inferida_regra,
+      COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_confidence') as col_fact_conta_inferida_confidence,
+      COL_LENGTH('dbo.audit_fact_parcelas', 'is_conta_bancaria_inferida') as col_fact_is_conta_inferida,
+      COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') as col_fact_conta_efetiva
   `);
 
   const row = (r.recordset?.[0] ?? {}) as Record<string, unknown>;
@@ -51,7 +105,7 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
     throw new Error(
       `Schema ETL não inicializado (faltando: ${missing.join(
         ", "
-      )}). Rode sql/auditdb_init.sql e sql/auditdb_etl_init.sql no AuditFinDB.`
+      )}). Rode sql/auditdb_init.sql e sql/auditdb_etl_init.sql (e, se aplicável, o patch de inferência de conta bancária) no AuditFinDB.`
     );
   }
 }
@@ -627,6 +681,53 @@ async function transformFact(audit: MssqlPool, runId: string) {
         LEFT JOIN banco_por_pagamento bp
           ON bp.run_id = md.run_id AND bp.pagamento_id = md.codigo_pagamento
         WHERE md.run_id = @run_id;
+
+        -- 🔮 Projeção por conta bancária (DEFAULT BTG por filial/matriz)
+        --
+        -- Benchmark (prática comum em cash forecasting): usar "house bank" como default e tratar exceções via regras.
+        -- Aqui NÃO sobrescrevemos conta_bancaria_id real (vínculo bancário). Gravamos inferência em colunas próprias.
+        --
+        -- Regra:
+        -- - Se a parcela não tem conta_bancaria_id (ainda não paga/vinculada), inferimos:
+        --   1) conta BTG da filial (descricao LIKE 'BTG%') quando existir
+        --   2) senão, BTG Matriz (descricao = 'BTG Matriz' ou LIKE '%BTG%Matriz%')
+        UPDATE f
+        SET
+          conta_bancaria_id_inferida = COALESCE(btg_filial.conta_bancaria_id, btg_matriz.conta_bancaria_id),
+          conta_bancaria_inferida_regra = CASE
+            WHEN btg_filial.conta_bancaria_id IS NOT NULL THEN 'DEFAULT_BTG_FILIAL'
+            WHEN btg_matriz.conta_bancaria_id IS NOT NULL THEN 'DEFAULT_BTG_MATRIZ'
+            ELSE NULL
+          END,
+          conta_bancaria_inferida_confidence = CASE
+            WHEN btg_filial.conta_bancaria_id IS NOT NULL THEN 3 -- alta
+            WHEN btg_matriz.conta_bancaria_id IS NOT NULL THEN 2 -- média
+            ELSE NULL
+          END,
+          is_conta_bancaria_inferida = CASE
+            WHEN COALESCE(btg_filial.conta_bancaria_id, btg_matriz.conta_bancaria_id) IS NOT NULL THEN 1
+            ELSE 0
+          END
+        FROM dbo.audit_fact_parcelas f
+        OUTER APPLY (
+          SELECT TOP 1 cb.conta_bancaria_id
+          FROM dbo.audit_raw_conta_bancaria cb
+          WHERE cb.run_id = f.run_id
+            AND cb.codigo_empresa_filial = f.codigo_empresa_filial
+            AND cb.descricao LIKE 'BTG%'
+          ORDER BY cb.conta_bancaria_id DESC
+        ) btg_filial
+        OUTER APPLY (
+          SELECT TOP 1 cb.conta_bancaria_id
+          FROM dbo.audit_raw_conta_bancaria cb
+          WHERE cb.run_id = f.run_id
+            AND (cb.descricao = 'BTG Matriz' OR cb.descricao LIKE '%BTG%Matriz%')
+          ORDER BY cb.conta_bancaria_id DESC
+        ) btg_matriz
+        WHERE f.run_id = @run_id
+          AND f.conta_bancaria_id IS NULL
+          AND f.data_vencimento IS NOT NULL
+          AND (f.conta_bancaria_id_inferida IS NULL OR f.is_conta_bancaria_inferida = 0);
 
         COMMIT;
       END TRY

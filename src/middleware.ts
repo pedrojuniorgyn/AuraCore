@@ -11,6 +11,13 @@ export default auth((req) => {
   const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard");
   const isOnLogin = req.nextUrl.pathname.startsWith("/login");
   const isApiAdmin = req.nextUrl.pathname.startsWith("/api/admin");
+  const pathname = req.nextUrl.pathname;
+
+  // Auditoria: estes endpoints têm guarda própria (token ou sessão) no handler.
+  // Não bloqueie no middleware (evita problemas de Edge/runtime env e permite automação).
+  if (pathname.startsWith("/api/admin/audit/snapshots")) {
+    return;
+  }
 
   if (isOnDashboard && !isLoggedIn) {
     return Response.redirect(new URL("/login", req.nextUrl));
@@ -33,6 +40,8 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  // Importante: /api/admin/audit/snapshots* é protegido no próprio handler (token ou sessão),
+  // então excluímos do middleware para permitir automação/execução local sem depender do Edge auth.
+  matcher: ["/((?!api/auth|api/admin/audit/snapshots|_next/static|_next/image|favicon.ico).*)"],
 };
 

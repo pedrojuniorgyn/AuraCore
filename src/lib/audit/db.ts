@@ -1,6 +1,6 @@
 import sql from "mssql";
 import { isIP } from "node:net";
-import { getAuditEnv } from "@/lib/audit/env";
+import { getAuditFinDbEnv, getLegacyDbEnv } from "@/lib/audit/env";
 
 export type MssqlPool = sql.ConnectionPool;
 
@@ -15,8 +15,7 @@ function globalWithPools(): GlobalWithPools {
 }
 
 function buildConfig(kind: PoolKey): sql.config {
-  const env = getAuditEnv();
-  const c = kind === "legacy" ? env.legacyDb : env.auditFinDb;
+  const c = kind === "legacy" ? getLegacyDbEnv() : getAuditFinDbEnv();
 
   // Tedious (via mssql) não permite SNI usando IP quando encrypt=true.
   if (c.encrypt && isIP(c.server) && !c.serverName) {

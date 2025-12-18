@@ -29,15 +29,55 @@ function todayUtcDate(): Date {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-  if (session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-  }
-
   const debugRequested = req.headers.get("x-audit-debug") === "1";
+
+  // Autorização: token (preferencial para automação) OU sessão admin (fallback)
+  const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+  const headerToken = req.headers.get("x-audit-token");
+  let requestedBy = { userId: "system", email: "system" };
+
+  if (token) {
+    if (!headerToken || headerToken !== token) {
+      const isProd = process.env.NODE_ENV === "production";
+      return NextResponse.json(
+        {
+          error: "Não autorizado",
+          ...(isProd || !debugRequested
+            ? {}
+            : {
+                debug: {
+                  tokenConfigured: true,
+                  headerTokenPresent: Boolean(headerToken),
+                  headerTokenLength: headerToken ? headerToken.length : 0,
+                },
+              }),
+        },
+        { status: 401 }
+      );
+    }
+  } else {
+    const session = await auth();
+    if (!session?.user) {
+      const isProd = process.env.NODE_ENV === "production";
+      return NextResponse.json(
+        {
+          error: "Não autorizado",
+          ...(isProd || !debugRequested
+            ? {}
+            : {
+                debug: {
+                  tokenConfigured: false,
+                },
+              }),
+        },
+        { status: 401 }
+      );
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+    requestedBy = { userId: session.user.id, email: session.user.email ?? session.user.id };
+  }
 
   const json = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(json ?? {});
@@ -83,10 +123,7 @@ export async function POST(req: Request) {
       periodStart,
       periodEndInclusive,
       axis,
-      requestedBy: {
-        userId: session.user.id,
-        email: session.user.email ?? session.user.id,
-      },
+      requestedBy,
     });
 
     return NextResponse.json({
