@@ -2,9 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Bar,
+  Line,
+} from "recharts";
 
 export default function FluxoCaixaPage() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<{ income: Array<{ date: string; amount: number }>; expenses: Array<{ date: string; amount: number }> } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -20,6 +31,28 @@ export default function FluxoCaixaPage() {
     }
   };
 
+  const chartData = (() => {
+    if (!data) return [];
+    const map = new Map<string, { date: string; entradas: number; saidas: number; liquido: number }>();
+
+    for (const x of data.income ?? []) {
+      const key = new Date(String(x.date)).toISOString().slice(0, 10);
+      const row = map.get(key) ?? { date: key, entradas: 0, saidas: 0, liquido: 0 };
+      row.entradas += Number(x.amount ?? 0);
+      map.set(key, row);
+    }
+    for (const x of data.expenses ?? []) {
+      const key = new Date(String(x.date)).toISOString().slice(0, 10);
+      const row = map.get(key) ?? { date: key, entradas: 0, saidas: 0, liquido: 0 };
+      row.saidas += Number(x.amount ?? 0);
+      map.set(key, row);
+    }
+
+    const rows = Array.from(map.values()).map((r) => ({ ...r, liquido: r.entradas - r.saidas }));
+    rows.sort((a, b) => a.date.localeCompare(b.date));
+    return rows;
+  })();
+
   return (
     <div className="p-6">
       <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
@@ -31,10 +64,29 @@ export default function FluxoCaixaPage() {
           <CardTitle>Próximos 90 Dias</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center bg-muted rounded">
-            <p className="text-muted-foreground">
-              TODO: Gráfico Recharts (Entradas vs Saídas)
-            </p>
+          <div className="h-80 bg-muted/20 rounded p-2">
+            {chartData.length ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value: any) =>
+                      new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value ?? 0))
+                    }
+                  />
+                  <Legend />
+                  <Bar dataKey="entradas" name="Entradas" fill="#22c55e" opacity={0.8} />
+                  <Bar dataKey="saidas" name="Saídas" fill="#ef4444" opacity={0.8} />
+                  <Line dataKey="liquido" name="Líquido" stroke="#06b6d4" strokeWidth={2} dot={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                Sem dados no período (90 dias).
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
