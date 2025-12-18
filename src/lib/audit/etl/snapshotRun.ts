@@ -22,50 +22,75 @@ function addDaysUtc(d: Date, days: number): Date {
 
 async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
   // Migrações idempotentes (schema evolution) para não depender de execução manual/SSH.
-  // Se a credencial do banco não tiver permissão de DDL, a execução falhará aqui e
-  // o erro será propagado com contexto.
+  // Executamos em etapas para evitar problemas de compile/metadata no mesmo batch do SQL Server.
   await audit.request().query(`
     IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') IS NULL
     BEGIN
-      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') IS NULL
-        ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_id_inferida bigint NULL;
+      ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_id_inferida bigint NULL;
+    END
+  `);
 
-      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_regra') IS NULL
-        ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_inferida_regra nvarchar(50) NULL;
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_regra') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_inferida_regra nvarchar(50) NULL;
+    END
+  `);
 
-      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_confidence') IS NULL
-        ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_inferida_confidence tinyint NULL;
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_confidence') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_fact_parcelas ADD conta_bancaria_inferida_confidence tinyint NULL;
+    END
+  `);
 
-      IF COL_LENGTH('dbo.audit_fact_parcelas', 'is_conta_bancaria_inferida') IS NULL
-        ALTER TABLE dbo.audit_fact_parcelas ADD is_conta_bancaria_inferida bit NULL;
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'is_conta_bancaria_inferida') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_fact_parcelas ADD is_conta_bancaria_inferida bit NULL;
+    END
+  `);
 
-      -- Coluna "efetiva" para relatórios/dashboards (real quando existe, senão inferida).
-      IF COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') IS NULL
-        ALTER TABLE dbo.audit_fact_parcelas
-          ADD conta_bancaria_id_efetiva AS (COALESCE(conta_bancaria_id, conta_bancaria_id_inferida)) PERSISTED;
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_fact_parcelas
+        ADD conta_bancaria_id_efetiva AS (COALESCE(conta_bancaria_id, conta_bancaria_id_inferida)) PERSISTED;
+    END
+  `);
 
-      -- Índice auxiliar para análises por conta inferida (opcional, mas barato e ajuda no dashboard)
-      IF NOT EXISTS (
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') IS NOT NULL
+      AND NOT EXISTS (
         SELECT 1
         FROM sys.indexes
         WHERE name = 'IX_audit_fact_parcelas_run_conta_inferida'
           AND object_id = OBJECT_ID('dbo.audit_fact_parcelas')
       )
-      BEGIN
-        CREATE INDEX IX_audit_fact_parcelas_run_conta_inferida
-          ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_inferida);
-      END
+    BEGIN
+      CREATE INDEX IX_audit_fact_parcelas_run_conta_inferida
+        ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_inferida);
+    END
+  `);
 
-      IF NOT EXISTS (
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') IS NOT NULL
+      AND NOT EXISTS (
         SELECT 1
         FROM sys.indexes
         WHERE name = 'IX_audit_fact_parcelas_run_conta_efetiva'
           AND object_id = OBJECT_ID('dbo.audit_fact_parcelas')
       )
-      BEGIN
-        CREATE INDEX IX_audit_fact_parcelas_run_conta_efetiva
-          ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_efetiva);
-      END
+    BEGIN
+      CREATE INDEX IX_audit_fact_parcelas_run_conta_efetiva
+        ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_efetiva);
     END
   `);
 
