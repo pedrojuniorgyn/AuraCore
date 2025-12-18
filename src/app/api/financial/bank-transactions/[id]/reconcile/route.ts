@@ -53,8 +53,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .where(and(eq(bankTransactions.id, txId), eq(bankTransactions.organizationId, ctx.organizationId)));
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message ?? "Erro ao conciliar" }, { status: 500 });
+  } catch (error: unknown) {
+    // getTenantContext() lança Response (401/403) quando auth falha.
+    if (error instanceof Response) return error;
+    const message = error instanceof Error ? error.message : "Erro ao conciliar";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

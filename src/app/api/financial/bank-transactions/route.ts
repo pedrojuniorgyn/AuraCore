@@ -42,8 +42,12 @@ export async function GET(req: NextRequest) {
       .limit(parsed.data.limit);
 
     return NextResponse.json({ success: true, data: items });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message ?? "Erro ao listar transações" }, { status: 500 });
+  } catch (error: unknown) {
+    // getTenantContext() lança Response (401/403) quando auth falha.
+    // Se capturarmos isso aqui e retornarmos 500, mascaramos o status real.
+    if (error instanceof Response) return error;
+    const message = error instanceof Error ? error.message : "Erro ao listar transações";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
