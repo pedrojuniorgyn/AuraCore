@@ -172,3 +172,4 @@ export function ModernFinancialSummary({ type }: { type: "payable" | "receivable
 
 
 
+
