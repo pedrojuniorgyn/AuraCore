@@ -32,6 +32,14 @@ export async function POST(req: Request) {
 
     // Idempotente em etapas (evita erro de compile/metadata no mesmo batch).
     await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_raw_conta_bancaria','U') IS NOT NULL
+        AND COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') IS NULL
+      BEGIN
+        ALTER TABLE dbo.audit_raw_conta_bancaria ADD numero_conta nvarchar(50) NULL;
+      END
+    `);
+
+    await audit.request().query(`
       IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
         AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') IS NULL
       BEGIN

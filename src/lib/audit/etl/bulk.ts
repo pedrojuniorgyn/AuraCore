@@ -3,23 +3,12 @@ import type { MssqlPool } from "@/lib/audit/db";
 
 type MssqlColumnType = Parameters<sql.Table["columns"]["add"]>[1];
 
-type TediousTypeSpec = {
-  // `tedious.TYPES.*`
-  type: unknown;
-  length?: number;
-  precision?: number;
-  scale?: number;
-};
-
 export type BulkColumn = {
   name: string;
   /**
    * Tipo aceito por `mssql.Table#columns.add`.
-   *
-   * No SQL Server, o runtime costuma ser mais estável ao receber specs no formato
-   * do `tedious` (ex.: `{ type: TYPES.Decimal, precision, scale }`).
    */
-  type: MssqlColumnType | TediousTypeSpec;
+  type: MssqlColumnType;
   nullable?: boolean;
 };
 
@@ -53,9 +42,7 @@ export async function bulkInsert(
   t.create = false;
 
   for (const c of columns) {
-    // Tipos do `mssql` não declaram o formato "tedious spec", embora o runtime aceite.
-    // Mantemos o cast aqui (ponto único) para não contaminar o resto do código.
-    t.columns.add(c.name, c.type as unknown as MssqlColumnType, {
+    t.columns.add(c.name, c.type, {
       nullable: Boolean(c.nullable),
     });
   }

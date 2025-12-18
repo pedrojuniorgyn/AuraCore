@@ -1,4 +1,4 @@
-import { TYPES } from "tedious";
+import sql from "mssql";
 import type { MssqlPool } from "@/lib/audit/db";
 import { getAuditFinPool, getAuditLegacyPool } from "@/lib/audit/db";
 import { bulkInsert, toMssqlBigInt, type BulkRowValue } from "@/lib/audit/etl/bulk";
@@ -23,6 +23,15 @@ function addDaysUtc(d: Date, days: number): Date {
 async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
   // Migrações idempotentes (schema evolution) para não depender de execução manual/SSH.
   // Executamos em etapas para evitar problemas de compile/metadata no mesmo batch do SQL Server.
+  // Compat: ambientes antigos podem não ter colunas adicionadas após o init inicial.
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_raw_conta_bancaria','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_raw_conta_bancaria ADD numero_conta nvarchar(50) NULL;
+    END
+  `);
+
   await audit.request().query(`
     IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
       AND COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') IS NULL
@@ -113,6 +122,7 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
       COL_LENGTH('dbo.audit_raw_movimentos', 'codigo_empresa_filial') as col_mov_filial,
       COL_LENGTH('dbo.audit_raw_movimentos', 'centro_custo_id') as col_mov_cc,
       COL_LENGTH('dbo.audit_raw_movimento_bancario', 'tipo_movimento_bancario') as col_mb_tipo,
+      COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') as col_cb_numero_conta,
       -- Projeção por conta: rastreia inferência (não sobrescreve o dado real)
       COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_inferida') as col_fact_conta_inferida_id,
       COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_regra') as col_fact_conta_inferida_regra,
@@ -419,9 +429,9 @@ async function syncDimTipoMovimentoBancario(audit: MssqlPool, legacy: MssqlPool)
     audit,
     "dbo.audit_dim_tipo_movimento_bancario",
     [
-      { name: "codigo_tipo_movimento_bancario", type: { type: TYPES.SmallInt }, nullable: false },
-      { name: "descricao", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
-      { name: "codigo_tipo_operacao", type: { type: TYPES.SmallInt }, nullable: true },
+      { name: "codigo_tipo_movimento_bancario", type: sql.SmallInt, nullable: false },
+      { name: "descricao", type: sql.NVarChar(255), nullable: true },
+      { name: "codigo_tipo_operacao", type: sql.SmallInt, nullable: true },
     ],
     rows as Array<Record<string, BulkRowValue>>
   );
@@ -490,20 +500,20 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_movimentos",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "movimento_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "pessoa_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "codigo_empresa_filial", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "centro_custo_id", type: { type: TYPES.Int }, nullable: true },
-      { name: "plano_contas_contabil_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "plano_contas_contabil_codigo_tipo_operacao", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "codigo_conta", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "numero_documento", type: { type: TYPES.Int }, nullable: true },
-      { name: "valor_total", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
-      { name: "data_movimento", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "data_emissao", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "type_operation", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "movimento_pai_id", type: { type: TYPES.BigInt }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "movimento_id", type: sql.BigInt, nullable: false },
+      { name: "pessoa_id", type: sql.BigInt, nullable: true },
+      { name: "codigo_empresa_filial", type: sql.SmallInt, nullable: true },
+      { name: "centro_custo_id", type: sql.Int, nullable: true },
+      { name: "plano_contas_contabil_id", type: sql.BigInt, nullable: true },
+      { name: "plano_contas_contabil_codigo_tipo_operacao", type: sql.SmallInt, nullable: true },
+      { name: "codigo_conta", type: sql.BigInt, nullable: true },
+      { name: "numero_documento", type: sql.Int, nullable: true },
+      { name: "valor_total", type: sql.Decimal(19, 4), nullable: true },
+      { name: "data_movimento", type: sql.DateTime2(0), nullable: true },
+      { name: "data_emissao", type: sql.DateTime2(0), nullable: true },
+      { name: "type_operation", type: sql.SmallInt, nullable: true },
+      { name: "movimento_pai_id", type: sql.BigInt, nullable: true },
     ],
     movimentos
   );
@@ -512,13 +522,13 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_movimentos_detalhe",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "parcela_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "movimento_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "numero_parcela", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "valor_parcela", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
-      { name: "data_vencimento", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "codigo_pagamento", type: { type: TYPES.BigInt }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "parcela_id", type: sql.BigInt, nullable: false },
+      { name: "movimento_id", type: sql.BigInt, nullable: false },
+      { name: "numero_parcela", type: sql.SmallInt, nullable: true },
+      { name: "valor_parcela", type: sql.Decimal(19, 4), nullable: true },
+      { name: "data_vencimento", type: sql.DateTime2(0), nullable: true },
+      { name: "codigo_pagamento", type: sql.BigInt, nullable: true },
     ],
     movimentosDetalhe
   );
@@ -527,14 +537,14 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_compras",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "compra_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "movimento_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "fornecedor_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "data_nf", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "valor_nf", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
-      { name: "plano_conta_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "plano_contabil_id", type: { type: TYPES.BigInt }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "compra_id", type: sql.BigInt, nullable: false },
+      { name: "movimento_id", type: sql.BigInt, nullable: false },
+      { name: "fornecedor_id", type: sql.BigInt, nullable: true },
+      { name: "data_nf", type: sql.DateTime2(0), nullable: true },
+      { name: "valor_nf", type: sql.Decimal(19, 4), nullable: true },
+      { name: "plano_conta_id", type: sql.BigInt, nullable: true },
+      { name: "plano_contabil_id", type: sql.BigInt, nullable: true },
     ],
     compras
   );
@@ -543,10 +553,10 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_pagamentos",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "pagamento_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "data_pagamento", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "valor_total", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "pagamento_id", type: sql.BigInt, nullable: false },
+      { name: "data_pagamento", type: sql.DateTime2(0), nullable: true },
+      { name: "valor_total", type: sql.Decimal(19, 4), nullable: true },
     ],
     pagamentos
   );
@@ -555,11 +565,11 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_pagamentos_detalhe",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "pagamento_detalhe_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "pagamento_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "tipo_pagamento_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "valor", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "pagamento_detalhe_id", type: sql.BigInt, nullable: false },
+      { name: "pagamento_id", type: sql.BigInt, nullable: false },
+      { name: "tipo_pagamento_id", type: sql.BigInt, nullable: true },
+      { name: "valor", type: sql.Decimal(19, 4), nullable: true },
     ],
     pagamentosDetalhe
   );
@@ -568,15 +578,15 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_movimento_bancario",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "movimento_bancario_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "pagamento_detalhe_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "conta_bancaria_id", type: { type: TYPES.BigInt }, nullable: true },
-      { name: "tipo_movimento_bancario", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "data_lancamento", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "data_real", type: { type: TYPES.DateTime2, scale: 0 }, nullable: true },
-      { name: "valor", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
-      { name: "bool_conciliado", type: { type: TYPES.Bit }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "movimento_bancario_id", type: sql.BigInt, nullable: false },
+      { name: "pagamento_detalhe_id", type: sql.BigInt, nullable: true },
+      { name: "conta_bancaria_id", type: sql.BigInt, nullable: true },
+      { name: "tipo_movimento_bancario", type: sql.SmallInt, nullable: true },
+      { name: "data_lancamento", type: sql.DateTime2(0), nullable: true },
+      { name: "data_real", type: sql.DateTime2(0), nullable: true },
+      { name: "valor", type: sql.Decimal(19, 4), nullable: true },
+      { name: "bool_conciliado", type: sql.Bit, nullable: true },
     ],
     movimentoBancario
   );
@@ -585,16 +595,16 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_raw_conta_bancaria",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "conta_bancaria_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "codigo_empresa_filial", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "saldo_inicial", type: { type: TYPES.Decimal, precision: 19, scale: 4 }, nullable: true },
-      { name: "descricao", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
-      { name: "nome_banco", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
-      { name: "agencia", type: { type: TYPES.NVarChar, length: 50 }, nullable: true },
-      { name: "numero_conta", type: { type: TYPES.NVarChar, length: 50 }, nullable: true },
-      { name: "nome_titular", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
-      { name: "is_ativo", type: { type: TYPES.Bit }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "conta_bancaria_id", type: sql.BigInt, nullable: false },
+      { name: "codigo_empresa_filial", type: sql.SmallInt, nullable: true },
+      { name: "saldo_inicial", type: sql.Decimal(19, 4), nullable: true },
+      { name: "descricao", type: sql.NVarChar(255), nullable: true },
+      { name: "nome_banco", type: sql.NVarChar(255), nullable: true },
+      { name: "agencia", type: sql.NVarChar(50), nullable: true },
+      { name: "numero_conta", type: sql.NVarChar(50), nullable: true },
+      { name: "nome_titular", type: sql.NVarChar(255), nullable: true },
+      { name: "is_ativo", type: sql.Bit, nullable: true },
     ],
     contaBancaria
   );
@@ -607,15 +617,15 @@ async function loadRawsToAudit(
     audit,
     "dbo.audit_fact_caixa_fechamento",
     [
-      { name: "run_id", type: { type: TYPES.UniqueIdentifier }, nullable: false },
-      { name: "data", type: { type: TYPES.Date }, nullable: false },
-      { name: "conta_bancaria_id", type: { type: TYPES.BigInt }, nullable: false },
-      { name: "codigo_empresa_filial", type: { type: TYPES.SmallInt }, nullable: true },
-      { name: "status_id", type: { type: TYPES.Int }, nullable: true },
-      { name: "status_descricao", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
-      { name: "historico", type: { type: TYPES.NVarChar, length: 1000 }, nullable: true },
-      { name: "usuario", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
-      { name: "empresa", type: { type: TYPES.NVarChar, length: 255 }, nullable: true },
+      { name: "run_id", type: sql.UniqueIdentifier, nullable: false },
+      { name: "data", type: sql.Date, nullable: false },
+      { name: "conta_bancaria_id", type: sql.BigInt, nullable: false },
+      { name: "codigo_empresa_filial", type: sql.SmallInt, nullable: true },
+      { name: "status_id", type: sql.Int, nullable: true },
+      { name: "status_descricao", type: sql.NVarChar(255), nullable: true },
+      { name: "historico", type: sql.NVarChar(1000), nullable: true },
+      { name: "usuario", type: sql.NVarChar(255), nullable: true },
+      { name: "empresa", type: sql.NVarChar(255), nullable: true },
     ],
     (withRun(raws.caixa_fechamento) as unknown) as Array<Record<string, BulkRowValue>>
   );
@@ -632,7 +642,29 @@ async function transformFact(audit: MssqlPool, runId: string) {
         DELETE FROM dbo.audit_findings WHERE run_id = @run_id;
         DELETE FROM dbo.audit_fact_parcelas WHERE run_id = @run_id;
 
-        ;WITH compras_agg AS (
+        ;WITH md_ranked AS (
+          SELECT
+            md.*,
+            ROW_NUMBER() OVER (
+              PARTITION BY md.run_id, md.parcela_id
+              ORDER BY md.movimento_id, md.codigo_pagamento
+            ) as rn
+          FROM dbo.audit_raw_movimentos_detalhe md
+          WHERE md.run_id = @run_id
+        ),
+        md_dedup AS (
+          SELECT
+            run_id,
+            parcela_id,
+            movimento_id,
+            numero_parcela,
+            valor_parcela,
+            data_vencimento,
+            codigo_pagamento
+          FROM md_ranked
+          WHERE rn = 1
+        ),
+        compras_agg AS (
           SELECT
             run_id,
             movimento_id,
@@ -698,7 +730,7 @@ async function transformFact(audit: MssqlPool, runId: string) {
             WHEN md.data_vencimento IS NOT NULL AND md.data_vencimento < SYSUTCDATETIME() THEN 'VENCIDA'
             ELSE 'ABERTA'
           END as status
-        FROM dbo.audit_raw_movimentos_detalhe md
+        FROM md_dedup md
         INNER JOIN dbo.audit_raw_movimentos m
           ON m.run_id = md.run_id AND m.movimento_id = md.movimento_id
         LEFT JOIN compras_agg ca
