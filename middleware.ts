@@ -40,5 +40,5 @@ export default auth((req) => {
 
 export const config = {
   // Matcher ignorando arquivos estáticos e api auth
-  matcher: ["/((?!api/auth|api/admin/audit/snapshots|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|api/health|api/admin/audit/snapshots|_next/static|_next/image|favicon.ico).*)"],
 };

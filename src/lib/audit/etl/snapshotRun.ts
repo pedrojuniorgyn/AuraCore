@@ -956,10 +956,42 @@ async function generateFindingsP0(audit: MssqlPool, runId: string) {
 }
 
 export async function runSnapshot(input: SnapshotRunInput) {
+  const runId = crypto.randomUUID();
+  await executeSnapshot(runId, input);
+  return { runId };
+}
+
+/**
+ * Inicia o snapshot em background e retorna imediatamente o runId.
+ *
+ * Útil em produção (Coolify/Traefik), onde requisições longas podem virar 504.
+ * Acompanhe o status em /auditoria/snapshots.
+ */
+export async function queueSnapshot(input: SnapshotRunInput): Promise<{ runId: string }> {
+  const audit = await getAuditFinPool();
+  const runId = crypto.randomUUID();
+  await ensureEtlSchema(audit);
+  await insertRun(audit, runId, input);
+
+  // Fire-and-forget: mantém o processamento no Node runtime do `next start`.
+  void executeSnapshot(runId, input, { skipInsert: true }).catch((err) => {
+    console.error("[audit:snapshot] background failed", {
+      runId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  });
+
+  return { runId };
+}
+
+async function executeSnapshot(
+  runId: string,
+  input: SnapshotRunInput,
+  opts?: { skipInsert?: boolean }
+): Promise<void> {
   const audit = await getAuditFinPool();
   const legacy = await getAuditLegacyPool();
 
-  const runId = crypto.randomUUID();
   const start = startOfDayUtc(input.periodStart);
   const endExclusive = addDaysUtc(startOfDayUtc(input.periodEndInclusive), 1);
 
@@ -969,11 +1001,14 @@ export async function runSnapshot(input: SnapshotRunInput) {
     start: start.toISOString(),
     endExclusive: endExclusive.toISOString(),
     requestedBy: input.requestedBy.email,
+    mode: opts?.skipInsert ? "background" : "sync",
   });
 
   try {
     await ensureEtlSchema(audit);
-    await insertRun(audit, runId, input);
+    if (!opts?.skipInsert) {
+      await insertRun(audit, runId, input);
+    }
 
     const tDim0 = Date.now();
     await syncDimTipoMovimentoBancario(audit, legacy);
@@ -1036,8 +1071,6 @@ export async function runSnapshot(input: SnapshotRunInput) {
 
     await finishRunSuccess(audit, runId);
     console.info("[audit:snapshot] success", { runId, ms: Date.now() - t0 });
-
-    return { runId };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro interno desconhecido";
     console.error("[audit:snapshot] failed", { runId, message });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { runSnapshot } from "@/lib/audit/etl/snapshotRun";
+import { queueSnapshot, runSnapshot } from "@/lib/audit/etl/snapshotRun";
 
 export const runtime = "nodejs";
 
@@ -101,16 +101,17 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { runId } = await runSnapshot({
-      periodStart,
-      periodEndInclusive,
-      axis,
-      requestedBy,
-    });
+    // Evita 504 no proxy: por padrão roda em background.
+    // Para modo síncrono (debug), envie header: x-audit-wait: 1
+    const wait = req.headers.get("x-audit-wait") === "1";
+    const fn = wait ? runSnapshot : queueSnapshot;
+
+    const { runId } = await fn({ periodStart, periodEndInclusive, axis, requestedBy });
 
     return NextResponse.json({
       success: true,
       runId,
+      queued: !wait,
       period: {
         start: periodStart.toISOString().slice(0, 10),
         end: periodEndInclusive.toISOString().slice(0, 10),
