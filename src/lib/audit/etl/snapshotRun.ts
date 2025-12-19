@@ -8,6 +8,7 @@ export type SnapshotRunInput = {
   periodEndInclusive: Date;
   axis: "VENCIMENTO" | "PAGAMENTO_REAL" | "DOCUMENTO";
   requestedBy: { userId: string; email: string };
+  organizationId?: number | null;
 };
 
 function startOfDayUtc(d: Date): Date {
@@ -29,6 +30,32 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
       AND COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') IS NULL
     BEGIN
       ALTER TABLE dbo.audit_raw_conta_bancaria ADD numero_conta nvarchar(50) NULL;
+    END
+  `);
+
+  // Multi-tenant no AuditFinDB: runs precisam ser segregadas por organização (AuraCore).
+  // Isso permite listar/limpar runs com segurança por tenant.
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_snapshot_runs', 'organization_id') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_snapshot_runs ADD organization_id int NULL;
+    END
+  `);
+
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_snapshot_runs', 'requested_by_user_id') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_snapshot_runs ADD requested_by_user_id nvarchar(255) NULL;
+    END
+  `);
+
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_snapshot_runs', 'requested_by_email') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_snapshot_runs ADD requested_by_email nvarchar(255) NULL;
     END
   `);
 
@@ -160,9 +187,18 @@ async function insertRun(
     .input("status", status)
     .input("period_start", input.periodStart)
     .input("period_end", input.periodEndInclusive)
+    .input("organization_id", (input.organizationId ?? null) as any)
+    .input("requested_by_user_id", input.requestedBy.userId)
+    .input("requested_by_email", input.requestedBy.email)
     .query(
-      `INSERT INTO dbo.audit_snapshot_runs (run_id, status, period_start, period_end)
-       VALUES (@run_id, @status, @period_start, @period_end)`
+      `INSERT INTO dbo.audit_snapshot_runs (
+         run_id, status, period_start, period_end,
+         organization_id, requested_by_user_id, requested_by_email
+       )
+       VALUES (
+         @run_id, @status, @period_start, @period_end,
+         @organization_id, @requested_by_user_id, @requested_by_email
+       )`
     );
 }
 

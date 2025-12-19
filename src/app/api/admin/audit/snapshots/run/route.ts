@@ -33,21 +33,33 @@ export async function POST(req: NextRequest) {
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const headerToken = req.headers.get("x-audit-token");
   let requestedBy = { userId: "system", email: "system" };
+  let organizationId: number | null = null;
 
   const tokenOk = token && headerToken && headerToken === token;
   if (!tokenOk) {
     // Se não vier token, aplica RBAC via sessão.
     // (Também permite roles não-admin com a permissão audit.run)
-    return withPermission(req, "audit.run", async (user) => {
+    return withPermission(req, "audit.run", async (user, ctx) => {
       requestedBy = { userId: user.id, email: user.email ?? user.id };
-      return handleRun(req, requestedBy);
+      organizationId = ctx.organizationId;
+      return handleRun(req, requestedBy, organizationId);
     });
   }
 
-  return handleRun(req, requestedBy);
+  // Para automação via token, opcionalmente pode informar o tenant pelo header.
+  // (Se não vier, o run fica com organization_id NULL e não aparece na UI por tenant.)
+  const orgHeader = req.headers.get("x-organization-id");
+  const parsedOrg = orgHeader ? Number(orgHeader) : NaN;
+  organizationId = Number.isFinite(parsedOrg) ? parsedOrg : null;
+
+  return handleRun(req, requestedBy, organizationId);
 }
 
-async function handleRun(req: Request, requestedBy: { userId: string; email: string }) {
+async function handleRun(
+  req: Request,
+  requestedBy: { userId: string; email: string },
+  organizationId: number | null
+) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
   const json = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(json ?? {});
@@ -94,7 +106,7 @@ async function handleRun(req: Request, requestedBy: { userId: string; email: str
     const wait = req.headers.get("x-audit-wait") === "1";
     const fn = wait ? runSnapshot : queueSnapshot;
 
-    const { runId } = await fn({ periodStart, periodEndInclusive, axis, requestedBy });
+    const { runId } = await fn({ periodStart, periodEndInclusive, axis, requestedBy, organizationId });
 
     return NextResponse.json({
       success: true,

@@ -12,6 +12,31 @@ async function applyMigrate(req: Request, appliedByEmail: string) {
     const audit = await getAuditFinPool();
 
     // Idempotente em etapas (evita erro de compile/metadata no mesmo batch).
+    // Multi-tenant: garantir colunas de segregação em audit_snapshot_runs.
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+        AND COL_LENGTH('dbo.audit_snapshot_runs', 'organization_id') IS NULL
+      BEGIN
+        ALTER TABLE dbo.audit_snapshot_runs ADD organization_id int NULL;
+      END
+    `);
+
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+        AND COL_LENGTH('dbo.audit_snapshot_runs', 'requested_by_user_id') IS NULL
+      BEGIN
+        ALTER TABLE dbo.audit_snapshot_runs ADD requested_by_user_id nvarchar(255) NULL;
+      END
+    `);
+
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+        AND COL_LENGTH('dbo.audit_snapshot_runs', 'requested_by_email') IS NULL
+      BEGIN
+        ALTER TABLE dbo.audit_snapshot_runs ADD requested_by_email nvarchar(255) NULL;
+      END
+    `);
+
     await audit.request().query(`
       IF OBJECT_ID('dbo.audit_raw_conta_bancaria','U') IS NOT NULL
         AND COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') IS NULL

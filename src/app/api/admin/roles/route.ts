@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
-import { roles } from "@/lib/db/schema";
-import { asc, eq, inArray } from "drizzle-orm";
+import { permissions, rolePermissions, roles } from "@/lib/db/schema";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 async function ensureDefaultRoles() {
   // Roles globais (não são por organização) — idempotente.
@@ -40,6 +40,35 @@ async function ensureDefaultRoles() {
   }
 }
 
+async function ensureDefaultRolePermissions() {
+  // Garante permissão base do módulo Auditoria existir
+  const desiredPerms = [
+    { slug: "audit.read", description: "Visualizar auditoria/snapshots" },
+  ] as const;
+
+  for (const p of desiredPerms) {
+    const exists = await db.select({ id: permissions.id }).from(permissions).where(eq(permissions.slug, p.slug));
+    if (exists.length === 0) {
+      await db.insert(permissions).values({ slug: p.slug, description: p.description });
+    }
+  }
+
+  const [auditRead] = await db.select({ id: permissions.id }).from(permissions).where(eq(permissions.slug, "audit.read"));
+  if (!auditRead?.id) return;
+
+  // Vincular AUDITOR -> audit.read (idempotente)
+  const [auditorRole] = await db.select({ id: roles.id }).from(roles).where(eq(roles.name, "AUDITOR"));
+  if (auditorRole?.id) {
+    const link = await db
+      .select({ roleId: rolePermissions.roleId })
+      .from(rolePermissions)
+      .where(and(eq(rolePermissions.roleId, auditorRole.id), eq(rolePermissions.permissionId, auditRead.id)));
+    if (link.length === 0) {
+      await db.insert(rolePermissions).values({ roleId: auditorRole.id, permissionId: auditRead.id });
+    }
+  }
+}
+
 /**
  * GET /api/admin/roles
  * 🔐 Requer permissão: admin.users.manage
@@ -50,6 +79,7 @@ export async function GET(request: NextRequest) {
     await ensureConnection();
 
     await ensureDefaultRoles();
+    await ensureDefaultRolePermissions();
 
     const data = await db
       .select({

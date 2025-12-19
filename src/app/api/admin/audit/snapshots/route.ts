@@ -4,7 +4,7 @@ import { withPermission } from "@/lib/auth/api-guard";
 
 export const runtime = "nodejs";
 
-async function listSnapshots(req: Request) {
+async function listSnapshots(req: Request, opts?: { organizationId?: number | null }) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
 
   try {
@@ -34,20 +34,50 @@ async function listSnapshots(req: Request) {
     const sinceDays = sinceDaysRaw ? Number(sinceDaysRaw) : 0;
     const sinceDaysSafe = Number.isFinite(sinceDays) && sinceDays > 0 ? Math.floor(sinceDays) : 0;
 
-    const r = await audit.request().input("since_days", sinceDaysSafe).query(`
-      SELECT TOP 50
-        run_id,
-        status,
-        started_at,
-        finished_at,
-        period_start,
-        period_end,
-        error_message
-      FROM dbo.audit_snapshot_runs
-      WHERE 1=1
-        AND (@since_days = 0 OR started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
-      ORDER BY started_at DESC;
+    // Detecta se o schema suporta multi-tenancy em audit_snapshot_runs
+    const hasOrgCol = await audit.request().query(`
+      SELECT COL_LENGTH('dbo.audit_snapshot_runs', 'organization_id') as org_col;
     `);
+    const orgColExists = (hasOrgCol.recordset?.[0] as any)?.org_col != null;
+
+    const orgId = opts?.organizationId ?? null;
+
+    const q = orgColExists
+      ? `
+        SELECT TOP 50
+          run_id,
+          status,
+          started_at,
+          finished_at,
+          period_start,
+          period_end,
+          error_message
+        FROM dbo.audit_snapshot_runs
+        WHERE 1=1
+          AND (@since_days = 0 OR started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
+          AND (@org_id IS NULL OR organization_id = @org_id)
+        ORDER BY started_at DESC;
+      `
+      : `
+        SELECT TOP 50
+          run_id,
+          status,
+          started_at,
+          finished_at,
+          period_start,
+          period_end,
+          error_message
+        FROM dbo.audit_snapshot_runs
+        WHERE 1=1
+          AND (@since_days = 0 OR started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
+        ORDER BY started_at DESC;
+      `;
+
+    const r = await audit
+      .request()
+      .input("since_days", sinceDaysSafe)
+      .input("org_id", orgId as any)
+      .query(q);
 
     return NextResponse.json({
       success: true,
@@ -87,8 +117,16 @@ export async function GET(req: NextRequest) {
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const headerToken = req.headers.get("x-audit-token");
   const tokenOk = token && headerToken && headerToken === token;
-  if (tokenOk) return listSnapshots(req);
+  if (tokenOk) {
+    // Opcional: filtrar por tenant via querystring quando chamado por automação/admin token.
+    const url = new URL(req.url);
+    const orgIdRaw = url.searchParams.get("organizationId");
+    const orgId = orgIdRaw ? Number(orgIdRaw) : NaN;
+    return listSnapshots(req, { organizationId: Number.isFinite(orgId) ? orgId : null });
+  }
 
   // Mesmo sem ser ADMIN, pode acessar se tiver permissão (ex.: role AUDITOR).
-  return withPermission(req, "audit.read", async () => listSnapshots(req));
+  return withPermission(req, "audit.read", async (_user, ctx) =>
+    listSnapshots(req, { organizationId: ctx.organizationId })
+  );
 }

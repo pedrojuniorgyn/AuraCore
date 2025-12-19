@@ -12,7 +12,7 @@ const bodySchema = z
   })
   .strict();
 
-async function cleanup(req: NextRequest, appliedBy: string) {
+async function cleanup(req: NextRequest, appliedBy: string, opts?: { organizationId?: number | null }) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
   const isProd = process.env.NODE_ENV === "production";
 
@@ -33,16 +33,25 @@ async function cleanup(req: NextRequest, appliedBy: string) {
 
     const audit = await getAuditFinPool();
 
+    // Detecta se existe coluna organization_id no schema de runs
+    const hasOrgCol = await audit.request().query(`
+      SELECT COL_LENGTH('dbo.audit_snapshot_runs', 'organization_id') as org_col;
+    `);
+    const orgColExists = (hasOrgCol.recordset?.[0] as any)?.org_col != null;
+    const orgId = opts?.organizationId ?? null;
+
     const before = await audit
       .request()
       .input("days", olderThanDays)
       .input("only_failed", onlyFailed ? 1 : 0)
+      .input("org_id", orgId as any)
       .query(
         `
         SELECT COUNT(1) as cnt
         FROM dbo.audit_snapshot_runs
         WHERE started_at < DATEADD(day, -@days, SYSUTCDATETIME())
-          AND (@only_failed = 0 OR status = 'FAILED');
+          AND (@only_failed = 0 OR status = 'FAILED')
+          AND (${orgColExists ? "(@org_id IS NULL OR organization_id = @org_id)" : "1=1"});
       `
       );
 
@@ -53,10 +62,12 @@ async function cleanup(req: NextRequest, appliedBy: string) {
       .request()
       .input("cutoff_days", olderThanDays)
       .input("only_failed", onlyFailed ? 1 : 0)
+      .input("org_id", orgId as any)
       .query(
         `
         DECLARE @cutoff datetime2 = DATEADD(day, -@cutoff_days, SYSUTCDATETIME());
         DECLARE @onlyFailed bit = CASE WHEN @only_failed = 1 THEN 1 ELSE 0 END;
+        DECLARE @orgId int = @org_id;
 
         DECLARE @sql nvarchar(max) = N'';
 
@@ -67,7 +78,8 @@ async function cleanup(req: NextRequest, appliedBy: string) {
             FROM ' + QUOTENAME(s.name) + N'.' + QUOTENAME(t.name) + N' AS target
             INNER JOIN dbo.audit_snapshot_runs r ON r.run_id = target.run_id
             WHERE r.started_at < @cutoff
-              AND (@onlyFailed = 0 OR r.status = ''FAILED'');
+              AND (@onlyFailed = 0 OR r.status = ''FAILED'')
+              AND (' + CASE WHEN ${orgColExists ? 1 : 0} = 1 THEN N'(@orgId IS NULL OR r.organization_id = @orgId)' ELSE N'1=1' END + N');
           END;
         '
         FROM sys.tables t
@@ -79,13 +91,15 @@ async function cleanup(req: NextRequest, appliedBy: string) {
 
         EXEC sp_executesql
           @sql,
-          N'@cutoff datetime2, @onlyFailed bit',
+          N'@cutoff datetime2, @onlyFailed bit, @orgId int',
           @cutoff = @cutoff,
-          @onlyFailed = @onlyFailed;
+          @onlyFailed = @onlyFailed,
+          @orgId = @orgId;
 
         DELETE FROM dbo.audit_snapshot_runs
         WHERE started_at < @cutoff
-          AND (@onlyFailed = 0 OR status = 'FAILED');
+          AND (@onlyFailed = 0 OR status = 'FAILED')
+          AND (${orgColExists ? "(@orgId IS NULL OR organization_id = @orgId)" : "1=1"});
       `
       );
 
@@ -113,9 +127,16 @@ export async function POST(req: NextRequest) {
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const headerToken = req.headers.get("x-audit-token");
   const tokenOk = token && headerToken && headerToken === token;
-  if (tokenOk) return cleanup(req, "system");
+  if (tokenOk) {
+    const orgHeader = req.headers.get("x-organization-id");
+    const parsedOrg = orgHeader ? Number(orgHeader) : NaN;
+    const organizationId = Number.isFinite(parsedOrg) ? parsedOrg : null;
+    return cleanup(req, "system", { organizationId });
+  }
 
   // Operação administrativa: exige permissão de migração (ou ADMIN)
-  return withPermission(req, "audit.migrate", async (user) => cleanup(req, user.email ?? user.id));
+  return withPermission(req, "audit.migrate", async (user, ctx) =>
+    cleanup(req, user.email ?? user.id, { organizationId: ctx.organizationId })
+  );
 }
 
