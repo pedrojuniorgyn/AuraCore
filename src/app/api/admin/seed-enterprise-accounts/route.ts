@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       // - organization_id = 1  -> organization_id = __ORG_ID__
       // - SELECT 1,            -> SELECT __ORG_ID__,
       //
-      // Importante: não mexemos em "SELECT 1 FROM" em subqueries (isso é só sentinel de EXISTS).
+      // Importante: não mexemos em "SELECT 1 FROM" em subqueries (sentinel de EXISTS).
       let sql = template;
       sql = sql.replace(/\borganization_id\s*=\s*1\b/gi, "organization_id = __ORG_ID__");
       sql = sql.replace(/\bSELECT\s+1\s*,/gi, "SELECT __ORG_ID__,");
@@ -199,14 +199,4 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
 
