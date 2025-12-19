@@ -39,12 +39,23 @@ export async function POST(request: Request) {
 
     // Evitar override de campos sensíveis via spread
     const {
+      id: _id,
       organizationId: _orgId,
+      organization_id: _org_id,
       branchId: _branchId,
+      branch_id: _branch_id,
       createdBy: _createdBy,
+      created_by: _created_by,
       updatedBy: _updatedBy,
+      updated_by: _updated_by,
+      createdAt: _createdAt,
+      created_at: _created_at,
+      updatedAt: _updatedAt,
+      updated_at: _updated_at,
       deletedAt: _deletedAt,
+      deleted_at: _deleted_at,
       deletedBy: _deletedBy,
+      deleted_by: _deleted_by,
       version: _version,
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;

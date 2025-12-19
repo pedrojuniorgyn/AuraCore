@@ -95,44 +95,54 @@ export async function POST(req: Request) {
     const mdfeNumber = lastMdfes.length + 1;
 
     // Criar MDFe
-    const [createdId] = await db
-      .insert(mdfeHeader)
-      .values({
-        organizationId,
-        branchId: trip.branchId,
-        mdfeNumber,
-        serie: "1",
-        tripId: trip.id,
-        vehicleId: trip.vehicleId,
-        driverId: trip.driverId,
-        originUf: "SP", // TODO: Buscar da primeira parada
-        destinationUf: "RJ", // TODO: Buscar da última parada
-        ciotNumber: trip.ciotNumber,
-        status: "DRAFT",
-        issueDate: new Date(),
-        createdBy,
-      })
-      .$returningId();
+    await db.insert(mdfeHeader).values({
+      organizationId,
+      branchId: trip.branchId,
+      mdfeNumber,
+      serie: "1",
+      tripId: trip.id,
+      vehicleId: trip.vehicleId,
+      driverId: trip.driverId,
+      originUf: "SP", // TODO: Buscar da primeira parada
+      destinationUf: "RJ", // TODO: Buscar da última parada
+      ciotNumber: trip.ciotNumber,
+      status: "DRAFT",
+      issueDate: new Date(),
+      createdBy,
+    } as any);
 
-    const mdfeId = (createdId as any)?.id;
-    if (mdfeId === null || mdfeId === undefined || !Number.isFinite(Number(mdfeId))) {
+    // Evita bugs do $returningId() no MSSQL e garante mdfeId sempre definido.
+    const [newMdfe] = await db
+      .select()
+      .from(mdfeHeader)
+      .where(
+        and(
+          eq(mdfeHeader.organizationId, organizationId),
+          eq(mdfeHeader.tripId, trip.id),
+          eq(mdfeHeader.mdfeNumber, mdfeNumber),
+          isNull(mdfeHeader.deletedAt)
+        )
+      )
+      .orderBy(desc(mdfeHeader.id));
+
+    const mdfeId = newMdfe?.id;
+    if (!Number.isFinite(Number(mdfeId))) {
       return NextResponse.json(
-        { error: "Falha ao criar MDFe (ID não retornado)" },
+        { error: "Falha ao criar MDFe (registro não encontrado após insert)" },
         { status: 500 }
       );
     }
-    const [newMdfe] = mdfeId
-      ? await db
-          .select()
-          .from(mdfeHeader)
-          .where(and(eq(mdfeHeader.id, Number(mdfeId)), eq(mdfeHeader.organizationId, organizationId), isNull(mdfeHeader.deletedAt)))
-          .limit(1)
-      : [];
 
     // Vincular CTes
-    if (cteIds.length > 0) {
+    const cteIdsSafe = Array.isArray(cteIds)
+      ? cteIds
+          .map((x: any) => Number(x))
+          .filter((n: number) => Number.isFinite(n))
+      : [];
+
+    if (cteIdsSafe.length > 0) {
       await db.insert(mdfeDocuments).values(
-        cteIds.map((cteId: number) => ({
+        cteIdsSafe.map((cteId: number) => ({
           mdfeHeaderId: Number(mdfeId),
           cteHeaderId: cteId,
         }))

@@ -17,9 +17,17 @@ export default auth((req) => {
   // Evita redirects HTML em chamadas fetch/curl.
   if (isApi && !isApiAdmin) return;
 
-  // Auditoria: estes endpoints têm guarda própria (token ou sessão) no handler.
-  // Não bloquear no middleware para permitir automação via curl/token.
+  // Auditoria: permitir automação via token, mas evitar bypass "aberto".
+  // Se NÃO tiver token válido, exigimos sessão (e o handler aplica RBAC audit.*).
   if (pathname.startsWith("/api/admin/audit/snapshots")) {
+    const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+    const headerToken = req.headers.get("x-audit-token");
+    const tokenOk = token && headerToken && headerToken === token;
+    if (tokenOk) return;
+    if (!isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Não exigir ADMIN aqui: o handler faz RBAC (audit.read/audit.run/audit.migrate).
     return;
   }
 
@@ -53,5 +61,5 @@ export default auth((req) => {
 
 export const config = {
   // Matcher ignorando arquivos estáticos e api auth
-  matcher: ["/((?!api/auth|api/health|api/admin/audit/snapshots|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|api/health|_next/static|_next/image|favicon.ico).*)"],
 };
