@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader, cteCorrectionLetters } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 /**
  * POST /api/fiscal/cte/:id/correction
@@ -73,19 +73,34 @@ export async function POST(
       const sequenceNumber = existingCCe.length + 1;
 
       // Registrar CCe (implementação simplificada)
-      const [createdId] = await db
-        .insert(cteCorrectionLetters)
-        .values({
-          organizationId: ctx.organizationId,
-          cteHeaderId: cteId,
-          sequenceNumber,
-          corrections: JSON.stringify(corrections),
-          status: "PENDING", // TODO: Enviar para Sefaz
-          createdBy: ctx.user.id,
-        })
-        .$returningId();
+      await db.insert(cteCorrectionLetters).values({
+        organizationId: ctx.organizationId,
+        cteHeaderId: cteId,
+        sequenceNumber,
+        corrections: JSON.stringify(corrections),
+        status: "PENDING", // TODO: Enviar para Sefaz
+        createdBy: ctx.userId,
+      } as any);
 
-      const cceId = (createdId as any)?.id;
+      const [created] = await db
+        .select({ id: cteCorrectionLetters.id })
+        .from(cteCorrectionLetters)
+        .where(
+          and(
+            eq(cteCorrectionLetters.organizationId, ctx.organizationId),
+            eq(cteCorrectionLetters.cteHeaderId, cteId),
+            eq(cteCorrectionLetters.sequenceNumber, sequenceNumber)
+          )
+        )
+        .orderBy(desc(cteCorrectionLetters.id));
+
+      const cceId = created?.id;
+      if (!cceId) {
+        return NextResponse.json(
+          { error: "Falha ao registrar CCe (registro não encontrado após insert)" },
+          { status: 500 }
+        );
+      }
 
       // TODO: Implementar envio real para Sefaz
       console.log("⚠️  CCe registrada localmente. Envio para Sefaz pendente de implementação.");
