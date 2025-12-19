@@ -35,7 +35,7 @@ export async function POST(
       toVehicleId,
       toPosition,
       mileageAtMovement,
-      createdBy: ctx.user.id,
+      createdBy: ctx.userId,
     });
 
     // Atualizar pneu
@@ -57,6 +57,8 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+
 
 
 

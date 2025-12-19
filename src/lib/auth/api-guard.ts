@@ -42,9 +42,15 @@ export async function withPermission<T>(
     }
 
     // 3. Executar handler com contexto
+    // Padronização: expor `userId` diretamente (evita usos incorretos como ctx.user.id).
     const ctx = {
       user: session.user,
-      branchId: (session.user as any).branchId,
+      userId: session.user.id,
+      // Compatibilidade: alguns handlers antigos usam branchId; preferir defaultBranchId quando existir.
+      branchId:
+        (session.user as any).branchId ??
+        (session.user as any).defaultBranchId ??
+        null,
       organizationId: (session.user as any).organizationId,
     };
 
@@ -76,7 +82,11 @@ export async function withAuth<T>(
 
     const ctx = {
       user: session.user,
-      branchId: (session.user as any).branchId,
+      userId: session.user.id,
+      branchId:
+        (session.user as any).branchId ??
+        (session.user as any).defaultBranchId ??
+        null,
       organizationId: (session.user as any).organizationId,
     };
 
@@ -88,6 +98,8 @@ export async function withAuth<T>(
     );
   }
 }
+
+
 
 
 

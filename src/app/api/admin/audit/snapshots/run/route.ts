@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleRun(req: Request, requestedBy: { userId: string; email: string }) {
+  const debugRequested = req.headers.get("x-audit-debug") === "1";
   const json = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(json ?? {});
   if (!parsed.success) {
