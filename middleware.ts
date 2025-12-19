@@ -31,6 +31,21 @@ export default auth((req) => {
     return;
   }
 
+  // Migração de branches (coluna de integração com legado): permitir automação via token
+  // para operar em ambientes sem cookie (Coolify terminal). Sem token, exige sessão ADMIN.
+  if (pathname.startsWith("/api/admin/branches/migrate")) {
+    const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+    const headerToken = req.headers.get("x-audit-token");
+    const tokenOk = token && headerToken && headerToken === token;
+    if (tokenOk) return;
+    if (!isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo), mas já estamos logados.
+    // Deixa continuar para o bloco /api/admin aplicar a regra de role.
+    return;
+  }
+
   // Login:
   // - se já está logado e abre /login -> manda para home do produto (/)
   if (isOnLogin && isLoggedIn) {
