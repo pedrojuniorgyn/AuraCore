@@ -17,6 +17,9 @@ function seedIsEnabled() {
 }
 
 export async function GET(req: NextRequest) {
+  const debugRequested = req.headers.get("x-seed-debug") === "1";
+  const isProd = process.env.NODE_ENV === "production";
+  let tokenOk = false;
   try {
     if (!seedIsEnabled()) {
       // 404 para não “anunciar” endpoint operacional
@@ -26,7 +29,7 @@ export async function GET(req: NextRequest) {
     // Autorização: token (preferencial). Em produção é obrigatório.
     const seedToken = process.env.SEED_HTTP_TOKEN;
     const headerToken = req.headers.get("x-seed-token");
-    const tokenOk = seedToken && headerToken && headerToken === seedToken;
+    tokenOk = Boolean(seedToken && headerToken && headerToken === seedToken);
     if (!tokenOk) {
       if (process.env.NODE_ENV === "production") {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,6 +38,9 @@ export async function GET(req: NextRequest) {
       const ctx = await getTenantContext();
       if (!ctx.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Se não passou pelo token, não exponha debug em produção.
+    const canDebug = debugRequested && (tokenOk || !isProd);
 
     // Garante que a conexão está estabelecida
     const db = await getDb();
@@ -345,6 +351,13 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Erro no Seed:", error);
-    return NextResponse.json({ error: "Falha ao criar seed." }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        error: "Falha ao criar seed.",
+        ...(canDebug ? { debug: { message, name: (error as any)?.name } } : {}),
+      },
+      { status: 500 }
+    );
   }
 }
