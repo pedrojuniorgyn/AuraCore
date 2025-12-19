@@ -17,6 +17,16 @@ type SnapshotItem = {
   errorMessage: string | null;
 };
 
+async function readJsonOrThrow(res: Response): Promise<any> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return await res.json();
+  }
+  const text = await res.text().catch(() => "");
+  const snippet = text ? ` — ${text.slice(0, 200)}` : "";
+  throw new Error(`HTTP ${res.status} ${res.statusText} (resposta não-JSON)${snippet}`);
+}
+
 export default function AuditSnapshotsPage() {
   const { user, isLoading } = useTenant();
   const { hasPermission, loading: permissionsLoading } = usePermissions();
@@ -37,7 +47,7 @@ export default function AuditSnapshotsPage() {
     try {
       const qs = sinceDays ? `?sinceDays=${sinceDays}` : "";
       const res = await fetch(`/api/admin/audit/snapshots${qs}`, { headers: { "x-audit-debug": "1" } });
-      const data = await res.json();
+      const data = await readJsonOrThrow(res);
       if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao listar snapshots");
       setItems(data.items ?? []);
     } catch (e) {
@@ -56,7 +66,7 @@ export default function AuditSnapshotsPage() {
         headers: { "Content-Type": "application/json", "x-audit-debug": "1" },
         body: JSON.stringify({ axis: "VENCIMENTO" }),
       });
-      const data = await res.json();
+      const data = await readJsonOrThrow(res);
       if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao executar snapshot");
       await load();
     } catch (e) {
@@ -74,7 +84,7 @@ export default function AuditSnapshotsPage() {
         method: "POST",
         headers: { "x-audit-debug": "1" },
       });
-      const data = await res.json();
+      const data = await readJsonOrThrow(res);
       if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao migrar AuditFinDB");
       await load();
     } catch (e) {
@@ -93,7 +103,7 @@ export default function AuditSnapshotsPage() {
         headers: { "Content-Type": "application/json", "x-audit-debug": "1" },
         body: JSON.stringify({ olderThanDays: 30, onlyFailed: true }),
       });
-      const data = await res.json();
+      const data = await readJsonOrThrow(res);
       if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao limpar snapshots antigos");
       await load();
     } catch (e) {
