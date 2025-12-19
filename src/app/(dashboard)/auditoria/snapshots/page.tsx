@@ -29,12 +29,14 @@ export default function AuditSnapshotsPage() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<"run" | "migrate" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sinceDays, setSinceDays] = useState<0 | 7 | 30>(7);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/audit/snapshots", { headers: { "x-audit-debug": "1" } });
+      const qs = sinceDays ? `?sinceDays=${sinceDays}` : "";
+      const res = await fetch(`/api/admin/audit/snapshots${qs}`, { headers: { "x-audit-debug": "1" } });
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao listar snapshots");
       setItems(data.items ?? []);
@@ -82,10 +84,29 @@ export default function AuditSnapshotsPage() {
     }
   };
 
+  const cleanupFailedOld = async () => {
+    setBusy("migrate");
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/audit/snapshots/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-audit-debug": "1" },
+        body: JSON.stringify({ olderThanDays: 30, onlyFailed: true }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao limpar snapshots antigos");
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   useEffect(() => {
     if (canRead) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canRead]);
+  }, [canRead, sinceDays]);
 
   const statusVariant = useMemo(() => {
     return (status: string): "default" | "secondary" | "destructive" => {
@@ -115,12 +136,44 @@ export default function AuditSnapshotsPage() {
           <h1 className="text-3xl font-bold">Auditoria — Snapshots</h1>
           <p className="text-muted-foreground">Execução e acompanhamento do ETL no AuditFinDB</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={load} disabled={loading || busy !== null}>
             Atualizar
           </Button>
+          <Button
+            variant={sinceDays === 7 ? "default" : "outline"}
+            onClick={() => setSinceDays(7)}
+            disabled={loading || busy !== null}
+            title="Mostrar últimos 7 dias"
+          >
+            7d
+          </Button>
+          <Button
+            variant={sinceDays === 30 ? "default" : "outline"}
+            onClick={() => setSinceDays(30)}
+            disabled={loading || busy !== null}
+            title="Mostrar últimos 30 dias"
+          >
+            30d
+          </Button>
+          <Button
+            variant={sinceDays === 0 ? "default" : "outline"}
+            onClick={() => setSinceDays(0)}
+            disabled={loading || busy !== null}
+            title="Mostrar histórico completo"
+          >
+            Tudo
+          </Button>
           <Button variant="outline" onClick={migrate} disabled={loading || busy !== null || !canMigrate}>
             {busy === "migrate" ? "Migrando..." : "Migrar schema"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={cleanupFailedOld}
+            disabled={loading || busy !== null || !canMigrate}
+            title="Remove runs antigos (FAILED) do histórico e limpa dados por run_id"
+          >
+            Limpar falhas antigas
           </Button>
           <Button onClick={run} disabled={loading || busy !== null || !canRun}>
             {busy === "run" ? "Executando..." : "Rodar snapshot"}

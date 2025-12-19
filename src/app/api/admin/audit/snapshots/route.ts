@@ -5,7 +5,6 @@ import { withPermission } from "@/lib/auth/api-guard";
 export const runtime = "nodejs";
 
 async function listSnapshots(req: Request) {
-  const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const debugRequested = req.headers.get("x-audit-debug") === "1";
 
   try {
@@ -30,7 +29,12 @@ async function listSnapshots(req: Request) {
         `
         );
     }
-    const r = await audit.request().query(`
+    const url = new URL(req.url);
+    const sinceDaysRaw = url.searchParams.get("sinceDays");
+    const sinceDays = sinceDaysRaw ? Number(sinceDaysRaw) : 0;
+    const sinceDaysSafe = Number.isFinite(sinceDays) && sinceDays > 0 ? Math.floor(sinceDays) : 0;
+
+    const r = await audit.request().input("since_days", sinceDaysSafe).query(`
       SELECT TOP 50
         run_id,
         status,
@@ -40,6 +44,8 @@ async function listSnapshots(req: Request) {
         period_end,
         error_message
       FROM dbo.audit_snapshot_runs
+      WHERE 1=1
+        AND (@since_days = 0 OR started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
       ORDER BY started_at DESC;
     `);
 
