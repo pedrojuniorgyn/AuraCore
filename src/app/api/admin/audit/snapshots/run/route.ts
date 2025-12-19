@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { queueSnapshot, runSnapshot } from "@/lib/audit/etl/snapshotRun";
+import { withPermission } from "@/lib/auth/api-guard";
 
 export const runtime = "nodejs";
 
@@ -28,9 +28,7 @@ function todayUtcDate(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
 }
 
-export async function POST(req: Request) {
-  const debugRequested = req.headers.get("x-audit-debug") === "1";
-
+export async function POST(req: NextRequest) {
   // Autorização: token (preferencial para automação) OU sessão admin
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
   const headerToken = req.headers.get("x-audit-token");
@@ -38,29 +36,18 @@ export async function POST(req: Request) {
 
   const tokenOk = token && headerToken && headerToken === token;
   if (!tokenOk) {
-    const session = await auth();
-    if (!session?.user) {
-      const isProd = process.env.NODE_ENV === "production";
-      return NextResponse.json(
-        {
-          error: "Não autorizado",
-          ...(isProd || !debugRequested
-            ? {}
-            : {
-                debug: {
-                  tokenConfigured: false,
-                },
-              }),
-        },
-        { status: 401 }
-      );
-    }
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
-    requestedBy = { userId: session.user.id, email: session.user.email ?? session.user.id };
+    // Se não vier token, aplica RBAC via sessão.
+    // (Também permite roles não-admin com a permissão audit.run)
+    return withPermission(req, "audit.run", async (user) => {
+      requestedBy = { userId: user.id, email: user.email ?? user.id };
+      return handleRun(req, requestedBy);
+    });
   }
 
+  return handleRun(req, requestedBy);
+}
+
+async function handleRun(req: Request, requestedBy: { userId: string; email: string }) {
   const json = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(json ?? {});
   if (!parsed.success) {

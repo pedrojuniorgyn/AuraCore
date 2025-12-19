@@ -1,31 +1,12 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuditFinPool } from "@/lib/audit/db";
+import { withPermission } from "@/lib/auth/api-guard";
 
 export const runtime = "nodejs";
 
-async function ensureAuthorized(req: Request): Promise<{ userId: string; email: string } | null> {
-  // Autorização: token (preferencial para automação) OU sessão admin
-  const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
-  const headerToken = req.headers.get("x-audit-token");
-
-  const tokenOk = token && headerToken && headerToken === token;
-  if (tokenOk) return { userId: "system", email: "system" };
-
-  const session = await auth();
-  if (!session?.user) return null;
-  if (session.user.role !== "ADMIN") return null;
-  return { userId: session.user.id, email: session.user.email ?? session.user.id };
-}
-
-export async function POST(req: Request) {
+async function applyMigrate(req: Request, appliedByEmail: string) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
   const isProd = process.env.NODE_ENV === "production";
-
-  const who = await ensureAuthorized(req);
-  if (!who) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
 
   try {
     const audit = await getAuditFinPool();
@@ -124,7 +105,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      appliedBy: who.email,
+      appliedBy: appliedByEmail,
       columns: {
         conta_bancaria_id_inferida: row.conta_bancaria_id_inferida ?? null,
         conta_bancaria_inferida_regra: row.conta_bancaria_inferida_regra ?? null,
@@ -143,5 +124,15 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function POST(req: NextRequest) {
+  // Autorização: token (preferencial para automação) OU permissão via sessão (RBAC)
+  const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+  const headerToken = req.headers.get("x-audit-token");
+  const tokenOk = token && headerToken && headerToken === token;
+  if (tokenOk) return applyMigrate(req, "system");
+
+  return withPermission(req, "audit.migrate", async (user) => applyMigrate(req, user.email ?? user.id));
 }
 

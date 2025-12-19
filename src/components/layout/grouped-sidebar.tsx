@@ -56,6 +56,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTenant } from "@/contexts/tenant-context";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SidebarItem {
   title: string;
@@ -240,6 +241,7 @@ const sidebarGroups: SidebarGroup[] = [
 export function GroupedSidebar() {
   const pathname = usePathname();
   const { user } = useTenant();
+  const { hasPermission } = usePermissions();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recentPages, setRecentPages] = useState<string[]>([]);
@@ -323,8 +325,8 @@ export function GroupedSidebar() {
   };
 
   const getFilteredGroups = () => {
-    const isAdmin = user?.role === "ADMIN";
-    const baseGroups = isAdmin ? sidebarGroups : sidebarGroups.filter((g) => g.title !== "Auditoria");
+    const canSeeAudit = user?.role === "ADMIN" || hasPermission("audit.read");
+    const baseGroups = canSeeAudit ? sidebarGroups : sidebarGroups.filter((g) => g.title !== "Auditoria");
     if (!searchQuery) return baseGroups;
     
     return baseGroups

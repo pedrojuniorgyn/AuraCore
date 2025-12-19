@@ -1,25 +1,11 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { getAuditFinPool } from "@/lib/audit/db";
+import { withPermission } from "@/lib/auth/api-guard";
 
 export const runtime = "nodejs";
 
-export async function GET(req: Request) {
-  // Autorização: token (preferencial para automação) OU sessão admin
+async function listSnapshots(req: Request) {
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
-  const headerToken = req.headers.get("x-audit-token");
-
-  const tokenOk = token && headerToken && headerToken === token;
-  if (!tokenOk) {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
-  }
-
   const debugRequested = req.headers.get("x-audit-debug") === "1";
 
   try {
@@ -68,4 +54,15 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(req: NextRequest) {
+  // Autorização: token (preferencial para automação) OU permissão via sessão (RBAC)
+  const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+  const headerToken = req.headers.get("x-audit-token");
+  const tokenOk = token && headerToken && headerToken === token;
+  if (tokenOk) return listSnapshots(req);
+
+  // Mesmo sem ser ADMIN, pode acessar se tiver permissão (ex.: role AUDITOR).
+  return withPermission(req, "audit.read", async () => listSnapshots(req));
 }

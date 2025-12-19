@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTenant } from "@/contexts/tenant-context";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,11 @@ type SnapshotItem = {
 
 export default function AuditSnapshotsPage() {
   const { user, isLoading } = useTenant();
-  const isAdmin = user?.role === "ADMIN";
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
+
+  const canRead = user?.role === "ADMIN" || hasPermission("audit.read");
+  const canRun = user?.role === "ADMIN" || hasPermission("audit.run");
+  const canMigrate = user?.role === "ADMIN" || hasPermission("audit.migrate");
 
   const [items, setItems] = useState<SnapshotItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,9 +83,9 @@ export default function AuditSnapshotsPage() {
   };
 
   useEffect(() => {
-    if (isAdmin) void load();
+    if (canRead) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin]);
+  }, [canRead]);
 
   const statusVariant = useMemo(() => {
     return (status: string): "default" | "secondary" | "destructive" => {
@@ -91,12 +96,14 @@ export default function AuditSnapshotsPage() {
     };
   }, []);
 
-  if (isLoading) return null;
-  if (!isAdmin) {
+  if (isLoading || permissionsLoading) return null;
+  if (!canRead) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-semibold">Auditoria</h1>
-        <p className="text-muted-foreground mt-2">Sem permissão (apenas ADMIN).</p>
+        <p className="text-muted-foreground mt-2">
+          Sem permissão. Necessário: <code>audit.read</code>
+        </p>
       </div>
     );
   }
@@ -112,10 +119,10 @@ export default function AuditSnapshotsPage() {
           <Button variant="secondary" onClick={load} disabled={loading || busy !== null}>
             Atualizar
           </Button>
-          <Button variant="outline" onClick={migrate} disabled={loading || busy !== null}>
+          <Button variant="outline" onClick={migrate} disabled={loading || busy !== null || !canMigrate}>
             {busy === "migrate" ? "Migrando..." : "Migrar schema"}
           </Button>
-          <Button onClick={run} disabled={loading || busy !== null}>
+          <Button onClick={run} disabled={loading || busy !== null || !canRun}>
             {busy === "run" ? "Executando..." : "Rodar snapshot"}
           </Button>
         </div>

@@ -130,6 +130,9 @@ export async function GET(req: NextRequest) {
     const desiredPermissions = [
       { slug: "admin.full", description: "Acesso total de administrador" },
       { slug: "admin.users.manage", description: "Gerenciar usuários (admin)" },
+      { slug: "audit.read", description: "Visualizar auditoria/snapshots" },
+      { slug: "audit.run", description: "Executar snapshots (ETL) da auditoria" },
+      { slug: "audit.migrate", description: "Aplicar migrações/DDL no AuditFinDB" },
     ] as const;
 
     for (const p of desiredPermissions) {
