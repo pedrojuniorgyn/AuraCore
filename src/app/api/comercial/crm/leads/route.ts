@@ -49,27 +49,44 @@ export async function POST(request: Request) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    const [createdId] = await db
-      .insert(crmLeads)
-      .values({
-        ...safeBody,
-        organizationId: ctx.organizationId,
-        stage: (safeBody as any)?.stage || "PROSPECTING",
-        ownerId: ctx.userId,
-        createdBy: ctx.userId,
-      })
-      .$returningId();
+    // Drizzle MSSQL: $returningId existe em runtime, mas pode não estar tipado.
+    // Além disso, nunca devolvemos success=true com data undefined.
+    const insert = (db as any).insert(crmLeads).values({
+      ...(safeBody as any),
+      organizationId: ctx.organizationId,
+      stage: (safeBody as any)?.stage || "PROSPECTING",
+      ownerId: ctx.userId,
+      createdBy: ctx.userId,
+    });
+    const [createdId] = await (insert as any).$returningId();
 
     const leadId = (createdId as any)?.id;
-    const [lead] = leadId
-      ? await db
-          .select()
-          .from(crmLeads)
-          .where(and(eq(crmLeads.id, Number(leadId)), eq(crmLeads.organizationId, ctx.organizationId), isNull(crmLeads.deletedAt)))
-          .limit(1)
-      : [];
+    if (!leadId) {
+      return NextResponse.json(
+        { error: "Falha ao criar lead (id não retornado)" },
+        { status: 500 }
+      );
+    }
 
-    return NextResponse.json({ success: true, data: lead });
+    const [lead] = await db
+      .select()
+      .from(crmLeads)
+      .where(
+        and(
+          eq(crmLeads.id, Number(leadId)),
+          eq(crmLeads.organizationId, ctx.organizationId),
+          isNull(crmLeads.deletedAt)
+        )
+      );
+
+    if (!lead) {
+      return NextResponse.json(
+        { error: "Falha ao criar lead (registro não encontrado após insert)" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: lead }, { status: 201 });
   } catch (error: any) {
     if (error instanceof Response) {
       return error;
@@ -77,7 +94,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
 
 
 
