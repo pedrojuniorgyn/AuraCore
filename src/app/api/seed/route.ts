@@ -90,26 +90,45 @@ export async function GET(req: NextRequest) {
     if (existingBySlug.length > 0) {
       organizationId = existingBySlug[0].id;
     } else {
-      const [anyOrg] = await db
+      const existingByDocument = await db
+        .select({ id: organizations.id })
+        .from(organizations)
+        .where(and(eq(organizations.document, orgDocument), isNull(organizations.deletedAt)))
+        .limit(1);
+      if (existingByDocument.length > 0) {
+        organizationId = existingByDocument[0].id;
+      }
+
+      const [anyOrg] = organizationId
+        ? [null]
+        : await db
         .select({ id: organizations.id })
         .from(organizations)
         .where(isNull(organizations.deletedAt))
         .limit(1);
-      organizationId = anyOrg?.id ?? null;
+      organizationId = organizationId ?? anyOrg?.id ?? null;
     }
 
     if (!organizationId) {
-      const [{ id }] = await db
-        .insert(organizations)
-        .values({
-          name: orgName,
-          slug: orgSlug,
-          document: orgDocument,
-          plan: "ENTERPRISE",
-          status: "ACTIVE",
-        })
-        .$returningId();
-      organizationId = id;
+      await db.insert(organizations).values({
+        name: orgName,
+        slug: orgSlug,
+        document: orgDocument,
+        plan: "ENTERPRISE",
+        status: "ACTIVE",
+      });
+
+      const createdOrg = await db
+        .select({ id: organizations.id })
+        .from(organizations)
+        .where(and(eq(organizations.slug, orgSlug), isNull(organizations.deletedAt)))
+        .orderBy(desc(organizations.id))
+        .limit(1);
+      organizationId = createdOrg[0]?.id ?? null;
+    }
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Falha ao garantir organização." }, { status: 500 });
     }
 
     // ----------------------------
@@ -123,14 +142,21 @@ export async function GET(req: NextRequest) {
 
     let adminRoleId = adminRoleRow?.id ?? null;
     if (!adminRoleId) {
-      const [{ id }] = await db
-        .insert(roles)
-        .values({
-          name: "ADMIN",
-          description: "Administrador do sistema (acesso total)",
-        })
-        .$returningId();
-      adminRoleId = id;
+      await db.insert(roles).values({
+        name: "ADMIN",
+        description: "Administrador do sistema (acesso total)",
+      });
+      const createdRole = await db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(eq(roles.name, "ADMIN"))
+        .orderBy(desc(roles.id))
+        .limit(1);
+      adminRoleId = createdRole[0]?.id ?? null;
+    }
+
+    if (!adminRoleId) {
+      return NextResponse.json({ error: "Falha ao garantir role ADMIN." }, { status: 500 });
     }
 
     const desiredPermissions = [
@@ -293,6 +319,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Falha ao garantir usuário admin." }, { status: 500 });
     }
 
+    // Segurança do login: se o mesmo email existir em múltiplas organizações,
+    // o login por credentials é bloqueado (ambíguo). Avisamos explicitamente.
+    const sameEmailUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.email, adminEmail), isNull(users.deletedAt)));
+    const emailAmbiguousAcrossOrgs = sameEmailUsers.length > 1;
+
     // user_roles (RBAC) para o admin
     const urExists = await db
       .select({ userId: userRoles.userId })
@@ -347,6 +381,12 @@ export async function GET(req: NextRequest) {
       notes: [
         "Em produção, este endpoint exige SEED_HTTP_ENABLED=true e SEED_HTTP_TOKEN + header x-seed-token.",
         "Use header x-seed-reset-password: 1 para forçar reset da senha do admin.",
+        ...(emailAmbiguousAcrossOrgs
+          ? [
+              "ATENÇÃO: este email existe em múltiplas organizações; o login por email/senha ficará bloqueado (ambiguidade multi-tenant).",
+              "Solução rápida: defina SEED_ADMIN_EMAIL para um email único e rode o seed novamente com x-seed-reset-password: 1.",
+            ]
+          : []),
       ],
     });
   } catch (error) {
@@ -355,7 +395,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Falha ao criar seed.",
-        ...(canDebug ? { debug: { message, name: (error as any)?.name } } : {}),
+        ...(canDebug ? { debug: { message, name: (error as any)?.name, stack: (error as any)?.stack } } : {}),
       },
       { status: 500 }
     );
