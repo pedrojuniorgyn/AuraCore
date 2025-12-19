@@ -38,6 +38,22 @@ async function applyMigrate(req: Request, appliedByEmail: string) {
     `);
 
     await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+        AND COL_LENGTH('dbo.audit_snapshot_runs', 'branch_id') IS NULL
+      BEGIN
+        ALTER TABLE dbo.audit_snapshot_runs ADD branch_id int NULL;
+      END
+    `);
+
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+        AND COL_LENGTH('dbo.audit_snapshot_runs', 'legacy_company_branch_code') IS NULL
+      BEGIN
+        ALTER TABLE dbo.audit_snapshot_runs ADD legacy_company_branch_code int NULL;
+      END
+    `);
+
+    await audit.request().query(`
       IF OBJECT_ID('dbo.audit_raw_conta_bancaria','U') IS NOT NULL
         AND COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') IS NULL
       BEGIN

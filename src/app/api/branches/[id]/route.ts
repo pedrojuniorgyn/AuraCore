@@ -20,7 +20,7 @@ export async function GET(
 ) {
   try {
     // 🔗 Garante conexão com banco
-    const { ensureConnection } = await import("@/lib/db");
+    const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
@@ -161,7 +161,13 @@ export async function PUT(
       );
     }
 
-    const { document, version, ...dataToUpdate } = parsedBody.data;
+    const { document, version, legacyCompanyBranchCode, ...dataToUpdate } = parsedBody.data as any;
+
+    // Compatibilidade: se a coluna ainda não existir no banco, ignoramos o campo (evita 500).
+    const legacyColCheck = await pool.request().query(`
+      SELECT COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as col;
+    `);
+    const legacyColExists = (legacyColCheck.recordset?.[0] as any)?.col != null;
 
     // Se o documento for atualizado, verifica duplicidade (excluindo o próprio ID)
     if (document && document !== currentBranch.document) {
@@ -191,6 +197,9 @@ export async function PUT(
       .set({
         ...dataToUpdate,
         ...(document && { document }), // Atualiza documento se fornecido
+        ...(legacyColExists && legacyCompanyBranchCode !== undefined
+          ? { legacyCompanyBranchCode: legacyCompanyBranchCode as number }
+          : {}),
         updatedBy: ctx.userId, // 📊 AUDITORIA: Quem atualizou
         updatedAt: new Date(),
         version: currentBranch.version + 1, // 🔒 OPTIMISTIC LOCK: Incrementa versão

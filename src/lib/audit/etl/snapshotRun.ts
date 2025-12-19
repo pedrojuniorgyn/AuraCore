@@ -9,6 +9,8 @@ export type SnapshotRunInput = {
   axis: "VENCIMENTO" | "PAGAMENTO_REAL" | "DOCUMENTO";
   requestedBy: { userId: string; email: string };
   organizationId?: number | null;
+  branchId?: number | null;
+  legacyCompanyBranchCode?: number | null;
 };
 
 function startOfDayUtc(d: Date): Date {
@@ -56,6 +58,22 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
       AND COL_LENGTH('dbo.audit_snapshot_runs', 'requested_by_email') IS NULL
     BEGIN
       ALTER TABLE dbo.audit_snapshot_runs ADD requested_by_email nvarchar(255) NULL;
+    END
+  `);
+
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_snapshot_runs', 'branch_id') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_snapshot_runs ADD branch_id int NULL;
+    END
+  `);
+
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_snapshot_runs', 'legacy_company_branch_code') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_snapshot_runs ADD legacy_company_branch_code int NULL;
     END
   `);
 
@@ -188,16 +206,20 @@ async function insertRun(
     .input("period_start", input.periodStart)
     .input("period_end", input.periodEndInclusive)
     .input("organization_id", (input.organizationId ?? null) as any)
+    .input("branch_id", (input.branchId ?? null) as any)
+    .input("legacy_company_branch_code", (input.legacyCompanyBranchCode ?? null) as any)
     .input("requested_by_user_id", input.requestedBy.userId)
     .input("requested_by_email", input.requestedBy.email)
     .query(
       `INSERT INTO dbo.audit_snapshot_runs (
          run_id, status, period_start, period_end,
-         organization_id, requested_by_user_id, requested_by_email
+         organization_id, branch_id, legacy_company_branch_code,
+         requested_by_user_id, requested_by_email
        )
        VALUES (
          @run_id, @status, @period_start, @period_end,
-         @organization_id, @requested_by_user_id, @requested_by_email
+         @organization_id, @branch_id, @legacy_company_branch_code,
+         @requested_by_user_id, @requested_by_email
        )`
     );
 }
@@ -253,12 +275,14 @@ const VENCIMENTO_WHERE = `
 async function extractRawMovimentosVencimento(
   legacy: MssqlPool,
   start: Date,
-  endExclusive: Date
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
 ) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT DISTINCT
         CAST(m.codigo_movimento as bigint) as movimento_id,
@@ -280,6 +304,7 @@ async function extractRawMovimentosVencimento(
       LEFT JOIN dbo.PlanoContasContabil pcc
         ON pcc.ID = m.IDPlanoContasContabil
       WHERE ${VENCIMENTO_WHERE}
+        AND (@filial IS NULL OR m.CodigoEmpresaFilial = @filial)
     `);
 
   return r.recordset as Array<Record<string, unknown>>;
@@ -288,12 +313,14 @@ async function extractRawMovimentosVencimento(
 async function extractRawMovimentosDetalheVencimento(
   legacy: MssqlPool,
   start: Date,
-  endExclusive: Date
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
 ) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT
         CAST(md.codigo_movimento_detalhe as bigint) as parcela_id,
@@ -306,15 +333,22 @@ async function extractRawMovimentosDetalheVencimento(
       INNER JOIN dbo.movimentos m
         ON m.codigo_movimento = md.codigo_movimento
       WHERE ${VENCIMENTO_WHERE}
+        AND (@filial IS NULL OR m.CodigoEmpresaFilial = @filial)
     `);
   return r.recordset as Array<Record<string, unknown>>;
 }
 
-async function extractRawComprasVencimento(legacy: MssqlPool, start: Date, endExclusive: Date) {
+async function extractRawComprasVencimento(
+  legacy: MssqlPool,
+  start: Date,
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
+) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT DISTINCT
         CAST(c.ID as bigint) as compra_id,
@@ -330,15 +364,22 @@ async function extractRawComprasVencimento(legacy: MssqlPool, start: Date, endEx
       INNER JOIN dbo.movimentos_detalhe md
         ON md.codigo_movimento = m.codigo_movimento
       WHERE ${VENCIMENTO_WHERE}
+        AND (@filial IS NULL OR m.CodigoEmpresaFilial = @filial)
     `);
   return r.recordset as Array<Record<string, unknown>>;
 }
 
-async function extractRawPagamentosVencimento(legacy: MssqlPool, start: Date, endExclusive: Date) {
+async function extractRawPagamentosVencimento(
+  legacy: MssqlPool,
+  start: Date,
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
+) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT DISTINCT
         CAST(p.codigo_pagamento as bigint) as pagamento_id,
@@ -350,15 +391,22 @@ async function extractRawPagamentosVencimento(legacy: MssqlPool, start: Date, en
       INNER JOIN dbo.movimentos m
         ON m.codigo_movimento = md.codigo_movimento
       WHERE ${VENCIMENTO_WHERE}
+        AND (@filial IS NULL OR m.CodigoEmpresaFilial = @filial)
     `);
   return r.recordset as Array<Record<string, unknown>>;
 }
 
-async function extractRawPagamentosDetalheVencimento(legacy: MssqlPool, start: Date, endExclusive: Date) {
+async function extractRawPagamentosDetalheVencimento(
+  legacy: MssqlPool,
+  start: Date,
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
+) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT DISTINCT
         CAST(pd.codigo_pagamento_detalhe as bigint) as pagamento_detalhe_id,
@@ -373,15 +421,22 @@ async function extractRawPagamentosDetalheVencimento(legacy: MssqlPool, start: D
       INNER JOIN dbo.movimentos m
         ON m.codigo_movimento = md.codigo_movimento
       WHERE ${VENCIMENTO_WHERE}
+        AND (@filial IS NULL OR m.CodigoEmpresaFilial = @filial)
     `);
   return r.recordset as Array<Record<string, unknown>>;
 }
 
-async function extractRawMovimentoBancarioVencimento(legacy: MssqlPool, start: Date, endExclusive: Date) {
+async function extractRawMovimentoBancarioVencimento(
+  legacy: MssqlPool,
+  start: Date,
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
+) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT DISTINCT
         CAST(mb.codigo_movimento_bancario as bigint) as movimento_bancario_id,
@@ -402,12 +457,16 @@ async function extractRawMovimentoBancarioVencimento(legacy: MssqlPool, start: D
       INNER JOIN dbo.movimentos m
         ON m.codigo_movimento = md.codigo_movimento
       WHERE ${VENCIMENTO_WHERE}
+        AND (@filial IS NULL OR m.CodigoEmpresaFilial = @filial)
     `);
   return r.recordset as Array<Record<string, unknown>>;
 }
 
-async function extractRawContaBancaria(legacy: MssqlPool) {
-  const r = await legacy.request().query(`
+async function extractRawContaBancaria(legacy: MssqlPool, legacyCompanyBranchCode?: number | null) {
+  const r = await legacy
+    .request()
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
+    .query(`
     SELECT
       CAST(cb.codigo_conta_bancaria as bigint) as conta_bancaria_id,
       CAST(cb.CodigoEmpresaFilial as smallint) as codigo_empresa_filial,
@@ -420,6 +479,7 @@ async function extractRawContaBancaria(legacy: MssqlPool) {
       CAST(cb.nome_titular as nvarchar(255)) as nome_titular,
       CAST(cb.IsAtivo as bit) as is_ativo
     FROM dbo.conta_bancaria cb
+    WHERE (@filial IS NULL OR cb.CodigoEmpresaFilial = @filial)
   `);
   return r.recordset as Array<Record<string, unknown>>;
 }
@@ -435,11 +495,17 @@ async function extractDimTipoMovimentoBancario(legacy: MssqlPool) {
   return r.recordset as Array<Record<string, unknown>>;
 }
 
-async function extractFactCaixaFechamento(legacy: MssqlPool, start: Date, endExclusive: Date) {
+async function extractFactCaixaFechamento(
+  legacy: MssqlPool,
+  start: Date,
+  endExclusive: Date,
+  legacyCompanyBranchCode?: number | null
+) {
   const r = await legacy
     .request()
     .input("start", start)
     .input("end", endExclusive)
+    .input("filial", (legacyCompanyBranchCode ?? null) as any)
     .query(`
       SELECT
         CAST(CONVERT(date, cf.Data) as date) as data,
@@ -460,6 +526,7 @@ async function extractFactCaixaFechamento(legacy: MssqlPool, start: Date, endExc
       WHERE cf.Data >= @start AND cf.Data < @end
         AND cb.IsAtivo = 1
         AND (cf.IdStatus = 1 OR cfh.Descricao IS NOT NULL)
+        AND (@filial IS NULL OR cb.CodigoEmpresaFilial = @filial)
       GROUP BY
         CONVERT(date, cf.Data),
         cf.IdContaBancaria,
@@ -1087,14 +1154,14 @@ async function executeSnapshot(
       conta_bancaria,
       caixa_fechamento,
     ] = await Promise.all([
-      extractRawMovimentosVencimento(legacy, start, endExclusive),
-      extractRawMovimentosDetalheVencimento(legacy, start, endExclusive),
-      extractRawComprasVencimento(legacy, start, endExclusive),
-      extractRawPagamentosVencimento(legacy, start, endExclusive),
-      extractRawPagamentosDetalheVencimento(legacy, start, endExclusive),
-      extractRawMovimentoBancarioVencimento(legacy, start, endExclusive),
-      extractRawContaBancaria(legacy),
-      extractFactCaixaFechamento(legacy, start, endExclusive),
+      extractRawMovimentosVencimento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
+      extractRawMovimentosDetalheVencimento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
+      extractRawComprasVencimento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
+      extractRawPagamentosVencimento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
+      extractRawPagamentosDetalheVencimento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
+      extractRawMovimentoBancarioVencimento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
+      extractRawContaBancaria(legacy, input.legacyCompanyBranchCode),
+      extractFactCaixaFechamento(legacy, start, endExclusive, input.legacyCompanyBranchCode),
     ]);
 
     console.info("[audit:snapshot] extracted", {

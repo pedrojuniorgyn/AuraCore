@@ -40,6 +40,7 @@ const connectionConfig: sql.config = {
 // 2. Singleton Global para evitar múltiplas conexões no Hot Reload
 const globalForDb = globalThis as unknown as {
   conn: sql.ConnectionPool | undefined;
+  schemaEnsured: boolean | undefined;
 };
 
 let conn: sql.ConnectionPool;
@@ -54,6 +55,18 @@ conn = globalForDb.conn;
 export const pool = conn;
 export const ensureConnection = async () => {
     if (!conn.connected) await conn.connect();
+    // Migrações idempotentes mínimas (evita quebrar selects quando adicionamos colunas novas no schema do Drizzle)
+    if (!globalForDb.schemaEnsured) {
+      // Branches: integração com legado (Audit ETL)
+      await conn.request().query(`
+        IF OBJECT_ID('dbo.branches','U') IS NOT NULL
+          AND COL_LENGTH('dbo.branches', 'legacy_company_branch_code') IS NULL
+        BEGIN
+          ALTER TABLE dbo.branches ADD legacy_company_branch_code int NULL;
+        END
+      `);
+      globalForDb.schemaEnsured = true;
+    }
     return conn;
 };
 

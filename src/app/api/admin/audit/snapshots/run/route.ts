@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
   const headerToken = req.headers.get("x-audit-token");
   let requestedBy = { userId: "system", email: "system" };
   let organizationId: number | null = null;
+  let branchId: number | null = null;
+  let legacyCompanyBranchCode: number | null = null;
 
   const tokenOk = token && headerToken && headerToken === token;
   if (!tokenOk) {
@@ -42,7 +44,35 @@ export async function POST(req: NextRequest) {
     return withPermission(req, "audit.run", async (user, ctx) => {
       requestedBy = { userId: user.id, email: user.email ?? user.id };
       organizationId = ctx.organizationId;
-      return handleRun(req, requestedBy, organizationId);
+
+      // Data Scoping por filial:
+      // - Admin pode rodar snapshot global da organização.
+      // - Não-admin roda apenas para a filial padrão (defaultBranchId).
+      branchId = ctx.isAdmin ? ctx.defaultBranchId ?? null : ctx.defaultBranchId;
+      if (!ctx.isAdmin && !branchId) {
+        return NextResponse.json(
+          { error: "Usuário sem filial padrão definida (defaultBranchId). Defina uma filial para executar o snapshot." },
+          { status: 400 }
+        );
+      }
+
+      legacyCompanyBranchCode = await resolveLegacyCompanyBranchCode({
+        organizationId: ctx.organizationId,
+        branchId,
+      });
+
+      // Se estamos escopando por filial, precisamos do mapeamento para o legado.
+      if (branchId && !ctx.isAdmin && !legacyCompanyBranchCode) {
+        return NextResponse.json(
+          {
+            error:
+              "Filial sem Código Legado configurado (legacyCompanyBranchCode). Preencha o 'Código da Filial (Legado)' na Filial para o Audit filtrar corretamente.",
+          },
+          { status: 400 }
+        );
+      }
+
+      return handleRun(req, requestedBy, organizationId, branchId, legacyCompanyBranchCode);
     });
   }
 
@@ -52,13 +82,53 @@ export async function POST(req: NextRequest) {
   const parsedOrg = orgHeader ? Number(orgHeader) : NaN;
   organizationId = Number.isFinite(parsedOrg) ? parsedOrg : null;
 
-  return handleRun(req, requestedBy, organizationId);
+  const branchHeader = req.headers.get("x-branch-id");
+  const parsedBranch = branchHeader ? Number(branchHeader) : NaN;
+  branchId = Number.isFinite(parsedBranch) ? parsedBranch : null;
+
+  const legacyBranchHeader = req.headers.get("x-legacy-company-branch-code");
+  const parsedLegacy = legacyBranchHeader ? Number(legacyBranchHeader) : NaN;
+  legacyCompanyBranchCode = Number.isFinite(parsedLegacy) ? parsedLegacy : null;
+
+  return handleRun(req, requestedBy, organizationId, branchId, legacyCompanyBranchCode);
+}
+
+async function resolveLegacyCompanyBranchCode(opts: {
+  organizationId: number;
+  branchId: number | null;
+}): Promise<number | null> {
+  if (!opts.branchId) return null;
+  const { ensureConnection, pool } = await import("@/lib/db");
+  await ensureConnection();
+
+  const col = await pool.request().query(`
+    SELECT COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as col;
+  `);
+  const colExists = (col.recordset?.[0] as any)?.col != null;
+  if (!colExists) return null;
+
+  const r = await pool
+    .request()
+    .input("org", opts.organizationId)
+    .input("id", opts.branchId)
+    .query(`
+      SELECT TOP 1 legacy_company_branch_code as code
+      FROM dbo.branches
+      WHERE id = @id
+        AND organization_id = @org
+        AND deleted_at IS NULL
+      ORDER BY id DESC;
+    `);
+  const code = Number((r.recordset?.[0] as any)?.code ?? NaN);
+  return Number.isFinite(code) ? code : null;
 }
 
 async function handleRun(
   req: Request,
   requestedBy: { userId: string; email: string },
-  organizationId: number | null
+  organizationId: number | null,
+  branchId: number | null,
+  legacyCompanyBranchCode: number | null
 ) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
   const json = await req.json().catch(() => null);
@@ -106,7 +176,15 @@ async function handleRun(
     const wait = req.headers.get("x-audit-wait") === "1";
     const fn = wait ? runSnapshot : queueSnapshot;
 
-    const { runId } = await fn({ periodStart, periodEndInclusive, axis, requestedBy, organizationId });
+    const { runId } = await fn({
+      periodStart,
+      periodEndInclusive,
+      axis,
+      requestedBy,
+      organizationId,
+      branchId,
+      legacyCompanyBranchCode,
+    });
 
     return NextResponse.json({
       success: true,

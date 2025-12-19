@@ -38,6 +38,15 @@ const branchFormSchema = z.object({
   document: z.string().min(14, "CNPJ deve ter 14 dígitos"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(10, "Telefone inválido"),
+  // Integração (legado / Auditoria)
+  legacyCompanyBranchCode: z.preprocess(
+    (v) => {
+      if (v === "" || v === null || v === undefined) return undefined;
+      const n = typeof v === "number" ? v : Number(String(v));
+      return Number.isFinite(n) ? n : undefined;
+    },
+    z.number().int().min(1).max(32767)
+  ).optional(),
 
   // Fiscal
   ie: z.string().min(1, "Inscrição Estadual é obrigatória"),
@@ -81,6 +90,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       document: initialData?.document || "",
       email: initialData?.email || "",
       phone: initialData?.phone || "",
+      legacyCompanyBranchCode: (initialData as any)?.legacyCompanyBranchCode ?? undefined,
       ie: initialData?.ie || "",
       im: initialData?.im || "",
       crt: initialData?.crt || "1",
@@ -296,6 +306,29 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                           <SelectItem value="INACTIVE">Inativa</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="legacyCompanyBranchCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Código da Filial (Legado)</FormLabel>
+                      <FormControl>
+                        <Input
+                          value={field.value === undefined ? "" : String(field.value)}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          placeholder="Ex: 1"
+                          inputMode="numeric"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Opcional. Preencha com o <code>CodigoEmpresaFilial</code> do banco legado para o módulo Auditoria
+                        filtrar corretamente por filial.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

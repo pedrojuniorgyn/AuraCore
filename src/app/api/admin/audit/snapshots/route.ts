@@ -4,7 +4,10 @@ import { withPermission } from "@/lib/auth/api-guard";
 
 export const runtime = "nodejs";
 
-async function listSnapshots(req: Request, opts?: { organizationId?: number | null }) {
+async function listSnapshots(
+  req: Request,
+  opts?: { organizationId?: number | null; isAdmin?: boolean; allowedBranches?: number[]; branchId?: number | null }
+) {
   const debugRequested = req.headers.get("x-audit-debug") === "1";
 
   try {
@@ -40,7 +43,16 @@ async function listSnapshots(req: Request, opts?: { organizationId?: number | nu
     `);
     const orgColExists = (hasOrgCol.recordset?.[0] as any)?.org_col != null;
 
+    const hasBranchCol = await audit.request().query(`
+      SELECT COL_LENGTH('dbo.audit_snapshot_runs', 'branch_id') as branch_col;
+    `);
+    const branchColExists = (hasBranchCol.recordset?.[0] as any)?.branch_col != null;
+
     const orgId = opts?.organizationId ?? null;
+    const explicitBranchId = opts?.branchId ?? null;
+    const isAdmin = opts?.isAdmin === true;
+    const allowedBranches = Array.isArray(opts?.allowedBranches) ? opts?.allowedBranches ?? [] : [];
+    const branchIdsCsv = allowedBranches.length ? allowedBranches.join(",") : "";
 
     const q = orgColExists
       ? `
@@ -56,6 +68,12 @@ async function listSnapshots(req: Request, opts?: { organizationId?: number | nu
         WHERE 1=1
           AND (@since_days = 0 OR started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
           AND (@org_id IS NULL OR organization_id = @org_id)
+          ${branchColExists ? "AND (@branch_id IS NULL OR branch_id = @branch_id)" : ""}
+          ${
+            branchColExists
+              ? "AND (@is_admin = 1 OR @allowed_branch_ids = '' OR branch_id IN (SELECT TRY_CAST(value as int) FROM string_split(@allowed_branch_ids, ',')))"
+              : ""
+          }
         ORDER BY started_at DESC;
       `
       : `
@@ -77,6 +95,9 @@ async function listSnapshots(req: Request, opts?: { organizationId?: number | nu
       .request()
       .input("since_days", sinceDaysSafe)
       .input("org_id", orgId as any)
+      .input("branch_id", explicitBranchId as any)
+      .input("is_admin", isAdmin ? 1 : 0)
+      .input("allowed_branch_ids", branchIdsCsv)
       .query(q);
 
     return NextResponse.json({
@@ -122,11 +143,25 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const orgIdRaw = url.searchParams.get("organizationId");
     const orgId = orgIdRaw ? Number(orgIdRaw) : NaN;
-    return listSnapshots(req, { organizationId: Number.isFinite(orgId) ? orgId : null });
+    const branchIdRaw = url.searchParams.get("branchId");
+    const branchId = branchIdRaw ? Number(branchIdRaw) : NaN;
+    return listSnapshots(req, {
+      organizationId: Number.isFinite(orgId) ? orgId : null,
+      branchId: Number.isFinite(branchId) ? branchId : null,
+      isAdmin: true,
+      allowedBranches: [],
+    });
   }
 
   // Mesmo sem ser ADMIN, pode acessar se tiver permissão (ex.: role AUDITOR).
-  return withPermission(req, "audit.read", async (_user, ctx) =>
-    listSnapshots(req, { organizationId: ctx.organizationId })
-  );
+  return withPermission(req, "audit.read", async (_user, ctx) => {
+    if (!ctx.isAdmin && (!ctx.allowedBranches || ctx.allowedBranches.length === 0)) {
+      return NextResponse.json({ success: true, items: [] });
+    }
+    return listSnapshots(req, {
+      organizationId: ctx.organizationId,
+      isAdmin: ctx.isAdmin,
+      allowedBranches: ctx.allowedBranches ?? [],
+    });
+  });
 }
