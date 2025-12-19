@@ -18,18 +18,25 @@ export async function POST(request: NextRequest) {
     const orgId = ctx.organizationId;
 
     function renderOrgSql(template: string, orgId: number): string {
-      const rendered = template.replaceAll("__ORG_ID__", String(orgId));
+      // Corrige hardcodes perigosos de multi-tenancy em templates SQL:
+      // - organization_id = 1  -> organization_id = __ORG_ID__
+      // - SELECT 1,            -> SELECT __ORG_ID__,
+      //
+      // Importante: não mexemos em "SELECT 1 FROM" em subqueries (isso é só sentinel de EXISTS).
+      let sql = template;
+      sql = sql.replace(/\borganization_id\s*=\s*1\b/gi, "organization_id = __ORG_ID__");
+      sql = sql.replace(/\bSELECT\s+1\s*,/gi, "SELECT __ORG_ID__,");
 
-      // 🔐 Hard-fail se existir hardcode de tenant (evita vazamento multi-tenant)
-      // (De propósito: isso quebra cedo em vez de semear dados no tenant errado.)
-      if (/\borganization_id\s*=\s*1\b/i.test(rendered)) {
+      sql = sql.replaceAll("__ORG_ID__", String(orgId));
+
+      // 🔐 Hard-fail se sobrar hardcode (evita vazamento entre tenants)
+      if (/\borganization_id\s*=\s*1\b/i.test(sql)) {
         throw new Error("Seed SQL inseguro: encontrou 'organization_id = 1' após renderização.");
       }
-      // Detecta inserts que ainda usam SELECT 1, como orgId
-      if (/\bINSERT\s+INTO\b[\s\S]*?\bSELECT\s+1\s*,/i.test(rendered)) {
+      if (/\bSELECT\s+1\s*,/i.test(sql)) {
         throw new Error("Seed SQL inseguro: encontrou 'SELECT 1,' após renderização.");
       }
-      return rendered;
+      return sql;
     }
     
     const accounts = `
@@ -43,77 +50,77 @@ export async function POST(request: NextRequest) {
       WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = __ORG_ID__);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '4.3.1.01.001', 'Ferramental e Utensílios', 'Ferramentas oficina', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1.01.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '4.3.1.01.001', 'Ferramental e Utensílios', 'Ferramentas oficina', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1.01.001' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '4.3.1.01.002', 'Gases Industriais', 'Oxigênio/Acetileno', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1.01.002' AND organization_id = __ORG_ID__);
+      SELECT 1, '4.3.1.01.002', 'Gases Industriais', 'Oxigênio/Acetileno', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.3.1' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.3.1.01.002' AND organization_id = 1);
 
       -- WMS RECEITAS
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '3.1.2', 'RECEITAS LOGÍSTICAS', 'Armazenagem e WMS', 'REVENUE', 0, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = __ORG_ID__);
+      SELECT 1, '3.1.2', 'RECEITAS LOGÍSTICAS', 'Armazenagem e WMS', 'REVENUE', 0, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '3.1.2.01.001', 'Receita Armazenagem Pallet', 'Cobrança por posição', 'REVENUE', (SELECT id FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2.01.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '3.1.2.01.001', 'Receita Armazenagem Pallet', 'Cobrança por posição', 'REVENUE', (SELECT id FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2.01.001' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '3.1.2.02.001', 'Receita Inbound', 'Recebimento mercadorias', 'REVENUE', (SELECT id FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2.02.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '3.1.2.02.001', 'Receita Inbound', 'Recebimento mercadorias', 'REVENUE', (SELECT id FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2.02.001' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '3.1.2.02.002', 'Receita Outbound', 'Expedição mercadorias', 'REVENUE', (SELECT id FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2.02.002' AND organization_id = __ORG_ID__);
+      SELECT 1, '3.1.2.02.002', 'Receita Outbound', 'Expedição mercadorias', 'REVENUE', (SELECT id FROM financial_chart_accounts WHERE code = '3.1.2' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.1.2.02.002' AND organization_id = 1);
 
       -- GERENCIAMENTO DE RISCO
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '4.1.4', 'CUSTOS DE GERENCIAMENTO RISCO', 'Prevenção perdas', 'EXPENSE', 0, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.1.4' AND organization_id = __ORG_ID__);
+      SELECT 1, '4.1.4', 'CUSTOS DE GERENCIAMENTO RISCO', 'Prevenção perdas', 'EXPENSE', 0, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.1.4' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '4.1.4.01.001', 'Rastreamento Satelital', 'Autotrac/Sascar/Omnilink', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.1.4' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.1.4.01.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '4.1.4.01.001', 'Rastreamento Satelital', 'Autotrac/Sascar/Omnilink', 'EXPENSE', (SELECT id FROM financial_chart_accounts WHERE code = '4.1.4' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '4.1.4.01.001' AND organization_id = 1);
 
       -- CIAP
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.4.05', 'ICMS ATIVO PERMANENTE', 'Crédito 48 meses', 'ASSET', 0, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.4.05', 'ICMS ATIVO PERMANENTE', 'Crédito 48 meses', 'ASSET', 0, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.4.05.001', 'CIAP a Recuperar LP', 'Longo prazo', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.4.05.001', 'CIAP a Recuperar LP', 'Longo prazo', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05.001' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.4.05.002', 'CIAP a Recuperar CP', 'Curto prazo', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05.002' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.4.05.002', 'CIAP a Recuperar CP', 'Curto prazo', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05.002' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.4.05.003', 'Crédito CIAP do Mês', 'Apropriado mensalmente', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05.003' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.4.05.003', 'Crédito CIAP do Mês', 'Apropriado mensalmente', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.4.05' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.4.05.003' AND organization_id = 1);
 
       -- SINISTROS
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.2.06', 'CRÉDITOS SINISTROS', 'A receber seguros', 'ASSET', 0, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.2.06' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.2.06', 'CRÉDITOS SINISTROS', 'A receber seguros', 'ASSET', 0, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.2.06' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, parent_id, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.2.06.001', 'Créditos Seguradoras', 'Indenizações aprovadas', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.2.06' AND organization_id = __ORG_ID__), 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.2.06.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.2.06.001', 'Créditos Seguradoras', 'Indenizações aprovadas', 'ASSET', (SELECT id FROM financial_chart_accounts WHERE code = '1.1.2.06' AND organization_id = 1), 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.2.06.001' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '3.3.1.01.001', 'Receita Indenização Seguros', 'Entrada seguradora', 'REVENUE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.3.1.01.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '3.3.1.01.001', 'Receita Indenização Seguros', 'Entrada seguradora', 'REVENUE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '3.3.1.01.001' AND organization_id = 1);
 
       -- INTERCOMPANY
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '1.1.9.01.001', 'Conta Corrente Matriz', 'Filial deve à Matriz', 'ASSET', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.9.01.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '1.1.9.01.001', 'Conta Corrente Matriz', 'Filial deve à Matriz', 'ASSET', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '1.1.9.01.001' AND organization_id = 1);
 
       INSERT INTO financial_chart_accounts (organization_id, code, name, description, account_type, is_analytical, status)
-      SELECT __ORG_ID__, '2.1.9.01.001', 'Conta Corrente Filiais', 'Matriz deve às Filiais', 'LIABILITY', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '2.1.9.01.001' AND organization_id = __ORG_ID__);
+      SELECT 1, '2.1.9.01.001', 'Conta Corrente Filiais', 'Matriz deve às Filiais', 'LIABILITY', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = '2.1.9.01.001' AND organization_id = 1);
     `;
 
     await pool.query(renderOrgSql(accounts, orgId));
@@ -125,24 +132,24 @@ export async function POST(request: NextRequest) {
       WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-901' AND organization_id = __ORG_ID__);
 
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
-      SELECT __ORG_ID__, 'CC-902', 'POSTO INTERNO', 'Abastecimento', 'EXPENSE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-902' AND organization_id = __ORG_ID__);
+      SELECT 1, 'CC-902', 'POSTO INTERNO', 'Abastecimento', 'EXPENSE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-902' AND organization_id = 1);
 
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
-      SELECT __ORG_ID__, 'CC-903', 'LAVA JATO', 'Conservação', 'EXPENSE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-903' AND organization_id = __ORG_ID__);
+      SELECT 1, 'CC-903', 'LAVA JATO', 'Conservação', 'EXPENSE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-903' AND organization_id = 1);
 
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
-      SELECT __ORG_ID__, 'CC-920', 'RH / D.P.', 'Recursos Humanos', 'EXPENSE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-920' AND organization_id = __ORG_ID__);
+      SELECT 1, 'CC-920', 'RH / D.P.', 'Recursos Humanos', 'EXPENSE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-920' AND organization_id = 1);
 
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
-      SELECT __ORG_ID__, 'CC-930', 'TECNOLOGIA', 'TI e Sistemas', 'EXPENSE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-930' AND organization_id = __ORG_ID__);
+      SELECT 1, 'CC-930', 'TECNOLOGIA', 'TI e Sistemas', 'EXPENSE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-930' AND organization_id = 1);
 
       INSERT INTO financial_cost_centers (organization_id, code, name, description, type, is_analytical, status)
-      SELECT __ORG_ID__, 'CC-940', 'COMERCIAL', 'Vendas', 'REVENUE', 1, 'ACTIVE'
-      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-940' AND organization_id = __ORG_ID__);
+      SELECT 1, 'CC-940', 'COMERCIAL', 'Vendas', 'REVENUE', 1, 'ACTIVE'
+      WHERE NOT EXISTS (SELECT 1 FROM financial_cost_centers WHERE code = 'CC-940' AND organization_id = 1);
     `;
 
     await pool.query(renderOrgSql(costCenters, orgId));
@@ -154,20 +161,20 @@ export async function POST(request: NextRequest) {
       WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'RJ' AND cargo_type = 'GERAL');
 
       INSERT INTO fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, legal_basis)
-      SELECT __ORG_ID__, 'SP', 'MG', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
-      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'MG' AND cargo_type = 'GERAL');
+      SELECT 1, 'SP', 'MG', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
+      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = 1 AND uf_origin = 'SP' AND uf_destination = 'MG' AND cargo_type = 'GERAL');
 
       INSERT INTO fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, legal_basis)
-      SELECT __ORG_ID__, 'SP', 'BA', 'GERAL', 1, '00', 'Tributação Normal', 7.00, 2.00, 'Lei BA 7014/96'
-      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'BA' AND cargo_type = 'GERAL');
+      SELECT 1, 'SP', 'BA', 'GERAL', 1, '00', 'Tributação Normal', 7.00, 2.00, 'Lei BA 7014/96'
+      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = 1 AND uf_origin = 'SP' AND uf_destination = 'BA' AND cargo_type = 'GERAL');
 
       INSERT INTO fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, legal_basis)
-      SELECT __ORG_ID__, 'SP', 'RS', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
-      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'RS' AND cargo_type = 'GERAL');
+      SELECT 1, 'SP', 'RS', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
+      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = 1 AND uf_origin = 'SP' AND uf_destination = 'RS' AND cargo_type = 'GERAL');
 
       INSERT INTO fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, legal_basis)
-      SELECT __ORG_ID__, 'SP', 'PR', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
-      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'PR' AND cargo_type = 'GERAL');
+      SELECT 1, 'SP', 'PR', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 'Resolução SF 13/2012'
+      WHERE NOT EXISTS (SELECT 1 FROM fiscal_tax_matrix WHERE organization_id = 1 AND uf_origin = 'SP' AND uf_destination = 'PR' AND cargo_type = 'GERAL');
     `;
 
     await pool.query(renderOrgSql(taxMatrix, orgId));
@@ -192,7 +199,6 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
-
 
 
 
