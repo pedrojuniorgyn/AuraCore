@@ -17,6 +17,16 @@ export async function POST(request: NextRequest) {
     }
     const orgId = ctx.organizationId;
 
+    // Por padrão, NÃO semeamos Matriz Tributária (pedido do usuário).
+    // Se quiser semear, envie { includeTaxMatrix: true } no body.
+    let includeTaxMatrix = false;
+    try {
+      const body = await request.json().catch(() => ({}));
+      includeTaxMatrix = body?.includeTaxMatrix === true;
+    } catch {
+      includeTaxMatrix = false;
+    }
+
     function renderOrgSql(template: string, orgId: number): string {
       // Corrige hardcodes perigosos de multi-tenancy em templates SQL:
       // - organization_id = 1  -> organization_id = __ORG_ID__
@@ -142,40 +152,44 @@ export async function POST(request: NextRequest) {
       renderOrgSql(costCenters, orgId).replaceAll("__CREATED_BY__", String(ctx.userId))
     );
 
-    // Seed Matriz Tributária
-    // Matriz tributária:
-    // - dbo.tax_matrix é a tabela oficial do AuraCore (usada pelo tax-calculator)
-    // - dbo.fiscal_tax_matrix existe em alguns ambientes (migration 0029) e ainda é usada por rotas legacy
-    //   → vamos semear nas duas, se existirem.
-    const taxMatrix = `
-      DECLARE @valid_from DATE = '2020-01-01';
+    let taxRulesSeeded = 0;
+    if (includeTaxMatrix) {
+      // Seed Matriz Tributária (opt-in)
+      // Matriz tributária:
+      // - dbo.tax_matrix é a tabela oficial do AuraCore (usada pelo tax-calculator)
+      // - dbo.fiscal_tax_matrix existe em alguns ambientes (migration 0029) e ainda é usada por rotas legacy
+      //   → vamos semear nas duas, se existirem.
+      const taxMatrix = `
+        DECLARE @valid_from DATE = '2020-01-01';
 
-      IF OBJECT_ID(N'dbo.tax_matrix', 'U') IS NOT NULL
-      BEGIN
-        INSERT INTO dbo.tax_matrix (organization_id, origin_uf, destination_uf, icms_rate, icms_reduction, fcp_rate, cfop_internal, cfop_interstate, cst, regime, valid_from, valid_to, notes, status, created_by, updated_by)
-        SELECT __ORG_ID__, 'SP', 'RJ', 12.00, 0.00, 0.00, '5353', '6353', '00', 'NORMAL', @valid_from, NULL, 'Seed enterprise', 'ACTIVE', '__CREATED_BY__', '__CREATED_BY__'
-        WHERE NOT EXISTS (SELECT 1 FROM dbo.tax_matrix WHERE organization_id = __ORG_ID__ AND origin_uf = 'SP' AND destination_uf = 'RJ' AND regime = 'NORMAL' AND deleted_at IS NULL);
+        IF OBJECT_ID(N'dbo.tax_matrix', 'U') IS NOT NULL
+        BEGIN
+          INSERT INTO dbo.tax_matrix (organization_id, origin_uf, destination_uf, icms_rate, icms_reduction, fcp_rate, cfop_internal, cfop_interstate, cst, regime, valid_from, valid_to, notes, status, created_by, updated_by)
+          SELECT __ORG_ID__, 'SP', 'RJ', 12.00, 0.00, 0.00, '5353', '6353', '00', 'NORMAL', @valid_from, NULL, 'Seed enterprise', 'ACTIVE', '__CREATED_BY__', '__CREATED_BY__'
+          WHERE NOT EXISTS (SELECT 1 FROM dbo.tax_matrix WHERE organization_id = __ORG_ID__ AND origin_uf = 'SP' AND destination_uf = 'RJ' AND regime = 'NORMAL' AND deleted_at IS NULL);
 
-        INSERT INTO dbo.tax_matrix (organization_id, origin_uf, destination_uf, icms_rate, icms_reduction, fcp_rate, cfop_internal, cfop_interstate, cst, regime, valid_from, valid_to, notes, status, created_by, updated_by)
-        SELECT __ORG_ID__, 'SP', 'MG', 12.00, 0.00, 0.00, '5353', '6353', '00', 'NORMAL', @valid_from, NULL, 'Seed enterprise', 'ACTIVE', '__CREATED_BY__', '__CREATED_BY__'
-        WHERE NOT EXISTS (SELECT 1 FROM dbo.tax_matrix WHERE organization_id = __ORG_ID__ AND origin_uf = 'SP' AND destination_uf = 'MG' AND regime = 'NORMAL' AND deleted_at IS NULL);
-      END;
+          INSERT INTO dbo.tax_matrix (organization_id, origin_uf, destination_uf, icms_rate, icms_reduction, fcp_rate, cfop_internal, cfop_interstate, cst, regime, valid_from, valid_to, notes, status, created_by, updated_by)
+          SELECT __ORG_ID__, 'SP', 'MG', 12.00, 0.00, 0.00, '5353', '6353', '00', 'NORMAL', @valid_from, NULL, 'Seed enterprise', 'ACTIVE', '__CREATED_BY__', '__CREATED_BY__'
+          WHERE NOT EXISTS (SELECT 1 FROM dbo.tax_matrix WHERE organization_id = __ORG_ID__ AND origin_uf = 'SP' AND destination_uf = 'MG' AND regime = 'NORMAL' AND deleted_at IS NULL);
+        END;
 
-      IF OBJECT_ID(N'dbo.fiscal_tax_matrix', 'U') IS NOT NULL
-      BEGIN
-        INSERT INTO dbo.fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, difal_applicable, difal_origin_percentage, difal_destination_percentage, is_active, valid_from, valid_until, legal_basis)
-        SELECT __ORG_ID__, 'SP', 'RJ', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 0, 0, 0, 1, @valid_from, NULL, 'Seed enterprise'
-        WHERE NOT EXISTS (SELECT 1 FROM dbo.fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'RJ' AND cargo_type = 'GERAL');
+        IF OBJECT_ID(N'dbo.fiscal_tax_matrix', 'U') IS NOT NULL
+        BEGIN
+          INSERT INTO dbo.fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, difal_applicable, difal_origin_percentage, difal_destination_percentage, is_active, valid_from, valid_until, legal_basis)
+          SELECT __ORG_ID__, 'SP', 'RJ', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 0, 0, 0, 1, @valid_from, NULL, 'Seed enterprise'
+          WHERE NOT EXISTS (SELECT 1 FROM dbo.fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'RJ' AND cargo_type = 'GERAL');
 
-        INSERT INTO dbo.fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, difal_applicable, difal_origin_percentage, difal_destination_percentage, is_active, valid_from, valid_until, legal_basis)
-        SELECT __ORG_ID__, 'SP', 'MG', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 0, 0, 0, 1, @valid_from, NULL, 'Seed enterprise'
-        WHERE NOT EXISTS (SELECT 1 FROM dbo.fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'MG' AND cargo_type = 'GERAL');
-      END;
-    `;
+          INSERT INTO dbo.fiscal_tax_matrix (organization_id, uf_origin, uf_destination, cargo_type, is_icms_contributor, cst_code, cst_description, icms_rate, fcp_rate, difal_applicable, difal_origin_percentage, difal_destination_percentage, is_active, valid_from, valid_until, legal_basis)
+          SELECT __ORG_ID__, 'SP', 'MG', 'GERAL', 1, '00', 'Tributação Normal', 12.00, 0.00, 0, 0, 0, 1, @valid_from, NULL, 'Seed enterprise'
+          WHERE NOT EXISTS (SELECT 1 FROM dbo.fiscal_tax_matrix WHERE organization_id = __ORG_ID__ AND uf_origin = 'SP' AND uf_destination = 'MG' AND cargo_type = 'GERAL');
+        END;
+      `;
 
-    await pool.query(
-      renderOrgSql(taxMatrix, orgId).replaceAll("__CREATED_BY__", String(ctx.userId))
-    );
+      await pool.query(
+        renderOrgSql(taxMatrix, orgId).replaceAll("__CREATED_BY__", String(ctx.userId))
+      );
+      taxRulesSeeded = 2;
+    }
 
     return NextResponse.json({
       success: true,
@@ -183,7 +197,8 @@ export async function POST(request: NextRequest) {
       details: {
         accounts_seeded: 8,
         cost_centers_seeded: 6,
-        tax_rules_seeded: 2
+        tax_rules_seeded: taxRulesSeeded,
+        includeTaxMatrix,
       }
     });
   } catch (error: any) {

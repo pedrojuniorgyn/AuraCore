@@ -60,6 +60,7 @@ export default function UsersManagementPage() {
   const { hasPermission, loading: permissionsLoading } = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -277,6 +278,40 @@ export default function UsersManagementPage() {
     }
   };
 
+  const deleteUser = async (u: User) => {
+    if (!u?.id) return;
+    if (!u.email) {
+      toast.error("Não é possível excluir", { description: "Usuário sem email." });
+      return;
+    }
+
+    const ok = confirm(
+      `Excluir o usuário?\n\n` +
+        `Email: ${u.email}\n` +
+        `Nome: ${u.name || "—"}\n\n` +
+        `Essa ação remove acessos (roles/filiais) e revoga sessões.`
+    );
+    if (!ok) return;
+
+    setDeletingUserId(u.id);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Falha ao excluir usuário");
+      }
+      toast.success("Usuário excluído");
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error("Erro ao excluir usuário", { description: err?.message });
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   if (permissionsLoading || loading) {
     return <div className="p-6">Carregando...</div>;
   }
@@ -470,7 +505,13 @@ export default function UsersManagementPage() {
                         >
                           <KeyRound className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteUser(user)}
+                          disabled={deletingUserId === user.id}
+                          title="Excluir usuário"
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>

@@ -105,7 +105,9 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
 
     setIsLoadingCep(true);
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+        headers: { Accept: "application/json" },
+      });
       const data = await response.json();
 
       if (data.erro) {
@@ -117,12 +119,24 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       form.setValue("district", data.bairro || "");
       form.setValue("cityName", data.localidade || "");
       form.setValue("state", data.uf || "");
-      form.setValue("cityCode", data.ibge || "");
-      form.setValue("complement", data.complemento || "");
+      if (typeof data.complemento === "string" && data.complemento) {
+        form.setValue("complement", data.complemento);
+      }
 
-      toast.success("Endereço preenchido automaticamente!");
+      // IBGE às vezes não vem. Se vier, valida e preenche; se não vier, deixa o usuário preencher manualmente.
+      const ibge = typeof data.ibge === "string" ? data.ibge.replace(/\D/g, "") : "";
+      if (/^\d{7}$/.test(ibge)) {
+        form.setValue("cityCode", ibge);
+        toast.success("Endereço preenchido automaticamente!");
+      } else {
+        toast.success("Endereço preenchido (IBGE pendente)", {
+          description: "Preencha o Código IBGE manualmente para concluir o cadastro.",
+        });
+      }
     } catch (error) {
-      toast.error("Erro ao buscar CEP");
+      toast.error("Erro ao buscar CEP", {
+        description: "Não foi possível consultar o ViaCEP. Preencha o endereço manualmente.",
+      });
     } finally {
       setIsLoadingCep(false);
     }
@@ -497,11 +511,13 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                     name="cityCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Código IBGE</FormLabel>
+                        <FormLabel>Código IBGE *</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="3550308" readOnly />
+                          <Input {...field} placeholder="3550308" maxLength={7} inputMode="numeric" />
                         </FormControl>
-                        <FormDescription>Preenchido automaticamente pelo CEP</FormDescription>
+                        <FormDescription>
+                          Tenta preencher automaticamente pelo CEP. Se não vier, digite manualmente (7 dígitos).
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

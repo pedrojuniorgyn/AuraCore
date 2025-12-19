@@ -284,9 +284,14 @@ export default function BranchConfigPage() {
             {branch.name} - CNPJ: {branch.document}
           </p>
         </div>
-        <Button variant="outline" onClick={() => router.push("/configuracoes/filiais")}>
-          Voltar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => router.push(`/configuracoes/filiais/edit/${branchId}`)}>
+            Editar dados
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/configuracoes/filiais")}>
+            Voltar
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
