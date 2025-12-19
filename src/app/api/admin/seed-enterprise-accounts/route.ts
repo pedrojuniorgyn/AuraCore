@@ -30,11 +30,15 @@ export async function POST(request: NextRequest) {
       sql = sql.replaceAll("__ORG_ID__", String(orgId));
 
       // 🔐 Hard-fail se sobrar hardcode (evita vazamento entre tenants)
-      if (/\borganization_id\s*=\s*1\b/i.test(sql)) {
-        throw new Error("Seed SQL inseguro: encontrou 'organization_id = 1' após renderização.");
-      }
-      if (/\bSELECT\s+1\s*,/i.test(sql)) {
-        throw new Error("Seed SQL inseguro: encontrou 'SELECT 1,' após renderização.");
+      // OBS: se o tenant atual for orgId=1, esses padrões são válidos após renderização.
+      // Só bloqueamos quando orgId != 1, pois aí indicaria que sobrou hardcode.
+      if (orgId !== 1) {
+        if (/\borganization_id\s*=\s*1\b/i.test(sql)) {
+          throw new Error("Seed SQL inseguro: encontrou 'organization_id = 1' após renderização.");
+        }
+        if (/\bSELECT\s+1\s*,/i.test(sql)) {
+          throw new Error("Seed SQL inseguro: encontrou 'SELECT 1,' após renderização.");
+        }
       }
       return sql;
     }
