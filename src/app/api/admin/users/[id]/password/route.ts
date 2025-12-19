@@ -51,7 +51,7 @@ export async function PUT(
           passwordHash,
           updatedAt: new Date(),
         } as any)
-        .where(eq(users.id, id));
+        .where(and(eq(users.id, id), eq(users.organizationId, ctx.organizationId)));
 
       return NextResponse.json({ success: true });
     } catch (error: any) {
