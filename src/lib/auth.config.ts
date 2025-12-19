@@ -8,21 +8,23 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = nextUrl.pathname.startsWith("/dashboard") || 
-                            nextUrl.pathname.startsWith("/financeiro") ||
-                            nextUrl.pathname.startsWith("/frota") ||
-                            nextUrl.pathname.startsWith("/tms");
-      
-      const isOnLogin = nextUrl.pathname.startsWith("/login");
+      const pathname = nextUrl.pathname;
+      const isOnLogin = pathname.startsWith("/login");
 
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redireciona para login
-      }
+      const isApi = pathname.startsWith("/api");
+      const isStatic =
+        pathname.startsWith("/_next/static") ||
+        pathname.startsWith("/_next/image") ||
+        pathname === "/favicon.ico";
+
+      // Tudo que não for login/api/estático é "produto" e requer sessão.
+      const isProductPage = !isOnLogin && !isApi && !isStatic;
+
+      if (isProductPage) return isLoggedIn;
 
       if (isOnLogin) {
         if (isLoggedIn) {
-          return Response.redirect(new URL("/dashboard", nextUrl));
+          return Response.redirect(new URL("/", nextUrl));
         }
         return true;
       }
