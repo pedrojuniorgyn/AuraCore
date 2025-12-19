@@ -19,7 +19,7 @@ export default auth((req) => {
 
   // Auditoria: permitir automação via token, mas evitar bypass "aberto".
   // Se NÃO tiver token válido, exigimos sessão (e o handler aplica RBAC audit.*).
-  if (pathname.startsWith("/api/admin/audit/snapshots")) {
+  if (pathname.startsWith("/api/admin/audit/")) {
     const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
     const headerToken = req.headers.get("x-audit-token");
     const tokenOk = token && headerToken && headerToken === token;

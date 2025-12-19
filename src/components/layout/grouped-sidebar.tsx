@@ -234,6 +234,7 @@ const sidebarGroups: SidebarGroup[] = [
     color: "text-amber-400",
     items: [
       { title: "Snapshots", href: "/auditoria/snapshots", icon: Database, color: "text-amber-400" },
+      { title: "Achados", href: "/auditoria/findings", icon: AlertTriangle, color: "text-red-400" },
     ],
   },
 ];
