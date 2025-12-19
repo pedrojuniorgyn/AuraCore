@@ -51,14 +51,15 @@ export async function POST(request: Request) {
 
     // Drizzle MSSQL: $returningId existe em runtime, mas pode não estar tipado.
     // Além disso, nunca devolvemos success=true com data undefined.
-    const insert = (db as any).insert(crmLeads).values({
-      ...(safeBody as any),
-      organizationId: ctx.organizationId,
-      stage: (safeBody as any)?.stage || "PROSPECTING",
-      ownerId: ctx.userId,
-      createdBy: ctx.userId,
-    });
-    const [createdId] = await (insert as any).$returningId();
+    const [createdId] = await (db
+      .insert(crmLeads)
+      .values({
+        ...safeBody,
+        organizationId: ctx.organizationId,
+        stage: (safeBody as any)?.stage || "PROSPECTING",
+        ownerId: ctx.userId,
+        createdBy: ctx.userId,
+      } as any) as any).$returningId();
 
     const leadId = (createdId as any)?.id;
     if (!leadId) {

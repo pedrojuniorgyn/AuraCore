@@ -145,17 +145,40 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
   }
 }
 
-async function insertRun(audit: MssqlPool, runId: string, input: SnapshotRunInput) {
+type SnapshotRunStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+
+async function insertRun(
+  audit: MssqlPool,
+  runId: string,
+  input: SnapshotRunInput,
+  status: SnapshotRunStatus
+) {
   await audit
     .request()
     // NOTE: evitamos passar `type` explicitamente para reduzir risco de incompatibilidades do driver.
     .input("run_id", runId)
-    .input("status", "RUNNING")
+    .input("status", status)
     .input("period_start", input.periodStart)
     .input("period_end", input.periodEndInclusive)
     .query(
       `INSERT INTO dbo.audit_snapshot_runs (run_id, status, period_start, period_end)
        VALUES (@run_id, @status, @period_start, @period_end)`
+    );
+}
+
+async function markRunRunning(audit: MssqlPool, runId: string) {
+  // Garante que uma execução "queued" não fique pendurada como RUNNING se o processo morrer antes de começar.
+  // No início da execução real, promovemos para RUNNING e "resetamos" finished/error.
+  await audit
+    .request()
+    .input("run_id", runId)
+    .query(
+      `UPDATE dbo.audit_snapshot_runs
+       SET status = 'RUNNING',
+           started_at = COALESCE(started_at, SYSUTCDATETIME()),
+           finished_at = NULL,
+           error_message = NULL
+       WHERE run_id = @run_id`
     );
 }
 
@@ -971,7 +994,8 @@ export async function queueSnapshot(input: SnapshotRunInput): Promise<{ runId: s
   const audit = await getAuditFinPool();
   const runId = crypto.randomUUID();
   await ensureEtlSchema(audit);
-  await insertRun(audit, runId, input);
+  // Importante: em modo background, marcar como QUEUED evita "RUNNING" pendurado caso o worker morra/recicle.
+  await insertRun(audit, runId, input, "QUEUED");
 
   // Fire-and-forget: mantém o processamento no Node runtime do `next start`.
   void executeSnapshot(runId, input, { skipInsert: true }).catch((err) => {
@@ -1007,8 +1031,10 @@ async function executeSnapshot(
   try {
     await ensureEtlSchema(audit);
     if (!opts?.skipInsert) {
-      await insertRun(audit, runId, input);
+      await insertRun(audit, runId, input, "RUNNING");
     }
+    // Se veio de queueSnapshot (QUEUED), promove para RUNNING aqui.
+    await markRunRunning(audit, runId);
 
     const tDim0 = Date.now();
     await syncDimTipoMovimentoBancario(audit, legacy);

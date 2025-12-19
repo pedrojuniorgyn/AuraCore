@@ -10,6 +10,26 @@ async function listSnapshots(req: Request) {
 
   try {
     const audit = await getAuditFinPool();
+    // Limpeza leve: runs "pendurados" (processo morreu/redeploy) não podem ficar eternamente RUNNING.
+    // Snapshot típico termina em poucos minutos; por segurança usamos tolerância alta.
+    const staleMinutes = Number(process.env.AUDIT_SNAPSHOT_STALE_MINUTES || "120");
+    if (Number.isFinite(staleMinutes) && staleMinutes > 0) {
+      await audit
+        .request()
+        .input("mins", staleMinutes)
+        .query(
+          `
+          UPDATE dbo.audit_snapshot_runs
+          SET status = 'FAILED',
+              finished_at = SYSUTCDATETIME(),
+              error_message = COALESCE(error_message, CONCAT('Stale run: excedeu ', CONVERT(varchar(20), @mins), 'min (provável recycle/redeploy).'))
+          WHERE finished_at IS NULL
+            AND status IN ('RUNNING','QUEUED')
+            AND started_at IS NOT NULL
+            AND DATEDIFF(minute, started_at, SYSUTCDATETIME()) > @mins;
+        `
+        );
+    }
     const r = await audit.request().query(`
       SELECT TOP 50
         run_id,

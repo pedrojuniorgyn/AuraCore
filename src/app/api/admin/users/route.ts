@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         id: users.id,
         name: users.name,
         email: users.email,
+        passwordHash: users.passwordHash,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -57,9 +58,13 @@ export async function GET(request: NextRequest) {
     }
 
     const usersWithRoles = allUsers.map((u) => ({
-      ...u,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      createdAt: u.createdAt,
       roles: rolesByUserId.get(u.id) ?? [],
       googleLinked: googleLinkedSet.has(u.id),
+      hasPassword: !!u.passwordHash,
     }));
 
     return NextResponse.json({
