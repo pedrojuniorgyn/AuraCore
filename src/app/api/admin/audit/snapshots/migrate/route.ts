@@ -53,6 +53,22 @@ async function applyMigrate(req: Request, appliedByEmail: string) {
       END
     `);
 
+    // Índices para listagens (snapshots/findings/cashflow/parcelas) não travarem por scan completo
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_snapshot_runs','U') IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_audit_snapshot_runs_org_branch_started'
+            AND object_id = OBJECT_ID('dbo.audit_snapshot_runs')
+        )
+      BEGIN
+        CREATE INDEX IX_audit_snapshot_runs_org_branch_started
+          ON dbo.audit_snapshot_runs (organization_id, branch_id, started_at)
+          INCLUDE (run_id, status, finished_at, period_start, period_end, error_message);
+      END
+    `);
+
     await audit.request().query(`
       IF OBJECT_ID('dbo.audit_raw_conta_bancaria','U') IS NOT NULL
         AND COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') IS NULL
@@ -130,6 +146,51 @@ async function applyMigrate(req: Request, appliedByEmail: string) {
       BEGIN
         CREATE INDEX IX_audit_fact_parcelas_run_conta_efetiva
           ON dbo.audit_fact_parcelas (run_id, conta_bancaria_id_efetiva);
+      END
+    `);
+
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_fact_parcelas','U') IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_audit_fact_parcelas_run_status_venc'
+            AND object_id = OBJECT_ID('dbo.audit_fact_parcelas')
+        )
+      BEGIN
+        CREATE INDEX IX_audit_fact_parcelas_run_status_venc
+          ON dbo.audit_fact_parcelas (run_id, status, data_vencimento)
+          INCLUDE (operacao, valor_parcela, valor_pago, has_vinculo_bancario, bool_conciliado, conta_bancaria_id, conta_bancaria_id_inferida);
+      END
+    `);
+
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_findings','U') IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_audit_findings_run_severity'
+            AND object_id = OBJECT_ID('dbo.audit_findings')
+        )
+      BEGIN
+        CREATE INDEX IX_audit_findings_run_severity
+          ON dbo.audit_findings (run_id, severity)
+          INCLUDE (rule_code, entity_type, entity_id);
+      END
+    `);
+
+    await audit.request().query(`
+      IF OBJECT_ID('dbo.audit_fact_cashflow_daily','U') IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_audit_fact_cashflow_daily_run_data'
+            AND object_id = OBJECT_ID('dbo.audit_fact_cashflow_daily')
+        )
+      BEGIN
+        CREATE INDEX IX_audit_fact_cashflow_daily_run_data
+          ON dbo.audit_fact_cashflow_daily (run_id, data)
+          INCLUDE (conta_bancaria_id, codigo_empresa_filial, entradas, saidas, liquido, saldo_inicial, saldo_final, status_caixa);
       END
     `);
 
