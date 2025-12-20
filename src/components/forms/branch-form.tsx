@@ -83,6 +83,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [legacyBranchOptions, setLegacyBranchOptions] = useState<Array<{ code: number; label: string }>>([]);
   const [taxClassOptions, setTaxClassOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const NONE = "__none__";
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
@@ -367,9 +368,9 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                       <FormControl>
                         {legacyBranchOptions.length ? (
                           <Select
-                            value={field.value == null ? "" : String(field.value)}
+                            value={field.value == null ? NONE : String(field.value)}
                             onValueChange={(v) => {
-                              if (!v) {
+                              if (v === NONE) {
                                 field.onChange(undefined);
                                 return;
                               }
@@ -381,7 +382,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                               <SelectValue placeholder="Selecione do legado (opcional)" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Não usar</SelectItem>
+                              <SelectItem value={NONE}>Não usar</SelectItem>
                               {legacyBranchOptions.map((opt) => (
                                 <SelectItem key={opt.code} value={String(opt.code)}>
                                   {opt.label}
@@ -484,12 +485,15 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                         <FormLabel>Classificação Tributária</FormLabel>
                         <FormControl>
                           {taxClassOptions.length ? (
-                            <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v)}>
+                            <Select
+                              value={(field.value ?? "").trim() ? (field.value as string) : NONE}
+                              onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
+                            >
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione do legado (opcional)" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Não informado</SelectItem>
+                                <SelectItem value={NONE}>Não informado</SelectItem>
                                 {taxClassOptions.map((opt) => (
                                   <SelectItem key={opt.value} value={opt.value}>
                                     {opt.label}
