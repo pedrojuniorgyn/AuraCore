@@ -81,6 +81,8 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [legacyBranchOptions, setLegacyBranchOptions] = useState<Array<{ code: number; label: string }>>([]);
+  const [taxClassOptions, setTaxClassOptions] = useState<Array<{ value: string; label: string }>>([]);
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
@@ -107,6 +109,51 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       status: initialData?.status || "ACTIVE",
     },
   });
+
+  // Carrega opções do banco legado (se disponível). Se falhar, mantém inputs manuais.
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadLegacyOptions() {
+      try {
+        const [rBranches, rTax] = await Promise.all([
+          fetch("/api/admin/audit/legacy/branch-codes", { credentials: "include" }),
+          fetch("/api/admin/audit/legacy/tax-classifications", { credentials: "include" }),
+        ]);
+
+        if (rBranches.ok) {
+          const data = await rBranches.json();
+          const items = Array.isArray(data?.items) ? data.items : [];
+          if (mounted) {
+            setLegacyBranchOptions(
+              items
+                .map((it: any) => ({ code: Number(it.code), label: String(it.label ?? it.code) }))
+                .filter((it: any) => Number.isFinite(it.code))
+            );
+          }
+        }
+
+        if (rTax.ok) {
+          const data = await rTax.json();
+          const items = Array.isArray(data?.items) ? data.items : [];
+          if (mounted) {
+            setTaxClassOptions(
+              items
+                .map((it: any) => ({ value: String(it.value ?? ""), label: String(it.label ?? it.value ?? "") }))
+                .filter((it: any) => it.value)
+            );
+          }
+        }
+      } catch {
+        // silencioso: UI continua com inputs manuais
+      }
+    }
+
+    void loadLegacyOptions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Busca automática de endereço via CEP
   const handleCepBlur = async () => {
@@ -318,12 +365,38 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                     <FormItem>
                       <FormLabel>Código da Filial (Legado)</FormLabel>
                       <FormControl>
-                        <Input
-                          value={field.value === undefined ? "" : String(field.value)}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          placeholder="Ex: 1"
-                          inputMode="numeric"
-                        />
+                        {legacyBranchOptions.length ? (
+                          <Select
+                            value={field.value == null ? "" : String(field.value)}
+                            onValueChange={(v) => {
+                              if (!v) {
+                                field.onChange(undefined);
+                                return;
+                              }
+                              const n = Number(v);
+                              field.onChange(Number.isFinite(n) ? n : undefined);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione do legado (opcional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">Não usar</SelectItem>
+                              {legacyBranchOptions.map((opt) => (
+                                <SelectItem key={opt.code} value={String(opt.code)}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={field.value === undefined ? "" : String(field.value)}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            placeholder="Ex: 1"
+                            inputMode="numeric"
+                          />
+                        )}
                       </FormControl>
                       <FormDescription>
                         Opcional. Preencha com o <code>CodigoEmpresaFilial</code> do banco legado para o módulo Auditoria
@@ -410,7 +483,23 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                       <FormItem>
                         <FormLabel>Classificação Tributária</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Opcional" />
+                          {taxClassOptions.length ? (
+                            <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione do legado (opcional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">Não informado</SelectItem>
+                                {taxClassOptions.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input {...field} placeholder="Opcional" />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>

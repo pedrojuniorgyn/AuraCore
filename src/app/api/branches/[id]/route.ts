@@ -6,19 +6,68 @@ import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ne } from "drizzle-orm";
 
 async function fetchBranchRaw(pool: any, id: number, organizationId: number) {
+  // Compatibilidade com schema divergente: algumas implantações podem não ter colunas novas.
+  // Importante: o frontend espera camelCase (mesmo formato do Drizzle).
+  const colCheck = await pool.request().query(`
+    SELECT
+      COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as legacy_col,
+      COL_LENGTH('dbo.branches', 'c_class_trib') as cclasstrib_col;
+  `);
+  const legacyColExists = (colCheck.recordset?.[0] as any)?.legacy_col != null;
+  const cClassTribColExists = (colCheck.recordset?.[0] as any)?.cclasstrib_col != null;
+
+  const legacySelect = legacyColExists
+    ? "b.legacy_company_branch_code"
+    : "CAST(NULL as int)";
+  const cClassTribSelect = cClassTribColExists
+    ? "b.c_class_trib"
+    : "CAST(NULL as nvarchar(10))";
+
   const r = await pool
     .request()
     .input("id", id)
     .input("org", organizationId)
-    .query(
-      `
-      SELECT TOP 1 *
-      FROM dbo.branches
-      WHERE id = @id
-        AND organization_id = @org
-        AND deleted_at IS NULL;
-    `
-    );
+    .query(`
+      SELECT TOP 1
+        b.id,
+        b.organization_id as organizationId,
+        ${legacySelect} as legacyCompanyBranchCode,
+        b.name,
+        b.trade_name as tradeName,
+        b.document,
+        b.email,
+        b.phone,
+        b.ie,
+        b.im,
+        ${cClassTribSelect} as cClassTrib,
+        b.crt,
+        b.zip_code as zipCode,
+        b.street,
+        b.number,
+        b.complement,
+        b.district,
+        b.city_code as cityCode,
+        b.city_name as cityName,
+        b.state,
+        b.time_zone as timeZone,
+        b.logo_url as logoUrl,
+        b.certificate_pfx as certificatePfx,
+        b.certificate_password as certificatePassword,
+        b.certificate_expiry as certificateExpiry,
+        b.last_nsu as lastNsu,
+        b.environment,
+        b.created_by as createdBy,
+        b.updated_by as updatedBy,
+        b.created_at as createdAt,
+        b.updated_at as updatedAt,
+        b.deleted_at as deletedAt,
+        b.version,
+        b.status
+      FROM dbo.branches b
+      WHERE b.id = @id
+        AND b.organization_id = @org
+        AND b.deleted_at IS NULL;
+    `);
   return (r.recordset?.[0] as any) ?? null;
 }
 
