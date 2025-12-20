@@ -58,7 +58,12 @@ async function listParcelas(
         COL_LENGTH('dbo.audit_fact_parcelas', 'is_conta_bancaria_inferida') as cb_isinf_col,
         COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') as cb_eff_col,
         COL_LENGTH('dbo.audit_raw_movimentos', 'plano_contas_contabil_nome') as pcc_nome_col,
-        COL_LENGTH('dbo.audit_raw_movimentos', 'movimento_descricao') as mov_desc_col
+        COL_LENGTH('dbo.audit_raw_movimentos', 'movimento_descricao') as mov_desc_col,
+        OBJECT_ID('dbo.audit_raw_conta_bancaria','U') as cb_obj,
+        COL_LENGTH('dbo.audit_raw_conta_bancaria', 'descricao') as cb_desc_col,
+        COL_LENGTH('dbo.audit_raw_conta_bancaria', 'nome_banco') as cb_nome_banco_col,
+        COL_LENGTH('dbo.audit_raw_conta_bancaria', 'agencia') as cb_agencia_col,
+        COL_LENGTH('dbo.audit_raw_conta_bancaria', 'numero_conta') as cb_numero_col
     `);
     const orgColExists = (cols.recordset?.[0] as any)?.org_col != null;
     const branchColExists = (cols.recordset?.[0] as any)?.branch_col != null;
@@ -66,6 +71,17 @@ async function listParcelas(
     const hasEffCol = (cols.recordset?.[0] as any)?.cb_eff_col != null;
     const hasPccNomeCol = (cols.recordset?.[0] as any)?.pcc_nome_col != null;
     const hasMovDescCol = (cols.recordset?.[0] as any)?.mov_desc_col != null;
+    const cbTableExists = Boolean((cols.recordset?.[0] as any)?.cb_obj);
+    const hasCbDescCol = (cols.recordset?.[0] as any)?.cb_desc_col != null;
+    const hasCbNomeBancoCol = (cols.recordset?.[0] as any)?.cb_nome_banco_col != null;
+    const hasCbAgenciaCol = (cols.recordset?.[0] as any)?.cb_agencia_col != null;
+    const hasCbNumeroCol = (cols.recordset?.[0] as any)?.cb_numero_col != null;
+
+    const contaJoinExpr = hasEffCol
+      ? "f.conta_bancaria_id_efetiva"
+      : hasInferCols
+        ? "COALESCE(f.conta_bancaria_id, f.conta_bancaria_id_inferida)"
+        : "f.conta_bancaria_id";
 
     if (opts.organizationId && orgColExists === false) {
       return NextResponse.json(
@@ -104,6 +120,26 @@ async function listParcelas(
           f.plano_contas_contabil_id,
           ${hasPccNomeCol ? "m.plano_contas_contabil_nome as plano_contas_contabil_nome," : "CAST(NULL as nvarchar(255)) as plano_contas_contabil_nome,"}
           ${hasMovDescCol ? "m.movimento_descricao as movimento_descricao," : "CAST(NULL as nvarchar(500)) as movimento_descricao,"}
+          ${
+            cbTableExists && (hasCbDescCol || hasCbNomeBancoCol || hasCbAgenciaCol || hasCbNumeroCol)
+              ? "cb.descricao as conta_bancaria_descricao,"
+              : "CAST(NULL as nvarchar(255)) as conta_bancaria_descricao,"
+          }
+          ${
+            cbTableExists && hasCbNomeBancoCol
+              ? "cb.nome_banco as conta_bancaria_nome_banco,"
+              : "CAST(NULL as nvarchar(255)) as conta_bancaria_nome_banco,"
+          }
+          ${
+            cbTableExists && hasCbAgenciaCol
+              ? "cb.agencia as conta_bancaria_agencia,"
+              : "CAST(NULL as nvarchar(50)) as conta_bancaria_agencia,"
+          }
+          ${
+            cbTableExists && hasCbNumeroCol
+              ? "cb.numero_conta as conta_bancaria_numero_conta,"
+              : "CAST(NULL as nvarchar(50)) as conta_bancaria_numero_conta,"
+          }
           f.numero_documento,
           f.operacao,
           f.data_documento,
@@ -131,6 +167,11 @@ async function listParcelas(
         FROM dbo.audit_fact_parcelas f
         INNER JOIN dbo.audit_snapshot_runs r ON r.run_id = f.run_id
         LEFT JOIN dbo.audit_raw_movimentos m ON m.run_id = f.run_id AND m.movimento_id = f.movimento_id
+        ${
+          cbTableExists
+            ? `LEFT JOIN dbo.audit_raw_conta_bancaria cb ON cb.run_id = f.run_id AND cb.conta_bancaria_id = ${contaJoinExpr}`
+            : ""
+        }
         WHERE 1=1
           AND (@run_id IS NULL OR f.run_id = @run_id)
           AND (@since_days = 0 OR r.started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
@@ -169,6 +210,10 @@ async function listParcelas(
         planoContasContabilId: row.plano_contas_contabil_id == null ? null : Number(row.plano_contas_contabil_id),
         planoContasContabilNome: row.plano_contas_contabil_nome ? String(row.plano_contas_contabil_nome) : null,
         movimentoDescricao: row.movimento_descricao ? String(row.movimento_descricao) : null,
+        contaBancariaDescricao: row.conta_bancaria_descricao ? String(row.conta_bancaria_descricao) : null,
+        contaBancariaNomeBanco: row.conta_bancaria_nome_banco ? String(row.conta_bancaria_nome_banco) : null,
+        contaBancariaAgencia: row.conta_bancaria_agencia ? String(row.conta_bancaria_agencia) : null,
+        contaBancariaNumeroConta: row.conta_bancaria_numero_conta ? String(row.conta_bancaria_numero_conta) : null,
         numeroDocumento: row.numero_documento == null ? null : Number(row.numero_documento),
         operacao: row.operacao ? String(row.operacao) : null,
         dataDocumento: dd ? dd.toISOString() : null,

@@ -35,6 +35,10 @@ export type AuditParcela = {
   planoContasContabilId?: number | null;
   planoContasContabilNome?: string | null;
   movimentoDescricao?: string | null;
+  contaBancariaDescricao?: string | null;
+  contaBancariaNomeBanco?: string | null;
+  contaBancariaAgencia?: string | null;
+  contaBancariaNumeroConta?: string | null;
   numeroDocumento: number | null;
   operacao: "PAGAMENTO" | "RECEBIMENTO" | string | null;
   dataDocumento?: string | null;
@@ -213,7 +217,25 @@ export function AuditParcelasGrid(props: {
         children: [
           { field: "dataVencimento", headerName: "Vencimento", width: 170, cellRenderer: PremiumDateCell },
           { field: "dataPagamentoReal", headerName: "Pagamento", width: 170, cellRenderer: PremiumDateCell },
-          { field: "dataLancamentoBanco", headerName: "Banco", width: 170, cellRenderer: PremiumDateCell },
+          {
+            headerName: "Banco",
+            width: 320,
+            valueGetter: (p) => {
+              const d = (p.data as any)?.contaBancariaDescricao as string | null | undefined;
+              const banco = (p.data as any)?.contaBancariaNomeBanco as string | null | undefined;
+              const ag = (p.data as any)?.contaBancariaAgencia as string | null | undefined;
+              const num = (p.data as any)?.contaBancariaNumeroConta as string | null | undefined;
+              const parts: string[] = [];
+              if (d) parts.push(d);
+              if (banco) parts.push(banco);
+              const agNum = [ag, num].filter(Boolean).join("/");
+              if (agNum) parts.push(agNum);
+              return parts.length ? parts.join(" — ") : "-";
+            },
+            filter: "agTextColumnFilter",
+          },
+          // mantemos a data do banco disponível via seletor de colunas
+          { field: "dataLancamentoBanco", headerName: "Data Banco", width: 170, cellRenderer: PremiumDateCell, hide: true },
         ],
       },
       {
