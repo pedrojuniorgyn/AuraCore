@@ -233,10 +233,11 @@ const sidebarGroups: SidebarGroup[] = [
     icon: ShieldCheck,
     color: "text-amber-400",
     items: [
+      { title: "Contas a Pagar", href: "/auditoria/contas-pagar", icon: ArrowDownCircle, color: "text-red-400" },
+      { title: "Contas a Receber", href: "/auditoria/contas-receber", icon: ArrowUpCircle, color: "text-green-400" },
+      { title: "Conciliação (Achados)", href: "/auditoria/conciliacao", icon: Repeat, color: "text-violet-400" },
+      { title: "Fluxo de Caixa", href: "/auditoria/cashflow", icon: TrendingDown, color: "text-cyan-400" },
       { title: "Snapshots", href: "/auditoria/snapshots", icon: Database, color: "text-amber-400" },
-      { title: "Achados", href: "/auditoria/findings", icon: AlertTriangle, color: "text-red-400" },
-      { title: "Fluxo de Caixa", href: "/auditoria/cashflow", icon: BarChart3, color: "text-cyan-400" },
-      { title: "Parcelas", href: "/auditoria/parcelas", icon: FileSpreadsheet, color: "text-indigo-400" },
     ],
   },
 ];
