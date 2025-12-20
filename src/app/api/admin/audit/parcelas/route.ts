@@ -56,12 +56,16 @@ async function listParcelas(
         COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_regra') as cb_regra_col,
         COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_inferida_confidence') as cb_conf_col,
         COL_LENGTH('dbo.audit_fact_parcelas', 'is_conta_bancaria_inferida') as cb_isinf_col,
-        COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') as cb_eff_col
+        COL_LENGTH('dbo.audit_fact_parcelas', 'conta_bancaria_id_efetiva') as cb_eff_col,
+        COL_LENGTH('dbo.audit_raw_movimentos', 'plano_contas_contabil_nome') as pcc_nome_col,
+        COL_LENGTH('dbo.audit_raw_movimentos', 'movimento_descricao') as mov_desc_col
     `);
     const orgColExists = (cols.recordset?.[0] as any)?.org_col != null;
     const branchColExists = (cols.recordset?.[0] as any)?.branch_col != null;
     const hasInferCols = (cols.recordset?.[0] as any)?.cb_inf_col != null;
     const hasEffCol = (cols.recordset?.[0] as any)?.cb_eff_col != null;
+    const hasPccNomeCol = (cols.recordset?.[0] as any)?.pcc_nome_col != null;
+    const hasMovDescCol = (cols.recordset?.[0] as any)?.mov_desc_col != null;
 
     if (opts.organizationId && orgColExists === false) {
       return NextResponse.json(
@@ -98,6 +102,8 @@ async function listParcelas(
           f.codigo_empresa_filial,
           f.centro_custo_id,
           f.plano_contas_contabil_id,
+          ${hasPccNomeCol ? "m.plano_contas_contabil_nome as plano_contas_contabil_nome," : "CAST(NULL as nvarchar(255)) as plano_contas_contabil_nome,"}
+          ${hasMovDescCol ? "m.movimento_descricao as movimento_descricao," : "CAST(NULL as nvarchar(500)) as movimento_descricao,"}
           f.numero_documento,
           f.operacao,
           f.data_documento,
@@ -124,6 +130,7 @@ async function listParcelas(
           ${orgColExists ? "r.organization_id as organization_id" : "CAST(NULL as int) as organization_id"}
         FROM dbo.audit_fact_parcelas f
         INNER JOIN dbo.audit_snapshot_runs r ON r.run_id = f.run_id
+        LEFT JOIN dbo.audit_raw_movimentos m ON m.run_id = f.run_id AND m.movimento_id = f.movimento_id
         WHERE 1=1
           AND (@run_id IS NULL OR f.run_id = @run_id)
           AND (@since_days = 0 OR r.started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
@@ -160,6 +167,8 @@ async function listParcelas(
         codigoEmpresaFilial: row.codigo_empresa_filial == null ? null : Number(row.codigo_empresa_filial),
         centroCustoId: row.centro_custo_id == null ? null : Number(row.centro_custo_id),
         planoContasContabilId: row.plano_contas_contabil_id == null ? null : Number(row.plano_contas_contabil_id),
+        planoContasContabilNome: row.plano_contas_contabil_nome ? String(row.plano_contas_contabil_nome) : null,
+        movimentoDescricao: row.movimento_descricao ? String(row.movimento_descricao) : null,
         numeroDocumento: row.numero_documento == null ? null : Number(row.numero_documento),
         operacao: row.operacao ? String(row.operacao) : null,
         dataDocumento: dd ? dd.toISOString() : null,

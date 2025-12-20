@@ -35,6 +35,24 @@ async function ensureEtlSchema(audit: MssqlPool): Promise<void> {
     END
   `);
 
+  // Enriquecimento de movimentos: plano de contas (nome/descrição) e descrição do movimento para UX nas telas.
+  // Essas colunas ficam em audit_raw_movimentos (não alteramos audit_fact_parcelas por enquanto).
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_raw_movimentos','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_raw_movimentos', 'plano_contas_contabil_nome') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_raw_movimentos ADD plano_contas_contabil_nome nvarchar(255) NULL;
+    END
+  `);
+
+  await audit.request().query(`
+    IF OBJECT_ID('dbo.audit_raw_movimentos','U') IS NOT NULL
+      AND COL_LENGTH('dbo.audit_raw_movimentos', 'movimento_descricao') IS NULL
+    BEGIN
+      ALTER TABLE dbo.audit_raw_movimentos ADD movimento_descricao nvarchar(500) NULL;
+    END
+  `);
+
   // Multi-tenant no AuditFinDB: runs precisam ser segregadas por organização (AuraCore).
   // Isso permite listar/limpar runs com segurança por tenant.
   await audit.request().query(`
@@ -272,12 +290,63 @@ const VENCIMENTO_WHERE = `
   )
 `;
 
+let cachedLegacyMovimentoDescCol: string | null | undefined;
+let cachedLegacyPccDescCol: string | null | undefined;
+
+function bracket(colName: string): string {
+  // defensivo: remove ']' para não quebrar o SQL
+  return `[${colName.replaceAll("]", "")}]`;
+}
+
+async function detectLegacyColumn(
+  legacy: MssqlPool,
+  tableName: string,
+  preferredLowerNames: string[]
+): Promise<string | null> {
+  // memoização simples por tabela (suficiente para um processo Node)
+  const cacheKey = `${tableName}:${preferredLowerNames.join(",")}`;
+  // usando variáveis específicas para reduzir risco de bug (duas detecções apenas)
+  if (tableName.toLowerCase() === "movimentos" && cachedLegacyMovimentoDescCol !== undefined) return cachedLegacyMovimentoDescCol;
+  if (tableName.toLowerCase() === "planocontascontabil" && cachedLegacyPccDescCol !== undefined) return cachedLegacyPccDescCol;
+
+  const inList = preferredLowerNames.map((n) => `'${n.toLowerCase()}'`).join(", ");
+  const r = await legacy.request().query(`
+    SELECT TOP 1 c.name as col_name
+    FROM sys.columns c
+    INNER JOIN sys.objects o ON o.object_id = c.object_id
+    INNER JOIN sys.schemas s ON s.schema_id = o.schema_id
+    WHERE s.name = 'dbo'
+      AND LOWER(o.name) = '${tableName.toLowerCase()}'
+      AND LOWER(c.name) IN (${inList});
+  `);
+  const found = (r.recordset?.[0] as any)?.col_name ? String((r.recordset?.[0] as any).col_name) : null;
+  const foundLower = found ? found.toLowerCase() : "";
+  const ok = found && preferredLowerNames.map((x) => x.toLowerCase()).includes(foundLower) ? found : null;
+
+  if (tableName.toLowerCase() === "movimentos") cachedLegacyMovimentoDescCol = ok;
+  if (tableName.toLowerCase() === "planocontascontabil") cachedLegacyPccDescCol = ok;
+  return ok;
+}
+
 async function extractRawMovimentosVencimento(
   legacy: MssqlPool,
   start: Date,
   endExclusive: Date,
   legacyCompanyBranchCode?: number | null
 ) {
+  // Descoberta “best effort” de colunas no legado (varia por versão/customização)
+  const movDescCol = await detectLegacyColumn(legacy, "movimentos", [
+    "descricao",
+    "historico",
+    "observacao",
+    "complemento",
+    "descricao_movimento",
+  ]);
+  const pccDescCol = await detectLegacyColumn(legacy, "PlanoContasContabil", ["descricao", "nome", "descricao_plano", "descricaoConta"]);
+
+  const movDescSelect = movDescCol ? `CAST(m.${bracket(movDescCol)} as nvarchar(500))` : "CAST(NULL as nvarchar(500))";
+  const pccDescSelect = pccDescCol ? `CAST(pcc.${bracket(pccDescCol)} as nvarchar(255))` : "CAST(NULL as nvarchar(255))";
+
   const r = await legacy
     .request()
     .input("start", start)
@@ -291,13 +360,15 @@ async function extractRawMovimentosVencimento(
         CAST(m.IDCentroCusto as int) as centro_custo_id,
         CAST(m.IDPlanoContasContabil as bigint) as plano_contas_contabil_id,
         CAST(pcc.codigo_tipo_operacao as smallint) as plano_contas_contabil_codigo_tipo_operacao,
+        ${pccDescSelect} as plano_contas_contabil_nome,
         CAST(m.codigo_conta as bigint) as codigo_conta,
         CAST(m.numero_documento as int) as numero_documento,
         CAST(m.valor_total as decimal(19,4)) as valor_total,
         CONVERT(datetime2(0), m.data_movimento) as data_movimento,
         CONVERT(datetime2(0), m.dataEmissao) as data_emissao,
         CAST(m.type_operation as smallint) as type_operation,
-        CAST(m.IDMovimentoPai as bigint) as movimento_pai_id
+        CAST(m.IDMovimentoPai as bigint) as movimento_pai_id,
+        ${movDescSelect} as movimento_descricao
       FROM dbo.movimentos m
       INNER JOIN dbo.movimentos_detalhe md
         ON md.codigo_movimento = m.codigo_movimento
@@ -633,6 +704,7 @@ async function loadRawsToAudit(
       { name: "centro_custo_id", type: sql.Int, nullable: true },
       { name: "plano_contas_contabil_id", type: sql.BigInt, nullable: true },
       { name: "plano_contas_contabil_codigo_tipo_operacao", type: sql.SmallInt, nullable: true },
+      { name: "plano_contas_contabil_nome", type: sql.NVarChar(255), nullable: true },
       { name: "codigo_conta", type: sql.BigInt, nullable: true },
       { name: "numero_documento", type: sql.Int, nullable: true },
       { name: "valor_total", type: sql.Decimal(19, 4), nullable: true },
@@ -640,6 +712,7 @@ async function loadRawsToAudit(
       { name: "data_emissao", type: sql.DateTime2(0), nullable: true },
       { name: "type_operation", type: sql.SmallInt, nullable: true },
       { name: "movimento_pai_id", type: sql.BigInt, nullable: true },
+      { name: "movimento_descricao", type: sql.NVarChar(500), nullable: true },
     ],
     movimentos
   );

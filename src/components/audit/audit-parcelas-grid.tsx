@@ -32,6 +32,9 @@ export type AuditParcela = {
   compraId: number | null;
   pessoaId: number | null;
   codigoEmpresaFilial: number | null;
+  planoContasContabilId?: number | null;
+  planoContasContabilNome?: string | null;
+  movimentoDescricao?: string | null;
   numeroDocumento: number | null;
   operacao: "PAGAMENTO" | "RECEBIMENTO" | string | null;
   dataDocumento?: string | null;
@@ -190,6 +193,19 @@ export function AuditParcelasGrid(props: {
           { field: "numeroDocumento", headerName: "Nº", width: 120, filter: "agNumberColumnFilter" },
           { field: "parcelaId", headerName: "Parcela", width: 120, filter: "agNumberColumnFilter" },
           { field: "movimentoId", headerName: "Movimento", width: 140, filter: "agNumberColumnFilter" },
+        ],
+      },
+      {
+        headerName: "Plano de Contas",
+        children: [
+          { field: "planoContasContabilId", headerName: "ID", width: 130, filter: "agNumberColumnFilter" },
+          { field: "planoContasContabilNome", headerName: "Nome", width: 260, filter: "agTextColumnFilter" },
+        ],
+      },
+      {
+        headerName: "Descrição",
+        children: [
+          { field: "movimentoDescricao", headerName: "Movimento", width: 320, filter: "agTextColumnFilter" },
         ],
       },
       {
