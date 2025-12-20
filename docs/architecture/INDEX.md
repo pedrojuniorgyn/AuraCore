@@ -16,6 +16,7 @@ Formalizar a arquitetura existente (ERP Enterprise TMS/WMS/Financeiro/Contábil)
    - [Financeiro](./domains/FINANCEIRO.md)
    - [Contábil](./domains/CONTABIL.md)
    - [Admin](./domains/ADMIN.md)
+   - [Auditoria](./domains/AUDITORIA.md)
    - [TMS](./domains/TMS.md)
 
 3. Diagramas
@@ -35,6 +36,7 @@ Formalizar a arquitetura existente (ERP Enterprise TMS/WMS/Financeiro/Contábil)
    - [Admin HTTP OFF em PROD](./adr/0004-admin-http-off-in-prod.md)
    - [Transações obrigatórias](./adr/0005-transactions-required-financial-accounting.md)
    - [Paginação e busca no SQL Server](./adr/0006-pagination-and-search-sqlserver.md)
+   - [Auditoria: operações via token](./adr/0007-audit-ops-http-token.md)
 
 5. Operação
    - [Deploy Coolify](./runbooks/RUNBOOK_COOLIFY_DEPLOY.md)

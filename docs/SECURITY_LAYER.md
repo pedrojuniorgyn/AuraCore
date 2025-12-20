@@ -183,6 +183,26 @@ const branches = await db
 
 ---
 
+## 🧩 Auditoria (AuditFinDB) — RBAC + Token de Infra
+
+O módulo **Auditoria** usa endpoints sob `/api/admin/audit/*` e possui dois modos de autorização:
+
+1) **Sessão (RBAC)**  
+Usuário autenticado + permissões:
+- `audit.read` (listar/visualizar telas)
+- `audit.run` (rodar snapshot)
+- `audit.migrate` (migrar schema/idempotente)
+
+2) **Token de infraestrutura (automação controlada)**  
+Para execução controlada em Coolify/infra, algumas rotas aceitam:
+- Header `x-audit-token: <token>`
+- O valor é validado contra a env `AUDIT_SNAPSHOT_HTTP_TOKEN`
+
+Notas:
+- Mesmo com token, o backend aplica filtros de tenant/filial quando informados e quando o schema do AuditFinDB suporta scoping.
+- Para detalhes de domínio/rotas, ver: `docs/architecture/domains/AUDITORIA.md`
+- Para operação em produção (runbook), ver: `docs/architecture/runbooks/RUNBOOK_MIGRATIONS_SEEDS.md`
+
 ## 📊 3. Padrão de Queries Seguras
 
 ### **GET - Listagem:**
