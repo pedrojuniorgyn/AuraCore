@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, IDetailCellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
@@ -104,6 +104,43 @@ function AuditStatusCell(props: ICellRendererParams) {
     >
       {icon}
       {ui.label}
+    </div>
+  );
+}
+
+function DetailCellRenderer(props: IDetailCellRendererParams) {
+  const row = props.data as AuditParcela;
+  const bankParts = [
+    row.contaBancariaDescricao,
+    row.contaBancariaNomeBanco,
+    [row.contaBancariaAgencia, row.contaBancariaNumeroConta].filter(Boolean).join("/"),
+  ].filter((x) => x && String(x).trim());
+
+  return (
+    <div className="p-4 bg-gradient-to-br from-gray-900/50 to-purple-900/10">
+      <h4 className="text-sm font-semibold text-purple-300 mb-3">
+        🔎 Detalhes da Parcela — Doc #{row.numeroDocumento ?? "-"} • Parcela {row.parcelaId ?? "-"}
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+        <div className="rounded-lg border border-purple-500/20 bg-black/20 p-3">
+          <div className="text-xs text-slate-400 mb-1">Plano de Contas</div>
+          <div className="font-mono text-xs">{row.planoContasContabilId ?? "-"}</div>
+          <div className="text-slate-200">{row.planoContasContabilNome ?? "-"}</div>
+        </div>
+        <div className="rounded-lg border border-purple-500/20 bg-black/20 p-3">
+          <div className="text-xs text-slate-400 mb-1">Conta Bancária (descrição)</div>
+          <div className="text-slate-200">{bankParts.length ? bankParts.join(" — ") : "-"}</div>
+          <div className="text-xs text-slate-400 mt-2">
+            Conta real: {row.contaBancariaId ?? "-"} • Inferida: {row.contaBancariaIdInferida ?? "-"} • Efetiva:{" "}
+            {row.contaBancariaIdEfetiva ?? "-"}
+          </div>
+        </div>
+        <div className="rounded-lg border border-purple-500/20 bg-black/20 p-3">
+          <div className="text-xs text-slate-400 mb-1">Movimento</div>
+          <div className="text-slate-200">{row.movimentoDescricao ?? "-"}</div>
+          <div className="text-xs text-slate-400 mt-2 font-mono break-all">{row.runId}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -215,8 +252,8 @@ export function AuditParcelasGrid(props: {
       {
         headerName: "Datas",
         children: [
-          { field: "dataVencimento", headerName: "Vencimento", width: 170, cellRenderer: PremiumDateCell },
-          { field: "dataPagamentoReal", headerName: "Pagamento", width: 170, cellRenderer: PremiumDateCell },
+          { field: "dataVencimento", headerName: "Vencimento", width: 170, cellRenderer: PremiumDateCell, filter: "agDateColumnFilter" },
+          { field: "dataPagamentoReal", headerName: "Pagamento", width: 170, cellRenderer: PremiumDateCell, filter: "agDateColumnFilter" },
           {
             headerName: "Banco",
             width: 320,
@@ -235,7 +272,7 @@ export function AuditParcelasGrid(props: {
             filter: "agTextColumnFilter",
           },
           // mantemos a data do banco disponível via seletor de colunas
-          { field: "dataLancamentoBanco", headerName: "Data Banco", width: 170, cellRenderer: PremiumDateCell, hide: true },
+          { field: "dataLancamentoBanco", headerName: "Data Banco", width: 170, cellRenderer: PremiumDateCell, filter: "agDateColumnFilter", hide: true },
         ],
       },
       {
@@ -436,11 +473,38 @@ export function AuditParcelasGrid(props: {
                 filter: true,
                 floatingFilter: true,
               }}
+              masterDetail
+              detailCellRenderer={DetailCellRenderer}
+              detailRowAutoHeight
               animateRows
+              enableRangeSelection
+              sideBar={{
+                toolPanels: [
+                  {
+                    id: "columns",
+                    labelDefault: "Colunas",
+                    labelKey: "columns",
+                    iconKey: "columns",
+                    toolPanel: "agColumnsToolPanel",
+                  },
+                  {
+                    id: "filters",
+                    labelDefault: "Filtros",
+                    labelKey: "filters",
+                    iconKey: "filter",
+                    toolPanel: "agFiltersToolPanel",
+                  },
+                ],
+                defaultToolPanel: "",
+              }}
+              rowGroupPanelShow="always"
+              groupDisplayType="groupRows"
               pagination
               paginationPageSize={50}
+              paginationPageSizeSelector={[25, 50, 100, 200]}
               suppressCellFocus
               enableCellTextSelection
+              ensureDomOrder
             />
           </div>
         </div>

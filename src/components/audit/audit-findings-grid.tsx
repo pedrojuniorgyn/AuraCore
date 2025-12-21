@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, IDetailCellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
@@ -119,6 +119,30 @@ function EvidenceActionCell(props: ICellRendererParams) {
   );
 }
 
+function FindingsDetailCellRenderer(props: IDetailCellRendererParams) {
+  const row = props.data as AuditFinding;
+  const evidence = row.evidenceJson;
+  let pretty = evidence;
+  if (evidence) {
+    try {
+      pretty = JSON.stringify(JSON.parse(evidence), null, 2);
+    } catch {
+      // keep raw
+    }
+  }
+
+  return (
+    <div className="p-4 bg-gradient-to-br from-gray-900/50 to-purple-900/10">
+      <h4 className="text-sm font-semibold text-purple-300 mb-3">🔎 Evidência — {row.ruleCode}</h4>
+      <div className="text-xs text-slate-400 mb-2 font-mono break-all">{row.runId}</div>
+      <div className="text-sm text-slate-200 mb-3">{row.message}</div>
+      <pre className="text-xs bg-black/20 border border-purple-500/20 rounded-lg p-3 overflow-auto max-h-[42vh]">
+{pretty ?? "Sem evidence_json para este achado."}
+      </pre>
+    </div>
+  );
+}
+
 export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
   const gridRef = useRef<AgGridReact>(null);
   const [items, setItems] = useState<AuditFinding[]>([]);
@@ -220,6 +244,7 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
         field: "startedAt",
         width: 200,
         valueFormatter: (p) => dateIsoToBr(p.value),
+        filter: "agDateColumnFilter",
       },
       { headerName: "Branch", field: "branchId", width: 120, filter: "agNumberColumnFilter" },
       { headerName: "RunId", field: "runId", width: 320, filter: "agTextColumnFilter" },
@@ -390,7 +415,13 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
                 floatingFilter: true,
               }}
               context={gridContext}
+              masterDetail
+              detailCellRenderer={FindingsDetailCellRenderer}
+              detailRowAutoHeight
               animateRows
+              enableRangeSelection
+              rowGroupPanelShow="always"
+              groupDisplayType="groupRows"
               pagination
               paginationPageSize={50}
               paginationPageSizeSelector={[25, 50, 100, 200]}
