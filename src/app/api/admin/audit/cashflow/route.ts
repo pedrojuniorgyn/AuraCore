@@ -8,8 +8,25 @@ export const runtime = "nodejs";
 const querySchema = z.object({
   runId: z.string().uuid().optional(),
   sinceDays: z.coerce.number().int().min(0).max(3650).optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  dateField: z.enum(["SNAPSHOT", "DATA"]).optional(),
   limit: z.coerce.number().int().min(1).max(5000).optional(),
 });
+
+function parseUtcStartOfDay(isoDate: string) {
+  return new Date(`${isoDate}T00:00:00.000Z`);
+}
+
+function parseUtcEndOfDay(isoDate: string) {
+  return new Date(`${isoDate}T23:59:59.999Z`);
+}
 
 async function listCashflow(
   req: Request,
@@ -26,8 +43,24 @@ async function listCashflow(
     }
 
     const { runId, sinceDays, limit } = parsed.data;
+    const { startDate, endDate, dateField } = parsed.data;
     const sinceDaysSafe = Number.isFinite(sinceDays ?? 0) ? (sinceDays ?? 0) : 0;
     const limitSafe = Number.isFinite(limit ?? 0) ? (limit ?? 2000) : 2000;
+
+    const dateFieldSafe = (dateField ?? "DATA") as NonNullable<typeof dateField>;
+    const startDateSafe = startDate ? parseUtcStartOfDay(startDate) : null;
+    const endDateSafe = endDate ? parseUtcEndOfDay(endDate) : null;
+
+    if (startDateSafe && endDateSafe && startDateSafe.getTime() > endDateSafe.getTime()) {
+      return NextResponse.json({ error: "Período inválido (startDate > endDate)" }, { status: 400 });
+    }
+
+    if (startDateSafe && endDateSafe) {
+      const days = (endDateSafe.getTime() - startDateSafe.getTime()) / (24 * 60 * 60 * 1000);
+      if (days > 1100) {
+        return NextResponse.json({ error: "Período máximo para filtro por data é 36 meses." }, { status: 400 });
+      }
+    }
 
     const audit = await getAuditFinPool();
 
@@ -48,11 +81,15 @@ async function listCashflow(
 
     const branchIdsCsv = opts.allowedBranches.length ? opts.allowedBranches.join(",") : "";
 
+    const dateCol = dateFieldSafe === "SNAPSHOT" ? "r.started_at" : "d.data";
+
     const r = await audit
       .request()
       .input("limit", limitSafe)
       .input("run_id", (runId ?? null) as any)
       .input("since_days", sinceDaysSafe)
+      .input("start_date", (startDateSafe ?? null) as any)
+      .input("end_date", (endDateSafe ?? null) as any)
       .input("org_id", (opts.organizationId ?? null) as any)
       .input("branch_id", (opts.branchId ?? null) as any)
       .input("is_admin", opts.isAdmin ? 1 : 0)
@@ -79,7 +116,13 @@ async function listCashflow(
         INNER JOIN dbo.audit_snapshot_runs r ON r.run_id = d.run_id
         WHERE 1=1
           AND (@run_id IS NULL OR d.run_id = @run_id)
-          AND (@since_days = 0 OR r.started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
+          AND (
+            (@start_date IS NULL AND @end_date IS NULL AND (@since_days = 0 OR r.started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME())))
+            OR
+            (@start_date IS NOT NULL OR @end_date IS NOT NULL)
+          )
+          AND (@start_date IS NULL OR ${dateCol} >= @start_date)
+          AND (@end_date IS NULL OR ${dateCol} <= @end_date)
           AND (${orgColExists ? "(@org_id IS NULL OR r.organization_id = @org_id)" : "1=1"})
           AND (${branchColExists ? "(@branch_id IS NULL OR r.branch_id = @branch_id)" : "1=1"})
           AND (${

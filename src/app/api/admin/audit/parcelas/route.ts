@@ -8,6 +8,15 @@ export const runtime = "nodejs";
 const querySchema = z.object({
   runId: z.string().uuid().optional(),
   sinceDays: z.coerce.number().int().min(0).max(3650).optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  dateField: z.enum(["SNAPSHOT", "VENCIMENTO", "PAGAMENTO", "BANCO", "DOCUMENTO"]).optional(),
   limit: z.coerce.number().int().min(1).max(5000).optional(),
   status: z.string().max(50).optional(), // status é string no AuditFinDB
   operacao: z.enum(["PAGAMENTO", "RECEBIMENTO"]).optional(),
@@ -16,6 +25,14 @@ const querySchema = z.object({
   onlyNoBankLink: z.coerce.boolean().optional(),
   onlyPendingConciliation: z.coerce.boolean().optional(),
 });
+
+function parseUtcStartOfDay(isoDate: string) {
+  return new Date(`${isoDate}T00:00:00.000Z`);
+}
+
+function parseUtcEndOfDay(isoDate: string) {
+  return new Date(`${isoDate}T23:59:59.999Z`);
+}
 
 async function listParcelas(
   req: Request,
@@ -34,6 +51,9 @@ async function listParcelas(
     const {
       runId,
       sinceDays,
+      startDate,
+      endDate,
+      dateField,
       limit,
       status,
       operacao,
@@ -45,6 +65,22 @@ async function listParcelas(
 
     const sinceDaysSafe = Number.isFinite(sinceDays ?? 0) ? (sinceDays ?? 0) : 0;
     const limitSafe = Number.isFinite(limit ?? 0) ? (limit ?? 500) : 500;
+
+    const dateFieldSafe = (dateField ?? "SNAPSHOT") as NonNullable<typeof dateField>;
+    const startDateSafe = startDate ? parseUtcStartOfDay(startDate) : null;
+    const endDateSafe = endDate ? parseUtcEndOfDay(endDate) : null;
+
+    if (startDateSafe && endDateSafe && startDateSafe.getTime() > endDateSafe.getTime()) {
+      return NextResponse.json({ error: "Período inválido (startDate > endDate)" }, { status: 400 });
+    }
+
+    // Guardrail: range grande tende a explodir custo de query. Permitimos até 36 meses (~1096 dias).
+    if (startDateSafe && endDateSafe) {
+      const days = (endDateSafe.getTime() - startDateSafe.getTime()) / (24 * 60 * 60 * 1000);
+      if (days > 1100) {
+        return NextResponse.json({ error: "Período máximo para filtro por data é 36 meses." }, { status: 400 });
+      }
+    }
 
     const audit = await getAuditFinPool();
 
@@ -92,11 +128,24 @@ async function listParcelas(
 
     const branchIdsCsv = opts.allowedBranches.length ? opts.allowedBranches.join(",") : "";
 
+    const dateCol =
+      dateFieldSafe === "VENCIMENTO"
+        ? "f.data_vencimento"
+        : dateFieldSafe === "PAGAMENTO"
+          ? "f.data_pagamento_real"
+          : dateFieldSafe === "BANCO"
+            ? "f.data_lancamento_banco"
+            : dateFieldSafe === "DOCUMENTO"
+              ? "f.data_documento"
+              : "r.started_at";
+
     const r = await audit
       .request()
       .input("limit", limitSafe)
       .input("run_id", (runId ?? null) as any)
       .input("since_days", sinceDaysSafe)
+      .input("start_date", (startDateSafe ?? null) as any)
+      .input("end_date", (endDateSafe ?? null) as any)
       .input("status", (status ?? null) as any)
       .input("operacao", (operacao ?? null) as any)
       .input("only_open", onlyOpen ? 1 : 0)
@@ -174,7 +223,13 @@ async function listParcelas(
         }
         WHERE 1=1
           AND (@run_id IS NULL OR f.run_id = @run_id)
-          AND (@since_days = 0 OR r.started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME()))
+          AND (
+            (@start_date IS NULL AND @end_date IS NULL AND (@since_days = 0 OR r.started_at >= DATEADD(day, -@since_days, SYSUTCDATETIME())))
+            OR
+            (@start_date IS NOT NULL OR @end_date IS NOT NULL)
+          )
+          AND (@start_date IS NULL OR ${dateCol} >= @start_date)
+          AND (@end_date IS NULL OR ${dateCol} <= @end_date)
           AND (@status IS NULL OR f.status = @status)
           AND (@operacao IS NULL OR f.operacao = @operacao)
           AND (@only_open = 0 OR f.status IN ('ABERTA','VENCIDA','SEM_VINCULO_BANCARIO','PENDENTE_CONCILIACAO'))

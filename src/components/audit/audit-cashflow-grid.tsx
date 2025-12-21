@@ -98,17 +98,58 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
   const [items, setItems] = useState<AuditCashflowRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [sinceDays, setSinceDays] = useState<0 | 7 | 30>(7);
+  const [dateField, setDateField] = useState<"DATA" | "SNAPSHOT">("DATA");
+  const [preset, setPreset] = useState<"7d" | "30d" | "3m" | "6m" | "12m" | "24m" | "36m" | "custom" | "all">("30d");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [runId, setRunId] = useState("");
   const [status, setStatus] = useState<"ALL" | string>("ALL");
   const [quick, setQuick] = useState("");
+
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const applyPreset = useCallback(
+    (p: typeof preset) => {
+      const today = new Date();
+      const end = today.toISOString().slice(0, 10);
+      if (p === "all") {
+        setStartDate("");
+        setEndDate("");
+        return;
+      }
+      if (p === "custom") return;
+      if (p === "7d" || p === "30d") {
+        const days = p === "7d" ? 7 : 30;
+        const start = new Date(today.getTime() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        setStartDate(start);
+        setEndDate(end);
+        return;
+      }
+      const months =
+        p === "3m" ? 3 : p === "6m" ? 6 : p === "12m" ? 12 : p === "24m" ? 24 : p === "36m" ? 36 : 0;
+      const startD = new Date(today);
+      startD.setMonth(startD.getMonth() - months);
+      const start = startD.toISOString().slice(0, 10);
+      setStartDate(start);
+      setEndDate(end);
+    },
+    [setEndDate, setStartDate]
+  );
+
+  useEffect(() => {
+    applyPreset(preset);
+  }, [applyPreset, preset]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const qs = new URLSearchParams();
       qs.set("limit", "5000");
-      if (sinceDays) qs.set("sinceDays", String(sinceDays));
+      if (startDate) qs.set("startDate", startDate);
+      if (endDate) qs.set("endDate", endDate);
+      if (startDate || endDate) qs.set("dateField", dateField);
+      if (!startDate && !endDate && preset === "7d") qs.set("sinceDays", "7");
+      if (!startDate && !endDate && preset === "30d") qs.set("sinceDays", "30");
       if (runId.trim()) qs.set("runId", runId.trim());
 
       const res = await fetch(`/api/admin/audit/cashflow?${qs.toString()}`, {
@@ -125,7 +166,7 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
     } finally {
       setLoading(false);
     }
-  }, [runId, sinceDays]);
+  }, [dateField, endDate, preset, runId, startDate]);
 
   useEffect(() => {
     void load();
@@ -369,16 +410,56 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
             <span className="text-sm font-medium">Filtros</span>
           </div>
 
-          <Select value={String(sinceDays)} onValueChange={(v) => setSinceDays((Number(v) as any) ?? 7)}>
+          <Select value={preset} onValueChange={(v) => setPreset(v as any)}>
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">Últimos 7 dias</SelectItem>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-              <SelectItem value="0">Histórico</SelectItem>
+              <SelectItem value="7d">Últimos 7 dias</SelectItem>
+              <SelectItem value="30d">Últimos 30 dias</SelectItem>
+              <SelectItem value="3m">Últimos 3 meses</SelectItem>
+              <SelectItem value="6m">Últimos 6 meses</SelectItem>
+              <SelectItem value="12m">Últimos 12 meses</SelectItem>
+              <SelectItem value="24m">Últimos 24 meses</SelectItem>
+              <SelectItem value="36m">Últimos 36 meses</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+              <SelectItem value="all">Tudo</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={dateField} onValueChange={(v) => setDateField(v as any)}>
+            <SelectTrigger className="w-[190px]">
+              <SelectValue placeholder="Filtrar por data" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="DATA">Data do movimento (dia)</SelectItem>
+              <SelectItem value="SNAPSHOT">Data do Snapshot</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            type="date"
+            value={startDate}
+            max={endDate || todayIso}
+            onChange={(e) => {
+              setPreset("custom");
+              setStartDate(e.target.value);
+            }}
+            className="w-[170px]"
+            title="Data inicial"
+          />
+          <Input
+            type="date"
+            value={endDate}
+            min={startDate || undefined}
+            max={todayIso}
+            onChange={(e) => {
+              setPreset("custom");
+              setEndDate(e.target.value);
+            }}
+            className="w-[170px]"
+            title="Data final"
+          />
 
           <Select value={status} onValueChange={(v) => setStatus(v)}>
             <SelectTrigger className="w-[220px]">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -16,14 +17,16 @@ import {
 
 export default function FluxoCaixaPage() {
   const [data, setData] = useState<{ income: Array<{ date: string; amount: number }>; expenses: Array<{ date: string; amount: number }> } | null>(null);
+  const [monthsAhead, setMonthsAhead] = useState<3 | 6 | 12 | 24 | 36 | 60>(3);
 
   useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthsAhead]);
 
   const loadData = async () => {
     try {
-      const response = await fetch("/api/financial/cash-flow");
+      const response = await fetch(`/api/financial/cash-flow?monthsAhead=${monthsAhead}`);
       const result = await response.json();
       setData(result.data);
     } catch (error) {
@@ -61,7 +64,22 @@ export default function FluxoCaixaPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Próximos 90 Dias</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Horizon: próximos {monthsAhead} meses</CardTitle>
+            <Select value={String(monthsAhead)} onValueChange={(v) => setMonthsAhead(Number(v) as any)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Horizonte" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 meses</SelectItem>
+                <SelectItem value="6">6 meses</SelectItem>
+                <SelectItem value="12">12 meses</SelectItem>
+                <SelectItem value="24">24 meses</SelectItem>
+                <SelectItem value="36">36 meses</SelectItem>
+                <SelectItem value="60">60 meses</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-80 bg-muted/20 rounded p-2">
@@ -84,7 +102,7 @@ export default function FluxoCaixaPage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
-                Sem dados no período (90 dias).
+                Sem dados no período.
               </div>
             )}
           </div>

@@ -1,14 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { accountsReceivable, accountsPayable } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, gte, lte, inArray, sql } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const ctx = await getTenantContext();
     const today = new Date();
-    const days90 = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
+    const url = new URL(req.url);
+    const monthsAheadRaw = url.searchParams.get("monthsAhead");
+    const monthsAhead = monthsAheadRaw ? Number(monthsAheadRaw) : 3;
+    const monthsAheadSafe = Number.isFinite(monthsAhead) ? Math.max(1, Math.min(60, Math.trunc(monthsAhead))) : 3;
+
+    const horizonEnd = new Date(today);
+    horizonEnd.setMonth(horizonEnd.getMonth() + monthsAheadSafe);
 
     // Entradas
     const income = await db
@@ -22,7 +28,7 @@ export async function GET() {
           eq(accountsReceivable.organizationId, ctx.organizationId),
           inArray(accountsReceivable.status, ["OPEN", "PARTIALLY_PAID"]),
           gte(accountsReceivable.dueDate, today),
-          lte(accountsReceivable.dueDate, days90)
+          lte(accountsReceivable.dueDate, horizonEnd)
         )
       )
       .groupBy(accountsReceivable.dueDate);
@@ -39,14 +45,14 @@ export async function GET() {
           eq(accountsPayable.organizationId, ctx.organizationId),
           inArray(accountsPayable.status, ["OPEN", "PARTIALLY_PAID"]),
           gte(accountsPayable.dueDate, today),
-          lte(accountsPayable.dueDate, days90)
+          lte(accountsPayable.dueDate, horizonEnd)
         )
       )
       .groupBy(accountsPayable.dueDate);
 
     return NextResponse.json({
       success: true,
-      data: { income, expenses },
+      data: { income, expenses, meta: { monthsAhead: monthsAheadSafe } },
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
