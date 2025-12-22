@@ -170,6 +170,7 @@ export function AuditParcelasGrid(props: {
   const [preset, setPreset] = useState<"7d" | "30d" | "3m" | "6m" | "12m" | "24m" | "36m" | "custom" | "all">("30d");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [limit, setLimit] = useState<2000 | 5000 | 10000>(5000);
   const [runId, setRunId] = useState("");
   const [status, setStatus] = useState<"ALL" | string>("ALL");
   const [onlyOpen, setOnlyOpen] = useState(false);
@@ -216,7 +217,7 @@ export function AuditParcelasGrid(props: {
     try {
       const qs = new URLSearchParams();
       qs.set("operacao", props.operacao);
-      qs.set("limit", "2000");
+      qs.set("limit", String(limit));
       // Novo filtro: por data de negócio (range). Mantemos fallback para sinceDays via preset "7d/30d".
       if (startDate) qs.set("startDate", startDate);
       if (endDate) qs.set("endDate", endDate);
@@ -247,6 +248,7 @@ export function AuditParcelasGrid(props: {
   }, [
     dateField,
     endDate,
+    limit,
     onlyNoBankLink,
     onlyOpen,
     onlyOverdue,
@@ -510,6 +512,17 @@ export function AuditParcelasGrid(props: {
             title="Data final"
           />
 
+          <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v) as any)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Linhas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2000">2.000 linhas</SelectItem>
+              <SelectItem value="5000">5.000 linhas</SelectItem>
+              <SelectItem value="10000">10.000 linhas</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Input value={runId} onChange={(e) => setRunId(e.target.value)} placeholder="runId (UUID)" className="w-[280px]" />
 
           <Select value={status} onValueChange={(v) => setStatus(v)}>
@@ -547,6 +560,11 @@ export function AuditParcelasGrid(props: {
           <Button variant="secondary" onClick={load} disabled={loading}>
             Aplicar
           </Button>
+
+          <div className="text-xs text-muted-foreground ml-auto">
+            Dica: filtros nas colunas do grid atuam <strong>apenas</strong> sobre as linhas já carregadas. Para buscar 2023/2024,
+            ajuste o período/De/Até acima.
+          </div>
         </div>
 
         <div className="aurora-premium-grid">

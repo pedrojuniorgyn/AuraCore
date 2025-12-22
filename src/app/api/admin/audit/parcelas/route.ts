@@ -17,7 +17,7 @@ const querySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   dateField: z.enum(["SNAPSHOT", "VENCIMENTO", "PAGAMENTO", "BANCO", "DOCUMENTO"]).optional(),
-  limit: z.coerce.number().int().min(1).max(5000).optional(),
+  limit: z.coerce.number().int().min(1).max(20000).optional(),
   status: z.string().max(50).optional(), // status é string no AuditFinDB
   operacao: z.enum(["PAGAMENTO", "RECEBIMENTO"]).optional(),
   onlyOpen: z.coerce.boolean().optional(),
@@ -243,7 +243,7 @@ async function listParcelas(
               ? "(@is_admin = 1 OR @allowed_branch_ids = '' OR r.branch_id IN (SELECT TRY_CAST(value as int) FROM string_split(@allowed_branch_ids, ',')))"
               : "1=1"
           })
-        ORDER BY r.started_at DESC, f.data_vencimento DESC, f.parcela_id DESC;
+        ORDER BY ${dateCol} DESC, r.started_at DESC, f.parcela_id DESC;
       `
       );
 

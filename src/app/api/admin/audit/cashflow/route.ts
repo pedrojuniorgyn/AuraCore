@@ -17,7 +17,7 @@ const querySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   dateField: z.enum(["SNAPSHOT", "DATA"]).optional(),
-  limit: z.coerce.number().int().min(1).max(5000).optional(),
+  limit: z.coerce.number().int().min(1).max(20000).optional(),
 });
 
 function parseUtcStartOfDay(isoDate: string) {
@@ -130,7 +130,7 @@ async function listCashflow(
               ? "(@is_admin = 1 OR @allowed_branch_ids = '' OR r.branch_id IN (SELECT TRY_CAST(value as int) FROM string_split(@allowed_branch_ids, ',')))"
               : "1=1"
           })
-        ORDER BY r.started_at DESC, d.data DESC;
+        ORDER BY ${dateCol} DESC, r.started_at DESC;
       `
       );
 
