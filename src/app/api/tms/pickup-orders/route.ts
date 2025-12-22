@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { pickupOrders } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
+import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
 
 /**
  * GET /api/tms/pickup-orders
@@ -11,12 +11,8 @@ export async function GET(req: Request) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
 
     const orders = await db
       .select()
@@ -24,7 +20,8 @@ export async function GET(req: Request) {
       .where(
         and(
           eq(pickupOrders.organizationId, organizationId),
-          isNull(pickupOrders.deletedAt)
+          isNull(pickupOrders.deletedAt),
+          ...getBranchScopeFilter(ctx, pickupOrders.branchId)
         )
       )
       .orderBy(desc(pickupOrders.createdAt));
@@ -33,10 +30,11 @@ export async function GET(req: Request) {
       success: true,
       data: orders,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof Response) return error;
     console.error("❌ Erro ao buscar ordens:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar ordens", details: error.message },
+      { error: "Erro ao buscar ordens", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -49,13 +47,9 @@ export async function POST(req: Request) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
-
-    const organizationId = session.user.organizationId;
-    const createdBy = session.user.email || "system";
+    const ctx = await getTenantContext();
+    const organizationId = ctx.organizationId;
+    const createdBy = ctx.userId || "system";
 
     const body = await req.json();
     // Evitar override de campos sensíveis via spread
@@ -71,15 +65,19 @@ export async function POST(req: Request) {
     } = (body ?? {}) as Record<string, unknown>;
 
     // branchId é NOT NULL no schema: usar body.branchId (se vier) ou defaultBranchId da sessão
-    const sessionDefaultBranchId =
-      Number((session.user as any)?.defaultBranchId ?? (session.user as any)?.branchId ?? 0) || null;
-    const branchIdRaw = (body as any)?.branchId ?? sessionDefaultBranchId;
-    const branchId = branchIdRaw ? Number(branchIdRaw) : NaN;
-    if (!branchId || Number.isNaN(branchId)) {
+    const branchIdCandidate = (body as any)?.branchId ?? ctx.defaultBranchId;
+    if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
         { error: "branchId é obrigatório (ou defina defaultBranchId no usuário)" },
         { status: 400 }
       );
+    }
+    const branchId = Number(branchIdCandidate);
+    if (!Number.isFinite(branchId) || branchId <= 0) {
+      return NextResponse.json({ error: "branchId inválido" }, { status: 400 });
+    }
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json({ error: "Sem permissão para a filial" }, { status: 403 });
     }
 
     // Gerar número
@@ -118,10 +116,11 @@ export async function POST(req: Request) {
       message: "Ordem criada!",
       data: newOrder,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof Response) return error;
     console.error("❌ Erro ao criar ordem:", error);
     return NextResponse.json(
-      { error: "Erro ao criar ordem", details: error.message },
+      { error: "Erro ao criar ordem", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

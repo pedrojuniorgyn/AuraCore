@@ -38,6 +38,15 @@ const branchFormSchema = z.object({
   document: z.string().min(14, "CNPJ deve ter 14 dígitos"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(10, "Telefone inválido"),
+  // Integração (legado / Auditoria)
+  legacyCompanyBranchCode: z.preprocess(
+    (v) => {
+      if (v === "" || v === null || v === undefined) return undefined;
+      const n = typeof v === "number" ? v : Number(String(v));
+      return Number.isFinite(n) ? n : undefined;
+    },
+    z.number().int().min(1).max(32767)
+  ).optional(),
 
   // Fiscal
   ie: z.string().min(1, "Inscrição Estadual é obrigatória"),
@@ -72,6 +81,9 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [legacyBranchOptions, setLegacyBranchOptions] = useState<Array<{ code: number; label: string }>>([]);
+  const [taxClassOptions, setTaxClassOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const NONE = "__none__";
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchFormSchema),
@@ -81,6 +93,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       document: initialData?.document || "",
       email: initialData?.email || "",
       phone: initialData?.phone || "",
+      legacyCompanyBranchCode: (initialData as any)?.legacyCompanyBranchCode ?? undefined,
       ie: initialData?.ie || "",
       im: initialData?.im || "",
       crt: initialData?.crt || "1",
@@ -98,6 +111,51 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
     },
   });
 
+  // Carrega opções do banco legado (se disponível). Se falhar, mantém inputs manuais.
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadLegacyOptions() {
+      try {
+        const [rBranches, rTax] = await Promise.all([
+          fetch("/api/admin/audit/legacy/branch-codes", { credentials: "include" }),
+          fetch("/api/admin/audit/legacy/tax-classifications", { credentials: "include" }),
+        ]);
+
+        if (rBranches.ok) {
+          const data = await rBranches.json();
+          const items = Array.isArray(data?.items) ? data.items : [];
+          if (mounted) {
+            setLegacyBranchOptions(
+              items
+                .map((it: any) => ({ code: Number(it.code), label: String(it.label ?? it.code) }))
+                .filter((it: any) => Number.isFinite(it.code))
+            );
+          }
+        }
+
+        if (rTax.ok) {
+          const data = await rTax.json();
+          const items = Array.isArray(data?.items) ? data.items : [];
+          if (mounted) {
+            setTaxClassOptions(
+              items
+                .map((it: any) => ({ value: String(it.value ?? ""), label: String(it.label ?? it.value ?? "") }))
+                .filter((it: any) => it.value)
+            );
+          }
+        }
+      } catch {
+        // silencioso: UI continua com inputs manuais
+      }
+    }
+
+    void loadLegacyOptions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Busca automática de endereço via CEP
   const handleCepBlur = async () => {
     const cep = form.getValues("zipCode").replace(/\D/g, "");
@@ -105,7 +163,9 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
 
     setIsLoadingCep(true);
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+        headers: { Accept: "application/json" },
+      });
       const data = await response.json();
 
       if (data.erro) {
@@ -117,12 +177,24 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       form.setValue("district", data.bairro || "");
       form.setValue("cityName", data.localidade || "");
       form.setValue("state", data.uf || "");
-      form.setValue("cityCode", data.ibge || "");
-      form.setValue("complement", data.complemento || "");
+      if (typeof data.complemento === "string" && data.complemento) {
+        form.setValue("complement", data.complemento);
+      }
 
-      toast.success("Endereço preenchido automaticamente!");
+      // IBGE às vezes não vem. Se vier, valida e preenche; se não vier, deixa o usuário preencher manualmente.
+      const ibge = typeof data.ibge === "string" ? data.ibge.replace(/\D/g, "") : "";
+      if (/^\d{7}$/.test(ibge)) {
+        form.setValue("cityCode", ibge);
+        toast.success("Endereço preenchido automaticamente!");
+      } else {
+        toast.success("Endereço preenchido (IBGE pendente)", {
+          description: "Preencha o Código IBGE manualmente para concluir o cadastro.",
+        });
+      }
     } catch (error) {
-      toast.error("Erro ao buscar CEP");
+      toast.error("Erro ao buscar CEP", {
+        description: "Não foi possível consultar o ViaCEP. Preencha o endereço manualmente.",
+      });
     } finally {
       setIsLoadingCep(false);
     }
@@ -286,6 +358,55 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="legacyCompanyBranchCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Código da Filial (Legado)</FormLabel>
+                      <FormControl>
+                        {legacyBranchOptions.length ? (
+                          <Select
+                            value={field.value == null ? NONE : String(field.value)}
+                            onValueChange={(v) => {
+                              if (v === NONE) {
+                                field.onChange(undefined);
+                                return;
+                              }
+                              const n = Number(v);
+                              field.onChange(Number.isFinite(n) ? n : undefined);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione do legado (opcional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={NONE}>Não usar</SelectItem>
+                              {legacyBranchOptions.map((opt) => (
+                                <SelectItem key={opt.code} value={String(opt.code)}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={field.value === undefined ? "" : String(field.value)}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            placeholder="Ex: 1"
+                            inputMode="numeric"
+                          />
+                        )}
+                      </FormControl>
+                      <FormDescription>
+                        Opcional. Preencha com o <code>CodigoEmpresaFilial</code> do banco legado para o módulo Auditoria
+                        filtrar corretamente por filial.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -363,7 +484,26 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                       <FormItem>
                         <FormLabel>Classificação Tributária</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Opcional" />
+                          {taxClassOptions.length ? (
+                            <Select
+                              value={(field.value ?? "").trim() ? (field.value as string) : NONE}
+                              onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione do legado (opcional)" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={NONE}>Não informado</SelectItem>
+                                {taxClassOptions.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input {...field} placeholder="Opcional" />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -497,11 +637,13 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                     name="cityCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Código IBGE</FormLabel>
+                        <FormLabel>Código IBGE *</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="3550308" readOnly />
+                          <Input {...field} placeholder="3550308" maxLength={7} inputMode="numeric" />
                         </FormControl>
-                        <FormDescription>Preenchido automaticamente pelo CEP</FormDescription>
+                        <FormDescription>
+                          Tenta preencher automaticamente pelo CEP. Se não vier, digite manualmente (7 dígitos).
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

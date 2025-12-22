@@ -4,21 +4,27 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, AlertTriangle } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface Trip {
   id: number;
   tripNumber: string;
   status: string;
-  scheduledEnd: Date;
-  estimatedEnd: Date;
+  scheduledEnd: string | null;
   slaStatus: string;
-  checkpoints: any[];
+  checkpoints: Array<{
+    id: number;
+    checkpointType: string;
+    description: string | null;
+    locationAddress: string | null;
+    recordedAt: string;
+  }>;
 }
 
 export default function TorreControlePage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingTripId, setSavingTripId] = useState<number | null>(null);
 
   useEffect(() => {
     loadTrips();
@@ -33,6 +39,26 @@ export default function TorreControlePage() {
       console.error("Erro:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addCheckpoint = async (tripId: number, checkpointType: string) => {
+    setSavingTripId(tripId);
+    try {
+      const res = await fetch(`/api/tms/trips/${tripId}/checkpoint`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkpointType }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error ?? "Falha ao registrar checkpoint");
+      }
+      await loadTrips();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingTripId(null);
     }
   };
 
@@ -55,6 +81,12 @@ export default function TorreControlePage() {
         <p className="text-slate-400">Monitor de entregas em tempo real</p>
       </div>
 
+      <div className="flex justify-end">
+        <Button variant="secondary" onClick={loadTrips} disabled={loading}>
+          Atualizar
+        </Button>
+      </div>
+
       <div className="grid gap-4">
         {trips.map((trip) => (
           <Card key={trip.id} className="p-4">
@@ -69,16 +101,78 @@ export default function TorreControlePage() {
               <div className="text-right text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Prev: {new Date(trip.scheduledEnd).toLocaleString()}
+                  Prev: {trip.scheduledEnd ? new Date(trip.scheduledEnd).toLocaleString() : "—"}
                 </div>
               </div>
             </div>
 
-            {/* TODO: Timeline visual */}
-            <div className="mt-4 p-3 bg-muted rounded">
-              <p className="text-sm text-muted-foreground">
-                TODO: Timeline de checkpoints
-              </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={savingTripId === trip.id}
+                onClick={() => addCheckpoint(trip.id, "PICKED")}
+              >
+                Coletado
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={savingTripId === trip.id}
+                onClick={() => addCheckpoint(trip.id, "IN_TRANSIT")}
+              >
+                Em trânsito
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={savingTripId === trip.id}
+                onClick={() => addCheckpoint(trip.id, "DELIVERED")}
+              >
+                Entregue
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={savingTripId === trip.id}
+                onClick={() => addCheckpoint(trip.id, "ISSUE")}
+              >
+                Ocorrência
+              </Button>
+            </div>
+
+            <div className="mt-4 rounded border bg-muted/30 p-3">
+              <div className="text-sm font-medium mb-2">Timeline</div>
+              {trip.checkpoints?.length ? (
+                <ol className="space-y-3">
+                  {trip.checkpoints.map((cp, idx) => (
+                    <li key={cp.id} className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="h-2.5 w-2.5 rounded-full bg-slate-400 mt-1.5" />
+                        {idx < trip.checkpoints.length - 1 ? (
+                          <div className="w-px flex-1 bg-slate-300/50 mt-1" />
+                        ) : null}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary">{cp.checkpointType}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(cp.recordedAt).toLocaleString()}
+                          </span>
+                        </div>
+                        {cp.description ? (
+                          <div className="text-sm mt-1">{cp.description}</div>
+                        ) : null}
+                        {cp.locationAddress ? (
+                          <div className="text-xs text-muted-foreground mt-1">{cp.locationAddress}</div>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="text-sm text-muted-foreground">Sem checkpoints ainda.</div>
+              )}
             </div>
           </Card>
         ))}

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const nextNumber = (lastProposal[0]?.id || 0) + 1;
     const proposalNumber = `PROP-${new Date().getFullYear()}-${String(nextNumber).padStart(4, "0")}`;
 
-    const [createdId] = await db
+    const [createdId] = await (db
       .insert(commercialProposals)
       .values({
         organizationId: ctx.organizationId,
@@ -56,19 +56,35 @@ export async function POST(request: Request) {
         conditions: JSON.stringify(body.conditions || {}),
         validityDays: body.validityDays || 15,
         createdBy: ctx.userId,
-      })
-      .$returningId();
+      } as any) as any).$returningId();
 
     const proposalId = (createdId as any)?.id;
-    const [proposal] = proposalId
-      ? await db
-          .select()
-          .from(commercialProposals)
-          .where(and(eq(commercialProposals.id, Number(proposalId)), eq(commercialProposals.organizationId, ctx.organizationId), isNull(commercialProposals.deletedAt)))
-          .limit(1)
-      : [];
+    if (!proposalId) {
+      return NextResponse.json(
+        { error: "Falha ao criar proposta (id não retornado)" },
+        { status: 500 }
+      );
+    }
 
-    return NextResponse.json({ success: true, data: proposal });
+    const [proposal] = await db
+      .select()
+      .from(commercialProposals)
+      .where(
+        and(
+          eq(commercialProposals.id, Number(proposalId)),
+          eq(commercialProposals.organizationId, ctx.organizationId),
+          isNull(commercialProposals.deletedAt)
+        )
+      );
+
+    if (!proposal) {
+      return NextResponse.json(
+        { error: "Falha ao criar proposta (registro não encontrado após insert)" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: proposal }, { status: 201 });
   } catch (error: any) {
     if (error instanceof Response) {
       return error;

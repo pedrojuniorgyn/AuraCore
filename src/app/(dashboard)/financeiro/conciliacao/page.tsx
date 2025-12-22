@@ -11,7 +11,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 
 interface BankTransaction {
   id: number;
-  transaction_date: string;
+  transactionDate: string;
   description: string;
   amount: number;
   reconciled: string;
@@ -22,6 +22,27 @@ export default function BankReconciliationPage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const bankAccountId = 1; // TODO: trocar por seleção de conta
+
+  useEffect(() => {
+    loadTransactions();
+  }, []);
+
+  const loadTransactions = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/financial/bank-transactions?bankAccountId=${bankAccountId}&limit=200`);
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error ?? "Falha ao listar transações");
+      }
+      setTransactions(data.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,7 +53,7 @@ export default function BankReconciliationPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("bankAccountId", "1"); // Trocar por seleção de conta
+      formData.append("bankAccountId", String(bankAccountId)); // TODO: trocar por seleção de conta
 
       const res = await fetch("/api/financial/bank-transactions/import-ofx", {
         method: "POST",
@@ -46,7 +67,7 @@ export default function BankReconciliationPage() {
           title: "Sucesso",
           description: `${data.count} transações importadas`,
         });
-        // Atualizar lista
+        await loadTransactions();
       } else {
         throw new Error(data.error);
       }
@@ -60,6 +81,22 @@ export default function BankReconciliationPage() {
     } finally {
       setUploading(false);
       e.target.value = "";
+    }
+  };
+
+  const reconcile = async (txId: number) => {
+    try {
+      const res = await fetch(`/api/financial/bank-transactions/${txId}/reconcile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reconciled: "S" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data?.error ?? "Falha ao conciliar");
+      await loadTransactions();
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erro", description: "Falha ao conciliar transação", variant: "destructive" });
     }
   };
 
@@ -190,7 +227,12 @@ export default function BankReconciliationPage() {
       {/* Lista de Transações */}
       <div className="bg-white border border-gray-200 rounded-lg">
         <div className="p-6 border-b">
-          <h2 className="text-lg font-semibold">Transações Importadas</h2>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold">Transações Importadas</h2>
+            <Button variant="secondary" onClick={loadTransactions} disabled={loading}>
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         <div className="p-6">
@@ -214,7 +256,7 @@ export default function BankReconciliationPage() {
                   <div className="flex-1">
                     <p className="font-medium">{tx.description}</p>
                     <p className="text-sm text-gray-500">
-                      {new Date(tx.transaction_date).toLocaleDateString("pt-BR")}
+                      {new Date(tx.transactionDate).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                   <div className="text-right">
@@ -225,11 +267,18 @@ export default function BankReconciliationPage() {
                     >
                       R$ {Math.abs(tx.amount).toFixed(2)}
                     </p>
-                    {tx.reconciled === "S" ? (
-                      <Check className="w-5 h-5 text-green-600 ml-auto" />
-                    ) : (
-                      <X className="w-5 h-5 text-gray-400 ml-auto" />
-                    )}
+                    <div className="flex items-center justify-end gap-2 mt-1">
+                      {tx.reconciled === "S" ? (
+                        <Check className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <>
+                          <X className="w-5 h-5 text-gray-400" />
+                          <Button size="sm" onClick={() => reconcile(tx.id)}>
+                            Conciliar
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

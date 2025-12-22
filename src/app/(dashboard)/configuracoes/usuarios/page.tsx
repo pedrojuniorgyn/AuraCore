@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserPlus, Shield, Edit, Trash2 } from "lucide-react";
+import { UserPlus, Shield, Edit, Trash2, KeyRound } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ interface User {
   email: string | null;
   roles: { id: number; name: string }[];
   googleLinked?: boolean;
+  hasPassword?: boolean;
 }
 
 interface RoleOption {
@@ -59,6 +60,7 @@ export default function UsersManagementPage() {
   const { hasPermission, loading: permissionsLoading } = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -74,6 +76,11 @@ export default function UsersManagementPage() {
   const [editRoleIds, setEditRoleIds] = useState<number[]>([]);
   const [editBranchIds, setEditBranchIds] = useState<number[]>([]);
   const [savingAccess, setSavingAccess] = useState(false);
+
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -96,6 +103,43 @@ export default function UsersManagementPage() {
       console.error("Erro ao carregar usuários:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openPassword = (u: User) => {
+    setPasswordUser(u);
+    setNewPassword("");
+    setPasswordOpen(true);
+    setSavingPassword(false);
+  };
+
+  const submitPasswordUpdate = async () => {
+    if (!passwordUser) return;
+    if (!newPassword || newPassword.length < 8) {
+      toast.error("Senha inválida", { description: "A senha deve ter no mínimo 8 caracteres." });
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      const res = await fetch(`/api/admin/users/${passwordUser.id}/password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Falha ao definir senha");
+
+      toast.success("Senha definida");
+      setPasswordOpen(false);
+      setPasswordUser(null);
+      setNewPassword("");
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error("Erro ao definir senha", { description: err?.message });
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -231,6 +275,40 @@ export default function UsersManagementPage() {
       toast.error("Erro ao convidar usuário", { description: err?.message });
     } finally {
       setInviting(false);
+    }
+  };
+
+  const deleteUser = async (u: User) => {
+    if (!u?.id) return;
+    if (!u.email) {
+      toast.error("Não é possível excluir", { description: "Usuário sem email." });
+      return;
+    }
+
+    const ok = confirm(
+      `Excluir o usuário?\n\n` +
+        `Email: ${u.email}\n` +
+        `Nome: ${u.name || "—"}\n\n` +
+        `Essa ação remove acessos (roles/filiais) e revoga sessões.`
+    );
+    if (!ok) return;
+
+    setDeletingUserId(u.id);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Falha ao excluir usuário");
+      }
+      toast.success("Usuário excluído");
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error("Erro ao excluir usuário", { description: err?.message });
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -395,7 +473,7 @@ export default function UsersManagementPage() {
                     <TableCell className="font-medium">{user.name || "—"}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      {user.googleLinked ? (
+                      {user.googleLinked || user.hasPassword ? (
                         <Badge variant="secondary">Ativo</Badge>
                       ) : (
                         <Badge variant="outline">Pendente (1º login)</Badge>
@@ -419,7 +497,21 @@ export default function UsersManagementPage() {
                         <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openPassword(user)}
+                          title="Definir senha (login por email)"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteUser(user)}
+                          disabled={deletingUserId === user.id}
+                          title="Excluir usuário"
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
@@ -431,6 +523,47 @@ export default function UsersManagementPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Definir senha</DialogTitle>
+            <DialogDescription>
+              Isto habilita login por <strong>Email/Senha</strong> para o usuário (independente do Google Workspace).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="rounded-md border p-3">
+              <div className="text-sm font-medium">{passwordUser?.name || "—"}</div>
+              <div className="text-xs text-muted-foreground">{passwordUser?.email}</div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword">Nova senha *</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+              />
+              <p className="text-xs text-muted-foreground">
+                Dica: após definir senha, o status passa a <code>Ativo</code> mesmo sem Google vinculado.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordOpen(false)} disabled={savingPassword}>
+              Cancelar
+            </Button>
+            <Button onClick={submitPasswordUpdate} disabled={savingPassword}>
+              {savingPassword ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-[720px]">
