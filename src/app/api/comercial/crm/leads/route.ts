@@ -39,17 +39,30 @@ export async function POST(request: Request) {
 
     // Evitar override de campos sensíveis via spread
     const {
+      id: _id,
       organizationId: _orgId,
+      organization_id: _org_id,
       branchId: _branchId,
+      branch_id: _branch_id,
       createdBy: _createdBy,
+      created_by: _created_by,
       updatedBy: _updatedBy,
+      updated_by: _updated_by,
+      createdAt: _createdAt,
+      created_at: _created_at,
+      updatedAt: _updatedAt,
+      updated_at: _updated_at,
       deletedAt: _deletedAt,
+      deleted_at: _deleted_at,
       deletedBy: _deletedBy,
+      deleted_by: _deleted_by,
       version: _version,
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    const [createdId] = await db
+    // Drizzle MSSQL: $returningId existe em runtime, mas pode não estar tipado.
+    // Além disso, nunca devolvemos success=true com data undefined.
+    const [createdId] = await (db
       .insert(crmLeads)
       .values({
         ...safeBody,
@@ -57,19 +70,35 @@ export async function POST(request: Request) {
         stage: (safeBody as any)?.stage || "PROSPECTING",
         ownerId: ctx.userId,
         createdBy: ctx.userId,
-      })
-      .$returningId();
+      } as any) as any).$returningId();
 
     const leadId = (createdId as any)?.id;
-    const [lead] = leadId
-      ? await db
-          .select()
-          .from(crmLeads)
-          .where(and(eq(crmLeads.id, Number(leadId)), eq(crmLeads.organizationId, ctx.organizationId), isNull(crmLeads.deletedAt)))
-          .limit(1)
-      : [];
+    if (!leadId) {
+      return NextResponse.json(
+        { error: "Falha ao criar lead (id não retornado)" },
+        { status: 500 }
+      );
+    }
 
-    return NextResponse.json({ success: true, data: lead });
+    const [lead] = await db
+      .select()
+      .from(crmLeads)
+      .where(
+        and(
+          eq(crmLeads.id, Number(leadId)),
+          eq(crmLeads.organizationId, ctx.organizationId),
+          isNull(crmLeads.deletedAt)
+        )
+      );
+
+    if (!lead) {
+      return NextResponse.json(
+        { error: "Falha ao criar lead (registro não encontrado após insert)" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: lead }, { status: 201 });
   } catch (error: any) {
     if (error instanceof Response) {
       return error;
@@ -77,7 +106,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
 
 
 

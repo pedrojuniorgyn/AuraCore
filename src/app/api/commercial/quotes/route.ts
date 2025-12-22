@@ -145,7 +145,7 @@ export async function POST(req: Request) {
     }
 
     // Criar cotação
-    const [createdId] = await db
+    const [createdId] = await (db
       .insert(freightQuotes)
       .values({
         organizationId,
@@ -174,23 +174,33 @@ export async function POST(req: Request) {
         priceBreakdown,
         status: "NEW",
         createdBy,
-      })
-      .$returningId();
+      } as any) as any).$returningId();
 
     const quoteId = (createdId as any)?.id;
-    const [newQuote] = quoteId
-      ? await db
-          .select()
-          .from(freightQuotes)
-          .where(and(eq(freightQuotes.id, Number(quoteId)), eq(freightQuotes.organizationId, organizationId)))
-          .limit(1)
-      : [];
+    if (!quoteId) {
+      return NextResponse.json(
+        { error: "Falha ao criar cotação (id não retornado)" },
+        { status: 500 }
+      );
+    }
+
+    const [newQuote] = await db
+      .select()
+      .from(freightQuotes)
+      .where(and(eq(freightQuotes.id, Number(quoteId)), eq(freightQuotes.organizationId, organizationId)));
+
+    if (!newQuote) {
+      return NextResponse.json(
+        { error: "Falha ao criar cotação (registro não encontrado após insert)" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: "Cotação criada com sucesso!",
       data: newQuote,
-    });
+    }, { status: 201 });
   } catch (error: any) {
     if (error instanceof Response) {
       return error;

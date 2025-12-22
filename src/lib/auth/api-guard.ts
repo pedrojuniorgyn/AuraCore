@@ -42,9 +42,29 @@ export async function withPermission<T>(
     }
 
     // 3. Executar handler com contexto
+    // Padronização: expor `userId` diretamente (evita usos incorretos como ctx.user.id).
+    // Importante: várias rotas (ex.: Auditoria) dependem de `isAdmin` e `allowedBranches`
+    // para aplicar Data Scoping. Esses campos já estão presentes na sessão (callbacks do NextAuth).
+    const role = (session.user as any)?.role ?? "USER";
+    const allowedBranches = Array.isArray((session.user as any)?.allowedBranches)
+      ? ((session.user as any).allowedBranches as number[])
+      : [];
+    const defaultBranchId =
+      (session.user as any)?.defaultBranchId !== undefined ? (session.user as any).defaultBranchId : null;
+    const isAdmin = role === "ADMIN";
+
     const ctx = {
       user: session.user,
-      branchId: (session.user as any).branchId,
+      userId: session.user.id,
+      role,
+      isAdmin,
+      defaultBranchId,
+      allowedBranches,
+      // Compatibilidade: alguns handlers antigos usam branchId; preferir defaultBranchId quando existir.
+      branchId:
+        (session.user as any).branchId ??
+        defaultBranchId ??
+        null,
       organizationId: (session.user as any).organizationId,
     };
 
@@ -74,9 +94,25 @@ export async function withAuth<T>(
       );
     }
 
+    const role = (session.user as any)?.role ?? "USER";
+    const allowedBranches = Array.isArray((session.user as any)?.allowedBranches)
+      ? ((session.user as any).allowedBranches as number[])
+      : [];
+    const defaultBranchId =
+      (session.user as any)?.defaultBranchId !== undefined ? (session.user as any).defaultBranchId : null;
+    const isAdmin = role === "ADMIN";
+
     const ctx = {
       user: session.user,
-      branchId: (session.user as any).branchId,
+      userId: session.user.id,
+      role,
+      isAdmin,
+      defaultBranchId,
+      allowedBranches,
+      branchId:
+        (session.user as any).branchId ??
+        defaultBranchId ??
+        null,
       organizationId: (session.user as any).organizationId,
     };
 
@@ -88,6 +124,9 @@ export async function withAuth<T>(
     );
   }
 }
+
+
+
 
 
 

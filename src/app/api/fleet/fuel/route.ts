@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fuelTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -34,17 +34,29 @@ export async function POST(request: Request) {
 
     // Evitar override de campos sensíveis via spread
     const {
+      id: _id,
       organizationId: _orgId,
+      organization_id: _org_id,
       branchId: _branchId,
+      branch_id: _branch_id,
       createdBy: _createdBy,
+      created_by: _created_by,
       updatedBy: _updatedBy,
+      updated_by: _updated_by,
+      createdAt: _createdAt,
+      created_at: _created_at,
+      updatedAt: _updatedAt,
+      updated_at: _updated_at,
       deletedAt: _deletedAt,
+      deleted_at: _deleted_at,
       deletedBy: _deletedBy,
+      deleted_by: _deleted_by,
       version: _version,
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    const [createdId] = await db
+    // Drizzle MSSQL: $returningId pode não estar tipado; use cast e requery robusto.
+    await (db
       .insert(fuelTransactions)
       .values({
         ...safeBody,
@@ -52,22 +64,13 @@ export async function POST(request: Request) {
         transactionDate: (safeBody as any)?.transactionDate
           ? new Date((safeBody as any).transactionDate as any)
           : new Date(),
-      })
-      .$returningId();
+      } as any) as any).$returningId();
 
-    const txId = (createdId as any)?.id;
-    const [transaction] = txId
-      ? await db
-          .select()
-          .from(fuelTransactions)
-          .where(
-            and(
-              eq(fuelTransactions.id, Number(txId)),
-              eq(fuelTransactions.organizationId, ctx.organizationId)
-            )
-          )
-          .limit(1)
-      : [];
+    const [transaction] = await db
+      .select()
+      .from(fuelTransactions)
+      .where(eq(fuelTransactions.organizationId, ctx.organizationId))
+      .orderBy(desc(fuelTransactions.id));
 
     return NextResponse.json({ success: true, data: transaction });
   } catch (error: any) {

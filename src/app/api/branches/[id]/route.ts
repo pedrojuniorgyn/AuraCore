@@ -5,6 +5,72 @@ import { createBranchSchema } from "@/lib/validators/branch";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ne } from "drizzle-orm";
 
+async function fetchBranchRaw(pool: any, id: number, organizationId: number) {
+  // Compatibilidade com schema divergente: algumas implantações podem não ter colunas novas.
+  // Importante: o frontend espera camelCase (mesmo formato do Drizzle).
+  const colCheck = await pool.request().query(`
+    SELECT
+      COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as legacy_col,
+      COL_LENGTH('dbo.branches', 'c_class_trib') as cclasstrib_col;
+  `);
+  const legacyColExists = (colCheck.recordset?.[0] as any)?.legacy_col != null;
+  const cClassTribColExists = (colCheck.recordset?.[0] as any)?.cclasstrib_col != null;
+
+  const legacySelect = legacyColExists
+    ? "b.legacy_company_branch_code"
+    : "CAST(NULL as int)";
+  const cClassTribSelect = cClassTribColExists
+    ? "b.c_class_trib"
+    : "CAST(NULL as nvarchar(10))";
+
+  const r = await pool
+    .request()
+    .input("id", id)
+    .input("org", organizationId)
+    .query(`
+      SELECT TOP 1
+        b.id,
+        b.organization_id as organizationId,
+        ${legacySelect} as legacyCompanyBranchCode,
+        b.name,
+        b.trade_name as tradeName,
+        b.document,
+        b.email,
+        b.phone,
+        b.ie,
+        b.im,
+        ${cClassTribSelect} as cClassTrib,
+        b.crt,
+        b.zip_code as zipCode,
+        b.street,
+        b.number,
+        b.complement,
+        b.district,
+        b.city_code as cityCode,
+        b.city_name as cityName,
+        b.state,
+        b.time_zone as timeZone,
+        b.logo_url as logoUrl,
+        b.certificate_pfx as certificatePfx,
+        b.certificate_password as certificatePassword,
+        b.certificate_expiry as certificateExpiry,
+        b.last_nsu as lastNsu,
+        b.environment,
+        b.created_by as createdBy,
+        b.updated_by as updatedBy,
+        b.created_at as createdAt,
+        b.updated_at as updatedAt,
+        b.deleted_at as deletedAt,
+        b.version,
+        b.status
+      FROM dbo.branches b
+      WHERE b.id = @id
+        AND b.organization_id = @org
+        AND b.deleted_at IS NULL;
+    `);
+  return (r.recordset?.[0] as any) ?? null;
+}
+
 /**
  * GET /api/branches/[id]
  * Busca uma filial específica.
@@ -20,7 +86,7 @@ export async function GET(
 ) {
   try {
     // 🔗 Garante conexão com banco
-    const { ensureConnection } = await import("@/lib/db");
+    const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
@@ -34,17 +100,9 @@ export async function GET(
       );
     }
 
-    // 🔐 SEGURANÇA: Multi-Tenant + Soft Delete + Data Scoping
-    const [branch] = await db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.id, id),
-          eq(branches.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO
-          isNull(branches.deletedAt) // 🗑️ NÃO DELETADO
-        )
-      );
+    // ✅ Compatibilidade (evita 500 quando schema diverge do Drizzle):
+    // Usamos SELECT * via pool para não depender de colunas novas no schema local.
+    const branch = await fetchBranchRaw(pool, id, ctx.organizationId);
 
     if (!branch) {
       return NextResponse.json(
@@ -91,7 +149,7 @@ export async function PUT(
 ) {
   try {
     // 🔗 Garante conexão com banco
-    const { ensureConnection } = await import("@/lib/db");
+    const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
@@ -120,17 +178,8 @@ export async function PUT(
       );
     }
 
-    // Busca filial atual com validações de segurança
-    const [currentBranch] = await db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.id, id),
-          eq(branches.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO
-          isNull(branches.deletedAt)
-        )
-      );
+    // Busca filial atual (raw) para evitar 500 por divergência de schema
+    const currentBranch = await fetchBranchRaw(pool, id, ctx.organizationId);
 
     if (!currentBranch) {
       return NextResponse.json(
@@ -161,7 +210,13 @@ export async function PUT(
       );
     }
 
-    const { document, version, ...dataToUpdate } = parsedBody.data;
+    const { document, version, legacyCompanyBranchCode, ...dataToUpdate } = parsedBody.data as any;
+
+    // Compatibilidade: se a coluna ainda não existir no banco, ignoramos o campo (evita 500).
+    const legacyColCheck = await pool.request().query(`
+      SELECT COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as col;
+    `);
+    const legacyColExists = (legacyColCheck.recordset?.[0] as any)?.col != null;
 
     // Se o documento for atualizado, verifica duplicidade (excluindo o próprio ID)
     if (document && document !== currentBranch.document) {
@@ -191,6 +246,9 @@ export async function PUT(
       .set({
         ...dataToUpdate,
         ...(document && { document }), // Atualiza documento se fornecido
+        ...(legacyColExists && legacyCompanyBranchCode !== undefined
+          ? { legacyCompanyBranchCode: legacyCompanyBranchCode as number }
+          : {}),
         updatedBy: ctx.userId, // 📊 AUDITORIA: Quem atualizou
         updatedAt: new Date(),
         version: currentBranch.version + 1, // 🔒 OPTIMISTIC LOCK: Incrementa versão
@@ -203,16 +261,8 @@ export async function PUT(
         )
       );
 
-    // 🔍 SQL Server não suporta .returning(), então fazemos SELECT depois
-    const [updatedBranch] = await db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.id, id),
-          eq(branches.organizationId, ctx.organizationId)
-        )
-      );
+    // 🔍 SQL Server não suporta .returning(); e SELECT via Drizzle pode quebrar se schema divergir.
+    const updatedBranch = await fetchBranchRaw(pool, id, ctx.organizationId);
 
     if (!updatedBranch) {
       return NextResponse.json(
@@ -252,7 +302,7 @@ export async function DELETE(
 ) {
   try {
     // 🔗 Garante conexão com banco
-    const { ensureConnection } = await import("@/lib/db");
+    const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
@@ -274,17 +324,8 @@ export async function DELETE(
       );
     }
 
-    // Busca filial atual com validações de segurança
-    const [currentBranch] = await db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.id, id),
-          eq(branches.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO
-          isNull(branches.deletedAt)
-        )
-      );
+    // Busca filial atual (raw) para evitar 500 por divergência de schema
+    const currentBranch = await fetchBranchRaw(pool, id, ctx.organizationId);
 
     if (!currentBranch) {
       return NextResponse.json(
