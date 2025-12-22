@@ -193,6 +193,9 @@ export const branches = mssqlTable("branches", {
   organizationId: int("organization_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }), // 🔑 Multi-Tenant
+  // Integração (legado): Código da filial no ERP/GlobalTCL (CodigoEmpresaFilial).
+  // Nullable: nem toda implantação usa o legado; existe migração idempotente em /api/admin/branches/migrate.
+  legacyCompanyBranchCode: int("legacy_company_branch_code"),
   name: nvarchar("name", { length: 255 }).notNull(), // Razão Social
   tradeName: nvarchar("trade_name", { length: 255 }).notNull(), // Nome Fantasia
   document: nvarchar("document", { length: 20 }).notNull(), // CNPJ

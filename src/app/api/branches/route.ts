@@ -114,6 +114,10 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // 🔗 Garante conexão com banco (necessário para checar colunas auxiliares)
+    const { ensureConnection, pool } = await import("@/lib/db");
+    await ensureConnection();
+
     // 🔐 SEGURANÇA: Obtém contexto do tenant
     const ctx = await getTenantContext();
 
@@ -132,7 +136,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { document, ...data } = parsedBody.data;
+    const { document, legacyCompanyBranchCode, ...data } = parsedBody.data;
+
+    // Compatibilidade: se a coluna ainda não existir no banco, ignoramos o campo (evita 500).
+    const legacyColCheck = await pool.request().query(`
+      SELECT COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as col;
+    `);
+    const legacyColExists = (legacyColCheck.recordset?.[0] as any)?.col != null;
 
     // Verifica se CNPJ já existe nesta organização (e não está deletado)
     const existingBranch = await db
@@ -157,6 +167,9 @@ export async function POST(request: NextRequest) {
     await db.insert(branches).values({
       ...data,
       document,
+      ...(legacyColExists && legacyCompanyBranchCode !== undefined
+        ? { legacyCompanyBranchCode: legacyCompanyBranchCode as number }
+        : {}),
       organizationId: ctx.organizationId, // 🔐 INJETA ORGANIZATION_ID (não confia no front)
       createdBy: ctx.userId, // 📊 AUDITORIA: Quem criou
       updatedBy: ctx.userId, // 📊 AUDITORIA: Quem criou (igual)

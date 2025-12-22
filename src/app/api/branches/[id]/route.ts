@@ -210,7 +210,7 @@ export async function PUT(
       );
     }
 
-    const { document, version, legacyCompanyBranchCode, ...dataToUpdate } = parsedBody.data as any;
+    const { document, legacyCompanyBranchCode, ...dataToUpdate } = parsedBody.data;
 
     // Compatibilidade: se a coluna ainda não existir no banco, ignoramos o campo (evita 500).
     const legacyColCheck = await pool.request().query(`
