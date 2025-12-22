@@ -47,3 +47,20 @@ Executar migrações e seeds com segurança em Linux/Coolify/SQL Server 2022, ev
   - clean/reset
   - migrations/DDL
   - fix de índice/FK sem runbook
+
+## Exceção controlada — Auditoria (AuditFinDB) via token
+O módulo Auditoria possui endpoints operacionais sob `/api/admin/audit/*` que podem ser usados em produção **apenas** quando:
+- a operação for idempotente (ex.: adicionar colunas/índices ausentes, cleanup por `run_id`)
+- houver autenticação forte:
+  - RBAC (usuário ADMIN + permissões `audit.*`) **OU**
+  - token de infraestrutura (`x-audit-token`) validado contra `AUDIT_SNAPSHOT_HTTP_TOKEN`
+- os logs da execução forem preservados (Coolify/observabilidade)
+
+Endpoints típicos:
+- `POST /api/admin/audit/snapshots/migrate` (DDL idempotente + índices)
+- `POST /api/admin/audit/snapshots/run` (ETL)
+- `POST /api/admin/audit/snapshots/cleanup` (limpeza de runs antigas)
+
+Recomendação operacional:
+- Em PROD, preferir executar **migrate** antes do primeiro snapshot após deploy
+- Em caso de incidentes de performance, revisar índices e limitar `sinceDays/limit`

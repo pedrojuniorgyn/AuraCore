@@ -45,7 +45,7 @@ import {
   Leaf, TreePine, Recycle,
   
   // Configurações
-  Settings, Sliders, Key, Database,
+  Settings, Sliders, Key, ShieldCheck, Database,
   
   // Navegação
   ChevronDown, ChevronRight, Star, History, Search,
@@ -56,6 +56,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTenant } from "@/contexts/tenant-context";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface SidebarItem {
   title: string;
@@ -227,11 +228,24 @@ const sidebarGroups: SidebarGroup[] = [
       { title: "Usuários", href: "/configuracoes/usuarios", icon: Users, color: "text-green-400" },
     ],
   },
+  {
+    title: "Auditoria",
+    icon: ShieldCheck,
+    color: "text-amber-400",
+    items: [
+      { title: "Contas a Pagar", href: "/auditoria/contas-pagar", icon: ArrowDownCircle, color: "text-red-400" },
+      { title: "Contas a Receber", href: "/auditoria/contas-receber", icon: ArrowUpCircle, color: "text-green-400" },
+      { title: "Conciliação (Achados)", href: "/auditoria/conciliacao", icon: Repeat, color: "text-violet-400" },
+      { title: "Fluxo de Caixa", href: "/auditoria/cashflow", icon: TrendingDown, color: "text-cyan-400" },
+      { title: "Snapshots", href: "/auditoria/snapshots", icon: Database, color: "text-amber-400" },
+    ],
+  },
 ];
 
 export function GroupedSidebar() {
   const pathname = usePathname();
   const { user } = useTenant();
+  const { hasPermission } = usePermissions();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [recentPages, setRecentPages] = useState<string[]>([]);
@@ -315,7 +329,8 @@ export function GroupedSidebar() {
   };
 
   const getFilteredGroups = () => {
-    const baseGroups = sidebarGroups;
+    const canSeeAudit = user?.role === "ADMIN" || hasPermission("audit.read");
+    const baseGroups = canSeeAudit ? sidebarGroups : sidebarGroups.filter((g) => g.title !== "Auditoria");
     if (!searchQuery) return baseGroups;
     
     return baseGroups
