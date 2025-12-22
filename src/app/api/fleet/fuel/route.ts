@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     } = (body ?? {}) as Record<string, unknown>;
 
     // Drizzle MSSQL: $returningId pode não estar tipado; use cast e requery robusto.
-    await (db
+    const inserted = await (db
       .insert(fuelTransactions)
       .values({
         ...safeBody,
@@ -66,10 +66,19 @@ export async function POST(request: Request) {
           : new Date(),
       } as any) as any).$returningId();
 
+    const insertedAny = inserted as any;
+    const insertedIdRaw = Array.isArray(insertedAny)
+      ? insertedAny?.[0]?.id ?? insertedAny?.[0]?.ID ?? insertedAny?.[0]
+      : insertedAny?.id ?? insertedAny?.ID ?? insertedAny;
+    const insertedId = Number(insertedIdRaw);
+    if (!Number.isFinite(insertedId) || insertedId <= 0) {
+      return NextResponse.json({ error: "Falha ao criar abastecimento (id não retornado)." }, { status: 500 });
+    }
+
     const [transaction] = await db
       .select()
       .from(fuelTransactions)
-      .where(eq(fuelTransactions.organizationId, ctx.organizationId))
+      .where(and(eq(fuelTransactions.organizationId, ctx.organizationId), eq(fuelTransactions.id, insertedId)))
       .orderBy(desc(fuelTransactions.id));
 
     return NextResponse.json({ success: true, data: transaction });

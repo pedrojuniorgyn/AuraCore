@@ -17,20 +17,6 @@ export default auth((req) => {
   // Evita redirects HTML em chamadas fetch/curl.
   if (isApi && !isApiAdmin) return;
 
-  // Auditoria: permitir automação via token, mas evitar bypass "aberto".
-  // Se NÃO tiver token válido, exigimos sessão (e o handler aplica RBAC audit.*).
-  if (pathname.startsWith("/api/admin/audit/")) {
-    const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
-    const headerToken = req.headers.get("x-audit-token");
-    const tokenOk = token && headerToken && headerToken === token;
-    if (tokenOk) return;
-    if (!isLoggedIn) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    // Não exigir ADMIN aqui: o handler faz RBAC (audit.read/audit.run/audit.migrate).
-    return;
-  }
-
   // Migração de branches (coluna de integração com legado): permitir automação via token
   // para operar em ambientes sem cookie (Coolify terminal). Sem token, exige sessão ADMIN.
   if (pathname.startsWith("/api/admin/branches/migrate")) {
@@ -41,9 +27,7 @@ export default auth((req) => {
     if (!isLoggedIn) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo), mas já estamos logados.
-    // Deixa continuar para o bloco /api/admin aplicar a regra de role.
-    return;
+    // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo).
   }
 
   // Login:

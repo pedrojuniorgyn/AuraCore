@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
   const debugRequested = req.headers.get("x-seed-debug") === "1";
   const isProd = process.env.NODE_ENV === "production";
   let tokenOk = false;
+  let canDebug = false;
   try {
     if (!seedIsEnabled()) {
       // 404 para não “anunciar” endpoint operacional
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Se não passou pelo token, não exponha debug em produção.
-    const canDebug = debugRequested && (tokenOk || !isProd);
+    canDebug = debugRequested && (tokenOk || !isProd);
 
     // Garante que a conexão está estabelecida
     const db = await getDb();
@@ -162,9 +163,6 @@ export async function GET(req: NextRequest) {
     const desiredPermissions = [
       { slug: "admin.full", description: "Acesso total de administrador" },
       { slug: "admin.users.manage", description: "Gerenciar usuários (admin)" },
-      { slug: "audit.read", description: "Visualizar auditoria/snapshots" },
-      { slug: "audit.run", description: "Executar snapshots (ETL) da auditoria" },
-      { slug: "audit.migrate", description: "Aplicar migrações/DDL no AuditFinDB" },
     ] as const;
 
     for (const p of desiredPermissions) {
