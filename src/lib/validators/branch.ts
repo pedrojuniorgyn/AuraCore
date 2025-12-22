@@ -102,6 +102,19 @@ export const createBranchSchema = z.object({
   document: cnpjValidator,
   email: emailValidator,
   phone: phoneValidator,
+  // === INTEGRAÇÃO (LEGADO) ===
+  // CodigoEmpresaFilial no banco legado (GlobalTCL), usado para integrações e migrações.
+  // Aceita string vazia no front e converte para undefined.
+  legacyCompanyBranchCode: z
+    .preprocess(
+      (v) => {
+        if (v === "" || v === null || v === undefined) return undefined;
+        const n = typeof v === "number" ? v : Number(String(v));
+        return Number.isFinite(n) ? n : undefined;
+      },
+      z.number().int().min(1).max(32767)
+    )
+    .optional(),
 
   // === FISCAL ===
   ie: ieValidator,
