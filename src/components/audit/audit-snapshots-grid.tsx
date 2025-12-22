@@ -14,7 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download, RefreshCw, Filter, PlayCircle, Wrench, Trash2, CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
+import { Download, RefreshCw, Filter, PlayCircle, Wrench, Trash2, CheckCircle2, XCircle, Clock, Loader2, Copy, Eye, RotateCcw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // AG Grid CSS + Aurora theme
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -118,14 +120,47 @@ function DetailCellRenderer(props: IDetailCellRendererParams) {
 }
 
 function ActionsCell(props: ICellRendererParams) {
-  const onRerun = (props.context as any)?.onRerun as ((runId: string) => void) | undefined;
+  const onView = (props.context as any)?.onView as ((row: AuditSnapshotRow) => void) | undefined;
+  const onRerun = (props.context as any)?.onRerun as ((row: AuditSnapshotRow) => void) | undefined;
+  const onDelete = (props.context as any)?.onDelete as ((row: AuditSnapshotRow) => void) | undefined;
+  const row = props.data as AuditSnapshotRow;
   const runId = String((props.data as any)?.runId ?? "");
   return (
     <div className="flex items-center gap-2">
       <button
         type="button"
-        title="Recarregar (purge) e atualizar KPIs"
-        onClick={() => onRerun?.(runId)}
+        title="Ver detalhes"
+        onClick={() => onView?.(row)}
+        style={{
+          padding: "6px",
+          borderRadius: "8px",
+          border: "1px solid rgba(59,130,246,0.35)",
+          background: "rgba(59,130,246,0.12)",
+          color: "#93C5FD",
+          cursor: "pointer",
+        }}
+      >
+        <Eye className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="Re-run (período custom)"
+        onClick={() => onRerun?.(row)}
+        style={{
+          padding: "6px",
+          borderRadius: "8px",
+          border: "1px solid rgba(34,197,94,0.35)",
+          background: "rgba(34,197,94,0.12)",
+          color: "#6EE7B7",
+          cursor: "pointer",
+        }}
+      >
+        <RotateCcw className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="Copiar runId"
+        onClick={() => navigator.clipboard?.writeText(runId)}
         style={{
           padding: "6px",
           borderRadius: "8px",
@@ -135,7 +170,22 @@ function ActionsCell(props: ICellRendererParams) {
           cursor: "pointer",
         }}
       >
-        <RefreshCw className="h-4 w-4" />
+        <Copy className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title="Excluir runId (remove dados do run)"
+        onClick={() => onDelete?.(row)}
+        style={{
+          padding: "6px",
+          borderRadius: "8px",
+          border: "1px solid rgba(239,68,68,0.35)",
+          background: "rgba(239,68,68,0.12)",
+          color: "#FCA5A5",
+          cursor: "pointer",
+        }}
+      >
+        <Trash2 className="h-4 w-4" />
       </button>
     </div>
   );
@@ -164,6 +214,15 @@ export function AuditSnapshotsGrid(props: {
   const [status, setStatus] = useState<string>("ALL");
   const [runId, setRunId] = useState<string>("");
   const [pageSize, setPageSize] = useState<50 | 100 | 200>(100);
+
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [rerunOpen, setRerunOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selected, setSelected] = useState<AuditSnapshotRow | null>(null);
+
+  const [rerunPeriodStart, setRerunPeriodStart] = useState<string>("");
+  const [rerunPeriodEnd, setRerunPeriodEnd] = useState<string>("");
+  const [rerunWait, setRerunWait] = useState(false);
 
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -294,6 +353,34 @@ export function AuditSnapshotsGrid(props: {
     }
   }, [props.canRun, refresh]);
 
+  const runSnapshotCustom = useCallback(async () => {
+    if (!props.canRun) return;
+    if (!rerunPeriodStart || !rerunPeriodEnd) {
+      toast.error("Informe período (início e fim)");
+      return;
+    }
+    setBusy("run");
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json", "x-audit-debug": "1" };
+      if (rerunWait) headers["x-audit-wait"] = "1";
+      const res = await fetch("/api/admin/audit/snapshots/run", {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({ axis: "VENCIMENTO", periodStart: rerunPeriodStart, periodEnd: rerunPeriodEnd }),
+      });
+      const data = await readJsonOrThrow(res);
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao executar snapshot");
+      toast.success(rerunWait ? "Snapshot executado" : "Snapshot enfileirado", { description: data?.runId ?? "" });
+      setRerunOpen(false);
+      refresh();
+    } catch (e) {
+      toast.error("Falha no re-run", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(null);
+    }
+  }, [props.canRun, refresh, rerunPeriodEnd, rerunPeriodStart, rerunWait]);
+
   const migrate = useCallback(async () => {
     if (!props.canMigrate) return;
     setBusy("migrate");
@@ -335,14 +422,49 @@ export function AuditSnapshotsGrid(props: {
     }
   }, [props.canMigrate, refresh]);
 
-  const onRerun = useCallback(
-    (_runId: string) => {
-      // por enquanto a ação é "refresh" (não reexecuta o mesmo runId)
+  const onView = useCallback((row: AuditSnapshotRow) => {
+    setSelected(row);
+    setDetailsOpen(true);
+  }, []);
+
+  const onRerun = useCallback((row: AuditSnapshotRow) => {
+    setSelected(row);
+    setRerunPeriodStart(row.periodStart ?? "");
+    setRerunPeriodEnd(row.periodEnd ?? "");
+    setRerunWait(false);
+    setRerunOpen(true);
+  }, []);
+
+  const onDelete = useCallback((row: AuditSnapshotRow) => {
+    setSelected(row);
+    setDeleteOpen(true);
+  }, []);
+
+  const doDelete = useCallback(async () => {
+    if (!props.canMigrate) return;
+    if (!selected?.runId) return;
+    setBusy("cleanup");
+    try {
+      const res = await fetch("/api/admin/audit/snapshots/cleanup-by-run", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-audit-debug": "1" },
+        credentials: "include",
+        body: JSON.stringify({ runId: selected.runId, deleteData: true }),
+      });
+      const data = await readJsonOrThrow(res);
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao excluir run");
+      toast.success("Run removido", { description: selected.runId });
+      setDeleteOpen(false);
+      setSelected(null);
       refresh();
-    },
-    [refresh]
-  );
-  const gridContext = useMemo(() => ({ onRerun }), [onRerun]);
+    } catch (e) {
+      toast.error("Falha ao excluir run", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(null);
+    }
+  }, [props.canMigrate, refresh, selected]);
+
+  const gridContext = useMemo(() => ({ onView, onRerun, onDelete }), [onDelete, onRerun, onView]);
 
   const columnDefs: ColDef[] = useMemo(
     () => [
@@ -589,6 +711,83 @@ export function AuditSnapshotsGrid(props: {
             />
           </div>
         </div>
+
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Detalhes do Snapshot</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="font-mono text-xs break-all flex-1">{selected?.runId ?? "-"}</div>
+                <Button
+                  variant="outline"
+                  onClick={() => selected?.runId && navigator.clipboard?.writeText(selected.runId)}
+                  disabled={!selected?.runId}
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar runId
+                </Button>
+              </div>
+              <pre className="text-xs bg-muted/30 border border-border rounded-lg p-3 overflow-auto max-h-[60vh]">
+{selected ? JSON.stringify(selected, null, 2) : "—"}
+              </pre>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={rerunOpen} onOpenChange={setRerunOpen}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Re-run (período custom)</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Axis suportado neste build: <span className="font-mono">VENCIMENTO</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Período início</div>
+                  <Input type="date" value={rerunPeriodStart} onChange={(e) => setRerunPeriodStart(e.target.value)} />
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Período fim</div>
+                  <Input type="date" value={rerunPeriodEnd} onChange={(e) => setRerunPeriodEnd(e.target.value)} />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={rerunWait} onChange={(e) => setRerunWait(e.target.checked)} />
+                Aguardar execução (síncrono) — usar apenas para debug
+              </label>
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="outline" onClick={() => setRerunOpen(false)} disabled={busy !== null}>
+                  Cancelar
+                </Button>
+                <Button onClick={runSnapshotCustom} disabled={busy !== null || !props.canRun}>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Executar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir este snapshot?</AlertDialogTitle>
+            </AlertDialogHeader>
+            <div className="text-sm text-muted-foreground">
+              Isso remove o run <span className="font-mono">{selected?.runId ?? "-"}</span> e todos os dados <span className="font-mono">audit_*</span> associados.
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy !== null}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={doDelete} disabled={busy !== null || !props.canMigrate}>
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PageTransition>
   );
