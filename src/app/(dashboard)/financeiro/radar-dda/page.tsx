@@ -94,7 +94,7 @@ export default function RadarDdaPage() {
   const { data: ddaItems = [], isLoading: loadingDda, refetch: refetchDda } = useQuery({
     queryKey: ["dda-inbox", selectedBankAccountId],
     queryFn: async () => {
-      const res = await fetch(`/api/financial/dda?organizationId=1`);
+      const res = await fetch(`/api/financial/dda`);
       const json = await res.json();
       return json.data || [];
     },
@@ -103,7 +103,7 @@ export default function RadarDdaPage() {
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bank-accounts"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/bank-accounts?organizationId=1");
+      const res = await fetch("/api/financial/bank-accounts");
       const json = await res.json();
       return json.data || [];
     },
@@ -112,7 +112,7 @@ export default function RadarDdaPage() {
   const { data: payables = [] } = useQuery({
     queryKey: ["payables", "open"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/payables?status=OPEN&organizationId=1");
+      const res = await fetch("/api/financial/payables?status=OPEN");
       const json = await res.json();
       return json.data || [];
     },
@@ -126,7 +126,6 @@ export default function RadarDdaPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          organizationId: 1,
           bankAccountId: selectedBankAccountId,
         }),
       });
@@ -148,7 +147,6 @@ export default function RadarDdaPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          organizationId: 1,
           bankAccountId: selectedBankAccountId,
           payableId: data.payableId,
         }),
@@ -172,7 +170,6 @@ export default function RadarDdaPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          organizationId: 1,
           bankAccountId: selectedBankAccountId,
         }),
       });

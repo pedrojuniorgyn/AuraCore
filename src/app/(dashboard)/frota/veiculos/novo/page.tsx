@@ -41,7 +41,6 @@ export default function NovoVeiculoPage() {
           year: parseInt(formData.year),
           capacityKg: parseFloat(formData.capacityKg),
           currentKm: parseInt(formData.currentKm),
-          organizationId: 1, // TODO: Pegar do contexto
         }),
       });
 
@@ -366,6 +365,7 @@ export default function NovoVeiculoPage() {
     </PageTransition>
   );
 }
+
 
 
 

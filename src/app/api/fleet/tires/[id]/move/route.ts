@@ -35,7 +35,7 @@ export async function POST(
       toVehicleId,
       toPosition,
       mileageAtMovement,
-      createdBy: ctx.user.id,
+      createdBy: ctx.userId,
     });
 
     // Atualizar pneu

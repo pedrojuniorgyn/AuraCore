@@ -97,7 +97,7 @@ export default function RemittancesPage() {
   const { data: payables = [], isLoading: loadingPayables } = useQuery({
     queryKey: ["payables", "open"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/payables?status=OPEN&organizationId=1");
+      const res = await fetch("/api/financial/payables?status=OPEN");
       const json = await res.json();
       return json.data || [];
     },
@@ -106,7 +106,7 @@ export default function RemittancesPage() {
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bank-accounts"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/bank-accounts?organizationId=1");
+      const res = await fetch("/api/financial/bank-accounts");
       const json = await res.json();
       return json.data || [];
     },
@@ -115,7 +115,7 @@ export default function RemittancesPage() {
   const { data: remittances = [], isLoading: loadingHistory } = useQuery({
     queryKey: ["remittances"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/remittances?organizationId=1");
+      const res = await fetch("/api/financial/remittances");
       const json = await res.json();
       return json.data || [];
     },

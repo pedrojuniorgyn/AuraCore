@@ -34,7 +34,7 @@ export default function ESGCarbonoPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/esg/emissions?organizationId=1');
+      const response = await fetch('/api/esg/emissions');
       if (response.ok) {
         const data = await response.json();
         setEmissions(data.data || []);
@@ -53,7 +53,6 @@ export default function ESGCarbonoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: 1,
           startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
           endDate: new Date().toISOString()
         })

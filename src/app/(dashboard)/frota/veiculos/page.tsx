@@ -55,7 +55,7 @@ export default function VehiclesPage() {
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ["vehicles", filterStatus],
     queryFn: async () => {
-      let url = "/api/fleet/vehicles?organizationId=1";
+      let url = "/api/fleet/vehicles";
       if (filterStatus) url += `&status=${filterStatus}`;
       const res = await fetch(url);
       const json = await res.json();

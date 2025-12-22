@@ -42,7 +42,7 @@ export async function withPermission<T>(
     }
 
     // 3. Executar handler com contexto
-    // Padronização: expor `userId` diretamente (evita usos incorretos como ctx.user.id).
+    // Padronização: expor `userId` diretamente (evita usos incorretos acessando o id via `ctx.user`).
     // Importante: várias rotas (ex.: Auditoria) dependem de `isAdmin` e `allowedBranches`
     // para aplicar Data Scoping. Esses campos já estão presentes na sessão (callbacks do NextAuth).
     const role = (session.user as any)?.role ?? "USER";

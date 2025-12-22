@@ -43,7 +43,7 @@ export default function SinistrosPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/claims?organizationId=1');
+      const response = await fetch('/api/claims');
       if (response.ok) {
         const data = await response.json();
         setClaims(data.data || []);
@@ -62,7 +62,6 @@ export default function SinistrosPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: 1,
           ...formData
         })
       });

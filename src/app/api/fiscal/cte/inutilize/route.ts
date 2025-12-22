@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         numberTo,
         year,
         justification,
-        userId: ctx.user.id,
+        userId: ctx.userId,
       });
 
       if (resultado.success) {

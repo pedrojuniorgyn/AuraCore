@@ -57,8 +57,8 @@ export default function BackofficePage() {
   const loadData = async () => {
     try {
       const [accountsRes, costCentersRes] = await Promise.all([
-        fetch('/api/backoffice/accounts?organizationId=1'),
-        fetch('/api/backoffice/cost-centers?organizationId=1')
+        fetch('/api/backoffice/accounts'),
+        fetch('/api/backoffice/cost-centers')
       ]);
 
       if (accountsRes.ok) {
