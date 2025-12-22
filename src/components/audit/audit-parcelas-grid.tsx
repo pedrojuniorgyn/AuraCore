@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams, IDetailCellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, IDetailCellRendererParams, IServerSideDatasource, IServerSideGetRowsParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
@@ -153,24 +153,28 @@ async function readJsonOrThrow(res: Response): Promise<any> {
   throw new Error(`HTTP ${res.status} ${res.statusText} (resposta não-JSON)${snippet}`);
 }
 
-function sum(values: Array<number | null | undefined>) {
-  return values.reduce((acc, v) => acc + (Number(v ?? 0) || 0), 0);
-}
-
 export function AuditParcelasGrid(props: {
   operacao: "PAGAMENTO" | "RECEBIMENTO";
   title: string;
   subtitle: string;
 }) {
   const gridRef = useRef<AgGridReact>(null);
-  const [items, setItems] = useState<AuditParcela[]>([]);
   const [loading, setLoading] = useState(false);
+  const [kpisLoading, setKpisLoading] = useState(false);
+  const [kpis, setKpis] = useState<{ count: number; total: number; paid: number; overdue: number; noBank: number; pendingConc: number }>({
+    count: 0,
+    total: 0,
+    paid: 0,
+    overdue: 0,
+    noBank: 0,
+    pendingConc: 0,
+  });
 
   const [dateField, setDateField] = useState<"VENCIMENTO" | "PAGAMENTO" | "BANCO" | "DOCUMENTO" | "SNAPSHOT">("VENCIMENTO");
   const [preset, setPreset] = useState<"7d" | "30d" | "3m" | "6m" | "12m" | "24m" | "36m" | "custom" | "all">("30d");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [limit, setLimit] = useState<2000 | 5000 | 10000>(5000);
+  const [pageSize, setPageSize] = useState<50 | 100 | 200 | 500>(100);
   const [runId, setRunId] = useState("");
   const [status, setStatus] = useState<"ALL" | string>("ALL");
   const [onlyOpen, setOnlyOpen] = useState(false);
@@ -212,66 +216,108 @@ export function AuditParcelasGrid(props: {
     applyPreset(preset);
   }, [applyPreset, preset]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const query = useMemo(() => {
+    const q: any = {
+      operacao: props.operacao,
+      dateField,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      runId: runId.trim() || undefined,
+      status: status !== "ALL" ? status : undefined,
+      onlyOpen: onlyOpen || undefined,
+      onlyOverdue: onlyOverdue || undefined,
+      onlyNoBankLink: onlyNoBankLink || undefined,
+      onlyPendingConciliation: onlyPendingConciliation || undefined,
+    };
+    if (!q.startDate && !q.endDate && preset === "7d") q.sinceDays = 7;
+    if (!q.startDate && !q.endDate && preset === "30d") q.sinceDays = 30;
+    return q;
+  }, [dateField, endDate, onlyNoBankLink, onlyOpen, onlyOverdue, onlyPendingConciliation, preset, props.operacao, runId, startDate, status]);
+
+  const loadKpis = useCallback(async () => {
+    setKpisLoading(true);
     try {
       const qs = new URLSearchParams();
       qs.set("operacao", props.operacao);
-      qs.set("limit", String(limit));
-      // Novo filtro: por data de negócio (range). Mantemos fallback para sinceDays via preset "7d/30d".
-      if (startDate) qs.set("startDate", startDate);
-      if (endDate) qs.set("endDate", endDate);
-      if (startDate || endDate) qs.set("dateField", dateField);
-      if (!startDate && !endDate && preset === "7d") qs.set("sinceDays", "7");
-      if (!startDate && !endDate && preset === "30d") qs.set("sinceDays", "30");
-      if (runId.trim()) qs.set("runId", runId.trim());
-      if (status !== "ALL") qs.set("status", status);
-      if (onlyOpen) qs.set("onlyOpen", "true");
-      if (onlyOverdue) qs.set("onlyOverdue", "true");
-      if (onlyNoBankLink) qs.set("onlyNoBankLink", "true");
-      if (onlyPendingConciliation) qs.set("onlyPendingConciliation", "true");
+      if (query.sinceDays) qs.set("sinceDays", String(query.sinceDays));
+      if (query.startDate) qs.set("startDate", String(query.startDate));
+      if (query.endDate) qs.set("endDate", String(query.endDate));
+      if (query.dateField) qs.set("dateField", String(query.dateField));
+      if (query.runId) qs.set("runId", String(query.runId));
+      if (query.status) qs.set("status", String(query.status));
+      if (query.onlyOpen) qs.set("onlyOpen", "true");
+      if (query.onlyOverdue) qs.set("onlyOverdue", "true");
+      if (query.onlyNoBankLink) qs.set("onlyNoBankLink", "true");
+      if (query.onlyPendingConciliation) qs.set("onlyPendingConciliation", "true");
 
-      const res = await fetch(`/api/admin/audit/parcelas?${qs.toString()}`, {
+      const res = await fetch(`/api/admin/audit/parcelas/summary?${qs.toString()}`, {
         headers: { "x-audit-debug": "1" },
         credentials: "include",
       });
       const data = await readJsonOrThrow(res);
-      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao listar parcelas");
-      setItems(Array.isArray(data.items) ? data.items : []);
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao calcular KPIs");
+      setKpis({
+        count: Number(data?.kpis?.count ?? 0),
+        total: Number(data?.kpis?.total ?? 0),
+        paid: Number(data?.kpis?.paid ?? 0),
+        overdue: Number(data?.kpis?.overdue ?? 0),
+        noBank: Number(data?.kpis?.noBank ?? 0),
+        pendingConc: Number(data?.kpis?.pendingConc ?? 0),
+      });
     } catch (e) {
-      toast.error("Falha ao carregar parcelas (Auditoria)", {
+      toast.error("Falha ao carregar KPIs (Auditoria)", {
         description: e instanceof Error ? e.message : String(e),
       });
+      setKpis({ count: 0, total: 0, paid: 0, overdue: 0, noBank: 0, pendingConc: 0 });
     } finally {
-      setLoading(false);
+      setKpisLoading(false);
     }
-  }, [
-    dateField,
-    endDate,
-    limit,
-    onlyNoBankLink,
-    onlyOpen,
-    onlyOverdue,
-    onlyPendingConciliation,
-    props.operacao,
-    preset,
-    runId,
-    startDate,
-    status,
-  ]);
+  }, [props.operacao, query]);
+
+  const datasource = useMemo<IServerSideDatasource>(
+    () => ({
+      getRows: async (params: IServerSideGetRowsParams) => {
+        setLoading(true);
+        try {
+          const req = params.request as any;
+          const res = await fetch("/api/admin/audit/parcelas/ssrm", {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-audit-debug": "1" },
+            credentials: "include",
+            body: JSON.stringify({
+              startRow: req.startRow ?? 0,
+              endRow: req.endRow ?? pageSize,
+              sortModel: Array.isArray(req.sortModel) ? req.sortModel : [],
+              filterModel: req.filterModel ?? {},
+              query,
+            }),
+          });
+          const data = await readJsonOrThrow(res);
+          if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha SSRM");
+          params.success({ rowData: Array.isArray(data.rows) ? data.rows : [], rowCount: Number(data.lastRow ?? 0) });
+        } catch (e) {
+          params.fail();
+          toast.error("Falha ao carregar grid (SSRM)", {
+            description: e instanceof Error ? e.message : String(e),
+          });
+        } finally {
+          setLoading(false);
+        }
+      },
+    }),
+    [pageSize, query]
+  );
+
+  const refresh = useCallback(() => {
+    gridRef.current?.api?.refreshServerSide({ purge: true });
+    void loadKpis();
+  }, [loadKpis]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  const kpis = useMemo(() => {
-    const total = sum(items.map((x) => x.valorParcela));
-    const paid = sum(items.map((x) => x.valorPago));
-    const overdue = items.filter((x) => String(x.status ?? "").toUpperCase() === "VENCIDA").length;
-    const noBank = items.filter((x) => x.hasVinculoBancario === false).length;
-    const pendingConc = items.filter((x) => String(x.status ?? "").toUpperCase() === "PENDENTE_CONCILIACAO").length;
-    return { total, paid, overdue, noBank, pendingConc, count: items.length };
-  }, [items]);
+    // sempre que filtros mudarem, recarrega KPIs e purga cache do SSRM
+    gridRef.current?.api?.setGridOption("serverSideDatasource", datasource);
+    refresh();
+  }, [datasource, refresh]);
 
   const columnDefs: ColDef[] = useMemo(
     () => [
@@ -383,7 +429,7 @@ export function AuditParcelasGrid(props: {
             </div>
             <div className="flex items-center gap-2">
               <RippleButton asChild disabled={loading} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500">
-                <button onClick={load}>
+                <button onClick={refresh}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {loading ? "Atualizando..." : "Atualizar"}
                 </button>
@@ -512,14 +558,15 @@ export function AuditParcelasGrid(props: {
             title="Data final"
           />
 
-          <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v) as any)}>
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v) as any)}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Linhas" />
+              <SelectValue placeholder="Linhas/página" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2000">2.000 linhas</SelectItem>
-              <SelectItem value="5000">5.000 linhas</SelectItem>
-              <SelectItem value="10000">10.000 linhas</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
+              <SelectItem value="500">500</SelectItem>
             </SelectContent>
           </Select>
 
@@ -557,7 +604,7 @@ export function AuditParcelasGrid(props: {
             Pendente conciliação
           </label>
 
-          <Button variant="secondary" onClick={load} disabled={loading}>
+          <Button variant="secondary" onClick={refresh} disabled={loading}>
             Aplicar
           </Button>
 
@@ -571,7 +618,6 @@ export function AuditParcelasGrid(props: {
           <div className="ag-theme-quartz-dark" style={{ height: "70vh", width: "100%" }}>
             <AgGridReact
               ref={gridRef}
-              rowData={items}
               columnDefs={columnDefs}
               defaultColDef={{
                 sortable: true,
@@ -579,6 +625,8 @@ export function AuditParcelasGrid(props: {
                 filter: true,
                 floatingFilter: true,
               }}
+              rowModelType="serverSide"
+              serverSideDatasource={datasource}
               masterDetail
               detailCellRenderer={DetailCellRenderer}
               detailRowAutoHeight
@@ -603,14 +651,14 @@ export function AuditParcelasGrid(props: {
                 ],
                 defaultToolPanel: "",
               }}
-              rowGroupPanelShow="always"
-              groupDisplayType="groupRows"
               pagination
-              paginationPageSize={50}
-              paginationPageSizeSelector={[25, 50, 100, 200]}
+              paginationPageSize={pageSize}
+              cacheBlockSize={pageSize}
+              maxBlocksInCache={5}
               suppressCellFocus
               enableCellTextSelection
               ensureDomOrder
+              loading={loading || kpisLoading}
             />
           </div>
         </div>

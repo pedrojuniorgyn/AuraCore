@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams, IDetailCellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, IDetailCellRendererParams, IServerSideDatasource, IServerSideGetRowsParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
@@ -145,10 +145,21 @@ function FindingsDetailCellRenderer(props: IDetailCellRendererParams) {
 
 export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
   const gridRef = useRef<AgGridReact>(null);
-  const [items, setItems] = useState<AuditFinding[]>([]);
   const [loading, setLoading] = useState(false);
+  const [kpisLoading, setKpisLoading] = useState(false);
+  const [kpis, setKpis] = useState<{ total: number; errors: number; warns: number; infos: number; rules: number }>({
+    total: 0,
+    errors: 0,
+    warns: 0,
+    infos: 0,
+    rules: 0,
+  });
 
-  const [sinceDays, setSinceDays] = useState<0 | 7 | 30>(7);
+  const [dateField, setDateField] = useState<"STARTED_AT" | "SNAPSHOT">("STARTED_AT");
+  const [preset, setPreset] = useState<"7d" | "30d" | "3m" | "6m" | "12m" | "24m" | "36m" | "custom" | "all">("30d");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [pageSize, setPageSize] = useState<50 | 100 | 200 | 500>(100);
   const [severity, setSeverity] = useState<"ALL" | "INFO" | "WARN" | "ERROR">("ALL");
   const [runId, setRunId] = useState("");
   const [ruleQuery, setRuleQuery] = useState("");
@@ -156,50 +167,86 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [selected, setSelected] = useState<AuditFinding | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const applyPreset = useCallback(
+    (p: typeof preset) => {
+      const today = new Date();
+      const end = today.toISOString().slice(0, 10);
+      if (p === "all") {
+        setStartDate("");
+        setEndDate("");
+        return;
+      }
+      if (p === "custom") return;
+      if (p === "7d" || p === "30d") {
+        const days = p === "7d" ? 7 : 30;
+        const start = new Date(today.getTime() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        setStartDate(start);
+        setEndDate(end);
+        return;
+      }
+      const months =
+        p === "3m" ? 3 : p === "6m" ? 6 : p === "12m" ? 12 : p === "24m" ? 24 : p === "36m" ? 36 : 0;
+      const startD = new Date(today);
+      startD.setMonth(startD.getMonth() - months);
+      const start = startD.toISOString().slice(0, 10);
+      setStartDate(start);
+      setEndDate(end);
+    },
+    [setEndDate, setStartDate]
+  );
+
+  useEffect(() => {
+    applyPreset(preset);
+  }, [applyPreset, preset]);
+
+  const query = useMemo(() => {
+    const q: any = {
+      dateField,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      runId: runId.trim() || undefined,
+      severity: severity !== "ALL" ? severity : undefined,
+      q: ruleQuery.trim() || undefined,
+    };
+    if (!q.startDate && !q.endDate && preset === "7d") q.sinceDays = 7;
+    if (!q.startDate && !q.endDate && preset === "30d") q.sinceDays = 30;
+    return q;
+  }, [dateField, endDate, preset, ruleQuery, runId, severity, startDate]);
+
+  const loadKpis = useCallback(async () => {
+    setKpisLoading(true);
     try {
       const qs = new URLSearchParams();
-      qs.set("limit", "500");
-      if (sinceDays) qs.set("sinceDays", String(sinceDays));
-      if (severity !== "ALL") qs.set("severity", severity);
-      if (runId.trim()) qs.set("runId", runId.trim());
+      if (query.sinceDays) qs.set("sinceDays", String(query.sinceDays));
+      if (query.startDate) qs.set("startDate", String(query.startDate));
+      if (query.endDate) qs.set("endDate", String(query.endDate));
+      if (query.dateField) qs.set("dateField", String(query.dateField));
+      if (query.runId) qs.set("runId", String(query.runId));
+      if (query.severity) qs.set("severity", String(query.severity));
+      if (query.q) qs.set("q", String(query.q));
 
-      const res = await fetch(`/api/admin/audit/findings?${qs.toString()}`, {
+      const res = await fetch(`/api/admin/audit/findings/summary?${qs.toString()}`, {
         headers: { "x-audit-debug": "1" },
         credentials: "include",
       });
       const data = await readJsonOrThrow(res);
-      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao listar achados");
-
-      const rows = Array.isArray(data.items) ? (data.items as AuditFinding[]) : [];
-      setItems(rows);
-    } catch (e) {
-      toast.error("Falha ao carregar achados (Auditoria)", {
-        description: e instanceof Error ? e.message : String(e),
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha KPIs");
+      setKpis({
+        total: Number(data?.kpis?.total ?? 0),
+        errors: Number(data?.kpis?.errors ?? 0),
+        warns: Number(data?.kpis?.warns ?? 0),
+        infos: Number(data?.kpis?.infos ?? 0),
+        rules: Number(data?.kpis?.rules ?? 0),
       });
+    } catch (e) {
+      toast.error("Falha ao carregar KPIs (Achados)", { description: e instanceof Error ? e.message : String(e) });
+      setKpis({ total: 0, errors: 0, warns: 0, infos: 0, rules: 0 });
     } finally {
-      setLoading(false);
+      setKpisLoading(false);
     }
-  }, [runId, severity, sinceDays]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  // aplica quick filter local (rule/message/entity)
-  useEffect(() => {
-    gridRef.current?.api?.setGridOption("quickFilterText", ruleQuery);
-  }, [ruleQuery]);
-
-  const kpis = useMemo(() => {
-    const total = items.length;
-    const errors = items.filter((x) => String(x.severity).toUpperCase() === "ERROR").length;
-    const warns = items.filter((x) => String(x.severity).toUpperCase() === "WARN").length;
-    const infos = items.filter((x) => String(x.severity).toUpperCase() === "INFO").length;
-    const rules = new Set(items.map((x) => x.ruleCode)).size;
-    return { total, errors, warns, infos, rules };
-  }, [items]);
+  }, [query]);
 
   const onViewEvidence = useCallback((row: AuditFinding) => {
     setSelected(row);
@@ -207,6 +254,48 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
   }, []);
 
   const gridContext = useMemo(() => ({ onViewEvidence }), [onViewEvidence]);
+
+  const datasource = useMemo<IServerSideDatasource>(
+    () => ({
+      getRows: async (params: IServerSideGetRowsParams) => {
+        setLoading(true);
+        try {
+          const req = params.request as any;
+          const res = await fetch("/api/admin/audit/findings/ssrm", {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-audit-debug": "1" },
+            credentials: "include",
+            body: JSON.stringify({
+              startRow: req.startRow ?? 0,
+              endRow: req.endRow ?? pageSize,
+              sortModel: Array.isArray(req.sortModel) ? req.sortModel : [],
+              filterModel: req.filterModel ?? {},
+              query,
+            }),
+          });
+          const data = await readJsonOrThrow(res);
+          if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha SSRM");
+          params.success({ rowData: Array.isArray(data.rows) ? data.rows : [], rowCount: Number(data.lastRow ?? 0) });
+        } catch (e) {
+          params.fail();
+          toast.error("Falha ao carregar grid (SSRM)", { description: e instanceof Error ? e.message : String(e) });
+        } finally {
+          setLoading(false);
+        }
+      },
+    }),
+    [pageSize, query]
+  );
+
+  const refresh = useCallback(() => {
+    gridRef.current?.api?.refreshServerSide({ purge: true });
+    void loadKpis();
+  }, [loadKpis]);
+
+  useEffect(() => {
+    gridRef.current?.api?.setGridOption("serverSideDatasource", datasource);
+    refresh();
+  }, [datasource, refresh]);
 
   const columnDefs: ColDef[] = useMemo(
     () => [
@@ -291,7 +380,7 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
             </div>
             <div className="flex items-center gap-2">
               <RippleButton asChild disabled={loading} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500">
-                <button onClick={load}>
+                <button onClick={refresh}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {loading ? "Atualizando..." : "Atualizar"}
                 </button>
@@ -366,16 +455,56 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
             <span className="text-sm font-medium">Filtros</span>
           </div>
 
-          <Select value={String(sinceDays)} onValueChange={(v) => setSinceDays((Number(v) as any) ?? 7)}>
-            <SelectTrigger className="w-[160px]">
+          <Select value={preset} onValueChange={(v) => setPreset(v as any)}>
+            <SelectTrigger className="w-[190px]">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7">Últimos 7 dias</SelectItem>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-              <SelectItem value="0">Histórico</SelectItem>
+              <SelectItem value="7d">Últimos 7 dias</SelectItem>
+              <SelectItem value="30d">Últimos 30 dias</SelectItem>
+              <SelectItem value="3m">Últimos 3 meses</SelectItem>
+              <SelectItem value="6m">Últimos 6 meses</SelectItem>
+              <SelectItem value="12m">Últimos 12 meses</SelectItem>
+              <SelectItem value="24m">Últimos 24 meses</SelectItem>
+              <SelectItem value="36m">Últimos 36 meses</SelectItem>
+              <SelectItem value="custom">Personalizado</SelectItem>
+              <SelectItem value="all">Tudo</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={dateField} onValueChange={(v) => setDateField(v as any)}>
+            <SelectTrigger className="w-[190px]">
+              <SelectValue placeholder="Filtrar por data" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="STARTED_AT">Data do Achado</SelectItem>
+              <SelectItem value="SNAPSHOT">Data do Snapshot</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            type="date"
+            value={startDate}
+            max={endDate || todayIso}
+            onChange={(e) => {
+              setPreset("custom");
+              setStartDate(e.target.value);
+            }}
+            className="w-[170px]"
+            title="Data inicial"
+          />
+          <Input
+            type="date"
+            value={endDate}
+            min={startDate || undefined}
+            max={todayIso}
+            onChange={(e) => {
+              setPreset("custom");
+              setEndDate(e.target.value);
+            }}
+            className="w-[170px]"
+            title="Data final"
+          />
 
           <Select value={severity} onValueChange={(v) => setSeverity(v as any)}>
             <SelectTrigger className="w-[160px]">
@@ -389,6 +518,18 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
             </SelectContent>
           </Select>
 
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v) as any)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Linhas/página" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
+              <SelectItem value="500">500</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Input value={runId} onChange={(e) => setRunId(e.target.value)} placeholder="runId (UUID)" className="w-[280px]" />
           <Input
             value={ruleQuery}
@@ -397,7 +538,7 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
             className="w-[320px]"
           />
 
-          <Button variant="secondary" onClick={load} disabled={loading}>
+          <Button variant="secondary" onClick={refresh} disabled={loading}>
             Aplicar
           </Button>
         </div>
@@ -406,7 +547,6 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
           <div className="ag-theme-quartz-dark" style={{ height: "70vh", width: "100%" }}>
             <AgGridReact
               ref={gridRef}
-              rowData={items}
               columnDefs={columnDefs}
               defaultColDef={{
                 sortable: true,
@@ -415,17 +555,18 @@ export function AuditFindingsGrid(props: { title: string; subtitle: string }) {
                 floatingFilter: true,
               }}
               context={gridContext}
+              rowModelType="serverSide"
+              serverSideDatasource={datasource}
               masterDetail
               detailCellRenderer={FindingsDetailCellRenderer}
               detailRowAutoHeight
               animateRows
               enableRangeSelection
-              rowGroupPanelShow="always"
-              groupDisplayType="groupRows"
               pagination
-              paginationPageSize={50}
-              paginationPageSizeSelector={[25, 50, 100, 200]}
-              loading={loading}
+              paginationPageSize={pageSize}
+              cacheBlockSize={pageSize}
+              maxBlocksInCache={5}
+              loading={loading || kpisLoading}
               loadingOverlayComponent={() => (
                 <div className="flex flex-col items-center justify-center p-8">
                   <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mb-4" />

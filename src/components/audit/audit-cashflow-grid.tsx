@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, IDetailCellRendererParams } from "ag-grid-community";
+import type { ColDef, IDetailCellRendererParams, IServerSideDatasource, IServerSideGetRowsParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
@@ -58,10 +58,6 @@ async function readJsonOrThrow(res: Response): Promise<any> {
   throw new Error(`HTTP ${res.status} ${res.statusText} (resposta não-JSON)${snippet}`);
 }
 
-function sum(values: Array<number | null | undefined>) {
-  return values.reduce((acc, v) => acc + (Number(v ?? 0) || 0), 0);
-}
-
 function CashflowDetailCellRenderer(props: IDetailCellRendererParams) {
   const row = props.data as AuditCashflowRow;
   return (
@@ -95,16 +91,25 @@ function CashflowDetailCellRenderer(props: IDetailCellRendererParams) {
 
 export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
   const gridRef = useRef<AgGridReact>(null);
-  const [items, setItems] = useState<AuditCashflowRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [kpisLoading, setKpisLoading] = useState(false);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [kpis, setKpis] = useState<{ count: number; entradas: number; saidas: number; liquido: number; saldoFinal: number }>({
+    count: 0,
+    entradas: 0,
+    saidas: 0,
+    liquido: 0,
+    saldoFinal: 0,
+  });
+  const [chartItems, setChartItems] = useState<Array<{ date: string; entradas: number; saidas: number; liquido: number }>>([]);
 
   const [dateField, setDateField] = useState<"DATA" | "SNAPSHOT">("DATA");
   const [preset, setPreset] = useState<"7d" | "30d" | "3m" | "6m" | "12m" | "24m" | "36m" | "custom" | "all">("30d");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [limit, setLimit] = useState<2000 | 5000 | 10000>(5000);
+  const [pageSize, setPageSize] = useState<50 | 100 | 200 | 500>(100);
   const [runId, setRunId] = useState("");
-  const [status, setStatus] = useState<"ALL" | string>("ALL");
+  const [statusCaixa, setStatusCaixa] = useState<string>("");
   const [quick, setQuick] = useState("");
 
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -141,81 +146,122 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
     applyPreset(preset);
   }, [applyPreset, preset]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const query = useMemo(() => {
+    const q: any = {
+      dateField,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      runId: runId.trim() || undefined,
+      statusCaixa: statusCaixa.trim() || undefined,
+    };
+    if (!q.startDate && !q.endDate && preset === "7d") q.sinceDays = 7;
+    if (!q.startDate && !q.endDate && preset === "30d") q.sinceDays = 30;
+    return q;
+  }, [dateField, endDate, preset, runId, startDate, statusCaixa]);
+
+  const loadKpis = useCallback(async () => {
+    setKpisLoading(true);
     try {
       const qs = new URLSearchParams();
-      qs.set("limit", String(limit));
-      if (startDate) qs.set("startDate", startDate);
-      if (endDate) qs.set("endDate", endDate);
-      if (startDate || endDate) qs.set("dateField", dateField);
-      if (!startDate && !endDate && preset === "7d") qs.set("sinceDays", "7");
-      if (!startDate && !endDate && preset === "30d") qs.set("sinceDays", "30");
-      if (runId.trim()) qs.set("runId", runId.trim());
-
-      const res = await fetch(`/api/admin/audit/cashflow?${qs.toString()}`, {
+      if (query.sinceDays) qs.set("sinceDays", String(query.sinceDays));
+      if (query.startDate) qs.set("startDate", String(query.startDate));
+      if (query.endDate) qs.set("endDate", String(query.endDate));
+      if (query.dateField) qs.set("dateField", String(query.dateField));
+      if (query.runId) qs.set("runId", String(query.runId));
+      if (query.statusCaixa) qs.set("statusCaixa", String(query.statusCaixa));
+      const res = await fetch(`/api/admin/audit/cashflow/summary?${qs.toString()}`, {
         headers: { "x-audit-debug": "1" },
         credentials: "include",
       });
       const data = await readJsonOrThrow(res);
-      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha ao carregar fluxo de caixa");
-      setItems(Array.isArray(data.items) ? data.items : []);
-    } catch (e) {
-      toast.error("Falha ao carregar Fluxo de Caixa (Auditoria)", {
-        description: e instanceof Error ? e.message : String(e),
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha KPIs");
+      setKpis({
+        count: Number(data?.kpis?.count ?? 0),
+        entradas: Number(data?.kpis?.entradas ?? 0),
+        saidas: Number(data?.kpis?.saidas ?? 0),
+        liquido: Number(data?.kpis?.liquido ?? 0),
+        saldoFinal: Number(data?.kpis?.saldoFinal ?? 0),
       });
+    } catch (e) {
+      toast.error("Falha ao carregar KPIs (Fluxo de Caixa)", { description: e instanceof Error ? e.message : String(e) });
+      setKpis({ count: 0, entradas: 0, saidas: 0, liquido: 0, saldoFinal: 0 });
     } finally {
-      setLoading(false);
+      setKpisLoading(false);
     }
-  }, [dateField, endDate, limit, preset, runId, startDate]);
+  }, [query]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const loadChart = useCallback(async () => {
+    setChartLoading(true);
+    try {
+      const qs = new URLSearchParams();
+      if (query.sinceDays) qs.set("sinceDays", String(query.sinceDays));
+      if (query.startDate) qs.set("startDate", String(query.startDate));
+      if (query.endDate) qs.set("endDate", String(query.endDate));
+      if (query.dateField) qs.set("dateField", String(query.dateField));
+      if (query.runId) qs.set("runId", String(query.runId));
+      if (query.statusCaixa) qs.set("statusCaixa", String(query.statusCaixa));
+      const res = await fetch(`/api/admin/audit/cashflow/chart?${qs.toString()}`, {
+        headers: { "x-audit-debug": "1" },
+        credentials: "include",
+      });
+      const data = await readJsonOrThrow(res);
+      if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha gráfico");
+      setChartItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      toast.error("Falha ao carregar gráfico (Fluxo de Caixa)", { description: e instanceof Error ? e.message : String(e) });
+      setChartItems([]);
+    } finally {
+      setChartLoading(false);
+    }
+  }, [query]);
 
   // quick filter (grid)
   useEffect(() => {
     gridRef.current?.api?.setGridOption("quickFilterText", quick);
   }, [quick]);
 
-  const filtered = useMemo(() => {
-    if (status === "ALL") return items;
-    const s = String(status).toUpperCase();
-    return items.filter((x) => String(x.statusCaixa ?? "").toUpperCase() === s);
-  }, [items, status]);
+  const datasource = useMemo<IServerSideDatasource>(
+    () => ({
+      getRows: async (params: IServerSideGetRowsParams) => {
+        setLoading(true);
+        try {
+          const req = params.request as any;
+          const res = await fetch("/api/admin/audit/cashflow/ssrm", {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-audit-debug": "1" },
+            credentials: "include",
+            body: JSON.stringify({
+              startRow: req.startRow ?? 0,
+              endRow: req.endRow ?? pageSize,
+              sortModel: Array.isArray(req.sortModel) ? req.sortModel : [],
+              filterModel: req.filterModel ?? {},
+              query,
+            }),
+          });
+          const data = await readJsonOrThrow(res);
+          if (!res.ok || !data?.success) throw new Error(data?.error ?? "Falha SSRM");
+          params.success({ rowData: Array.isArray(data.rows) ? data.rows : [], rowCount: Number(data.lastRow ?? 0) });
+        } catch (e) {
+          params.fail();
+          toast.error("Falha ao carregar grid (SSRM)", { description: e instanceof Error ? e.message : String(e) });
+        } finally {
+          setLoading(false);
+        }
+      },
+    }),
+    [pageSize, query]
+  );
 
-  const kpis = useMemo(() => {
-    const entradas = sum(filtered.map((x) => x.entradas));
-    const saidas = sum(filtered.map((x) => x.saidas));
-    const liquido = sum(filtered.map((x) => x.liquido));
-    const saldoFinal = sum(filtered.map((x) => x.saldoFinal));
-    return { entradas, saidas, liquido, saldoFinal, count: filtered.length };
-  }, [filtered]);
+  const refresh = useCallback(() => {
+    gridRef.current?.api?.refreshServerSide({ purge: true });
+    void loadKpis();
+    void loadChart();
+  }, [loadChart, loadKpis]);
 
-  const chartData = useMemo(() => {
-    const map = new Map<string, { date: string; entradas: number; saidas: number; liquido: number }>();
-    for (const it of filtered) {
-      const key = String(it.date ?? "");
-      if (!key) continue;
-      const row = map.get(key) ?? { date: key, entradas: 0, saidas: 0, liquido: 0 };
-      row.entradas += Number(it.entradas ?? 0);
-      row.saidas += Number(it.saidas ?? 0);
-      row.liquido += Number(it.liquido ?? 0);
-      map.set(key, row);
-    }
-    const rows = Array.from(map.values());
-    rows.sort((a, b) => a.date.localeCompare(b.date));
-    return rows;
-  }, [filtered]);
-
-  const statusOptions = useMemo(() => {
-    const s = new Set<string>();
-    for (const it of items) {
-      const v = String(it.statusCaixa ?? "").trim();
-      if (v) s.add(v.toUpperCase());
-    }
-    return Array.from(s).sort();
-  }, [items]);
+  useEffect(() => {
+    gridRef.current?.api?.setGridOption("serverSideDatasource", datasource);
+    refresh();
+  }, [datasource, refresh]);
 
   const columnDefs: ColDef[] = useMemo(
     () => [
@@ -303,7 +349,7 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
             </div>
             <div className="flex items-center gap-2">
               <RippleButton asChild disabled={loading} className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500">
-                <button onClick={load}>
+                <button onClick={refresh}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {loading ? "Atualizando..." : "Atualizar"}
                 </button>
@@ -381,9 +427,11 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="text-sm font-medium text-muted-foreground mb-3">Evolução por dia</div>
           <div className="h-72 bg-muted/10 rounded p-2">
-            {chartData.length ? (
+            {chartLoading ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">Carregando gráfico…</div>
+            ) : chartItems.length ? (
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <ComposedChart data={chartItems} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
@@ -462,30 +510,19 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
             title="Data final"
           />
 
-          <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v) as any)}>
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v) as any)}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Linhas" />
+              <SelectValue placeholder="Linhas/página" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2000">2.000 linhas</SelectItem>
-              <SelectItem value="5000">5.000 linhas</SelectItem>
-              <SelectItem value="10000">10.000 linhas</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
+              <SelectItem value="500">500</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={status} onValueChange={(v) => setStatus(v)}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Status do caixa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              {statusOptions.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Input value={statusCaixa} onChange={(e) => setStatusCaixa(e.target.value)} placeholder="Status do caixa (opcional)" className="w-[220px]" />
 
           <Input value={runId} onChange={(e) => setRunId(e.target.value)} placeholder="runId (UUID)" className="w-[280px]" />
           <Input
@@ -495,7 +532,7 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
             className="w-[260px]"
           />
 
-          <Button variant="secondary" onClick={load} disabled={loading}>
+          <Button variant="secondary" onClick={refresh} disabled={loading}>
             Aplicar
           </Button>
 
@@ -510,25 +547,24 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
           <div className="ag-theme-quartz-dark" style={{ height: "70vh", width: "100%" }}>
             <AgGridReact
               ref={gridRef}
-              rowData={filtered}
               columnDefs={columnDefs}
               defaultColDef={{
                 sortable: true,
                 resizable: true,
                 filter: true,
                 floatingFilter: true,
-                enableRowGroup: true,
               }}
+              rowModelType="serverSide"
+              serverSideDatasource={datasource}
               masterDetail
               detailCellRenderer={CashflowDetailCellRenderer}
               detailRowAutoHeight
               animateRows
               enableRangeSelection
-              rowGroupPanelShow="always"
-              groupDisplayType="groupRows"
               pagination
-              paginationPageSize={50}
-              paginationPageSizeSelector={[25, 50, 100, 200]}
+              paginationPageSize={pageSize}
+              cacheBlockSize={pageSize}
+              maxBlocksInCache={5}
               suppressCellFocus
               enableCellTextSelection
               ensureDomOrder
@@ -551,6 +587,7 @@ export function AuditCashflowGrid(props: { title: string; subtitle: string }) {
                 ],
                 defaultToolPanel: "",
               }}
+              loading={loading || kpisLoading || chartLoading}
             />
           </div>
         </div>
