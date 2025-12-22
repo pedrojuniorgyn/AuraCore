@@ -36,7 +36,6 @@ export default function NovoMotoristaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          organizationId: 1, // TODO: Pegar do contexto
         }),
       });
 
@@ -327,6 +326,7 @@ export default function NovoMotoristaPage() {
     </PageTransition>
   );
 }
+
 
 
 

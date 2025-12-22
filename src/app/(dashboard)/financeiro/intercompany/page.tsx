@@ -34,8 +34,8 @@ export default function IntercompanyPage() {
   const loadData = async () => {
     try {
       const [rulesRes, historyRes] = await Promise.all([
-        fetch('/api/intercompany/allocations?type=rules&organizationId=1'),
-        fetch('/api/intercompany/allocations?organizationId=1')
+        fetch('/api/intercompany/allocations?type=rules'),
+        fetch('/api/intercompany/allocations')
       ]);
 
       if (rulesRes.ok) {
@@ -61,7 +61,6 @@ export default function IntercompanyPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: 1,
           period: new Date().toISOString().slice(0, 7).replace('-', '/'),
           totalAmount: 50000,
           method: 'REVENUE'

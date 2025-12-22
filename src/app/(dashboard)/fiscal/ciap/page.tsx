@@ -49,7 +49,7 @@ export default function CIAPPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/ciap/assets?organizationId=1');
+      const response = await fetch('/api/ciap/assets');
       if (response.ok) {
         const data = await response.json();
         setAssets(data.data || []);
@@ -68,7 +68,6 @@ export default function CIAPPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: 1,
           referenceMonth: new Date().toISOString()
         })
       });

@@ -33,7 +33,7 @@ export default function JornadasPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/hr/driver-journey?organizationId=1');
+      const response = await fetch('/api/hr/driver-journey');
       if (response.ok) {
         const data = await response.json();
         setJourneys(data.data || []);
@@ -51,7 +51,7 @@ export default function JornadasPage() {
       const response = await fetch('/api/hr/process-payroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organizationId: 1, period: new Date().toISOString() })
+        body: JSON.stringify({ period: new Date().toISOString() })
       });
       const data = await response.json();
       if (data.success) {

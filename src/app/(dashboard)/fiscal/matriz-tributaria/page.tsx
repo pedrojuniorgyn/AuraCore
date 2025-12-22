@@ -35,7 +35,7 @@ export default function MatrizTributariaPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/fiscal/tax-matrix?organizationId=1');
+      const response = await fetch('/api/fiscal/tax-matrix');
       if (response.ok) {
         const data = await response.json();
         setRules(data.data || []);
@@ -53,7 +53,6 @@ export default function MatrizTributariaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: 1,
           ufOrigin: 'SP',
           ufDestination: 'RJ',
           cargoType: 'GERAL',

@@ -51,8 +51,8 @@ export default function WMSFaturamentoPage() {
   const loadData = async () => {
     try {
       const [eventsRes, invoicesRes] = await Promise.all([
-        fetch('/api/wms/billing-events?organizationId=1'),
-        fetch('/api/wms/pre-invoices?organizationId=1')
+        fetch('/api/wms/billing-events'),
+        fetch('/api/wms/pre-invoices')
       ]);
 
       if (eventsRes.ok) {
@@ -78,7 +78,6 @@ export default function WMSFaturamentoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: 1,
           customerId: 1,
           period: '12/2024',
           subtotal: kpis.total

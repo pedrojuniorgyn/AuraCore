@@ -53,7 +53,7 @@ export default function DriversPage() {
   const { data: drivers = [], isLoading } = useQuery({
     queryKey: ["drivers"],
     queryFn: async () => {
-      const res = await fetch("/api/fleet/drivers?organizationId=1");
+      const res = await fetch("/api/fleet/drivers");
       const json = await res.json();
       return json.data || [];
     },
