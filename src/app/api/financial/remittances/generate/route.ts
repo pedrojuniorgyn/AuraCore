@@ -283,6 +283,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    // getTenantContext() pode lançar NextResponse (401/500). Preserve.
+    if (error instanceof Response) return error;
     console.error("❌ Erro ao gerar remessa:", error);
     return NextResponse.json(
       { error: "Falha ao gerar remessa CNAB" },
