@@ -76,70 +76,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // === BUSCAR CONTA BANCÁRIA ===
-    const [bankAccount] = await db
-      .select()
-      .from(bankAccounts)
-      .where(
-        and(
-          eq(bankAccounts.id, bankAccountId),
-          eq(bankAccounts.organizationId, ctx.organizationId),
-          isNull(bankAccounts.deletedAt)
-        )
-      );
-
-    if (!bankAccount) {
-      return NextResponse.json(
-        { error: "Conta bancária não encontrada" },
-        { status: 404 }
-      );
-    }
-
-    // === BUSCAR DADOS DA FILIAL (EMPRESA) ===
-    const [branch] = await db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.organizationId, ctx.organizationId),
-          eq(branches.id, branchId),
-          isNull(branches.deletedAt)
-        )
-      )
-      .limit(1);
-
-    if (!branch) {
-      return NextResponse.json(
-        { error: "Filial não encontrada" },
-        { status: 404 }
-      );
-    }
-
-    // === BUSCAR TÍTULOS A PAGAR ===
-    const payables = await db
-      .select({
-        payable: accountsPayable,
-      })
-      .from(accountsPayable)
-      .where(
-        and(
-          inArray(accountsPayable.id, payableIds),
-          eq(accountsPayable.organizationId, ctx.organizationId),
-          eq(accountsPayable.status, "OPEN"),
-          isNull(accountsPayable.deletedAt)
-        )
-      );
-
-    if (payables.length === 0) {
-      return NextResponse.json(
-        { error: "Nenhum título em aberto encontrado" },
-        { status: 400 }
-      );
-    }
-
     // === IDEMPOTÊNCIA (efeito único) ===
-    // Pode ser fornecida pelo cliente via header (recomendado).
-    // Sem header, usamos hash determinístico dos parâmetros (org/branch/bankAccount/payableIds).
+    // Deve ocorrer ANTES de qualquer validação baseada em estado mutável (ex.: títulos OPEN),
+    // para que retries com a mesma key retornem o mesmo sucesso mesmo após mudanças de status.
     const scope = "financial.remittances.generate";
     const keyFromHeader =
       request.headers.get("idempotency-key") ||
@@ -201,6 +140,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // === BUSCAR CONTA BANCÁRIA ===
+    const [bankAccount] = await db
+      .select()
+      .from(bankAccounts)
+      .where(
+        and(
+          eq(bankAccounts.id, bankAccountId),
+          eq(bankAccounts.organizationId, ctx.organizationId),
+          isNull(bankAccounts.deletedAt)
+        )
+      );
+
+    if (!bankAccount) {
+      return NextResponse.json(
+        { error: "Conta bancária não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // === BUSCAR DADOS DA FILIAL (EMPRESA) ===
+    const [branch] = await db
+      .select()
+      .from(branches)
+      .where(
+        and(
+          eq(branches.organizationId, ctx.organizationId),
+          eq(branches.id, branchId),
+          isNull(branches.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (!branch) {
+      return NextResponse.json(
+        { error: "Filial não encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // === BUSCAR TÍTULOS A PAGAR ===
+    const payables = await db
+      .select({
+        payable: accountsPayable,
+      })
+      .from(accountsPayable)
+      .where(
+        and(
+          inArray(accountsPayable.id, payableIds),
+          eq(accountsPayable.organizationId, ctx.organizationId),
+          eq(accountsPayable.status, "OPEN"),
+          isNull(accountsPayable.deletedAt)
+        )
+      );
+
+    if (payables.length === 0) {
+      await finalizeIdempotency({
+        organizationId: ctx.organizationId,
+        scope,
+        key: idemKey,
+        status: "FAILED",
+        errorMessage: "Nenhum título em aberto encontrado",
+      });
+      return NextResponse.json(
+        { error: "Nenhum título em aberto encontrado" },
+        { status: 400 }
+      );
+    }
+
     // === PREPARAR DADOS PARA CNAB ===
     const cnabOptions: CNAB240Options = {
       bankAccount: {
@@ -243,6 +250,8 @@ export async function POST(request: NextRequest) {
       0
     );
 
+    // Tudo abaixo é mutação; qualquer falha deve finalizar a idempotência como FAILED
+    // para evitar ficar preso em IN_PROGRESS.
     let remittance: any;
     try {
       [remittance] = await db
@@ -260,6 +269,37 @@ export async function POST(request: NextRequest) {
           createdBy: ctx.userId,
         })
         .$returningId();
+
+      // === ATUALIZAR CONTADOR DE REMESSAS ===
+      await db
+        .update(bankAccounts)
+        .set({
+          nextRemittanceNumber: (bankAccount.nextRemittanceNumber || 1) + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(bankAccounts.id, bankAccount.id));
+
+      // === MARCAR TÍTULOS COMO "PROCESSING" ===
+      await db
+        .update(accountsPayable)
+        .set({
+          status: "PROCESSING",
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            inArray(accountsPayable.id, payableIds),
+            eq(accountsPayable.organizationId, ctx.organizationId)
+          )
+        );
+
+      await finalizeIdempotency({
+        organizationId: ctx.organizationId,
+        scope,
+        key: idemKey,
+        status: "SUCCEEDED",
+        resultRef: `bank_remittances:${remittance.id}`,
+      });
     } catch (e: any) {
       await finalizeIdempotency({
         organizationId: ctx.organizationId,
@@ -270,38 +310,6 @@ export async function POST(request: NextRequest) {
       });
       throw e;
     }
-
-    // === ATUALIZAR CONTADOR DE REMESSAS ===
-    await db
-      .update(bankAccounts)
-      .set({
-        nextRemittanceNumber: (bankAccount.nextRemittanceNumber || 1) + 1,
-        updatedAt: new Date(),
-      })
-      .where(eq(bankAccounts.id, bankAccount.id));
-
-    // === MARCAR TÍTULOS COMO "PROCESSING" ===
-    await db
-      .update(accountsPayable)
-      .set({
-        status: "PROCESSING",
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          inArray(accountsPayable.id, payableIds),
-          eq(accountsPayable.organizationId, ctx.organizationId)
-        )
-      );
-
-    // === RETORNAR RESULTADO ===
-    await finalizeIdempotency({
-      organizationId: ctx.organizationId,
-      scope,
-      key: idemKey,
-      status: "SUCCEEDED",
-      resultRef: `bank_remittances:${remittance.id}`,
-    });
 
     return NextResponse.json({
       success: true,

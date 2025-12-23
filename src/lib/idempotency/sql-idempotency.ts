@@ -34,14 +34,15 @@ export async function acquireIdempotency(args: AcquireArgs): Promise<Idempotency
       DECLARE @now DATETIME2 = SYSUTCDATETIME();
       DECLARE @status NVARCHAR(16);
       DECLARE @resultRef NVARCHAR(255);
+      DECLARE @expiresAt DATETIME2;
 
       SELECT TOP 1 @status = status,
-                   @resultRef = result_ref
+                   @resultRef = result_ref,
+                   @expiresAt = expires_at
       FROM dbo.idempotency_keys WITH (UPDLOCK, HOLDLOCK)
       WHERE organization_id = @orgId
         AND scope = @scope
-        AND idem_key = @key
-        AND (expires_at IS NULL OR expires_at > @now);
+        AND idem_key = @key;
 
       IF @status IS NULL
       BEGIN
@@ -50,6 +51,21 @@ export async function acquireIdempotency(args: AcquireArgs): Promise<Idempotency
         ) VALUES (
           @orgId, @scope, @key, NULL, 'IN_PROGRESS', @now, @now, DATEADD(minute, @ttl, @now)
         );
+        SELECT CAST('EXECUTE' AS NVARCHAR(16)) AS status, CAST(NULL AS NVARCHAR(255)) AS resultRef;
+      END
+      ELSE IF @expiresAt IS NOT NULL AND @expiresAt <= @now
+      BEGIN
+        -- Linha expirada ainda existe e é coberta pelo índice único.
+        -- Reutiliza a mesma linha ao invés de tentar INSERT (evita violação do UNIQUE).
+        UPDATE dbo.idempotency_keys
+        SET status = 'IN_PROGRESS',
+            last_error = NULL,
+            result_ref = NULL,
+            updated_at = @now,
+            expires_at = DATEADD(minute, @ttl, @now)
+        WHERE organization_id = @orgId
+          AND scope = @scope
+          AND idem_key = @key;
         SELECT CAST('EXECUTE' AS NVARCHAR(16)) AS status, CAST(NULL AS NVARCHAR(255)) AS resultRef;
       END
       ELSE IF @status = 'FAILED'
