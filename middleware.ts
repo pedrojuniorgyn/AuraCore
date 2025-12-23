@@ -17,6 +17,21 @@ export default auth((req) => {
   // Evita redirects HTML em chamadas fetch/curl.
   if (isApi && !isApiAdmin) return;
 
+  const isInternalTokenOk = () => {
+    // Opção 1: reutiliza token já existente (audit/migrações)
+    const auditToken = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+    const headerAuditToken = req.headers.get("x-audit-token");
+    if (auditToken && headerAuditToken && headerAuditToken === auditToken) return true;
+
+    // Opção 2: token dedicado para diagnóstico
+    const diagToken = process.env.INTERNAL_DIAGNOSTICS_TOKEN;
+    const headerDiagToken =
+      req.headers.get("x-internal-token") || req.headers.get("x-diagnostics-token");
+    if (diagToken && headerDiagToken && headerDiagToken === diagToken) return true;
+
+    return false;
+  };
+
   // Migração de branches (coluna de integração com legado): permitir automação via token
   // para operar em ambientes sem cookie (Coolify terminal). Sem token, exige sessão ADMIN.
   if (pathname.startsWith("/api/admin/branches/migrate")) {
@@ -24,6 +39,16 @@ export default auth((req) => {
     const headerToken = req.headers.get("x-audit-token");
     const tokenOk = token && headerToken && headerToken === token;
     if (tokenOk) return;
+    if (!isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo).
+  }
+
+  // Diagnóstico de requests lentos: permitir uso via token no terminal do Coolify
+  // (sem cookie NextAuth). Sem token, exige sessão ADMIN (regra do bloco isApiAdmin abaixo).
+  if (pathname.startsWith("/api/admin/diagnostics/requests")) {
+    if (isInternalTokenOk()) return;
     if (!isLoggedIn) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
