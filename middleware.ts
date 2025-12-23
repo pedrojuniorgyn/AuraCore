@@ -55,6 +55,15 @@ export default auth((req) => {
     // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo).
   }
 
+  // Operações (smoke tests): permitir uso via token no terminal do Coolify
+  if (pathname.startsWith("/api/admin/ops/health")) {
+    if (isInternalTokenOk()) return;
+    if (!isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo).
+  }
+
   // Login:
   // - se já está logado e abre /login -> manda para home do produto (/)
   if (isOnLogin && isLoggedIn) {
