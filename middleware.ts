@@ -55,6 +55,15 @@ export default auth((req) => {
     // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo).
   }
 
+  // Migração 0033 (idempotency_keys): permitir execução via token no terminal do Coolify
+  if (pathname.startsWith("/api/admin/migrations/0033-idempotency")) {
+    if (isInternalTokenOk()) return;
+    if (!isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Aqui exigimos ADMIN por padrão (regra do bloco isApiAdmin abaixo).
+  }
+
   // Operações (smoke tests): permitir uso via token no terminal do Coolify
   if (pathname.startsWith("/api/admin/ops/health")) {
     if (isInternalTokenOk()) return;
