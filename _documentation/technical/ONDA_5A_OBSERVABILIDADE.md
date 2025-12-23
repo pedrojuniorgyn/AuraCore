@@ -57,9 +57,12 @@ Resultado esperado:
 ---
 
 ## Próximos passos desta onda (hardening)
-- Propagar `x-request-id` na resposta (para o frontend e troubleshooting).
-- Adicionar `Server-Timing: app;dur=<ms>` (facilita inspeção em devtools).
-- Definir “slow threshold” configurável (ex.: `OBS_SLOW_MS`) e logar `api.slow`.
+- Propagar `x-request-id` na resposta (para o frontend e troubleshooting). ✅
+- Adicionar `Server-Timing: app;dur=<ms>` (facilita inspeção em devtools). ✅
+- Definir “slow threshold” configurável (ex.: `OBS_SLOW_MS`) e logar `api.slow`. ✅
+
+### Variáveis de ambiente
+- `OBS_SLOW_MS` (opcional): a partir de quantos ms um request vira `api.slow` (default: 1500)
 
 ---
 

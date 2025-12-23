@@ -9,9 +9,8 @@ Regra: **toda PR** relevante deve ser registrada aqui com: objetivo, risco, como
 
 | Onda | Status | PR | Deploy validado | Observações |
 |------|--------|----|-----------------|------------|
-| 5A (baseline) | 🔄 em andamento | PR #15 | ⬜ | Logs estruturados + diagnóstico de requests lentos |
-| 5A (hardening) | ⏳ pendente | - | - | `x-request-id` + `Server-Timing` + slow threshold |
-| 5B (lote 1) | ⏳ pendente | - | - | Idempotência persistida (SQL) + rotas críticas |
+| 5A (baseline + hardening) | 🔄 em andamento | PR #15 | ⬜ | Logs JSON + diagnóstico + `x-request-id` + `Server-Timing` + `OBS_SLOW_MS` |
+| 5B (lote 1) | 🔄 em andamento | PR #17 | ⬜ | Idempotência persistida (SQL) nas rotas críticas (PR empilhada) |
 
 ---
 
@@ -22,10 +21,31 @@ Regra: **toda PR** relevante deve ser registrada aqui com: objetivo, risco, como
 - **Principais pontos**:
   - Instrumentação em `withPermission` e `withAuth`
   - Endpoint: `GET /api/admin/diagnostics/requests`
+  - Hardening: `x-request-id` em respostas + `Server-Timing` + evento `api.slow` (`OBS_SLOW_MS`)
 - **Risco**: baixo (observabilidade).  
 - **Como validar (Coolify)**:
   - Ver logs JSON no container (buscar por `api.request`, `api.error`)
+  - Confirmar headers nas respostas: `x-request-id` e `server-timing`
   - Chamar: `/api/admin/diagnostics/requests?minMs=200&sinceMinutes=30&limit=50`
+- **Resultado**: ⬜ (aguardando merge/deploy)
+
+---
+
+## Onda 5B — Idempotência (lote 1)
+
+### PR #17 (empilhada na PR #15)
+- **Objetivo**: garantir **efeito único** (anti-duplicação) em integrações e ações financeiras críticas.
+- **Mudança**:
+  - Migration `0033_idempotency_keys.sql` (tabela `dbo.idempotency_keys`)
+  - Util `acquire/finalize` com lock **SERIALIZABLE**
+  - Aplicado em:
+    - `POST /api/btg/webhook`
+    - `POST /api/financial/dda/sync`
+    - `POST /api/financial/remittances/generate`
+- **Risco**: médio (toca fluxos financeiros).  
+- **Como validar**:
+  - Rodar migration 0033 no SQL Server
+  - Repetir chamada 2x com mesmos parâmetros e confirmar `hit`/`in_progress`
 - **Resultado**: ⬜ (aguardando merge/deploy)
 
 ---
