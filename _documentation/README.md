@@ -28,6 +28,9 @@ Contém relatórios de implementação, status e resultados:
 
 **Total:** 32 documentos
 
+**Ondas 5A+ (execução viva):**
+- `reports/ONDAS_5PLUS_EXECUCAO_LOG.md`
+
 ---
 
 ## 📋 Planning (`/planning`)
@@ -39,6 +42,9 @@ Contém documentos de planejamento estratégico:
 - Cenários e estratégias
 
 **Total:** 9 documentos
+
+**Ondas 5A+ (roadmap executivo):**
+- `planning/ROADMAP_ONDAS_5A_A_9_EXECUTIVO.md`
 
 ---
 
@@ -53,6 +59,9 @@ Contém documentação técnica detalhada:
 - Documentação de componentes (AG Grid, Aurora, etc)
 
 **Total:** 92 documentos
+
+**Ondas 5A+ (guias técnicos):**
+- `technical/ONDA_5A_OBSERVABILIDADE.md`
 
 ---
 

@@ -150,6 +150,11 @@
     - Problemas identificados
     - Soluções aplicadas
 
+20. **ROADMAP_ONDAS_5A_A_9_EXECUTIVO.md** ⭐
+    - Roadmap incremental (Coolify + SQL Server)
+    - Ondas 5A–9 com DoD, checklists e estimativas
+    - Execução segura sem big-bang refactor
+
 ---
 
 ## 📁 **ORGANIZAÇÃO DOS DOCUMENTOS:**
@@ -159,10 +164,12 @@
 **🏆 EXECUTIVOS (Leitura Rápida):**
 - RELATORIO_EXECUTIVO_FINAL.md
 - RELATORIO_DETALHADO_FRONTENDS.md
+- ONDAS_5PLUS_EXECUCAO_LOG.md
 
 **🔧 TÉCNICOS (Implementação):**
 - AUTENTICACAO_CORRIGIDA.md
 - TESTES_AUTENTICACAO_FINAL.md
+- ONDA_5A_OBSERVABILIDADE.md
 
 **🏦 BTG PACTUAL (9 docs):**
 - BTG_SETUP.md
@@ -179,6 +186,7 @@
 - MASTER_PLAN_MARATONA.md
 - MARATONA_FINALIZADA.md
 - PRÓXIMOS_PASSOS_IMPLEMENTADOS.md
+- ROADMAP_ONDAS_5A_A_9_EXECUTIVO.md
 
 ---
 
