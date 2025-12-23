@@ -10,6 +10,10 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { generateCNAB240, type CNAB240Options } from "@/services/banking/cnab-generator";
 import { format } from "date-fns";
 import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { createHash } from "crypto";
+import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
+
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -103,6 +107,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // === IDEMPOTÊNCIA (efeito único) ===
+    // Pode ser fornecida pelo cliente via header (recomendado).
+    // Sem header, usamos hash determinístico dos parâmetros (org/branch/bankAccount/payableIds).
+    const scope = "financial.remittances.generate";
+    const keyFromHeader =
+      request.headers.get("idempotency-key") ||
+      request.headers.get("Idempotency-Key");
+    const payableIdsSorted = [...payableIds].map(Number).filter(Number.isFinite).sort((a, b) => a - b);
+    const hashBase = JSON.stringify({
+      organizationId: ctx.organizationId,
+      branchId,
+      bankAccountId,
+      payableIds: payableIdsSorted,
+    });
+    const hash = createHash("sha256").update(hashBase).digest("hex");
+    const computedKey = `remittance:${hash}`;
+    const idemKey = (keyFromHeader && keyFromHeader.trim()) ? keyFromHeader.trim().slice(0, 128) : computedKey.slice(0, 128);
+
+    const idem = await acquireIdempotency({
+      organizationId: ctx.organizationId,
+      scope,
+      key: idemKey,
+      ttlMinutes: 24 * 60,
+    });
+    if (idem.outcome === "hit") {
+      const ref = (idem.resultRef ?? "").toString();
+      const match = ref.startsWith("bank_remittances:") ? Number(ref.replace("bank_remittances:", "")) : NaN;
+      if (Number.isFinite(match) && match > 0) {
+        const [existing] = await db
+          .select()
+          .from(bankRemittances)
+          .where(
+            and(
+              eq(bankRemittances.id, match),
+              eq(bankRemittances.organizationId, ctx.organizationId),
+              isNull(bankRemittances.deletedAt)
+            )
+          )
+          .limit(1);
+        if (existing) {
+          return NextResponse.json({
+            success: true,
+            idempotency: "hit",
+            remittance: {
+              id: existing.id,
+              fileName: existing.fileName,
+              totalRecords: existing.totalRecords,
+              totalAmount: Number(existing.totalAmount),
+            },
+          });
+        }
+      }
+      return NextResponse.json(
+        { success: true, idempotency: "hit", message: "Remessa já gerada anteriormente (efeito único)" },
+        { status: 200 }
+      );
+    }
+    if (idem.outcome === "in_progress") {
+      return NextResponse.json(
+        { success: true, idempotency: "in_progress", message: "Geração de remessa já está em processamento" },
+        { status: 202 }
+      );
+    }
+
     // === PREPARAR DADOS PARA CNAB ===
     const cnabOptions: CNAB240Options = {
       bankAccount: {
@@ -145,21 +213,33 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    const [remittance] = await db
-      .insert(bankRemittances)
-      .values({
+    let remittance: any;
+    try {
+      [remittance] = await db
+        .insert(bankRemittances)
+        .values({
+          organizationId: ctx.organizationId,
+          bankAccountId: bankAccount.id,
+          fileName,
+          content: cnabContent,
+          remittanceNumber: bankAccount.nextRemittanceNumber || 1,
+          type: "PAYMENT",
+          status: "GENERATED",
+          totalRecords: payables.length,
+          totalAmount: totalAmount.toString(),
+          createdBy: ctx.userId,
+        })
+        .$returningId();
+    } catch (e: any) {
+      await finalizeIdempotency({
         organizationId: ctx.organizationId,
-        bankAccountId: bankAccount.id,
-        fileName,
-        content: cnabContent,
-        remittanceNumber: bankAccount.nextRemittanceNumber || 1,
-        type: "PAYMENT",
-        status: "GENERATED",
-        totalRecords: payables.length,
-        totalAmount: totalAmount.toString(),
-        createdBy: ctx.userId,
-      })
-      .$returningId();
+        scope,
+        key: idemKey,
+        status: "FAILED",
+        errorMessage: e?.message ?? String(e),
+      });
+      throw e;
+    }
 
     // === ATUALIZAR CONTADOR DE REMESSAS ===
     await db
@@ -185,6 +265,14 @@ export async function POST(request: NextRequest) {
       );
 
     // === RETORNAR RESULTADO ===
+    await finalizeIdempotency({
+      organizationId: ctx.organizationId,
+      scope,
+      key: idemKey,
+      status: "SUCCEEDED",
+      resultRef: `bank_remittances:${remittance.id}`,
+    });
+
     return NextResponse.json({
       success: true,
       remittance: {
