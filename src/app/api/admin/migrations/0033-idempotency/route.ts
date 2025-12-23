@@ -6,6 +6,21 @@ import { join } from "path";
 
 export const runtime = "nodejs";
 
+function isInternalTokenOk(req: NextRequest) {
+  // Opção 1: reutiliza token já existente (audit/migrações)
+  const auditToken = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+  const headerAuditToken = req.headers.get("x-audit-token");
+  if (auditToken && headerAuditToken && headerAuditToken === auditToken) return true;
+
+  // Opção 2: token dedicado para diagnóstico/migrations
+  const diagToken = process.env.INTERNAL_DIAGNOSTICS_TOKEN;
+  const headerDiagToken =
+    req.headers.get("x-internal-token") || req.headers.get("x-diagnostics-token");
+  if (diagToken && headerDiagToken && headerDiagToken === diagToken) return true;
+
+  return false;
+}
+
 function splitGoBatches(sqlText: string) {
   // Divide por linhas "GO" (SQL Server), ignorando case e espaços.
   // OBS: não tenta interpretar GO dentro de strings/comentários; para migrations idempotentes é suficiente.
@@ -34,7 +49,7 @@ function splitGoBatches(sqlText: string) {
  * - Em produção (Coolify terminal), pode ser liberado por token no middleware (x-audit-token).
  */
 export async function POST(req: NextRequest) {
-  return withPermission(req, "admin.users.manage", async () => {
+  const handler = async () => {
     await ensureConnection();
 
     const filePath = join(process.cwd(), "drizzle", "migrations", "0033_idempotency_keys.sql");
@@ -60,6 +75,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, message: "Migration 0033 executada com sucesso", results });
-  });
+  };
+
+  // Em ambiente Coolify, é comum operar via terminal do container sem sessão NextAuth.
+  // Permitimos execução via token; caso contrário, exige permissão ADMIN.
+  if (isInternalTokenOk(req)) return handler();
+  return withPermission(req, "admin.users.manage", handler);
 }
 
