@@ -5,6 +5,27 @@ import { log } from "@/lib/observability/logger";
 import { getOrCreateRequestId } from "@/lib/observability/request-id";
 import { pushRequestLog } from "@/lib/observability/request-buffer";
 
+function buildTelemetryHeaders(requestId: string, durationMs: number) {
+  const headers = new Headers();
+  headers.set("x-request-id", requestId);
+  // Ajuda debugging em DevTools e em proxies (Coolify)
+  headers.set("server-timing", `app;dur=${Math.max(0, Math.round(durationMs))}`);
+  return headers;
+}
+
+function withTelemetryHeaders(res: Response, requestId: string, durationMs: number): Response {
+  const h = new Headers(res.headers);
+  const telemetry = buildTelemetryHeaders(requestId, durationMs);
+  telemetry.forEach((v, k) => h.set(k, v));
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+}
+
+function getSlowThresholdMs() {
+  const raw = process.env.OBS_SLOW_MS;
+  const n = raw !== undefined ? Number(raw) : 1500;
+  return Number.isFinite(n) ? Math.max(0, n) : 1500;
+}
+
 /**
  * Guard para proteger API routes com permissões
  * 
@@ -29,9 +50,10 @@ export async function withPermission<T>(
     // 1. Verificar autenticação
     const session = await auth();
     if (!session?.user?.id) {
+      const durationMs = Date.now() - startedAt;
       const res = NextResponse.json(
         { error: "Unauthorized", message: "Sessão inválida ou expirada" },
-        { status: 401 }
+        { status: 401, headers: buildTelemetryHeaders(requestId, durationMs) }
       );
       pushRequestLog({
         ts: new Date().toISOString(),
@@ -39,7 +61,7 @@ export async function withPermission<T>(
         method,
         path,
         status: 401,
-        durationMs: Date.now() - startedAt,
+        durationMs,
         permission: permissionCode,
       });
       log("warn", "api.unauthorized", { requestId, method, path, status: 401, permission: permissionCode });
@@ -49,13 +71,14 @@ export async function withPermission<T>(
     // 2. Verificar permissão
     const hasAccess = await hasPermission(session.user.id, permissionCode);
     if (!hasAccess) {
+      const durationMs = Date.now() - startedAt;
       const res = NextResponse.json(
         {
           error: "Forbidden",
           message: `Você não tem permissão para esta ação`,
           required: permissionCode,
         },
-        { status: 403 }
+        { status: 403, headers: buildTelemetryHeaders(requestId, durationMs) }
       );
       pushRequestLog({
         ts: new Date().toISOString(),
@@ -63,7 +86,7 @@ export async function withPermission<T>(
         method,
         path,
         status: 403,
-        durationMs: Date.now() - startedAt,
+        durationMs,
         userId: session.user.id,
         organizationId: (session.user as any).organizationId,
         branchId: ((session.user as any).branchId ?? (session.user as any).defaultBranchId ?? null) as any,
@@ -110,6 +133,7 @@ export async function withPermission<T>(
 
     const res = await handler(session.user, ctx);
     const durationMs = Date.now() - startedAt;
+    const slowMs = getSlowThresholdMs();
     pushRequestLog({
       ts: new Date().toISOString(),
       requestId,
@@ -133,7 +157,21 @@ export async function withPermission<T>(
       branchId: ctx.branchId,
       permission: permissionCode,
     });
-    return res;
+    if (durationMs >= slowMs) {
+      log("warn", "api.slow", {
+        requestId,
+        method,
+        path,
+        status: (res as any)?.status ?? 200,
+        durationMs,
+        slowMs,
+        userId: session.user.id,
+        organizationId: (session.user as any).organizationId,
+        branchId: ctx.branchId,
+        permission: permissionCode,
+      });
+    }
+    return withTelemetryHeaders(res, requestId, durationMs);
   } catch (error: any) {
     const durationMs = Date.now() - startedAt;
     pushRequestLog({
@@ -148,7 +186,7 @@ export async function withPermission<T>(
     log("error", "api.error", { requestId, method, path, status: 500, durationMs, permission: permissionCode, error });
     return NextResponse.json(
       { error: "Internal Server Error", message: error?.message ?? "Erro interno" },
-      { status: 500 }
+      { status: 500, headers: buildTelemetryHeaders(requestId, durationMs) }
     );
   }
 }
@@ -167,9 +205,10 @@ export async function withAuth<T>(
   try {
     const session = await auth();
     if (!session?.user?.id) {
+      const durationMs = Date.now() - startedAt;
       const res = NextResponse.json(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401, headers: buildTelemetryHeaders(requestId, durationMs) }
       );
       pushRequestLog({
         ts: new Date().toISOString(),
@@ -177,7 +216,7 @@ export async function withAuth<T>(
         method,
         path,
         status: 401,
-        durationMs: Date.now() - startedAt,
+        durationMs,
       });
       log("warn", "api.unauthorized", { requestId, method, path, status: 401 });
       return res;
@@ -207,6 +246,7 @@ export async function withAuth<T>(
 
     const res = await handler(session.user, ctx);
     const durationMs = Date.now() - startedAt;
+    const slowMs = getSlowThresholdMs();
     pushRequestLog({
       ts: new Date().toISOString(),
       requestId,
@@ -228,7 +268,20 @@ export async function withAuth<T>(
       organizationId: (session.user as any).organizationId,
       branchId: ctx.branchId,
     });
-    return res;
+    if (durationMs >= slowMs) {
+      log("warn", "api.slow", {
+        requestId,
+        method,
+        path,
+        status: (res as any)?.status ?? 200,
+        durationMs,
+        slowMs,
+        userId: session.user.id,
+        organizationId: (session.user as any).organizationId,
+        branchId: ctx.branchId,
+      });
+    }
+    return withTelemetryHeaders(res, requestId, durationMs);
   } catch (error: any) {
     const durationMs = Date.now() - startedAt;
     pushRequestLog({
@@ -242,7 +295,7 @@ export async function withAuth<T>(
     log("error", "api.error", { requestId, method, path, status: 500, durationMs, error });
     return NextResponse.json(
       { error: "Internal Server Error", message: error?.message ?? "Erro interno" },
-      { status: 500 }
+      { status: 500, headers: buildTelemetryHeaders(requestId, durationMs) }
     );
   }
 }
