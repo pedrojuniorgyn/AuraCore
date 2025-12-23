@@ -10,9 +10,39 @@ import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-i
 
 export const runtime = "nodejs";
 
+function isInternalTokenOk(req: NextRequest) {
+  const auditToken = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
+  const headerAuditToken = req.headers.get("x-audit-token");
+  if (auditToken && headerAuditToken && headerAuditToken === auditToken) return true;
+
+  const diagToken = process.env.INTERNAL_DIAGNOSTICS_TOKEN;
+  const headerDiagToken =
+    req.headers.get("x-internal-token") || req.headers.get("x-diagnostics-token");
+  if (diagToken && headerDiagToken && headerDiagToken === diagToken) return true;
+
+  return false;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const ctx = await getTenantContext();
+    const tokenOk = isInternalTokenOk(request);
+    const ctx = tokenOk
+      ? {
+          userId: "SYSTEM",
+          organizationId: Number(request.headers.get("x-organization-id")),
+          role: "ADMIN",
+          defaultBranchId: null,
+          allowedBranches: [],
+          isAdmin: true,
+        }
+      : await getTenantContext();
+
+    if (tokenOk && (!Number.isFinite(ctx.organizationId) || ctx.organizationId <= 0)) {
+      return NextResponse.json(
+        { error: "Informe x-organization-id (modo token)" },
+        { status: 400 }
+      );
+    }
     if (!ctx.isAdmin) {
       return NextResponse.json(
         { error: "Forbidden", message: "Apenas ADMIN pode executar sincronização DDA" },
