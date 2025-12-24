@@ -9,7 +9,8 @@ import { bankAccounts, accountsPayable, bankRemittances, branches } from "@/lib/
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { generateCNAB240, type CNAB240Options } from "@/services/banking/cnab-generator";
 import { format } from "date-fns";
-import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { getTenantContext } from "@/lib/auth/context";
+import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { createHash } from "crypto";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 
@@ -49,21 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // branchId vem do header e precisa ser validado contra allowedBranches
-    const branchHeader = request.headers.get("x-branch-id");
-    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
-    if (!branchId || Number.isNaN(branchId)) {
-      return NextResponse.json(
-        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
-        { status: 400 }
-      );
-    }
-    if (!hasAccessToBranch(ctx, branchId)) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Sem acesso à filial informada" },
-        { status: 403 }
-      );
-    }
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
     const body = await request.json();
     const { bankAccountId, payableIds } = body;

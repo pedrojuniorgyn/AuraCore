@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { getTenantContext } from "@/lib/auth/context";
+import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 
@@ -15,21 +16,7 @@ export async function POST(
   const resolvedParams = await params;
   try {
     const ctx = await getTenantContext();
-
-    const branchHeader = request.headers.get("x-branch-id");
-    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
-    if (!branchId || Number.isNaN(branchId)) {
-      return NextResponse.json(
-        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
-        { status: 400 }
-      );
-    }
-    if (!hasAccessToBranch(ctx, branchId)) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Sem acesso à filial informada" },
-        { status: 403 }
-      );
-    }
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
     const payableId = Number(resolvedParams.id);
     if (!Number.isFinite(payableId) || payableId <= 0) {
