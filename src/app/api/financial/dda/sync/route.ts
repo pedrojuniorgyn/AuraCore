@@ -77,10 +77,13 @@ export async function POST(request: NextRequest) {
       ttlMinutes: 60, // evita duplo sync na mesma hora; admin pode forçar com outra key
     });
     if (idem.outcome === "hit") {
+      const ref = (idem.resultRef ?? "").toString();
+      const importedMatch = ref.startsWith("imported:") ? Number(ref.replace("imported:", "")) : NaN;
+      const imported = Number.isFinite(importedMatch) ? importedMatch : null;
       return NextResponse.json({
         success: true,
         idempotency: "hit",
-        imported: 0,
+        imported,
         message: "Sincronização já executada recentemente (efeito único)",
       });
     }
