@@ -44,11 +44,25 @@ export function initializeCronJobs() {
       console.log("🕐 [CRON] Executando verificação de manutenções preventivas...");
       await runMaintenanceAlertsJob();
     });
+
+    // Job 3: Document Pipeline (fila de jobs) — a cada minuto
+    cron.schedule("*/1 * * * *", async () => {
+      try {
+        const { runDocumentJobsTick } = await import("@/lib/documents/jobs-worker");
+        const r = await runDocumentJobsTick({ maxJobs: 5 });
+        if (r.processed > 0) {
+          console.log(`🗂️ [CRON] Document jobs: processed=${r.processed} ok=${r.succeeded} fail=${r.failed}`);
+        }
+      } catch (e: any) {
+        console.error("❌ [CRON] Falha ao processar document jobs:", e?.message ?? String(e));
+      }
+    });
     
     initialized = true;
     console.log("✅ Cron Jobs inicializados!");
     console.log("  - Importação NFe: a cada hora configurada");
     console.log("  - Alertas Manutenção: diariamente às 8h");
+    console.log("  - Document Jobs: a cada 1 minuto");
   }
 }
 
