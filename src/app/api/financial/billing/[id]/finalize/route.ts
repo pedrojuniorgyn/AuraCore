@@ -139,9 +139,11 @@ export async function POST(
 
       return NextResponse.json(result.payload, { status: result.status });
     } catch (error: any) {
+      // resolveBranchIdOrThrow lança NextResponse (400/403). Preserve.
+      if (error instanceof Response) return error;
       console.error("❌ Erro ao finalizar fatura:", error);
       return NextResponse.json(
-        { error: error.message },
+        { error: error?.message ?? String(error) },
         { status: 500 }
       );
     }
