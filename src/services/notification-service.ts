@@ -106,7 +106,7 @@ export class NotificationService {
       title: "📦 Novos documentos importados",
       message,
       data: { imported, duplicates, totalValue },
-      actionUrl: "/fiscal/entrada-notas",
+      actionUrl: "/fiscal/documentos",
     });
   }
 
@@ -124,7 +124,7 @@ export class NotificationService {
       event: NotificationEvent.SEFAZ_ERROR_656,
       title: "⏰ SEFAZ: Aguardar 1 hora",
       message: "Consumo Indevido - Não há novos documentos disponíveis no momento",
-      actionUrl: "/fiscal/entrada-notas",
+      actionUrl: "/fiscal/documentos",
     });
   }
 
@@ -144,7 +144,7 @@ export class NotificationService {
       title: "❌ Erro na importação SEFAZ",
       message: error,
       data: { error },
-      actionUrl: "/fiscal/entrada-notas",
+      actionUrl: "/fiscal/documentos",
     });
   }
 
