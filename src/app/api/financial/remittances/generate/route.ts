@@ -250,65 +250,96 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    // Tudo abaixo é mutação; qualquer falha deve finalizar a idempotência como FAILED
-    // para evitar ficar preso em IN_PROGRESS.
-    let remittance: any;
+    // Tudo abaixo é mutação; precisa ser atômico.
+    // Se o INSERT da remessa acontecer e algum UPDATE falhar depois, um retry com status FAILED
+    // pode inserir remessa duplicada. Por isso, usamos transação.
+    let remittance: { id: number } | null = null;
     try {
-      [remittance] = await db
-        .insert(bankRemittances)
-        .values({
+      remittance = await db.transaction(async (tx) => {
+        const [createdId] = await tx
+          .insert(bankRemittances)
+          .values({
+            organizationId: ctx.organizationId,
+            bankAccountId: bankAccount.id,
+            fileName,
+            content: cnabContent,
+            remittanceNumber: bankAccount.nextRemittanceNumber || 1,
+            type: "PAYMENT",
+            status: "GENERATED",
+            totalRecords: payables.length,
+            totalAmount: totalAmount.toString(),
+            createdBy: ctx.userId,
+          })
+          .$returningId();
+
+        const remittanceId = Number((createdId as any)?.id);
+        if (!Number.isFinite(remittanceId) || remittanceId <= 0) {
+          throw new Error("Falha ao criar remessa (id não retornado)");
+        }
+
+        // === ATUALIZAR CONTADOR DE REMESSAS ===
+        await tx
+          .update(bankAccounts)
+          .set({
+            nextRemittanceNumber: (bankAccount.nextRemittanceNumber || 1) + 1,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(bankAccounts.id, bankAccount.id),
+              eq(bankAccounts.organizationId, ctx.organizationId),
+              isNull(bankAccounts.deletedAt)
+            )
+          );
+
+        // === MARCAR TÍTULOS COMO "PROCESSING" ===
+        await tx
+          .update(accountsPayable)
+          .set({
+            status: "PROCESSING",
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              inArray(accountsPayable.id, payableIds),
+              eq(accountsPayable.organizationId, ctx.organizationId),
+              eq(accountsPayable.status, "OPEN"),
+              isNull(accountsPayable.deletedAt)
+            )
+          );
+
+        return { id: remittanceId };
+      });
+
+      // Idempotência: best-effort (não derruba sucesso da operação se a finalização falhar).
+      try {
+        await finalizeIdempotency({
           organizationId: ctx.organizationId,
-          bankAccountId: bankAccount.id,
-          fileName,
-          content: cnabContent,
-          remittanceNumber: bankAccount.nextRemittanceNumber || 1,
-          type: "PAYMENT",
-          status: "GENERATED",
-          totalRecords: payables.length,
-          totalAmount: totalAmount.toString(),
-          createdBy: ctx.userId,
-        })
-        .$returningId();
-
-      // === ATUALIZAR CONTADOR DE REMESSAS ===
-      await db
-        .update(bankAccounts)
-        .set({
-          nextRemittanceNumber: (bankAccount.nextRemittanceNumber || 1) + 1,
-          updatedAt: new Date(),
-        })
-        .where(eq(bankAccounts.id, bankAccount.id));
-
-      // === MARCAR TÍTULOS COMO "PROCESSING" ===
-      await db
-        .update(accountsPayable)
-        .set({
-          status: "PROCESSING",
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            inArray(accountsPayable.id, payableIds),
-            eq(accountsPayable.organizationId, ctx.organizationId)
-          )
-        );
-
-      await finalizeIdempotency({
-        organizationId: ctx.organizationId,
-        scope,
-        key: idemKey,
-        status: "SUCCEEDED",
-        resultRef: `bank_remittances:${remittance.id}`,
-      });
+          scope,
+          key: idemKey,
+          status: "SUCCEEDED",
+          resultRef: `bank_remittances:${remittance.id}`,
+        });
+      } catch (e: any) {
+        console.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
+      }
     } catch (e: any) {
-      await finalizeIdempotency({
-        organizationId: ctx.organizationId,
-        scope,
-        key: idemKey,
-        status: "FAILED",
-        errorMessage: e?.message ?? String(e),
-      });
+      try {
+        await finalizeIdempotency({
+          organizationId: ctx.organizationId,
+          scope,
+          key: idemKey,
+          status: "FAILED",
+          errorMessage: e?.message ?? String(e),
+        });
+      } catch (e2: any) {
+        console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
+      }
       throw e;
+    }
+
+    if (!remittance) {
+      throw new Error("Falha ao gerar remessa");
     }
 
     return NextResponse.json({
