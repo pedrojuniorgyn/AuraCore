@@ -62,14 +62,47 @@ export default function BankReconciliationPage() {
 
       const data = await res.json();
 
-      if (data.success) {
+      if (!data?.success) throw new Error(data?.error ?? "Falha ao importar OFX");
+
+      // Novo fluxo (Onda 6): importação pode ser enfileirada (jobs)
+      if (data.queued && data.jobId) {
+        const jobId = Number(data.jobId);
+        toast({
+          title: "Importação enfileirada",
+          description: "Acompanhe em Configurações → Document Pipeline. Tentando atualizar automaticamente...",
+        });
+
+        // Poll simples (best-effort) para dar feedback e atualizar lista
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < 60_000) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const jobRes = await fetch(`/api/documents/jobs/${jobId}`, { cache: "no-store" });
+          const jobJson = await jobRes.json().catch(() => null as any);
+          const status = jobJson?.job?.status as string | undefined;
+          if (status === "SUCCEEDED") {
+            const result = jobJson?.job?.resultJson ? JSON.parse(jobJson.job.resultJson) : null;
+            toast({
+              title: "Importação concluída",
+              description: `${result?.inserted ?? 0} transações importadas`,
+            });
+            await loadTransactions();
+            break;
+          }
+          if (status === "FAILED") {
+            toast({
+              title: "Importação falhou",
+              description: jobJson?.job?.lastError ?? "Falha ao importar OFX",
+              variant: "destructive",
+            });
+            break;
+          }
+        }
+      } else {
         toast({
           title: "Sucesso",
           description: `${data.count} transações importadas`,
         });
         await loadTransactions();
-      } else {
-        throw new Error(data.error);
       }
     } catch (error) {
       console.error("Erro ao importar OFX:", error);

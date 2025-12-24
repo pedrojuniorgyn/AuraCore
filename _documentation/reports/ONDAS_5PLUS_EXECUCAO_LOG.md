@@ -9,9 +9,8 @@ Regra: **toda PR** relevante deve ser registrada aqui com: objetivo, risco, como
 
 | Onda | Status | PR | Deploy validado | Observações |
 |------|--------|----|-----------------|------------|
-| 5A (baseline) | 🔄 em andamento | PR #15 | ⬜ | Logs estruturados + diagnóstico de requests lentos |
-| 5A (hardening) | ⏳ pendente | - | - | `x-request-id` + `Server-Timing` + slow threshold |
-| 5B (lote 1) | ⏳ pendente | - | - | Idempotência persistida (SQL) + rotas críticas |
+| 5A + 5B | ✅ concluído | PR #20 + PR #22 | ✅ | Observabilidade + idempotência + Ops Panel + hotfix healthcheck |
+| 6 (Document Pipeline) | 🔄 em andamento | (a abrir) | ⬜ | S3/MinIO + document_store/jobs + pilotos (PDF fiscal + OFX) |
 
 ---
 
