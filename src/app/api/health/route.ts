@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { scheduleAutoSmokeRun } from "@/lib/ops/auto-smoke";
 
 /**
  * Healthcheck simples (não toca no banco)
@@ -9,8 +8,24 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
-  // Pós-deploy: dispara smoke test em background (não bloqueia o healthcheck).
-  scheduleAutoSmokeRun("healthcheck");
+  // IMPORTANTE:
+  // - /api/health precisa responder rápido e nunca depender de DB/imports pesados.
+  // - o auto-smoke é disparado em background (best-effort) via import dinâmico.
+  try {
+    void import("@/lib/ops/auto-smoke")
+      .then(({ scheduleAutoSmokeRun }) => {
+        try {
+          scheduleAutoSmokeRun("healthcheck");
+        } catch (e) {
+          console.error("⚠️ auto-smoke failed (schedule):", e);
+        }
+      })
+      .catch((e) => {
+        console.error("⚠️ auto-smoke failed (import):", e);
+      });
+  } catch (e) {
+    console.error("⚠️ auto-smoke failed (sync):", e);
+  }
   return NextResponse.json(
     {
       ok: true,
