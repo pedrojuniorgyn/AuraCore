@@ -4,11 +4,16 @@
 Formalizar a arquitetura existente (ERP Enterprise TMS/WMS/Financeiro/Contábil), reduzir risco de manutenção e padronizar contratos de segurança/integração/performance.
 
 ## Leitura rápida (ordem sugerida)
+0. Gestão do projeto
+   - [Project Overview](./PROJECT_OVERVIEW.md)
+   - [Painel de Gestão](./PROJECT_MANAGEMENT_PANEL.md)
+
 1. Contracts
    - [Tenant + Branch](./contracts/TENANT_BRANCH_CONTRACT.md)
    - [RBAC](./contracts/RBAC_CONTRACT.md)
    - [API Contract](./contracts/API_CONTRACT.md)
    - [Erros](./contracts/ERROR_CONTRACT.md)
+   - [Definition of Done (DoD)](./contracts/DELIVERY_DOD.md)
    - [Transações](./contracts/TRANSACTIONS_CONTRACT.md)
    - [SQL Server & Performance](./contracts/SQLSERVER_PERFORMANCE_CONTRACT.md)
 
