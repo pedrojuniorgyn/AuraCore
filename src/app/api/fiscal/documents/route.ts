@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const limitParam = Number(searchParams.get("limit") || "100");
     const offsetParam = Number(searchParams.get("offset") || "0");
     const limit = Number.isFinite(limitParam)
-      ? Math.min(Math.max(Math.trunc(limitParam), 1), 200)
+      ? Math.min(Math.max(Math.trunc(limitParam), 1), 1000)
       : 100;
     const offset = Number.isFinite(offsetParam) ? Math.max(Math.trunc(offsetParam), 0) : 0;
     
