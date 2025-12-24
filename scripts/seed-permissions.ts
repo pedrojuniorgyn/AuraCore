@@ -97,6 +97,10 @@ async function run() {
     const desiredPermissions = [
       { slug: "admin.full", desc: "Acesso total de administrador" },
       { slug: "admin.users.manage", desc: "Gerenciar usuários (admin)" },
+      { slug: "audit.read", desc: "Auditoria: visualizar relatórios e grids" },
+      { slug: "audit.run", desc: "Auditoria: executar snapshot/ETL" },
+      { slug: "audit.migrate", desc: "Auditoria: aplicar migrações idempotentes no AuditFinDB" },
+      { slug: "audit.admin", desc: "Auditoria: operações administrativas (cleanup/retention)" },
       { slug: "fiscal.cte.create", desc: "Criar/emitir CTe" },
       { slug: "fiscal.cte.cancel", desc: "Cancelar CTe" },
       { slug: "fiscal.cte.authorize", desc: "Autorizar CTe" },
