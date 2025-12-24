@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DocumentDetailModal } from "@/components/fiscal/document-detail-modal";
+import { toast } from "sonner";
 
 interface FiscalDocument {
   id: number;
@@ -95,8 +96,16 @@ export default function FiscalDocumentsPage() {
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/fiscal/documents?limit=1000");
-      const data = await response.json();
+      const branchId = localStorage.getItem("auracore:current-branch") || "";
+      const response = await fetch("/api/fiscal/documents?limit=1000", {
+        headers: branchId ? { "x-branch-id": branchId } : {},
+      });
+      const data = await response.json().catch(() => ({} as any));
+
+      if (!response.ok) {
+        const msg = data?.error ?? "Falha ao carregar documentos (verifique a filial ativa)";
+        throw new Error(msg);
+      }
       
       setDocuments(data.data || []);
       
@@ -111,6 +120,7 @@ export default function FiscalDocumentsPage() {
       });
     } catch (error) {
       console.error("Erro ao buscar documentos:", error);
+      toast.error(error instanceof Error ? error.message : "Falha ao carregar documentos fiscais");
     } finally {
       setLoading(false);
     }
@@ -123,8 +133,10 @@ export default function FiscalDocumentsPage() {
     }
 
     try {
+      const branchId = localStorage.getItem("auracore:current-branch") || "";
       const response = await fetch(`/api/fiscal/documents/${id}`, {
         method: "DELETE",
+        headers: branchId ? { "x-branch-id": branchId } : {},
       });
 
       if (response.ok) {
@@ -147,8 +159,10 @@ export default function FiscalDocumentsPage() {
     }
 
     try {
+      const branchId = localStorage.getItem("auracore:current-branch") || "";
       const response = await fetch(`/api/fiscal/documents/${id}/reclassify`, {
         method: "POST",
+        headers: branchId ? { "x-branch-id": branchId } : {},
       });
 
       if (response.ok) {
