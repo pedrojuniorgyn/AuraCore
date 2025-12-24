@@ -17,6 +17,8 @@ Formalizar a arquitetura existente (ERP Enterprise TMS/WMS/Financeiro/Contábil)
    - [Contábil](./domains/CONTABIL.md)
    - [Admin](./domains/ADMIN.md)
    - [TMS](./domains/TMS.md)
+   - [Auditoria v2](./domains/AUDITORIA_V2.md)
+   - [Tenancy + Branch scoping](./domains/TENANCY_BRANCH_SCOPING.md)
 
 3. Diagramas
    - [C4 — Context](./diagrams/C4_CONTEXT.md)
@@ -40,6 +42,7 @@ Formalizar a arquitetura existente (ERP Enterprise TMS/WMS/Financeiro/Contábil)
    - [Deploy Coolify](./runbooks/RUNBOOK_COOLIFY_DEPLOY.md)
    - [Migrations & Seeds](./runbooks/RUNBOOK_MIGRATIONS_SEEDS.md)
    - [SQL Server 2022](./runbooks/RUNBOOK_SQLSERVER_2022.md)
+   - [Auditoria v2](./runbooks/RUNBOOK_AUDITORIA_V2.md)
    - [Incidentes](./runbooks/RUNBOOK_INCIDENTS.md)
 
 ## Guardrails
