@@ -8,6 +8,7 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GridPattern } from "@/components/ui/animated-background";
 import { FileText, RefreshCw, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 type Job = {
   id: number;
@@ -161,7 +162,22 @@ export default function DocumentosPipelinePage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">Sem jobs ainda.</div>
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <div>Sem jobs ainda.</div>
+                  <div className="text-xs">
+                    Para gerar jobs:
+                    <ul className="list-disc ml-5 mt-1 space-y-1">
+                      <li>
+                        Importe um OFX em{" "}
+                        <Link className="underline" href="/financeiro/conciliacao">
+                          Financeiro → Conciliação
+                        </Link>
+                        .
+                      </li>
+                      <li>Faça upload de PDF em um Documento Fiscal (o registro aparece em `document_store`).</li>
+                    </ul>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
