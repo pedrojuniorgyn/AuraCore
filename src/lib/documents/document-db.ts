@@ -384,3 +384,36 @@ export async function listJobs(args: { organizationId: number; limit?: number })
   return (result.recordset as any) ?? [];
 }
 
+export async function requeueFailedJob(args: {
+  organizationId: number;
+  jobId: number;
+}): Promise<{ ok: boolean; documentId: number | null }> {
+  await ensureDocumentTables();
+
+  const result = await pool
+    .request()
+    .input("orgId", sql.Int, args.organizationId)
+    .input("jobId", sql.BigInt, BigInt(args.jobId))
+    .query<{ documentId: number }>(`
+      UPDATE dbo.document_jobs
+      SET status = 'QUEUED',
+          scheduled_at = SYSUTCDATETIME(),
+          started_at = NULL,
+          finished_at = NULL,
+          last_error = NULL,
+          result_json = NULL,
+          updated_at = SYSUTCDATETIME()
+      OUTPUT INSERTED.document_id as documentId
+      WHERE organization_id = @orgId
+        AND id = @jobId
+        AND status = 'FAILED'
+        AND attempts < max_attempts;
+    `);
+
+  const docId = Number((result.recordset?.[0] as any)?.documentId);
+  if (!Number.isFinite(docId) || docId <= 0) {
+    return { ok: false, documentId: null };
+  }
+  return { ok: true, documentId: docId };
+}
+

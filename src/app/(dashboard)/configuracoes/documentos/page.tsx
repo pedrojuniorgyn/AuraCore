@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GridPattern } from "@/components/ui/animated-background";
-import { FileText, RefreshCw, Play } from "lucide-react";
+import { FileText, RefreshCw, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 type Job = {
@@ -66,6 +66,24 @@ export default function DocumentosPipelinePage() {
     }
   }, [load]);
 
+  const retryJob = useCallback(
+    async (jobId: number) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/documents/jobs/${jobId}/retry`, { method: "POST" });
+        const json = await res.json();
+        if (!res.ok || !json?.success) throw new Error(json?.error ?? "Falha ao reenfileirar job");
+        toast.success(`Job #${jobId} reenfileirado`);
+        await load();
+      } catch (e: any) {
+        toast.error(e?.message ?? "Falha ao reenfileirar job");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [load]
+  );
+
   return (
     <PageTransition>
       <div className="flex-1 space-y-6 p-8 pt-6 relative">
@@ -123,6 +141,17 @@ export default function DocumentosPipelinePage() {
                         ) : null}
                       </div>
                       <div className="flex items-center gap-2">
+                        {j.status === "FAILED" ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={loading || j.attempts >= j.maxAttempts}
+                            onClick={() => retryJob(j.id)}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Reenfileirar
+                          </Button>
+                        ) : null}
                         <Badge variant={statusBadgeVariant(j.status)}>{j.status}</Badge>
                         <span className="text-xs text-muted-foreground">
                           {j.attempts}/{j.maxAttempts}
