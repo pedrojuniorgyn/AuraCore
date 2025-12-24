@@ -211,13 +211,7 @@ export async function POST(request: NextRequest) {
       );
 
     if (payables.length === 0) {
-      await finalizeIdempotency({
-        organizationId: ctx.organizationId,
-        scope,
-        key: idemKey,
-        status: "FAILED",
-        errorMessage: "Nenhum título em aberto encontrado",
-      });
+      await finalizeFailedAndContinue("Nenhum título em aberto encontrado");
       return NextResponse.json(
         { error: "Nenhum título em aberto encontrado" },
         { status: 400 }
