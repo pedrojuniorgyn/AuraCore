@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
+import { BRANCH_COOKIE_NAME } from "@/lib/tenant/branch-cookie";
 
 // Middleware roda em Edge Runtime: não pode importar libs Node (ex.: mssql).
 // Por isso usamos o authConfig "leve" (sem adapter/providers) apenas para ler o JWT/cookie.
@@ -13,9 +14,29 @@ export default auth((req) => {
   const isApi = pathname.startsWith("/api");
   const isApiAdmin = pathname.startsWith("/api/admin");
 
-  // Não interferir em rotas /api (exceto /api/admin que tem regra própria abaixo).
-  // Evita redirects HTML em chamadas fetch/curl.
-  if (isApi && !isApiAdmin) return;
+  // === Branch scoping (automático) ===
+  // Para evitar “esquecer” x-branch-id em fetches, injetamos o header em /api/** quando faltar:
+  // - primeiro pelo cookie HttpOnly (setado por /api/tenant/branch)
+  // - fallback: defaultBranchId do usuário (se existir no token)
+  //
+  // ⚠️ Não aplicamos em /api/admin aqui para não interferir em automações/token flows.
+  if (isApi && !isApiAdmin) {
+    const hasBranchHeader = !!req.headers.get("x-branch-id");
+    if (!hasBranchHeader) {
+      const cookieBranch = req.cookies.get(BRANCH_COOKIE_NAME)?.value;
+      const tokenDefaultBranch = (req.auth?.user as any)?.defaultBranchId;
+      const candidate = cookieBranch || (tokenDefaultBranch ? String(tokenDefaultBranch) : "");
+      const branchIdNum = Number(candidate);
+      if (Number.isFinite(branchIdNum) && branchIdNum > 0) {
+        const headers = new Headers(req.headers);
+        headers.set("x-branch-id", String(branchIdNum));
+        return NextResponse.next({ request: { headers } });
+      }
+    }
+
+    // Não interferir em /api (evita redirects HTML em chamadas fetch/curl).
+    return;
+  }
 
   const isInternalTokenOk = () => {
     // Opção 1: reutiliza token já existente (audit/migrações)

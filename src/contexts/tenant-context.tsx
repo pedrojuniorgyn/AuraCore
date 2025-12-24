@@ -56,6 +56,22 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   /**
+   * Persiste filial ativa em cookie HttpOnly (backend/middleware).
+   * Best-effort: não bloqueia UX se falhar.
+   */
+  const persistBranchCookie = useCallback(async (branchId: number) => {
+    try {
+      await fetch("/api/tenant/branch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branchId }),
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  /**
    * Busca as filiais disponíveis para o usuário da API
    */
   const fetchAvailableBranches = useCallback(async () => {
@@ -101,6 +117,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         if (storedBranch && hasPermission) {
           setCurrentBranch(storedBranch);
           console.log(`✅ Filial restaurada do localStorage: ${storedBranch.tradeName}`);
+          void persistBranchCookie(storedBranch.id);
           return;
         } else {
           // Remove do localStorage se não tiver mais permissão
@@ -115,6 +132,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           setCurrentBranch(defaultBranch);
           localStorage.setItem(STORAGE_KEY, defaultBranch.id.toString());
           console.log(`✅ Filial padrão selecionada: ${defaultBranch.tradeName}`);
+          void persistBranchCookie(defaultBranch.id);
           return;
         }
       }
@@ -125,9 +143,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         setCurrentBranch(firstBranch);
         localStorage.setItem(STORAGE_KEY, firstBranch.id.toString());
         console.log(`✅ Primeira filial selecionada: ${firstBranch.tradeName}`);
+        void persistBranchCookie(firstBranch.id);
       }
     },
-    [session]
+    [session, persistBranchCookie]
   );
 
   /**
@@ -187,13 +206,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       setCurrentBranch(branch);
       localStorage.setItem(STORAGE_KEY, branchId.toString());
 
+      // Atualiza cookie (backend/middleware)
+      await persistBranchCookie(branchId);
+
       toast.success(`Filial alterada: ${branch.tradeName}`);
 
       // 🔄 Recarrega a página para atualizar todos os dados
       // Alternativa: Invalidar queries do React Query/Refine
       router.refresh();
     },
-    [session, availableBranches, router]
+    [session, availableBranches, router, persistBranchCookie]
   );
 
   /**
