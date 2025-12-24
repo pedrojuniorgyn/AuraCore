@@ -140,6 +140,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const finalizeFailedAndContinue = async (errorMessage: string) => {
+      try {
+        await finalizeIdempotency({
+          organizationId: ctx.organizationId,
+          scope,
+          key: idemKey,
+          status: "FAILED",
+          errorMessage,
+        });
+      } catch (e: any) {
+        console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e);
+      }
+    };
+
     // === BUSCAR CONTA BANCÁRIA ===
     const [bankAccount] = await db
       .select()
@@ -153,6 +167,7 @@ export async function POST(request: NextRequest) {
       );
 
     if (!bankAccount) {
+      await finalizeFailedAndContinue("Conta bancária não encontrada");
       return NextResponse.json(
         { error: "Conta bancária não encontrada" },
         { status: 404 }
@@ -173,6 +188,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (!branch) {
+      await finalizeFailedAndContinue("Filial não encontrada");
       return NextResponse.json(
         { error: "Filial não encontrada" },
         { status: 404 }
