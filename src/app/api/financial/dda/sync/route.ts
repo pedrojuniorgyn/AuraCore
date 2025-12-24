@@ -100,13 +100,18 @@ export async function POST(request: NextRequest) {
     try {
       const imported = await ddaService.syncDdaInbox();
 
-      await finalizeIdempotency({
-        organizationId: ctx.organizationId,
-        scope,
-        key: idemKey,
-        status: "SUCCEEDED",
-        resultRef: `imported:${imported}`,
-      });
+      // Idempotência: best-effort (não derruba sucesso da operação se a finalização falhar).
+      try {
+        await finalizeIdempotency({
+          organizationId: ctx.organizationId,
+          scope,
+          key: idemKey,
+          status: "SUCCEEDED",
+          resultRef: `imported:${imported}`,
+        });
+      } catch (e: any) {
+        console.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
+      }
 
       return NextResponse.json({
         success: true,
@@ -114,13 +119,18 @@ export async function POST(request: NextRequest) {
         message: `${imported} boleto(s) importado(s) com sucesso`,
       });
     } catch (e: any) {
-      await finalizeIdempotency({
-        organizationId: ctx.organizationId,
-        scope,
-        key: idemKey,
-        status: "FAILED",
-        errorMessage: e?.message ?? String(e),
-      });
+      // Idempotência: best-effort (não mascarar erro original se a finalização falhar).
+      try {
+        await finalizeIdempotency({
+          organizationId: ctx.organizationId,
+          scope,
+          key: idemKey,
+          status: "FAILED",
+          errorMessage: e?.message ?? String(e),
+        });
+      } catch (e2: any) {
+        console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
+      }
       throw e;
     }
   } catch (error: any) {
