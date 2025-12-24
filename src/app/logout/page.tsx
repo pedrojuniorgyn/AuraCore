@@ -10,7 +10,23 @@ import { Card } from "@/components/ui/card";
  */
 export default function LogoutPage() {
   useEffect(() => {
-    signOut({ callbackUrl: "/login" });
+    const run = async () => {
+      // Importante:
+      // - o cookie auracore_branch é independente do NextAuth e pode persistir após logout.
+      // - se outro usuário logar no mesmo browser, o middleware pode injetar um x-branch-id obsoleto.
+      try {
+        await fetch("/api/tenant/branch", { method: "DELETE" });
+      } catch {
+        // ignore
+      }
+      try {
+        localStorage.removeItem("auracore:current-branch");
+      } catch {
+        // ignore
+      }
+      await signOut({ callbackUrl: "/login" });
+    };
+    void run();
   }, []);
 
   return (
