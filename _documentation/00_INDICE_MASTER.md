@@ -51,6 +51,10 @@
 - Admin: `../docs/architecture/domains/ADMIN.md`
 - TMS: `../docs/architecture/domains/TMS.md`
 
+### **🔎 Auditoria (GlobalTCL → AuditFinDB):**
+- Retrospectiva (14/12→23/12): `./technical/RETROSPECTIVA_2025-12-14_A_2025-12-23.md`
+- Dossiê do módulo Auditoria: `./technical/MODULO_AUDITORIA_GLOBALTCL_AUDITFINDB.md`
+
 ### **🛠️ Runbooks (operação):**
 - Deploy Coolify: `../docs/architecture/runbooks/RUNBOOK_COOLIFY_DEPLOY.md`
 - Migrations/Seeds: `../docs/architecture/runbooks/RUNBOOK_MIGRATIONS_SEEDS.md`
