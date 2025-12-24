@@ -49,6 +49,21 @@ export default function OperacoesPage() {
         fetch("/api/admin/ops/health/history?limit=25", { cache: "no-store" }),
       ]);
 
+      if (!latestRes.ok) {
+        const latestErr = await latestRes.json().catch(() => null as any);
+        throw new Error(
+          latestErr?.message ??
+            latestErr?.error ??
+            `Falha ao carregar último resultado (${latestRes.status})`
+        );
+      }
+      if (!histRes.ok) {
+        const histErr = await histRes.json().catch(() => null as any);
+        throw new Error(
+          histErr?.message ?? histErr?.error ?? `Falha ao carregar histórico (${histRes.status})`
+        );
+      }
+
       const latestJson = await latestRes.json();
       const histJson = await histRes.json();
 
