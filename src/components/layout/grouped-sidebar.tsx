@@ -220,6 +220,7 @@ const sidebarGroups: SidebarGroup[] = [
     items: [
       { title: "Dashboard Config", href: "/configuracoes", icon: LayoutDashboard, color: "text-slate-400" },
       { title: "Operações (Smoke Tests)", href: "/configuracoes/operacoes", icon: Activity, color: "text-cyan-400" },
+      { title: "Auditoria", href: "/auditoria", icon: ClipboardCheck, color: "text-amber-400" },
       { title: "Document Pipeline", href: "/configuracoes/documentos", icon: FileText, color: "text-cyan-400" },
       { title: "Filiais", href: "/configuracoes/filiais", icon: Building2, color: "text-indigo-400" },
       { title: "Backoffice", href: "/configuracoes/backoffice", icon: Sliders, color: "text-purple-400" },
