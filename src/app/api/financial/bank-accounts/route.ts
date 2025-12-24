@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, ensureConnection } from "@/lib/db";
 import { bankAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
+import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull } from "drizzle-orm";
 
 /**
@@ -44,10 +45,12 @@ export async function POST(request: NextRequest) {
     await ensureConnection();
     const ctx = await getTenantContext();
     const body = await request.json();
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
     await db.insert(bankAccounts).values({
       organizationId: ctx.organizationId,
-      branchId: body.branchId || ctx.defaultBranchId || 1,
+      // Política: header manda; body não decide filial.
+      branchId,
       name: body.name,
       bankCode: body.bankCode || null,
       bankName: body.bankName || null,
