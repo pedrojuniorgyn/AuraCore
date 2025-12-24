@@ -110,56 +110,18 @@ export async function downloadObjectToBuffer(args: { key: string }): Promise<Buf
   if (Buffer.isBuffer(body)) return body;
 
   const chunks: Buffer[] = [];
-
-  // Node.js Readable (async iterable) — tratamento explícito de erro + cleanup.
-  if (typeof body?.[Symbol.asyncIterator] === "function") {
-    try {
-      for await (const chunk of body) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-      }
-      return Buffer.concat(chunks);
-    } catch (e) {
-      // best-effort: encerra o stream em caso de erro mid-flight
-      try {
-        if (typeof body?.destroy === "function") body.destroy(e);
-      } catch {
-        // ignore
-      }
-      throw e;
-    }
-  }
-
-  // Web ReadableStream (fallback)
-  if (typeof body?.getReader === "function") {
-    const reader = body.getReader();
-    try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(Buffer.isBuffer(value) ? value : Buffer.from(value));
-      }
-      return Buffer.concat(chunks);
-    } catch (e) {
-      try {
-        await reader.cancel(e);
-      } catch {
-        // ignore
-      }
-      throw e;
-    } finally {
-      try {
-        reader.releaseLock();
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  // Último fallback: tenta Buffer.from diretamente
   try {
-    return Buffer.from(body);
-  } catch {
-    return Buffer.from([]);
+    for await (const chunk of body) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  } catch (e) {
+    // best-effort: encerra o stream em caso de erro mid-flight
+    try {
+      if (typeof body?.destroy === "function") body.destroy(e);
+    } catch {
+      // ignore
+    }
+    throw e;
   }
 }
-
