@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
-import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { getTenantContext } from "@/lib/auth/context";
+import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 
 /**
  * POST /api/financial/billing/:id/finalize
@@ -28,21 +29,7 @@ export async function POST(
     try {
       const tenant = await getTenantContext();
 
-      // Branch scoping: header precisa ser válido e permitido
-      const branchHeader = request.headers.get("x-branch-id");
-      const branchId = branchHeader ? Number(branchHeader) : tenant.defaultBranchId;
-      if (!branchId || Number.isNaN(branchId)) {
-        return NextResponse.json(
-          { error: "Informe x-branch-id (ou defina defaultBranchId)" },
-          { status: 400 }
-        );
-      }
-      if (!hasAccessToBranch(tenant, branchId)) {
-        return NextResponse.json(
-          { error: "Forbidden", message: "Sem acesso à filial informada" },
-          { status: 403 }
-        );
-      }
+      const branchId = resolveBranchIdOrThrow(request.headers, tenant);
 
       const result = await withMssqlTransaction(async (tx) => {
         // Buscar fatura com lock

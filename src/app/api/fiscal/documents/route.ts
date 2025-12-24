@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fiscalDocuments, fiscalDocumentItems } from "@/lib/db/schema/accounting";
-import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { getTenantContext } from "@/lib/auth/context";
+import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 import { eq, and, gte, lte, desc, sql as rawSql, isNull } from "drizzle-orm";
@@ -24,20 +25,7 @@ export async function GET(request: NextRequest) {
     await ensureConnection();
 
     const ctx = await getTenantContext();
-    const branchHeader = request.headers.get("x-branch-id");
-    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
-    if (!branchId || Number.isNaN(branchId)) {
-      return NextResponse.json(
-        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
-        { status: 400 }
-      );
-    }
-    if (!hasAccessToBranch(ctx, branchId)) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Sem acesso à filial informada" },
-        { status: 403 }
-      );
-    }
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
     
     // Query params
     const { searchParams } = new URL(request.url);
@@ -143,20 +131,7 @@ export async function POST(request: NextRequest) {
     await ensureConnection();
 
     const ctx = await getTenantContext();
-    const branchHeader = request.headers.get("x-branch-id");
-    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
-    if (!branchId || Number.isNaN(branchId)) {
-      return NextResponse.json(
-        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
-        { status: 400 }
-      );
-    }
-    if (!hasAccessToBranch(ctx, branchId)) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Sem acesso à filial informada" },
-        { status: 403 }
-      );
-    }
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
     
     const body = await request.json();
     

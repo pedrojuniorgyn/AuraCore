@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { taxCredits, inboundInvoices } from "@/lib/db/schema";
-import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
+import { getTenantContext } from "@/lib/auth/context";
+import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -57,21 +58,7 @@ export async function POST(request: NextRequest) {
     await ensureConnection();
     const ctx = await getTenantContext();
     const body = await request.json();
-
-    const branchHeader = request.headers.get("x-branch-id");
-    const branchId = branchHeader ? Number(branchHeader) : ctx.defaultBranchId;
-    if (!branchId || Number.isNaN(branchId)) {
-      return NextResponse.json(
-        { error: "Informe x-branch-id (ou defina defaultBranchId)" },
-        { status: 400 }
-      );
-    }
-    if (!hasAccessToBranch(ctx, branchId)) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Sem acesso à filial informada" },
-        { status: 403 }
-      );
-    }
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
     // ⚠️ Segurança: impedir override via spread do body
     // (última chave vence em object literals)
