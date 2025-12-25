@@ -1,0 +1,94 @@
+/**
+ * MCP Resource: Contracts
+ * 
+ * Expõe contratos arquiteturais do AuraCore via MCP
+ */
+
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CONTRACTS_DIR = path.join(__dirname, '../../knowledge/contracts');
+
+export interface ContractResource {
+  uri: string;
+  name: string;
+  description: string;
+  mimeType: string;
+}
+
+/**
+ * Lista todos os contratos disponíveis
+ */
+export async function listContracts(): Promise<ContractResource[]> {
+  try {
+    const files = await fs.readdir(CONTRACTS_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    
+    const resources: ContractResource[] = await Promise.all(
+      jsonFiles.map(async (file) => {
+        const content = await fs.readFile(path.join(CONTRACTS_DIR, file), 'utf-8');
+        const contract = JSON.parse(content);
+        
+        return {
+          uri: `contract://${contract.id}`,
+          name: contract.title,
+          description: `Contrato arquitetural: ${contract.title}`,
+          mimeType: 'application/json',
+        };
+      })
+    );
+    
+    return resources;
+  } catch (error) {
+    console.error('Erro ao listar contratos:', error);
+    return [];
+  }
+}
+
+/**
+ * Obtém um contrato específico pelo ID
+ */
+export async function getContract(contractId: string): Promise<string> {
+  const filePath = path.join(CONTRACTS_DIR, `${contractId.toUpperCase()}.json`);
+  
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    return content;
+  } catch (error) {
+    throw new Error(`Contrato não encontrado: ${contractId}`);
+  }
+}
+
+/**
+ * Busca contratos por termo
+ */
+export async function searchContracts(query: string): Promise<unknown[]> {
+  try {
+    const files = await fs.readdir(CONTRACTS_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    
+    const results: unknown[] = [];
+    
+    for (const file of jsonFiles) {
+      const content = await fs.readFile(path.join(CONTRACTS_DIR, file), 'utf-8');
+      const contract = JSON.parse(content);
+      
+      // Buscar no conteúdo e regras
+      if (
+        contract.content.toLowerCase().includes(query.toLowerCase()) ||
+        contract.rules.some((rule: string) => rule.toLowerCase().includes(query.toLowerCase()))
+      ) {
+        results.push(contract);
+      }
+    }
+    
+    return results;
+  } catch (error) {
+    console.error('Erro ao buscar contratos:', error);
+    return [];
+  }
+}
+
