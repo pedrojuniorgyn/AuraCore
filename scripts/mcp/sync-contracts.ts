@@ -149,8 +149,10 @@ async function migrateContract(fileName: string): Promise<void> {
   const titleMatch = content.match(/^#\s+(.+)$/m);
   const title = titleMatch ? titleMatch[1].trim() : fileName.replace('.md', '');
   
+  const contractId = fileNameToId(fileName);
+  
   const contract: Contract = {
-    id: fileNameToId(fileName),
+    id: contractId,
     title,
     type: 'contract',
     content,
@@ -163,11 +165,12 @@ async function migrateContract(fileName: string): Promise<void> {
     },
   };
   
-  // Salvar JSON
-  const destPath = path.join(CONTRACTS_DEST, fileName.replace('.md', '.json'));
+  // Salvar JSON com nome padronizado (lowercase-com-hifen)
+  const destFileName = `${contractId}.json`;
+  const destPath = path.join(CONTRACTS_DEST, destFileName);
   await fs.writeFile(destPath, JSON.stringify(contract, null, 2), 'utf-8');
   
-  console.log(`✅ Migrado: ${fileName} → ${path.basename(destPath)}`);
+  console.log(`✅ Migrado: ${fileName} → ${destFileName}`);
 }
 
 /**
@@ -188,8 +191,10 @@ async function migrateADR(fileName: string): Promise<void> {
   const decisionMatch = content.match(/##\s+Decisão\s*\n([^#]+)/);
   const consequencesMatch = content.match(/##\s+Consequências\s*\n([^#]+)/);
   
+  const adrId = fileNameToId(fileName);
+  
   const adr: ADR = {
-    id: fileNameToId(fileName),
+    id: adrId,
     number,
     title,
     type: 'adr',
@@ -205,11 +210,12 @@ async function migrateADR(fileName: string): Promise<void> {
     },
   };
   
-  // Salvar JSON
-  const destPath = path.join(ADR_DEST, fileName.replace('.md', '.json'));
+  // Salvar JSON com nome padronizado (lowercase-com-hifen)
+  const destFileName = `${adrId}.json`;
+  const destPath = path.join(ADR_DEST, destFileName);
   await fs.writeFile(destPath, JSON.stringify(adr, null, 2), 'utf-8');
   
-  console.log(`✅ Migrado ADR: ${fileName} → ${path.basename(destPath)}`);
+  console.log(`✅ Migrado ADR: ${fileName} → ${destFileName}`);
 }
 
 /**

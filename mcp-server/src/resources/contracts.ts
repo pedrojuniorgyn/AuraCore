@@ -50,9 +50,11 @@ export async function listContracts(): Promise<ContractResource[]> {
 
 /**
  * Obtém um contrato específico pelo ID
+ * ID deve estar em lowercase-com-hifen (ex: api-contract)
  */
 export async function getContract(contractId: string): Promise<string> {
-  const filePath = path.join(CONTRACTS_DIR, `${contractId.toUpperCase()}.json`);
+  const fileName = `${contractId}.json`;
+  const filePath = path.join(CONTRACTS_DIR, fileName);
   
   try {
     const content = await fs.readFile(filePath, 'utf-8');

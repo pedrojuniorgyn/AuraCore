@@ -50,9 +50,11 @@ export async function listADRs(): Promise<ADRResource[]> {
 
 /**
  * Obtém um ADR específico pelo ID
+ * ID deve estar em lowercase-com-hifen (ex: 0001-sqlserver-only)
  */
 export async function getADR(adrId: string): Promise<string> {
-  const filePath = path.join(ADRS_DIR, `${adrId}.json`);
+  const fileName = `${adrId}.json`;
+  const filePath = path.join(ADRS_DIR, fileName);
   
   try {
     const content = await fs.readFile(filePath, 'utf-8');
