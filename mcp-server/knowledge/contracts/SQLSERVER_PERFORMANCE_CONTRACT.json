@@ -1,0 +1,34 @@
+{
+  "id": "sqlserver-performance-contract",
+  "title": "Contract — SQL Server 2022 & Performance",
+  "type": "contract",
+  "content": "# Contract — SQL Server 2022 & Performance\n\n## Regras\n1. Paginação no banco (OFFSET/FETCH ou estratégia equivalente).\n2. Evitar “select tudo + slice”.\n3. Evitar LIKE '%x%' sem estratégia (índices/FTS/colunas).\n4. Usar Query Store para regressão de plano e tuning.\n5. Evitar SQL interpolado; preferir parametrização.\n\n## Observabilidade mínima\n- p95/p99 por endpoint\n- taxa de erro por endpoint\n- deadlocks / waits / timeouts no SQL Server\n- pool de conexões (mssql)\n",
+  "sections": [
+    {
+      "heading": "Contract — SQL Server 2022 & Performance",
+      "level": 1,
+      "content": ""
+    },
+    {
+      "heading": "Regras",
+      "level": 2,
+      "content": "1. Paginação no banco (OFFSET/FETCH ou estratégia equivalente).\n2. Evitar “select tudo + slice”.\n3. Evitar LIKE '%x%' sem estratégia (índices/FTS/colunas).\n4. Usar Query Store para regressão de plano e tuning.\n5. Evitar SQL interpolado; preferir parametrização."
+    },
+    {
+      "heading": "Observabilidade mínima",
+      "level": 2,
+      "content": "- p95/p99 por endpoint\n- taxa de erro por endpoint\n- deadlocks / waits / timeouts no SQL Server\n- pool de conexões (mssql)"
+    }
+  ],
+  "rules": [
+    "p95/p99 por endpoint",
+    "taxa de erro por endpoint",
+    "deadlocks / waits / timeouts no SQL Server",
+    "pool de conexões (mssql)"
+  ],
+  "metadata": {
+    "sourceFile": "docs/architecture/contracts/SQLSERVER_PERFORMANCE_CONTRACT.md",
+    "migratedAt": "2025-12-25T23:32:16.326Z",
+    "version": "1.0.0"
+  }
+}

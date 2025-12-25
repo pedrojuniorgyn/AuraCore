@@ -1,0 +1,52 @@
+{
+  "id": "tenant-branch-contract",
+  "title": "Contract — Tenant + Branch (multi-tenant + data scoping)",
+  "type": "contract",
+  "content": "# Contract — Tenant + Branch (multi-tenant + data scoping)\n\n## Fonte de verdade\n- O contexto vem da sessão (NextAuth) através de `getTenantContext()`.\n\n## Campos do contexto\n- userId: string (UUID)\n- organizationId: number\n- role: string\n- defaultBranchId: number | null\n- allowedBranches: number[]\n- isAdmin: boolean\n\n## Regras obrigatórias\n1. Toda query de negócio filtra por `organizationId` do contexto (nunca do body/query).\n2. Se o dado tem `branchId`:\n   - Admin: acesso total na organização.\n   - Não-admin: `branchId` deve estar em `allowedBranches` → senão 403.\n3. `x-branch-id` do frontend é apenas “contexto sugerido”.\n   - O backend valida; não confia.\n4. Fallback silencioso para branch “1” é proibido em produção.\n\n## Anti-regressão (cheiros)\n- Ler `x-branch-id` sem validar `allowedBranches`.\n- Selecionar por `id` sem filtrar por `organizationId`.\n",
+  "sections": [
+    {
+      "heading": "Contract — Tenant + Branch (multi-tenant + data scoping)",
+      "level": 1,
+      "content": ""
+    },
+    {
+      "heading": "Fonte de verdade",
+      "level": 2,
+      "content": "- O contexto vem da sessão (NextAuth) através de `getTenantContext()`."
+    },
+    {
+      "heading": "Campos do contexto",
+      "level": 2,
+      "content": "- userId: string (UUID)\n- organizationId: number\n- role: string\n- defaultBranchId: number | null\n- allowedBranches: number[]\n- isAdmin: boolean"
+    },
+    {
+      "heading": "Regras obrigatórias",
+      "level": 2,
+      "content": "1. Toda query de negócio filtra por `organizationId` do contexto (nunca do body/query).\n2. Se o dado tem `branchId`:\n   - Admin: acesso total na organização.\n   - Não-admin: `branchId` deve estar em `allowedBranches` → senão 403.\n3. `x-branch-id` do frontend é apenas “contexto sugerido”.\n   - O backend valida; não confia.\n4. Fallback silencioso para branch “1” é proibido em produção."
+    },
+    {
+      "heading": "Anti-regressão (cheiros)",
+      "level": 2,
+      "content": "- Ler `x-branch-id` sem validar `allowedBranches`.\n- Selecionar por `id` sem filtrar por `organizationId`."
+    }
+  ],
+  "rules": [
+    "O contexto vem da sessão (NextAuth) através de `getTenantContext()`.",
+    "userId: string (UUID)",
+    "organizationId: number",
+    "role: string",
+    "defaultBranchId: number | null",
+    "allowedBranches: number[]",
+    "isAdmin: boolean",
+    "Admin: acesso total na organização.",
+    "Não-admin: `branchId` deve estar em `allowedBranches` → senão 403.",
+    "O backend valida; não confia.",
+    "Ler `x-branch-id` sem validar `allowedBranches`.",
+    "Selecionar por `id` sem filtrar por `organizationId`."
+  ],
+  "metadata": {
+    "sourceFile": "docs/architecture/contracts/TENANT_BRANCH_CONTRACT.md",
+    "migratedAt": "2025-12-25T23:32:16.324Z",
+    "version": "1.0.0"
+  }
+}

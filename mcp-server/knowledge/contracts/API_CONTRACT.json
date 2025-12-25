@@ -1,0 +1,52 @@
+{
+  "id": "api-contract",
+  "title": "Contract — API (Route Handlers)",
+  "type": "contract",
+  "content": "# Contract — API (Route Handlers)\n\n## Classificação de endpoints\nA) Produto (UI)\nB) Operacional (Admin/Job)\nC) Público (Webhook/Health)\n\n## Regras (A)\n- Auth + Tenant Context obrigatórios\n- RBAC por operação sensível\n- Zod em payload\n- 409 para optimistic lock\n- Transação para multi-step write\n- Paginação no SQL Server (sem slice)\n\n## Regras (B)\n- Tudo do tipo A, mais:\n- Hard gate (permissão forte + segredo operacional)\n- Bloqueio por ambiente (produção OFF por padrão)\n- Logs “quem rodou / quando / o quê”\n\n## Regras (C)\n- Health: não toca DB\n- Webhook: assinatura + idempotência + transação + SQL parametrizado\n",
+  "sections": [
+    {
+      "heading": "Contract — API (Route Handlers)",
+      "level": 1,
+      "content": ""
+    },
+    {
+      "heading": "Classificação de endpoints",
+      "level": 2,
+      "content": "A) Produto (UI)\nB) Operacional (Admin/Job)\nC) Público (Webhook/Health)"
+    },
+    {
+      "heading": "Regras (A)",
+      "level": 2,
+      "content": "- Auth + Tenant Context obrigatórios\n- RBAC por operação sensível\n- Zod em payload\n- 409 para optimistic lock\n- Transação para multi-step write\n- Paginação no SQL Server (sem slice)"
+    },
+    {
+      "heading": "Regras (B)",
+      "level": 2,
+      "content": "- Tudo do tipo A, mais:\n- Hard gate (permissão forte + segredo operacional)\n- Bloqueio por ambiente (produção OFF por padrão)\n- Logs “quem rodou / quando / o quê”"
+    },
+    {
+      "heading": "Regras (C)",
+      "level": 2,
+      "content": "- Health: não toca DB\n- Webhook: assinatura + idempotência + transação + SQL parametrizado"
+    }
+  ],
+  "rules": [
+    "Auth + Tenant Context obrigatórios",
+    "RBAC por operação sensível",
+    "Zod em payload",
+    "409 para optimistic lock",
+    "Transação para multi-step write",
+    "Paginação no SQL Server (sem slice)",
+    "Tudo do tipo A, mais:",
+    "Hard gate (permissão forte + segredo operacional)",
+    "Bloqueio por ambiente (produção OFF por padrão)",
+    "Logs “quem rodou / quando / o quê”",
+    "Health: não toca DB",
+    "Webhook: assinatura + idempotência + transação + SQL parametrizado"
+  ],
+  "metadata": {
+    "sourceFile": "docs/architecture/contracts/API_CONTRACT.md",
+    "migratedAt": "2025-12-25T23:32:16.323Z",
+    "version": "1.0.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "0003-userid-is-uuid-string",
+  "number": "0003",
+  "title": "userId é UUID string (não numérico)",
+  "type": "adr",
+  "status": "Aceito",
+  "context": "O schema core define `users.id` como UUID string (`nvarchar`). Há rotas que convertem `session.user.id` com `parseInt`, causando inconsistência.",
+  "decision": "- `userId` é **sempre string UUID**.\n- Campos de auditoria (`createdBy`, `updatedBy`, etc.) usam string.\n- É proibido `parseInt(session.user.id)` em rotas de negócio.",
+  "consequences": "- Auditoria consistente.\n- Facilita integração com NextAuth e evita bugs silenciosos.",
+  "content": "# ADR 0003 — userId é UUID string (não numérico)\n\n## Status\nAceito\n\n## Contexto\nO schema core define `users.id` como UUID string (`nvarchar`). Há rotas que convertem `session.user.id` com `parseInt`, causando inconsistência.\n\n## Decisão\n- `userId` é **sempre string UUID**.\n- Campos de auditoria (`createdBy`, `updatedBy`, etc.) usam string.\n- É proibido `parseInt(session.user.id)` em rotas de negócio.\n\n## Consequências\n- Auditoria consistente.\n- Facilita integração com NextAuth e evita bugs silenciosos.\n",
+  "metadata": {
+    "sourceFile": "docs/architecture/adr/0003-userid-is-uuid-string.md",
+    "migratedAt": "2025-12-25T23:32:16.327Z",
+    "version": "1.0.0"
+  }
+}

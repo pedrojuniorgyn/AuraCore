@@ -1,0 +1,100 @@
+{
+  "id": "error-contract",
+  "title": "Contract — Erros (HTTP)",
+  "type": "contract",
+  "content": "# Contract — Erros (HTTP)\n\n## 1) Objetivo\nPadronizar respostas de erro para:\n- evitar `500` em cenários esperados (ex.: falta de configuração, falta de contexto)\n- permitir UX consistente no frontend (mensagens e retries)\n- facilitar observabilidade (correlação via `requestId`)\n\n---\n\n## 2) Status codes padrão\n- **400**: validação / regra de negócio / payload inválido\n- **401**: não autenticado\n- **403**: sem permissão / sem acesso à filial\n- **404**: não encontrado (inclui “não pertence ao tenant”)\n- **409**: conflito de versão (optimistic lock)\n- **503**: módulo desabilitado / dependência não configurada (ex.: Auditoria v2 sem env)\n- **500**: erro interno (sem stack em produção)\n\n---\n\n## 3) Payload padrão (recomendado)\nFormato consistente (mínimo):\n\n```json\n{\n  \"error\": \"Mensagem humana curta\",\n  \"code\": \"SOME_CODE\",\n  \"details\": \"Detalhe opcional para debug\",\n  \"requestId\": \"req_ou_uuid\",\n  \"errors\": [\n    { \"path\": \"campo\", \"message\": \"mensagem\" }\n  ]\n}\n```\n\nRegras:\n- `error`: obrigatório (mensagem curta).\n- `code`: obrigatório para todos os erros “controlados”.\n- `details`: opcional (não deve vazar segredos).\n- `requestId`: recomendado (copiado do header `x-request-id` quando existir).\n- `errors[]`: recomendado para validações (400).\n\n---\n\n## 4) Códigos recomendados (code)\n\n### 4.1 Tenancy / branch scoping\n- `UNAUTHORIZED`: 401\n- `FORBIDDEN`: 403\n- `BRANCH_REQUIRED`: 400 (sem `x-branch-id` e sem `defaultBranchId`)\n- `BRANCH_INVALID`: 400\n- `BRANCH_FORBIDDEN`: 403\n\n### 4.2 Módulos opcionais / integrações\nUsar **503** para evitar stacktrace/500 quando o sistema está “OK”, mas o módulo/dep não está disponível.\n- `MODULE_DISABLED`: 503 (feature flag desligada)\n- `MODULE_NOT_CONFIGURED`: 503 (feature flag ligada, mas env faltando/inválida)\n- `DEPENDENCY_UNAVAILABLE`: 503 (timeout/rede para dependência externa; se for transitório)\n\n### 4.3 Concorrência / idempotência\n- `VERSION_CONFLICT`: 409\n- `IDEMPOTENCY_IN_PROGRESS`: 409 (ou 202/409 conforme endpoint)\n\n---\n\n## 5) Exemplos\n\n### 5.1 Validação (400)\n```json\n{\n  \"error\": \"Payload inválido\",\n  \"code\": \"VALIDATION_ERROR\",\n  \"errors\": [\n    { \"path\": \"periodStart\", \"message\": \"Data inválida\" }\n  ],\n  \"requestId\": \"2c2b1f...\"\n}\n```\n\n### 5.2 Auditoria v2 não configurada (503)\n```json\n{\n  \"error\": \"Módulo Auditoria não configurado\",\n  \"code\": \"MODULE_NOT_CONFIGURED\",\n  \"details\": \"AUDIT_STORE_DB_SERVER ausente | AUDIT_LEGACY_DB_USER ausente\",\n  \"requestId\": \"2c2b1f...\"\n}\n```\n\n### 5.3 Conflito de versão (409)\n```json\n{\n  \"error\": \"Conflito de versão\",\n  \"code\": \"VERSION_CONFLICT\",\n  \"currentVersion\": 7,\n  \"sentVersion\": 6,\n  \"requestId\": \"2c2b1f...\"\n}\n```\n",
+  "sections": [
+    {
+      "heading": "Contract — Erros (HTTP)",
+      "level": 1,
+      "content": ""
+    },
+    {
+      "heading": "1) Objetivo",
+      "level": 2,
+      "content": "Padronizar respostas de erro para:\n- evitar `500` em cenários esperados (ex.: falta de configuração, falta de contexto)\n- permitir UX consistente no frontend (mensagens e retries)\n- facilitar observabilidade (correlação via `requestId`)\n\n---"
+    },
+    {
+      "heading": "2) Status codes padrão",
+      "level": 2,
+      "content": "- **400**: validação / regra de negócio / payload inválido\n- **401**: não autenticado\n- **403**: sem permissão / sem acesso à filial\n- **404**: não encontrado (inclui “não pertence ao tenant”)\n- **409**: conflito de versão (optimistic lock)\n- **503**: módulo desabilitado / dependência não configurada (ex.: Auditoria v2 sem env)\n- **500**: erro interno (sem stack em produção)\n\n---"
+    },
+    {
+      "heading": "3) Payload padrão (recomendado)",
+      "level": 2,
+      "content": "Formato consistente (mínimo):\n\n```json\n{\n  \"error\": \"Mensagem humana curta\",\n  \"code\": \"SOME_CODE\",\n  \"details\": \"Detalhe opcional para debug\",\n  \"requestId\": \"req_ou_uuid\",\n  \"errors\": [\n    { \"path\": \"campo\", \"message\": \"mensagem\" }\n  ]\n}\n```\n\nRegras:\n- `error`: obrigatório (mensagem curta).\n- `code`: obrigatório para todos os erros “controlados”.\n- `details`: opcional (não deve vazar segredos).\n- `requestId`: recomendado (copiado do header `x-request-id` quando existir).\n- `errors[]`: recomendado para validações (400).\n\n---"
+    },
+    {
+      "heading": "4) Códigos recomendados (code)",
+      "level": 2,
+      "content": ""
+    },
+    {
+      "heading": "4.1 Tenancy / branch scoping",
+      "level": 3,
+      "content": "- `UNAUTHORIZED`: 401\n- `FORBIDDEN`: 403\n- `BRANCH_REQUIRED`: 400 (sem `x-branch-id` e sem `defaultBranchId`)\n- `BRANCH_INVALID`: 400\n- `BRANCH_FORBIDDEN`: 403"
+    },
+    {
+      "heading": "4.2 Módulos opcionais / integrações",
+      "level": 3,
+      "content": "Usar **503** para evitar stacktrace/500 quando o sistema está “OK”, mas o módulo/dep não está disponível.\n- `MODULE_DISABLED`: 503 (feature flag desligada)\n- `MODULE_NOT_CONFIGURED`: 503 (feature flag ligada, mas env faltando/inválida)\n- `DEPENDENCY_UNAVAILABLE`: 503 (timeout/rede para dependência externa; se for transitório)"
+    },
+    {
+      "heading": "4.3 Concorrência / idempotência",
+      "level": 3,
+      "content": "- `VERSION_CONFLICT`: 409\n- `IDEMPOTENCY_IN_PROGRESS`: 409 (ou 202/409 conforme endpoint)\n\n---"
+    },
+    {
+      "heading": "5) Exemplos",
+      "level": 2,
+      "content": ""
+    },
+    {
+      "heading": "5.1 Validação (400)",
+      "level": 3,
+      "content": "```json\n{\n  \"error\": \"Payload inválido\",\n  \"code\": \"VALIDATION_ERROR\",\n  \"errors\": [\n    { \"path\": \"periodStart\", \"message\": \"Data inválida\" }\n  ],\n  \"requestId\": \"2c2b1f...\"\n}\n```"
+    },
+    {
+      "heading": "5.2 Auditoria v2 não configurada (503)",
+      "level": 3,
+      "content": "```json\n{\n  \"error\": \"Módulo Auditoria não configurado\",\n  \"code\": \"MODULE_NOT_CONFIGURED\",\n  \"details\": \"AUDIT_STORE_DB_SERVER ausente | AUDIT_LEGACY_DB_USER ausente\",\n  \"requestId\": \"2c2b1f...\"\n}\n```"
+    },
+    {
+      "heading": "5.3 Conflito de versão (409)",
+      "level": 3,
+      "content": "```json\n{\n  \"error\": \"Conflito de versão\",\n  \"code\": \"VERSION_CONFLICT\",\n  \"currentVersion\": 7,\n  \"sentVersion\": 6,\n  \"requestId\": \"2c2b1f...\"\n}\n```"
+    }
+  ],
+  "rules": [
+    "evitar `500` em cenários esperados (ex.: falta de configuração, falta de contexto)",
+    "permitir UX consistente no frontend (mensagens e retries)",
+    "facilitar observabilidade (correlação via `requestId`)",
+    "**400**: validação / regra de negócio / payload inválido",
+    "**401**: não autenticado",
+    "**403**: sem permissão / sem acesso à filial",
+    "**404**: não encontrado (inclui “não pertence ao tenant”)",
+    "**409**: conflito de versão (optimistic lock)",
+    "**503**: módulo desabilitado / dependência não configurada (ex.: Auditoria v2 sem env)",
+    "**500**: erro interno (sem stack em produção)",
+    "`error`: obrigatório (mensagem curta).",
+    "`code`: obrigatório para todos os erros “controlados”.",
+    "`details`: opcional (não deve vazar segredos).",
+    "`requestId`: recomendado (copiado do header `x-request-id` quando existir).",
+    "`errors[]`: recomendado para validações (400).",
+    "`UNAUTHORIZED`: 401",
+    "`FORBIDDEN`: 403",
+    "`BRANCH_REQUIRED`: 400 (sem `x-branch-id` e sem `defaultBranchId`)",
+    "`BRANCH_INVALID`: 400",
+    "`BRANCH_FORBIDDEN`: 403",
+    "`MODULE_DISABLED`: 503 (feature flag desligada)",
+    "`MODULE_NOT_CONFIGURED`: 503 (feature flag ligada, mas env faltando/inválida)",
+    "`DEPENDENCY_UNAVAILABLE`: 503 (timeout/rede para dependência externa; se for transitório)",
+    "`VERSION_CONFLICT`: 409",
+    "`IDEMPOTENCY_IN_PROGRESS`: 409 (ou 202/409 conforme endpoint)"
+  ],
+  "metadata": {
+    "sourceFile": "docs/architecture/contracts/ERROR_CONTRACT.md",
+    "migratedAt": "2025-12-25T23:32:16.325Z",
+    "version": "1.0.0"
+  }
+}

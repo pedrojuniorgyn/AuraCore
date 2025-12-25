@@ -1,0 +1,16 @@
+{
+  "id": "0006-pagination-and-search-sqlserver",
+  "number": "0006",
+  "title": "Paginação e busca no SQL Server (sem slice)",
+  "type": "adr",
+  "status": "Aceito",
+  "context": "Existem endpoints que fazem select completo e paginam com `.slice()`. Em volume ERP, isso degrada performance.",
+  "decision": "- Paginação deve ocorrer no SQL Server (OFFSET/FETCH ou estratégia equivalente), sempre com ORDER BY determinístico.\n- Busca com LIKE '%x%' deve ter estratégia (índices/FTS), evitando full scans involuntários.",
+  "consequences": "- Reduz consumo de memória/CPU no Node.\n- Estabiliza latência (p95/p99) em produção.",
+  "content": "# ADR 0006 — Paginação e busca no SQL Server (sem slice)\n\n## Status\nAceito\n\n## Contexto\nExistem endpoints que fazem select completo e paginam com `.slice()`. Em volume ERP, isso degrada performance.\n\n## Decisão\n- Paginação deve ocorrer no SQL Server (OFFSET/FETCH ou estratégia equivalente), sempre com ORDER BY determinístico.\n- Busca com LIKE '%x%' deve ter estratégia (índices/FTS), evitando full scans involuntários.\n\n## Consequências\n- Reduz consumo de memória/CPU no Node.\n- Estabiliza latência (p95/p99) em produção.\n",
+  "metadata": {
+    "sourceFile": "docs/architecture/adr/0006-pagination-and-search-sqlserver.md",
+    "migratedAt": "2025-12-25T23:32:16.328Z",
+    "version": "1.0.0"
+  }
+}

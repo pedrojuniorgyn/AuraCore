@@ -1,0 +1,16 @@
+{
+  "id": "0005-transactions-required-financial-accounting",
+  "number": "0005",
+  "title": "Transações obrigatórias em Financeiro/Contábil",
+  "type": "adr",
+  "status": "Aceito",
+  "context": "Fluxos multi-step (baixa, posting, remessa, webhooks) podem deixar estado parcial se falharem no meio.",
+  "decision": "- Qualquer fluxo com 2+ writes que precisam ser consistentes deve ser transacional (commit/rollback).\n- Webhooks e sync jobs devem ser idempotentes.",
+  "consequences": "- Elimina estado parcial.\n- Aumenta previsibilidade e auditabilidade do ERP.",
+  "content": "# ADR 0005 — Transações obrigatórias em Financeiro/Contábil\n\n## Status\nAceito\n\n## Contexto\nFluxos multi-step (baixa, posting, remessa, webhooks) podem deixar estado parcial se falharem no meio.\n\n## Decisão\n- Qualquer fluxo com 2+ writes que precisam ser consistentes deve ser transacional (commit/rollback).\n- Webhooks e sync jobs devem ser idempotentes.\n\n## Consequências\n- Elimina estado parcial.\n- Aumenta previsibilidade e auditabilidade do ERP.\n",
+  "metadata": {
+    "sourceFile": "docs/architecture/adr/0005-transactions-required-financial-accounting.md",
+    "migratedAt": "2025-12-25T23:32:16.328Z",
+    "version": "1.0.0"
+  }
+}

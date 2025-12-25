@@ -1,0 +1,16 @@
+{
+  "id": "0004-admin-http-off-in-prod",
+  "number": "0004",
+  "title": "Admin HTTP OFF em produção para operações perigosas",
+  "type": "adr",
+  "status": "Aceito",
+  "context": "Existem endpoints admin que executam seed/migrations/DDL/clean/fixes. Isso é operacionalmente perigoso em produção.",
+  "decision": "- Em produção:\n  - endpoints de operação perigosa via HTTP ficam desabilitados por padrão.\n  - operações passam a ser executadas via runbook (terminal), com logs e backup.\n- Exceção: gestão de usuários/roles e diagnósticos read-only, sempre com RBAC.",
+  "consequences": "- Reduz superfície de ataque e execução acidental.\n- Exige runbooks e disciplina operacional.",
+  "content": "# ADR 0004 — Admin HTTP OFF em produção para operações perigosas\n\n## Status\nAceito\n\n## Contexto\nExistem endpoints admin que executam seed/migrations/DDL/clean/fixes. Isso é operacionalmente perigoso em produção.\n\n## Decisão\n- Em produção:\n  - endpoints de operação perigosa via HTTP ficam desabilitados por padrão.\n  - operações passam a ser executadas via runbook (terminal), com logs e backup.\n- Exceção: gestão de usuários/roles e diagnósticos read-only, sempre com RBAC.\n\n## Consequências\n- Reduz superfície de ataque e execução acidental.\n- Exige runbooks e disciplina operacional.\n",
+  "metadata": {
+    "sourceFile": "docs/architecture/adr/0004-admin-http-off-in-prod.md",
+    "migratedAt": "2025-12-25T23:32:16.328Z",
+    "version": "1.0.0"
+  }
+}

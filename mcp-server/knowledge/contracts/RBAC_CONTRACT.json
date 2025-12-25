@@ -1,0 +1,51 @@
+{
+  "id": "rbac-contract",
+  "title": "Contract — RBAC",
+  "type": "contract",
+  "content": "# Contract — RBAC\n\n## Modelo atual (híbrido)\n- Role primária em `users.role` (ex.: ADMIN/USER)\n- RBAC relacional: roles/permissions/role_permissions/user_roles\n\n## Regras\n1. Frontend usa permissões para UX (mostrar/ocultar), mas:\n2. Backend é o enforcement final:\n   - Operações sensíveis devem exigir permissão explícita (`withPermission`).\n3. Admin endpoints:\n   - Gestão (users/roles): permitido em produção com RBAC.\n   - Operação (seed/migrate/clean/fix): hard gate + ambiente.\n\n## Slugs sugeridos (núcleo)\n- admin.full\n- admin.users.manage\n- admin.diagnostics.read\n- admin.migrations.run\n- admin.seeds.run\n- financial.payables.pay\n- financial.remittances.generate\n- accounting.journal.post\n- accounting.journal.reverse\n- tms.trips.manage\n- tms.occurrences.manage\n",
+  "sections": [
+    {
+      "heading": "Contract — RBAC",
+      "level": 1,
+      "content": ""
+    },
+    {
+      "heading": "Modelo atual (híbrido)",
+      "level": 2,
+      "content": "- Role primária em `users.role` (ex.: ADMIN/USER)\n- RBAC relacional: roles/permissions/role_permissions/user_roles"
+    },
+    {
+      "heading": "Regras",
+      "level": 2,
+      "content": "1. Frontend usa permissões para UX (mostrar/ocultar), mas:\n2. Backend é o enforcement final:\n   - Operações sensíveis devem exigir permissão explícita (`withPermission`).\n3. Admin endpoints:\n   - Gestão (users/roles): permitido em produção com RBAC.\n   - Operação (seed/migrate/clean/fix): hard gate + ambiente."
+    },
+    {
+      "heading": "Slugs sugeridos (núcleo)",
+      "level": 2,
+      "content": "- admin.full\n- admin.users.manage\n- admin.diagnostics.read\n- admin.migrations.run\n- admin.seeds.run\n- financial.payables.pay\n- financial.remittances.generate\n- accounting.journal.post\n- accounting.journal.reverse\n- tms.trips.manage\n- tms.occurrences.manage"
+    }
+  ],
+  "rules": [
+    "Role primária em `users.role` (ex.: ADMIN/USER)",
+    "RBAC relacional: roles/permissions/role_permissions/user_roles",
+    "Operações sensíveis devem exigir permissão explícita (`withPermission`).",
+    "Gestão (users/roles): permitido em produção com RBAC.",
+    "Operação (seed/migrate/clean/fix): hard gate + ambiente.",
+    "admin.full",
+    "admin.users.manage",
+    "admin.diagnostics.read",
+    "admin.migrations.run",
+    "admin.seeds.run",
+    "financial.payables.pay",
+    "financial.remittances.generate",
+    "accounting.journal.post",
+    "accounting.journal.reverse",
+    "tms.trips.manage",
+    "tms.occurrences.manage"
+  ],
+  "metadata": {
+    "sourceFile": "docs/architecture/contracts/RBAC_CONTRACT.md",
+    "migratedAt": "2025-12-25T23:32:16.325Z",
+    "version": "1.0.0"
+  }
+}

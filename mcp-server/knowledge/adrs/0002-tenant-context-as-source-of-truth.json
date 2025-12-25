@@ -1,0 +1,16 @@
+{
+  "id": "0002-tenant-context-as-source-of-truth",
+  "number": "0002",
+  "title": "Tenant Context como fonte de verdade (auth → tenant → branch)",
+  "type": "adr",
+  "status": "Aceito",
+  "context": "O sistema é multi-tenant e possui scoping adicional por filial. Parte das rotas já usa `getTenantContext()`.",
+  "decision": "- `getTenantContext()` é a **fonte de verdade** para `organizationId`, `userId`, `role`, `allowedBranches` e `defaultBranchId`.\n- Endpoints não devem aceitar `organizationId` do body/query como fonte de verdade.",
+  "consequences": "- Reduz vazamento cross-tenant.\n- Simplifica padronização de segurança em rotas de produto e operações.",
+  "content": "# ADR 0002 — Tenant Context como fonte de verdade (auth → tenant → branch)\n\n## Status\nAceito\n\n## Contexto\nO sistema é multi-tenant e possui scoping adicional por filial. Parte das rotas já usa `getTenantContext()`.\n\n## Decisão\n- `getTenantContext()` é a **fonte de verdade** para `organizationId`, `userId`, `role`, `allowedBranches` e `defaultBranchId`.\n- Endpoints não devem aceitar `organizationId` do body/query como fonte de verdade.\n\n## Consequências\n- Reduz vazamento cross-tenant.\n- Simplifica padronização de segurança em rotas de produto e operações.\n",
+  "metadata": {
+    "sourceFile": "docs/architecture/adr/0002-tenant-context-as-source-of-truth.md",
+    "migratedAt": "2025-12-25T23:32:16.327Z",
+    "version": "1.0.0"
+  }
+}

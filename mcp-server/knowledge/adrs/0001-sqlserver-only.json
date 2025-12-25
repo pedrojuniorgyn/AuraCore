@@ -1,0 +1,16 @@
+{
+  "id": "0001-sqlserver-only",
+  "number": "0001",
+  "title": "SQL Server 2022 como único banco suportado",
+  "type": "adr",
+  "status": "Aceito",
+  "context": "AuraCore é um ERP enterprise e opera exclusivamente com SQL Server 2022 (Linux/Container ou host). Drizzle é usado com dialect `mssql` e driver `node-mssql`.",
+  "decision": "- O sistema assume **somente SQL Server 2022**.\n- SQL deve ser 100% compatível com SQL Server.\n- Não serão adicionadas compatibilidades com PostgreSQL/MySQL/SQLite.",
+  "consequences": "- Migrações e queries devem respeitar limitações/recursos do SQL Server (OFFSET/FETCH, Query Store, etc.).\n- Padrões de retorno (ex.: sem `.returning()` como dependência) devem ser ajustados ao SQL Server.",
+  "content": "# ADR 0001 — SQL Server 2022 como único banco suportado\n\n## Status\nAceito\n\n## Contexto\nAuraCore é um ERP enterprise e opera exclusivamente com SQL Server 2022 (Linux/Container ou host). Drizzle é usado com dialect `mssql` e driver `node-mssql`.\n\n## Decisão\n- O sistema assume **somente SQL Server 2022**.\n- SQL deve ser 100% compatível com SQL Server.\n- Não serão adicionadas compatibilidades com PostgreSQL/MySQL/SQLite.\n\n## Consequências\n- Migrações e queries devem respeitar limitações/recursos do SQL Server (OFFSET/FETCH, Query Store, etc.).\n- Padrões de retorno (ex.: sem `.returning()` como dependência) devem ser ajustados ao SQL Server.\n",
+  "metadata": {
+    "sourceFile": "docs/architecture/adr/0001-sqlserver-only.md",
+    "migratedAt": "2025-12-25T23:32:16.327Z",
+    "version": "1.0.0"
+  }
+}

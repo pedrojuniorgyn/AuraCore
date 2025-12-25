@@ -1,0 +1,38 @@
+{
+  "id": "transactions-contract",
+  "title": "Contract — Transações (atomicidade)",
+  "type": "contract",
+  "content": "# Contract — Transações (atomicidade)\n\n## Quando é obrigatório usar transação\n- Qualquer fluxo com 2+ writes que devem ser consistentes:\n  - Baixa (contas a pagar/receber)\n  - Geração/estorno de lançamento contábil\n  - Finalização de faturamento + criação de título\n  - Webhook com múltiplos efeitos\n  - Numeração + criação (MAX+1 deve ser substituído por abordagem concorrência-safe)\n\n## Anti-regressão\n- Criar header e linhas em tabelas diferentes sem commit/rollback.\n- “check then insert” sem proteção contra concorrência.\n",
+  "sections": [
+    {
+      "heading": "Contract — Transações (atomicidade)",
+      "level": 1,
+      "content": ""
+    },
+    {
+      "heading": "Quando é obrigatório usar transação",
+      "level": 2,
+      "content": "- Qualquer fluxo com 2+ writes que devem ser consistentes:\n  - Baixa (contas a pagar/receber)\n  - Geração/estorno de lançamento contábil\n  - Finalização de faturamento + criação de título\n  - Webhook com múltiplos efeitos\n  - Numeração + criação (MAX+1 deve ser substituído por abordagem concorrência-safe)"
+    },
+    {
+      "heading": "Anti-regressão",
+      "level": 2,
+      "content": "- Criar header e linhas em tabelas diferentes sem commit/rollback.\n- “check then insert” sem proteção contra concorrência."
+    }
+  ],
+  "rules": [
+    "Qualquer fluxo com 2+ writes que devem ser consistentes:",
+    "Baixa (contas a pagar/receber)",
+    "Geração/estorno de lançamento contábil",
+    "Finalização de faturamento + criação de título",
+    "Webhook com múltiplos efeitos",
+    "Numeração + criação (MAX+1 deve ser substituído por abordagem concorrência-safe)",
+    "Criar header e linhas em tabelas diferentes sem commit/rollback.",
+    "“check then insert” sem proteção contra concorrência."
+  ],
+  "metadata": {
+    "sourceFile": "docs/architecture/contracts/TRANSACTIONS_CONTRACT.md",
+    "migratedAt": "2025-12-25T23:32:16.326Z",
+    "version": "1.0.0"
+  }
+}
