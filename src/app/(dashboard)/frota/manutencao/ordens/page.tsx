@@ -67,7 +67,7 @@ export default function WorkOrdersPage() {
         return;
       }
       toast({ title: "Sucesso", description: "Excluído com sucesso!" });
-      fetchOrders();
+      fetchWorkOrders();
     } catch (error) {
       toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
     }
