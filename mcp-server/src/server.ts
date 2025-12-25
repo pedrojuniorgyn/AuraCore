@@ -8,6 +8,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { listContracts, getContract } from './resources/contracts.js';
 import { listADRs, getADR } from './resources/adrs.js';
+import { checkCursorIssues, IssueCheckResult } from './tools/check-cursor-issues.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -41,11 +42,30 @@ export class AuraCoreMCPServer {
             properties: {},
           },
         },
+        {
+          name: 'check_cursor_issues',
+          description: 'Verifica issues identificados pelo Cursor apos operacoes criticas',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              context: {
+                type: 'string',
+                description: 'Contexto da verificacao',
+              },
+              scope: {
+                type: 'string',
+                description: 'Escopo da verificacao',
+                default: '.',
+              },
+            },
+            required: ['context'],
+          },
+        },
       ],
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name } = request.params;
+      const { name, arguments: args } = request.params;
 
       if (name === 'ping') {
         return {
@@ -53,6 +73,22 @@ export class AuraCoreMCPServer {
             {
               type: 'text',
               text: 'PONG! AuraCore MCP Server is working!',
+            },
+          ],
+        };
+      }
+
+      if (name === 'check_cursor_issues') {
+        const result = await checkCursorIssues(
+          (args as { context: string; scope?: string }).context,
+          (args as { context: string; scope?: string }).scope || '.'
+        );
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: formatIssueCheckResult(result),
             },
           ],
         };
@@ -112,4 +148,30 @@ export class AuraCoreMCPServer {
     await this.server.connect(transport);
     console.error('AuraCore MCP Server v1.0.0 running');
   }
+}
+
+function formatIssueCheckResult(result: IssueCheckResult): string {
+  let output = `VERIFICACAO DE ISSUES - ${result.context}\n\n`;
+  output += `Timestamp: ${result.timestamp}\n`;
+  output += `Escopo: ${result.scope}\n`;
+  output += `Total: ${result.totalIssues}\n\n`;
+
+  if (result.critical.length > 0) {
+    output += `CRITICO (${result.critical.length}):\n`;
+    result.critical.forEach(issue => {
+      output += `  ${issue.file}:${issue.line} - ${issue.message}\n`;
+    });
+    output += '\n';
+  }
+
+  if (result.high.length > 0) {
+    output += `ALTA (${result.high.length}):\n`;
+    result.high.forEach(issue => {
+      output += `  ${issue.file}:${issue.line} - ${issue.message}\n`;
+    });
+    output += '\n';
+  }
+
+  output += `\nRECOMENDACAO: ${result.recommendation}`;
+  return output;
 }
