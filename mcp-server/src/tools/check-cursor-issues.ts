@@ -57,41 +57,53 @@ async function collectIssues(scope: string): Promise<CursorIssue[]> {
 
 async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
   try {
-    // Executar tsc - se sucesso (exit 0), nao ha erros
+    // CRITICO: NAO usar encoding - deixa stderr/stdout como Buffer
     execSync('npx tsc --noEmit --pretty false', {
       cwd: scope,
-      encoding: 'utf-8',
-      // CORRECAO: usar stdio simples para captura automatica
-      stdio: 'pipe'
+      // stdio como array para capturar stdout/stderr
+      stdio: ['pipe', 'pipe', 'pipe']
     });
     
+    // Se chegou aqui, nao ha erros (exit 0)
     return [];
     
   } catch (error: unknown) {
-    // CORRECAO: Com stdio pipe, stderr e stdout sao capturados automaticamente
-    // Tentar stderr primeiro (onde tsc envia erros), depois stdout (fallback)
-    let errorOutput = '';
+    // TypeScript erros causam exit code != 0
     
-    // Type guard para acessar propriedades
-    if (error && typeof error === 'object') {
-      const execError = error as { stderr?: unknown; stdout?: unknown; message?: string };
-      
-      if (execError.stderr && typeof execError.stderr === 'string') {
-        errorOutput = execError.stderr;
-      } else if (execError.stdout && typeof execError.stdout === 'string') {
-        errorOutput = execError.stdout;
-      }
+    // Type guard robusto
+    if (!error || typeof error !== 'object') {
+      console.error('Unexpected error type in getTypeScriptErrors');
+      return [];
     }
     
-    if (errorOutput) {
-      return parseTypeScriptOutput(errorOutput);
+    // Cast para tipo conhecido do Node.js
+    interface ExecSyncError extends Error {
+      status?: number;
+      stderr?: Buffer | string;
+      stdout?: Buffer | string;
     }
     
-    const errorMessage = error && typeof error === 'object' && 'message' in error
-      ? String((error as { message: unknown }).message)
-      : 'Unknown error';
+    const execError = error as ExecSyncError;
     
-    console.error('Failed to capture TypeScript output:', errorMessage);
+    // DESCOBERTA: tsc envia erros para STDOUT, nao STDERR
+    // Extrair output (stdout tem prioridade neste caso)
+    let output = '';
+    
+    if (execError.stdout) {
+      output = Buffer.isBuffer(execError.stdout)
+        ? execError.stdout.toString('utf-8')
+        : execError.stdout;
+    } else if (execError.stderr) {
+      output = Buffer.isBuffer(execError.stderr)
+        ? execError.stderr.toString('utf-8')
+        : execError.stderr;
+    }
+    
+    if (output && output.trim()) {
+      return parseTypeScriptOutput(output);
+    }
+    
+    console.error('No TypeScript output captured');
     return [];
   }
 }
