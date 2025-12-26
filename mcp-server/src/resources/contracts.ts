@@ -37,7 +37,8 @@ export async function listContracts(): Promise<ContractResource[]> {
           uri: `contract://${contract.id}`,
           name: contract.title,
           description: `Contrato arquitetural: ${contract.title}`,
-          mimeType: 'application/json',
+          // CORRECAO: Consistente com ReadResourceRequestSchema
+          mimeType: 'text/plain',
         };
       })
     );
