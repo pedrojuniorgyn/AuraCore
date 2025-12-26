@@ -79,10 +79,21 @@ export class AuraCoreMCPServer {
       }
 
       if (name === 'check_cursor_issues') {
-        const result = await checkCursorIssues(
-          (args as { context: string; scope?: string }).context,
-          (args as { context: string; scope?: string }).scope || '.'
-        );
+        // Validar argumentos
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for check_cursor_issues');
+        }
+
+        const typedArgs = args as { context?: unknown; scope?: unknown };
+        const context = typedArgs.context;
+
+        if (!context || typeof context !== 'string' || context.trim() === '') {
+          throw new Error('check_cursor_issues requires non-empty context parameter');
+        }
+
+        const scope = typeof typedArgs.scope === 'string' ? typedArgs.scope : '.';
+
+        const result = await checkCursorIssues(context, scope);
 
         return {
           content: [
