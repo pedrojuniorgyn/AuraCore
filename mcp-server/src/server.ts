@@ -13,6 +13,7 @@ import { getEpicStatus } from './tools/get-epic-status.js';
 import { getContractTool } from './tools/get-contract-tool.js';
 import { searchPatterns } from './tools/search-patterns.js';
 import { proposePattern } from './tools/propose-pattern.js';
+import { validateCode } from './tools/validate-code.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -152,6 +153,31 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['id', 'name', 'category', 'description'],
+          },
+        },
+        {
+          name: 'validate_code',
+          description: 'Valida codigo contra regras de contratos especificos',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              code: {
+                type: 'string',
+                description: 'Codigo a ser validado',
+              },
+              contract_ids: {
+                type: 'array',
+                description: 'IDs dos contratos para validar',
+                items: { type: 'string' },
+              },
+              language: {
+                type: 'string',
+                description: 'Linguagem do codigo',
+                enum: ['typescript', 'javascript', 'sql'],
+                default: 'typescript',
+              },
+            },
+            required: ['code', 'contract_ids'],
           },
         },
       ],
@@ -391,6 +417,58 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to propose pattern: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'validate_code') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for validate_code');
+        }
+
+        const typedArgs = args as {
+          code?: unknown;
+          contract_ids?: unknown;
+          language?: unknown;
+        };
+
+        const code = typedArgs.code;
+        const contractIds = typedArgs.contract_ids;
+        const language = typedArgs.language;
+
+        // Validacao
+        if (!code || typeof code !== 'string') {
+          throw new Error('validate_code requires code (string)');
+        }
+
+        if (!Array.isArray(contractIds)) {
+          throw new Error('validate_code requires contract_ids (array)');
+        }
+
+        const lang = language && typeof language === 'string'
+          ? language as 'typescript' | 'javascript' | 'sql'
+          : 'typescript';
+
+        if (!['typescript', 'javascript', 'sql'].includes(lang)) {
+          throw new Error('language must be typescript, javascript, or sql');
+        }
+
+        try {
+          const result = await validateCode(code, contractIds, lang);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to validate code: ${errorMessage}`);
         }
       }
 
