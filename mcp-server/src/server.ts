@@ -11,6 +11,8 @@ import { listADRs, getADR } from './resources/adrs.js';
 import { checkCursorIssues, IssueCheckResult } from './tools/check-cursor-issues.js';
 import { getEpicStatus } from './tools/get-epic-status.js';
 import { getContractTool } from './tools/get-contract-tool.js';
+import { searchPatterns } from './tools/search-patterns.js';
+import { proposePattern } from './tools/propose-pattern.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -90,6 +92,66 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['contract_id'],
+          },
+        },
+        {
+          name: 'search_patterns',
+          description: 'Busca padroes de codigo aprovados baseado em query',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Texto para buscar em padroes',
+              },
+              status: {
+                type: 'string',
+                description: 'Filtrar por status',
+                enum: ['approved', 'proposed', 'all'],
+                default: 'approved',
+              },
+            },
+            required: ['query'],
+          },
+        },
+        {
+          name: 'propose_pattern',
+          description: 'Propoe novo padrao de codigo para aprovacao',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'string',
+                description: 'ID do padrao (lowercase-hyphen)',
+              },
+              name: {
+                type: 'string',
+                description: 'Nome do padrao',
+              },
+              category: {
+                type: 'string',
+                description: 'Categoria',
+              },
+              description: {
+                type: 'string',
+                description: 'Descricao',
+              },
+              example: {
+                type: 'string',
+                description: 'Exemplo de codigo',
+              },
+              rules: {
+                type: 'array',
+                description: 'Regras',
+                items: { type: 'string' },
+              },
+              tags: {
+                type: 'array',
+                description: 'Tags',
+                items: { type: 'string' },
+              },
+            },
+            required: ['id', 'name', 'category', 'description'],
           },
         },
       ],
@@ -199,6 +261,88 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to get contract: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'search_patterns') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for search_patterns');
+        }
+
+        const typedArgs = args as { query?: unknown; status?: unknown };
+        const query = typedArgs.query;
+
+        if (!query || typeof query !== 'string') {
+          throw new Error('search_patterns requires query parameter');
+        }
+
+        const status = typedArgs.status && typeof typedArgs.status === 'string'
+          ? (typedArgs.status as 'approved' | 'proposed' | 'all')
+          : 'approved';
+
+        try {
+          const result = await searchPatterns(query, status);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to search patterns: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'propose_pattern') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for propose_pattern');
+        }
+
+        const typedArgs = args as {
+          id?: unknown;
+          name?: unknown;
+          category?: unknown;
+          description?: unknown;
+          example?: unknown;
+          rules?: unknown;
+          tags?: unknown;
+        };
+
+        // Extrair campos com type casting seguro
+        const input = {
+          id: typedArgs.id as string,
+          name: typedArgs.name as string,
+          category: typedArgs.category as string,
+          description: typedArgs.description as string,
+          example: typedArgs.example as string | undefined,
+          rules: typedArgs.rules as string[] | undefined,
+          tags: typedArgs.tags as string[] | undefined,
+        };
+
+        try {
+          const pattern = await proposePattern(input);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(pattern, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to propose pattern: ${errorMessage}`);
         }
       }
 

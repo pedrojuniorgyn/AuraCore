@@ -1,0 +1,19 @@
+{
+  "id": "repository-pattern",
+  "name": "Repository Pattern",
+  "category": "data-access",
+  "description": "Padrão para acesso a dados usando repositories",
+  "status": "approved",
+  "approvedBy": "Tech Lead",
+  "approvedDate": "2024-12-01",
+  "tags": ["database", "prisma", "data-access"],
+  "example": {
+    "typescript": "export class UserRepository {\n  constructor(private prisma: PrismaClient) {}\n\n  async findById(id: string) {\n    return this.prisma.user.findUnique({ where: { id } });\n  }\n\n  async findAll() {\n    return this.prisma.user.findMany();\n  }\n}"
+  },
+  "rules": [
+    "Repository deve encapsular acesso ao Prisma",
+    "Metodos devem seguir nomenclatura find/create/update/delete",
+    "Sempre usar transactions para operacoes multiplas"
+  ],
+  "relatedContracts": ["api-contract", "transactions-contract"]
+}
