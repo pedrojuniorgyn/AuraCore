@@ -63,6 +63,32 @@
 **Regra:** Usar allSettled quando erros parciais são aceitáveis  
 **Código:** `contracts.ts` listContracts
 
+### 11. Schema Consistency Between Interface e JSON
+**Problema:** Interface TypeScript não corresponde à estrutura JSON real  
+**Exemplo:** Interface definia `name: string` mas JSON usa `title: string`  
+**Solução:** SEMPRE verificar JSON real antes de definir interface  
+**Regra:** Interface deve ESPELHAR JSON exato (campos e tipos)  
+**Prevenção:**
+- Ler JSON sample antes de criar interface
+- Validar com dados reais, não assumir
+- Documentar estrutura esperada no código
+
+**Exemplo Correto:**
+```typescript
+// ❌ ERRADO (assumir):
+interface Contract {
+  name: string;  // Assumiu 'name'
+}
+
+// ✅ CORRETO (verificar primeiro):
+interface Contract {
+  title: string;  // JSON usa 'title'
+}
+```
+
+**Código:** Todas interfaces que mapeiam JSON  
+**Nível:** CRÍTICO (causa falhas de validação)
+
 ## Checklist Pré-Commit
 
 Antes de cada commit, verificar:

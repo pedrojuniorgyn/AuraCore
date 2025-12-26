@@ -8,10 +8,10 @@ const __dirname = path.dirname(__filename);
 
 interface Contract {
   id: string;
-  name: string;
-  category: string;
-  description: string;
-  rules: string[];
+  title: string;  // CORRECAO: era 'name', JSON usa 'title'
+  category?: string;
+  description?: string;
+  rules?: string[];
   examples?: unknown[];
 }
 
@@ -32,7 +32,7 @@ export async function getContractTool(contractId: string): Promise<Contract> {
     const contract = JSON.parse(content) as Contract;
     
     // Validar schema (LESSON LEARNED #6)
-    if (!contract.id || !contract.name) {
+    if (!contract.id || !contract.title) {
       throw new Error(`Invalid contract schema in ${safeId}.json`);
     }
     
