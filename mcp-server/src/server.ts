@@ -14,6 +14,7 @@ import { getContractTool } from './tools/get-contract-tool.js';
 import { searchPatterns } from './tools/search-patterns.js';
 import { proposePattern } from './tools/propose-pattern.js';
 import { validateCode } from './tools/validate-code.js';
+import { checkCompliance } from './tools/check-compliance.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -178,6 +179,20 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['code', 'contract_ids'],
+          },
+        },
+        {
+          name: 'check_compliance',
+          description: 'Verifica compliance geral de um arquivo contra contratos e padroes',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              file_path: {
+                type: 'string',
+                description: 'Caminho do arquivo a ser verificado',
+              },
+            },
+            required: ['file_path'],
           },
         },
       ],
@@ -500,6 +515,46 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to validate code: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'check_compliance') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for check_compliance');
+        }
+
+        const typedArgs = args as {
+          file_path?: unknown;
+        };
+
+        const filePath = typedArgs.file_path;
+
+        // Validacao file_path
+        if (!filePath || typeof filePath !== 'string') {
+          throw new Error('check_compliance requires file_path (string)');
+        }
+
+        if (filePath.trim() === '') {
+          throw new Error('file_path must be a non-empty string');
+        }
+
+        try {
+          const report = await checkCompliance(filePath);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(report, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to check compliance: ${errorMessage}`);
         }
       }
 
