@@ -19,6 +19,13 @@ interface EmployeeCountResult {
   employee_count: number;
 }
 
+export interface AllocationExecutionResult {
+  allocationId: number;
+  totalAmount: number;
+  totalAllocated: number;
+  targetsProcessed: number;
+}
+
 export interface AllocationRule {
   ruleName: string;
   sourceBranchId: number;
@@ -43,7 +50,7 @@ export class IntercompanyAllocationEngine {
     period: string, 
     totalAmount: number,
     rule: AllocationRule
-  ): Promise<any> {
+  ): Promise<AllocationExecutionResult> {
     
     // 1. Calcular percentuais conforme método
     const targets = await this.calculateTargetPercentages(organizationId, rule);

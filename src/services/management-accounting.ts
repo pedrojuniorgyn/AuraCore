@@ -52,6 +52,14 @@ interface TotalRevenueResult {
   total_revenue: string | number;
 }
 
+interface DREQueryResult {
+  code: string;
+  account_name: string;
+  current_month: string | number;
+  last_month: string | number;
+  ytd: string | number;
+}
+
 export interface DREGerencialData {
   accountCode: string;
   accountName: string;
@@ -416,18 +424,19 @@ export async function calculateManagementDRE(
       ORDER BY mca.code
     `);
 
-    return (result.recordset || []).map((row: any) => {
-      const currentMonth = parseFloat(row.current_month || "0");
-      const lastMonth = parseFloat(row.last_month || "0");
+    const dreData = (result.recordset || result) as unknown as DREQueryResult[];
+    return dreData.map((row) => {
+      const currentMonth = parseFloat(String(row.current_month || "0"));
+      const lastMonth = parseFloat(String(row.last_month || "0"));
       const variance = lastMonth !== 0 ? ((currentMonth - lastMonth) / Math.abs(lastMonth)) * 100 : 0;
 
       return {
-        accountCode: row.account_code,
+        accountCode: row.code,
         accountName: row.account_name,
         currentMonth,
         lastMonth,
         variance,
-        ytd: parseFloat(row.ytd || "0"),
+        ytd: parseFloat(String(row.ytd || "0")),
         trend: [], // Será preenchido no frontend
       };
     });
