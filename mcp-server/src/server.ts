@@ -110,36 +110,46 @@ export class AuraCoreMCPServer {
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
 
-      // Parse URI (contract://api-contract ou adr://0001-sqlserver-only)
-      const [protocol, id] = uri.split('://');
+      try {
+        // Parse URI (contract://api-contract ou adr://0001-sqlserver-only)
+        const [protocol, id] = uri.split('://');
 
-      if (protocol === 'contract') {
-        const content = await getContract(id);
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: 'application/json',
-              text: content,
-            },
-          ],
-        };
+        if (!id) {
+          throw new Error(`Invalid URI format: ${uri}. Expected protocol://id`);
+        }
+
+        if (protocol === 'contract') {
+          const content = await getContract(id);
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'application/json',
+                text: content,
+              },
+            ],
+          };
+        }
+
+        if (protocol === 'adr') {
+          const content = await getADR(id);
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'application/json',
+                text: content,
+              },
+            ],
+          };
+        }
+
+        throw new Error(`Unknown resource protocol: ${protocol}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Error reading resource ${uri}:`, errorMessage);
+        throw new Error(`Failed to read resource: ${errorMessage}`);
       }
-
-      if (protocol === 'adr') {
-        const content = await getADR(id);
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: 'application/json',
-              text: content,
-            },
-          ],
-        };
-      }
-
-      throw new Error(`Unknown resource protocol: ${protocol}`);
     });
   }
 
