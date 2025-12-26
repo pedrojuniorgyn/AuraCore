@@ -435,15 +435,28 @@ export class AuraCoreMCPServer {
         const contractIds = typedArgs.contract_ids;
         const language = typedArgs.language;
 
-        // Validacao
+        // Validacao code
         if (!code || typeof code !== 'string') {
           throw new Error('validate_code requires code (string)');
         }
 
+        // Validacao contract_ids (array + element types)
         if (!Array.isArray(contractIds)) {
           throw new Error('validate_code requires contract_ids (array)');
         }
 
+        if (contractIds.length === 0) {
+          throw new Error('contract_ids must contain at least one contract ID');
+        }
+
+        const invalidElements = contractIds.filter(id => typeof id !== 'string');
+        if (invalidElements.length > 0) {
+          throw new Error(
+            `contract_ids must contain only strings. Found ${invalidElements.length} non-string element(s): ${JSON.stringify(invalidElements.slice(0, 3))}`
+          );
+        }
+
+        // Validacao language
         const lang = language && typeof language === 'string'
           ? language as 'typescript' | 'javascript' | 'sql'
           : 'typescript';

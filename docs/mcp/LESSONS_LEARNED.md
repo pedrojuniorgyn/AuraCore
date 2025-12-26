@@ -165,6 +165,30 @@ if (hasSqlKeywords) {
 **Código:** `validate-code.ts` SQL injection detection  
 **Nível:** ALTO (afeta precisão de validação)
 
+### 15. Array Element Validation
+**Problema:** Validar apenas `Array.isArray()` não é suficiente  
+**Solução:** Validar TIPO dos elementos após confirmar array  
+**Regra:** Array validation = isArray + element type check
+
+**Exemplo:**
+```typescript
+// ❌ INSUFICIENTE:
+if (!Array.isArray(ids)) throw new Error('must be array');
+
+// ✅ COMPLETO:
+if (!Array.isArray(ids)) throw new Error('must be array');
+if (ids.length === 0) throw new Error('must not be empty');
+const invalid = ids.filter(id => typeof id !== 'string');
+if (invalid.length > 0) {
+  throw new Error(
+    `must contain only strings. Found: ${JSON.stringify(invalid)}`
+  );
+}
+```
+
+**Código:** `server.ts` validate_code handler  
+**Nível:** MÉDIO (previne erros confusos)
+
 ## Checklist Pré-Commit
 
 Antes de cada commit, verificar:

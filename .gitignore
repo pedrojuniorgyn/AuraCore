@@ -72,3 +72,7 @@ Thumbs.db
 # Test data
 test-data/
 *.test.xml
+
+# Temporary test files
+test-*.mjs
+*.test.mjs
