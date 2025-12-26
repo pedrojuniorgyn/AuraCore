@@ -57,19 +57,36 @@ async function collectIssues(scope: string): Promise<CursorIssue[]> {
 
 async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
   try {
+    // execSync com configuracao correta para capturar stderr
     execSync('npx tsc --noEmit --pretty false', {
       cwd: scope,
       encoding: 'utf-8',
-      stdio: 'pipe'
+      // CRITICO: capturar stderr onde tsc envia erros
+      stdio: ['pipe', 'pipe', 'pipe']
     });
+    
+    // Se chegou aqui, nao ha erros (exit code 0)
     return [];
+    
   } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'stdout' in error) {
-      const stdout = (error as { stdout: string }).stdout;
-      if (stdout && typeof stdout === 'string') {
-        return parseTypeScriptOutput(stdout);
+    // tsc retorna exit code != 0 quando ha erros
+    
+    // CORRECAO: Erros TypeScript estao em STDERR, nao STDOUT
+    // Tentar stderr primeiro, depois stdout como fallback
+    if (error && typeof error === 'object') {
+      const errorObj = error as { stderr?: unknown; stdout?: unknown; message?: string };
+      
+      // Prioridade 1: stderr (onde tsc envia erros)
+      const errorOutput = errorObj.stderr || errorObj.stdout || '';
+      
+      if (errorOutput && typeof errorOutput === 'string') {
+        return parseTypeScriptOutput(errorOutput);
       }
+      
+      // Se nao conseguiu capturar output, log e retorna vazio
+      console.error('Failed to capture TypeScript errors:', errorObj.message || 'Unknown error');
     }
+    
     return [];
   }
 }
