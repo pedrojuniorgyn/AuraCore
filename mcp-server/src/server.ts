@@ -9,6 +9,8 @@ import {
 import { listContracts, getContract } from './resources/contracts.js';
 import { listADRs, getADR } from './resources/adrs.js';
 import { checkCursorIssues, IssueCheckResult } from './tools/check-cursor-issues.js';
+import { getEpicStatus } from './tools/get-epic-status.js';
+import { getContractTool } from './tools/get-contract-tool.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -61,6 +63,35 @@ export class AuraCoreMCPServer {
             required: ['context'],
           },
         },
+        {
+          name: 'get_epic_status',
+          description: 'Retorna status e detalhes de um epico especifico',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              epic_id: {
+                type: 'string',
+                description: 'ID do epico (E0, E1, E2, etc)',
+                pattern: '^E[0-9]$',
+              },
+            },
+            required: ['epic_id'],
+          },
+        },
+        {
+          name: 'get_contract',
+          description: 'Retorna contrato completo por ID',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              contract_id: {
+                type: 'string',
+                description: 'ID do contrato (ex: api-contract, rbac-contract)',
+              },
+            },
+            required: ['contract_id'],
+          },
+        },
       ],
     }));
 
@@ -103,6 +134,72 @@ export class AuraCoreMCPServer {
             },
           ],
         };
+      }
+
+      if (name === 'get_epic_status') {
+        // Validar argumentos (LESSON LEARNED #9)
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for get_epic_status');
+        }
+
+        const typedArgs = args as { epic_id?: unknown };
+        const epicId = typedArgs.epic_id;
+
+        if (!epicId || typeof epicId !== 'string') {
+          throw new Error('get_epic_status requires epic_id parameter');
+        }
+
+        try {
+          const status = await getEpicStatus(epicId);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(status, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to get epic status: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'get_contract') {
+        // Validar argumentos
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for get_contract');
+        }
+
+        const typedArgs = args as { contract_id?: unknown };
+        const contractId = typedArgs.contract_id;
+
+        if (!contractId || typeof contractId !== 'string') {
+          throw new Error('get_contract requires contract_id parameter');
+        }
+
+        try {
+          const contract = await getContractTool(contractId);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(contract, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to get contract: ${errorMessage}`);
+        }
       }
 
       throw new Error(`Unknown tool: ${name}`);
