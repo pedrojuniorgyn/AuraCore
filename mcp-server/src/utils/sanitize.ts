@@ -7,16 +7,18 @@ export function sanitizeResourceId(id: string): string {
     throw new Error('Invalid resource ID: must be non-empty string');
   }
 
-  const sanitized = id
-    .replace(/\.\./g, '')
-    .replace(/\//g, '')
-    .replace(/\\/g, '')
-    .trim();
+  // Detectar tentativas de path traversal ANTES de sanitizar
+  if (id.includes('..') || id.includes('/') || id.includes('\\')) {
+    throw new Error(`Invalid resource ID: path traversal attempt detected in "${id}"`);
+  }
 
-  if (!/^[a-z0-9-]+$/.test(sanitized)) {
+  const trimmed = id.trim();
+
+  // Validar formato permitido (lowercase, números, hifens)
+  if (!/^[a-z0-9-]+$/.test(trimmed)) {
     throw new Error(`Invalid resource ID format: ${id}. Only lowercase letters, numbers and hyphens allowed.`);
   }
 
-  return sanitized;
+  return trimmed;
 }
 
