@@ -69,3 +69,7 @@ GO
 PRINT 'Migration 0033 executada com sucesso!';
 GO
 
+
+
+
+

@@ -175,3 +175,7 @@ Governança operacional e segurança enterprise (auditoria, trilhas, retenção,
 - **Performance**: medir 5 endpoints top e comparar p95/p99 (antes/depois).
 - **Estabilidade**: taxa de erro por endpoint (4xx/5xx), timeouts, deadlocks, rollback readiness.
 
+
+
+
+

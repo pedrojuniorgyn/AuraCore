@@ -146,10 +146,40 @@ function checkRule(
   
   // REGRA: SQL - deve usar parametros (prevenir SQL injection)
   if (lowerRule.includes('sql') && lowerRule.includes('injection')) {
-    const hasStringConcat = /['"].*\+.*['"]|`.*\$\{.*\}`/.test(code);
-    const hasSqlKeywords = /select|insert|update|delete|where/i.test(code);
+    // Detectar keywords SQL primeiro
+    const hasSqlKeywords = /\b(select|insert|update|delete|where|from|join|union)\b/i.test(lowerCode);
     
-    if (hasStringConcat && hasSqlKeywords && language !== 'sql') {
+    if (!hasSqlKeywords) {
+      // Sem keywords SQL, nao e query SQL
+      return null;
+    }
+    
+    // Agora verificar concatenacao ESPECIFICA de SQL
+    // Pattern 1: String literal + variavel em contexto SQL
+    // Ex: "SELECT * FROM users WHERE id = " + userId
+    const sqlConcatPattern = /(select|insert|update|delete|where|from)\s+[^"']*["'][^"']*["']\s*\+|["'][^"']*["']\s*\+\s*[^"']*\s*(select|insert|update|delete|where)/i;
+    
+    // Pattern 2: Template literal com interpolacao em SQL
+    // Ex: `SELECT * FROM users WHERE id = ${userId}`
+    const sqlTemplatePattern = /`[^`]*(select|insert|update|delete|where|from)[^`]*\$\{[^}]+\}[^`]*`/i;
+    
+    // Pattern 3: Concatenacao de strings que contem keywords SQL
+    // Ex: "SELECT * " + variable + " FROM users"
+    const sqlKeywordConcat = /(["'][^"']*\b(select|insert|update|delete|where|from)\b[^"']*["'])\s*\+|\+\s*(["'][^"']*\b(select|insert|update|delete|where|from)\b[^"']*["'])/i;
+    
+    const hasDangerousConcat = sqlConcatPattern.test(code) || 
+                               sqlTemplatePattern.test(code) ||
+                               sqlKeywordConcat.test(code);
+    
+    if (hasDangerousConcat && language !== 'sql') {
+      // Verificar se usa Prisma (que e seguro)
+      const usesPrisma = /prisma\.\w+\.(findMany|findUnique|create|update|delete|findFirst)/i.test(code);
+      
+      if (usesPrisma) {
+        // Prisma e seguro, nao reportar
+        return null;
+      }
+      
       return {
         contractId,
         rule,

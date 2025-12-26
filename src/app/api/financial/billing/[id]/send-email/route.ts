@@ -17,6 +17,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "financial.billing.create", async (user, ctx) => {
+    const resolvedParams = await params;
     const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
@@ -27,7 +28,6 @@ export async function POST(
     }
 
     try {
-    const resolvedParams = await params;
       const body = await request.json();
       const { email } = body;
 
@@ -60,7 +60,7 @@ export async function POST(
       const pdfBuffer = await billingPDFGenerator.gerarPDF(billingId);
 
       // Configurar transporter SMTP
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || "smtp.gmail.com",
         port: parseInt(process.env.SMTP_PORT || "587"),
         secure: false,

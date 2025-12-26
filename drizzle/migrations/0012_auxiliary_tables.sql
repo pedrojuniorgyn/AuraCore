@@ -134,3 +134,7 @@ CREATE INDEX idx_vehicle_types_category ON vehicle_types(category);
 
 
 
+
+
+
+

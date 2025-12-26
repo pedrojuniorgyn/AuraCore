@@ -137,6 +137,34 @@ const rules = args.rules.filter(r => typeof r === 'string');
 **Código:** `propose-pattern.ts` linha 84-110  
 **Nível:** MÉDIO (pode causar silent failures)
 
+### 14. Regex Patterns - Especificidade vs Falsos Positivos
+**Problema:** Regex muito permissivo gera falsos positivos  
+**Solução:** Verificar contexto ANTES de aplicar regex específico  
+**Regra:** Progressão: Context check → Specific pattern → Edge cases
+
+**Exemplo:**
+```typescript
+// ❌ ERRADO (muito permissivo):
+const hasProblem = /['"].*\+.*['"]/.test(code);
+// Detecta: "hello" + "world" (FALSO POSITIVO)
+
+// ✅ CORRETO (específico):
+const hasSqlKeywords = /\b(select|insert)\b/i.test(code);
+if (hasSqlKeywords) {
+  const hasSqlConcat = /(select|insert)[^"']*["'].*["']\s*\+/.test(code);
+  // Detecta apenas SQL concatenation
+}
+```
+
+**Estratégia:**
+1. Verificar contexto (SQL keywords)
+2. Aplicar regex específico ao contexto
+3. Verificar edge cases (Prisma = seguro)
+4. Retornar resultado preciso
+
+**Código:** `validate-code.ts` SQL injection detection  
+**Nível:** ALTO (afeta precisão de validação)
+
 ## Checklist Pré-Commit
 
 Antes de cada commit, verificar:

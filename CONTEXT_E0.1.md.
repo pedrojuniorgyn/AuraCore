@@ -28,7 +28,8 @@
 - `src/lib/db/schema.ts` → Schema SQL Server (Drizzle)
 - `next.config.ts` → Configuração Next.js
 
-### Estado AtdErrors: true`
+### Estado Atual do Build
+- **Configuração:** `ignoreBuildErrors: true`
 - **Erros TypeScript estimados:** ~450-470
 - **Build:** Compila com sucesso (mas ignora erros)
 
@@ -62,7 +63,9 @@ Fase 2: Correção Incremental
 └─ Repetir até erros bloqueantes = 0
 
 Fase 3: Habilitar TypeCheck
-├─ Modificar neimeira tentativa ✅
+├─ Modificar next.config.ts
+├─ Executar: npm run build
+├─ DEVE passar na primeira tentativa ✅
 ├─ Commit: "feat(e0.1): habilitar TypeCheck"
 └─ E0.1 CONCLUÍDO ✅
 ```
@@ -111,7 +114,12 @@ A cada 5 arquivos corrigidos:
 ├─ Relatar ao humano
 └─ Aguardar aprovação para continuar
 
-NUNCOS (NÃO TOCAR)
+NUNCA corrigir 10+ arquivos sem pausa
+```
+
+---
+
+## 🚫 Arquivos PROIBIDOS (NÃO TOCAR)
 
 **5 arquivos CRÍTICOS preservados para E9 (com testes):**
 
@@ -143,7 +151,11 @@ NUNCOS (NÃO TOCAR)
 
 **Se qualquer item = ❌, NÃO prosseguir**
 
---ise Pura (0 modificações)
+---
+
+## 🎯 Plano de Ação Proposto
+
+### Fase 1: Análise Pura (0 modificações)
 
 **Objetivo:** Entender o que realmente BLOQUEIA build
 ```bash
@@ -197,7 +209,11 @@ git commit -m "feat(e0.1): habilitar TypeCheck - build validado"
 git push origin main
 ```
 
-**🎉 E0.1 CONCLUÍDO!esso
+**🎉 E0.1 CONCLUÍDO!**
+
+---
+
+## 📊 Métricas de Sucesso
 
 **Critérios obrigatórios:**
 - [ ] `next.config.ts`: `ignoreBuildErrors: false` ✅
@@ -228,7 +244,12 @@ git push origin main
 1. ✅ Validar cada entrega (não deixar acumular)
 2. ✅ Aprovar continuação a cada pausa
 3. ✅ Reportar problemas imediatamente
-4. ✅ Não press## 🚀 Estado Atual (Ponto de Partida)
+4. ✅ Não pressionar por velocidade
+5. ✅ Confiar no processo gradual
+
+---
+
+## 🚀 Estado Atual (Ponto de Partida)
 
 **Git:**
 - Branch: `main` ✅
@@ -249,3 +270,8 @@ git push origin main
 ---
 
 **FIM DO CONTEXTO - Leia completamente antes de começar**
+EOF
+
+git add CONTEXT_E0.1.md
+git commit -m "docs: contexto E0.1 recomeço (estratégia ultra-conservadora)"
+git push origin main

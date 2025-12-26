@@ -16,6 +16,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "financial.billing.create", async (user, ctx) => {
+    const resolvedParams = await params;
     const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
@@ -26,7 +27,6 @@ export async function POST(
     }
 
     try {
-    const resolvedParams = await params;
       // Buscar fatura + cliente
       const [billing] = await db
         .select({
