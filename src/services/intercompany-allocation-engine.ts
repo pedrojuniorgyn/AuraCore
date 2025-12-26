@@ -6,6 +6,19 @@
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interfaces para tipagem de resultados SQL
+interface AllocationInsertResult {
+  id: number;
+}
+
+interface RevenueQueryResult {
+  revenue: string | number;
+}
+
+interface EmployeeCountResult {
+  employee_count: number;
+}
+
 export interface AllocationRule {
   ruleName: string;
   sourceBranchId: number;
@@ -46,13 +59,14 @@ export class IntercompanyAllocationEngine {
          ${rule.sourceAccountId}, ${totalAmount}, ${rule.allocationMethod}, 'POSTED')
     `);
     
-    const allocationId = allocationResult.recordset?.[0]?.id || 0;
+    const allocationData = (allocationResult.recordset || allocationResult) as unknown as AllocationInsertResult[];
+    const allocationId = allocationData[0]?.id || 0;
     
     // 3. Criar detalhes para cada filial
     let totalAllocated = 0;
     
     for (const target of targets) {
-      const allocatedAmount = totalAmount * (target.percentage / 100);
+      const allocatedAmount = totalAmount * ((target.percentage || 0) / 100);
       totalAllocated += allocatedAmount;
       
       await db.execute(sql`
@@ -133,7 +147,8 @@ export class IntercompanyAllocationEngine {
           AND YEAR(issue_date) = YEAR(GETDATE())
       `);
       
-      const revenue = revenueResult.recordset?.[0]?.revenue || revenueResult[0]?.revenue || 0;
+      const revenueData = (revenueResult.recordset || revenueResult) as unknown as RevenueQueryResult[];
+      const revenue = Number(revenueData[0]?.revenue || 0);
       revenues[target.targetBranchId] = revenue;
       totalRevenue += revenue;
     }
@@ -164,7 +179,8 @@ export class IntercompanyAllocationEngine {
           AND status = 'ACTIVE'
       `);
       
-      const count = countResult.recordset?.[0]?.employee_count || countResult[0]?.employee_count || 0;
+      const countData = (countResult.recordset || countResult) as unknown as EmployeeCountResult[];
+      const count = countData[0]?.employee_count || 0;
       headcounts[target.targetBranchId] = count;
       totalHeadcount += count;
     }

@@ -29,6 +29,25 @@ const CREDIT_ELIGIBLE_ACCOUNTS = [
   '4.1.1.04.001', // Pedágio
 ];
 
+// Interfaces para tipagem de resultados SQL
+interface FiscalDocumentQueryResult {
+  gross_amount: string;
+  net_amount: string;
+  document_type: string;
+  cfop: string;
+  ncm_code: string | null;
+}
+
+interface ChartOfAccountsResult {
+  id: bigint;
+  code: string;
+  name: string;
+}
+
+interface JournalEntryInsertResult {
+  id: bigint;
+}
+
 export interface TaxCreditCalculation {
   fiscalDocumentId?: bigint;
   purchaseAmount: number;
@@ -63,11 +82,13 @@ export async function calculateTaxCreditsForDocument(
       GROUP BY fd.gross_amount, fd.net_amount, fd.document_type, fd.cfop, fdi.ncm_code
     `);
 
-    if (!docResult[0]) {
+    const docData = (docResult.recordset || docResult) as unknown as FiscalDocumentQueryResult[];
+    const doc = docData[0];
+    
+    if (!doc) {
       return null;
     }
 
-    const doc = docResult[0];
     const netAmount = parseFloat(doc.net_amount || "0");
 
     // 2. Determinar se é elegível para crédito
@@ -117,8 +138,9 @@ export async function registerTaxCredit(
         AND deleted_at IS NULL
     `);
 
-    const pisAccount = accountsResult.find((a: any) => a.code === '1.1.4.01.001');
-    const cofinsAccount = accountsResult.find((a: any) => a.code === '1.1.4.01.002');
+    const accounts = (accountsResult.recordset || accountsResult) as unknown as ChartOfAccountsResult[];
+    const pisAccount = accounts.find((a) => a.code === '1.1.4.01.001');
+    const cofinsAccount = accounts.find((a) => a.code === '1.1.4.01.002');
 
     if (!pisAccount || !cofinsAccount) {
       console.error("❌ Contas de crédito PIS/COFINS não encontradas");
@@ -158,11 +180,14 @@ export async function registerTaxCredit(
       )
     `);
 
-    const entryId = entryResult[0]?.id;
+    const entryData = (entryResult.recordset || entryResult) as unknown as JournalEntryInsertResult[];
+    const entry = entryData[0];
 
-    if (!entryId) {
+    if (!entry?.id) {
       throw new Error("Falha ao criar journal_entry");
     }
+
+    const entryId = entry.id;
 
     // 3. Criar linhas de lançamento (D: Crédito PIS/COFINS)
     await db.execute(sql`

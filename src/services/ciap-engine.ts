@@ -6,6 +6,30 @@
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interfaces para tipagem de resultados SQL
+interface CIAPInsertResult {
+  id: number;
+}
+
+interface RevenueQueryResult {
+  total_revenue: string | number;
+  taxable_revenue: string | number;
+}
+
+interface CIAPAssetQueryResult {
+  id: number;
+  monthly_installment: string | number;
+  installments_appropriated: number;
+  total_installments: number;
+}
+
+interface CIAPAppropriationQueryResult {
+  asset_id: number;
+  reference_month: Date;
+  appropriated_amount: number;
+  appropriation_factor: number;
+}
+
 export interface CIAPAsset {
   assetId: number;
   purchaseAmount: number;
@@ -43,7 +67,8 @@ export class CIAPEngine {
          ${asset.purchaseDate}, ${icmsTotal}, 'ACTIVE')
     `);
 
-    const ciapId = result.recordset?.[0]?.id || 0;
+    const ciapData = (result.recordset || result) as unknown as CIAPInsertResult[];
+    const ciapId = ciapData[0]?.id || 0;
     return ciapId;
   }
 
@@ -67,9 +92,10 @@ export class CIAPEngine {
         AND document_status = 'AUTHORIZED'
     `);
 
-    const revenues = revenuesResult.recordset?.[0] || revenuesResult[0] || {};
-    const totalRevenue = revenues.total_revenue || 0;
-    const taxableRevenue = revenues.taxable_revenue || 0;
+    const revenueData = (revenuesResult.recordset || revenuesResult) as unknown as RevenueQueryResult[];
+    const revenues = revenueData[0] || { total_revenue: 0, taxable_revenue: 0 };
+    const totalRevenue = Number(revenues.total_revenue) || 0;
+    const taxableRevenue = Number(revenues.taxable_revenue) || 0;
     
     const factor = totalRevenue > 0 ? taxableRevenue / totalRevenue : 0;
 
@@ -101,12 +127,12 @@ export class CIAPEngine {
         AND installments_appropriated < total_installments
     `);
 
-    const assets = assetsResult.recordset || assetsResult;
+    const assets = (assetsResult.recordset || assetsResult) as unknown as CIAPAssetQueryResult[];
     let totalAppropriated = 0;
 
     // 3. Apropriar cada ativo
     for (const asset of assets) {
-      const appropriatedAmount = asset.monthly_installment * factor;
+      const appropriatedAmount = Number(asset.monthly_installment) * factor;
       totalAppropriated += appropriatedAmount;
 
       // Registrar apropriação
@@ -167,9 +193,9 @@ export class CIAPEngine {
     const lines: string[] = [];
     lines.push('|G001|'); // Bloco G
 
-    const appropList = appropriations.recordset || appropriations;
+    const appropList = (appropriations.recordset || appropriations) as unknown as CIAPAppropriationQueryResult[];
     for (const approp of appropList) {
-      lines.push(`|G125|${approp.asset_id}|${approp.appropriated_amount.toFixed(2)}|`);
+      lines.push(`|G125|${approp.asset_id}|${Number(approp.appropriated_amount).toFixed(2)}|`);
     }
 
     lines.push('|G990|'); // Fim Bloco G

@@ -12,6 +12,46 @@
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interfaces para tipagem de resultados SQL
+interface JournalEntryResult {
+  id: bigint;
+  organization_id: bigint;
+  branch_id: bigint;
+  entry_number: string;
+  entry_date: Date;
+  source_type: string;
+  source_id: bigint | null;
+  description: string;
+  total_debit: string;
+  total_credit: string;
+  status: string;
+}
+
+interface ManagementEntryInsertResult {
+  id: bigint;
+}
+
+interface BalanceQueryResult {
+  total_debit: string | number;
+  total_credit: string | number;
+}
+
+interface KmQueryResult {
+  cc_km: string | number;
+}
+
+interface RevenueQueryResult {
+  cc_revenue: string | number;
+}
+
+interface TotalKmResult {
+  total_km: string | number;
+}
+
+interface TotalRevenueResult {
+  total_revenue: string | number;
+}
+
 export interface DREGerencialData {
   accountCode: string;
   accountName: string;
@@ -41,11 +81,12 @@ export async function syncPCCToPCG(
       SELECT * FROM journal_entries WHERE id = ${legalJournalEntryId}
     `);
 
-    if (!legalEntryResult[0]) {
+    const legalEntryData = (legalEntryResult.recordset || legalEntryResult) as unknown as JournalEntryResult[];
+    const legalEntry = legalEntryData[0];
+
+    if (!legalEntry) {
       throw new Error("Lançamento contábil não encontrado");
     }
-
-    const legalEntry = legalEntryResult[0];
 
     // 2. Buscar linhas do lançamento
     const linesResult = await db.execute(sql`
@@ -95,7 +136,8 @@ export async function syncPCCToPCG(
       )
     `);
 
-    const mgmtEntryId = mgmtEntryResult[0]?.id;
+    const mgmtEntryData = (mgmtEntryResult.recordset || mgmtEntryResult) as unknown as ManagementEntryInsertResult[];
+    const mgmtEntryId = mgmtEntryData[0]?.id;
 
     if (!mgmtEntryId) {
       throw new Error("Falha ao criar lançamento gerencial");
@@ -196,8 +238,9 @@ export async function allocateIndirectCosts(
           AND MONTH(mje.entry_date) = ${month}
       `);
 
-      const totalDebit = parseFloat(balanceResult[0]?.total_debit || "0");
-      const totalCredit = parseFloat(balanceResult[0]?.total_credit || "0");
+      const balanceData = (balanceResult.recordset || balanceResult) as unknown as BalanceQueryResult[];
+      const totalDebit = parseFloat(String(balanceData[0]?.total_debit || "0"));
+      const totalCredit = parseFloat(String(balanceData[0]?.total_credit || "0"));
       const balance = totalDebit - totalCredit;
 
       if (balance <= 0) continue;
@@ -217,7 +260,8 @@ export async function allocateIndirectCosts(
             AND MONTH(issue_date) = ${month}
             AND deleted_at IS NULL
         `);
-        allocationBase = parseFloat(kmResult[0]?.total_km || "1");
+        const kmData = (kmResult.recordset || kmResult) as unknown as TotalKmResult[];
+        allocationBase = parseFloat(String(kmData[0]?.total_km || "1"));
       } else if (account.allocation_rule === 'REVENUE_BASED') {
         // Base: Receita bruta do período
         const revenueResult = await db.execute(sql`
@@ -228,7 +272,8 @@ export async function allocateIndirectCosts(
             AND MONTH(issue_date) = ${month}
             AND deleted_at IS NULL
         `);
-        allocationBase = parseFloat(revenueResult[0]?.total_revenue || "1");
+        const revenueData = (revenueResult.recordset || revenueResult) as unknown as TotalRevenueResult[];
+        allocationBase = parseFloat(String(revenueData[0]?.total_revenue || "1"));
       }
 
       // 4. Buscar centros de custo ativos
@@ -258,7 +303,8 @@ export async function allocateIndirectCosts(
                 WHERE jel.cost_center_id = ${cc.id}
               )
           `);
-          const ccKm = parseFloat(ccKmResult[0]?.cc_km || "0");
+          const ccKmData = (ccKmResult.recordset || ccKmResult) as unknown as KmQueryResult[];
+          const ccKm = parseFloat(String(ccKmData[0]?.cc_km || "0"));
           ccProportion = allocationBase > 0 ? ccKm / allocationBase : 0;
         } else if (account.allocation_rule === 'REVENUE_BASED') {
           const ccRevenueResult = await db.execute(sql`
@@ -268,7 +314,8 @@ export async function allocateIndirectCosts(
               AND YEAR(cd.issue_date) = ${year}
               AND MONTH(cd.issue_date) = ${month}
           `);
-          const ccRevenue = parseFloat(ccRevenueResult[0]?.cc_revenue || "0");
+          const ccRevenueData = (ccRevenueResult.recordset || ccRevenueResult) as unknown as RevenueQueryResult[];
+          const ccRevenue = parseFloat(String(ccRevenueData[0]?.cc_revenue || "0"));
           ccProportion = allocationBase > 0 ? ccRevenue / allocationBase : 0;
         }
 
