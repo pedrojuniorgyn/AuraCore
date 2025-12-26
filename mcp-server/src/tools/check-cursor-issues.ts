@@ -66,7 +66,9 @@ async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'stdout' in error) {
       const stdout = (error as { stdout: string }).stdout;
-      return parseTypeScriptOutput(stdout);
+      if (stdout && typeof stdout === 'string') {
+        return parseTypeScriptOutput(stdout);
+      }
     }
     return [];
   }

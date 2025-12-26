@@ -172,6 +172,28 @@ function formatIssueCheckResult(result: IssueCheckResult): string {
     output += '\n';
   }
 
+  if (result.medium.length > 0) {
+    output += `MEDIA (${result.medium.length}):\n`;
+    result.medium.slice(0, 3).forEach(issue => {
+      output += `  ${issue.file}:${issue.line} - ${issue.message}\n`;
+    });
+    if (result.medium.length > 3) {
+      output += `  ... e mais ${result.medium.length - 3} issue(s)\n`;
+    }
+    output += '\n';
+  }
+
+  if (result.low.length > 0) {
+    output += `BAIXA (${result.low.length}):\n`;
+    result.low.slice(0, 3).forEach(issue => {
+      output += `  ${issue.file}:${issue.line} - ${issue.message}\n`;
+    });
+    if (result.low.length > 3) {
+      output += `  ... e mais ${result.low.length - 3} issue(s)\n`;
+    }
+    output += '\n';
+  }
+
   output += `\nRECOMENDACAO: ${result.recommendation}`;
   return output;
 }

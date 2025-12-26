@@ -7,6 +7,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { sanitizeResourceId } from '../utils/sanitize.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +28,7 @@ export async function listADRs(): Promise<ADRResource[]> {
     const files = await fs.readdir(ADRS_DIR);
     const jsonFiles = files.filter(f => f.endsWith('.json')).sort();
     
-    const resources: ADRResource[] = await Promise.all(
+    const results = await Promise.allSettled(
       jsonFiles.map(async (file) => {
         const content = await fs.readFile(path.join(ADRS_DIR, file), 'utf-8');
         const adr = JSON.parse(content);
@@ -40,10 +41,27 @@ export async function listADRs(): Promise<ADRResource[]> {
         };
       })
     );
-    
+
+    const resources: ADRResource[] = [];
+    const errors: string[] = [];
+
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        resources.push(result.value);
+      } else {
+        const filename = jsonFiles[index];
+        errors.push(`Failed to load ${filename}: ${result.reason}`);
+        console.error(`ADR loading error: ${filename}`, result.reason);
+      }
+    });
+
+    if (errors.length > 0) {
+      console.warn(`Loaded ${resources.length} ADRs with ${errors.length} errors`);
+    }
+
     return resources;
   } catch (error) {
-    console.error('Erro ao listar ADRs:', error);
+    console.error('Failed to list ADRs:', error);
     return [];
   }
 }
@@ -53,7 +71,8 @@ export async function listADRs(): Promise<ADRResource[]> {
  * ID deve estar em lowercase-com-hifen (ex: 0001-sqlserver-only)
  */
 export async function getADR(adrId: string): Promise<string> {
-  const fileName = `${adrId}.json`;
+  const safeId = sanitizeResourceId(adrId);
+  const fileName = `${safeId}.json`;
   const filePath = path.join(ADRS_DIR, fileName);
   
   try {
