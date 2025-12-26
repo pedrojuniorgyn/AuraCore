@@ -189,6 +189,29 @@ if (invalid.length > 0) {
 **Código:** `server.ts` validate_code handler  
 **Nível:** MÉDIO (previne erros confusos)
 
+### 16. String Validation - Non-Empty Check
+**Problema:** `typeof === 'string'` aceita strings vazias  
+**Solução:** Validar também que `string.trim() !== ''`  
+**Regra:** String validation = type check + non-empty check
+
+**Exemplo:**
+```typescript
+// ❌ INCOMPLETO:
+if (typeof value !== 'string') throw error;
+
+// ✅ COMPLETO:
+if (typeof value !== 'string') throw error;
+if (value.trim() === '') throw new Error('must be non-empty string');
+```
+
+**Aplicação:** Qualquer input string que será usado
+- IDs, paths, queries, nomes, etc
+- Previne bugs em processamento posterior
+- Erro claro na camada de validação
+
+**Código:** `server.ts` validate_code handler  
+**Nível:** MÉDIO (previne validação incompleta)
+
 ## Checklist Pré-Commit
 
 Antes de cada commit, verificar:

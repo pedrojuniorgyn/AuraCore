@@ -456,6 +456,24 @@ export class AuraCoreMCPServer {
           );
         }
 
+        // Validar strings nao vazias
+        const emptyStrings = contractIds.filter(id => 
+          typeof id === 'string' && id.trim() === ''
+        );
+        if (emptyStrings.length > 0) {
+          throw new Error(
+            `contract_ids must contain non-empty strings. Found ${emptyStrings.length} empty string(s)`
+          );
+        }
+
+        // Validar que ha pelo menos 1 ID valido apos filtros
+        const validIds = contractIds.filter(id => 
+          typeof id === 'string' && id.trim() !== ''
+        );
+        if (validIds.length === 0) {
+          throw new Error('contract_ids must contain at least one valid non-empty string');
+        }
+
         // Validacao language
         const lang = language && typeof language === 'string'
           ? language as 'typescript' | 'javascript' | 'sql'
