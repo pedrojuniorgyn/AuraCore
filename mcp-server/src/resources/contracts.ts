@@ -92,17 +92,41 @@ export async function searchContracts(query: string): Promise<unknown[]> {
     const jsonFiles = files.filter(f => f.endsWith('.json'));
     
     const results: unknown[] = [];
+    const lowerQuery = query.toLowerCase();
     
     for (const file of jsonFiles) {
       const content = await fs.readFile(path.join(CONTRACTS_DIR, file), 'utf-8');
       const contract = JSON.parse(content);
       
-      // Buscar no conteúdo e regras
-      if (
-        contract.content.toLowerCase().includes(query.toLowerCase()) ||
-        contract.rules.some((rule: string) => rule.toLowerCase().includes(query.toLowerCase()))
-      ) {
+      // Busca em campos principais
+      const searchableText = [
+        contract.id,
+        contract.name,
+        contract.category,
+        contract.description,
+        contract.content
+      ].filter(Boolean).join(' ').toLowerCase();
+      
+      if (searchableText.includes(lowerQuery)) {
         results.push(contract);
+        continue;
+      }
+      
+      // CORRECAO: Validar rules e array antes de .some()
+      if (Array.isArray(contract.rules)) {
+        const hasMatchingRule = contract.rules.some((rule: any) => {
+          const ruleText = [
+            rule.id,
+            rule.description,
+            rule.rationale
+          ].filter(Boolean).join(' ').toLowerCase();
+          
+          return ruleText.includes(lowerQuery);
+        });
+        
+        if (hasMatchingRule) {
+          results.push(contract);
+        }
       }
     }
     

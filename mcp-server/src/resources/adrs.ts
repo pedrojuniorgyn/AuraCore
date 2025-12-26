@@ -30,15 +30,9 @@ export async function listADRs(): Promise<ADRResource[]> {
     
     const results = await Promise.allSettled(
       jsonFiles.map(async (file) => {
-        const content = await fs.readFile(path.join(ADRS_DIR, file), 'utf-8');
-        const adr = JSON.parse(content);
-        
-        return {
-          uri: `adr://${adr.id}`,
-          name: `ADR ${adr.number}: ${adr.title}`,
-          description: `Status: ${adr.status} | ${adr.context.substring(0, 100)}...`,
-          mimeType: 'application/json',
-        };
+        const id = file.replace('.json', '');
+        const content = await getADR(id);
+        return JSON.parse(content);
       })
     );
 
@@ -47,7 +41,19 @@ export async function listADRs(): Promise<ADRResource[]> {
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
-        resources.push(result.value);
+        const adr = result.value;
+        
+        // CORRECAO: Validar context existe e e string antes de substring
+        const contextPreview = adr.context && typeof adr.context === 'string'
+          ? adr.context.substring(0, 100)
+          : 'No context available';
+        
+        resources.push({
+          uri: `adr://${adr.id}`,
+          name: `ADR ${adr.number}: ${adr.title}`,
+          description: `Status: ${adr.status} | ${contextPreview}...`,
+          mimeType: 'text/plain',
+        });
       } else {
         const filename = jsonFiles[index];
         errors.push(`Failed to load ${filename}: ${result.reason}`);
@@ -92,18 +98,25 @@ export async function searchADRs(query: string): Promise<unknown[]> {
     const jsonFiles = files.filter(f => f.endsWith('.json'));
     
     const results: unknown[] = [];
+    const lowerQuery = query.toLowerCase();
     
     for (const file of jsonFiles) {
       const content = await fs.readFile(path.join(ADRS_DIR, file), 'utf-8');
       const adr = JSON.parse(content);
       
-      // Buscar no título, contexto, decisão e consequências
-      if (
-        adr.title.toLowerCase().includes(query.toLowerCase()) ||
-        adr.context.toLowerCase().includes(query.toLowerCase()) ||
-        adr.decision.toLowerCase().includes(query.toLowerCase()) ||
-        adr.consequences.toLowerCase().includes(query.toLowerCase())
-      ) {
+      // CORRECAO: Validar campos existem antes de acessar
+      const searchableText = [
+        adr.id,
+        adr.title,
+        adr.status,
+        adr.context,
+        adr.decision,
+        adr.consequences
+      ].filter(field => field && typeof field === 'string')
+       .join(' ')
+       .toLowerCase();
+      
+      if (searchableText.includes(lowerQuery)) {
         results.push(adr);
       }
     }

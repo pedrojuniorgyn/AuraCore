@@ -57,36 +57,32 @@ async function collectIssues(scope: string): Promise<CursorIssue[]> {
 
 async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
   try {
-    // execSync com configuracao correta para capturar stderr
+    // Executar tsc - se sucesso (exit 0), nao ha erros
     execSync('npx tsc --noEmit --pretty false', {
       cwd: scope,
       encoding: 'utf-8',
-      // CRITICO: capturar stderr onde tsc envia erros
-      stdio: ['pipe', 'pipe', 'pipe']
+      // CORRECAO: usar stdio simples para captura automatica
+      stdio: 'pipe'
     });
     
-    // Se chegou aqui, nao ha erros (exit code 0)
     return [];
     
-  } catch (error: unknown) {
-    // tsc retorna exit code != 0 quando ha erros
+  } catch (error: any) {
+    // CORRECAO: Com stdio pipe, stderr e stdout sao capturados automaticamente
+    // Tentar stderr primeiro (onde tsc envia erros), depois stdout (fallback)
+    let errorOutput = '';
     
-    // CORRECAO: Erros TypeScript estao em STDERR, nao STDOUT
-    // Tentar stderr primeiro, depois stdout como fallback
-    if (error && typeof error === 'object') {
-      const errorObj = error as { stderr?: unknown; stdout?: unknown; message?: string };
-      
-      // Prioridade 1: stderr (onde tsc envia erros)
-      const errorOutput = errorObj.stderr || errorObj.stdout || '';
-      
-      if (errorOutput && typeof errorOutput === 'string') {
-        return parseTypeScriptOutput(errorOutput);
-      }
-      
-      // Se nao conseguiu capturar output, log e retorna vazio
-      console.error('Failed to capture TypeScript errors:', errorObj.message || 'Unknown error');
+    if (error.stderr && typeof error.stderr === 'string') {
+      errorOutput = error.stderr;
+    } else if (error.stdout && typeof error.stdout === 'string') {
+      errorOutput = error.stdout;
     }
     
+    if (errorOutput) {
+      return parseTypeScriptOutput(errorOutput);
+    }
+    
+    console.error('Failed to capture TypeScript output:', error.message);
     return [];
   }
 }

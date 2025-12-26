@@ -135,7 +135,8 @@ export class AuraCoreMCPServer {
             contents: [
               {
                 uri,
-                mimeType: 'application/json',
+                // CORRECAO: text/plain para conteudo texto (nao application/json)
+                mimeType: 'text/plain',
                 text: content,
               },
             ],
@@ -148,7 +149,8 @@ export class AuraCoreMCPServer {
             contents: [
               {
                 uri,
-                mimeType: 'application/json',
+                // CORRECAO: text/plain para conteudo texto
+                mimeType: 'text/plain',
                 text: content,
               },
             ],
