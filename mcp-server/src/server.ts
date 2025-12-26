@@ -315,16 +315,64 @@ export class AuraCoreMCPServer {
           tags?: unknown;
         };
 
-        // Extrair campos com type casting seguro
-        const input = {
-          id: typedArgs.id as string,
-          name: typedArgs.name as string,
-          category: typedArgs.category as string,
-          description: typedArgs.description as string,
-          example: typedArgs.example as string | undefined,
-          rules: typedArgs.rules as string[] | undefined,
-          tags: typedArgs.tags as string[] | undefined,
+        // Validacao explicita de campos obrigatorios (SEM type assertions)
+        const id = typedArgs.id;
+        const nameField = typedArgs.name;
+        const category = typedArgs.category;
+        const description = typedArgs.description;
+
+        if (!id || typeof id !== 'string') {
+          throw new Error('propose_pattern requires id (string)');
+        }
+        if (!nameField || typeof nameField !== 'string') {
+          throw new Error('propose_pattern requires name (string)');
+        }
+        if (!category || typeof category !== 'string') {
+          throw new Error('propose_pattern requires category (string)');
+        }
+        if (!description || typeof description !== 'string') {
+          throw new Error('propose_pattern requires description (string)');
+        }
+
+        // Montar input com tipos validados
+        const input: {
+          id: string;
+          name: string;
+          category: string;
+          description: string;
+          example?: string;
+          rules?: string[];
+          tags?: string[];
+        } = {
+          id,
+          name: nameField,
+          category,
+          description
         };
+
+        // Campos opcionais - validar antes de adicionar
+        if (typedArgs.example !== undefined) {
+          if (typeof typedArgs.example !== 'string') {
+            throw new Error('example must be a string if provided');
+          }
+          input.example = typedArgs.example;
+        }
+
+        if (typedArgs.rules !== undefined) {
+          if (!Array.isArray(typedArgs.rules)) {
+            throw new Error('rules must be an array if provided');
+          }
+          // Filtrar apenas strings validas
+          input.rules = typedArgs.rules.filter(r => typeof r === 'string');
+        }
+
+        if (typedArgs.tags !== undefined) {
+          if (!Array.isArray(typedArgs.tags)) {
+            throw new Error('tags must be an array if provided');
+          }
+          // Filtrar apenas strings validas
+          input.tags = typedArgs.tags.filter(t => typeof t === 'string');
+        }
 
         try {
           const pattern = await proposePattern(input);

@@ -80,21 +80,41 @@ export async function proposePattern(input: ProposePatternInput): Promise<Propos
   // Verificar se ja existe
   try {
     await fs.access(filepath);
+    // Se chegou aqui, arquivo EXISTE
     throw new Error(`Pattern ${safeId} already exists in proposed`);
   } catch (error: unknown) {
-    // Se nao existe (ENOENT), ok para criar
-    if (error && typeof error === 'object' && 'code' in error) {
-      const fsError = error as { code: string };
-      if (fsError.code !== 'ENOENT') {
-        throw error; // Outro erro, re-throw
+    // Type guard robusto
+    if (!error || typeof error !== 'object') {
+      // Erro inesperado sem estrutura
+      throw new Error('Unexpected error checking pattern existence');
+    }
+    
+    // Verificar se e erro de "already exists" (nosso throw)
+    if ('message' in error) {
+      const message = String((error as { message: unknown }).message);
+      if (message.includes('already exists')) {
+        throw error; // Re-throw nosso erro
       }
-    } else if (error && typeof error === 'object' && 'message' in error) {
-      // Se erro tem message (nosso "already exists"), re-throw
-      throw error;
+    }
+    
+    // Verificar se e ENOENT (arquivo nao existe - OK para criar)
+    if ('code' in error) {
+      const fsError = error as { code: string };
+      if (fsError.code === 'ENOENT') {
+        // OK - arquivo nao existe, pode criar
+        // Continue para writeFile abaixo
+      } else {
+        // Outro erro de filesystem (permissao, etc)
+        throw error;
+      }
+    } else {
+      // Erro sem code e sem message "already exists"
+      // Re-throw em vez de silenciar
+      throw new Error(`Unexpected error checking pattern: ${String(error)}`);
     }
   }
   
-  // Salvar arquivo
+  // Salvar arquivo (so chega aqui se ENOENT)
   await fs.writeFile(filepath, JSON.stringify(pattern, null, 2), 'utf-8');
   
   return pattern;

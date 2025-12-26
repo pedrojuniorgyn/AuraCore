@@ -89,13 +89,63 @@ interface Contract {
 **Código:** Todas interfaces que mapeiam JSON  
 **Nível:** CRÍTICO (causa falhas de validação)
 
+### 12. Type Assertions - NUNCA sem Validação
+**Problema:** Usar `as tipo` sem validar valor primeiro  
+**Solução:** Validar tipo explicitamente, ENTÃO atribuir (não cast)  
+**Regra:** NUNCA `as tipo` - Validar → Atribuir  
+**Nível:** CRÍTICO (workspace rule)
+
+**Exemplo Correto:**
+```typescript
+// ❌ ERRADO (type assertion sem validação):
+const rules = args.rules as string[];
+
+// ✅ CORRETO (validar primeiro):
+if (!Array.isArray(args.rules)) {
+  throw new Error('rules must be array');
+}
+const rules = args.rules.filter(r => typeof r === 'string');
+```
+
+**Código:** Todos handlers MCP, validação de input  
+**Prevenção:** Type guards antes de atribuir valores
+
+### 13. Error Handling - Sempre Re-throw Unknown
+**Problema:** Erros inesperados silenciados (não re-throwados)  
+**Solução:** Sempre ter else clause para re-throw  
+**Regra:** Nunca deixar catch vazio ou sem else final
+
+**Exemplo Correto:**
+```typescript
+// ❌ ERRADO (erro silencioso):
+} catch (error: unknown) {
+  if ('code' in error) { ... }
+  // Outros erros: SILÊNCIO (BUG!)
+}
+
+// ✅ CORRETO (sempre re-throw):
+} catch (error: unknown) {
+  if ('code' in error) {
+    // Handle específico
+  } else {
+    // Re-throw qualquer erro inesperado
+    throw new Error(`Unexpected: ${String(error)}`);
+  }
+}
+```
+
+**Código:** `propose-pattern.ts` linha 84-110  
+**Nível:** MÉDIO (pode causar silent failures)
+
 ## Checklist Pré-Commit
 
 Antes de cada commit, verificar:
 - [ ] Zero uso de `any` (usar `unknown`)
+- [ ] Zero type assertions (`as tipo`) sem validação prévia
 - [ ] Array.isArray() antes de métodos array
 - [ ] Validar propriedades antes de acessar
 - [ ] Try-catch em handlers MCP
+- [ ] Catch blocks sempre com else clause (re-throw unknown)
 - [ ] MIME types consistentes
 - [ ] IDs sanitizados (resources)
 - [ ] Type guards em error handling
