@@ -24,6 +24,20 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
+// Interfaces para tipagem de dados do XML NFe
+interface ICMSGroup {
+  CST?: string;
+  CSOSN?: string;
+  [key: string]: unknown;
+}
+
+interface DetPagElement {
+  tPag?: string | number;
+  indPag?: string | number;
+  vPag?: string | number;
+  [key: string]: unknown;
+}
+
 /**
  * Interface para dados estruturados da NFe
  */
@@ -190,7 +204,8 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       // Extrai CST (pode estar em ICMS, ICMSSN, etc)
       let cst = "";
       if (imposto?.ICMS) {
-        const icmsGroup = Object.values(imposto.ICMS)[0] as any;
+        const icmsValues = Object.values(imposto.ICMS) as unknown as ICMSGroup[];
+        const icmsGroup = icmsValues[0];
         cst = icmsGroup?.CST || icmsGroup?.CSOSN || "";
       }
       
@@ -271,7 +286,8 @@ function parseNFeDate(dateStr: string): Date {
   }
   
   // Remove timezone se houver
-  const cleanDate = dateStr.split(/[+-]\d{2}:\d{2}/)[0];
+  const dateParts = dateStr.split(/[+-]\d{2}:\d{2}/);
+  const cleanDate = dateParts[0] || dateStr;
   
   return new Date(cleanDate);
 }
@@ -308,7 +324,8 @@ function extractPaymentInfo(infNFe: any): ParsedNFe['payment'] | undefined {
       detPagArray = [detPagArray];
     }
     
-    const firstPag = detPagArray[0];
+    const detPagElements = detPagArray as unknown as DetPagElement[];
+    const firstPag = detPagElements[0];
     if (!firstPag) {
       return undefined;
     }
@@ -343,7 +360,7 @@ function extractPaymentInfo(infNFe: any): ParsedNFe['payment'] | undefined {
       installments.push({
         number: "001",
         dueDate: issueDate, // Vence no mesmo dia (à vista)
-        amount: parseFloat(firstPag.vPag),
+        amount: parseFloat(String(firstPag.vPag)),
       });
     }
     

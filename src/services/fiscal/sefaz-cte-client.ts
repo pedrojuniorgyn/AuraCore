@@ -2,6 +2,15 @@ import * as soap from "soap";
 import { DOMParser, XMLSerializer } from "xmldom";
 
 /**
+ * Helper para extrair texto de XML de forma segura
+ */
+function getXMLText(xmlDoc: Document, tagName: string): string | undefined {
+  const elements = xmlDoc.getElementsByTagName(tagName);
+  const element = elements[0];
+  return element?.textContent || undefined;
+}
+
+/**
  * URLs dos Webservices Sefaz CTe
  * Documentação: https://www.cte.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=E4+hIudXkjM=
  */
@@ -139,14 +148,14 @@ export class SefazCTeClient {
       const xmlResponse = parser.parseFromString(result.cteRecepcaoLoteResult, "text/xml");
 
       // Extrair informações
-      const cStat = xmlResponse.getElementsByTagName("cStat")[0]?.textContent;
-      const xMotivo = xmlResponse.getElementsByTagName("xMotivo")[0]?.textContent;
+      const cStat = getXMLText(xmlResponse, "cStat");
+      const xMotivo = getXMLText(xmlResponse, "xMotivo");
 
       if (cStat === "100" || cStat === "104") {
         // 100 = Autorizado, 104 = Lote processado
-        const nProt = xmlResponse.getElementsByTagName("nProt")[0]?.textContent;
-        const chCTe = xmlResponse.getElementsByTagName("chCTe")[0]?.textContent;
-        const dhRecbto = xmlResponse.getElementsByTagName("dhRecbto")[0]?.textContent;
+        const nProt = getXMLText(xmlResponse, "nProt");
+        const chCTe = getXMLText(xmlResponse, "chCTe");
+        const dhRecbto = getXMLText(xmlResponse, "dhRecbto");
 
         return {
           success: true,
@@ -166,11 +175,14 @@ export class SefazCTeClient {
           rejeicoes: [xMotivo || "Erro desconhecido"],
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : 'Erro desconhecido';
       console.error("❌ Erro ao enviar CTe:", error);
       return {
         success: false,
-        motivo: `Erro de comunicação: ${error.message}`,
+        motivo: `Erro de comunicação: ${errorMessage}`,
       };
     }
   }
@@ -198,19 +210,22 @@ export class SefazCTeClient {
       const parser = new DOMParser();
       const xmlResponse = parser.parseFromString(result.cteConsultaCTResult, "text/xml");
 
-      const cStat = xmlResponse.getElementsByTagName("cStat")[0]?.textContent;
-      const xMotivo = xmlResponse.getElementsByTagName("xMotivo")[0]?.textContent;
+      const cStat = getXMLText(xmlResponse, "cStat");
+      const xMotivo = getXMLText(xmlResponse, "xMotivo");
 
       return {
         success: cStat === "100",
         status: cStat || "000",
         motivo: xMotivo || "Status desconhecido",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : 'Erro desconhecido';
       console.error("❌ Erro ao consultar CTe:", error);
       return {
         success: false,
-        motivo: `Erro de comunicação: ${error.message}`,
+        motivo: `Erro de comunicação: ${errorMessage}`,
       };
     }
   }
@@ -237,21 +252,24 @@ export class SefazCTeClient {
       const parser = new DOMParser();
       const xmlResponse = parser.parseFromString(result.cteInutilizacaoResult, "text/xml");
 
-      const cStat = xmlResponse.getElementsByTagName("cStat")[0]?.textContent;
-      const xMotivo = xmlResponse.getElementsByTagName("xMotivo")[0]?.textContent;
-      const nProt = xmlResponse.getElementsByTagName("nProt")[0]?.textContent;
+      const cStat = getXMLText(xmlResponse, "cStat");
+      const xMotivo = getXMLText(xmlResponse, "xMotivo");
+      const nProt = getXMLText(xmlResponse, "nProt");
 
       return {
         success: cStat === "102", // 102 = Inutilização homologada
         status: cStat || "000",
         motivo: xMotivo || "Status desconhecido",
-        protocol: nProt,
+        protocolo: nProt,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : 'Erro desconhecido';
       console.error("❌ Erro ao inutilizar:", error);
       return {
         success: false,
-        motivo: `Erro de comunicação: ${error.message}`,
+        motivo: `Erro de comunicação: ${errorMessage}`,
       };
     }
   }
@@ -299,19 +317,22 @@ export class SefazCTeClient {
       const parser = new DOMParser();
       const xmlResponse = parser.parseFromString(result.cteRecepcaoEventoResult, "text/xml");
 
-      const cStat = xmlResponse.getElementsByTagName("cStat")[0]?.textContent;
-      const xMotivo = xmlResponse.getElementsByTagName("xMotivo")[0]?.textContent;
+      const cStat = getXMLText(xmlResponse, "cStat");
+      const xMotivo = getXMLText(xmlResponse, "xMotivo");
 
       return {
         success: cStat === "135" || cStat === "136", // 135 = Cancelamento homologado, 136 = Cancelado
         status: cStat || "000",
         motivo: xMotivo || "Status desconhecido",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: unknown }).message)
+        : 'Erro desconhecido';
       console.error("❌ Erro ao cancelar CTe:", error);
       return {
         success: false,
-        motivo: `Erro de comunicação: ${error.message}`,
+        motivo: `Erro de comunicação: ${errorMessage}`,
       };
     }
   }
