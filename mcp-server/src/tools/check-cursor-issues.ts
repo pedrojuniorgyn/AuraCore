@@ -67,22 +67,31 @@ async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
     
     return [];
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     // CORRECAO: Com stdio pipe, stderr e stdout sao capturados automaticamente
     // Tentar stderr primeiro (onde tsc envia erros), depois stdout (fallback)
     let errorOutput = '';
     
-    if (error.stderr && typeof error.stderr === 'string') {
-      errorOutput = error.stderr;
-    } else if (error.stdout && typeof error.stdout === 'string') {
-      errorOutput = error.stdout;
+    // Type guard para acessar propriedades
+    if (error && typeof error === 'object') {
+      const execError = error as { stderr?: unknown; stdout?: unknown; message?: string };
+      
+      if (execError.stderr && typeof execError.stderr === 'string') {
+        errorOutput = execError.stderr;
+      } else if (execError.stdout && typeof execError.stdout === 'string') {
+        errorOutput = execError.stdout;
+      }
     }
     
     if (errorOutput) {
       return parseTypeScriptOutput(errorOutput);
     }
     
-    console.error('Failed to capture TypeScript output:', error.message);
+    const errorMessage = error && typeof error === 'object' && 'message' in error
+      ? String((error as { message: unknown }).message)
+      : 'Unknown error';
+    
+    console.error('Failed to capture TypeScript output:', errorMessage);
     return [];
   }
 }

@@ -101,7 +101,7 @@ export async function searchContracts(query: string): Promise<unknown[]> {
       // Busca em campos principais
       const searchableText = [
         contract.id,
-        contract.name,
+        contract.title,
         contract.category,
         contract.description,
         contract.content
@@ -112,16 +112,14 @@ export async function searchContracts(query: string): Promise<unknown[]> {
         continue;
       }
       
-      // CORRECAO: Validar rules e array antes de .some()
+      // CORRECAO: Rules sao STRINGS, nao objetos
       if (Array.isArray(contract.rules)) {
-        const hasMatchingRule = contract.rules.some((rule: any) => {
-          const ruleText = [
-            rule.id,
-            rule.description,
-            rule.rationale
-          ].filter(Boolean).join(' ').toLowerCase();
-          
-          return ruleText.includes(lowerQuery);
+        const hasMatchingRule = contract.rules.some((rule: string) => {
+          // Rule e string diretamente, nao objeto
+          if (typeof rule === 'string') {
+            return rule.toLowerCase().includes(lowerQuery);
+          }
+          return false;
         });
         
         if (hasMatchingRule) {
