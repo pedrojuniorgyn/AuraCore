@@ -202,13 +202,14 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro no seed:", error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

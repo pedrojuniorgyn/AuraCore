@@ -246,11 +246,12 @@ export async function PUT(
       document: updated,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao atualizar documento:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

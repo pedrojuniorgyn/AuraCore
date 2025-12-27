@@ -54,13 +54,14 @@ export async function GET(
 
     return NextResponse.json(product);
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error fetching product:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar produto.", details: error.message },
+      { error: "Falha ao buscar produto.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -226,13 +227,14 @@ export async function PUT(
 
     return NextResponse.json(updatedProduct);
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error updating product:", error);
     return NextResponse.json(
-      { error: "Falha ao atualizar produto.", details: error.message },
+      { error: "Falha ao atualizar produto.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -326,13 +328,14 @@ export async function DELETE(
       data: deletedProduct,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error deleting product:", error);
     return NextResponse.json(
-      { error: "Falha ao excluir produto.", details: error.message },
+      { error: "Falha ao excluir produto.", details: errorMessage },
       { status: 500 }
     );
   }

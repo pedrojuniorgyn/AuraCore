@@ -68,12 +68,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

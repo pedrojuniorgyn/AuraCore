@@ -111,13 +111,14 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error fetching cargo repository:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar repositório de cargas.", details: error.message },
+      { error: "Falha ao buscar repositório de cargas.", details: errorMessage },
       { status: 500 }
     );
   }

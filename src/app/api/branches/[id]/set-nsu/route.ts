@@ -62,12 +62,13 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao atualizar NSU:", error);
     return NextResponse.json(
-      { error: "Falha ao atualizar NSU.", details: error.message },
+      { error: "Falha ao atualizar NSU.", details: errorMessage },
       { status: 500 }
     );
   }

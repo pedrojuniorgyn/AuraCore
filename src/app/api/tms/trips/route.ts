@@ -32,12 +32,13 @@ export async function GET(req: Request) {
       data: allTrips,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao buscar viagens:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar viagens", details: error.message },
+      { error: "Erro ao buscar viagens", details: errorMessage },
       { status: 500 }
     );
   }
@@ -148,12 +149,13 @@ export async function POST(req: Request) {
       data: newTrip,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao criar viagem:", error);
     return NextResponse.json(
-      { error: "Erro ao criar viagem", details: error.message },
+      { error: "Erro ao criar viagem", details: errorMessage },
       { status: 500 }
     );
   }

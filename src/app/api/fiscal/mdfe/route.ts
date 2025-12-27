@@ -30,12 +30,13 @@ export async function GET(req: Request) {
       data: mdfes,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao buscar MDFes:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar MDFes", details: error.message },
+      { error: "Erro ao buscar MDFes", details: errorMessage },
       { status: 500 }
     );
   }
@@ -155,12 +156,13 @@ export async function POST(req: Request) {
       data: newMdfe,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao criar MDFe:", error);
     return NextResponse.json(
-      { error: "Erro ao criar MDFe", details: error.message },
+      { error: "Erro ao criar MDFe", details: errorMessage },
       { status: 500 }
     );
   }

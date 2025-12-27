@@ -153,7 +153,8 @@ export async function POST(request: NextRequest) {
 
         created++;
       } catch (error: unknown) {
-        console.error(`❌ Erro ao criar NCM ${item.ncm}:`, error.message);
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
+        console.error(`❌ Erro ao criar NCM ${item.ncm}:`, errorMessage);
       }
     }
 

@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
       total: partnersList.length,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     // Se for erro de autenticação, retorna a resposta de erro direto
     if (error instanceof Response) {
       return error;
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     console.error("❌ Error fetching business partners:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar parceiros de negócio.", details: error.message },
+      { error: "Falha ao buscar parceiros de negócio.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -183,13 +184,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newPartner, { status: 201 });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error creating business partner:", error);
     return NextResponse.json(
-      { error: "Falha ao criar parceiro de negócio.", details: error.message },
+      { error: "Falha ao criar parceiro de negócio.", details: errorMessage },
       { status: 500 }
     );
   }

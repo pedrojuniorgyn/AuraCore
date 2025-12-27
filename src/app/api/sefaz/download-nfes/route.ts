@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -95,8 +96,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: "Falha ao consultar Sefaz", 
-        details: error.message,
-        hint: error.message.includes("Certificado") 
+        details: errorMessage,
+        hint: errorMessage.includes("Certificado") 
           ? "Faça o upload do certificado digital da filial primeiro."
           : undefined,
       },

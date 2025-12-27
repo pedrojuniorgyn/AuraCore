@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_payable");
     } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_payable");
       } else {
-        console.log("⚠️ Não foi possível adicionar FK em accounts_payable:", error.message);
+        console.log("⚠️ Não foi possível adicionar FK em accounts_payable:", errorMessage);
       }
     }
 
@@ -66,10 +67,11 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_receivable");
     } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_receivable");
       } else {
-        console.log("⚠️ Não foi possível adicionar FK em accounts_receivable:", error.message);
+        console.log("⚠️ Não foi possível adicionar FK em accounts_receivable:", errorMessage);
       }
     }
 

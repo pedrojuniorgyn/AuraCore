@@ -71,12 +71,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: receivables, total: receivables.length });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao listar contas a receber:", error);
     return NextResponse.json(
-      { error: "Falha ao listar contas", details: error.message },
+      { error: "Falha ao listar contas", details: errorMessage },
       { status: 500 }
     );
   }
@@ -132,12 +133,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: newReceivable }, { status: 201 });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao criar conta a receber:", error);
     return NextResponse.json(
-      { error: "Falha ao criar conta", details: error.message },
+      { error: "Falha ao criar conta", details: errorMessage },
       { status: 500 }
     );
   }

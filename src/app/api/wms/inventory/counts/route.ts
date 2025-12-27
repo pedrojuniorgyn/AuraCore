@@ -37,7 +37,7 @@ export async function GET() {
       return error;
     }
     console.error("❌ Erro ao listar contagens:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? errorMessage : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     console.error("❌ Erro ao iniciar contagem:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? errorMessage : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

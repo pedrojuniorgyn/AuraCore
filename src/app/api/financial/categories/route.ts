@@ -55,12 +55,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: categories, total: categories.length });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao listar categorias:", error);
     return NextResponse.json(
-      { error: "Falha ao listar categorias", details: error.message },
+      { error: "Falha ao listar categorias", details: errorMessage },
       { status: 500 }
     );
   }
@@ -117,12 +118,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: newCategory }, { status: 201 });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao criar categoria:", error);
     return NextResponse.json(
-      { error: "Falha ao criar categoria", details: error.message },
+      { error: "Falha ao criar categoria", details: errorMessage },
       { status: 500 }
     );
   }

@@ -121,13 +121,14 @@ export async function GET(
 
     return NextResponse.json({ data: branch });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error fetching branch:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar filial.", details: error.message },
+      { error: "Falha ao buscar filial.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -273,13 +274,14 @@ export async function PUT(
 
     return NextResponse.json({ data: updatedBranch });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error updating branch:", error);
     return NextResponse.json(
-      { error: "Falha ao atualizar filial.", details: error.message },
+      { error: "Falha ao atualizar filial.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -364,13 +366,14 @@ export async function DELETE(
       data: { id, name: currentBranch.name },
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error deleting branch:", error);
     return NextResponse.json(
-      { error: "Falha ao excluir filial.", details: error.message },
+      { error: "Falha ao excluir filial.", details: errorMessage },
       { status: 500 }
     );
   }

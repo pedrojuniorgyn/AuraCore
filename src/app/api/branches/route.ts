@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
       total: branchesList.length,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     // Se for erro de autenticação, retorna a resposta de erro direto
     if (error instanceof Response) {
       return error;
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
 
     console.error("❌ Error fetching branches:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar filiais.", details: error.message },
+      { error: "Falha ao buscar filiais.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -194,13 +195,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newBranch, { status: 201 });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error creating branch:", error);
     return NextResponse.json(
-      { error: "Falha ao criar filial.", details: error.message },
+      { error: "Falha ao criar filial.", details: errorMessage },
       { status: 500 }
     );
   }

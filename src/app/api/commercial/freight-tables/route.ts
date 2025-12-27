@@ -97,12 +97,13 @@ export async function GET(request: NextRequest) {
       data: tablesWithDetails 
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao listar tabelas de frete:", error);
     return NextResponse.json(
-      { error: "Falha ao listar tabelas de frete", details: error.message },
+      { error: "Falha ao listar tabelas de frete", details: errorMessage },
       { status: 500 }
     );
   }
@@ -234,12 +235,13 @@ export async function POST(request: NextRequest) {
       data: { id: tableId },
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao criar tabela de frete:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao criar tabela de frete" },
+      { error: errorMessage || "Falha ao criar tabela de frete" },
       { status: 500 }
     );
   }

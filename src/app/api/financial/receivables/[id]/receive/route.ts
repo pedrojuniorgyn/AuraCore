@@ -107,12 +107,13 @@ export async function POST(
 
     return NextResponse.json({ data: updated });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao registrar recebimento:", error);
     return NextResponse.json(
-      { error: "Falha ao registrar recebimento", details: error.message },
+      { error: "Falha ao registrar recebimento", details: errorMessage },
       { status: 500 }
     );
   }

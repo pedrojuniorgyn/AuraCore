@@ -153,13 +153,14 @@ export async function POST(
     });
 
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error uploading certificate:", error);
     return NextResponse.json(
-      { error: "Falha ao fazer upload do certificado", details: error.message },
+      { error: "Falha ao fazer upload do certificado", details: errorMessage },
       { status: 500 }
     );
   }

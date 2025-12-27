@@ -71,13 +71,14 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error fetching products:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar produtos.", details: error.message },
+      { error: "Falha ao buscar produtos.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -168,13 +169,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error creating product:", error);
     return NextResponse.json(
-      { error: "Falha ao criar produto.", details: error.message },
+      { error: "Falha ao criar produto.", details: errorMessage },
       { status: 500 }
     );
   }

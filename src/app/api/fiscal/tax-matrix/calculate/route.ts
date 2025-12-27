@@ -55,6 +55,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     console.error("❌ Erro ao calcular imposto:", error);
     
     // Se for erro de matriz não configurada, retornar erro específico
@@ -69,7 +70,7 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json(
-      { error: "Erro ao calcular imposto", details: error.message },
+      { error: "Erro ao calcular imposto", details: errorMessage },
       { status: 500 }
     );
   }

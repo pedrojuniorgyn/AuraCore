@@ -39,12 +39,13 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: quote });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao buscar cotação:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar cotação", details: error.message },
+      { error: "Erro ao buscar cotação", details: errorMessage },
       { status: 500 }
     );
   }
@@ -137,12 +138,13 @@ export async function PUT(
       data: updated,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao atualizar cotação:", error);
     return NextResponse.json(
-      { error: "Erro ao atualizar cotação", details: error.message },
+      { error: "Erro ao atualizar cotação", details: errorMessage },
       { status: 500 }
     );
   }
@@ -184,12 +186,13 @@ export async function DELETE(
       message: "Cotação excluída!",
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao excluir cotação:", error);
     return NextResponse.json(
-      { error: "Erro ao excluir cotação", details: error.message },
+      { error: "Erro ao excluir cotação", details: errorMessage },
       { status: 500 }
     );
   }

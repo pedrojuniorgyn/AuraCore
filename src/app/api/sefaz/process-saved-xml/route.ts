@@ -44,12 +44,13 @@ export async function POST(request: NextRequest) {
       data: result,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao processar XML salvo:", error);
     return NextResponse.json(
-      { error: "Falha ao processar XML.", details: error.message },
+      { error: "Falha ao processar XML.", details: errorMessage },
       { status: 500 }
     );
   }

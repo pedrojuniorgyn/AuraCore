@@ -54,13 +54,14 @@ export async function GET(
 
     return NextResponse.json(partner);
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error fetching business partner:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar parceiro de negócio.", details: error.message },
+      { error: "Falha ao buscar parceiro de negócio.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -205,13 +206,14 @@ export async function PUT(
 
     return NextResponse.json(updatedPartner);
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error updating business partner:", error);
     return NextResponse.json(
-      { error: "Falha ao atualizar parceiro de negócio.", details: error.message },
+      { error: "Falha ao atualizar parceiro de negócio.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -305,13 +307,14 @@ export async function DELETE(
       data: deletedPartner,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
 
     console.error("❌ Error deleting business partner:", error);
     return NextResponse.json(
-      { error: "Falha ao excluir parceiro de negócio.", details: error.message },
+      { error: "Falha ao excluir parceiro de negócio.", details: errorMessage },
       { status: 500 }
     );
   }

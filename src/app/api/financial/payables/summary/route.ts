@@ -77,12 +77,13 @@ export async function GET(request: NextRequest) {
       countPaidThisMonth: totalPaid?.count || 0,
     });
   } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
     if (error instanceof Response) {
       return error;
     }
     console.error("❌ Erro ao buscar resumo:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar resumo", details: error.message },
+      { error: "Falha ao buscar resumo", details: errorMessage },
       { status: 500 }
     );
   }

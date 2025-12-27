@@ -111,12 +111,13 @@ export async function POST(
         data: { cceId, sequenceNumber },
       });
     } catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
       if (error instanceof Response) {
         return error;
       }
       console.error("❌ Erro ao processar CCe:", error);
       return NextResponse.json(
-        { error: error instanceof Error ? error.message : String(error) },
+        { error: error instanceof Error ? errorMessage : String(error) },
         { status: 500 }
       );
     }
