@@ -1,0 +1,31 @@
+{
+  "id": "LC-BATCH2",
+  "epic": "E2",
+  "date": "2025-12-27",
+  "error_description": "result[0] any implícito em 16 ocorrências em queries SQL (db.execute) - sem interface tipada para resultados",
+  "correction_applied": "Criadas 6 interfaces específicas (MaxCodeResult, MaxCodeStringResult, ParentCodeResult, CountResult, TaxMatrixResult, InsertedIdResult, ManagementAccountResult), aplicado padrão LC-001: (result.recordset || result) as unknown as Interface[], validação de existência antes de usar result[0]",
+  "files_affected": [
+    "src/app/api/financial/chart-accounts/suggest-code/route.ts",
+    "src/app/api/financial/chart-accounts/[id]/route.ts",
+    "src/app/api/financial/cost-centers/[id]/route.ts",
+    "src/app/api/fiscal/simulate/route.ts",
+    "src/app/api/management/chart-accounts/route.ts",
+    "src/app/api/management/chart-accounts/[id]/route.ts",
+    "src/app/api/cost-centers/3d/route.ts"
+  ],
+  "pattern_name": "sql-query-typing",
+  "interfaces_created": [
+    "MaxCodeResult",
+    "MaxCodeStringResult", 
+    "ParentCodeResult",
+    "CountResult",
+    "TaxMatrixResult",
+    "InsertedIdResult",
+    "ManagementAccountResult"
+  ],
+  "commits": [
+    "97d37cc - feat(api): E2 BATCH 2 - corrigir SQL result typing em 7 rotas",
+    "003727c - fix(api): corrigir tipo de MaxCodeStringResult em suggest-code"
+  ]
+}
+
