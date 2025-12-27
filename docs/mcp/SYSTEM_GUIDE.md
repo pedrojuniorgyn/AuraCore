@@ -515,10 +515,117 @@ fi
 
 ---
 
-## 13. HISTÓRICO DE VERSÕES
+## 13. LIMITAÇÕES DO check_cursor_issues ⚠️
+
+### O que `check_cursor_issues` detecta:
+
+| Tipo | Ferramenta | Exemplo |
+|------|------------|---------|
+| ✅ Erros de compilação TypeScript | `tsc` | Type mismatch, undefined properties |
+| ✅ Erros de lint | `eslint` | Unused variables, explicit any |
+| ✅ Erros de sintaxe | `tsc` | Missing semicolons, typos |
+
+### O que `check_cursor_issues` NÃO detecta:
+
+| Tipo | Por quê | Exemplo |
+|------|---------|---------|
+| ❌ **Referências circulares** | Análise estática limitada | `const x = x + 1` compila mas falha em runtime |
+| ❌ **Uso antes da definição** | Escopo aninhado não validado | `const errorMessage = errorMessage ?? 'default'` |
+| ❌ **Conflitos de escopo** | tsc não valida shadowing | Variável redeclarada em escopo interno |
+| ❌ **Erros de lógica** | Validação semântica inexistente | `if (x = 5)` ao invés de `if (x === 5)` |
+| ❌ **Race conditions** | Runtime behavior | Async/await mal usado |
+| ❌ **Memory leaks** | Runtime behavior | Event listeners não removidos |
+
+### Caso Real: E3 - 3 Issues do Agent Review
+
+#### O problema
+
+Após BATCH 3.2, o script introduziu um bug sutil:
+
+```typescript
+// ❌ BUG: Referência circular (compila mas falha em runtime)
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  //                                           ^^^^^^^^^^^^^ 
+  //                                           Deveria ser error.message
+  return { error: errorMessage }; // undefined em runtime!
+}
+```
+
+#### Por que tsc não detectou?
+
+1. **Sintaxe válida**: `errorMessage` é um identificador válido
+2. **Tipo correto**: TypeScript infere `string` corretamente
+3. **Escopo válido**: Variável no mesmo escopo do `const`
+4. **Sem erro de compilação**: Código compila sem warnings
+
+#### Como o Agent Review detectou?
+
+- **Análise de fluxo de dados**: Detecta uso antes da definição
+- **Análise semântica**: Identifica referências circulares
+- **Análise de escopo**: Valida shadowing e conflitos
+
+### Recomendação OBRIGATÓRIA
+
+**Após `check_cursor_issues`, SEMPRE verificar o Agent Review do Cursor antes do push.**
+
+#### Fluxo Atualizado
+
+```bash
+# 1. check_cursor_issues (MCP)
+Tool: check_cursor_issues
+Args: { "context": "pré-commit" }
+
+# 2. Verificar Agent Review (Cursor IDE)
+# - Abrir painel "Problems" no Cursor
+# - Filtrar por "Agent Review"
+# - Corrigir TODOS os issues detectados
+
+# 3. Se Agent Review OK: commit
+git commit -m "mensagem"
+
+# 4. check_cursor_issues pós-commit
+Tool: check_cursor_issues
+Args: { "context": "pós-commit" }
+
+# 5. Verificar Agent Review novamente
+
+# 6. Se ambos OK: push
+git push origin main
+```
+
+### Exemplo de Correção
+
+```typescript
+// ❌ ANTES (Agent Review detectou, tsc não)
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  // Referência circular: errorMessage usado antes de definir
+}
+
+// ✅ DEPOIS (corrigido)
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  // ✓ error.message correto
+}
+```
+
+### Lições Aprendidas
+
+| Lição | Aplicação |
+|-------|-----------|
+| **tsc não é suficiente** | Sempre usar Agent Review também |
+| **Scripts precisam de revisão** | Mesmo scripts automatizados têm bugs |
+| **Erros sutis existem** | Referências circulares compilam mas falham |
+| **Runtime ≠ Compile-time** | Alguns erros só aparecem em execução |
+
+---
+
+## 14. HISTÓRICO DE VERSÕES
 
 | Versão | Data | Alterações |
 |--------|------|------------|
 | 1.0.0 | 27/12/2025 | Versão inicial com sistema completo |
 | 1.1.0 | 27/12/2025 | + Seção 12: Prevenção de Regressões (lição E2 BATCH 1) |
+| 1.2.0 | 27/12/2025 | + Seção 13: Limitações do check_cursor_issues (lição E3) |
 
