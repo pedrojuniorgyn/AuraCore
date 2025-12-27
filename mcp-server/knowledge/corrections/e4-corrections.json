@@ -1,0 +1,21 @@
+{
+  "epic": "E4",
+  "corrections": [
+    {
+      "id": "LC-843577",
+      "date": "2025-12-27",
+      "epic": "E4",
+      "error": "204 erros TypeScript (TS7022 + TS2448) de referências circulares em errorMessage introduzidos pelo script E3 BATCH 3.2. Bug: const errorMessage = error instanceof Error ? errorMessage : String(error); usava errorMessage antes de definir. Agent Review detectou 3 bugs adicionais: (1) dead code em cte/correction usando errorMessage declarado mas não utilizado, (2) escopo aninhado em seed-ncm-categories onde catch externo usava errorMessage do catch interno, (3) path resolution não robusto no script fix-circular-errorMessage.ts",
+      "correction": "Correção massiva automática via script fix-circular-errorMessage.ts: 108 substituições de ? errorMessage : para ? error.message : em 67 arquivos API. Correções manuais: (1) cte/correction.ts linha 120 usa errorMessage ao invés de repetir type guard, (2) seed-ncm-categories.ts linha 170 adiciona const errorMessage no catch externo, (3) fix-circular-errorMessage.ts usa path.resolve(__dirname, '..') para path resolution robusto",
+      "files_affected": [
+        "scripts/fix-circular-errorMessage.ts",
+        "src/app/api/fiscal/cte/[id]/correction/route.ts",
+        "src/app/api/admin/seed-ncm-categories/route.ts",
+        "src/app/api/**/*.ts (67 arquivos com referências circulares)"
+      ],
+      "pattern_created": "error-handling-circular-reference-prevention",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

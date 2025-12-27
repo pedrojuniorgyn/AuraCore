@@ -1,0 +1,22 @@
+{
+  "epic": "E6",
+  "corrections": [
+    {
+      "id": "LC-167885",
+      "date": "2025-12-27",
+      "epic": "E6",
+      "error": "TS2304: Cannot find name - 13 erros diretos + 6 em cascata (total 19): E6-A (4 erros) - rotas Next.js 15 usavam resolvedParams sem declarar (params mudou de objeto para Promise<Params>). E6-B (9 erros + 6 cascata) - sefaz-processor.ts usava 3 tabelas do schema (inboundInvoices, cargoDocuments, externalCtes) sem importá-las, causando erros TS2304 diretos que geravam 6 erros adicionais em cascata.",
+      "correction": "E6-A: Adicionado 'const resolvedParams = await params;' em 4 rotas API antes do primeiro uso de resolvedParams.id. Padrão correto: declarar no início da função async, logo após withAuth/withPermission. E6-B: Adicionado 3 imports ao bloco de import do schema em sefaz-processor.ts (linhas 6-14): inboundInvoices (usado 4x), cargoDocuments (usado 6x), externalCtes (usado 1x). Total: 5 arquivos corrigidos, 19 erros eliminados.",
+      "files_affected": [
+        "src/app/api/financial/billing/[id]/pdf/route.ts",
+        "src/app/api/fiscal/cte/[id]/authorize/route.ts",
+        "src/app/api/fiscal/cte/[id]/cancel/route.ts",
+        "src/app/api/fiscal/cte/[id]/query/route.ts",
+        "src/services/sefaz-processor.ts"
+      ],
+      "pattern_created": "nextjs15-params-resolution-and-schema-imports",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

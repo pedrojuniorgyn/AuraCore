@@ -1,0 +1,34 @@
+{
+  "epic": "E5",
+  "corrections": [
+    {
+      "id": "LC-991075",
+      "date": "2025-12-27",
+      "epic": "E5",
+      "error": "TS2304: Cannot find name 'errorMessage' - 150 ocorrências em blocos catch (error: unknown) onde errorMessage era usado sem definição prévia ou em escopo incorreto. Causado por scripts E3/E4 que removeram/alteraram código mas deixaram usos órfãos de errorMessage.",
+      "correction": "Corrigido em 2 batches: BATCH 1 (113 arquivos) - script fix-missing-errorMessage.ts adicionou const errorMessage = error instanceof Error ? error.message : String(error); em blocos catch simples. BATCH 2 (21 arquivos) - script fix-nested-errorMessage.ts corrigiu blocos catch aninhados onde escopo externo usava errorMessage do escopo interno. Total: 134 arquivos, 137 blocos catch corrigidos, 150 erros TS2304 eliminados (-100%).",
+      "files_affected": [
+        "scripts/fix-missing-errorMessage.ts",
+        "scripts/fix-nested-errorMessage.ts",
+        "src/app/api/**/*.ts (134 arquivos corrigidos)",
+        "src/services/**/*.ts"
+      ],
+      "pattern_created": "error-handling-errorMessage-scope",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-256335",
+      "date": "2025-12-27",
+      "epic": "E5",
+      "error": "Bug crítico em fix-missing-errorMessage.ts: Script usava matchAll() para encontrar blocos catch e modificava a string content durante a iteração. Isso invalidava os índices de todos os matches subsequentes, causando inserções em posições incorretas quando o arquivo tinha múltiplos blocos catch. Felizmente, o bug não causou corrupção funcional (código compila corretamente), apenas problemas de indentação em ~20 arquivos.",
+      "correction": "Implementada estratégia collect-sort-apply: (1) Coletar todas as modificações em um array antes de aplicar, (2) Ordenar modificações por posição (do final para o início), (3) Aplicar modificações em ordem reversa para garantir que índices permaneçam válidos. Mesma estratégia já usada com sucesso em fix-nested-errorMessage.ts. Bug corrigido sem reprocessar arquivos, pois não houve corrupção funcional.",
+      "files_affected": [
+        "scripts/fix-missing-errorMessage.ts"
+      ],
+      "pattern_created": "script-index-invalidation-prevention",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

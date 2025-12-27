@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.7",
+  "version": "1.0.11",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -141,6 +141,68 @@
         "src/app/api/admin/add-fiscal-fk-columns/route.ts"
       ],
       "pattern_created": "error-handling-unknown v2.0.0",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-843577",
+      "date": "2025-12-27",
+      "epic": "E4",
+      "error": "204 erros TypeScript (TS7022 + TS2448) de referências circulares em errorMessage introduzidos pelo script E3 BATCH 3.2. Bug: const errorMessage = error instanceof Error ? errorMessage : String(error); usava errorMessage antes de definir. Agent Review detectou 3 bugs adicionais: (1) dead code em cte/correction usando errorMessage declarado mas não utilizado, (2) escopo aninhado em seed-ncm-categories onde catch externo usava errorMessage do catch interno, (3) path resolution não robusto no script fix-circular-errorMessage.ts",
+      "correction": "Correção massiva automática via script fix-circular-errorMessage.ts: 108 substituições de ? errorMessage : para ? error.message : em 67 arquivos API. Correções manuais: (1) cte/correction.ts linha 120 usa errorMessage ao invés de repetir type guard, (2) seed-ncm-categories.ts linha 170 adiciona const errorMessage no catch externo, (3) fix-circular-errorMessage.ts usa path.resolve(__dirname, '..') para path resolution robusto",
+      "files_affected": [
+        "scripts/fix-circular-errorMessage.ts",
+        "src/app/api/fiscal/cte/[id]/correction/route.ts",
+        "src/app/api/admin/seed-ncm-categories/route.ts",
+        "src/app/api/**/*.ts (67 arquivos com referências circulares)"
+      ],
+      "pattern_created": "error-handling-circular-reference-prevention",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-991075",
+      "date": "2025-12-27",
+      "epic": "E5",
+      "error": "TS2304: Cannot find name 'errorMessage' - 150 ocorrências em blocos catch (error: unknown) onde errorMessage era usado sem definição prévia ou em escopo incorreto. Causado por scripts E3/E4 que removeram/alteraram código mas deixaram usos órfãos de errorMessage.",
+      "correction": "Corrigido em 2 batches: BATCH 1 (113 arquivos) - script fix-missing-errorMessage.ts adicionou const errorMessage = error instanceof Error ? error.message : String(error); em blocos catch simples. BATCH 2 (21 arquivos) - script fix-nested-errorMessage.ts corrigiu blocos catch aninhados onde escopo externo usava errorMessage do escopo interno. Total: 134 arquivos, 137 blocos catch corrigidos, 150 erros TS2304 eliminados (-100%).",
+      "files_affected": [
+        "scripts/fix-missing-errorMessage.ts",
+        "scripts/fix-nested-errorMessage.ts",
+        "src/app/api/**/*.ts (134 arquivos corrigidos)",
+        "src/services/**/*.ts"
+      ],
+      "pattern_created": "error-handling-errorMessage-scope",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-256335",
+      "date": "2025-12-27",
+      "epic": "E5",
+      "error": "Bug crítico em fix-missing-errorMessage.ts: Script usava matchAll() para encontrar blocos catch e modificava a string content durante a iteração. Isso invalidava os índices de todos os matches subsequentes, causando inserções em posições incorretas quando o arquivo tinha múltiplos blocos catch. Felizmente, o bug não causou corrupção funcional (código compila corretamente), apenas problemas de indentação em ~20 arquivos.",
+      "correction": "Implementada estratégia collect-sort-apply: (1) Coletar todas as modificações em um array antes de aplicar, (2) Ordenar modificações por posição (do final para o início), (3) Aplicar modificações em ordem reversa para garantir que índices permaneçam válidos. Mesma estratégia já usada com sucesso em fix-nested-errorMessage.ts. Bug corrigido sem reprocessar arquivos, pois não houve corrupção funcional.",
+      "files_affected": [
+        "scripts/fix-missing-errorMessage.ts"
+      ],
+      "pattern_created": "script-index-invalidation-prevention",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-167885",
+      "date": "2025-12-27",
+      "epic": "E6",
+      "error": "TS2304: Cannot find name - 13 erros diretos + 6 em cascata (total 19): E6-A (4 erros) - rotas Next.js 15 usavam resolvedParams sem declarar (params mudou de objeto para Promise<Params>). E6-B (9 erros + 6 cascata) - sefaz-processor.ts usava 3 tabelas do schema (inboundInvoices, cargoDocuments, externalCtes) sem importá-las, causando erros TS2304 diretos que geravam 6 erros adicionais em cascata.",
+      "correction": "E6-A: Adicionado 'const resolvedParams = await params;' em 4 rotas API antes do primeiro uso de resolvedParams.id. Padrão correto: declarar no início da função async, logo após withAuth/withPermission. E6-B: Adicionado 3 imports ao bloco de import do schema em sefaz-processor.ts (linhas 6-14): inboundInvoices (usado 4x), cargoDocuments (usado 6x), externalCtes (usado 1x). Total: 5 arquivos corrigidos, 19 erros eliminados.",
+      "files_affected": [
+        "src/app/api/financial/billing/[id]/pdf/route.ts",
+        "src/app/api/fiscal/cte/[id]/authorize/route.ts",
+        "src/app/api/fiscal/cte/[id]/cancel/route.ts",
+        "src/app/api/fiscal/cte/[id]/query/route.ts",
+        "src/services/sefaz-processor.ts"
+      ],
+      "pattern_created": "nextjs15-params-resolution-and-schema-imports",
       "status": "APPROVED",
       "must_not_repeat": true
     }
