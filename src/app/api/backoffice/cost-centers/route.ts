@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: costCenters.recordset || costCenters
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching cost centers:", error);
     return NextResponse.json({
       success: false,
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
 
 
 

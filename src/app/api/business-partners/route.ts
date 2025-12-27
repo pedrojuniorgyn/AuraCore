@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       data: partnersList,
       total: partnersList.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Se for erro de autenticação, retorna a resposta de erro direto
     if (error instanceof Response) {
       return error;
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       .orderBy(desc(businessPartners.id));
 
     return NextResponse.json(newPartner, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

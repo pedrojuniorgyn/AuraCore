@@ -16,7 +16,7 @@ export async function GET(
         "Content-Disposition": `inline; filename="DACTE_${cteId}.pdf"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

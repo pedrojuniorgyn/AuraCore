@@ -22,7 +22,7 @@ export async function PUT(
       success: true,
       message: "Sinistro atualizado"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
@@ -46,13 +46,14 @@ export async function DELETE(
       success: true,
       message: "Sinistro excluído"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

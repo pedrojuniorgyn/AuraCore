@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 30, // 30 dias
     });
     return res;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: error?.message ?? String(error) }, { status: 500 });
   }
@@ -73,6 +73,7 @@ export async function DELETE() {
   });
   return res;
 }
+
 
 
 

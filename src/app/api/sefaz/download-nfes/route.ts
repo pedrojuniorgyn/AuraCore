@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         );
 
         console.log("✅ Processamento concluído:", processResult);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("❌ Erro ao processar documentos:", error.message);
         // Continua e retorna os dados da consulta mesmo se o processamento falhar
       }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

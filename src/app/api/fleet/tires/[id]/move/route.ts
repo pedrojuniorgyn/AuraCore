@@ -53,7 +53,7 @@ export async function POST(
       .where(eq(tires.id, tireId));
 
     return NextResponse.json({ success: true, message: "Movimento registrado" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

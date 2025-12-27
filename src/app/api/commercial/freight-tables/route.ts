@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: tablesWithDetails 
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
       message: "Tabela de frete criada com sucesso!",
       data: { id: tableId },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

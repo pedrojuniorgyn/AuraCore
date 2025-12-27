@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       success: true,
       data: allTrips,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
       message: "Viagem criada!",
       data: newTrip,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

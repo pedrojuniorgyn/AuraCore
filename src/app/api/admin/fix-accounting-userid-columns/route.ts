@@ -158,7 +158,7 @@ export async function GET() {
       success: true,
       message: "Colunas *_by do módulo contábil compatibilizadas para NVARCHAR(255) (quando aplicável).",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { success: false, error: error.message, stack: error.stack },
       { status: 500 }

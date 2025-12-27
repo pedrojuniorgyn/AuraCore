@@ -108,7 +108,7 @@ export async function POST(req: Request) {
         "✅ Índices de performance criados"
       ]
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao executar migration:", error);
     return NextResponse.json(
       { error: error.message },
@@ -116,6 +116,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
 

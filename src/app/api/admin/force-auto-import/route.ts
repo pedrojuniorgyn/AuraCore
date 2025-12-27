@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       note: "Verifique os logs acima para detalhes da importação.",
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ [FORCE] Erro ao executar importação manual:", error);
     return NextResponse.json(
       {
@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
     note: "A importação será executada imediatamente, sem aguardar o cron job.",
   });
 }
+
 
 
 

@@ -132,7 +132,7 @@ export async function POST(
         success: true,
         message: "Fatura enviada por email com sucesso!",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao enviar email:", error);
       return NextResponse.json(
         { error: error.message },

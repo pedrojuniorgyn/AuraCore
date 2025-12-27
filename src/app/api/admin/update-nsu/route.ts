@@ -40,13 +40,14 @@ export async function POST(request: NextRequest) {
       message: `NSU atualizado para ${newNsu}`,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
     );
   }
 }
+
 
 
 

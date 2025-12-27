@@ -45,7 +45,7 @@ export async function GET(req: Request) {
       success: true,
       data: result.recordset || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao listar contas gerenciais:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -128,11 +128,12 @@ export async function POST(req: Request) {
       message: "Conta gerencial criada com sucesso!",
       data: { id: result[0]?.id },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar conta gerencial:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

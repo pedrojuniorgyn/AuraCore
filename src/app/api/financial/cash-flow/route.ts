@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       success: true,
       data: { income, expenses, meta: { monthsAhead: monthsAheadSafe } },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

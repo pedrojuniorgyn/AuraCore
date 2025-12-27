@@ -172,7 +172,7 @@ export async function PUT(
       success: true,
       message: "Tabela atualizada com sucesso!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao atualizar tabela:", error);
     return NextResponse.json(
       { error: error.message || "Falha ao atualizar tabela" },
@@ -207,6 +207,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 

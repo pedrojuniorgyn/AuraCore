@@ -38,7 +38,7 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: quote });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -136,7 +136,7 @@ export async function PUT(
       message: "Cotação atualizada!",
       data: updated,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -183,7 +183,7 @@ export async function DELETE(
       success: true,
       message: "Cotação excluída!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

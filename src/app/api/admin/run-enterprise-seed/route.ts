@@ -26,13 +26,14 @@ export async function POST(request: NextRequest) {
         cost_allocation_rules: "3 regras de rateio"
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

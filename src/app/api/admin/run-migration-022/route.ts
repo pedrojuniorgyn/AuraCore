@@ -145,7 +145,7 @@ export async function POST(req: Request) {
         "✅ Campo financial_cost_centers.class"
       ]
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao executar migration:", error);
     return NextResponse.json(
       { error: error.message },
@@ -153,6 +153,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
 

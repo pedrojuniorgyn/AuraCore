@@ -58,7 +58,7 @@ export async function POST(req: Request) {
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar SPED Fiscal:", error);
     return NextResponse.json(
       { error: error.message },
@@ -66,6 +66,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
 

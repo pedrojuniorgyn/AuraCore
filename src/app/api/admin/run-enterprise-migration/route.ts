@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         ]
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro na migration:", error);
     return NextResponse.json({
       success: false,

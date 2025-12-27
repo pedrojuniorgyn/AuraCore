@@ -13,13 +13,14 @@ export async function POST(request: NextRequest) {
       lines: blockG,
       message: `Bloco G gerado com ${blockG.length} linhas`
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

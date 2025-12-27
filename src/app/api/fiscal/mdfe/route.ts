@@ -29,7 +29,7 @@ export async function GET(req: Request) {
       success: true,
       data: mdfes,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
       message: "MDFe criado! (XML será gerado em produção)",
       data: newMdfe,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

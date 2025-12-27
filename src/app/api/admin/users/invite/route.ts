@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
         message: "Usuário convidado com sucesso. Ele já pode logar via Google Workspace.",
         data: { userId, email, roleId, branchIds, loginUrl },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Error inviting user:", error);
       return NextResponse.json(
         { error: "Falha ao convidar usuário", details: error?.message || String(error) },

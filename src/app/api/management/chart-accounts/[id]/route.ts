@@ -41,7 +41,7 @@ export async function GET(
       success: true,
       data: result[0],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar conta gerencial:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -85,7 +85,7 @@ export async function PUT(
       success: true,
       message: "Conta atualizada com sucesso!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao atualizar conta gerencial:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -118,11 +118,12 @@ export async function DELETE(
       success: true,
       message: "Conta excluída com sucesso!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao excluir conta gerencial:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

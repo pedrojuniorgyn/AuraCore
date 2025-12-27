@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       .orderBy(financialCategories.code);
 
     return NextResponse.json({ data: categories, total: categories.length });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       .orderBy(financialCategories.id);
 
     return NextResponse.json({ data: newCategory }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

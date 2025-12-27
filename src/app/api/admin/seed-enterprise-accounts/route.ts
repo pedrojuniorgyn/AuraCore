@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
         includeTaxMatrix,
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

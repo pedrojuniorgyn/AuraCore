@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       totalPaidThisMonth: totalPaid?.total || 0,
       countPaidThisMonth: totalPaid?.count || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

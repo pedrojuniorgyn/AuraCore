@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: invoices.recordset || invoices
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
@@ -41,10 +41,11 @@ export async function POST(request: NextRequest) {
     `);
 
     return NextResponse.json({ success: true, message: "Pré-fatura gerada" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
 
 
 

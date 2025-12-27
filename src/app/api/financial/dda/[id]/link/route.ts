@@ -30,7 +30,7 @@ export async function POST(
       success: true,
       message: "Boleto vinculado com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao vincular DDA:", error);
     return NextResponse.json(
       { error: error.message || "Falha ao vincular DDA" },

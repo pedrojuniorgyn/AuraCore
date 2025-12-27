@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       data: result.recordset,
       total: result.recordset.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao buscar regras PCG-NCM:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao buscar regras" },
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Regra criada com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao criar regra:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao criar regra" },

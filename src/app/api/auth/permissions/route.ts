@@ -20,7 +20,7 @@ export async function GET() {
       success: true,
       permissions,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar permissões:", error);
     return NextResponse.json(
       { error: error.message },
@@ -28,6 +28,7 @@ export async function GET() {
     );
   }
 }
+
 
 
 

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       message: "Coluna existe e está acessível",
       sample: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao testar coluna:", error);
     return NextResponse.json(
       { error: error.message },
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

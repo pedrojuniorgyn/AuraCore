@@ -153,7 +153,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         .where(eq(users.id, id));
 
       return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Error updating user access:", error);
       return NextResponse.json(
         { error: "Falha ao atualizar acessos", details: error?.message || String(error) },

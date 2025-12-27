@@ -108,7 +108,7 @@ export async function POST(
           { status: 422 } // Unprocessable Entity
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao autorizar CTe:", error);
       return NextResponse.json(
         {

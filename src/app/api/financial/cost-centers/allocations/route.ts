@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       success: true,
       message: "Rateio criado com sucesso!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar rateio:", error);
     return NextResponse.json(
       { error: error.message },
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
 

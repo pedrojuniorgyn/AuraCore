@@ -71,7 +71,7 @@ export async function PUT(
       .limit(1);
 
     return NextResponse.json({ success: true, data: lead });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -134,7 +134,7 @@ export async function DELETE(
       success: true,
       message: "Lead excluído com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

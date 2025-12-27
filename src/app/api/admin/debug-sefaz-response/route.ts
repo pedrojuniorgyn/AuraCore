@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(debug, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         error: error.message,
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       .orderBy(accountsReceivable.dueDate);
 
     return NextResponse.json({ data: receivables, total: receivables.length });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       .orderBy(accountsReceivable.id);
 
     return NextResponse.json({ data: newReceivable }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

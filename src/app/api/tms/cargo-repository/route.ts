@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       total: filteredCargos.length,
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

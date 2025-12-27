@@ -110,7 +110,7 @@ export async function POST(
         message: "Carta de Correção registrada (envio para Sefaz pendente)",
         data: { cceId, sequenceNumber },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof Response) {
         return error;
       }

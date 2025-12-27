@@ -39,11 +39,12 @@ export async function POST(req: Request) {
         period,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao alocar custos:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

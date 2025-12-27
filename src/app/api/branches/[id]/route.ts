@@ -120,7 +120,7 @@ export async function GET(
     }
 
     return NextResponse.json({ data: branch });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -272,7 +272,7 @@ export async function PUT(
     }
 
     return NextResponse.json({ data: updatedBranch });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -363,7 +363,7 @@ export async function DELETE(
       message: "Filial excluída com sucesso.",
       data: { id, name: currentBranch.name },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

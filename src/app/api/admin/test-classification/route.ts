@@ -133,7 +133,7 @@ export async function POST() {
     console.log("✅ [TEST] Teste concluído!");
 
     return NextResponse.json(report, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ [TEST] Erro no teste:", error);
     return NextResponse.json(
       {

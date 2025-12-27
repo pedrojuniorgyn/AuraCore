@@ -22,7 +22,7 @@ export async function GET() {
       .orderBy(crmLeads.createdAt);
 
     return NextResponse.json({ success: true, data: leads });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, data: lead }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

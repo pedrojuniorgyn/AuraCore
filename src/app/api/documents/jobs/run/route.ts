@@ -12,7 +12,7 @@ export async function POST() {
     }
     const result = await runDocumentJobsTick({ maxJobs: 10 });
     return NextResponse.json({ success: true, result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: error?.message ?? String(error) }, { status: 500 });
   }

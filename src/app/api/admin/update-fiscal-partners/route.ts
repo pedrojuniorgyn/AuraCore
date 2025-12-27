@@ -58,7 +58,7 @@ export async function GET() {
       nfes: updated,
       total: updated,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao atualizar parceiros:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

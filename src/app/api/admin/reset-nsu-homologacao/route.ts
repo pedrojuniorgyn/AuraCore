@@ -66,11 +66,12 @@ export async function GET(request: Request) {
         nextImport: "Começará do NSU 0 no ambiente de HOMOLOGAÇÃO",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao resetar NSU:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

@@ -394,7 +394,7 @@ export async function GET() {
         "accounts_receivable.journal_entry_id",
       ],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro na migration:", error);
     return NextResponse.json(
       { error: error.message, stack: error.stack },

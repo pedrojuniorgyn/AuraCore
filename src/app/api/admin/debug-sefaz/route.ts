@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         "X-Total-Documents": result.totalDocuments.toString(),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro no debug Sefaz:", error);
     return NextResponse.json(
       { error: error.message },

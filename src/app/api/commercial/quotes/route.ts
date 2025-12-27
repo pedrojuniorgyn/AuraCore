@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       success: true,
       data: quotes,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -201,7 +201,7 @@ export async function POST(req: Request) {
       message: "Cotação criada com sucesso!",
       data: newQuote,
     }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

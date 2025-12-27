@@ -90,7 +90,7 @@ export async function POST(
       newClassification,
       newFiscalStatus,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao reclassificar documento:", error);
     return NextResponse.json(
       { error: error.message },

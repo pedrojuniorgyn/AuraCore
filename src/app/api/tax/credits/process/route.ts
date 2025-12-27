@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         totalCreditGenerated: result.totalCredit,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao processar créditos:", error);
     return NextResponse.json(
       { error: error.message },
@@ -36,6 +36,7 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
 
 

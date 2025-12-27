@@ -54,7 +54,7 @@ export async function GET(req: Request) {
         icmsCalculation: icmsCalculation || null,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao calcular imposto:", error);
     
     // Se for erro de matriz não configurada, retornar erro específico
@@ -74,6 +74,7 @@ export async function GET(req: Request) {
     );
   }
 }
+
 
 
 

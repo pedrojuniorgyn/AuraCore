@@ -92,7 +92,7 @@ export async function POST(
           pdfUrl: resultado.pdfUrl,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao gerar boleto:", error);
       return NextResponse.json(
         { error: error.message },

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     return NextResponse.json({ success: true, job });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: error?.message ?? String(error) }, { status: 500 });
   }

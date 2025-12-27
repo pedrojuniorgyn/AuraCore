@@ -54,7 +54,7 @@ export async function PUT(
         .where(and(eq(users.id, id), eq(users.organizationId, ctx.organizationId)));
 
       return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Error setting user password:", error);
       return NextResponse.json(
         { error: "Falha ao definir senha", details: error?.message || String(error) },

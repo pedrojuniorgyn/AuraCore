@@ -36,7 +36,7 @@ export async function POST(
       message: "Lançamento contábil gerado com sucesso",
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao contabilizar:", error);
     return NextResponse.json(
       { error: error.message },

@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       vehicleId: result.vehicleId,
       costCenterId: result.costCenterId,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar veículo:", error);
     return NextResponse.json(
       { error: error.message || "Falha ao criar veículo" },

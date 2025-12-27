@@ -56,7 +56,7 @@ export async function GET(
     });
 
     return NextResponse.json(calculation);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao calcular pagamento:", error);
     return NextResponse.json(
       { error: error.message },
@@ -64,6 +64,7 @@ export async function GET(
     );
   }
 }
+
 
 
 

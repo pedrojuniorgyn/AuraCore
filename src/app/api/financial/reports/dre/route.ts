@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
       { error: "Tipo de relatório inválido. Use: consolidated, by_plate, by_dimension" },
       { status: 400 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar DRE:", error);
     return NextResponse.json(
       { error: "Erro ao gerar DRE", details: error.message },

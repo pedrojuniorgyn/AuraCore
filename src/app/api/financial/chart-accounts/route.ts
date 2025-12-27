@@ -45,7 +45,7 @@ export async function GET(req: Request) {
         tree, // Árvore (para visualização)
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -192,7 +192,7 @@ export async function POST(req: Request) {
       message: "Conta criada com sucesso!",
       data: newAccount,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

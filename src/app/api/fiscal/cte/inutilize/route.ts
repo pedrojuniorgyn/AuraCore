@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           { status: 422 }
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao inutilizar:", error);
       return NextResponse.json(
         { error: error.message },

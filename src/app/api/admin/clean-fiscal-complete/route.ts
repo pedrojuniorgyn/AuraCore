@@ -101,7 +101,7 @@ export async function POST() {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro na limpeza:", error);
     return NextResponse.json(
       { 

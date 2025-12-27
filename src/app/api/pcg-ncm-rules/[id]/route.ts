@@ -61,7 +61,7 @@ export async function GET(
       success: true,
       data: result.recordset[0],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao buscar regra:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao buscar regra" },
@@ -147,7 +147,7 @@ export async function PUT(
       success: true,
       message: "Regra atualizada com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao atualizar regra:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao atualizar regra" },
@@ -196,7 +196,7 @@ export async function DELETE(
       success: true,
       message: "Regra excluída com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao excluir regra:", error);
     return NextResponse.json(
       { error: error.message || "Erro ao excluir regra" },

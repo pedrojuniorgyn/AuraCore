@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         chartAccount: n.chartAccountCode ? `${n.chartAccountCode} - ${n.chartAccountName}` : "N/A",
       })),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao listar NCM categories:", error);
     return NextResponse.json(
       { error: error.message },
@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

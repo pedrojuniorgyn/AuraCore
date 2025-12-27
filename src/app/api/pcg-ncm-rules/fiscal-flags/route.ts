@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
         priority: flags.priority,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro em /api/pcg-ncm-rules/fiscal-flags:", error);
     return NextResponse.json(
       { 
@@ -103,6 +103,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

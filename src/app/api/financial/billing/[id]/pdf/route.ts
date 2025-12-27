@@ -61,7 +61,7 @@ export async function GET(
           "Content-Disposition": `attachment; filename="fatura-${billingId}.pdf"`,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao gerar PDF:", error);
       return NextResponse.json(
         { error: error.message },

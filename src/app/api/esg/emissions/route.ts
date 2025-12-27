@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: emissions.recordset || emissions
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
@@ -57,10 +57,11 @@ export async function POST(request: NextRequest) {
       message: "Emissão de carbono calculada",
       co2_ton: co2Ton
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
 
 
 

@@ -17,7 +17,7 @@ export async function GET() {
       .orderBy(fuelTransactions.transactionDate);
 
     return NextResponse.json({ success: true, data: transactions });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       .orderBy(desc(fuelTransactions.id));
 
     return NextResponse.json({ success: true, data: transaction });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

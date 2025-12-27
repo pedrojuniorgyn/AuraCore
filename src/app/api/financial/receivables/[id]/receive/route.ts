@@ -106,7 +106,7 @@ export async function POST(
       .where(eq(accountsReceivable.id, id));
 
     return NextResponse.json({ data: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

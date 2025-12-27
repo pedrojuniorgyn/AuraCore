@@ -81,7 +81,7 @@ export async function POST() {
       success: true,
       message: "Tabela notifications criada com sucesso!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar tabela:", error);
     return NextResponse.json(
       { success: false, error: error.message },

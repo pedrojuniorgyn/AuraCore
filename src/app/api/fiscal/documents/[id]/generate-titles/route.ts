@@ -74,7 +74,7 @@ export async function POST(
       message: `${result.titlesGenerated} título(s) gerado(s) com sucesso`,
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar títulos:", error);
     return NextResponse.json(
       { error: error.message },

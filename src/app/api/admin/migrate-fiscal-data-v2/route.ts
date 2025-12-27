@@ -121,7 +121,7 @@ export async function GET() {
       message: "Migração executada com sucesso",
       total: (total as any)?.total || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro na migração:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

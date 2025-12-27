@@ -15,13 +15,14 @@ export async function PUT(
       success: true,
       message: "Pré-fatura enviada para aprovação do cliente"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

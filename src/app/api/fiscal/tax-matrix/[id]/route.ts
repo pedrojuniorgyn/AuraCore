@@ -24,7 +24,7 @@ export async function PUT(
       success: true,
       message: "Regra fiscal atualizada"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
@@ -48,7 +48,7 @@ export async function DELETE(
       success: true,
       message: "Regra fiscal desativada"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const limit = Number(searchParams.get("limit") ?? "50");
     const jobs = await listJobs({ organizationId: ctx.organizationId, limit });
     return NextResponse.json({ success: true, jobs });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: error?.message ?? String(error) }, { status: 500 });
   }

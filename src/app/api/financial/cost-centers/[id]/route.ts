@@ -37,7 +37,7 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: result[0] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -188,7 +188,7 @@ export async function PUT(
       message: "Centro de custo atualizado com sucesso!",
       data: updated,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -361,7 +361,7 @@ export async function DELETE(
       success: true,
       message: "Centro de custo excluído com sucesso!",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

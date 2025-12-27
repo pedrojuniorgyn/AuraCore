@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(tripOccurrences.createdAt));
 
     return NextResponse.json({ data: occurrences });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       : [];
 
     return NextResponse.json({ success: true, data: occurrence });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

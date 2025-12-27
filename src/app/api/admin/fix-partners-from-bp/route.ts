@@ -30,11 +30,12 @@ export async function GET() {
       success: true,
       message: "Parceiros atualizados com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

@@ -24,7 +24,7 @@ export async function POST(
       payableId,
       message: "Conta a pagar criada com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar conta a pagar:", error);
     return NextResponse.json(
       { error: error.message || "Falha ao criar conta a pagar" },

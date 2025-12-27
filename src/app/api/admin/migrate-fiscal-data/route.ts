@@ -313,7 +313,7 @@ export async function GET() {
         cteMigrated,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro na migração:", error);
     return NextResponse.json(
       { error: error.message, stack: error.stack },

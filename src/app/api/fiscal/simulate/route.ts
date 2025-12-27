@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         legal: rule.legal_basis
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

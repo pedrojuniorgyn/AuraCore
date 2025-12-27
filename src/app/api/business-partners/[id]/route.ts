@@ -53,7 +53,7 @@ export async function GET(
     }
 
     return NextResponse.json(partner);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -204,7 +204,7 @@ export async function PUT(
     }
 
     return NextResponse.json(updatedPartner);
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -304,7 +304,7 @@ export async function DELETE(
       message: "Parceiro de negócio excluído com sucesso.",
       data: deletedPartner,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

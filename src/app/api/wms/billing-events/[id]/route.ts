@@ -25,7 +25,7 @@ export async function PUT(
       success: true,
       message: "Evento atualizado com sucesso"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
@@ -49,13 +49,14 @@ export async function DELETE(
       success: true,
       message: "Evento excluído com sucesso"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

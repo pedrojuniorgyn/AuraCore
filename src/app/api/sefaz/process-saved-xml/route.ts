@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       message: result.message || "Processamento concluído!",
       data: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       .orderBy(bankAccounts.name);
 
     return NextResponse.json({ data: accounts, total: accounts.length });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       .orderBy(bankAccounts.id);
 
     return NextResponse.json({ data: newAccount }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

@@ -62,7 +62,7 @@ export async function GET() {
     });
 
     return NextResponse.json({ success: true, data: enriched });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

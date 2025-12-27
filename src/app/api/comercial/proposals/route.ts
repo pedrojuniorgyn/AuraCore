@@ -18,7 +18,7 @@ export async function GET() {
       .orderBy(commercialProposals.createdAt);
 
     return NextResponse.json({ success: true, data: proposals });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, data: proposal }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

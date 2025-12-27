@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         migration2: "financial_cost_centers.class ✅"
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao executar migrations:", error);
     return NextResponse.json(
       {

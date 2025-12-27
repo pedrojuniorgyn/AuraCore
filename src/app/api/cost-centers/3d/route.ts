@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       message: "Centro de Custo 3D criado com sucesso!",
       data: { id: newId },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar CC 3D:", error);
     return NextResponse.json(
       { error: error.message },
@@ -136,7 +136,7 @@ export async function GET(req: Request) {
       success: true,
       data: result.recordset || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar CCs 3D:", error);
     return NextResponse.json(
       { error: error.message },

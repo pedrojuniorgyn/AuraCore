@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     const payables = await query.where(and(...conditions)).orderBy(accountsPayable.dueDate);
 
     return NextResponse.json({ data: payables, total: payables.length });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       .orderBy(accountsPayable.id);
 
     return NextResponse.json({ data: newPayable }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

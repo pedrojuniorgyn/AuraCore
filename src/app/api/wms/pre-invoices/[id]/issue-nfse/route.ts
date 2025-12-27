@@ -16,13 +16,14 @@ export async function POST(
       message: "NFS-e emitida com sucesso",
       invoiceNumber
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

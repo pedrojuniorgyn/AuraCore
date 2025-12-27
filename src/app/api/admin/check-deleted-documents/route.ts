@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         })),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao verificar documentos deletados:", error);
     return NextResponse.json(
       { error: error.message },
@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

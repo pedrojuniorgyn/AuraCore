@@ -22,7 +22,7 @@ export async function GET() {
       .orderBy(tires.createdAt);
 
     return NextResponse.json({ success: true, data: allTires });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       : [];
 
     return NextResponse.json({ success: true, data: tire });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

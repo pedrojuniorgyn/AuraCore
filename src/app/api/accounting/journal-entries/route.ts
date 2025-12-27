@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       );
 
     return NextResponse.json({ data: result.recordset ?? [] });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, entry: created }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

@@ -100,7 +100,7 @@ export async function POST(
       certificateExpiry.setFullYear(certificateExpiry.getFullYear() + 1);
 
       console.log("✅ Certificado válido");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao validar certificado:", error.message);
       
       // Tenta validar de outra forma (menos rigorosa)
@@ -152,7 +152,7 @@ export async function POST(
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -164,6 +164,7 @@ export async function POST(
     );
   }
 }
+
 
 
 

@@ -120,7 +120,7 @@ export async function GET(
         receivables,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar detalhes do documento:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -245,7 +245,7 @@ export async function PUT(
       success: true,
       document: updated,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -321,7 +321,7 @@ export async function DELETE(
       success: true,
       message: "Documento excluído com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao excluir documento:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

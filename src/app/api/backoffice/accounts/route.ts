@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: accounts.recordset || accounts
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching backoffice accounts:", error);
     return NextResponse.json({
       success: false,
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Lançamento criado com sucesso"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating backoffice entry:", error);
     return NextResponse.json({
       success: false,
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
 
 
 

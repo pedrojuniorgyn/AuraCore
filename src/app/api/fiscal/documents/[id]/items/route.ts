@@ -46,7 +46,7 @@ export async function GET(
     `);
 
     return NextResponse.json(result.recordset || []);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar itens:", error);
     return NextResponse.json(
       { error: error.message },
@@ -54,6 +54,7 @@ export async function GET(
     );
   }
 }
+
 
 
 

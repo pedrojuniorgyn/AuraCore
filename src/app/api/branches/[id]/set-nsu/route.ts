@@ -61,7 +61,7 @@ export async function PUT(
       { message: "NSU atualizado com sucesso!", nsu: cleanNsu },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -72,6 +72,7 @@ export async function PUT(
     );
   }
 }
+
 
 
 

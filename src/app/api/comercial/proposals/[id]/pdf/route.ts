@@ -37,7 +37,7 @@ export async function GET(
         "Content-Disposition": `attachment; filename="Proposta-${proposal.proposalNumber}.pdf"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

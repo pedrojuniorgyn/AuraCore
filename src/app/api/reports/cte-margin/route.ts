@@ -117,7 +117,7 @@ export async function GET(req: Request) {
         costBreakdown,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao calcular margem do CTe:", error);
     return NextResponse.json(
       { error: error.message },
@@ -125,6 +125,7 @@ export async function GET(req: Request) {
     );
   }
 }
+
 
 
 

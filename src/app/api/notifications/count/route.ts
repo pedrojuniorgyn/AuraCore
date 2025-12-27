@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const count = result[0]?.count || 0;
 
     return NextResponse.json({ count });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error counting notifications:", error);
     return NextResponse.json(
       { error: error.message },

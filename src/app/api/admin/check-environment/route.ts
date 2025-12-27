@@ -58,11 +58,12 @@ export async function GET() {
     console.log("   • null/undefined → tpAmb=2 (Homologação - TESTE)\n");
 
     return NextResponse.json(report);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 

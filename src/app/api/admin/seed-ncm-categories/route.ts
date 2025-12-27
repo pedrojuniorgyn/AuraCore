@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
         `);
 
         created++;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`❌ Erro ao criar NCM ${item.ncm}:`, error.message);
       }
     }
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       skipped,
       total: ncmCategories.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro no seed:", error);
     return NextResponse.json(
       { error: error.message },

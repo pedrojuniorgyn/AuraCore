@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Migration de NCM concluída com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro na migration:", error);
     return NextResponse.json(
       { error: error.message },
@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

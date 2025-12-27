@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       }
       throw e;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // getTenantContext() pode lançar NextResponse (401/500). Preserve.
     if (error instanceof Response) return error;
     console.error("❌ Erro ao sincronizar DDA:", error);

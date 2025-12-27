@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro no seed:", error);
     return NextResponse.json(
       {

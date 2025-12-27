@@ -83,7 +83,7 @@ export async function GET() {
         "financial_transactions",
       ],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao limpar tabelas:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

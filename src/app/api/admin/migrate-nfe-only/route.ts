@@ -39,7 +39,7 @@ export async function GET() {
       success: true,
       message: "NFes migradas com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

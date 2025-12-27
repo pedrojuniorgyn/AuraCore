@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: events.recordset || events
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
@@ -59,13 +59,14 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Evento registrado com sucesso"
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({
       success: false,
       error: error.message
     }, { status: 500 });
   }
 }
+
 
 
 

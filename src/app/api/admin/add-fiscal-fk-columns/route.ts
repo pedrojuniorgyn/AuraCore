@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         ADD fiscal_document_id BIGINT NULL
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_payable");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.message.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_payable");
       } else {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         ADD fiscal_document_id BIGINT NULL
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_receivable");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.message.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_receivable");
       } else {
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         FOREIGN KEY (fiscal_document_id) REFERENCES fiscal_documents(id)
       `);
       console.log("✅ FK adicionada em accounts_payable");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.message.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_payable");
       } else {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         FOREIGN KEY (fiscal_document_id) REFERENCES fiscal_documents(id)
       `);
       console.log("✅ FK adicionada em accounts_receivable");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.message.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_receivable");
       } else {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: "Colunas fiscal_document_id adicionadas com sucesso",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao adicionar colunas:", error);
     return NextResponse.json(
       { error: error.message },
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

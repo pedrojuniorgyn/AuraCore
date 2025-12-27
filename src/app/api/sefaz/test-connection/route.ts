@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao testar conexão Sefaz:", error);
     
     return NextResponse.json(
@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

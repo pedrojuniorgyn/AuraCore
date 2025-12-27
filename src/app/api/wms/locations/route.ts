@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       .where(eq(warehouseZones.warehouseId, parseInt(warehouseId)));
 
     return NextResponse.json({ success: true, data: locations });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       : [];
 
     return NextResponse.json({ success: true, data: location });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

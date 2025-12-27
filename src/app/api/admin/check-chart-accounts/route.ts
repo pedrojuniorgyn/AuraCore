@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       total,
       sample: accountsResult.recordset,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao verificar plano de contas:", error);
     return NextResponse.json(
       { error: error.message },
@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

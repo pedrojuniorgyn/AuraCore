@@ -500,7 +500,7 @@ export async function POST(
     });
     
     return NextResponse.json(result.payload, { status: result.status });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
     }

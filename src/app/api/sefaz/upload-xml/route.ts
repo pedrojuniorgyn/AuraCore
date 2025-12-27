@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       data: results,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao processar upload:", error);
     return NextResponse.json(
       { 
