@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -57,6 +57,20 @@
         "mcp-server/src/tools/register-correction.ts"
       ],
       "pattern_created": "input-sanitization",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-757945",
+      "date": "2025-12-27",
+      "epic": "E2",
+      "error": "catch (error: any) em 269 ocorrências - permite acesso inseguro a error.message sem type guard",
+      "correction": "Script automatizado: catch (error: unknown) em 179 arquivos de rotas API",
+      "files_affected": [
+        "src/app/api/**/*.ts",
+        "scripts/fix-error-handling.ts"
+      ],
+      "pattern_created": "error-handling-unknown",
       "status": "APPROVED",
       "must_not_repeat": true
     }
