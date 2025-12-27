@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_payable");
     } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_payable");
       } else {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_receivable");
     } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_receivable");
       } else {
