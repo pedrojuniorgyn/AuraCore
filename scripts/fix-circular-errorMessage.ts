@@ -12,7 +12,9 @@ import { globSync } from 'glob';
  * Detectado por: tsc TS7022 + TS2448 (102 + 102 = 204 erros)
  */
 
-const srcDir = path.join(__dirname, '../src');
+// Resolve path from project root, not relative to __dirname
+const projectRoot = path.resolve(__dirname, '..');
+const srcDir = path.join(projectRoot, 'src');
 const files = globSync('**/*.ts', { cwd: srcDir });
 
 let totalFixed = 0;
