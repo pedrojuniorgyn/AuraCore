@@ -15,8 +15,9 @@ export async function GET(req: NextRequest) {
     const jobs = await listJobs({ organizationId: ctx.organizationId, limit });
     return NextResponse.json({ success: true, jobs });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) return error;
-    return NextResponse.json({ error: error?.message ?? String(error) }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

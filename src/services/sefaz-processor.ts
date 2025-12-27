@@ -52,6 +52,7 @@ interface ProcessResult {
   resumos: number; // resNFe (resumos)
   completas: number; // procNFe (completas)
   errorMessages: string[];
+  message?: string;
 }
 
 /**

@@ -13,8 +13,9 @@ export async function POST() {
     const result = await runDocumentJobsTick({ maxJobs: 10 });
     return NextResponse.json({ success: true, result });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) return error;
-    return NextResponse.json({ error: error?.message ?? String(error) }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

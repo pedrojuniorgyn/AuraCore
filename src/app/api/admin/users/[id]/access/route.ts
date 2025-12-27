@@ -154,9 +154,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
       return NextResponse.json({ success: true });
     } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Error updating user access:", error);
       return NextResponse.json(
-        { error: "Falha ao atualizar acessos", details: error?.message || String(error) },
+        { error: "Falha ao atualizar acessos", details: errorMessage },
         { status: 500 }
       );
     }

@@ -139,11 +139,12 @@ export async function POST(
 
       return NextResponse.json(result.payload, { status: result.status });
     } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
       // resolveBranchIdOrThrow lança NextResponse (400/403). Preserve.
       if (error instanceof Response) return error;
       console.error("❌ Erro ao finalizar fatura:", error);
       return NextResponse.json(
-        { error: error?.message ?? String(error) },
+        { error: errorMessage },
         { status: 500 }
       );
     }
