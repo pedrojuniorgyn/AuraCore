@@ -57,11 +57,13 @@ async function collectIssues(scope: string): Promise<CursorIssue[]> {
 
 async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
   try {
-    // CRITICO: NAO usar encoding - deixa stderr/stdout como Buffer
+    // CORRECAO: encoding 'utf-8' para capturar stdout/stderr como string
+    // timeout de 60s para evitar travamento
     execSync('npx tsc --noEmit --pretty false', {
       cwd: scope,
-      // stdio como array para capturar stdout/stderr
-      stdio: ['pipe', 'pipe', 'pipe']
+      encoding: 'utf-8',
+      timeout: 60000, // 60 segundos
+      maxBuffer: 10 * 1024 * 1024, // 10MB
     });
     
     // Se chegou aqui, nao ha erros (exit 0)
@@ -79,24 +81,28 @@ async function getTypeScriptErrors(scope: string): Promise<CursorIssue[]> {
     // Cast para tipo conhecido do Node.js
     interface ExecSyncError extends Error {
       status?: number;
-      stderr?: Buffer | string;
-      stdout?: Buffer | string;
+      signal?: string;
+      killed?: boolean;
+      stderr?: string;
+      stdout?: string;
     }
     
     const execError = error as ExecSyncError;
+    
+    // Verificar se foi timeout/killed
+    if (execError.killed || execError.signal === 'SIGTERM') {
+      console.error('TypeScript check timeout - processo muito longo');
+      return [];
+    }
     
     // DESCOBERTA: tsc envia erros para STDOUT, nao STDERR
     // Extrair output (stdout tem prioridade neste caso)
     let output = '';
     
-    if (execError.stdout) {
-      output = Buffer.isBuffer(execError.stdout)
-        ? execError.stdout.toString('utf-8')
-        : execError.stdout;
-    } else if (execError.stderr) {
-      output = Buffer.isBuffer(execError.stderr)
-        ? execError.stderr.toString('utf-8')
-        : execError.stderr;
+    if (execError.stdout && typeof execError.stdout === 'string') {
+      output = execError.stdout;
+    } else if (execError.stderr && typeof execError.stderr === 'string') {
+      output = execError.stderr;
     }
     
     if (output && output.trim()) {
