@@ -33,7 +33,7 @@ export async function GET() {
       try {
         if (!doc.xml_content) continue;
         
-        const parsed = parseNFeXML(doc.xml_content);
+        const parsed = await parseNFeXML(doc.xml_content);
         
         await db.execute(rawSql`
           UPDATE fiscal_documents

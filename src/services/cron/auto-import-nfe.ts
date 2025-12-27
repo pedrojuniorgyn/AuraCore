@@ -89,7 +89,7 @@ async function runAutoImport() {
         const result = await downloadNFesFromSefaz(
           setting.organizationId,
           setting.branchId,
-          branch.cnpj,
+          branch.document,
           "system-cron" // userId para auditoria
         );
 

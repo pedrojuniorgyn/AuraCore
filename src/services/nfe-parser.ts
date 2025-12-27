@@ -97,6 +97,7 @@ export interface ParsedNFe {
     itemNumber: number;
     productCode: string; // Código do fornecedor
     productName: string; // Descrição
+    description?: string; // Descrição alternativa
     ean?: string; // EAN/GTIN
     ncm: string; // NCM (8 dígitos)
     cfop: string; // CFOP (4 dígitos)
@@ -105,6 +106,16 @@ export interface ParsedNFe {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
+    totalGross?: number; // Total bruto
+    discount?: number; // Desconto
+    totalNet?: number; // Total líquido
+    freight?: number; // Frete
+    insurance?: number; // Seguro
+    otherExpenses?: number; // Outras despesas
+    icms?: { value?: number; [key: string]: unknown }; // ICMS
+    ipi?: { value?: number; [key: string]: unknown }; // IPI
+    pis?: { value?: number; [key: string]: unknown }; // PIS
+    cofins?: { value?: number; [key: string]: unknown }; // COFINS
   }>;
   
   // Pagamento (Novo!)

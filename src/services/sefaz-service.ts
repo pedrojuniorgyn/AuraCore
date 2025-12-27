@@ -358,7 +358,7 @@ export async function downloadNFesFromSefaz(
   branchId: number,
   cnpj: string,
   userId: string
-): Promise<{ success: boolean; imported: number; totalDocuments: number; error?: string }> {
+): Promise<{ success: boolean; imported: number; totalDocuments: number; error?: string; duplicates?: number; totalValue?: number; sefazStatus?: string }> {
   try {
     const { processSefazResponse } = await import("@/services/sefaz-processor");
     const sefazService = createSefazService(branchId, organizationId);
@@ -373,6 +373,7 @@ export async function downloadNFesFromSefaz(
         imported: 0,
         totalDocuments: 0,
         error: `${downloadResult.error.code} - ${downloadResult.error.message}`,
+        sefazStatus: downloadResult.error.code,
       };
     }
 
@@ -388,6 +389,14 @@ export async function downloadNFesFromSefaz(
         );
         imported = processResult.imported || 0;
         console.log(`✅ ${imported} documento(s) importado(s) com sucesso!`);
+        // Retornar também duplicates e totalValue se disponíveis
+        return { 
+          success: true, 
+          imported, 
+          totalDocuments: downloadResult.totalDocuments,
+          duplicates: processResult.duplicates,
+          totalValue: 0 // TODO: Calcular totalValue dos documentos importados
+        };
       } catch (error: any) {
         console.error("❌ Erro ao processar documentos:", error.message);
         return { success: false, imported: 0, totalDocuments: downloadResult.totalDocuments, error: `Erro no processamento: ${error.message}` };

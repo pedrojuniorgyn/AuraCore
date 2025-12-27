@@ -103,9 +103,9 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
 
   // 7. Gerar Chave de Acesso (44 dígitos)
   const cteKey = await generateCteKey({
-    branchUf: branch?.uf || "SP",
+    branchUf: branch?.state || "SP",
     issueDate: new Date(),
-    cnpj: branch?.cnpj || "",
+    cnpj: branch?.document || "",
     model: "57",
     serie: "1",
     cteNumber: await getNextCteNumber(order.branchId),
@@ -137,8 +137,8 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
         
         // Emitente
         .ele("emit")
-          .ele("CNPJ").txt(branch?.cnpj || "").up()
-          .ele("IE").txt(branch?.stateRegistration || "").up()
+          .ele("CNPJ").txt(branch?.document || "").up()
+          .ele("IE").txt(branch?.ie || "").up()
           .ele("xNome").txt(branch?.name || "").up()
           .ele("xFant").txt(branch?.tradeName || branch?.name || "").up()
           .ele("enderEmit")
@@ -146,16 +146,16 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
             .ele("nro").txt(branch?.number || "SN").up()
             .ele("xBairro").txt(branch?.district || "").up()
             .ele("cMun").txt("3550308").up() // TODO: Buscar código IBGE
-            .ele("xMun").txt(branch?.city || "").up()
+            .ele("xMun").txt(branch?.cityName || "").up()
             .ele("CEP").txt(branch?.zipCode?.replace(/\D/g, "") || "").up()
-            .ele("UF").txt(branch?.uf || "").up()
+            .ele("UF").txt(branch?.state || "").up()
           .up()
         .up()
 
         // Remetente (Cliente)
         .ele("rem")
           .ele("CNPJ").txt(customer?.document || "").up()
-          .ele("IE").txt(customer?.stateRegistration || "").up()
+          .ele("IE").txt(customer?.ie || "").up()
           .ele("xNome").txt(customer?.name || "").up()
           .ele("xFant").txt(customer?.tradeName || customer?.name || "").up()
           .ele("enderReme")
@@ -163,16 +163,16 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
             .ele("nro").txt(customer?.number || "SN").up()
             .ele("xBairro").txt(customer?.district || "").up()
             .ele("cMun").txt("3550308").up()
-            .ele("xMun").txt(customer?.city || "").up()
+            .ele("xMun").txt(customer?.cityName || "").up()
             .ele("CEP").txt(customer?.zipCode?.replace(/\D/g, "") || "").up()
-            .ele("UF").txt(customer?.uf || "").up()
+            .ele("UF").txt(customer?.state || "").up()
           .up()
         .up()
 
         // Destinatário (mesmo que remetente por enquanto)
         .ele("dest")
           .ele("CNPJ").txt(customer?.document || "").up()
-          .ele("IE").txt(customer?.stateRegistration || "").up()
+          .ele("IE").txt(customer?.ie || "").up()
           .ele("xNome").txt(customer?.name || "").up()
           .ele("enderDest")
             .ele("xLgr").txt(order.destinationAddress || "").up()
