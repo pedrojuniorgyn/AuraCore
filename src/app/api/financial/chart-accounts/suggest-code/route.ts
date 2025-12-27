@@ -8,6 +8,10 @@ interface MaxCodeResult {
   max_code: number | null;
 }
 
+interface MaxCodeStringResult {
+  max_code: string | null;
+}
+
 interface ParentCodeResult {
   code: string;
 }
@@ -73,7 +77,7 @@ export async function GET(req: Request) {
           AND organization_id = ${ctx.organizationId}
       `);
 
-      const childrenData = (childrenResult.recordset || childrenResult) as unknown as MaxCodeResult[];
+      const childrenData = (childrenResult.recordset || childrenResult) as unknown as MaxCodeStringResult[];
       const childRow = childrenData[0];
       const maxChildCode = childRow?.max_code;
 
