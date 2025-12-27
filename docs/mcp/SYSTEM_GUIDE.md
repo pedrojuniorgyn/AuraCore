@@ -621,11 +621,307 @@ catch (error: unknown) {
 
 ---
 
-## 14. HISTÓRICO DE VERSÕES
+## 14. FLUXO DE COMMIT COM AGENT REVIEW (OBRIGATÓRIO) 🔥
+
+### 🚨 REGRA CRÍTICA
+
+**Agent Review é OBRIGATÓRIO antes de push.** `tsc` e `eslint` NÃO são suficientes.
+
+### Por quê?
+
+| Ferramenta | Tempo | Detecta | Limitações |
+|-----------|-------|---------|------------|
+| **tsc + eslint** | ~5s | Sintaxe, tipos básicos | ❌ Não detecta lógica, escopo, circular refs |
+| **Agent Review** | 2-3min | **+ Lógica, escopo, circular refs, anti-patterns** | - |
+
+**Caso Real (E3):**
+- `tsc`: 0 erros ✅
+- `Agent Review`: **3 issues críticas** ❌ (referência circular, use-before-definition, scope mismatch)
+
+**Conclusão:** tsc compila código que falha em runtime!
+
+---
+
+### 14.1 Fluxo Otimizado de Commit
+
+#### FASE 1: Pré-Commit
+
+```bash
+# 1. Verificação estática rápida (5s)
+Tool: check_cursor_issues
+Args: { "context": "pré-commit", "scope": "." }
+
+# 2. Se OK, commitar
+git add .
+git commit -m "feat(module): descrição
+
+- Detalhe 1
+- Detalhe 2
+
+Refs: E3"
+```
+
+#### FASE 2: Validação Pós-Commit (CRÍTICO)
+
+```bash
+# 3. Verificação estática pós-commit (5s)
+Tool: check_cursor_issues
+Args: { "context": "pós-commit" }
+
+# 4. ⏸️ PAUSA - NÃO FAZER PUSH AINDA
+# Continuar trabalhando em outras tarefas OU aguardar Agent Review
+```
+
+#### FASE 3: Verificação do Agent Review (OBRIGATÓRIO)
+
+```bash
+# 5. AGUARDAR 2-3 MINUTOS ⏱️
+# Agent Review processa o commit no background
+
+# 6. VERIFICAR AGENT REVIEW MANUALMENTE
+# Abrir painel "AGENT REVIEW" no Cursor IDE
+# Verificar se há "Potential Issues"
+```
+
+#### FASE 4: Decisão
+
+##### ❌ Se Agent Review encontrou issues:
+
+```bash
+# CANCELAR commit
+git reset --soft HEAD~1
+
+# Corrigir issues manualmente
+# (Agent Review mostra localização exata)
+
+# Reiniciar FASE 1 (pré-commit novamente)
+```
+
+##### ✅ Se Agent Review NÃO encontrou issues:
+
+```bash
+# 7. PUSH seguro
+git push origin main
+
+# 8. Registrar correções (se houver)
+Tool: register_correction
+Args: {
+  "epic": "E3",
+  "error_description": "...",
+  "correction_applied": "...",
+  "files_affected": [...]
+}
+```
+
+---
+
+### 14.2 Checklist Completo
+
+```markdown
+### ANTES DO PUSH:
+□ check_cursor_issues (pré-commit) → 0 erros
+□ git commit realizado
+□ check_cursor_issues (pós-commit) → 0 erros
+□ **AGUARDAR 2-3 MINUTOS** ⏱️
+□ **ABRIR AGENT REVIEW NO CURSOR**
+□ **VERIFICAR SE HÁ ISSUES**
+□ Se issues > 0:
+  □ git reset --soft HEAD~1
+  □ Corrigir issues
+  □ Repetir fluxo desde início
+□ Se issues = 0:
+  □ git push origin main
+  □ register_correction (se necessário)
+```
+
+---
+
+### 14.3 Exemplos de Issues que Apenas Agent Review Detecta
+
+#### Exemplo 1: Referência Circular
+
+```typescript
+// ❌ tsc: ✅ compila sem erros
+// ❌ Agent Review: ❌ detecta referência circular
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  //                                           ^^^^^^^^^^^^^ usa a si mesmo!
+}
+
+// ✅ CORREÇÃO
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+}
+```
+
+#### Exemplo 2: Use-Before-Definition em Escopo Aninhado
+
+```typescript
+// ❌ tsc: ✅ compila
+// ❌ Agent Review: ❌ detecta uso antes da definição
+function outer() {
+  try {
+    inner();
+  } catch (error: unknown) {
+    console.log(errorMessage); // ❌ errorMessage não definido ainda
+    const errorMessage = error instanceof Error ? error.message : String(error);
+  }
+}
+
+// ✅ CORREÇÃO
+function outer() {
+  try {
+    inner();
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.log(errorMessage); // ✅ agora sim
+  }
+}
+```
+
+#### Exemplo 3: Conflito de Escopo em Nested Catch
+
+```typescript
+// ❌ tsc: ✅ compila
+// ❌ Agent Review: ❌ detecta conflito de escopo
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
+  try {
+    // ...
+  } catch (error: unknown) {
+    // ❌ errorMessage aqui refere-se ao escopo externo, mas deveria ser local
+    console.log(errorMessage);
+  }
+}
+
+// ✅ CORREÇÃO
+catch (error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
+  try {
+    // ...
+  } catch (innerError: unknown) {
+    const innerErrorMessage = innerError instanceof Error ? innerError.message : String(innerError);
+    console.log(innerErrorMessage); // ✅ variável única
+  }
+}
+```
+
+---
+
+### 14.4 Por que 2-3 minutos?
+
+| Fase | Tempo | O que acontece |
+|------|-------|----------------|
+| 1. Commit criado | 0s | Git salva alterações |
+| 2. Cursor detecta commit | ~5-10s | Monitora .git/ |
+| 3. Cursor inicia análise | 10-30s | Carrega diff |
+| 4. Agent Review (AI) processa | **2-3min** | **Análise semântica completa** |
+| 5. Issues mostrados | - | Painel Agent Review |
+
+**Por isso:** Aguardar 2-3 minutos é **obrigatório** para análise completa.
+
+---
+
+### 14.5 Estratégia de Trabalho
+
+#### Opção A: Trabalho Contínuo
+
+```bash
+# 1. Fazer commit
+git commit -m "feat: implementar feature X"
+
+# 2. check_cursor_issues pós-commit
+Tool: check_cursor_issues
+
+# 3. Continuar trabalhando em OUTRA tarefa
+# (enquanto Agent Review processa)
+# Exemplo: documentação, refatoração, testes
+
+# 4. Após 3 minutos, verificar Agent Review
+# Se OK → push
+# Se issues → reset e corrigir
+```
+
+#### Opção B: Aguardar Verificação
+
+```bash
+# 1. Fazer commit
+git commit -m "fix: corrigir bug Y"
+
+# 2. check_cursor_issues pós-commit
+Tool: check_cursor_issues
+
+# 3. ⏸️ PAUSAR E AGUARDAR 3 MINUTOS
+# (fazer café, revisar código, ler docs)
+
+# 4. Verificar Agent Review
+# Se OK → push
+# Se issues → reset e corrigir
+```
+
+---
+
+### 14.6 Fluxo Visual
+
+```mermaid
+graph TD
+    A[Código modificado] --> B[check_cursor_issues<br/>pré-commit]
+    B -->|0 erros| C[git commit]
+    B -->|> 0 erros| A
+    C --> D[check_cursor_issues<br/>pós-commit]
+    D -->|0 erros| E[⏱️ AGUARDAR 2-3 MIN]
+    D -->|> 0 erros| F[git reset --soft HEAD~1]
+    F --> A
+    E --> G[Verificar Agent Review<br/>Cursor IDE]
+    G -->|Issues encontradas| F
+    G -->|0 issues| H[git push origin main]
+    H --> I[register_correction<br/>se necessário]
+    I --> J[✅ Concluído]
+```
+
+---
+
+### 14.7 Lições Críticas
+
+| Lição | Impacto | Aplicação |
+|-------|---------|-----------|
+| **tsc não é suficiente** | Alto | Sempre usar Agent Review |
+| **Agent Review demora 2-3min** | Médio | Planejar trabalho durante espera |
+| **Referências circulares compilam** | Crítico | Falham apenas em runtime |
+| **Scripts automatizados têm bugs** | Alto | Revisão manual obrigatória |
+| **Verificação em 2 camadas** | Crítico | tsc + Agent Review = completo |
+
+---
+
+### 14.8 Registro de Caso Real
+
+#### E3: 3 Issues Críticas Não Detectadas por tsc
+
+| Arquivo | Issue | tsc | Agent Review | Impacto |
+|---------|-------|-----|--------------|---------|
+| `journal-entries/route.ts` | Referência circular | ✅ | ❌ | Runtime error |
+| `branches/[id]/certificate/route.ts` | Use-before-definition | ✅ | ❌ | undefined em runtime |
+| `admin/add-fiscal-fk-columns/route.ts` | Scope mismatch | ✅ | ❌ | Variável errada usada |
+
+**Todos os 3 casos:**
+- ✅ `tsc --noEmit`: 0 erros (compilou perfeitamente)
+- ❌ `Agent Review`: 3 issues críticas
+- 🐛 **Runtime**: Falhas em produção (se não corrigidos)
+
+**Correção:** `LC-664665` registrada no MCP.
+
+**Lição:** **NUNCA fazer push sem verificar Agent Review!**
+
+---
+
+## 15. HISTÓRICO DE VERSÕES
 
 | Versão | Data | Alterações |
 |--------|------|------------|
 | 1.0.0 | 27/12/2025 | Versão inicial com sistema completo |
 | 1.1.0 | 27/12/2025 | + Seção 12: Prevenção de Regressões (lição E2 BATCH 1) |
 | 1.2.0 | 27/12/2025 | + Seção 13: Limitações do check_cursor_issues (lição E3) |
+| 1.3.0 | 27/12/2025 | + Seção 14: Fluxo de Commit com Agent Review (OBRIGATÓRIO) |
 

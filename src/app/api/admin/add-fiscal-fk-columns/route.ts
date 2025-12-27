@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_payable");
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_payable");
       } else {
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_receivable");
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_receivable");
       } else {
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
       message: "Colunas fiscal_document_id adicionadas com sucesso",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao adicionar colunas:", error);
     return NextResponse.json(
       { error: errorMessage },
