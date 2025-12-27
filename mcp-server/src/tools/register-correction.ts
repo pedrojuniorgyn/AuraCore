@@ -5,6 +5,31 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Sanitiza identificadores para prevenir path traversal e injeção
+ * Remove caracteres perigosos e valida tamanho
+ */
+function sanitizeIdentifier(id: string): string {
+  const sanitized = id
+    .replace(/\.\./g, '') // Remove ".."
+    .replace(/[\/\\'"]/g, '') // Remove /, \, ', "
+    .toLowerCase()
+    .replace(/\./g, '-') // Converte todos os pontos para hífen
+    .replace(/[^a-z0-9-]/g, '') // Remove caracteres especiais
+    .replace(/-+/g, '-') // Remove hífens duplicados
+    .replace(/^-|-$/g, ''); // Remove hífens no início/fim
+  
+  if (!sanitized || sanitized.length === 0) {
+    throw new Error('Identificador inválido: vazio após sanitização');
+  }
+  
+  if (sanitized.length > 50) {
+    throw new Error(`Identificador muito longo: ${sanitized.length} caracteres (máx: 50)`);
+  }
+  
+  return sanitized;
+}
+
 interface CorrectionInput {
   epic: string;
   error_description: string;
@@ -54,8 +79,8 @@ export async function registerCorrection(input: CorrectionInput): Promise<Correc
     fs.mkdirSync(correctionsDir, { recursive: true });
   }
   
-  // Salvar em arquivo do épico
-  const epicSlug = input.epic.toLowerCase().replace('.', '-');
+  // Salvar em arquivo do épico (sanitizado para segurança)
+  const epicSlug = sanitizeIdentifier(input.epic);
   const epicFile = path.join(correctionsDir, `${epicSlug}-corrections.json`);
   
   let epicData: { epic: string; corrections: unknown[] };
