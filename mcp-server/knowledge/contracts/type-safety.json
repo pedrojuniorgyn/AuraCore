@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -44,6 +44,19 @@
         "sefaz-cte-client.ts"
       ],
       "pattern_created": "error-handling-unknown",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-677308",
+      "date": "2025-12-27",
+      "epic": "MCP",
+      "error": "register-correction.ts: replace() só mudava primeiro ponto + faltava validação path traversal",
+      "correction": "Regex global /\\./g + sanitizeIdentifier() com validação de segurança",
+      "files_affected": [
+        "mcp-server/src/tools/register-correction.ts"
+      ],
+      "pattern_created": "input-sanitization",
       "status": "APPROVED",
       "must_not_repeat": true
     }
