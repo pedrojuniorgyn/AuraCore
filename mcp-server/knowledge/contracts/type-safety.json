@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
-  
   "rules": [
     "NUNCA use 'any' explícito ou implícito - use 'unknown' ou tipo específico",
     "NUNCA use '@ts-ignore' ou '@ts-nocheck'",
@@ -16,7 +15,6 @@
     "SEMPRE tipar parâmetros de funções e retornos",
     "SEMPRE usar Zod para validação de input em rotas API"
   ],
-  
   "learned_corrections": [
     {
       "id": "LC-001",
@@ -42,13 +40,14 @@
       "epic": "E0.1",
       "error": "catch (error: any) permite acesso inseguro a propriedades",
       "correction": "Usar catch (error: unknown) com type guards",
-      "files_affected": ["sefaz-cte-client.ts"],
+      "files_affected": [
+        "sefaz-cte-client.ts"
+      ],
       "pattern_created": "error-handling-unknown",
       "status": "APPROVED",
       "must_not_repeat": true
     }
   ],
-  
   "examples": [
     {
       "name": "SQL Query Result Typing (LC-001)",
@@ -63,7 +62,6 @@
       "learned_from": "E0.1 - sefaz-cte-client.ts"
     }
   ],
-  
   "validation_rules": {
     "block_patterns": [
       ": any",
@@ -79,13 +77,11 @@
       "instanceof Error"
     ]
   },
-  
   "references": [
     ".cursorrules - Regras críticas",
     "docs/mcp/LESSONS_LEARNED.md",
     "docs/mcp/PHASE_2_COMPLETE.md"
   ],
-  
   "update_policy": {
     "description": "Este contrato DEVE ser atualizado sempre que um novo erro for corrigido",
     "process": [
@@ -100,4 +96,3 @@
     "mandatory": true
   }
 }
-

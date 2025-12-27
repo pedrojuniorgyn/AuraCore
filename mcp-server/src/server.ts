@@ -15,6 +15,7 @@ import { searchPatterns } from './tools/search-patterns.js';
 import { proposePattern } from './tools/propose-pattern.js';
 import { validateCode } from './tools/validate-code.js';
 import { checkCompliance } from './tools/check-compliance.js';
+import { registerCorrection } from './tools/register-correction.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -193,6 +194,37 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['file_path'],
+          },
+        },
+        {
+          name: 'register_correction',
+          description: 'Registra uma correção de issue para evitar reincidência. Use SEMPRE após corrigir uma issue do Agent Review ou qualquer erro encontrado.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              epic: {
+                type: 'string',
+                description: 'Épico atual (ex: E0.1, E2, E3)',
+              },
+              error_description: {
+                type: 'string',
+                description: 'Descrição clara do erro/issue encontrado',
+              },
+              correction_applied: {
+                type: 'string',
+                description: 'Descrição de como o erro foi corrigido',
+              },
+              files_affected: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Lista de arquivos que foram corrigidos',
+              },
+              pattern_name: {
+                type: 'string',
+                description: 'Nome do padrão criado, se aplicável (opcional)',
+              },
+            },
+            required: ['epic', 'error_description', 'correction_applied', 'files_affected'],
           },
         },
       ],
@@ -555,6 +587,70 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to check compliance: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'register_correction') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for register_correction');
+        }
+
+        const input = args as {
+          epic?: unknown;
+          error_description?: unknown;
+          correction_applied?: unknown;
+          files_affected?: unknown;
+          pattern_name?: unknown;
+        };
+
+        // Validar campos obrigatórios
+        if (!input.epic || typeof input.epic !== 'string') {
+          throw new Error('epic é obrigatório e deve ser string');
+        }
+        if (!input.error_description || typeof input.error_description !== 'string') {
+          throw new Error('error_description é obrigatório e deve ser string');
+        }
+        if (!input.correction_applied || typeof input.correction_applied !== 'string') {
+          throw new Error('correction_applied é obrigatório e deve ser string');
+        }
+        if (!Array.isArray(input.files_affected) || input.files_affected.length === 0) {
+          throw new Error('files_affected é obrigatório e deve ser array não vazio');
+        }
+
+        // Validar que todos elementos de files_affected são strings
+        const invalidFiles = input.files_affected.filter(f => typeof f !== 'string');
+        if (invalidFiles.length > 0) {
+          throw new Error('files_affected deve conter apenas strings');
+        }
+
+        // pattern_name é opcional
+        const patternName = input.pattern_name && typeof input.pattern_name === 'string'
+          ? input.pattern_name
+          : undefined;
+
+        try {
+          const result = await registerCorrection({
+            epic: input.epic,
+            error_description: input.error_description,
+            correction_applied: input.correction_applied,
+            files_affected: input.files_affected as string[],
+            pattern_name: patternName,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to register correction: ${errorMessage}`);
         }
       }
 
