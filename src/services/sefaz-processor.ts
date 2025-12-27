@@ -8,7 +8,10 @@ import {
   fiscalDocumentItems,
   businessPartners, 
   products,
-  branches
+  branches,
+  inboundInvoices,
+  cargoDocuments,
+  externalCtes
 } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { 
