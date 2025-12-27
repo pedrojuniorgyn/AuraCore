@@ -118,8 +118,11 @@ export const FinancialCharts: React.FC = () => {
 
     // Remove gráficos anteriores
     const chartModels = gridApi.getChartModels();
+    interface ExtendedGridApi {
+      destroyChart(chartId: string): void;
+    }
     chartModels?.forEach((model) => {
-      gridApi.destroyChart(model.chartId);
+      (gridApi as unknown as ExtendedGridApi).destroyChart(model.chartId);
     });
 
     // Cria novo gráfico

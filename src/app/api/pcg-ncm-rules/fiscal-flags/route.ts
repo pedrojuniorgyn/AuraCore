@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { organizationId } = getTenantContext();
+    const { organizationId } = await getTenantContext();
     const { searchParams } = new URL(request.url);
     const ncmCode = searchParams.get("ncm_code");
 
@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

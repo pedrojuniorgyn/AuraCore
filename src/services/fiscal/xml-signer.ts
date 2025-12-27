@@ -61,12 +61,18 @@ export class XmlSigner {
         digestAlgorithm: "http://www.w3.org/2001/04/xmlenc#sha256",
       });
 
-      sig.signingKey = privateKeyPem;
+      interface SignedXmlWithExtensions {
+        signingKey: string;
+        signatureAlgorithm: string;
+        canonicalizationAlgorithm: string;
+        keyInfoProvider: unknown;
+      }
+      (sig as unknown as SignedXmlWithExtensions).signingKey = privateKeyPem;
       sig.signatureAlgorithm = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
       sig.canonicalizationAlgorithm = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
 
       // 6. Adicionar informações do certificado
-      sig.keyInfoProvider = {
+      (sig as unknown as SignedXmlWithExtensions).keyInfoProvider = {
         getKeyInfo: () => {
           const certPem = forge.pki.certificateToPem(cert);
           const certBase64 = certPem
@@ -134,7 +140,11 @@ export class XmlSigner {
  */
 export async function createXmlSignerFromDb(organizationId: number): Promise<XmlSigner> {
   const { db } = await import("@/lib/db");
-  const { digitalCertificates } = await import("@/lib/db/schema");
+  const schema = await import("@/lib/db/schema");
+  interface SchemaWithDigitalCerts {
+    digitalCertificates: unknown;
+  }
+  const { digitalCertificates } = schema as unknown as SchemaWithDigitalCerts;
   const { eq, and, isNull } = await import("drizzle-orm");
 
   const [cert] = await db

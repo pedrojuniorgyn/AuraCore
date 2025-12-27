@@ -26,11 +26,11 @@ export async function GET(
         name: users.name,
         email: users.email,
         role: users.role,
-        status: users.status,
         organizationId: users.organizationId,
-        branchId: users.branchId,
+        defaultBranchId: users.defaultBranchId,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
+        deletedAt: users.deletedAt,
       })
       .from(users)
       .where(
@@ -182,7 +182,7 @@ export async function PUT(
         name: users.name,
         email: users.email,
         role: users.role,
-        status: users.status,
+        deletedAt: users.deletedAt,
       })
       .from(users)
       .where(

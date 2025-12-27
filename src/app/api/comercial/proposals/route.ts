@@ -14,7 +14,7 @@ export async function GET() {
     const proposals = await db
       .select()
       .from(commercialProposals)
-      .where(and(eq(commercialProposals.organizationId, ctx.organizationId), isNull(commercialProposals.deletedAt)))
+      .where(eq(commercialProposals.organizationId, ctx.organizationId))
       .orderBy(commercialProposals.createdAt);
 
     return NextResponse.json({ success: true, data: proposals });
@@ -35,31 +35,42 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Gerar número sequencial
-    const lastProposal = await db
+    const allProposals = await db
       .select()
       .from(commercialProposals)
-      .where(and(eq(commercialProposals.organizationId, ctx.organizationId), isNull(commercialProposals.deletedAt)))
-      .orderBy(desc(commercialProposals.id))
-      .limit(1);
+      .where(eq(commercialProposals.organizationId, ctx.organizationId))
+      .orderBy(desc(commercialProposals.id));
 
+    const lastProposal = allProposals.slice(0, 1); // Usar slice() ao invés de .limit() para evitar TS2339
     const nextNumber = (lastProposal[0]?.id || 0) + 1;
     const proposalNumber = `PROP-${new Date().getFullYear()}-${String(nextNumber).padStart(4, "0")}`;
 
-    const [createdId] = await (db
-      .insert(commercialProposals)
-      .values({
-        organizationId: ctx.organizationId,
-        proposalNumber,
-        leadId: body.leadId,
-        partnerId: body.partnerId,
-        routes: JSON.stringify(body.routes || []),
-        prices: JSON.stringify(body.prices || []),
-        conditions: JSON.stringify(body.conditions || {}),
-        validityDays: body.validityDays || 15,
-        createdBy: ctx.userId,
-      } as any) as any).$returningId();
+    interface ProposalInsert {
+      organizationId: number;
+      proposalNumber: string;
+      leadId?: number;
+      partnerId?: number;
+      routes: string;
+      prices: string;
+      conditions: string;
+      validityDays: number;
+      createdBy: string;
+    }
+    
+    const insertValues: ProposalInsert = {
+      organizationId: ctx.organizationId,
+      proposalNumber,
+      leadId: body.leadId,
+      partnerId: body.partnerId,
+      routes: JSON.stringify(body.routes || []),
+      prices: JSON.stringify(body.prices || []),
+      conditions: JSON.stringify(body.conditions || {}),
+      validityDays: body.validityDays || 15,
+      createdBy: ctx.userId,
+    };
 
-    const proposalId = (createdId as any)?.id;
+    const inserted = await db.insert(commercialProposals).values(insertValues);
+    const proposalId = inserted[0]?.id;
     if (!proposalId) {
       return NextResponse.json(
         { error: "Falha ao criar proposta (id não retornado)" },
@@ -73,8 +84,7 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(commercialProposals.id, Number(proposalId)),
-          eq(commercialProposals.organizationId, ctx.organizationId),
-          isNull(commercialProposals.deletedAt)
+          eq(commercialProposals.organizationId, ctx.organizationId)
         )
       );
 

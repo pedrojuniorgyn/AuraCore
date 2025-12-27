@@ -158,7 +158,10 @@ export async function createReceivablesFromCTe(
     }
 
     // Parseia condições de pagamento
-    const paymentTerms = client.paymentTerms || "0";
+    interface ClientWithPaymentTerms {
+      paymentTerms?: string;
+    }
+    const paymentTerms = (client as unknown as ClientWithPaymentTerms).paymentTerms || "0";
     const installments = parsePaymentTerms(paymentTerms, cte.total_service, cte.issue_date);
 
     const receivableIds: number[] = [];

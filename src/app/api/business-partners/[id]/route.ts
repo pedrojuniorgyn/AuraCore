@@ -144,7 +144,7 @@ export async function PUT(
       );
     }
 
-    const { document, version, ...dataToUpdate } = parsedBody.data;
+    const { document, ...dataToUpdate } = parsedBody.data;
 
     // Se o documento for atualizado, verifica duplicidade (excluindo o próprio ID)
     if (document && document !== currentPartner.document) {
