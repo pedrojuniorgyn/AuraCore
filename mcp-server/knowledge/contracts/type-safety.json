@@ -1,0 +1,103 @@
+{
+  "id": "type-safety",
+  "title": "Type Safety Contract",
+  "version": "1.0.0",
+  "category": "typescript",
+  "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
+  
+  "rules": [
+    "NUNCA use 'any' explícito ou implícito - use 'unknown' ou tipo específico",
+    "NUNCA use '@ts-ignore' ou '@ts-nocheck'",
+    "NUNCA use 'as any' para type casting",
+    "SEMPRE crie interfaces tipadas para resultados de queries SQL",
+    "SEMPRE use 'as Interface | undefined' para result[0] de queries",
+    "SEMPRE valide existência antes de acessar propriedades",
+    "SEMPRE use type guards para converter 'unknown' em tipos específicos",
+    "SEMPRE tipar parâmetros de funções e retornos",
+    "SEMPRE usar Zod para validação de input em rotas API"
+  ],
+  
+  "learned_corrections": [
+    {
+      "id": "LC-001",
+      "date": "2025-12-27",
+      "epic": "E0.1",
+      "error": "result[0] retorna any implícito em queries SQL",
+      "correction": "Criar interface tipada e usar 'as unknown as Interface[]'",
+      "files_affected": [
+        "tax-credit-engine.ts",
+        "ciap-engine.ts",
+        "intercompany-allocation-engine.ts",
+        "management-accounting.ts",
+        "nfe-parser.ts",
+        "sefaz-cte-client.ts"
+      ],
+      "pattern_created": "sql-query-typing",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-002",
+      "date": "2025-12-27",
+      "epic": "E0.1",
+      "error": "catch (error: any) permite acesso inseguro a propriedades",
+      "correction": "Usar catch (error: unknown) com type guards",
+      "files_affected": ["sefaz-cte-client.ts"],
+      "pattern_created": "error-handling-unknown",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ],
+  
+  "examples": [
+    {
+      "name": "SQL Query Result Typing (LC-001)",
+      "incorrect": "const row = result[0];",
+      "correct": "interface QueryResult { id: number; name: string; }\nconst data = (result.recordset || result) as unknown as QueryResult[];\nconst row = data[0];\nif (!row) throw new Error('Not found');",
+      "learned_from": "E0.1 - 38 correções"
+    },
+    {
+      "name": "Error Handling (LC-002)",
+      "incorrect": "catch (error: any) { console.log(error.message); }",
+      "correct": "catch (error: unknown) {\n  if (error instanceof Error) {\n    console.log(error.message);\n  } else {\n    throw new Error(String(error));\n  }\n}",
+      "learned_from": "E0.1 - sefaz-cte-client.ts"
+    }
+  ],
+  
+  "validation_rules": {
+    "block_patterns": [
+      ": any",
+      "as any",
+      "@ts-ignore",
+      "@ts-nocheck",
+      "result[0] sem tipagem"
+    ],
+    "require_patterns": [
+      "as unknown as",
+      "| undefined",
+      "if (!row)",
+      "instanceof Error"
+    ]
+  },
+  
+  "references": [
+    ".cursorrules - Regras críticas",
+    "docs/mcp/LESSONS_LEARNED.md",
+    "docs/mcp/PHASE_2_COMPLETE.md"
+  ],
+  
+  "update_policy": {
+    "description": "Este contrato DEVE ser atualizado sempre que um novo erro for corrigido",
+    "process": [
+      "1. Erro identificado e corrigido",
+      "2. Adicionar entrada em 'learned_corrections'",
+      "3. Adicionar exemplo em 'examples'",
+      "4. Atualizar 'validation_rules' se necessário",
+      "5. Incrementar versão do contrato",
+      "6. Rebuild MCP Server (npm run build)"
+    ],
+    "responsible": "Agente que corrigiu o erro",
+    "mandatory": true
+  }
+}
+

@@ -1,0 +1,46 @@
+{
+  "id": "error-handling-unknown",
+  "name": "Error Handling with Unknown",
+  "version": "1.0.0",
+  "status": "APPROVED",
+  "category": "typescript",
+  "created_at": "2025-12-27",
+  "learned_from": "E0.1",
+  
+  "description": "Padrão obrigatório para tratamento de erros com unknown e type guards",
+  
+  "problem": {
+    "description": "catch (error: any) permite acesso inseguro a propriedades",
+    "impact": "Runtime errors se error não for Error instance",
+    "frequency": "MÉDIA - encontrado em integrações externas"
+  },
+  
+  "solution": {
+    "steps": [
+      "1. Usar catch (error: unknown)",
+      "2. Verificar se é instanceof Error antes de acessar .message",
+      "3. Ter fallback para erros não-Error",
+      "4. Re-throw com informação útil"
+    ],
+    "code_template": "try {\n  // código que pode falhar\n} catch (error: unknown) {\n  if (error instanceof Error) {\n    console.error(error.message);\n    throw error;\n  } else {\n    throw new Error(`Erro inesperado: ${String(error)}`);\n  }\n}"
+  },
+  
+  "incorrect_patterns": [
+    "catch (error: any)",
+    "catch (error) { error.message }",
+    "catch (e: any) { throw e.message }"
+  ],
+  
+  "correct_patterns": [
+    "catch (error: unknown)",
+    "if (error instanceof Error)",
+    "String(error) para fallback"
+  ],
+  
+  "enforcement": {
+    "validate_code_checks": true,
+    "eslint_rule": "@typescript-eslint/no-explicit-any",
+    "block_on_violation": true
+  }
+}
+

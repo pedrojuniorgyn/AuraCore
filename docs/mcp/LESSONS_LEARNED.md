@@ -228,3 +228,52 @@ Antes de cada commit, verificar:
 - [ ] check_cursor_issues executado
 - [ ] Testes manuais quando necessário
 
+---
+
+## Sistema de Aprendizado Contínuo
+
+### Regra Fundamental
+
+**Todo erro corrigido DEVE ser documentado e transformado em regra para evitar reincidência.**
+
+### Processo Obrigatório
+
+Quando um erro é corrigido:
+
+1. **Documentar** em `mcp-server/knowledge/corrections/{epic}-corrections.json`
+2. **Criar padrão** em `mcp-server/knowledge/patterns/approved/{pattern-name}.json`
+3. **Atualizar contrato** relevante (ex: `type-safety-contract.json`)
+4. **Rebuild MCP** com `npm run build`
+5. **Validar** que MCP bloqueia o erro antigo
+
+### Estrutura de Correção
+
+```json
+{
+  "id": "LC-XXX",
+  "date": "YYYY-MM-DD",
+  "epic": "EX.X",
+  "error": "Descrição do erro",
+  "correction": "Como foi corrigido",
+  "files_affected": ["arquivo1.ts", "arquivo2.ts"],
+  "pattern_created": "nome-do-padrao",
+  "status": "APPROVED",
+  "must_not_repeat": true
+}
+```
+
+### Validação de Não-Reincidência
+
+O MCP `validate_code` deve verificar:
+- Padrões incorretos listados em `incorrect_patterns`
+- Ausência de padrões corretos quando necessário
+- Violações de regras em `validation_rules.block_patterns`
+
+### Contratos Vivos
+
+Os contratos no MCP são **documentos vivos** que evoluem:
+- `type-safety-contract.json` - Aprende com correções de TypeScript
+- Cada correção adiciona uma entrada em `learned_corrections`
+- Padrões aprovados referenciam as correções que os originaram
+- Sistema garante que erros do passado não se repitam no futuro
+

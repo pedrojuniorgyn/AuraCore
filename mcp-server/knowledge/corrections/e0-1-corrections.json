@@ -1,0 +1,115 @@
+{
+  "epic": "E0.1",
+  "title": "Eliminar any Implícito em Queries SQL",
+  "date_started": "2025-12-26",
+  "date_completed": "2025-12-27",
+  "status": "COMPLETED",
+  
+  "summary": {
+    "total_any_eliminated": 38,
+    "files_corrected": 6,
+    "interfaces_created": 14,
+    "helper_functions_created": 1,
+    "typescript_errors_reduced": 71
+  },
+  
+  "corrections": [
+    {
+      "id": "E0.1-001",
+      "file": "src/services/tax-credit-engine.ts",
+      "error_type": "any_implicit_array_access",
+      "error_description": "result[0] retorna any implícito",
+      "solution": "Criar interface FiscalDocumentQueryResult e tipar resultado",
+      "interfaces_created": ["FiscalDocumentQueryResult", "ChartOfAccountsResult", "JournalEntryInsertResult"],
+      "lines_affected": [45, 78, 112],
+      "commit": "a30064c"
+    },
+    {
+      "id": "E0.1-002",
+      "file": "src/services/ciap-engine.ts",
+      "error_type": "any_implicit_array_access",
+      "error_description": "result[0] retorna any implícito em múltiplas queries",
+      "solution": "Criar interfaces tipadas para cada query",
+      "interfaces_created": ["CIAPInsertResult", "RevenueQueryResult", "CIAPAssetQueryResult", "CIAPAppropriationQueryResult"],
+      "lines_affected": [34, 67, 89, 123],
+      "commit": "a30064c"
+    },
+    {
+      "id": "E0.1-003",
+      "file": "src/services/intercompany-allocation-engine.ts",
+      "error_type": "any_implicit_and_explicit",
+      "error_description": "any implícito em result[0] + Promise<any> explícito",
+      "solution": "Criar interfaces + tipar retorno de função",
+      "interfaces_created": ["AllocationInsertResult", "AllocationExecutionResult", "EmployeeCountResult"],
+      "lines_affected": [46, 78, 95],
+      "commit": "c44ee73"
+    },
+    {
+      "id": "E0.1-004",
+      "file": "src/services/management-accounting.ts",
+      "error_type": "any_implicit_and_explicit",
+      "error_description": "Múltiplos any implícitos + .map((row: any) =>",
+      "solution": "Criar interfaces + tipar callbacks de array",
+      "interfaces_created": ["JournalEntryResult", "ManagementEntryInsertResult", "BalanceQueryResult", "DREQueryResult"],
+      "lines_affected": [78, 132, 237, 300, 419, 427],
+      "commit": "c44ee73"
+    },
+    {
+      "id": "E0.1-005",
+      "file": "src/services/nfe-parser.ts",
+      "error_type": "any_implicit_xml_parsing",
+      "error_description": "Elementos XML sem tipagem",
+      "solution": "Criar interfaces ICMSGroup e DetPagElement",
+      "interfaces_created": ["ICMSGroup", "DetPagElement"],
+      "lines_affected": [45, 89, 134],
+      "commit": "8e54fb1"
+    },
+    {
+      "id": "E0.1-006",
+      "file": "src/services/fiscal/sefaz-cte-client.ts",
+      "error_type": "any_implicit_and_error_handling",
+      "error_description": "XML parsing sem tipo + catch (error: any)",
+      "solution": "Criar função helper getXMLText + usar unknown em catch",
+      "helper_functions_created": ["getXMLText"],
+      "lines_affected": [23, 45, 67, 89, 112, 134, 156, 178, 200, 222],
+      "commit": "8e54fb1"
+    }
+  ],
+  
+  "patterns_generated": [
+    {
+      "id": "sql-query-typing",
+      "name": "SQL Query Result Typing",
+      "description": "Padrão para tipar resultados de queries SQL",
+      "status": "APPROVED",
+      "location": "mcp-server/knowledge/patterns/approved/sql-query-typing.json"
+    },
+    {
+      "id": "error-handling-unknown",
+      "name": "Error Handling with Unknown",
+      "description": "Padrão para tratar erros com unknown + type guards",
+      "status": "APPROVED",
+      "location": "mcp-server/knowledge/patterns/approved/error-handling-unknown.json"
+    }
+  ],
+  
+  "lessons_learned": [
+    "db.execute() retorna MsSqlQueryResult que pode ter .recordset ou ser array direto",
+    "DECIMAL do SQL Server vem como string, não number",
+    "XML parsing precisa de interfaces para cada tipo de elemento",
+    "catch (error: unknown) requer type guard antes de acessar .message"
+  ],
+  
+  "must_not_repeat": {
+    "description": "Estes erros NUNCA devem acontecer novamente no projeto",
+    "errors": [
+      "const row = result[0] sem tipagem",
+      "Promise<any> como retorno de função",
+      ".map((row: any) => ...) sem tipar row",
+      "catch (error: any) sem type guard",
+      "Acesso a XML element sem interface"
+    ],
+    "enforcement": "MCP validate_code deve bloquear estes padrões"
+  }
+}
+

@@ -484,3 +484,5 @@ WHERE NOT EXISTS (SELECT 1 FROM financial_chart_accounts WHERE code = v.code AND
 
 
 
+
+

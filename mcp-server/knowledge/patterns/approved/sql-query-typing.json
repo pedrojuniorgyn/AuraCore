@@ -1,0 +1,54 @@
+{
+  "id": "sql-query-typing",
+  "name": "SQL Query Result Typing",
+  "version": "1.0.0",
+  "status": "APPROVED",
+  "category": "typescript",
+  "created_at": "2025-12-27",
+  "learned_from": "E0.1",
+  
+  "description": "Padrão obrigatório para tipar resultados de queries SQL no AuraCore",
+  
+  "problem": {
+    "description": "Queries SQL retornam any implícito quando acessamos result[0]",
+    "impact": "Erros de runtime não detectados em compile-time",
+    "frequency": "ALTA - 57 ocorrências encontradas no E0.1"
+  },
+  
+  "solution": {
+    "steps": [
+      "1. Criar interface com campos retornados pela query",
+      "2. Considerar que DECIMAL vem como string do SQL Server",
+      "3. Usar 'as unknown as Interface[]' para tipar o resultado",
+      "4. Usar '| undefined' para indicar que pode não existir",
+      "5. Validar existência antes de usar (if (!row) throw)"
+    ],
+    "code_template": "interface QueryResult {\n  id: number;\n  name: string;\n  total: string; // DECIMAL vem como string\n}\n\nconst result = await db.execute(sql`SELECT ...`);\nconst data = (result.recordset || result) as unknown as QueryResult[];\nconst row = data[0];\n\nif (!row) {\n  throw new Error('Registro não encontrado');\n}\n\n// Agora row é QueryResult (tipado)"
+  },
+  
+  "incorrect_patterns": [
+    "const row = result[0];",
+    "const data = result[0] as any;",
+    "result.forEach((row) => { // row é any",
+    "result.map(row => row.id) // row é any"
+  ],
+  
+  "correct_patterns": [
+    "const data = result as unknown as Interface[];",
+    "const row = data[0] as Interface | undefined;",
+    "if (!row) throw new Error('...');",
+    "result.forEach((row: Interface) => {"
+  ],
+  
+  "enforcement": {
+    "validate_code_checks": true,
+    "eslint_rule": "@typescript-eslint/no-explicit-any",
+    "block_on_violation": true
+  },
+  
+  "references": [
+    "E0.1 - 38 correções realizadas",
+    "mcp-server/knowledge/corrections/e0-1-corrections.json"
+  ]
+}
+
