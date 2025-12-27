@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, data: locations });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: location });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }

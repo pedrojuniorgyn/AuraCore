@@ -54,7 +54,7 @@ export async function GET(
 
     return NextResponse.json(partner);
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -206,7 +206,7 @@ export async function PUT(
 
     return NextResponse.json(updatedPartner);
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -307,7 +307,7 @@ export async function DELETE(
       data: deletedPartner,
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }

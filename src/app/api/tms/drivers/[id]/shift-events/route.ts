@@ -133,7 +133,7 @@ export async function POST(
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao registrar evento de jornada:", error);
-    const errorMessage = error instanceof Error ? errorMessage : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

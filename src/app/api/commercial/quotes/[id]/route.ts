@@ -39,7 +39,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: quote });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -138,7 +138,7 @@ export async function PUT(
       data: updated,
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -186,7 +186,7 @@ export async function DELETE(
       message: "Cotação excluída!",
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }

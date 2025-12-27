@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao listar débitos DDA:", error);
-    const errorMessage = error instanceof Error ? errorMessage : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

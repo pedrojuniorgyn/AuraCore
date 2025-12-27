@@ -18,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: transactions });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: transaction });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }

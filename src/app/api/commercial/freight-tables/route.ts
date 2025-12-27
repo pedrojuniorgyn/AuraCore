@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       data: tablesWithDetails 
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -235,7 +235,7 @@ export async function POST(request: NextRequest) {
       data: { id: tableId },
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }

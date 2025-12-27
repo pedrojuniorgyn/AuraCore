@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       return error;
     }
     console.error("❌ Erro ao listar O.S.:", error);
-    const errorMessage = error instanceof Error ? errorMessage : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     console.error("❌ Erro ao criar O.S.:", error);
-    const errorMessage = error instanceof Error ? errorMessage : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       data: result,
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }

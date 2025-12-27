@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -71,6 +71,76 @@
         "scripts/fix-error-handling.ts"
       ],
       "pattern_created": "error-handling-unknown",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-936041",
+      "date": "2025-12-27",
+      "epic": "E3",
+      "error": "TS18046: 233 erros de acesso a error.message sem type guard (regressão introduzida no BATCH 1 do E2 - o script substituiu catch (error: any) por catch (error: unknown) e criou errorMessage, mas não substituiu todos os usos de error.message)",
+      "correction": "Script automatizado fix-error-message-access.ts: substituiu 179 ocorrências de error.message → errorMessage dentro de blocos catch (error: unknown). Processou 329 arquivos, modificou 136 arquivos. Redução de erros TS18046: 233 → 79 (-66%). Os 79 erros restantes são em contextos inline como { error: error.message } que requerem segunda passada.",
+      "files_affected": [
+        "src/app/api/**/*.ts (136 arquivos modificados)",
+        "scripts/fix-error-message-access.ts (script criado)"
+      ],
+      "pattern_created": "error-message-type-guard",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-430717",
+      "date": "2025-12-27",
+      "epic": "E3",
+      "error": "REGRESSÃO E2 BATCH 1: Script de automação causou 233 erros TS18046 por substituição parcial de error.message. check_cursor_issues não detectou porque tsc estava com cache incremental ativado.",
+      "correction": "Documentação de prevenção: (1) Atualizado error-handling-unknown.json v2.0.0 com anti-patterns e regression_lessons, (2) Adicionado seção 12 no SYSTEM_GUIDE.md com checklist obrigatório pós-scripts, (3) Template verify-post-automation.sh criado, (4) Regra: SEMPRE executar tsc --incremental false após scripts + verificar se padrão antigo ainda existe com grep",
+      "files_affected": [
+        "mcp-server/knowledge/patterns/approved/error-handling-unknown.json",
+        "docs/mcp/SYSTEM_GUIDE.md"
+      ],
+      "pattern_created": "regression-prevention",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-386691",
+      "date": "2025-12-27",
+      "epic": "E3",
+      "error": "79 erros TS18046 restantes após BATCH 3.1 - blocos catch (error: unknown) sem const errorMessage definido, usando error.message diretamente",
+      "correction": "Script fix-error-message-inline.ts: detectou blocos catch (error: unknown) que usam error.message mas não têm errorMessage definido, adicionou const errorMessage = error instanceof Error ? error.message : String(error) e substituiu todas as ocorrências. 50 arquivos modificados, 244 substituições. Resultado: 79 → 1 erro TS18046 (-99%)",
+      "files_affected": [
+        "src/app/api/**/*.ts (50 arquivos)",
+        "scripts/fix-error-message-inline.ts"
+      ],
+      "pattern_created": "error-message-complete-fix",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-664665",
+      "date": "2025-12-27",
+      "epic": "E3",
+      "error": "3 issues de referência circular detectados pelo Agent Review do Cursor: const errorMessage = error instanceof Error ? errorMessage : String(error) usa errorMessage antes de defini-lo, causando undefined em runtime. Bug introduzido pelo script fix-error-message-inline.ts linha 54 que tinha lógica incorreta.",
+      "correction": "Corrigido referências circulares para error.message correto: (1) journal-entries - indentação e ordem, (2) certificate - errorMessage definido após instanceof Response check, (3) add-fiscal-fk-columns - 3 ocorrências corrigidas com replace_all. Agent Review detectou mas tsc não (limitação de análise estática).",
+      "files_affected": [
+        "src/app/api/accounting/journal-entries/route.ts",
+        "src/app/api/branches/[id]/certificate/route.ts",
+        "src/app/api/admin/add-fiscal-fk-columns/route.ts"
+      ],
+      "pattern_created": "circular-reference-prevention",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-398013",
+      "date": "2025-12-27",
+      "epic": "E3",
+      "error": "3 blocos catch (error: unknown) usavam errorMessage sem definição prévia. Causava ReferenceError em runtime. Agent Review detectou, tsc não.",
+      "correction": "Adicionado const errorMessage = error instanceof Error ? error.message : String(error); no início de cada bloco catch afetado (linhas 23, 38, 85)",
+      "files_affected": [
+        "src/app/api/admin/add-fiscal-fk-columns/route.ts"
+      ],
+      "pattern_created": "error-handling-unknown v2.0.0",
       "status": "APPROVED",
       "must_not_repeat": true
     }

@@ -21,7 +21,7 @@ export async function GET() {
       apiUrl: process.env.BTG_API_BASE_URL,
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? errorMessage : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { 
         success: false, 

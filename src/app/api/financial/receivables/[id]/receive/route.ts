@@ -107,7 +107,7 @@ export async function POST(
 
     return NextResponse.json({ data: updated });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? errorMessage : String(error);
+  const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
