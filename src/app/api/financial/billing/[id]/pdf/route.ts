@@ -16,6 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withAuth(request, async (user, ctx) => {
+    const resolvedParams = await params;
     const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
@@ -26,7 +27,6 @@ export async function GET(
     }
 
     try {
-    const resolvedParams = await params;
       console.log(`📄 Gerando PDF da fatura #${billingId}...`);
 
       // Gerar PDF

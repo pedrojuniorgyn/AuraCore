@@ -17,6 +17,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withPermission(request, "fiscal.cte.authorize", async (user, ctx) => {
+    const resolvedParams = await params;
     const cteId = parseInt(resolvedParams.id);
 
     if (isNaN(cteId)) {
