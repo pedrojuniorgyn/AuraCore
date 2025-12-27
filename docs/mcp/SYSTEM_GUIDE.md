@@ -306,9 +306,219 @@ npx tsc --noEmit 2>&1 | grep -c "error TS"
 
 ---
 
-## 12. HISTÓRICO DE VERSÕES
+## 12. PREVENÇÃO DE REGRESSÕES (CRÍTICO) 🚨
+
+### 12.1 Após Scripts de Automação
+
+**SEMPRE** seguir este checklist após executar scripts que modificam múltiplos arquivos:
+
+```bash
+# 1. Contar erros ANTES
+ANTES=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+echo "⏱️  Erros antes: $ANTES"
+
+# 2. Executar script
+npx tsx scripts/seu-script.ts
+
+# 3. Contar erros DEPOIS
+DEPOIS=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+echo "⏱️  Erros depois: $DEPOIS"
+
+# 4. Verificar se padrão antigo ainda existe
+PADRÃO_ANTIGO=$(grep -rn "PADRÃO_ANTIGO" src --include="*.ts" | wc -l)
+echo "🔍 Padrão antigo restante: $PADRÃO_ANTIGO"
+
+# 5. Decidir
+if [ $DEPOIS -gt $ANTES ]; then
+  echo "❌ REGRESSÃO DETECTADA! Não fazer commit."
+  echo "   Erros aumentaram de $ANTES para $DEPOIS (+$((DEPOIS - ANTES)))"
+  git checkout .
+  exit 1
+elif [ $PADRÃO_ANTIGO -gt 0 ]; then
+  echo "⚠️  ATENÇÃO: Script incompleto! Padrão antigo ainda existe."
+  echo "   Revisar script antes de commit."
+  exit 1
+else
+  echo "✅ OK para commit (erros: $ANTES → $DEPOIS)"
+fi
+```
+
+### 12.2 Lição Aprendida: E2 BATCH 1 → Regressão TS18046
+
+#### O que aconteceu
+
+| Fase | Ação | Resultado | Problema |
+|------|------|-----------|----------|
+| 1. E2 BATCH 1 | Script substituiu `catch (error: any)` → `catch (error: unknown)` | ✅ 269 substituições | - |
+| 2. E2 BATCH 1 | Script criou `const errorMessage = ...` | ✅ 269 criações | - |
+| 3. E2 BATCH 1 | Script substituiu `error.message` → `errorMessage` | ❌ **PARCIAL** (apenas 179/412) | **233 erros TS18046** |
+| 4. E2 BATCH 1 | check_cursor_issues executado | ❌ **Não detectou** | tsc estava cacheado |
+| 5. E2 BATCH 1 | Commit + Push realizado | ✅ Sucesso | **Regressão passou despercebida** |
+| 6. E3 BATCH 3 | Verificação manual pós-E2 | ⚠️ **233 erros TS18046** descobertos | Necessário BATCH 3 |
+| 7. E3 BATCH 3 | Script melhorado executado | ✅ 179 correções | 79 erros inline restantes |
+
+#### Por que aconteceu
+
+| Causa | Detalhes | Impacto |
+|-------|----------|---------|
+| **Regex incompleta** | Script não capturou `error.message` em contextos inline como `{ error: error.message }` | 233 erros não corrigidos |
+| **tsc cacheado** | `check_cursor_issues` usou `tsc --noEmit` (com cache incremental) | Erros TS18046 não detectados |
+| **Falta de verificação** | Não verificou se padrão antigo (`error.message`) ainda existia | Script passou como "sucesso" |
+| **Commit imediato** | Commit realizado sem comparação de erros antes/depois | Regressão enviada ao repositório |
+
+#### Como prevenir
+
+| Etapa | Ação | Comando/Tool | Objetivo |
+|-------|------|--------------|----------|
+| **1. Antes do script** | Contar erros TypeScript | `npx tsc --noEmit --incremental false 2>&1 \| grep -c "error TS"` | Baseline |
+| **2. Após script** | Contar erros novamente | Mesmo comando | Comparação |
+| **3. Verificar padrão** | Buscar padrão antigo | `grep -rn "error\\.message" src \| wc -l` | Completude |
+| **4. Validar resultado** | Se erros aumentaram | `git checkout .` | Cancelar mudanças |
+| **5. MCP check** | `check_cursor_issues` com `--incremental false` | Tool MCP | Verificação final |
+| **6. Commit** | Só se erros <= baseline | `git commit` | Segurança |
+
+#### Checklist Obrigatório para Scripts de Automação
+
+```bash
+#!/bin/bash
+# Template de verificação pós-script
+
+# Cores
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "🔍 VERIFICAÇÃO PÓS-SCRIPT"
+echo "========================="
+
+# 1. Contar erros ANTES (se disponível em variável de ambiente)
+if [ -z "$ERRORS_BEFORE" ]; then
+  echo "${YELLOW}⚠️  ERRORS_BEFORE não definido. Execute script com:${NC}"
+  echo "   export ERRORS_BEFORE=\$(npx tsc --noEmit --incremental false 2>&1 | grep -c 'error TS')"
+  exit 1
+fi
+
+# 2. Contar erros DEPOIS
+ERRORS_AFTER=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+
+# 3. Verificar padrão antigo (exemplo: error.message)
+OLD_PATTERN_COUNT=$(grep -rn "error\.message" src --include="*.ts" 2>/dev/null | wc -l | tr -d ' ')
+
+# 4. Calcular diferença
+DIFF=$((ERRORS_AFTER - ERRORS_BEFORE))
+
+# 5. Relatório
+echo ""
+echo "📊 RESULTADOS:"
+echo "   Erros antes:  $ERRORS_BEFORE"
+echo "   Erros depois: $ERRORS_AFTER"
+echo "   Diferença:    $DIFF"
+echo "   Padrão antigo: $OLD_PATTERN_COUNT ocorrências"
+echo ""
+
+# 6. Decisão
+if [ $DIFF -gt 0 ]; then
+  echo "${RED}❌ REGRESSÃO DETECTADA!${NC}"
+  echo "   Erros aumentaram em $DIFF"
+  echo "   Executando git checkout ..."
+  git checkout .
+  exit 1
+elif [ $OLD_PATTERN_COUNT -gt 0 ]; then
+  echo "${YELLOW}⚠️  ATENÇÃO: Script incompleto!${NC}"
+  echo "   Padrão antigo ainda existe em $OLD_PATTERN_COUNT locais"
+  echo "   Revisar e melhorar script antes de commit."
+  exit 1
+elif [ $DIFF -lt 0 ]; then
+  echo "${GREEN}✅ EXCELENTE! Erros reduziram em ${DIFF#-}${NC}"
+  echo "   OK para commit."
+  exit 0
+else
+  echo "${GREEN}✅ OK para commit (sem mudanças)${NC}"
+  exit 0
+fi
+```
+
+### 12.3 Casos de Uso
+
+#### Exemplo 1: Script de Substituição de Tipos
+
+```bash
+# Salvar baseline
+export ERRORS_BEFORE=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+echo "Baseline: $ERRORS_BEFORE erros"
+
+# Executar script
+npx tsx scripts/fix-types.ts
+
+# Verificar
+bash scripts/verify-post-script.sh
+```
+
+#### Exemplo 2: Refatoração em Massa
+
+```bash
+# 1. Baseline
+tsc_before=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+
+# 2. Refatoração
+npx tsx scripts/refactor-all.ts
+
+# 3. Verificação
+tsc_after=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+
+# 4. Comparação
+if [ $tsc_after -gt $tsc_before ]; then
+  echo "❌ REGRESSÃO: $tsc_before → $tsc_after (+$((tsc_after - tsc_before)))"
+  git checkout .
+else
+  echo "✅ OK: $tsc_before → $tsc_after"
+fi
+```
+
+### 12.4 Ferramentas de Prevenção
+
+#### Script: verify-post-automation.sh
+
+Criar em: `scripts/verify-post-automation.sh`
+
+```bash
+#!/bin/bash
+# Verificação automática após scripts de automação
+# Uso: bash scripts/verify-post-automation.sh "error\\.message"
+
+PATTERN="$1"
+ERRORS_BEFORE="${ERRORS_BEFORE:-0}"
+
+if [ -z "$PATTERN" ]; then
+  echo "❌ Uso: $0 'PADRÃO_ANTIGO'"
+  exit 1
+fi
+
+# Contar erros
+ERRORS_AFTER=$(npx tsc --noEmit --incremental false 2>&1 | grep -c "error TS")
+PATTERN_COUNT=$(grep -rn "$PATTERN" src --include="*.ts" 2>/dev/null | wc -l | tr -d ' ')
+
+# Decidir
+DIFF=$((ERRORS_AFTER - ERRORS_BEFORE))
+
+if [ $DIFF -gt 0 ] || [ $PATTERN_COUNT -gt 0 ]; then
+  echo "❌ FALHOU"
+  echo "   Erros: $ERRORS_BEFORE → $ERRORS_AFTER"
+  echo "   Padrão antigo: $PATTERN_COUNT"
+  exit 1
+else
+  echo "✅ PASSOU"
+  exit 0
+fi
+```
+
+---
+
+## 13. HISTÓRICO DE VERSÕES
 
 | Versão | Data | Alterações |
 |--------|------|------------|
 | 1.0.0 | 27/12/2025 | Versão inicial com sistema completo |
+| 1.1.0 | 27/12/2025 | + Seção 12: Prevenção de Regressões (lição E2 BATCH 1) |
 

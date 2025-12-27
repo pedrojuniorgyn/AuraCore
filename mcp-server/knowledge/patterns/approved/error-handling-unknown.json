@@ -1,46 +1,116 @@
 {
   "id": "error-handling-unknown",
-  "name": "Error Handling with Unknown",
-  "version": "1.0.0",
+  "name": "Error Handling with Unknown Type",
+  "version": "2.0.0",
   "status": "APPROVED",
-  "category": "typescript",
+  "category": "type-safety",
   "created_at": "2025-12-27",
-  "learned_from": "E0.1",
+  "updated_at": "2025-12-27",
+  "learned_from": ["E0.1", "E2-BATCH1-REGRESSION", "E3-BATCH3"],
   
-  "description": "Padrão obrigatório para tratamento de erros com unknown e type guards",
+  "description": "Padrão CRÍTICO para tratamento de erros com unknown e type guards. Substituição COMPLETA de error.* por variáveis tipadas é OBRIGATÓRIA.",
+  
+  "rules": [
+    "⚠️ CRÍTICO: SEMPRE use catch (error: unknown) ao invés de catch (error: any)",
+    "⚠️ CRÍTICO: SEMPRE crie const errorMessage = error instanceof Error ? error.message : String(error) NO INÍCIO do bloco catch",
+    "⚠️ CRÍTICO: NUNCA use error.message, error.stack, error.code diretamente sem type guard",
+    "⚠️ CRÍTICO: SEMPRE substitua TODOS os usos de error.* por variáveis tipadas",
+    "✅ SEMPRE use errorMessage para acessar a mensagem do erro",
+    "✅ Para error.stack: const errorStack = error instanceof Error ? error.stack : undefined",
+    "✅ Para error.code: const errorCode = (error as NodeJS.ErrnoException).code",
+    "✅ Para error.name: const errorName = error instanceof Error ? error.name : 'Error'"
+  ],
   
   "problem": {
-    "description": "catch (error: any) permite acesso inseguro a propriedades",
-    "impact": "Runtime errors se error não for Error instance",
-    "frequency": "MÉDIA - encontrado em integrações externas"
+    "description": "catch (error: any) permite acesso inseguro a propriedades. Pior ainda: substituição PARCIAL de error.message causa TS18046.",
+    "impact": "Runtime errors se error não for Error instance. Regressões de centenas de erros TS18046.",
+    "frequency": "ALTA - encontrado em 233 locais após BATCH 1 do E2",
+    "ts_error_code": "TS18046",
+    "regression_risk": "CRÍTICO"
   },
   
   "solution": {
     "steps": [
       "1. Usar catch (error: unknown)",
-      "2. Verificar se é instanceof Error antes de acessar .message",
-      "3. Ter fallback para erros não-Error",
-      "4. Re-throw com informação útil"
+      "2. Criar const errorMessage = error instanceof Error ? error.message : String(error) NO INÍCIO",
+      "3. Substituir TODOS os error.message → errorMessage",
+      "4. Substituir TODOS os error.stack → errorStack (com type guard)",
+      "5. Verificar se não sobrou nenhum error.* direto"
     ],
-    "code_template": "try {\n  // código que pode falhar\n} catch (error: unknown) {\n  if (error instanceof Error) {\n    console.error(error.message);\n    throw error;\n  } else {\n    throw new Error(`Erro inesperado: ${String(error)}`);\n  }\n}"
+    "code_template": "try {\n  // código que pode falhar\n} catch (error: unknown) {\n  const errorMessage = error instanceof Error ? error.message : String(error);\n  console.error('Erro:', errorMessage);\n  return NextResponse.json({ error: errorMessage }, { status: 500 });\n}"
   },
+  
+  "anti_patterns": [
+    {
+      "name": "Substituição Parcial (REGRESSÃO E2 BATCH 1)",
+      "wrong": "catch (error: unknown) { const errorMessage = ...; console.log(error.message); }",
+      "right": "catch (error: unknown) { const errorMessage = ...; console.log(errorMessage); }",
+      "severity": "CRITICAL",
+      "ts_error": "TS18046",
+      "learned_from": "LC-936041",
+      "files_affected": 233,
+      "how_to_prevent": "Após script de automação, verificar: grep -rn 'error\\.message' src | wc -l"
+    },
+    {
+      "name": "Acesso direto a error.message em objeto inline",
+      "wrong": "catch (error: unknown) { return { error: error.message }; }",
+      "right": "catch (error: unknown) { const errorMessage = ...; return { error: errorMessage }; }",
+      "severity": "CRITICAL",
+      "ts_error": "TS18046",
+      "files_affected": 79
+    },
+    {
+      "name": "catch (error: any)",
+      "wrong": "catch (error: any) { console.log(error.message); }",
+      "right": "catch (error: unknown) { const errorMessage = ...; console.log(errorMessage); }",
+      "severity": "CRITICAL",
+      "ts_error": "Violação type-safety",
+      "files_affected": 0
+    }
+  ],
   
   "incorrect_patterns": [
     "catch (error: any)",
     "catch (error) { error.message }",
+    "catch (error: unknown) { error.message }",
+    "catch (error: unknown) { throw error.message }",
     "catch (e: any) { throw e.message }"
   ],
   
   "correct_patterns": [
     "catch (error: unknown)",
-    "if (error instanceof Error)",
-    "String(error) para fallback"
+    "const errorMessage = error instanceof Error ? error.message : String(error)",
+    "if (error instanceof Error) { ... }",
+    "String(error) para fallback",
+    "errorMessage (variável tipada)"
   ],
+  
+  "example_correct": "try {\n  await someAsyncOperation();\n} catch (error: unknown) {\n  const errorMessage = error instanceof Error ? error.message : String(error);\n  const errorStack = error instanceof Error ? error.stack : undefined;\n  console.error('Erro:', errorMessage);\n  if (errorStack) console.error('Stack:', errorStack);\n  return NextResponse.json({ error: errorMessage }, { status: 500 });\n}",
+  
+  "example_wrong_1": "// ❌ REGRESSÃO: errorMessage criado mas não usado\ntry {\n  await someAsyncOperation();\n} catch (error: unknown) {\n  const errorMessage = error instanceof Error ? error.message : String(error);\n  console.error('Erro:', error.message); // ❌ TS18046\n  return NextResponse.json({ error: error.message }, { status: 500 }); // ❌ TS18046\n}",
+  
+  "example_wrong_2": "// ❌ ANTI-PATTERN: any\ntry {\n  await someAsyncOperation();\n} catch (error: any) {\n  console.error('Erro:', error.message); // ❌ Inseguro\n}",
   
   "enforcement": {
     "validate_code_checks": true,
     "eslint_rule": "@typescript-eslint/no-explicit-any",
-    "block_on_violation": true
+    "block_on_violation": true,
+    "tsc_error": "TS18046",
+    "prevention_checklist": [
+      "1. Após scripts: executar tsc --noEmit --incremental false",
+      "2. Verificar padrão antigo: grep -rn 'error\\\\.message' src | wc -l",
+      "3. Se > 0: script incompleto, não fazer commit"
+    ]
+  },
+  
+  "regression_lessons": {
+    "incident": "E2 BATCH 1",
+    "what_happened": "Script substituiu catch (error: any) → catch (error: unknown) e criou errorMessage, mas NÃO substituiu os 233 usos de error.message",
+    "impact": "233 erros TS18046 introduzidos",
+    "root_cause": "Script regex não capturou todas as ocorrências de error.message (inline em objetos, etc.)",
+    "how_detected": "E3 BATCH 3 - verificação manual após commit",
+    "time_to_fix": "2 horas (BATCH 3 + BATCH 3.2)",
+    "prevention": "SEMPRE verificar se padrão antigo ainda existe após script de automação",
+    "must_not_repeat": true
   }
 }
-
