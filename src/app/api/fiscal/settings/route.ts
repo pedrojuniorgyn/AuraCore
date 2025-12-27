@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: settings });
   } catch (error: unknown) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -172,7 +172,7 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Erro ao atualizar fiscal settings:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

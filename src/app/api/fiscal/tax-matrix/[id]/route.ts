@@ -27,7 +27,7 @@ export async function PUT(
   } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }
@@ -51,7 +51,7 @@ export async function DELETE(
   } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

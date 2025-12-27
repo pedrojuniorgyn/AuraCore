@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     // getTenantContext() lança Response (401/403) quando auth falha.
     // Se capturarmos isso aqui e retornarmos 500, mascaramos o status real.
     if (error instanceof Response) return error;
-    const message = error instanceof Error ? error.message : "Erro ao listar transações";
+    const message = error instanceof Error ? errorMessage : "Erro ao listar transações";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

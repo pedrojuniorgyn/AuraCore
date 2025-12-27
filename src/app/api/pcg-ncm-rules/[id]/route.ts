@@ -64,7 +64,7 @@ export async function GET(
   } catch (error: unknown) {
     console.error("Erro ao buscar regra:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao buscar regra" },
+      { error: errorMessage || "Erro ao buscar regra" },
       { status: 500 }
     );
   }
@@ -150,7 +150,7 @@ export async function PUT(
   } catch (error: unknown) {
     console.error("Erro ao atualizar regra:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao atualizar regra" },
+      { error: errorMessage || "Erro ao atualizar regra" },
       { status: 500 }
     );
   }
@@ -199,7 +199,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error("Erro ao excluir regra:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao excluir regra" },
+      { error: errorMessage || "Erro ao excluir regra" },
       { status: 500 }
     );
   }

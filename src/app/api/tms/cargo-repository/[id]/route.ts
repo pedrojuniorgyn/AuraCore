@@ -43,7 +43,7 @@ export async function GET(
   } catch (error: unknown) {
     console.error("❌ Error fetching cargo:", error);
     return NextResponse.json(
-      { error: "Falha ao buscar carga.", details: error.message },
+      { error: "Falha ao buscar carga.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -104,7 +104,7 @@ export async function PUT(
   } catch (error: unknown) {
     console.error("❌ Error updating cargo:", error);
     return NextResponse.json(
-      { error: "Falha ao atualizar carga.", details: error.message },
+      { error: "Falha ao atualizar carga.", details: errorMessage },
       { status: 500 }
     );
   }
@@ -148,7 +148,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error("❌ Error deleting cargo:", error);
     return NextResponse.json(
-      { error: "Falha ao remover carga.", details: error.message },
+      { error: "Falha ao remover carga.", details: errorMessage },
       { status: 500 }
     );
   }

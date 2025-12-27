@@ -101,7 +101,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error("❌ Erro ao fazer upload do PDF:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

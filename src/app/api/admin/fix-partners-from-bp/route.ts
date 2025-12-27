@@ -32,7 +32,7 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error("❌ Erro:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) return error;
     console.error("❌ Erro ao sincronizar DDA:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao sincronizar DDA" },
+      { error: errorMessage || "Falha ao sincronizar DDA" },
       { status: 500 }
     );
   }

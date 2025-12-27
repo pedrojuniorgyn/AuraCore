@@ -91,7 +91,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error("❌ Erro ao criar CC 3D:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -146,7 +146,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     console.error("❌ Erro ao buscar CCs 3D:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

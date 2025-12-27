@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar SPED Contribuições:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

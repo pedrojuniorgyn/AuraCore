@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       data: assets.recordset || assets
     });
   } catch (error: unknown) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       message: "Ativo CIAP registrado"
     });
   } catch (error: unknown) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 

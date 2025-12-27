@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro no seed:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

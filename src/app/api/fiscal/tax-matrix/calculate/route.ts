@@ -58,10 +58,10 @@ export async function GET(req: Request) {
     console.error("❌ Erro ao calcular imposto:", error);
     
     // Se for erro de matriz não configurada, retornar erro específico
-    if (error.message.includes("não configurada")) {
+    if (errorMessage.includes("não configurada")) {
       return NextResponse.json(
         {
-          error: error.message,
+          error: errorMessage,
           suggestion: "Configure a matriz tributária para esta rota em /fiscal/matriz-tributaria",
         },
         { status: 404 }

@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar DRE:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao gerar relatório" },
+      { error: errorMessage || "Erro ao gerar relatório" },
       { status: 500 }
     );
   }

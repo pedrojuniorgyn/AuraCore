@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       data: history.recordset || history
     });
   } catch (error: unknown) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       message: "Rateio executado"
     });
   } catch (error: unknown) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 

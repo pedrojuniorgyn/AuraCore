@@ -72,7 +72,7 @@ export async function GET(
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao buscar conta gerencial:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -116,7 +116,7 @@ export async function PUT(
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao atualizar conta gerencial:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -149,7 +149,7 @@ export async function DELETE(
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao excluir conta gerencial:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

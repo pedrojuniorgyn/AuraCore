@@ -160,7 +160,7 @@ export async function GET() {
     });
   } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, error: error.message, stack: error.stack },
+      { success: false, error: errorMessage, stack: (error instanceof Error ? error.stack : undefined) },
       { status: 500 }
     );
   }

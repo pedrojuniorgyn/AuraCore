@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: errorMessage,
         hint: "Verifique se as tabelas existem.",
       },
       { status: 500 }

@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error("Erro ao buscar regras PCG-NCM:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao buscar regras" },
+      { error: errorMessage || "Erro ao buscar regras" },
       { status: 500 }
     );
   }
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("Erro ao criar regra:", error);
     return NextResponse.json(
-      { error: error.message || "Erro ao criar regra" },
+      { error: errorMessage || "Erro ao criar regra" },
       { status: 500 }
     );
   }

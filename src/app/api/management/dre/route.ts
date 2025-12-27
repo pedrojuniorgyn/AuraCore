@@ -39,7 +39,7 @@ export async function GET(req: Request) {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao calcular DRE Gerencial:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

@@ -107,7 +107,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error("❌ Erro ao aprovar cotação:", error);
     return NextResponse.json(
-      { error: "Erro ao aprovar cotação", details: error.message },
+      { error: "Erro ao aprovar cotação", details: errorMessage },
       { status: 500 }
     );
   }

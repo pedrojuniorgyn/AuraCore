@@ -365,8 +365,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
-        stack: error.stack,
+        error: errorMessage,
+        stack: (error instanceof Error ? error.stack : undefined),
       },
       { status: 500 }
     );

@@ -88,8 +88,8 @@ export async function POST(request: NextRequest) {
     console.error("❌ Erro na migration:", error);
     return NextResponse.json({
       success: false,
-      error: error.message,
-      stack: error.stack
+      error: errorMessage,
+      stack: (error instanceof Error ? error.stack : undefined)
     }, { status: 500 });
   }
 }

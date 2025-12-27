@@ -101,7 +101,7 @@ export async function POST(
 
       console.log("✅ Certificado válido");
     } catch (error: unknown) {
-      console.error("❌ Erro ao validar certificado:", error.message);
+      console.error("❌ Erro ao validar certificado:", errorMessage);
       
       // Tenta validar de outra forma (menos rigorosa)
       // Se o arquivo existe e tem conteúdo, aceita

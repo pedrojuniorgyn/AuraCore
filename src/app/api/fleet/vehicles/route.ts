@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao criar veículo:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao criar veículo" },
+      { error: errorMessage || "Falha ao criar veículo" },
       { status: 500 }
     );
   }

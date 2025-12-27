@@ -113,7 +113,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Erro ao autorizar CTe",
-          details: error.message,
+          details: errorMessage,
         },
         { status: 500 }
       );

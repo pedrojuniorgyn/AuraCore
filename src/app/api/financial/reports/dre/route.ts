@@ -240,7 +240,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar DRE:", error);
     return NextResponse.json(
-      { error: "Erro ao gerar DRE", details: error.message },
+      { error: "Erro ao gerar DRE", details: errorMessage },
       { status: 500 }
     );
   }

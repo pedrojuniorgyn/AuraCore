@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_payable");
     } catch (error: unknown) {
-      if (error.message.includes("already an object")) {
+      if (errorMessage.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_payable");
       } else {
         throw error;
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_receivable");
     } catch (error: unknown) {
-      if (error.message.includes("already an object")) {
+      if (errorMessage.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_receivable");
       } else {
         throw error;
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_payable");
     } catch (error: unknown) {
-      if (error.message.includes("already an object")) {
+      if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_payable");
       } else {
         console.log("⚠️ Não foi possível adicionar FK em accounts_payable:", error.message);
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_receivable");
     } catch (error: unknown) {
-      if (error.message.includes("already an object")) {
+      if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_receivable");
       } else {
         console.log("⚠️ Não foi possível adicionar FK em accounts_receivable:", error.message);
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao adicionar colunas:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

@@ -316,7 +316,7 @@ export async function GET() {
   } catch (error: unknown) {
     console.error("❌ Erro na migração:", error);
     return NextResponse.json(
-      { error: error.message, stack: error.stack },
+      { error: errorMessage, stack: (error instanceof Error ? error.stack : undefined) },
       { status: 500 }
     );
   }

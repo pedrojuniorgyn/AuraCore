@@ -52,7 +52,7 @@ export async function GET(req: Request) {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao listar contas gerenciais:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao criar conta gerencial:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

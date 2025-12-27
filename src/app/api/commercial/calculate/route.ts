@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao calcular frete:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao calcular frete" },
+      { error: errorMessage || "Falha ao calcular frete" },
       { status: 500 }
     );
   }

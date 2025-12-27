@@ -120,7 +120,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     console.error("❌ Erro ao calcular margem do CTe:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: "Falha ao processar upload", 
-        details: error.message,
+        details: errorMessage,
       },
       { status: 500 }
     );

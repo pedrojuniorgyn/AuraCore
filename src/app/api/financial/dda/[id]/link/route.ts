@@ -33,7 +33,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error("❌ Erro ao vincular DDA:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao vincular DDA" },
+      { error: errorMessage || "Falha ao vincular DDA" },
       { status: 500 }
     );
   }

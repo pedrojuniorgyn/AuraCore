@@ -175,7 +175,7 @@ export async function PUT(
   } catch (error: unknown) {
     console.error("❌ Erro ao atualizar tabela:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao atualizar tabela" },
+      { error: errorMessage || "Falha ao atualizar tabela" },
       { status: 500 }
     );
   }

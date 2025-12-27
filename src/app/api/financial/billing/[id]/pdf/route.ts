@@ -64,7 +64,7 @@ export async function GET(
     } catch (error: unknown) {
       console.error("❌ Erro ao gerar PDF:", error);
       return NextResponse.json(
-        { error: error.message },
+        { error: errorMessage },
         { status: 500 }
       );
     }

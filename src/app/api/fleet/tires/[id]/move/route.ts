@@ -54,7 +54,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, message: "Movimento registrado" });
   } catch (error: unknown) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

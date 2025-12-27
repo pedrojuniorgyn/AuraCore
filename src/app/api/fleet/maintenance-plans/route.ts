@@ -32,7 +32,7 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao listar planos:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? errorMessage : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao criar plano:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? errorMessage : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

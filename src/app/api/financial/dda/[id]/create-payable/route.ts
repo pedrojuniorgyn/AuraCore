@@ -27,7 +27,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error("❌ Erro ao criar conta a pagar:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao criar conta a pagar" },
+      { error: errorMessage || "Falha ao criar conta a pagar" },
       { status: 500 }
     );
   }

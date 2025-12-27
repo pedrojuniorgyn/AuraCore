@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

@@ -32,7 +32,7 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao listar DDAs:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? errorMessage : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching cost centers:", error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }

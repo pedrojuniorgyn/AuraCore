@@ -84,7 +84,7 @@ export async function POST() {
   } catch (error: unknown) {
     console.error("❌ Erro ao criar tabela:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

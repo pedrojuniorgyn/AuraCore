@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   } catch (error: unknown) {
     // getTenantContext() lança Response (401/403) quando auth falha.
     if (error instanceof Response) return error;
-    const message = error instanceof Error ? error.message : "Erro ao conciliar";
+    const message = error instanceof Error ? errorMessage : "Erro ao conciliar";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

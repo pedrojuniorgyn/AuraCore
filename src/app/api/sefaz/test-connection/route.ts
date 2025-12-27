@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: "Erro ao testar conexão",
-        details: error.message || "Erro interno do servidor",
+        details: errorMessage || "Erro interno do servidor",
       },
       { status: 500 }
     );

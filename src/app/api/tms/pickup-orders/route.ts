@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     if (error instanceof Response) return error;
     console.error("❌ Erro ao buscar ordens:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar ordens", details: error instanceof Error ? error.message : String(error) },
+      { error: "Erro ao buscar ordens", details: error instanceof Error ? errorMessage : String(error) },
       { status: 500 }
     );
   }
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
     if (error instanceof Response) return error;
     console.error("❌ Erro ao criar ordem:", error);
     return NextResponse.json(
-      { error: "Erro ao criar ordem", details: error instanceof Error ? error.message : String(error) },
+      { error: "Erro ao criar ordem", details: error instanceof Error ? errorMessage : String(error) },
       { status: 500 }
     );
   }

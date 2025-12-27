@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     console.error("❌ Erro ao buscar CTes:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar CTes", details: error.message },
+      { error: "Erro ao buscar CTes", details: errorMessage },
       { status: 500 }
     );
   }

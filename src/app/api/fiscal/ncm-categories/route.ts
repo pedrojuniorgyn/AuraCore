@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao buscar NCM categories:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao criar NCM category:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

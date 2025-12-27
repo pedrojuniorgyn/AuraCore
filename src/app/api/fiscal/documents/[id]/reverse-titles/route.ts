@@ -37,7 +37,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error("❌ Erro ao reverter títulos:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

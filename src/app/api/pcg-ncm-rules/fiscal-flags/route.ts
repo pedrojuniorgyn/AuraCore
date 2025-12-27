@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
     console.error("❌ Erro em /api/pcg-ncm-rules/fiscal-flags:", error);
     return NextResponse.json(
       { 
-        error: error.message || "Erro interno ao buscar flags fiscais",
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        error: errorMessage || "Erro interno ao buscar flags fiscais",
+        details: process.env.NODE_ENV === "development" ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
       { status: 500 }
     );

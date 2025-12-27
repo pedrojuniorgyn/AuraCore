@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Erro ao criar motorista:", error);
     return NextResponse.json(
-      { error: error.message || "Falha ao criar motorista" },
+      { error: errorMessage || "Falha ao criar motorista" },
       { status: 500 }
     );
   }

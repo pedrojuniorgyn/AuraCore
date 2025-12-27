@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching backoffice accounts:", error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating backoffice entry:", error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: errorMessage
     }, { status: 500 });
   }
 }
