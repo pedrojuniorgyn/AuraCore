@@ -5,6 +5,11 @@ import { eq, and, isNull, sql } from "drizzle-orm";
 import { logChartAccountChange } from "@/services/audit-logger";
 import { getTenantContext } from "@/lib/auth/context";
 
+// Interface para queries de contagem SQL
+interface CountResult {
+  count: number;
+}
+
 /**
  * GET /api/financial/chart-accounts/:id
  */
@@ -106,14 +111,16 @@ export async function PUT(
         WHERE chart_account_id = ${id}
           AND deleted_at IS NULL
       `);
-      const hasEntries = (hasEntriesResult[0]?.count || 0) > 0;
+      const hasEntriesData = (hasEntriesResult.recordset || hasEntriesResult) as unknown as CountResult[];
+      const hasEntriesRow = hasEntriesData[0];
+      const hasEntries = (hasEntriesRow?.count || 0) > 0;
 
       if (hasEntries) {
         return NextResponse.json(
           {
-            error: `❌ Código não pode ser alterado. Conta "${existing[0].code} - ${existing[0].name}" possui ${hasEntriesResult[0].count} lançamento(s) contábil(is).`,
+            error: `❌ Código não pode ser alterado. Conta "${existing[0].code} - ${existing[0].name}" possui ${hasEntriesRow?.count || 0} lançamento(s) contábil(is).`,
             code: "CODE_LOCKED",
-            count: hasEntriesResult[0].count,
+            count: hasEntriesRow?.count || 0,
             suggestion: "Você pode editar nome, descrição ou status, mas não o código.",
             reason: "Integridade de auditoria (NBC TG 26)"
           },
@@ -272,7 +279,9 @@ export async function DELETE(
       WHERE chart_account_id = ${id}
         AND deleted_at IS NULL
     `);
-    const journalEntriesCount = journalEntriesResult[0]?.count || 0;
+    const journalEntriesData = (journalEntriesResult.recordset || journalEntriesResult) as unknown as CountResult[];
+    const journalEntriesRow = journalEntriesData[0];
+    const journalEntriesCount = journalEntriesRow?.count || 0;
 
     if (journalEntriesCount > 0) {
       return NextResponse.json(
@@ -319,7 +328,9 @@ export async function DELETE(
       WHERE chart_account_id = ${id}
         AND deleted_at IS NULL
     `);
-    const fiscalItemsCount = fiscalItemsResult[0]?.count || 0;
+    const fiscalItemsData = (fiscalItemsResult.recordset || fiscalItemsResult) as unknown as CountResult[];
+    const fiscalItemsRow = fiscalItemsData[0];
+    const fiscalItemsCount = fiscalItemsRow?.count || 0;
 
     if (fiscalItemsCount > 0) {
       return NextResponse.json(

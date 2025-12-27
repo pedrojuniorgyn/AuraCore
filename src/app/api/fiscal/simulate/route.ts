@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interface para resultado da matriz fiscal
+interface TaxMatrixResult {
+  cst_code: string;
+  cst_description: string;
+  icms_rate: number;
+  fcp_rate: number;
+  difal_applicable: number;
+  legal_basis: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -21,7 +31,8 @@ export async function POST(request: NextRequest) {
         AND is_active = 1
     `);
 
-    const rule = result.recordset?.[0] || result[0];
+    const data = (result.recordset || result) as unknown as TaxMatrixResult[];
+    const rule = data[0];
 
     if (!rule) {
       return NextResponse.json({

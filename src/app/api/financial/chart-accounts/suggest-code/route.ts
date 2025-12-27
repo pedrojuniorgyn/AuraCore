@@ -3,6 +3,15 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
+// Interfaces para queries SQL
+interface MaxCodeResult {
+  max_code: number | null;
+}
+
+interface ParentCodeResult {
+  code: string;
+}
+
 /**
  * GET /api/financial/chart-accounts/suggest-code?parentId=123
  * Sugere próximo código significativo baseado no pai
@@ -29,7 +38,9 @@ export async function GET(req: Request) {
           AND ISNUMERIC(code) = 1
       `);
 
-      const maxCode = result[0]?.max_code || 0;
+      const data = (result.recordset || result) as unknown as MaxCodeResult[];
+      const row = data[0];
+      const maxCode = row?.max_code || 0;
       suggestedCode = String(maxCode + 1);
     } else {
       // Com pai: buscar código do pai e último filho
@@ -41,14 +52,17 @@ export async function GET(req: Request) {
           AND deleted_at IS NULL
       `);
 
-      if (!parentResult[0]) {
+      const parentData = (parentResult.recordset || parentResult) as unknown as ParentCodeResult[];
+      const parentRow = parentData[0];
+
+      if (!parentRow) {
         return NextResponse.json(
           { error: "Conta pai não encontrada" },
           { status: 404 }
         );
       }
 
-      const parentCode = parentResult[0].code;
+      const parentCode = parentRow.code;
 
       // Buscar último código filho
       const childrenResult = await db.execute(sql`
@@ -59,7 +73,9 @@ export async function GET(req: Request) {
           AND organization_id = ${ctx.organizationId}
       `);
 
-      const maxChildCode = childrenResult[0]?.max_code;
+      const childrenData = (childrenResult.recordset || childrenResult) as unknown as MaxCodeResult[];
+      const childRow = childrenData[0];
+      const maxChildCode = childRow?.max_code;
 
       if (!maxChildCode) {
         // Primeiro filho

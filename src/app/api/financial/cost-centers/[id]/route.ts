@@ -4,6 +4,11 @@ import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
+// Interface para queries de contagem SQL
+interface CountResult {
+  count: number;
+}
+
 /**
  * GET /api/financial/cost-centers/:id
  */
@@ -96,14 +101,16 @@ export async function PUT(
         WHERE cost_center_id = ${id}
           AND deleted_at IS NULL
       `);
-      const hasEntries = (hasEntriesResult[0]?.count || 0) > 0;
+      const hasEntriesData = (hasEntriesResult.recordset || hasEntriesResult) as unknown as CountResult[];
+      const hasEntriesRow = hasEntriesData[0];
+      const hasEntries = (hasEntriesRow?.count || 0) > 0;
 
       if (hasEntries) {
         return NextResponse.json(
           {
-            error: `❌ Código não pode ser alterado. Centro de Custo "${existing[0].code} - ${existing[0].name}" possui ${hasEntriesResult[0].count} lançamento(s) contábil(is).`,
+            error: `❌ Código não pode ser alterado. Centro de Custo "${existing[0].code} - ${existing[0].name}" possui ${hasEntriesRow?.count || 0} lançamento(s) contábil(is).`,
             code: "CODE_LOCKED",
-            count: hasEntriesResult[0].count,
+            count: hasEntriesRow?.count || 0,
             suggestion: "Você pode editar nome, descrição ou status, mas não o código.",
             reason: "Integridade de auditoria"
           },
@@ -245,7 +252,9 @@ export async function DELETE(
       WHERE cost_center_id = ${id}
         AND deleted_at IS NULL
     `);
-    const journalEntriesCount = journalEntriesResult[0]?.count || 0;
+    const journalEntriesData = (journalEntriesResult.recordset || journalEntriesResult) as unknown as CountResult[];
+    const journalEntriesRow = journalEntriesData[0];
+    const journalEntriesCount = journalEntriesRow?.count || 0;
 
     if (journalEntriesCount > 0) {
       return NextResponse.json(
@@ -266,7 +275,9 @@ export async function DELETE(
       WHERE cost_center_id = ${id}
         AND deleted_at IS NULL
     `);
-    const payablesCount = payablesResult[0]?.count || 0;
+    const payablesData = (payablesResult.recordset || payablesResult) as unknown as CountResult[];
+    const payablesRow = payablesData[0];
+    const payablesCount = payablesRow?.count || 0;
 
     if (payablesCount > 0) {
       return NextResponse.json(
@@ -287,7 +298,9 @@ export async function DELETE(
       WHERE cost_center_id = ${id}
         AND deleted_at IS NULL
     `);
-    const receivablesCount = receivablesResult[0]?.count || 0;
+    const receivablesData = (receivablesResult.recordset || receivablesResult) as unknown as CountResult[];
+    const receivablesRow = receivablesData[0];
+    const receivablesCount = receivablesRow?.count || 0;
 
     if (receivablesCount > 0) {
       return NextResponse.json(
@@ -308,7 +321,9 @@ export async function DELETE(
       WHERE cost_center_id = ${id}
         AND deleted_at IS NULL
     `);
-    const workOrdersCount = workOrdersResult[0]?.count || 0;
+    const workOrdersData = (workOrdersResult.recordset || workOrdersResult) as unknown as CountResult[];
+    const workOrdersRow = workOrdersData[0];
+    const workOrdersCount = workOrdersRow?.count || 0;
 
     if (workOrdersCount > 0) {
       return NextResponse.json(

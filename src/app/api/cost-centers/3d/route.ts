@@ -3,6 +3,11 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interface para INSERT OUTPUT INSERTED.id
+interface InsertedIdResult {
+  id: number;
+}
+
 /**
  * POST /api/cost-centers/3d
  * Cria Centro de Custo Tridimensional
@@ -74,7 +79,9 @@ export async function POST(req: Request) {
       )
     `);
 
-    const newId = result[0]?.id;
+    const insertedData = (result.recordset || result) as unknown as InsertedIdResult[];
+    const insertedRow = insertedData[0];
+    const newId = insertedRow?.id;
 
     return NextResponse.json({
       success: true,

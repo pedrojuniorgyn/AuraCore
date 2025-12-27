@@ -3,6 +3,32 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interface para query de conta gerencial com join
+interface ManagementAccountResult {
+  id: number;
+  organization_id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  type: string;
+  category: string | null;
+  parent_id: number | null;
+  level: number;
+  is_analytical: number;
+  legal_account_id: number | null;
+  allocation_rule: string | null;
+  allocation_base: string | null;
+  status: string;
+  legal_account_code: string | null;
+  legal_account_name: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: Date;
+  updated_at: Date;
+  deleted_at: Date | null;
+  version: number;
+}
+
 /**
  * GET /api/management/chart-accounts/[id]
  */
@@ -30,7 +56,10 @@ export async function GET(
         AND mca.deleted_at IS NULL
     `);
 
-    if (!result[0]) {
+    const data = (result.recordset || result) as unknown as ManagementAccountResult[];
+    const row = data[0];
+
+    if (!row) {
       return NextResponse.json(
         { error: "Conta não encontrada" },
         { status: 404 }
@@ -39,7 +68,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: result[0],
+      data: row,
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao buscar conta gerencial:", error);

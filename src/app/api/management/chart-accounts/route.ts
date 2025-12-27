@@ -3,6 +3,11 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+// Interface para INSERT OUTPUT INSERTED.id
+interface InsertedIdResult {
+  id: number;
+}
+
 /**
  * GET /api/management/chart-accounts
  * Lista contas gerenciais (PCG)
@@ -123,10 +128,13 @@ export async function POST(req: Request) {
       )
     `);
 
+    const insertedData = (result.recordset || result) as unknown as InsertedIdResult[];
+    const insertedRow = insertedData[0];
+
     return NextResponse.json({
       success: true,
       message: "Conta gerencial criada com sucesso!",
-      data: { id: result[0]?.id },
+      data: { id: insertedRow?.id },
     });
   } catch (error: unknown) {
     console.error("❌ Erro ao criar conta gerencial:", error);
