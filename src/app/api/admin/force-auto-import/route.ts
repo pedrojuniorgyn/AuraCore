@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ [FORCE] Erro ao executar importação manual:", error);
     return NextResponse.json(
       {

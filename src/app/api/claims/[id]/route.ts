@@ -23,6 +23,7 @@ export async function PUT(
       message: "Sinistro atualizado"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage
@@ -47,6 +48,7 @@ export async function DELETE(
       message: "Sinistro excluído"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage

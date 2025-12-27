@@ -75,6 +75,7 @@ export async function POST(
       ...result,
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao gerar títulos:", error);
     return NextResponse.json(
       { error: errorMessage },

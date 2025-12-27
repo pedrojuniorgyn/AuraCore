@@ -31,6 +31,7 @@ export async function GET() {
       message: "Parceiros atualizados com sucesso",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

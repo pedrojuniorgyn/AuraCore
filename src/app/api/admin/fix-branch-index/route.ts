@@ -15,6 +15,7 @@ export async function POST() {
       await db.execute(sql.raw(`DROP INDEX [branches_document_org_idx] ON [branches]`));
       console.log("✅ Índice antigo removido!");
     } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn("⚠️ Índice antigo não encontrado:", errorMessage);
     }
 
@@ -31,6 +32,7 @@ export async function POST() {
       message: "Índice atualizado com sucesso! Agora soft delete funciona corretamente.",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao atualizar índice:", error);
     return NextResponse.json(
       { error: "Falha ao atualizar índice", details: errorMessage },

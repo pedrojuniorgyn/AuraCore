@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
       costCenterId: result.costCenterId,
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao criar veículo:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao criar veículo" },

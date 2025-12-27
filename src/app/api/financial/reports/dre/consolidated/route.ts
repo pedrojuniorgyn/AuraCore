@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao gerar DRE:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao gerar relatório" },

@@ -16,6 +16,7 @@ export async function PUT(
       message: "Pré-fatura enviada para aprovação do cliente"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage

@@ -101,6 +101,7 @@ export async function POST(
 
       console.log("✅ Certificado válido");
     } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Erro ao validar certificado:", errorMessage);
       
       // Tenta validar de outra forma (menos rigorosa)

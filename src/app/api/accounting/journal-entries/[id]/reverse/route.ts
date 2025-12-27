@@ -36,6 +36,7 @@ export async function POST(
       message: "Lançamento contábil revertido com sucesso",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao reverter:", error);
     return NextResponse.json(
       { error: errorMessage },

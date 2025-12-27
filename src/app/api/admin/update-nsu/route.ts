@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

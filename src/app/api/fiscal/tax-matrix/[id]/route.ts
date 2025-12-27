@@ -25,6 +25,7 @@ export async function PUT(
       message: "Regra fiscal atualizada"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage
@@ -49,6 +50,7 @@ export async function DELETE(
       message: "Regra fiscal desativada"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage

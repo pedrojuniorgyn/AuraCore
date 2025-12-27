@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
         console.log("✅ Processamento concluído:", processResult);
       } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("❌ Erro ao processar documentos:", errorMessage);
         // Continua e retorna os dados da consulta mesmo se o processamento falhar
       }

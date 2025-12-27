@@ -84,6 +84,7 @@ export async function GET() {
       ],
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao limpar tabelas:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

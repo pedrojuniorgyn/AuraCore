@@ -62,6 +62,7 @@ export async function GET(
       data: result.recordset[0],
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro ao buscar regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao buscar regra" },
@@ -148,6 +149,7 @@ export async function PUT(
       message: "Regra atualizada com sucesso",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro ao atualizar regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao atualizar regra" },
@@ -197,6 +199,7 @@ export async function DELETE(
       message: "Regra excluída com sucesso",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro ao excluir regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao excluir regra" },

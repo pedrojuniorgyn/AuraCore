@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao verificar documentos deletados:", error);
     return NextResponse.json(
       { error: errorMessage },

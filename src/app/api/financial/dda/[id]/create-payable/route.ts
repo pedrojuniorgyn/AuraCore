@@ -25,6 +25,7 @@ export async function POST(
       message: "Conta a pagar criada com sucesso",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao criar conta a pagar:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao criar conta a pagar" },

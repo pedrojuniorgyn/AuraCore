@@ -129,6 +129,7 @@ export async function POST() {
     });
 
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro na migration:", error);
     return NextResponse.json(
       { error: errorMessage },

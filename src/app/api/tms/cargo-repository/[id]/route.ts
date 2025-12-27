@@ -41,6 +41,7 @@ export async function GET(
     return NextResponse.json({ data: cargo });
     
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error fetching cargo:", error);
     return NextResponse.json(
       { error: "Falha ao buscar carga.", details: errorMessage },
@@ -102,6 +103,7 @@ export async function PUT(
     });
     
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error updating cargo:", error);
     return NextResponse.json(
       { error: "Falha ao atualizar carga.", details: errorMessage },
@@ -146,6 +148,7 @@ export async function DELETE(
     });
     
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error deleting cargo:", error);
     return NextResponse.json(
       { error: "Falha ao remover carga.", details: errorMessage },

@@ -21,6 +21,7 @@ export async function GET() {
       permissions,
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar permissões:", error);
     return NextResponse.json(
       { error: errorMessage },

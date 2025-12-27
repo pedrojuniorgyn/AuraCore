@@ -89,6 +89,7 @@ export async function POST(req: Request) {
       data: { id: newId },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao criar CC 3D:", error);
     return NextResponse.json(
       { error: errorMessage },
@@ -144,6 +145,7 @@ export async function GET(req: Request) {
       data: result.recordset || [],
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar CCs 3D:", error);
     return NextResponse.json(
       { error: errorMessage },

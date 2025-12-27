@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
       throw e;
     }
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     // getTenantContext() pode lançar NextResponse (401/500). Preserve.
     if (error instanceof Response) return error;
     console.error("❌ Erro ao sincronizar DDA:", error);

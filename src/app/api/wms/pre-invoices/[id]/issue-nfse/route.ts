@@ -17,6 +17,7 @@ export async function POST(
       invoiceNumber
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage

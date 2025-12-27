@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao testar conexão Sefaz:", error);
     
     return NextResponse.json(

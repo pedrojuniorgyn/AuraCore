@@ -76,6 +76,7 @@ export async function POST() {
       message: "Migration banking_cnab executada com sucesso!",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro na migration:", error);
     return NextResponse.json(
       {

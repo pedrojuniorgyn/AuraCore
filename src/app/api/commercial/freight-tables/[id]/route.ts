@@ -173,6 +173,7 @@ export async function PUT(
       message: "Tabela atualizada com sucesso!",
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao atualizar tabela:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao atualizar tabela" },

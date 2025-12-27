@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       data: accounts.recordset || accounts
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error fetching backoffice accounts:", error);
     return NextResponse.json({
       success: false,
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
       message: "Lançamento criado com sucesso"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error creating backoffice entry:", error);
     return NextResponse.json({
       success: false,

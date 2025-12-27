@@ -134,6 +134,7 @@ export async function POST() {
 
     return NextResponse.json(report, { status: 200 });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ [TEST] Erro no teste:", error);
     return NextResponse.json(
       {

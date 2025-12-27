@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       message: `Bloco G gerado com ${blockG.length} linhas`
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage

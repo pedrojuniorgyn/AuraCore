@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       data: emissions.recordset || emissions
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       co2_ton: co2Ton
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

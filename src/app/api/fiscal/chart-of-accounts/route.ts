@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result.recordset || []);
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar plano de contas:", error);
     return NextResponse.json(
       { error: errorMessage },

@@ -59,6 +59,7 @@ export async function GET() {
       total: updated,
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao atualizar parceiros:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

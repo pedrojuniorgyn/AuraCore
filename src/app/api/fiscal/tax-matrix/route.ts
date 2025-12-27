@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       data: matrix.recordset || matrix
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
       message: "Regra fiscal criada"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

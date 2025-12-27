@@ -26,6 +26,7 @@ export async function PUT(
       message: "Evento atualizado com sucesso"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage
@@ -50,6 +51,7 @@ export async function DELETE(
       message: "Evento excluído com sucesso"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
       error: errorMessage

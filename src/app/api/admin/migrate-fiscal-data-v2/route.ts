@@ -122,6 +122,7 @@ export async function GET() {
       total: (total as any)?.total || 0,
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro na migração:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

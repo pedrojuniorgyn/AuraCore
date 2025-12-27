@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       data: costCenters.recordset || costCenters
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error fetching cost centers:", error);
     return NextResponse.json({
       success: false,

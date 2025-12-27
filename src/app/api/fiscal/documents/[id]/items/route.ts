@@ -47,6 +47,7 @@ export async function GET(
 
     return NextResponse.json(result.recordset || []);
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar itens:", error);
     return NextResponse.json(
       { error: errorMessage },

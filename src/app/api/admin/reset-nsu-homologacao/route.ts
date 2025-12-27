@@ -67,6 +67,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao resetar NSU:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }

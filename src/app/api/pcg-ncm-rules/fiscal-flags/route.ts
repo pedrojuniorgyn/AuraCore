@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro em /api/pcg-ncm-rules/fiscal-flags:", error);
     return NextResponse.json(
       { 

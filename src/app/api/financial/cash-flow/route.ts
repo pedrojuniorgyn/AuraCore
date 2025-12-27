@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
       data: { income, expenses, meta: { monthsAhead: monthsAheadSafe } },
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

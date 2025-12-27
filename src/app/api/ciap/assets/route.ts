@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       data: assets.recordset || assets
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       message: "Ativo CIAP registrado"
     });
   } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
