@@ -39,10 +39,11 @@ for (const file of files) {
   // 1. Não têm "const errorMessage =" já definido
   // 2. Usam errorMessage em algum lugar do bloco
   
+  // Lista para armazenar modificações a serem aplicadas (do final para o início para não bagunçar índices)
+  const modifications: { position: number; text: string }[] = [];
+  
   // Encontra blocos catch (error: unknown)
   const catchBlocks = content.matchAll(/catch\s*\(\s*error\s*:\s*unknown\s*\)\s*\{/g);
-  
-  let modifications = 0;
   
   for (const match of catchBlocks) {
     const catchStart = match.index!;
@@ -68,19 +69,26 @@ for (const file of files) {
       const insertPoint = catchOpenBrace;
       const errorMessageDefinition = '\n    const errorMessage = error instanceof Error ? error.message : String(error);';
       
-      content = content.substring(0, insertPoint) + errorMessageDefinition + content.substring(insertPoint);
-      
-      modifications++;
-      
-      // Ajusta catchEnd para o novo tamanho
-      catchEnd += errorMessageDefinition.length;
+      modifications.push({
+        position: insertPoint,
+        text: errorMessageDefinition
+      });
     }
   }
   
-  if (modifications > 0) {
+  // Aplica modificações do final para o início para não invalidar índices
+  if (modifications.length > 0) {
+    modifications.sort((a, b) => b.position - a.position);
+    
+    for (const mod of modifications) {
+      content = content.substring(0, mod.position) + mod.text + content.substring(mod.position);
+    }
+  }
+  
+  if (modifications.length > 0) {
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`✅ ${file}: ${modifications} bloco(s) corrigido(s)`);
-    totalFixed += modifications;
+    console.log(`✅ ${file}: ${modifications.length} bloco(s) corrigido(s)`);
+    totalFixed += modifications.length;
     filesModified++;
   }
 }
