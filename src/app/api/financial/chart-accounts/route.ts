@@ -156,22 +156,24 @@ export async function POST(req: Request) {
     const isAnalytical = level > 0; // Simplificado: contas de nível 1+ são analíticas por padrão
 
     // Criar
+    const accountData: typeof chartOfAccounts.$inferInsert = {
+      organizationId: ctx.organizationId,
+      code,
+      name,
+      type,
+      category: category || null,
+      parentId: parentId || null,
+      level,
+      isAnalytical,
+      acceptsCostCenter: acceptsCostCenter || false,
+      requiresCostCenter: requiresCostCenter || false,
+      status: "ACTIVE",
+      createdBy: ctx.userId,
+    };
+    
     const insertQuery = db
       .insert(chartOfAccounts)
-      .values({
-        organizationId: ctx.organizationId,
-        code,
-        name,
-        type,
-        category: category || null,
-        parentId: parentId || null,
-        level,
-        isAnalytical,
-        acceptsCostCenter: acceptsCostCenter || false,
-        requiresCostCenter: requiresCostCenter || false,
-        status: "ACTIVE",
-        createdBy: ctx.userId,
-      });
+      .values(accountData);
 
     const createdId = await insertReturning(insertQuery, { id: chartOfAccounts.id });
     const newAccountId = createdId[0]?.id;

@@ -130,21 +130,23 @@ export async function POST(req: Request) {
     }
 
     // Criar
+    const costCenterData: typeof costCenters.$inferInsert = {
+      organizationId: ctx.organizationId,
+      code,
+      name,
+      type,
+      parentId: parentId || null,
+      level,
+      linkedVehicleId: linkedVehicleId || null,
+      isAnalytical: type === "ANALYTIC",
+      class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
+      status: "ACTIVE",
+      createdBy: ctx.userId,
+    };
+    
     const insertQuery = db
       .insert(costCenters)
-      .values({
-        organizationId: ctx.organizationId,
-        code,
-        name,
-        type,
-        parentId: parentId || null,
-        level,
-        linkedVehicleId: linkedVehicleId || null,
-        isAnalytical: type === "ANALYTIC",
-        class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
-        status: "ACTIVE",
-        createdBy: ctx.userId,
-      });
+      .values(costCenterData);
 
     const createdId = await insertReturning(insertQuery, { id: costCenters.id });
     const newCostCenterId = createdId[0]?.id;
