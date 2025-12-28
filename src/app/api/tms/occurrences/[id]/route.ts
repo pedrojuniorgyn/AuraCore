@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tripOccurrences } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar ocorrência específica
 export async function GET(
@@ -23,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const occurrence = await db
+    const occurrence = await queryFirst<typeof tripOccurrences.$inferSelect>(db
       .select()
       .from(tripOccurrences)
       .where(
@@ -33,16 +34,16 @@ export async function GET(
           isNull(tripOccurrences.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (occurrence.length === 0) {
+    if (!occurrence) {
       return NextResponse.json(
         { error: "Ocorrência não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: occurrence[0] });
+    return NextResponse.json({ success: true, data: occurrence });
   } catch (error) {
     console.error("Erro ao buscar ocorrência:", error);
     return NextResponse.json(
@@ -93,7 +94,7 @@ export async function PUT(
     }
 
     // Verificar se ocorrência existe
-    const existing = await db
+    const existing = await queryFirst<typeof tripOccurrences.$inferSelect>(db
       .select()
       .from(tripOccurrences)
       .where(
@@ -103,9 +104,9 @@ export async function PUT(
           isNull(tripOccurrences.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Ocorrência não encontrada" },
         { status: 404 }
@@ -113,7 +114,7 @@ export async function PUT(
     }
 
     // Validar mudança de status
-    if (body.status === "CLOSED" && existing[0].status !== "IN_PROGRESS") {
+    if (body.status === "CLOSED" && existing.status !== "IN_PROGRESS") {
       return NextResponse.json(
         { error: "Apenas ocorrências em andamento podem ser fechadas" },
         { status: 400 }
@@ -136,7 +137,7 @@ export async function PUT(
         )
       );
 
-    const [updated] = await db
+    const updated = await queryFirst<typeof tripOccurrences.$inferSelect>(db
       .select()
       .from(tripOccurrences)
       .where(
@@ -146,7 +147,7 @@ export async function PUT(
           isNull(tripOccurrences.deletedAt)
         )
       )
-      .limit(1);
+      );
 
     return NextResponse.json({
       success: true,
@@ -182,7 +183,7 @@ export async function DELETE(
     }
 
     // Verificar se ocorrência existe
-    const existing = await db
+    const existing = await queryFirst<typeof tripOccurrences.$inferSelect>(db
       .select()
       .from(tripOccurrences)
       .where(
@@ -192,9 +193,9 @@ export async function DELETE(
           isNull(tripOccurrences.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Ocorrência não encontrada" },
         { status: 404 }
@@ -202,7 +203,7 @@ export async function DELETE(
     }
 
     // Validar se ocorrência está vinculada a sinistro
-    if (existing[0].insuranceClaim === "S") {
+    if (existing.insuranceClaim === "S") {
       return NextResponse.json(
         { error: "Não é possível excluir ocorrência com sinistro registrado" },
         { status: 400 }

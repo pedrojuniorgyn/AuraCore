@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { trips } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar viagem específica
 export async function GET(
@@ -23,26 +24,27 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const trip = await db
-      .select()
-      .from(trips)
-      .where(
-        and(
-          eq(trips.id, tripId),
-          eq(trips.organizationId, session.user.organizationId),
-          isNull(trips.deletedAt)
+    const trip = await queryFirst<typeof trips.$inferSelect>(
+      db
+        .select()
+        .from(trips)
+        .where(
+          and(
+            eq(trips.id, tripId),
+            eq(trips.organizationId, session.user.organizationId),
+            isNull(trips.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (trip.length === 0) {
+    if (!trip) {
       return NextResponse.json(
         { error: "Viagem não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: trip[0] });
+    return NextResponse.json({ success: true, data: trip });
   } catch (error) {
     console.error("Erro ao buscar viagem:", error);
     return NextResponse.json(
@@ -94,19 +96,20 @@ export async function PUT(
     }
 
     // Verificar se viagem existe
-    const existing = await db
-      .select()
-      .from(trips)
-      .where(
-        and(
-          eq(trips.id, tripId),
-          eq(trips.organizationId, session.user.organizationId),
-          isNull(trips.deletedAt)
+    const existing = await queryFirst<typeof trips.$inferSelect>(
+      db
+        .select()
+        .from(trips)
+        .where(
+          and(
+            eq(trips.id, tripId),
+            eq(trips.organizationId, session.user.organizationId),
+            isNull(trips.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Viagem não encontrada" },
         { status: 404 }
@@ -114,7 +117,7 @@ export async function PUT(
     }
 
     // Validar mudança de status
-    if (body.status === "COMPLETED" && existing[0].status !== "IN_TRANSIT") {
+    if (body.status === "COMPLETED" && existing.status !== "IN_TRANSIT") {
       return NextResponse.json(
         { error: "Apenas viagens em trânsito podem ser concluídas" },
         { status: 400 }
@@ -144,17 +147,18 @@ export async function PUT(
         )
       );
 
-    const [updated] = await db
-      .select()
-      .from(trips)
-      .where(
-        and(
-          eq(trips.id, tripId),
-          eq(trips.organizationId, session.user.organizationId),
-          isNull(trips.deletedAt)
+    const updated = await queryFirst<typeof trips.$inferSelect>(
+      db
+        .select()
+        .from(trips)
+        .where(
+          and(
+            eq(trips.id, tripId),
+            eq(trips.organizationId, session.user.organizationId),
+            isNull(trips.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
     return NextResponse.json({
       success: true,
@@ -190,19 +194,20 @@ export async function DELETE(
     }
 
     // Verificar se viagem existe
-    const existing = await db
-      .select()
-      .from(trips)
-      .where(
-        and(
-          eq(trips.id, tripId),
-          eq(trips.organizationId, session.user.organizationId),
-          isNull(trips.deletedAt)
+    const existing = await queryFirst<typeof trips.$inferSelect>(
+      db
+        .select()
+        .from(trips)
+        .where(
+          and(
+            eq(trips.id, tripId),
+            eq(trips.organizationId, session.user.organizationId),
+            isNull(trips.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Viagem não encontrada" },
         { status: 404 }

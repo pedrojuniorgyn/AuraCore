@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { accountsReceivable } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar conta a receber específica
 export async function GET(
@@ -20,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const receivable = await db
+    const receivable = await queryFirst<typeof accountsReceivable.$inferSelect>(db
       .select()
       .from(accountsReceivable)
       .where(
@@ -30,16 +31,16 @@ export async function GET(
           isNull(accountsReceivable.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (receivable.length === 0) {
+    if (!receivable) {
       return NextResponse.json(
         { error: "Conta a receber não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: receivable[0] });
+    return NextResponse.json({ success: true, data: receivable });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -79,7 +80,7 @@ export async function PUT(
     }
 
     // Verificar se conta existe
-    const existing = await db
+    const existing = await queryFirst<typeof accountsReceivable.$inferSelect>(db
       .select()
       .from(accountsReceivable)
       .where(
@@ -89,9 +90,9 @@ export async function PUT(
           isNull(accountsReceivable.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Conta a receber não encontrada" },
         { status: 404 }
@@ -99,7 +100,7 @@ export async function PUT(
     }
 
     // Validar se já foi recebida
-    if (existing[0].status === "PAID") {
+    if (existing.status === "PAID") {
       return NextResponse.json(
         { error: "Não é possível editar conta já recebida" },
         { status: 400 }
@@ -107,7 +108,7 @@ export async function PUT(
     }
 
     // Validar mudança de valor se tiver boleto gerado
-    if (existing[0].boletoId && body.amount !== existing[0].amount) {
+    if (existing.boletoId && body.amount !== existing.amount) {
       return NextResponse.json(
         { error: "Não é possível alterar valor de conta com boleto gerado" },
         { status: 400 }
@@ -124,11 +125,11 @@ export async function PUT(
       })
       .where(and(eq(accountsReceivable.id, receivableId), eq(accountsReceivable.organizationId, ctx.organizationId)));
 
-    const [updated] = await db
+    const updated = await queryFirst<typeof accountsReceivable.$inferSelect>(db
       .select()
       .from(accountsReceivable)
       .where(and(eq(accountsReceivable.id, receivableId), eq(accountsReceivable.organizationId, ctx.organizationId)))
-      .limit(1);
+      );
 
     return NextResponse.json({
       success: true,
@@ -164,7 +165,7 @@ export async function DELETE(
     }
 
     // Verificar se conta existe
-    const existing = await db
+    const existing = await queryFirst<typeof accountsReceivable.$inferSelect>(db
       .select()
       .from(accountsReceivable)
       .where(
@@ -174,9 +175,9 @@ export async function DELETE(
           isNull(accountsReceivable.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Conta a receber não encontrada" },
         { status: 404 }
@@ -184,14 +185,14 @@ export async function DELETE(
     }
 
     // Validar status antes de excluir
-    if (existing[0].status === "PAID") {
+    if (existing.status === "PAID") {
       return NextResponse.json(
         { error: "Não é possível excluir conta já recebida" },
         { status: 400 }
       );
     }
 
-    if (existing[0].boletoId) {
+    if (existing.boletoId) {
       return NextResponse.json(
         { error: "Não é possível excluir conta com boleto gerado. Cancele o boleto primeiro." },
         { status: 400 }
@@ -199,8 +200,8 @@ export async function DELETE(
     }
 
     // TODO: Reverter lançamento contábil se houver
-    // if (existing[0].journalEntryId) {
-    //   await reverseJournalEntry(existing[0].journalEntryId);
+    // if (existing.journalEntryId) {
+    //   await reverseJournalEntry(existing.journalEntryId);
     // }
 
     // Soft delete

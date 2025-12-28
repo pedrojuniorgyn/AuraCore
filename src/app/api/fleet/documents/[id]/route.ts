@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vehicleDocuments } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar documento de veículo específico
 export async function GET(
@@ -20,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const document = await db
+    const document = await queryFirst<typeof fleetDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -30,16 +31,16 @@ export async function GET(
           isNull(vehicleDocuments.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (document.length === 0) {
+    if (!document) {
       return NextResponse.json(
         { error: "Documento não encontrado" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: document[0] });
+    return NextResponse.json({ success: true, data: document });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -79,7 +80,7 @@ export async function PUT(
     }
 
     // Verificar se documento existe
-    const existing = await db
+    const existing = await queryFirst<typeof fleetDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -89,9 +90,9 @@ export async function PUT(
           isNull(vehicleDocuments.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Documento não encontrado" },
         { status: 404 }
@@ -146,7 +147,7 @@ export async function PUT(
       );
     }
 
-    const [updated] = await db
+    const updated = await queryFirst<typeof fleetDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -156,7 +157,7 @@ export async function PUT(
           isNull(vehicleDocuments.deletedAt)
         )
       )
-      .limit(1);
+      );
 
     return NextResponse.json({
       success: true,
@@ -192,7 +193,7 @@ export async function DELETE(
     }
 
     // Verificar se documento existe
-    const existing = await db
+    const existing = await queryFirst<typeof fleetDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -202,9 +203,9 @@ export async function DELETE(
           isNull(vehicleDocuments.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Documento não encontrado" },
         { status: 404 }

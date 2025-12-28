@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { maintenanceWorkOrders } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar ordem de serviço específica
 export async function GET(
@@ -20,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const workOrder = await db
+    const workOrder = await queryFirst<typeof workOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(
@@ -30,16 +31,16 @@ export async function GET(
           isNull(maintenanceWorkOrders.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (workOrder.length === 0) {
+    if (!workOrder) {
       return NextResponse.json(
         { error: "Ordem de serviço não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: workOrder[0] });
+    return NextResponse.json({ success: true, data: workOrder });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -79,7 +80,7 @@ export async function PUT(
     }
 
     // Verificar se ordem existe
-    const existing = await db
+    const existing = await queryFirst<typeof workOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(
@@ -89,9 +90,9 @@ export async function PUT(
           isNull(maintenanceWorkOrders.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Ordem de serviço não encontrada" },
         { status: 404 }
@@ -99,7 +100,7 @@ export async function PUT(
     }
 
     // Validar mudança de status
-    if (body.status && existing[0].status === "COMPLETED" && body.status !== "COMPLETED") {
+    if (body.status && existing.status === "COMPLETED" && body.status !== "COMPLETED") {
       return NextResponse.json(
         { error: "Não é possível reabrir uma ordem de serviço concluída" },
         { status: 400 }
@@ -141,11 +142,11 @@ export async function PUT(
       );
     }
 
-    const [updated] = await db
+    const updated = await queryFirst<typeof workOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(and(eq(maintenanceWorkOrders.id, workOrderId), eq(maintenanceWorkOrders.organizationId, ctx.organizationId), isNull(maintenanceWorkOrders.deletedAt)))
-      .limit(1);
+      );
 
     return NextResponse.json({
       success: true,
@@ -181,7 +182,7 @@ export async function DELETE(
     }
 
     // Verificar se ordem existe
-    const existing = await db
+    const existing = await queryFirst<typeof workOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(
@@ -191,9 +192,9 @@ export async function DELETE(
           isNull(maintenanceWorkOrders.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Ordem de serviço não encontrada" },
         { status: 404 }
@@ -201,7 +202,7 @@ export async function DELETE(
     }
 
     // Validar status antes de excluir
-    if (existing[0].status === "IN_PROGRESS") {
+    if (existing.status === "IN_PROGRESS") {
       return NextResponse.json(
         { error: "Não é possível excluir ordem de serviço em andamento" },
         { status: 400 }

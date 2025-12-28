@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { billingInvoices } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar fatura específica
 export async function GET(
@@ -20,26 +21,27 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const billing = await db
-      .select()
-      .from(billingInvoices)
-      .where(
-        and(
-          eq(billingInvoices.id, billingId),
-          eq(billingInvoices.organizationId, ctx.organizationId),
-          isNull(billingInvoices.deletedAt)
+    const billing = await queryFirst<typeof billingInvoices.$inferSelect>(
+      db
+        .select()
+        .from(billingInvoices)
+        .where(
+          and(
+            eq(billingInvoices.id, billingId),
+            eq(billingInvoices.organizationId, ctx.organizationId),
+            isNull(billingInvoices.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (billing.length === 0) {
+    if (!billing) {
       return NextResponse.json(
         { error: "Fatura não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: billing[0] });
+    return NextResponse.json({ success: true, data: billing });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -79,7 +81,7 @@ export async function PUT(
     }
 
     // Verificar se fatura existe
-    const existing = await db
+    const existing = await queryFirst<typeof billingInvoices.$inferSelect>(db
       .select()
       .from(billingInvoices)
       .where(
@@ -89,9 +91,9 @@ export async function PUT(
           isNull(billingInvoices.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Fatura não encontrada" },
         { status: 404 }
@@ -99,7 +101,7 @@ export async function PUT(
     }
 
     // Validar se já foi finalizada
-    if (existing[0].status === "FINALIZED" || existing[0].status === "PAID") {
+    if (existing.status === "FINALIZED" || existing.status === "PAID") {
       return NextResponse.json(
         { error: "Não é possível editar fatura finalizada ou paga" },
         { status: 400 }
@@ -107,7 +109,7 @@ export async function PUT(
     }
 
     // Validar mudança de valor se tiver boleto gerado
-    if (existing[0].boletoId && body.totalAmount !== existing[0].totalAmount) {
+    if (existing.boletoId && body.totalAmount !== existing.totalAmount) {
       return NextResponse.json(
         { error: "Não é possível alterar valor de fatura com boleto gerado" },
         { status: 400 }
@@ -124,11 +126,11 @@ export async function PUT(
       })
       .where(and(eq(billingInvoices.id, billingId), eq(billingInvoices.organizationId, ctx.organizationId)));
 
-    const [updated] = await db
+    const updated = await queryFirst<typeof billingInvoices.$inferSelect>(db
       .select()
       .from(billingInvoices)
       .where(and(eq(billingInvoices.id, billingId), eq(billingInvoices.organizationId, ctx.organizationId)))
-      .limit(1);
+      );
 
     return NextResponse.json({
       success: true,
@@ -164,7 +166,7 @@ export async function DELETE(
     }
 
     // Verificar se fatura existe
-    const existing = await db
+    const existing = await queryFirst<typeof billingInvoices.$inferSelect>(db
       .select()
       .from(billingInvoices)
       .where(
@@ -174,9 +176,9 @@ export async function DELETE(
           isNull(billingInvoices.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Fatura não encontrada" },
         { status: 404 }
@@ -184,21 +186,21 @@ export async function DELETE(
     }
 
     // Validar status antes de excluir
-    if (existing[0].status === "PAID") {
+    if (existing.status === "PAID") {
       return NextResponse.json(
         { error: "Não é possível excluir fatura já paga" },
         { status: 400 }
       );
     }
 
-    if (existing[0].status === "FINALIZED") {
+    if (existing.status === "FINALIZED") {
       return NextResponse.json(
         { error: "Não é possível excluir fatura finalizada. Cancele-a primeiro." },
         { status: 400 }
       );
     }
 
-    if (existing[0].boletoId) {
+    if (existing.boletoId) {
       return NextResponse.json(
         { error: "Não é possível excluir fatura com boleto gerado. Cancele o boleto primeiro." },
         { status: 400 }
