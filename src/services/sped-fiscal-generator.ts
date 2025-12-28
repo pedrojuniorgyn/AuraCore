@@ -66,11 +66,16 @@ async function generateBloco0(config: SpedFiscalConfig): Promise<string[]> {
   lines.push(`|0001|0|`);
   
   // 0005: Dados Complementares da Empresa
+  interface OrgData {
+    name: string;
+    document: string;
+  }
+  
   const orgResult = await db.execute(sql`
     SELECT name, document 
     FROM organizations 
     WHERE id = ${config.organizationId}
-  `);
+  `) as unknown as OrgData[];
   
   const org = orgResult[0];
   
@@ -234,6 +239,11 @@ async function generateBlocoE(config: SpedFiscalConfig): Promise<string[]> {
   lines.push(`|E100|${startDate}|${endDateStr}|`);
   
   // E110: Apuração ICMS (Simplificado)
+  interface ApuracaoData {
+    icms_debito: string | number;
+    icms_credito: string | number;
+  }
+  
   const apuracaoResult = await db.execute(sql`
     SELECT 
       SUM(CASE WHEN fd.operation_type = 'SAIDA' THEN fd.tax_amount ELSE 0 END) as icms_debito,
@@ -243,10 +253,10 @@ async function generateBlocoE(config: SpedFiscalConfig): Promise<string[]> {
       AND MONTH(fd.issue_date) = ${config.referenceMonth}
       AND YEAR(fd.issue_date) = ${config.referenceYear}
       AND fd.deleted_at IS NULL
-  `);
+  `) as unknown as ApuracaoData[];
   
-  const icmsDebito = parseFloat(apuracaoResult[0]?.icms_debito || "0");
-  const icmsCredito = parseFloat(apuracaoResult[0]?.icms_credito || "0");
+  const icmsDebito = parseFloat(String(apuracaoResult[0]?.icms_debito || "0"));
+  const icmsCredito = parseFloat(String(apuracaoResult[0]?.icms_credito || "0"));
   const saldoApurar = icmsDebito - icmsCredito;
   
   lines.push(`|E110|${icmsDebito.toFixed(2)}|0|${icmsCredito.toFixed(2)}|0|0|0|${Math.max(saldoApurar, 0).toFixed(2)}|0|0|`);
@@ -314,9 +324,13 @@ export async function validateSpedData(
   const errors: string[] = [];
 
   // Validação 1: Organização existe
+  interface OrgId {
+    id: number;
+  }
+  
   const orgResult = await db.execute(sql`
     SELECT id FROM organizations WHERE id = ${config.organizationId}
-  `);
+  `) as unknown as OrgId[];
   
   if (!orgResult[0]) {
     errors.push("Organização não encontrada");
@@ -332,6 +346,10 @@ export async function validateSpedData(
   }
 
   // Validação 3: Verificar se há documentos fiscais no período
+  interface DocCount {
+    count: number;
+  }
+  
   const docsResult = await db.execute(sql`
     SELECT COUNT(*) as count
     FROM fiscal_documents
@@ -339,7 +357,7 @@ export async function validateSpedData(
       AND MONTH(issue_date) = ${config.referenceMonth}
       AND YEAR(issue_date) = ${config.referenceYear}
       AND deleted_at IS NULL
-  `);
+  `) as unknown as DocCount[];
 
   const docCount = docsResult[0]?.count || 0;
   if (docCount === 0) {

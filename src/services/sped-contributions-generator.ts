@@ -62,9 +62,13 @@ async function generateBloco0Contrib(config: SpedContributionsConfig): Promise<s
   lines.push(`|0001|0|`);
   
   // 0035: Identificação SCP (Simplificado)
+  interface OrgDocument {
+    document: string;
+  }
+  
   const orgResult = await db.execute(sql`
     SELECT document FROM organizations WHERE id = ${config.organizationId}
-  `);
+  `) as unknown as OrgDocument[];
   
   lines.push(`|0035|${orgResult[0]?.document}|`);
   
@@ -185,6 +189,11 @@ async function generateBlocoM(config: SpedContributionsConfig): Promise<string[]
   lines.push(`|M001|0|`);
   
   // Calcular totais de débito e crédito
+  interface TotalsResult {
+    total_debit: string | number;
+    total_credit: string | number;
+  }
+  
   const totalsResult = await db.execute(sql`
     SELECT 
       SUM(CASE WHEN je.source_type = 'TAX_DEBIT' THEN je.total_debit ELSE 0 END) as total_debit,
@@ -193,10 +202,10 @@ async function generateBlocoM(config: SpedContributionsConfig): Promise<string[]
     WHERE je.organization_id = ${config.organizationId}
       AND MONTH(je.entry_date) = ${config.referenceMonth}
       AND YEAR(je.entry_date) = ${config.referenceYear}
-  `);
+  `) as unknown as TotalsResult[];
   
-  const totalDebito = parseFloat(totalsResult[0]?.total_debit || "0");
-  const totalCredito = parseFloat(totalsResult[0]?.total_credit || "0");
+  const totalDebito = parseFloat(String(totalsResult[0]?.total_debit || "0"));
+  const totalCredito = parseFloat(String(totalsResult[0]?.total_credit || "0"));
   
   // M200: PIS
   const pisAPagar = Math.max(totalDebito - totalCredito, 0) * 0.179; // 1.65/9.25

@@ -85,13 +85,18 @@ export async function DELETE(
     const categoryId = parseInt(id, 10);
 
     // Buscar categoria para mensagens detalhadas
+    interface CategoryData {
+      name: string;
+      code: string;
+    }
+    
     const categoryResult = await db.execute(sql`
       SELECT name, code 
       FROM financial_categories 
       WHERE id = ${categoryId}
         AND organization_id = ${ctx.organizationId}
         AND deleted_at IS NULL
-    `);
+    `) as unknown as CategoryData[];
 
     if (!categoryResult[0]) {
       return NextResponse.json(
@@ -103,12 +108,16 @@ export async function DELETE(
     const category = categoryResult[0];
 
     // ✅ VALIDAÇÃO 1: Verificar uso em itens de documentos fiscais
+    interface CountResult {
+      count: number;
+    }
+    
     const fiscalItemsResult = await db.execute(sql`
       SELECT COUNT(*) as count 
       FROM fiscal_document_items 
       WHERE category_id = ${categoryId}
         AND deleted_at IS NULL
-    `);
+    `) as unknown as CountResult[];
     const fiscalItemsCount = fiscalItemsResult[0]?.count || 0;
 
     if (fiscalItemsCount > 0) {
@@ -129,7 +138,7 @@ export async function DELETE(
       FROM accounts_payable 
       WHERE category_id = ${categoryId}
         AND deleted_at IS NULL
-    `);
+    `) as unknown as CountResult[];
     const payablesCount = payablesResult[0]?.count || 0;
 
     if (payablesCount > 0) {
@@ -150,7 +159,7 @@ export async function DELETE(
       FROM accounts_receivable 
       WHERE category_id = ${categoryId}
         AND deleted_at IS NULL
-    `);
+    `) as unknown as CountResult[];
     const receivablesCount = receivablesResult[0]?.count || 0;
 
     if (receivablesCount > 0) {

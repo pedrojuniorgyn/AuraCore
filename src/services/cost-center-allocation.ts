@@ -35,12 +35,16 @@ export async function createCostCenterAllocations(
     }
 
     // ✅ Validação 2: Buscar valor total da linha
+    interface LineAmountResult {
+      line_amount: string | number;
+    }
+    
     const lineResult = await db.execute(sql`
       SELECT 
         COALESCE(debit_amount, 0) + COALESCE(credit_amount, 0) as line_amount
       FROM journal_entry_lines
       WHERE id = ${data.journalEntryLineId}
-    `);
+    `) as unknown as LineAmountResult[];
 
     if (!lineResult[0]) {
       return {
@@ -49,16 +53,20 @@ export async function createCostCenterAllocations(
       };
     }
 
-    const lineAmount = parseFloat(lineResult[0].line_amount);
+    const lineAmount = parseFloat(String(lineResult[0].line_amount));
 
     // ✅ Validação 3: Todos CCs devem ser analíticos
+    interface CostCenterResult {
+      is_analytical: boolean;
+    }
+    
     for (const allocation of data.allocations) {
       const ccResult = await db.execute(sql`
         SELECT is_analytical 
         FROM financial_cost_centers 
         WHERE id = ${allocation.costCenterId}
           AND deleted_at IS NULL
-      `);
+      `) as unknown as CostCenterResult[];
 
       if (!ccResult[0]) {
         return {

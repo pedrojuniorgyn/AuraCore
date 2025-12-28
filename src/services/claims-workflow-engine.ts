@@ -31,13 +31,18 @@ export class ClaimsWorkflowEngine {
     const claimNumber = `SIN-${Date.now().toString().slice(-6)}`;
     
     // Buscar seguro do veículo
+    interface InsuranceData {
+      insurance_coverage?: number;
+      franchise_amount?: number;
+    }
+    
     const insuranceResult = await db.execute(sql`
       SELECT insurance_coverage, franchise_amount
       FROM vehicles
       WHERE id = ${claim.vehicleId}
-    `);
+    `) as unknown as InsuranceData[];
     
-    const insurance = insuranceResult.recordset?.[0] || insuranceResult[0] || {};
+    const insurance = insuranceResult[0] || {};
     const insuranceCoverage = insurance.insurance_coverage || 0;
     const franchiseAmount = insurance.franchise_amount || 5000;
     
@@ -81,13 +86,19 @@ export class ClaimsWorkflowEngine {
    */
   private static async generateAccountingEntry(claimId: number, decision: ClaimDecision): Promise<void> {
     
+    interface ClaimInfo {
+      organization_id: number;
+      claim_number: string;
+      vehicle_id: number;
+    }
+    
     const claimResult = await db.execute(sql`
       SELECT organization_id, claim_number, vehicle_id
       FROM claims_management
       WHERE id = ${claimId}
-    `);
+    `) as unknown as ClaimInfo[];
     
-    const claim = claimResult.recordset?.[0] || claimResult[0];
+    const claim = claimResult[0];
     if (!claim) return;
     
     let debitAccount = '';
