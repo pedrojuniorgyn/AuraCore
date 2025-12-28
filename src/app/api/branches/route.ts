@@ -31,58 +31,40 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
 
-    // Query base: Multi-Tenant + Soft Delete
-    let query = db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO MULTI-TENANT
-          isNull(branches.deletedAt) // 🗑️ APENAS NÃO DELETADOS
-        )
-      );
+    // Construir condições dinamicamente
+    const conditions = [
+      eq(branches.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO MULTI-TENANT
+      isNull(branches.deletedAt) // 🗑️ APENAS NÃO DELETADOS
+    ];
 
     // Filtro por busca (nome, trade_name, document)
     if (search) {
-      query = query.where(
-        and(
-          eq(branches.organizationId, ctx.organizationId),
-          isNull(branches.deletedAt),
-          or(
-            ilike(branches.name, `%${search}%`),
-            ilike(branches.tradeName, `%${search}%`),
-            ilike(branches.document, `%${search}%`)
-          )
+      conditions.push(
+        or(
+          ilike(branches.name, `%${search}%`),
+          ilike(branches.tradeName, `%${search}%`),
+          ilike(branches.document, `%${search}%`)
         )
-      ) as any;
+      );
     }
 
     // Filtro por status
     if (status) {
-      query = query.where(
-        and(
-          eq(branches.organizationId, ctx.organizationId),
-          isNull(branches.deletedAt),
-          eq(branches.status, status)
-        )
-      ) as any;
+      conditions.push(eq(branches.status, status));
     }
 
     // 🏢 DATA SCOPING: Se não for ADMIN, filtra por filiais permitidas
     if (!ctx.isAdmin && ctx.allowedBranches.length > 0) {
-      query = query.where(
-        and(
-          eq(branches.organizationId, ctx.organizationId),
-          isNull(branches.deletedAt),
-          inArray(branches.id, ctx.allowedBranches)
-        )
-      ) as any;
+      conditions.push(inArray(branches.id, ctx.allowedBranches));
     } else if (!ctx.isAdmin && ctx.allowedBranches.length === 0) {
       // Usuário sem filiais permitidas = sem acesso
       return NextResponse.json({ data: [], total: 0 });
     }
 
-    const branchesList = await query;
+    const branchesList = await db
+      .select()
+      .from(branches)
+      .where(and(...conditions.filter(Boolean)));
 
     return NextResponse.json({
       data: branchesList,

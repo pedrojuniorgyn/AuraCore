@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { queryFirst } from "@/lib/db/query-helpers";
 import { freightQuotes } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
@@ -126,11 +127,15 @@ export async function PUT(
       );
     }
 
-    const [updated] = await db
+    const updated = await queryFirst<typeof freightQuotes.$inferSelect>(db
       .select()
       .from(freightQuotes)
       .where(and(eq(freightQuotes.id, id), eq(freightQuotes.organizationId, organizationId), isNull(freightQuotes.deletedAt)))
-      .limit(1);
+    );
+
+    if (!updated) {
+      return NextResponse.json({ error: "Cotação não encontrada" }, { status: 404 });
+    }
 
     return NextResponse.json({
       success: true,

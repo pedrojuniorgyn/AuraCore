@@ -139,7 +139,7 @@ export function ModernFinancialSummary({ type }: { type: "payable" | "receivable
                       className={`h-full bg-gradient-to-r ${card.bgGradient.replace("/20", "")} transition-all duration-1000`}
                       style={{
                         width: `${Math.min(
-                          (card.value / (data?.totalOpen + data?.totalOverdue + data?.totalPaid || 1)) * 100,
+                          (card.value / ((data?.totalOpen ?? 0) + (data?.totalOverdue ?? 0) + (data?.totalPaid ?? 0) || 1)) * 100,
                           100
                         )}%`,
                       }}

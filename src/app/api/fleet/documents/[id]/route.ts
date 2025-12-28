@@ -21,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const document = await queryFirst<typeof fleetDocuments.$inferSelect>(db
+    const document = await queryFirst<typeof vehicleDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -80,7 +80,7 @@ export async function PUT(
     }
 
     // Verificar se documento existe
-    const existing = await queryFirst<typeof fleetDocuments.$inferSelect>(db
+    const existing = await queryFirst<typeof vehicleDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -147,7 +147,7 @@ export async function PUT(
       );
     }
 
-    const updated = await queryFirst<typeof fleetDocuments.$inferSelect>(db
+    const updated = await queryFirst<typeof vehicleDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(
@@ -193,7 +193,7 @@ export async function DELETE(
     }
 
     // Verificar se documento existe
-    const existing = await queryFirst<typeof fleetDocuments.$inferSelect>(db
+    const existing = await queryFirst<typeof vehicleDocuments.$inferSelect>(db
       .select()
       .from(vehicleDocuments)
       .where(

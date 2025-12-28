@@ -140,11 +140,7 @@ export class XmlSigner {
  */
 export async function createXmlSignerFromDb(organizationId: number): Promise<XmlSigner> {
   const { db } = await import("@/lib/db");
-  const schema = await import("@/lib/db/schema");
-  interface SchemaWithDigitalCerts {
-    digitalCertificates: unknown;
-  }
-  const { digitalCertificates } = schema as unknown as SchemaWithDigitalCerts;
+  const { digitalCertificates } = await import("@/lib/db/schema");
   const { eq, and, isNull } = await import("drizzle-orm");
 
   const [cert] = await db

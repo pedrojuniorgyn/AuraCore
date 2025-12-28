@@ -32,9 +32,8 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
-      message: "Lançamento contábil gerado com sucesso",
       ...result,
+      message: "Lançamento contábil gerado com sucesso",
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

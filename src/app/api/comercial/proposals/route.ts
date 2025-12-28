@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     };
 
     const inserted = await db.insert(commercialProposals).values(insertValues);
-    const proposalId = inserted[0]?.id;
+    const proposalId = (inserted as any)[0]?.id;
     if (!proposalId) {
       return NextResponse.json(
         { error: "Falha ao criar proposta (id não retornado)" },

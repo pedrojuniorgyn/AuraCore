@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { queryFirst } from "@/lib/db/query-helpers";
 import { crmLeads } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and } from "drizzle-orm";
@@ -62,11 +63,15 @@ export async function PUT(
       return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
     }
 
-    const [lead] = await db
+    const lead = await queryFirst<typeof crmLeads.$inferSelect>(db
       .select()
       .from(crmLeads)
       .where(and(eq(crmLeads.id, leadId), eq(crmLeads.organizationId, ctx.organizationId)))
-      .limit(1);
+    );
+
+    if (!lead) {
+      return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, data: lead });
   } catch (error: unknown) {

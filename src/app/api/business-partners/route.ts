@@ -32,55 +32,37 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") || "";
     const status = searchParams.get("status") || "";
 
-    // Query base: Multi-Tenant + Soft Delete
-    let query = db
-      .select()
-      .from(businessPartners)
-      .where(
-        and(
-          eq(businessPartners.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO MULTI-TENANT
-          isNull(businessPartners.deletedAt) // 🗑️ APENAS NÃO DELETADOS
-        )
-      );
+    // Construir condições dinamicamente
+    const conditions = [
+      eq(businessPartners.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO MULTI-TENANT
+      isNull(businessPartners.deletedAt) // 🗑️ APENAS NÃO DELETADOS
+    ];
 
     // Filtro por busca (nome, trade_name, document)
     if (search) {
-      query = query.where(
-        and(
-          eq(businessPartners.organizationId, ctx.organizationId),
-          isNull(businessPartners.deletedAt),
-          or(
-            ilike(businessPartners.name, `%${search}%`),
-            ilike(businessPartners.tradeName, `%${search}%`),
-            ilike(businessPartners.document, `%${search}%`)
-          )
+      conditions.push(
+        or(
+          ilike(businessPartners.name, `%${search}%`),
+          ilike(businessPartners.tradeName, `%${search}%`),
+          ilike(businessPartners.document, `%${search}%`)
         )
-      ) as any;
+      );
     }
 
     // Filtro por tipo
     if (type) {
-      query = query.where(
-        and(
-          eq(businessPartners.organizationId, ctx.organizationId),
-          isNull(businessPartners.deletedAt),
-          eq(businessPartners.type, type)
-        )
-      ) as any;
+      conditions.push(eq(businessPartners.type, type));
     }
 
     // Filtro por status
     if (status) {
-      query = query.where(
-        and(
-          eq(businessPartners.organizationId, ctx.organizationId),
-          isNull(businessPartners.deletedAt),
-          eq(businessPartners.status, status)
-        )
-      ) as any;
+      conditions.push(eq(businessPartners.status, status));
     }
 
-    const partnersList = await query;
+    const partnersList = await db
+      .select()
+      .from(businessPartners)
+      .where(and(...conditions.filter(Boolean)));
 
     return NextResponse.json({
       data: partnersList,

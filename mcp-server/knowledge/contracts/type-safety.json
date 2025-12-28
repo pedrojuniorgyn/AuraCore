@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -355,6 +355,42 @@
         "src/app/api/tms/trips/[id]/route.ts"
       ],
       "pattern_created": "e8-ts-complete-multi-phase-type-safety",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-482601",
+      "date": "2025-12-28",
+      "epic": "E9-TS",
+      "error": "E9-TS Fases 9.1 + 9.2 Completo: 63 erros TypeScript eliminados através de 2 fases sistemáticas - Fase 9.1 Quick Wins (TS2345 Dirent mocks com helper mockDirentArray type-safe, TS7006 implicit any em callbacks e params), Fase 9.2 UI Components + Multi-Fix (TS2322 NumberCounter end→value e type conversions, TS2353 campos inexistentes deletedBy/updatedBy/status em 16 rotas, TS2551/TS2552 workOrders→maintenanceWorkOrders e toFixed em strings, TS2365 operador += com string|number). Projeto iniciou E9 com 209 erros, finalizou Fase 9.2 com 146 erros. META < 150 ERROS ATINGIDA!",
+      "correction": "Fase 9.1 (-21 erros): Helper mockDirentArray para testes type-safe com 'Awaited<ReturnType<typeof fs.readdir>>', tipos explícitos (value: string) para callbacks SearchableSelect e reduce, tipar params AG Grid cellStyle. Fase 9.2 (-42 erros): Props NumberCounter (end→value), number→string conversion em receivables/receive, remover 21 campos inexistentes no schema (deletedBy/updatedBy/status/originUf/useNewQueryKeys), corrigir nome de tabela workOrders→maintenanceWorkOrders, parseFloat() antes de toFixed() em strings, protocol→protocolo, Number() para operadores +=. Total: 35 arquivos corrigidos, 2 commits, 63 erros eliminados (209 → 146). META < 150 ATINGIDA! Redução acumulada desde início do projeto: -1054 erros (-88%)!",
+      "files_affected": [
+        "mcp-server/tests/unit/search-patterns.test.ts",
+        "src/app/(dashboard)/financeiro/remessas/page.tsx",
+        "src/app/(dashboard)/fiscal/documentos/[id]/editar/page.tsx",
+        "src/app/(dashboard)/operacional/margem-cte/page.tsx",
+        "src/app/(dashboard)/gerencial/dre/page.tsx",
+        "src/app/api/financial/receivables/[id]/receive/route.ts",
+        "src/app/api/commercial/quotes/route.ts",
+        "src/app/api/financial/cost-centers/[id]/route.ts",
+        "src/app/api/comercial/crm/leads/[id]/route.ts",
+        "src/app/api/financial/billing/[id]/route.ts",
+        "src/app/api/financial/payables/[id]/route.ts",
+        "src/app/api/financial/receivables/[id]/route.ts",
+        "src/app/api/fleet/documents/[id]/route.ts",
+        "src/app/api/fleet/drivers/[id]/route.ts",
+        "src/app/api/fleet/maintenance/work-orders/[id]/route.ts",
+        "src/app/api/fleet/tires/[id]/route.ts",
+        "src/app/api/fleet/vehicles/[id]/route.ts",
+        "src/app/api/tms/occurrences/[id]/route.ts",
+        "src/app/api/tms/trips/[id]/route.ts",
+        "src/app/api/users/[id]/route.ts",
+        "src/providers/refine-provider.tsx",
+        "src/services/fiscal/cte-builder.ts",
+        "src/services/fiscal/cte-inutilization-service.ts",
+        "src/app/api/financial/reports/dre/route.ts"
+      ],
+      "pattern_created": "e9-ts-quick-wins-ui-components-multi-fix",
       "status": "APPROVED",
       "must_not_repeat": true
     }

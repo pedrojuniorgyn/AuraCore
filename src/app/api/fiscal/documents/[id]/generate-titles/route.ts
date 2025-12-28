@@ -70,9 +70,8 @@ export async function POST(
     }
 
     return NextResponse.json({
-      success: true,
-      message: `${result.titlesGenerated} título(s) gerado(s) com sucesso`,
       ...result,
+      message: `${result.titlesGenerated} título(s) gerado(s) com sucesso`,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

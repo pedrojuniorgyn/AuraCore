@@ -210,9 +210,9 @@ export async function GET(request: NextRequest) {
         } else if (category === "ADMINISTRATIVE") {
           dimensions.administrative.expense += Number(exp.amount) || 0;
         } else if (category === "FINANCIAL") {
-          dimensions.financial.expense += exp.amount || 0;
+          dimensions.financial.expense += Number(exp.amount) || 0;
         } else {
-          dimensions.other.expense += exp.amount || 0;
+          dimensions.other.expense += Number(exp.amount) || 0;
         }
       });
 

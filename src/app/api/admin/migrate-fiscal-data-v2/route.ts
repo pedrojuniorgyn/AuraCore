@@ -112,9 +112,11 @@ export async function GET() {
     console.log("✅ FKs atualizadas");
 
     // Contar total
-    const [{ total }] = await db.execute(rawSql`SELECT COUNT(*) as total FROM fiscal_documents`);
+    const result = await db.execute(rawSql`SELECT COUNT(*) as total FROM fiscal_documents`);
+    const rows = Array.isArray(result) ? result : [result];
+    const total = (rows[0] as any)?.total || 0;
     
-    console.log(`\n✅ Migração concluída! Total: ${(total as any)?.total || 0} documentos\n`);
+    console.log(`\n✅ Migração concluída! Total: ${total} documentos\n`);
 
     return NextResponse.json({
       success: true,
