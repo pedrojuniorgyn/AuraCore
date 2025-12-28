@@ -1,4 +1,3 @@
-// @ts-ignore - ofx-js não tem tipos disponíveis
 import { parse as parseOfx } from "ofx-js";
 import sql from "mssql";
 import { ensureConnection, pool } from "@/lib/db";
