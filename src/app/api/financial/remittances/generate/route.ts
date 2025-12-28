@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { createHash } from "crypto";
+import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 
 export const runtime = "nodejs";
@@ -91,17 +92,18 @@ export async function POST(request: NextRequest) {
       const ref = (idem.resultRef ?? "").toString();
       const match = ref.startsWith("bank_remittances:") ? Number(ref.replace("bank_remittances:", "")) : NaN;
       if (Number.isFinite(match) && match > 0) {
-        const [existing] = await db
-          .select()
-          .from(bankRemittances)
-          .where(
-            and(
-              eq(bankRemittances.id, match),
-              eq(bankRemittances.organizationId, ctx.organizationId),
-              isNull(bankRemittances.deletedAt)
+        const existing = await queryFirst<typeof bankRemittances.$inferSelect>(
+          db
+            .select()
+            .from(bankRemittances)
+            .where(
+              and(
+                eq(bankRemittances.id, match),
+                eq(bankRemittances.organizationId, ctx.organizationId),
+                isNull(bankRemittances.deletedAt)
+              )
             )
-          )
-          .limit(1);
+        );
         if (existing) {
           return NextResponse.json({
             success: true,
@@ -162,17 +164,18 @@ export async function POST(request: NextRequest) {
     }
 
     // === BUSCAR DADOS DA FILIAL (EMPRESA) ===
-    const [branch] = await db
-      .select()
-      .from(branches)
-      .where(
-        and(
-          eq(branches.organizationId, ctx.organizationId),
-          eq(branches.id, branchId),
-          isNull(branches.deletedAt)
+    const branch = await queryFirst<typeof branches.$inferSelect>(
+      db
+        .select()
+        .from(branches)
+        .where(
+          and(
+            eq(branches.organizationId, ctx.organizationId),
+            eq(branches.id, branchId),
+            isNull(branches.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
     if (!branch) {
       await finalizeFailedAndContinue("Filial não encontrada");
@@ -253,7 +256,7 @@ export async function POST(request: NextRequest) {
     let remittance: { id: number } | null = null;
     try {
       remittance = await db.transaction(async (tx) => {
-        const [createdId] = await tx
+        const insertQuery = tx
           .insert(bankRemittances)
           .values({
             organizationId: ctx.organizationId,
@@ -266,10 +269,10 @@ export async function POST(request: NextRequest) {
             totalRecords: payables.length,
             totalAmount: totalAmount.toString(),
             createdBy: ctx.userId,
-          })
-          .$returningId();
+          });
 
-        const remittanceId = Number((createdId as any)?.id);
+        const createdId = await insertReturning(insertQuery, { id: bankRemittances.id });
+        const remittanceId = createdId[0]?.id;
         if (!Number.isFinite(remittanceId) || remittanceId <= 0) {
           throw new Error("Falha ao criar remessa (id não retornado)");
         }

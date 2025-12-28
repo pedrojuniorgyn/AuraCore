@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bankRemittances } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar remessa específica
 export async function GET(
@@ -21,19 +22,20 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const remittance = await db
-      .select()
-      .from(bankRemittances)
-      .where(
-        and(
-          eq(bankRemittances.id, remittanceId),
-          eq(bankRemittances.organizationId, session.user.organizationId),
-          isNull(bankRemittances.deletedAt)
+    const remittance = await queryFirst<typeof bankRemittances.$inferSelect>(
+      db
+        .select()
+        .from(bankRemittances)
+        .where(
+          and(
+            eq(bankRemittances.id, remittanceId),
+            eq(bankRemittances.organizationId, session.user.organizationId),
+            isNull(bankRemittances.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (remittance.length === 0) {
+    if (!remittance) {
       return NextResponse.json(
         { error: "Remessa não encontrada" },
         { status: 404 }
@@ -68,19 +70,20 @@ export async function DELETE(
     }
 
     // Verificar se remessa existe
-    const existing = await db
-      .select()
-      .from(bankRemittances)
-      .where(
-        and(
-          eq(bankRemittances.id, remittanceId),
-          eq(bankRemittances.organizationId, session.user.organizationId),
-          isNull(bankRemittances.deletedAt)
+    const existing = await queryFirst<typeof bankRemittances.$inferSelect>(
+      db
+        .select()
+        .from(bankRemittances)
+        .where(
+          and(
+            eq(bankRemittances.id, remittanceId),
+            eq(bankRemittances.organizationId, session.user.organizationId),
+            isNull(bankRemittances.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Remessa não encontrada" },
         { status: 404 }
