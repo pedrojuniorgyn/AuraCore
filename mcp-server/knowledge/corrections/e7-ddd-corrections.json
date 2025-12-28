@@ -48,6 +48,61 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-662125",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.0 + E7.1 COMPLETOS: Setup + Shared Kernel + Value Objects + Documentação Arquitetural - Marco histórico da fundação DDD do AuraCore",
+      "correction": "Infraestrutura DDD completa criada: Result<T,E> pattern, AggregateRoot, Entity, ValueObject, DomainEvent (com generateUUID fallback), DomainError hierarchy. Value Objects implementados com TDD: Money (25 testes - operações monetárias, formatação pt-BR, conversão cents, bug Money.zero() corrigido), CNPJ (10 testes - validação dígitos verificadores brasileiros), Email (12 testes - validação formato, lowercase, trim). Vitest configurado (80% coverage threshold), InMemoryRepository helper criado. Documentação arquitetural completa de 376 linhas (E7_DDD_HEXAGONAL_HIBRIDO.md) com filosofia híbrida, estrutura de pastas, camadas, cronograma 21 semanas, estratégia de testes. 100% type-safe, zero any, TDD aplicado, 47 testes passando.",
+      "files_affected": [
+        "src/shared/domain/types/Result.ts",
+        "src/shared/domain/entities/AggregateRoot.ts",
+        "src/shared/domain/entities/Entity.ts",
+        "src/shared/domain/entities/ValueObject.ts",
+        "src/shared/domain/events/DomainEvent.ts",
+        "src/shared/domain/errors/DomainError.ts",
+        "src/shared/domain/value-objects/Money.ts",
+        "src/shared/domain/value-objects/CNPJ.ts",
+        "src/shared/domain/value-objects/Email.ts",
+        "src/shared/domain/value-objects/index.ts",
+        "src/shared/domain/index.ts",
+        "src/shared/infrastructure/di/tokens.ts",
+        "src/shared/infrastructure/di/container.ts",
+        "src/shared/infrastructure/di/index.ts",
+        "src/shared/index.ts",
+        "tests/setup.ts",
+        "tests/helpers/mocks/repositories/InMemoryRepository.ts",
+        "tests/unit/shared/value-objects/Money.test.ts",
+        "tests/unit/shared/value-objects/CNPJ.test.ts",
+        "tests/unit/shared/value-objects/Email.test.ts",
+        "vitest.config.ts",
+        "docs/architecture/E7_DDD_HEXAGONAL_HIBRIDO.md",
+        "package.json"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-021765",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.1 100% COMPLETO: Todos os 6 Value Objects implementados com TDD - Shared Kernel robusto",
+      "correction": "CPF (13 testes - validação brasileira com dígitos verificadores, formatação XXX.XXX.XXX-XX), DateRange (18 testes - intervalos de data com overlaps, contains, encompasses, duration em dias/meses), TaxRate (24 testes - taxas 0-100%, factories para impostos brasileiros IRRF/PIS/COFINS/CSLL/ISS, cálculo sobre Money). Total E7.1: 6 Value Objects (Money, CNPJ, CPF, Email, DateRange, TaxRate), 102 testes passando, 100% type-safe, zero any, TDD aplicado.",
+      "files_affected": [
+        "src/shared/domain/value-objects/CPF.ts",
+        "src/shared/domain/value-objects/DateRange.ts",
+        "src/shared/domain/value-objects/TaxRate.ts",
+        "src/shared/domain/value-objects/index.ts",
+        "src/shared/domain/index.ts",
+        "tests/unit/shared/value-objects/CPF.test.ts",
+        "tests/unit/shared/value-objects/DateRange.test.ts",
+        "tests/unit/shared/value-objects/TaxRate.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

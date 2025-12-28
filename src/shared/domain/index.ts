@@ -7,7 +7,7 @@ export { Entity } from './entities/Entity';
 export { ValueObject } from './entities/ValueObject';
 
 // Value Objects
-export { Money, CNPJ, Email } from './value-objects';
+export { Money, CNPJ, CPF, Email, DateRange, TaxRate } from './value-objects';
 
 // Events
 export type { DomainEvent } from './events/DomainEvent';
