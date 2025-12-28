@@ -42,9 +42,10 @@ export class Money extends ValueObject<MoneyProps> {
 
   /**
    * Cria Money com valor zero
+   * Usa create() para garantir validação da moeda
    */
-  static zero(currency: string = 'BRL'): Money {
-    return new Money({ amount: 0, currency: currency.toUpperCase() });
+  static zero(currency: string = 'BRL'): Result<Money, string> {
+    return Money.create(0, currency);
   }
 
   /**

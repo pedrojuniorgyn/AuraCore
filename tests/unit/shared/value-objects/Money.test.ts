@@ -63,14 +63,25 @@ describe('Money', () => {
 
   describe('zero', () => {
     it('should create Money with zero amount', () => {
-      const money = Money.zero();
-      expect(money.amount).toBe(0);
-      expect(money.currency).toBe('BRL');
+      const result = Money.zero();
+      expect(Result.isOk(result)).toBe(true);
+      if (Result.isOk(result)) {
+        expect(result.value.amount).toBe(0);
+        expect(result.value.currency).toBe('BRL');
+      }
     });
 
     it('should create zero with specified currency', () => {
-      const money = Money.zero('USD');
-      expect(money.currency).toBe('USD');
+      const result = Money.zero('USD');
+      expect(Result.isOk(result)).toBe(true);
+      if (Result.isOk(result)) {
+        expect(result.value.currency).toBe('USD');
+      }
+    });
+
+    it('should fail with invalid currency', () => {
+      const result = Money.zero('INVALID');
+      expect(Result.isFail(result)).toBe(true);
     });
   });
 
@@ -173,8 +184,10 @@ describe('Money', () => {
     });
 
     it('isZero should return true for zero amount', () => {
-      const money = Money.zero();
-      expect(money.isZero()).toBe(true);
+      const result = Money.zero();
+      if (Result.isOk(result)) {
+        expect(result.value.isZero()).toBe(true);
+      }
     });
   });
 
