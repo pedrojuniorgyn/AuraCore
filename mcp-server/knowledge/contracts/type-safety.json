@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.11",
+  "version": "1.0.15",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -203,6 +203,41 @@
         "src/services/sefaz-processor.ts"
       ],
       "pattern_created": "nextjs15-params-resolution-and-schema-imports",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-160941",
+      "date": "2025-12-27",
+      "epic": "E7-TS",
+      "error": "Agent Review detectou uso de 'as any' em 5 arquivos, violando regra crítica do projeto: '❌ NUNCA use as any'. Também detectou remoção de .limit(1) causando problema de performance.",
+      "correction": "Substituído 'as any' por interfaces tipadas com 'unknown'. Criadas 6 interfaces específicas (ExtendedGridApi, PaginationWithCurrent, ClientWithPaymentTerms, SignedXmlWithExtensions, SchemaWithDigitalCerts, ProposalInsert). Adicionado slice(0,1) para limitar resultados temporariamente até Fase 2.",
+      "files_affected": [
+        "src/components/financial/FinancialCharts.tsx",
+        "src/providers/data-provider.ts",
+        "src/services/financial/cte-receivable-generator.ts",
+        "src/services/fiscal/xml-signer.ts",
+        "src/app/api/comercial/proposals/route.ts"
+      ],
+      "pattern_created": "typed-interfaces-over-any",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-629649",
+      "date": "2025-12-28",
+      "epic": "E7-TS",
+      "error": "102 erros TS2339 relacionados ao Drizzle ORM com dialect mssql: Property 'limit' does not exist on type 'Omit<MsSqlSelectBase<...>>'. Problema: Drizzle com SQL Server não exporta tipagem completa para método .limit().",
+      "correction": "Criado src/lib/db/query-helpers.ts com funções helper tipadas: queryWithLimit<T>() para .limit(n), queryFirst<T>() para .limit(1) retornando T | null, queryPaginated<T>() para paginação. Aplicado em 6 arquivos (seed, drivers, users, vehicles, tires). Padrão: usar 'as unknown as QueryWithLimit<T>' sem usar 'any'. Redução: 102 → 86 erros (-16 erros, -16%). Restam 86 erros Drizzle (.where, .$returningId, .limit em outros arquivos) para Fase 2 continuação.",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts",
+        "src/app/api/seed/route.ts",
+        "src/app/api/fleet/drivers/[id]/route.ts",
+        "src/app/api/users/[id]/route.ts",
+        "src/app/api/fleet/vehicles/[id]/route.ts",
+        "src/app/api/fleet/tires/[id]/route.ts"
+      ],
+      "pattern_created": "drizzle-mssql-limit-typing",
       "status": "APPROVED",
       "must_not_repeat": true
     }
