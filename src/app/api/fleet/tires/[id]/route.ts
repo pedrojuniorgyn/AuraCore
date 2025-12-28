@@ -77,19 +77,20 @@ export async function PUT(
     }
 
     // Verificar se pneu existe
-    const existing = await db
-      .select()
-      .from(tires)
-      .where(
-        and(
-          eq(tires.id, tireId),
-          eq(tires.organizationId, ctx.organizationId),
-          isNull(tires.deletedAt)
+    const existing = await queryFirst<typeof tires.$inferSelect>(
+      db
+        .select()
+        .from(tires)
+        .where(
+          and(
+            eq(tires.id, tireId),
+            eq(tires.organizationId, ctx.organizationId),
+            isNull(tires.deletedAt)
+          )
         )
-      )
-      );
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Pneu não encontrado" },
         { status: 404 }
@@ -97,20 +98,21 @@ export async function PUT(
     }
 
     // Verificar número de série duplicado
-    if (body.serialNumber !== existing[0].serialNumber) {
-      const duplicateSerial = await db
-        .select()
-        .from(tires)
-        .where(
-          and(
-            eq(tires.serialNumber, body.serialNumber),
-            eq(tires.organizationId, ctx.organizationId),
-            isNull(tires.deletedAt)
+    if (body.serialNumber !== existing.serialNumber) {
+      const duplicateSerial = await queryFirst<typeof tires.$inferSelect>(
+        db
+          .select()
+          .from(tires)
+          .where(
+            and(
+              eq(tires.serialNumber, body.serialNumber),
+              eq(tires.organizationId, ctx.organizationId),
+              isNull(tires.deletedAt)
+            )
           )
-        )
-        );
+      );
 
-      if (duplicateSerial.length > 0 && duplicateSerial[0].id !== tireId) {
+      if (duplicateSerial && duplicateSerial.id !== tireId) {
         return NextResponse.json(
           { error: "Já existe um pneu com este número de série" },
           { status: 400 }
@@ -150,11 +152,12 @@ export async function PUT(
       return NextResponse.json({ error: "Pneu não encontrado" }, { status: 404 });
     }
 
-    const [updated] = await db
-      .select()
-      .from(tires)
-      .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
-      );
+    const updated = await queryFirst<typeof tires.$inferSelect>(
+      db
+        .select()
+        .from(tires)
+        .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
+    );
 
     return NextResponse.json({
       success: true,
@@ -190,19 +193,20 @@ export async function DELETE(
     }
 
     // Verificar se pneu existe
-    const existing = await db
-      .select()
-      .from(tires)
-      .where(
-        and(
-          eq(tires.id, tireId),
-          eq(tires.organizationId, ctx.organizationId),
-          isNull(tires.deletedAt)
+    const existing = await queryFirst<typeof tires.$inferSelect>(
+      db
+        .select()
+        .from(tires)
+        .where(
+          and(
+            eq(tires.id, tireId),
+            eq(tires.organizationId, ctx.organizationId),
+            isNull(tires.deletedAt)
+          )
         )
-      )
-      );
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Pneu não encontrado" },
         { status: 404 }
