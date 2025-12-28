@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -82,31 +83,34 @@ export async function GET(req: NextRequest) {
     const orgDocument = (process.env.SEED_ORG_DOCUMENT || "00000000000000").trim();
 
     let organizationId: number | null = null;
-    const existingBySlug = await db
-      .select({ id: organizations.id })
-      .from(organizations)
-      .where(and(eq(organizations.slug, orgSlug), isNull(organizations.deletedAt)))
-      .limit(1);
-
-    if (existingBySlug.length > 0) {
-      organizationId = existingBySlug[0].id;
-    } else {
-      const existingByDocument = await db
+    const existingBySlug = await queryFirst<{ id: number }>(
+      db
         .select({ id: organizations.id })
         .from(organizations)
-        .where(and(eq(organizations.document, orgDocument), isNull(organizations.deletedAt)))
-        .limit(1);
-      if (existingByDocument.length > 0) {
-        organizationId = existingByDocument[0].id;
+        .where(and(eq(organizations.slug, orgSlug), isNull(organizations.deletedAt)))
+    );
+
+    if (existingBySlug) {
+      organizationId = existingBySlug.id;
+    } else {
+      const existingByDocument = await queryFirst<{ id: number }>(
+        db
+          .select({ id: organizations.id })
+          .from(organizations)
+          .where(and(eq(organizations.document, orgDocument), isNull(organizations.deletedAt)))
+      );
+      if (existingByDocument) {
+        organizationId = existingByDocument.id;
       }
 
-      const [anyOrg] = organizationId
-        ? [null]
-        : await db
-        .select({ id: organizations.id })
-        .from(organizations)
-        .where(isNull(organizations.deletedAt))
-        .limit(1);
+      const anyOrg = organizationId
+        ? null
+        : await queryFirst<{ id: number }>(
+          db
+            .select({ id: organizations.id })
+            .from(organizations)
+            .where(isNull(organizations.deletedAt))
+        );
       organizationId = organizationId ?? anyOrg?.id ?? null;
     }
 
@@ -119,13 +123,14 @@ export async function GET(req: NextRequest) {
         status: "ACTIVE",
       });
 
-      const createdOrg = await db
-        .select({ id: organizations.id })
-        .from(organizations)
-        .where(and(eq(organizations.slug, orgSlug), isNull(organizations.deletedAt)))
-        .orderBy(desc(organizations.id))
-        .limit(1);
-      organizationId = createdOrg[0]?.id ?? null;
+      const createdOrg = await queryFirst<{ id: number }>(
+        db
+          .select({ id: organizations.id })
+          .from(organizations)
+          .where(and(eq(organizations.slug, orgSlug), isNull(organizations.deletedAt)))
+          .orderBy(desc(organizations.id))
+      );
+      organizationId = createdOrg?.id ?? null;
     }
 
     if (!organizationId) {
@@ -135,11 +140,12 @@ export async function GET(req: NextRequest) {
     // ----------------------------
     // 2) RBAC (idempotente)
     // ----------------------------
-    const [adminRoleRow] = await db
-      .select({ id: roles.id })
-      .from(roles)
-      .where(eq(roles.name, "ADMIN"))
-      .limit(1);
+    const adminRoleRow = await queryFirst<{ id: number }>(
+      db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(eq(roles.name, "ADMIN"))
+    );
 
     let adminRoleId = adminRoleRow?.id ?? null;
     if (!adminRoleId) {
@@ -147,13 +153,14 @@ export async function GET(req: NextRequest) {
         name: "ADMIN",
         description: "Administrador do sistema (acesso total)",
       });
-      const createdRole = await db
-        .select({ id: roles.id })
-        .from(roles)
-        .where(eq(roles.name, "ADMIN"))
-        .orderBy(desc(roles.id))
-        .limit(1);
-      adminRoleId = createdRole[0]?.id ?? null;
+      const createdRole = await queryFirst<{ id: number }>(
+        db
+          .select({ id: roles.id })
+          .from(roles)
+          .where(eq(roles.name, "ADMIN"))
+          .orderBy(desc(roles.id))
+      );
+      adminRoleId = createdRole?.id ?? null;
     }
 
     if (!adminRoleId) {
@@ -166,12 +173,13 @@ export async function GET(req: NextRequest) {
     ] as const;
 
     for (const p of desiredPermissions) {
-      const exists = await db
-        .select({ id: permissions.id })
-        .from(permissions)
-        .where(eq(permissions.slug, p.slug))
-        .limit(1);
-      if (exists.length === 0) {
+      const exists = await queryFirst<{ id: number }>(
+        db
+          .select({ id: permissions.id })
+          .from(permissions)
+          .where(eq(permissions.slug, p.slug))
+      );
+      if (!exists) {
         await db.insert(permissions).values({
           slug: p.slug,
           description: p.description,
@@ -182,12 +190,13 @@ export async function GET(req: NextRequest) {
     // Vincular todas as permissões existentes ao role ADMIN (idempotente)
     const allPerms = await db.select({ id: permissions.id }).from(permissions);
     for (const perm of allPerms) {
-      const linkExists = await db
-        .select({ roleId: rolePermissions.roleId })
-        .from(rolePermissions)
-        .where(and(eq(rolePermissions.roleId, adminRoleId), eq(rolePermissions.permissionId, perm.id)))
-        .limit(1);
-      if (linkExists.length === 0) {
+      const linkExists = await queryFirst<{ roleId: number }>(
+        db
+          .select({ roleId: rolePermissions.roleId })
+          .from(rolePermissions)
+          .where(and(eq(rolePermissions.roleId, adminRoleId), eq(rolePermissions.permissionId, perm.id)))
+      );
+      if (!linkExists) {
         await db.insert(rolePermissions).values({
           roleId: adminRoleId,
           permissionId: perm.id,
@@ -213,14 +222,15 @@ export async function GET(req: NextRequest) {
     const matrizState = (process.env.SEED_MATRIZ_STATE || "SP").trim();
 
     let matrizBranchId: number | null = null;
-    const existingMatriz = await db
-      .select({ id: branches.id })
-      .from(branches)
-      .where(and(eq(branches.organizationId, organizationId), eq(branches.document, matrizDocument), isNull(branches.deletedAt)))
-      .limit(1);
+    const existingMatriz = await queryFirst<{ id: number }>(
+      db
+        .select({ id: branches.id })
+        .from(branches)
+        .where(and(eq(branches.organizationId, organizationId), eq(branches.document, matrizDocument), isNull(branches.deletedAt)))
+    );
 
-    if (existingMatriz.length > 0) {
-      matrizBranchId = existingMatriz[0].id;
+    if (existingMatriz) {
+      matrizBranchId = existingMatriz.id;
     } else {
       await db.insert(branches).values({
         organizationId,
@@ -245,12 +255,13 @@ export async function GET(req: NextRequest) {
         status: "ACTIVE",
       });
 
-      const [created] = await db
-        .select({ id: branches.id })
-        .from(branches)
-        .where(and(eq(branches.organizationId, organizationId), eq(branches.document, matrizDocument)))
-        .orderBy(desc(branches.id))
-        .limit(1);
+      const created = await queryFirst<{ id: number }>(
+        db
+          .select({ id: branches.id })
+          .from(branches)
+          .where(and(eq(branches.organizationId, organizationId), eq(branches.document, matrizDocument)))
+          .orderBy(desc(branches.id))
+      );
       matrizBranchId = created?.id ?? null;
     }
 
@@ -269,18 +280,19 @@ export async function GET(req: NextRequest) {
     const passwordHash = await hash(adminPassword, 10);
 
     let adminUserId: string | null = null;
-    const existingAdmin = await db
-      .select({ id: users.id, passwordHash: users.passwordHash })
-      .from(users)
-      .where(and(eq(users.organizationId, organizationId), eq(users.email, adminEmail), isNull(users.deletedAt)))
-      .limit(1);
+    const existingAdmin = await queryFirst<{ id: string; passwordHash: string | null }>(
+      db
+        .select({ id: users.id, passwordHash: users.passwordHash })
+        .from(users)
+        .where(and(eq(users.organizationId, organizationId), eq(users.email, adminEmail), isNull(users.deletedAt)))
+    );
 
-    if (existingAdmin.length > 0) {
-      adminUserId = existingAdmin[0].id;
+    if (existingAdmin) {
+      adminUserId = existingAdmin.id;
 
       // Atualiza papel/branch e (se necessário) senha
       const shouldResetPassword =
-        req.headers.get("x-seed-reset-password") === "1" || !existingAdmin[0].passwordHash;
+        req.headers.get("x-seed-reset-password") === "1" || !existingAdmin.passwordHash;
       await db
         .update(users)
         .set({
@@ -305,11 +317,12 @@ export async function GET(req: NextRequest) {
         deletedAt: null,
       });
 
-      const [createdUser] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.organizationId, organizationId), eq(users.email, adminEmail), isNull(users.deletedAt)))
-        .limit(1);
+      const createdUser = await queryFirst<{ id: string }>(
+        db
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.organizationId, organizationId), eq(users.email, adminEmail), isNull(users.deletedAt)))
+      );
       adminUserId = createdUser?.id ?? null;
     }
 
@@ -326,19 +339,20 @@ export async function GET(req: NextRequest) {
     const emailAmbiguousAcrossOrgs = sameEmailUsers.length > 1;
 
     // user_roles (RBAC) para o admin
-    const urExists = await db
-      .select({ userId: userRoles.userId })
-      .from(userRoles)
-      .where(
-        and(
-          eq(userRoles.userId, adminUserId),
-          eq(userRoles.roleId, adminRoleId),
-          eq(userRoles.organizationId, organizationId)
+    const urExists = await queryFirst<{ userId: string }>(
+      db
+        .select({ userId: userRoles.userId })
+        .from(userRoles)
+        .where(
+          and(
+            eq(userRoles.userId, adminUserId),
+            eq(userRoles.roleId, adminRoleId),
+            eq(userRoles.organizationId, organizationId)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (urExists.length === 0) {
+    if (!urExists) {
       await db.insert(userRoles).values({
         userId: adminUserId,
         roleId: adminRoleId,
@@ -350,12 +364,13 @@ export async function GET(req: NextRequest) {
 
     // user_branches (Data Scoping) para o admin
     if (matrizBranchId) {
-      const ubExists = await db
-        .select({ userId: userBranches.userId })
-        .from(userBranches)
-        .where(and(eq(userBranches.userId, adminUserId), eq(userBranches.branchId, matrizBranchId)))
-        .limit(1);
-      if (ubExists.length === 0) {
+      const ubExists = await queryFirst<{ userId: string }>(
+        db
+          .select({ userId: userBranches.userId })
+          .from(userBranches)
+          .where(and(eq(userBranches.userId, adminUserId), eq(userBranches.branchId, matrizBranchId)))
+      );
+      if (!ubExists) {
         await db.insert(userBranches).values({
           userId: adminUserId,
           branchId: matrizBranchId,
