@@ -27,6 +27,27 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-262670",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.1 Parcial: Value Objects Money, CNPJ, Email com testes completos + correções de ambiente (crypto.randomUUID fallback, vitest node_modules exclusion, Email trim)",
+      "correction": "Implementados 3 Value Objects com TDD: Money (22 testes - operações monetárias, formatação pt-BR, conversão cents), CNPJ (10 testes - validação dígitos verificadores brasileiros), Email (12 testes - validação formato, domain, localPart). Corrigido crypto.randomUUID em DomainEvent com fallback para getRandomValues e Math.random. Corrigido vitest.config para excluir node_modules. Corrigido Email para trim ANTES de validar. 100% type-safe, zero any, todas interfaces satisfazem Record<string, unknown> constraint.",
+      "files_affected": [
+        "src/shared/domain/value-objects/Money.ts",
+        "src/shared/domain/value-objects/CNPJ.ts",
+        "src/shared/domain/value-objects/Email.ts",
+        "src/shared/domain/value-objects/index.ts",
+        "src/shared/domain/events/DomainEvent.ts",
+        "tests/unit/shared/value-objects/Money.test.ts",
+        "tests/unit/shared/value-objects/CNPJ.test.ts",
+        "tests/unit/shared/value-objects/Email.test.ts",
+        "vitest.config.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

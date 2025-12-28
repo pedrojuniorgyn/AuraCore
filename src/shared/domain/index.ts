@@ -6,6 +6,9 @@ export { AggregateRoot } from './entities/AggregateRoot';
 export { Entity } from './entities/Entity';
 export { ValueObject } from './entities/ValueObject';
 
+// Value Objects
+export { Money, CNPJ, Email } from './value-objects';
+
 // Events
 export type { DomainEvent } from './events/DomainEvent';
 export { BaseDomainEvent } from './events/DomainEvent';

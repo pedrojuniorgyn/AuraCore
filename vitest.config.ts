@@ -10,13 +10,22 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/modules/**/*.ts', 'src/shared/**/*.ts'],
-      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/index.ts'],
+      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/index.ts', '**/node_modules/**'],
       thresholds: {
         global: { branches: 80, functions: 80, lines: 80, statements: 80 }
       }
     },
-    include: ['**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules', '.next', 'dist']
+    include: [
+      'tests/**/*.{test,spec}.{ts,tsx}',
+      'src/**/*.{test,spec}.{ts,tsx}'
+    ],
+    exclude: [
+      'node_modules/**',
+      '**/node_modules/**',
+      'mcp-server/node_modules/**',
+      '.next/**',
+      'dist/**'
+    ]
   },
   resolve: {
     alias: {
