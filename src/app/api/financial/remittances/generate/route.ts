@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
           });
 
         const createdId = await insertReturning(insertQuery, { id: bankRemittances.id });
-        const remittanceId = createdId[0]?.id;
+        const remittanceId = Number(createdId[0]?.id);
         if (!Number.isFinite(remittanceId) || remittanceId <= 0) {
           throw new Error("Falha ao criar remessa (id não retornado)");
         }

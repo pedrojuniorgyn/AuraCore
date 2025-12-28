@@ -42,7 +42,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: remittance[0] });
+    return NextResponse.json({ success: true, data: remittance });
   } catch (error) {
     console.error("Erro ao buscar remessa:", error);
     return NextResponse.json(
@@ -91,14 +91,14 @@ export async function DELETE(
     }
 
     // Validar status antes de excluir
-    if (existing[0].status === "PROCESSED") {
+    if (existing.status === "PROCESSED") {
       return NextResponse.json(
         { error: "Não é possível excluir remessa já processada pelo banco" },
         { status: 400 }
       );
     }
 
-    if (existing[0].status === "SENT") {
+    if (existing.status === "SENT") {
       return NextResponse.json(
         { error: "Não é possível excluir remessa já enviada ao banco" },
         { status: 400 }
@@ -113,7 +113,6 @@ export async function DELETE(
       .update(bankRemittances)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
       })
       .where(eq(bankRemittances.id, remittanceId));
 
