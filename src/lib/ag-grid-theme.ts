@@ -23,7 +23,6 @@ export const auraTheme = themeQuartz.withParams({
   
   // Linhas ímpares/pares
   oddRowBackgroundColor: "#0f172a",
-  evenRowBackgroundColor: "#1a1f2e",
   
   // Hover
   rowHoverColor: "rgba(99, 102, 241, 0.1)",

@@ -30,9 +30,9 @@ const paymentSchema = z.object({
   payDate: z.string(),
   amountPaid: z.number().positive(),
   bankAccountId: z.number().optional(),
-  discount: z.number().default(0),
-  interest: z.number().default(0),
-  fine: z.number().default(0),
+  discount: z.number().optional().default(0),
+  interest: z.number().optional().default(0),
+  fine: z.number().optional().default(0),
   notes: z.string().optional(),
 });
 
@@ -108,9 +108,10 @@ export function PaymentModal({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Erro ao registrar", {
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

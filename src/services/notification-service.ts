@@ -199,8 +199,8 @@ export class NotificationService {
       })
       .where(
         and(
-          eq(notifications.id, notificationId),
-          eq(notifications.userId, userId)
+          eq(notifications.id, Number(notificationId)),
+          eq(notifications.userId, String(userId))
         )
       );
   }
@@ -217,7 +217,7 @@ export class NotificationService {
       })
       .where(
         and(
-          eq(notifications.userId, userId),
+          eq(notifications.userId, String(userId)),
           eq(notifications.isRead, sql`0`)
         )
       );
@@ -231,7 +231,7 @@ export class NotificationService {
     unreadOnly: boolean = false,
     limit: number = 50
   ) {
-    const conditions = [eq(notifications.userId, userId)];
+    const conditions = [eq(notifications.userId, String(userId))];
     
     if (unreadOnly) {
       conditions.push(eq(notifications.isRead, sql`0`));
@@ -256,7 +256,7 @@ export class NotificationService {
       .from(notifications)
       .where(
         and(
-          eq(notifications.userId, userId),
+          eq(notifications.userId, String(userId)),
           eq(notifications.isRead, sql`0`)
         )
       );

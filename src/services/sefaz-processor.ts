@@ -299,7 +299,7 @@ async function importNFeAutomatically(
         createdBy: userIdNum,
         updatedBy: userIdNum,
         version: 1,
-      });
+      } as unknown as typeof businessPartners.$inferInsert);
 
       const [newPartner] = await db
         .select()
@@ -386,7 +386,7 @@ async function importNFeAutomatically(
       createdBy: userIdNum,
       updatedBy: userIdNum,
       version: 1,
-    });
+    } as unknown as typeof fiscalDocuments.$inferInsert);
 
     // Busca documento fiscal criado
     const [newDocument] = await db
@@ -480,7 +480,7 @@ async function importNFeAutomatically(
         createdBy: userIdNum,
         updatedBy: userIdNum,
         version: 1,
-      });
+      } as unknown as typeof fiscalDocumentItems.$inferInsert);
     }
 
     console.log(`✅ NFe ${parsedNFe.number} importada com ${parsedNFe.items.length} itens`);

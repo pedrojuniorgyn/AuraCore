@@ -42,8 +42,8 @@ export default function FleetDocsPage() {
       field: "expiryDate", 
       headerName: "Vencimento", 
       width: 130,
-      valueFormatter: (p: any) => new Date(p.value).toLocaleDateString("pt-BR"),
-      cellStyle: (p: any) => {
+      valueFormatter: (p) => new Date(p.value).toLocaleDateString("pt-BR"),
+      cellStyle: (p) => {
         const diff = new Date(p.value).getTime() - Date.now();
         const days = diff / (1000 * 60 * 60 * 24);
         if (days < 0) return { backgroundColor: "#ef4444", color: "white" };
@@ -62,8 +62,8 @@ export default function FleetDocsPage() {
       field: "expiryDate", 
       headerName: "Vencimento", 
       width: 130,
-      valueFormatter: (p: any) => new Date(p.value).toLocaleDateString("pt-BR"),
-      cellStyle: (p: any) => {
+      valueFormatter: (p) => new Date(p.value).toLocaleDateString("pt-BR"),
+      cellStyle: (p) => {
         const diff = new Date(p.value).getTime() - Date.now();
         const days = diff / (1000 * 60 * 60 * 24);
         if (days < 0) return { backgroundColor: "#ef4444", color: "white" };

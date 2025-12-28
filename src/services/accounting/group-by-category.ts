@@ -65,7 +65,7 @@ export async function groupItemsByCategory(
   
   for (const [categoryId, categoryItems] of groupedMap.entries()) {
     // Pega classificação do primeiro item (todos do grupo têm a mesma)
-    const firstItem = categoryItems[0] as any;
+    const firstItem = categoryItems[0] as unknown as NFeItemWithClassification;
     const classification = firstItem._classification;
     
     if (!classification) {
@@ -83,7 +83,7 @@ export async function groupItemsByCategory(
       chartAccountCode: classification.chartAccountCode,
       chartAccountName: classification.chartAccountName,
       costCenterId: classification.costCenterId,
-      items: categoryItems as unknown as typeof categoryItems,
+      items: categoryItems as unknown as NFeItemWithClassification[],
       totalAmount,
       itemCount: categoryItems.length,
     });
