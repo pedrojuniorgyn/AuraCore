@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { tires } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar pneu específico
 export async function GET(
@@ -20,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const tire = await db
+    const tire = await queryFirst<typeof tires.$inferSelect>(db
       .select()
       .from(tires)
       .where(
@@ -30,13 +31,13 @@ export async function GET(
           isNull(tires.deletedAt)
         )
       )
-      .limit(1);
+      );
 
-    if (tire.length === 0) {
+    if (!tire) {
       return NextResponse.json({ error: "Pneu não encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: tire[0] });
+    return NextResponse.json({ success: true, data: tire });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -86,7 +87,7 @@ export async function PUT(
           isNull(tires.deletedAt)
         )
       )
-      .limit(1);
+      );
 
     if (existing.length === 0) {
       return NextResponse.json(
@@ -107,7 +108,7 @@ export async function PUT(
             isNull(tires.deletedAt)
           )
         )
-        .limit(1);
+        );
 
       if (duplicateSerial.length > 0 && duplicateSerial[0].id !== tireId) {
         return NextResponse.json(
@@ -153,7 +154,7 @@ export async function PUT(
       .select()
       .from(tires)
       .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
-      .limit(1);
+      );
 
     return NextResponse.json({
       success: true,
@@ -199,7 +200,7 @@ export async function DELETE(
           isNull(tires.deletedAt)
         )
       )
-      .limit(1);
+      );
 
     if (existing.length === 0) {
       return NextResponse.json(

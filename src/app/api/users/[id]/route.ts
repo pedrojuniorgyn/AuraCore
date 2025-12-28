@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar usuário específico
 export async function GET(
@@ -20,36 +21,47 @@ export async function GET(
 
     const userId = resolvedParams.id;
 
-    const user = await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        organizationId: users.organizationId,
-        defaultBranchId: users.defaultBranchId,
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-        deletedAt: users.deletedAt,
-      })
-      .from(users)
-      .where(
-        and(
-          eq(users.id, userId),
-          eq(users.organizationId, session.user.organizationId),
-          isNull(users.deletedAt)
+    const user = await queryFirst<{
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      organizationId: number;
+      defaultBranchId: number | null;
+      createdAt: Date;
+      updatedAt: Date;
+      deletedAt: Date | null;
+    }>(
+      db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          organizationId: users.organizationId,
+          defaultBranchId: users.defaultBranchId,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+          deletedAt: users.deletedAt,
+        })
+        .from(users)
+        .where(
+          and(
+            eq(users.id, userId),
+            eq(users.organizationId, session.user.organizationId),
+            isNull(users.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (user.length === 0) {
+    if (!user) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: user[0] });
+    return NextResponse.json({ success: true, data: user });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -96,19 +108,20 @@ export async function PUT(
     }
 
     // Verificar se usuário existe
-    const existing = await db
-      .select()
-      .from(users)
-      .where(
-        and(
-          eq(users.id, userId),
-          eq(users.organizationId, session.user.organizationId),
-          isNull(users.deletedAt)
+    const existing = await queryFirst<typeof users.$inferSelect>(
+      db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.id, userId),
+            eq(users.organizationId, session.user.organizationId),
+            isNull(users.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
@@ -116,20 +129,21 @@ export async function PUT(
     }
 
     // Verificar email duplicado
-    if (body.email !== existing[0].email) {
-      const duplicateEmail = await db
-        .select()
-        .from(users)
-        .where(
-          and(
-            eq(users.email, body.email),
-            eq(users.organizationId, session.user.organizationId),
-            isNull(users.deletedAt)
+    if (body.email !== existing.email) {
+      const duplicateEmail = await queryFirst<typeof users.$inferSelect>(
+        db
+          .select()
+          .from(users)
+          .where(
+            and(
+              eq(users.email, body.email),
+              eq(users.organizationId, session.user.organizationId),
+              isNull(users.deletedAt)
+            )
           )
-        )
-        .limit(1);
+      );
 
-      if (duplicateEmail.length > 0 && duplicateEmail[0].id !== userId) {
+      if (duplicateEmail && duplicateEmail.id !== userId) {
         return NextResponse.json(
           { error: "Já existe um usuário com este email" },
           { status: 400 }
@@ -176,23 +190,30 @@ export async function PUT(
       );
 
     // SQL Server: buscar após update (sem returning)
-    const [updated] = await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        deletedAt: users.deletedAt,
-      })
-      .from(users)
-      .where(
-        and(
-          eq(users.id, userId),
-          eq(users.organizationId, session.user.organizationId),
-          isNull(users.deletedAt)
+    const updated = await queryFirst<{
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      deletedAt: Date | null;
+    }>(
+      db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          deletedAt: users.deletedAt,
+        })
+        .from(users)
+        .where(
+          and(
+            eq(users.id, userId),
+            eq(users.organizationId, session.user.organizationId),
+            isNull(users.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
     return NextResponse.json({
       success: true,
@@ -244,19 +265,20 @@ export async function DELETE(
     }
 
     // Verificar se usuário existe
-    const existing = await db
-      .select()
-      .from(users)
-      .where(
-        and(
-          eq(users.id, userId),
-          eq(users.organizationId, session.user.organizationId),
-          isNull(users.deletedAt)
+    const existing = await queryFirst<typeof users.$inferSelect>(
+      db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.id, userId),
+            eq(users.organizationId, session.user.organizationId),
+            isNull(users.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }

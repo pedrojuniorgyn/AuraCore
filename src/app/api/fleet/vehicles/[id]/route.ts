@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vehicles } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar veículo específico
 export async function GET(
@@ -20,23 +21,24 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const vehicle = await db
-      .select()
-      .from(vehicles)
-      .where(
-        and(
-          eq(vehicles.id, vehicleId),
-          eq(vehicles.organizationId, ctx.organizationId),
-          isNull(vehicles.deletedAt)
+    const vehicle = await queryFirst<typeof vehicles.$inferSelect>(
+      db
+        .select()
+        .from(vehicles)
+        .where(
+          and(
+            eq(vehicles.id, vehicleId),
+            eq(vehicles.organizationId, ctx.organizationId),
+            isNull(vehicles.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (vehicle.length === 0) {
+    if (!vehicle) {
       return NextResponse.json({ error: "Veículo não encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: vehicle[0] });
+    return NextResponse.json({ success: true, data: vehicle });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -76,19 +78,20 @@ export async function PUT(
     }
 
     // Verificar se veículo existe
-    const existing = await db
-      .select()
-      .from(vehicles)
-      .where(
-        and(
-          eq(vehicles.id, vehicleId),
-          eq(vehicles.organizationId, ctx.organizationId),
-          isNull(vehicles.deletedAt)
+    const existing = await queryFirst<typeof vehicles.$inferSelect>(
+      db
+        .select()
+        .from(vehicles)
+        .where(
+          and(
+            eq(vehicles.id, vehicleId),
+            eq(vehicles.organizationId, ctx.organizationId),
+            isNull(vehicles.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Veículo não encontrado" },
         { status: 404 }
@@ -96,20 +99,21 @@ export async function PUT(
     }
 
     // Verificar se placa já existe em outro veículo
-    if (body.plate !== existing[0].plate) {
-      const duplicatePlate = await db
-        .select()
-        .from(vehicles)
-        .where(
-          and(
-            eq(vehicles.plate, body.plate),
-            eq(vehicles.organizationId, ctx.organizationId),
-            isNull(vehicles.deletedAt)
+    if (body.plate !== existing.plate) {
+      const duplicatePlate = await queryFirst<typeof vehicles.$inferSelect>(
+        db
+          .select()
+          .from(vehicles)
+          .where(
+            and(
+              eq(vehicles.plate, body.plate),
+              eq(vehicles.organizationId, ctx.organizationId),
+              isNull(vehicles.deletedAt)
+            )
           )
-        )
-        .limit(1);
+      );
 
-      if (duplicatePlate.length > 0 && duplicatePlate[0].id !== vehicleId) {
+      if (duplicatePlate && duplicatePlate.id !== vehicleId) {
         return NextResponse.json(
           { error: "Já existe um veículo com esta placa" },
           { status: 400 }
@@ -149,11 +153,12 @@ export async function PUT(
       return NextResponse.json({ error: "Veículo não encontrado" }, { status: 404 });
     }
 
-    const [updated] = await db
-      .select()
-      .from(vehicles)
-      .where(and(eq(vehicles.id, vehicleId), eq(vehicles.organizationId, ctx.organizationId), isNull(vehicles.deletedAt)))
-      .limit(1);
+    const updated = await queryFirst<typeof vehicles.$inferSelect>(
+      db
+        .select()
+        .from(vehicles)
+        .where(and(eq(vehicles.id, vehicleId), eq(vehicles.organizationId, ctx.organizationId), isNull(vehicles.deletedAt)))
+    );
 
     return NextResponse.json({
       success: true,
@@ -189,19 +194,20 @@ export async function DELETE(
     }
 
     // Verificar se veículo existe
-    const existing = await db
-      .select()
-      .from(vehicles)
-      .where(
-        and(
-          eq(vehicles.id, vehicleId),
-          eq(vehicles.organizationId, ctx.organizationId),
-          isNull(vehicles.deletedAt)
+    const existing = await queryFirst<typeof vehicles.$inferSelect>(
+      db
+        .select()
+        .from(vehicles)
+        .where(
+          and(
+            eq(vehicles.id, vehicleId),
+            eq(vehicles.organizationId, ctx.organizationId),
+            isNull(vehicles.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Veículo não encontrado" },
         { status: 404 }
