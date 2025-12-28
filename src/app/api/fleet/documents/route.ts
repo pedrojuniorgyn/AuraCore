@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vehicleDocuments, driverDocuments } from "@/lib/db/schema";
 import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, lte } from "drizzle-orm";
+import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 
 // GET - Lista documentos vencendo
 export async function GET(request: NextRequest) {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     } = (body ?? {}) as Record<string, unknown>;
 
     if (body.type === "vehicle") {
-      const [createdId] = await db
+      const insertQuery = db
         .insert(vehicleDocuments)
         .values({
           ...safeBody,
@@ -106,23 +107,25 @@ export async function POST(request: NextRequest) {
           branchId,
           createdBy: ctx.userId,
           version: 1,
-        })
-        .$returningId();
+        });
 
-      const docId = (createdId as any)?.id;
-      const [doc] = docId
-        ? await db
-            .select()
-            .from(vehicleDocuments)
-            .where(and(eq(vehicleDocuments.id, Number(docId)), eq(vehicleDocuments.organizationId, ctx.organizationId)))
-            .limit(1)
-        : [];
+      const createdId = await insertReturning(insertQuery, { id: vehicleDocuments.id });
+      const docId = createdId[0]?.id;
+
+      const doc = docId
+        ? await queryFirst<typeof vehicleDocuments.$inferSelect>(
+            db
+              .select()
+              .from(vehicleDocuments)
+              .where(and(eq(vehicleDocuments.id, Number(docId)), eq(vehicleDocuments.organizationId, ctx.organizationId)))
+          )
+        : null;
 
       return NextResponse.json({ success: true, data: doc });
     }
 
     if (body.type === "driver") {
-      const [createdId] = await db
+      const insertQuery = db
         .insert(driverDocuments)
         .values({
           ...safeBody,
@@ -130,17 +133,19 @@ export async function POST(request: NextRequest) {
           branchId,
           createdBy: ctx.userId,
           version: 1,
-        })
-        .$returningId();
+        });
 
-      const docId = (createdId as any)?.id;
-      const [doc] = docId
-        ? await db
-            .select()
-            .from(driverDocuments)
-            .where(and(eq(driverDocuments.id, Number(docId)), eq(driverDocuments.organizationId, ctx.organizationId)))
-            .limit(1)
-        : [];
+      const createdId = await insertReturning(insertQuery, { id: driverDocuments.id });
+      const docId = createdId[0]?.id;
+
+      const doc = docId
+        ? await queryFirst<typeof driverDocuments.$inferSelect>(
+            db
+              .select()
+              .from(driverDocuments)
+              .where(and(eq(driverDocuments.id, Number(docId)), eq(driverDocuments.organizationId, ctx.organizationId)))
+          )
+        : null;
 
       return NextResponse.json({ success: true, data: doc });
     }
