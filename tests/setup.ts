@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { beforeAll, afterAll, afterEach, vi } from 'vitest';
 
 beforeAll(() => {

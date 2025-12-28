@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.38",
+  "version": "1.0.41",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -772,6 +772,64 @@
         "tests/unit/modules/financial/domain/entities/AccountPayable.test.ts"
       ],
       "pattern_created": "DDD Getter Fallback Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-930045",
+      "date": "2025-12-28",
+      "epic": "E7.2",
+      "error": "Bug em cancel(): método ignorava o resultado de payment.cancel() ao iterar pelos pagamentos. Pior ainda, permitia cancelar payables com pagamentos CONFIRMED (status PARTIAL), violando invariante de domínio que payables cancelados não devem ter transações confirmadas. Isso criava inconsistência: payable CANCELLED com payments CONFIRMED.",
+      "correction": "Adicionada validação em cancel() para verificar se há pagamentos CONFIRMED antes de permitir cancelamento. Se houver, retorna erro informativo com quantidade e valor total. Fluxo correto agora é: estornar pagamentos primeiro → depois cancelar payable. Adicionados 2 testes: (1) rejeitar cancelamento com CONFIRMED payments; (2) permitir cancelamento com apenas PENDING payments. Invariante de cancelamento agora protegida.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "tests/unit/modules/financial/domain/entities/AccountPayable.test.ts"
+      ],
+      "pattern_created": "DDD Cancel Invariant Protection Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-208327",
+      "date": "2025-12-28",
+      "epic": "E7.2",
+      "error": "E7.2 SEMANA 1 FINAL: Domain Layer Financial completo - 6 bugs críticos corrigidos durante Agent Review, 19 testes unitários, 6 invariantes de domínio protegidas. Tactical DDD aplicado com Aggregate Root, Entities, Value Objects, Domain Events, Domain Errors e Repository Port.",
+      "correction": "AccountPayable Aggregate Root (290 linhas) com ciclo de vida completo (OPEN→PROCESSING→PARTIAL→PAID/CANCELLED). Payment Entity (129 linhas) com estados PENDING/CONFIRMED/CANCELLED. PaymentTerms Value Object (143 linhas) com cálculo de multa e juros. 6 bugs Agent Review corrigidos: (1) supplierId validation - data integrity; (2) OverpaymentError semantic - domain correctness; (3) dead code removal - code quality; (4) state consistency status/totalPaid - DDD core principle CRÍTICO; (5) remainingAmount fallback - accounting integrity CRÍTICO; (6) cancel with CONFIRMED payments - invariant protection CRÍTICO. 19 testes TDD passando. 6 invariantes garantidas. Qualidade enterprise DDD alcançada.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "src/modules/financial/domain/entities/Payment.ts",
+        "src/modules/financial/domain/value-objects/PaymentTerms.ts",
+        "src/modules/financial/domain/events/PayableEvents.ts",
+        "src/modules/financial/domain/errors/FinancialErrors.ts",
+        "src/modules/financial/domain/ports/output/IPayableRepository.ts",
+        "tests/unit/modules/financial/domain/entities/AccountPayable.test.ts"
+      ],
+      "pattern_created": "E7.2 Week 1 Complete - Enterprise DDD Financial Domain",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-216949",
+      "date": "2025-12-28",
+      "epic": "E7.2",
+      "error": "E7.2 Semana 2: Application Layer - 5 Use Cases com DTOs, Zod validation, multi-tenancy, DI com tsyringe. Habilitado experimentalDecorators e emitDecoratorMetadata no tsconfig.json. Adicionado reflect-metadata no tests/setup.ts. 11 testes unitários passando.",
+      "correction": "CreatePayableUseCase, PayAccountPayableUseCase, CancelPayableUseCase, ListPayablesUseCase, GetPayableByIdUseCase. DTOs com Zod schemas (CreatePayableDTO, PayAccountPayableDTO, PayableResponseDTO). ExecutionContext para multi-tenancy (userId, organizationId, branchId, isAdmin). Mapper toPayableResponseDTO. Branch scoping com validação admin vs user. Dependency Injection com tsyringe usando @injectable e @inject. Validação Zod com error.issues.map(e => e.path.join('.')). Import type para interfaces em decorators. PaginatedPayablesDTO para listagem. tsconfig.json atualizado com experimentalDecorators e emitDecoratorMetadata. tests/setup.ts com import 'reflect-metadata'.",
+      "files_affected": [
+        "src/modules/financial/application/use-cases/CreatePayableUseCase.ts",
+        "src/modules/financial/application/use-cases/PayAccountPayableUseCase.ts",
+        "src/modules/financial/application/use-cases/CancelPayableUseCase.ts",
+        "src/modules/financial/application/use-cases/ListPayablesUseCase.ts",
+        "src/modules/financial/application/use-cases/GetPayableByIdUseCase.ts",
+        "src/modules/financial/application/use-cases/BaseUseCase.ts",
+        "src/modules/financial/application/dtos/CreatePayableDTO.ts",
+        "src/modules/financial/application/dtos/PayAccountPayableDTO.ts",
+        "src/modules/financial/application/dtos/PayableResponseDTO.ts",
+        "tests/unit/modules/financial/application/use-cases/CreatePayableUseCase.test.ts",
+        "tests/unit/modules/financial/application/use-cases/PayAccountPayableUseCase.test.ts",
+        "tsconfig.json",
+        "tests/setup.ts"
+      ],
+      "pattern_created": "E7.2 Week 2 - Application Layer with Use Cases, DTOs, and DI",
       "status": "APPROVED",
       "must_not_repeat": true
     }
