@@ -64,7 +64,7 @@ async function generateBloco0ECD(config: SpedECDConfig): Promise<string[]> {
     SELECT document, name FROM organizations WHERE id = ${config.organizationId}
   `);
   
-  const org = orgResult[0];
+  const org = (orgResult as any)[0];
   lines.push(`|0007|${org.document}|${org.name}||||||||`);
   
   // 0020: Dados do Contabilista
@@ -104,7 +104,7 @@ async function generateBlocoJ(config: SpedECDConfig): Promise<string[]> {
       SELECT code FROM chart_of_accounts WHERE id = ${account.parent_id}
     `) : null;
     
-    const parentCode = parentResult?.[0]?.code || '';
+    const parentCode = (parentResult as any)?.[0]?.code || '';
     const tipoSaldo = account.type === 'ASSET' ? 'D' : 'C'; // Débito ou Crédito
     const nivel = account.code.split('.').length;
     

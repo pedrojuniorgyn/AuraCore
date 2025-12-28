@@ -45,14 +45,14 @@ export async function GET(req: Request) {
         AND deleted_at IS NULL
     `);
 
-    if (!cteResult[0]) {
+    if (!(cteResult as any)[0]) {
       return NextResponse.json(
         { error: "CTe não encontrado" },
         { status: 404 }
       );
     }
 
-    const cte = cteResult[0];
+    const cte = (cteResult as any)[0];
 
     // 2. Buscar custos variáveis vinculados ao CTe
     // Lógica: Soma de journal_entry_lines onde cost_center_id vincula ao CTe
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
         AND jel.deleted_at IS NULL
     `);
 
-    const totalVariableCosts = parseFloat(costsResult[0]?.total_variable_costs || "0");
+    const totalVariableCosts = parseFloat((costsResult as any)[0]?.total_variable_costs || "0");
 
     // 3. Calcular Margem de Contribuição
     const grossRevenue = parseFloat(cte.gross_amount || "0");

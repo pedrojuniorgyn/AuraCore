@@ -161,8 +161,6 @@ export const defaultGridOptions = {
     sum: "Soma",
     min: "Mínimo",
     max: "Máximo",
-    first: "Primeiro",
-    last: "Último",
     none: "Nenhum",
     count: "Contagem",
     avg: "Média",

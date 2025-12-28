@@ -212,7 +212,7 @@ export async function DELETE(
     }
 
     // Validar se pneu está instalado em veículo
-    if (existing[0].status === "INSTALLED" && existing[0].currentVehicleId) {
+    if ((existing as any)[0].status === "INSTALLED" && (existing as any)[0].currentVehicleId) {
       return NextResponse.json(
         { error: "Pneu está instalado em um veículo. Remova-o antes de excluir." },
         { status: 400 }

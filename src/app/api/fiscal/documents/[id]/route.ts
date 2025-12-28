@@ -68,7 +68,7 @@ export async function GET(
     
     // 3. Buscar lançamento contábil (se existe)
     let journalEntry = null;
-    let journalLines = [];
+    let journalLines: any[] = [];
     
     if (document.journalEntryId) {
       [journalEntry] = await db

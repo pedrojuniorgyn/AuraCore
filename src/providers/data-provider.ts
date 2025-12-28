@@ -309,7 +309,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
 
     if (query) {
       Object.keys(query).forEach((key) => {
-        requestUrl += `${key}=${query[key]}&`;
+        requestUrl += `${key}=${(query as any)[key]}&`;
       });
     }
 

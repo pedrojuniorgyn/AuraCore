@@ -195,7 +195,7 @@ export class ClaimsWorkflowEngine {
         AND YEAR(claim_date) = ${year}
     `);
     
-    return report.recordset?.[0] || report[0] || {};
+    return report.recordset?.[0] || (report as any)[0] || {};
   }
 }
 

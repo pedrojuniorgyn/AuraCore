@@ -152,7 +152,7 @@ export async function PUT(
     }
 
     // Não permitir que usuário mude seu próprio role para ADMIN
-    if (session.user.id === userId && body.role === "ADMIN" && existing[0].role !== "ADMIN") {
+    if (session.user.id === userId && body.role === "ADMIN" && (existing as any)[0].role !== "ADMIN") {
       return NextResponse.json(
         { error: "Você não pode promover a si mesmo para administrador" },
         { status: 400 }

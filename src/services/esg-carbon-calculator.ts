@@ -150,7 +150,7 @@ export class ESGCarbonCalculator {
       GROUP BY customer_name
     `);
     
-    return summary.recordset?.[0] || summary[0] || {};
+    return summary.recordset?.[0] || (summary as any)[0] || {};
   }
   
   /**
@@ -192,7 +192,7 @@ export class ESGCarbonCalculator {
         AND YEAR(emission_date) = ${year}
     `);
     
-    const data = dashboard.recordset?.[0] || dashboard[0] || {};
+    const data = dashboard.recordset?.[0] || (dashboard as any)[0] || {};
     
     const compensationRate = data.total_co2_tons > 0 
       ? (data.compensated_tons / data.total_co2_tons) * 100 
