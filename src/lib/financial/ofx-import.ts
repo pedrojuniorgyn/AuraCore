@@ -17,6 +17,50 @@ function coerceArray<T>(v: T | T[] | undefined | null): T[] {
   return Array.isArray(v) ? v : [v];
 }
 
+// Interfaces tipadas para estrutura OFX
+interface OFXTransactionRaw {
+  TRNTYPE?: string;
+  DTPOSTED?: string;
+  TRNAMT?: string;
+  FITID?: string;
+  MEMO?: string;
+  NAME?: string;
+}
+
+interface OFXBankTransactionList {
+  STMTTRN?: OFXTransactionRaw | OFXTransactionRaw[];
+}
+
+interface OFXStatementResponse {
+  BANKTRANLIST?: OFXBankTransactionList;
+}
+
+interface OFXCreditCardStatementResponse {
+  BANKTRANLIST?: OFXBankTransactionList;
+}
+
+interface OFXStatementTransactionResponse {
+  STMTRS?: OFXStatementResponse;
+  CCSTMTRS?: OFXCreditCardStatementResponse;
+}
+
+interface OFXBankMessageSetResponse {
+  STMTTRNRS?: OFXStatementTransactionResponse | OFXStatementTransactionResponse[];
+}
+
+interface OFXCreditCardMessageSetResponse {
+  CCSTMTTRNRS?: OFXStatementTransactionResponse | OFXStatementTransactionResponse[];
+}
+
+interface OFXData {
+  BANKMSGSRSV1?: OFXBankMessageSetResponse;
+  CREDITCARDMSGSRSV1?: OFXCreditCardMessageSetResponse;
+}
+
+interface OFXResult {
+  OFX?: OFXData;
+}
+
 export type OfxTransaction = {
   date: string;
   description: string;
@@ -26,17 +70,21 @@ export type OfxTransaction = {
 
 export async function parseOFXContent(content: string): Promise<OfxTransaction[]> {
   const parsed = await parseOfx(content);
-  const ofx = (parsed as any)?.OFX ?? (parsed as any);
+  const parsedResult = parsed as unknown as OFXResult;
+  const ofx = parsedResult.OFX ?? (parsed as unknown as OFXResult["OFX"]);
 
   // Banco (conta corrente) ou cartão
-  const stmtTrnRs = (ofx?.BANKMSGSRSV1?.STMTTRNRS ?? ofx?.CREDITCARDMSGSRSV1?.CCSTMTTRNRS) as any;
+  const stmtTrnRs = (ofx?.BANKMSGSRSV1?.STMTTRNRS ?? ofx?.CREDITCARDMSGSRSV1?.CCSTMTTRNRS) as
+    | OFXStatementTransactionResponse
+    | OFXStatementTransactionResponse[]
+    | undefined;
   const stmtrs =
     (Array.isArray(stmtTrnRs) ? stmtTrnRs[0] : stmtTrnRs)?.STMTRS ??
     (Array.isArray(stmtTrnRs) ? stmtTrnRs[0] : stmtTrnRs)?.CCSTMTRS;
   const banktranlist = stmtrs?.BANKTRANLIST;
   const stmttrn = banktranlist?.STMTTRN;
 
-  const rows = coerceArray<any>(stmttrn);
+  const rows = coerceArray<OFXTransactionRaw>(stmttrn);
   const out: OfxTransaction[] = [];
 
   for (const t of rows) {
