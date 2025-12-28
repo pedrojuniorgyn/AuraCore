@@ -190,7 +190,7 @@ export class NotificationService {
   /**
    * Marcar notificação como lida
    */
-  async markAsRead(notificationId: number, userId: number): Promise<void> {
+  async markAsRead(notificationId: number, userId: string): Promise<void> {
     await db
       .update(notifications)
       .set({
@@ -200,7 +200,7 @@ export class NotificationService {
       .where(
         and(
           eq(notifications.id, Number(notificationId)),
-          eq(notifications.userId, String(userId))
+          eq(notifications.userId, userId)
         )
       );
   }
@@ -208,7 +208,7 @@ export class NotificationService {
   /**
    * Marcar todas como lidas
    */
-  async markAllAsRead(userId: number): Promise<void> {
+  async markAllAsRead(userId: string): Promise<void> {
     await db
       .update(notifications)
       .set({
@@ -217,7 +217,7 @@ export class NotificationService {
       })
       .where(
         and(
-          eq(notifications.userId, String(userId)),
+          eq(notifications.userId, userId),
           eq(notifications.isRead, sql`0`)
         )
       );
@@ -227,11 +227,11 @@ export class NotificationService {
    * Obter notificações de um usuário
    */
   async getByUser(
-    userId: number,
+    userId: string,
     unreadOnly: boolean = false,
     limit: number = 50
   ) {
-    const conditions = [eq(notifications.userId, String(userId))];
+    const conditions = [eq(notifications.userId, userId)];
     
     if (unreadOnly) {
       conditions.push(eq(notifications.isRead, sql`0`));
@@ -250,13 +250,13 @@ export class NotificationService {
   /**
    * Contar notificações não lidas
    */
-  async countUnread(userId: number): Promise<number> {
+  async countUnread(userId: string): Promise<number> {
     const result = await db
       .select({ count: sql<number>`COUNT(*)` })
       .from(notifications)
       .where(
         and(
-          eq(notifications.userId, String(userId)),
+          eq(notifications.userId, userId),
           eq(notifications.isRead, sql`0`)
         )
       );

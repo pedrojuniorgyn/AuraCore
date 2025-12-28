@@ -273,7 +273,7 @@ async function importNFeAutomatically(
       partnerId = existingPartner.id;
     } else {
       // Cria fornecedor
-      await db.insert(businessPartners).values({
+      const partnerData: typeof businessPartners.$inferInsert = {
         organizationId,
         type: "PROVIDER",
         document: parsedNFe.issuer.cnpj.replace(/\D/g, ""),
@@ -299,7 +299,8 @@ async function importNFeAutomatically(
         createdBy: userIdNum,
         updatedBy: userIdNum,
         version: 1,
-      } as unknown as typeof businessPartners.$inferInsert);
+      };
+      await db.insert(businessPartners).values(partnerData);
 
       const [newPartner] = await db
         .select()
@@ -340,7 +341,7 @@ async function importNFeAutomatically(
     console.log(`🏷️  NFe classificada como: ${nfeType}`);
 
     // ✅ Insere na NOVA TABELA fiscal_documents
-    await db.insert(fiscalDocuments).values({
+    const documentData: typeof fiscalDocuments.$inferInsert = {
       organizationId,
       branchId,
       
@@ -386,7 +387,8 @@ async function importNFeAutomatically(
       createdBy: userIdNum,
       updatedBy: userIdNum,
       version: 1,
-    } as unknown as typeof fiscalDocuments.$inferInsert);
+    };
+    await db.insert(fiscalDocuments).values(documentData);
 
     // Busca documento fiscal criado
     const [newDocument] = await db
@@ -436,7 +438,7 @@ async function importNFeAutomatically(
         productId = existingProduct.id;
       }
 
-      await db.insert(fiscalDocumentItems).values({
+      const itemData: typeof fiscalDocumentItems.$inferInsert = {
         fiscalDocumentId,
         organizationId,
         
@@ -480,7 +482,8 @@ async function importNFeAutomatically(
         createdBy: userIdNum,
         updatedBy: userIdNum,
         version: 1,
-      } as unknown as typeof fiscalDocumentItems.$inferInsert);
+      };
+      await db.insert(fiscalDocumentItems).values(itemData);
     }
 
     console.log(`✅ NFe ${parsedNFe.number} importada com ${parsedNFe.items.length} itens`);
