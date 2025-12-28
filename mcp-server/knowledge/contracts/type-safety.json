@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.43",
+  "version": "1.0.45",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -868,6 +868,41 @@
         "tests/unit/modules/financial/infrastructure/persistence/PayableMapper.test.ts"
       ],
       "pattern_created": "E7.2 Week 3 - Infrastructure Layer with Repository, Mapper, Events, DI",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-514123",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.2 SEMANA 3 MARCO: Infrastructure Layer completa - DrizzlePayableRepository, PayableMapper, DomainEventDispatcher, FinancialModule DI",
+      "correction": "DrizzlePayableRepository implementa IPayableRepository com Drizzle ORM + SQL Server. PayableMapper converte Domain<->Persistence. DomainEventDispatcher para eventos de domínio. FinancialModule registra dependências no tsyringe. Upsert manual (mssql), queryPaginated helper. 33 testes passando.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/persistence/DrizzlePayableRepository.ts",
+        "src/modules/financial/infrastructure/persistence/PayableMapper.ts",
+        "src/modules/financial/infrastructure/persistence/PayableSchema.ts",
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts",
+        "src/modules/financial/infrastructure/di/FinancialModule.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-240782",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.2 SEMANA 4 FINAL: Presentation Layer - API Routes, Controller, Bootstrap. Módulo Financial COMPLETO!",
+      "correction": "PayablesController com 5 métodos (create, list, getById, pay, cancel). API Routes Next.js em /api/v2/financial/payables. Bootstrap para inicialização do módulo. Error handling centralizado. Multi-tenancy via ExecutionContext. E7.2 Financial 100% completo - todas as 4 camadas Hexagonal implementadas.",
+      "files_affected": [
+        "src/modules/financial/presentation/controllers/PayablesController.ts",
+        "src/modules/financial/presentation/bootstrap.ts",
+        "src/app/api/v2/financial/payables/route.ts",
+        "src/app/api/v2/financial/payables/[id]/route.ts",
+        "src/app/api/v2/financial/payables/[id]/pay/route.ts",
+        "src/app/api/v2/financial/payables/[id]/cancel/route.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }
