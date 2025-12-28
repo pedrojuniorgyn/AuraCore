@@ -4,6 +4,7 @@ import { BRANCH_COOKIE_NAME } from "@/lib/tenant/branch-cookie";
 import { db, ensureConnection } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 export const runtime = "nodejs";
 
@@ -28,12 +29,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden", code: "BRANCH_FORBIDDEN" }, { status: 403 });
     }
 
-    // Valida existência da filial na organização (evita cookie com ID “fantasma”)
-    const [branch] = await db
-      .select({ id: branches.id })
-      .from(branches)
-      .where(and(eq(branches.id, branchId), eq(branches.organizationId, ctx.organizationId), isNull(branches.deletedAt)))
-      .limit(1);
+    // Valida existência da filial na organização (evita cookie com ID "fantasma")
+    const branch = await queryFirst<{ id: number }>(
+      db
+        .select({ id: branches.id })
+        .from(branches)
+        .where(and(eq(branches.id, branchId), eq(branches.organizationId, ctx.organizationId), isNull(branches.deletedAt)))
+    );
 
     if (!branch) {
       return NextResponse.json({ error: "Filial não encontrada" }, { status: 404 });
@@ -74,6 +76,7 @@ export async function DELETE() {
   });
   return res;
 }
+
 
 
 

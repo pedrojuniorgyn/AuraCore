@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { warehouseLocations, warehouseZones } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET(request: Request) {
   try {
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    const [createdId] = await db
+    const insertQuery = db
       .insert(warehouseLocations)
       .values({
         zoneId: body.zoneId,
@@ -71,17 +72,19 @@ export async function POST(request: Request) {
         locationType: body.locationType,
         maxWeightKg: body.maxWeightKg,
         status: "AVAILABLE",
-      })
-      .$returningId();
+      });
 
-    const locationId = (createdId as any)?.id;
-    const [location] = locationId
-      ? await db
-          .select()
-          .from(warehouseLocations)
-          .where(eq(warehouseLocations.id, Number(locationId)))
-          .limit(1)
-      : [];
+    const createdId = await insertReturning(insertQuery, { id: warehouseLocations.id });
+    const locationId = createdId[0]?.id;
+
+    const location = locationId
+      ? await queryFirst<typeof warehouseLocations.$inferSelect>(
+          db
+            .select()
+            .from(warehouseLocations)
+            .where(eq(warehouseLocations.id, Number(locationId)))
+        )
+      : null;
 
     return NextResponse.json({ success: true, data: location });
   } catch (error: unknown) {

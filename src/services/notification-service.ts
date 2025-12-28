@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { notifications } from "@/lib/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { queryWithLimit } from "@/lib/db/query-helpers";
 
 /**
  * Tipos de notificação
@@ -236,12 +237,14 @@ export class NotificationService {
       conditions.push(eq(notifications.isRead, sql`0`));
     }
 
-    return await db
-      .select()
-      .from(notifications)
-      .where(and(...conditions))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit);
+    return await queryWithLimit<typeof notifications.$inferSelect>(
+      db
+        .select()
+        .from(notifications)
+        .where(and(...conditions))
+        .orderBy(desc(notifications.createdAt)),
+      limit
+    );
   }
 
   /**

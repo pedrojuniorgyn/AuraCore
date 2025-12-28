@@ -8,6 +8,7 @@
 import { db } from "@/lib/db";
 import { autoClassificationRules, financialCategories, chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, or, like, isNull, asc } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 export interface ClassificationResult {
   categoryId: number;
@@ -195,31 +196,36 @@ export async function getDefaultClassification(
 ): Promise<ClassificationResult | null> {
   try {
     // Busca regra de menor prioridade (maior número = fallback)
-    const [result] = await db
-      .select({
-        rule: autoClassificationRules,
-        category: financialCategories,
-        account: chartOfAccounts,
-      })
-      .from(autoClassificationRules)
-      .leftJoin(
-        financialCategories,
-        eq(autoClassificationRules.categoryId, financialCategories.id)
-      )
-      .leftJoin(
-        chartOfAccounts,
-        eq(autoClassificationRules.chartAccountId, chartOfAccounts.id)
-      )
-      .where(
-        and(
-          eq(autoClassificationRules.organizationId, organizationId),
-          eq(autoClassificationRules.operationType, operationType),
-          eq(autoClassificationRules.isActive, "true"),
-          isNull(autoClassificationRules.deletedAt)
+    const result = await queryFirst<{
+      rule: typeof autoClassificationRules.$inferSelect;
+      category: typeof financialCategories.$inferSelect | null;
+      account: typeof chartOfAccounts.$inferSelect | null;
+    }>(
+      db
+        .select({
+          rule: autoClassificationRules,
+          category: financialCategories,
+          account: chartOfAccounts,
+        })
+        .from(autoClassificationRules)
+        .leftJoin(
+          financialCategories,
+          eq(autoClassificationRules.categoryId, financialCategories.id)
         )
-      )
-      .orderBy(asc(autoClassificationRules.priority))
-      .limit(1);
+        .leftJoin(
+          chartOfAccounts,
+          eq(autoClassificationRules.chartAccountId, chartOfAccounts.id)
+        )
+        .where(
+          and(
+            eq(autoClassificationRules.organizationId, organizationId),
+            eq(autoClassificationRules.operationType, operationType),
+            eq(autoClassificationRules.isActive, "true"),
+            isNull(autoClassificationRules.deletedAt)
+          )
+        )
+        .orderBy(asc(autoClassificationRules.priority))
+    );
 
     if (result && result.category && result.account) {
       return {

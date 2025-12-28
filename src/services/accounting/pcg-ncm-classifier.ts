@@ -13,6 +13,7 @@
 import { db } from "@/lib/db";
 import { pcgNcmRules, managementChartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull, like, asc } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 export interface PcgNcmMatch {
   pcgId: number;
@@ -117,26 +118,30 @@ export async function getFiscalFlagsByNcm(
     const cleanNcm = ncmCode.replace(/\D/g, "");
 
     // 1. Busca por NCM EXATO (prioridade máxima)
-    const [exactMatch] = await db
-      .select({
-        rule: pcgNcmRules,
-        pcg: managementChartOfAccounts,
-      })
-      .from(pcgNcmRules)
-      .leftJoin(
-        managementChartOfAccounts,
-        eq(pcgNcmRules.pcgId, managementChartOfAccounts.id)
-      )
-      .where(
-        and(
-          eq(pcgNcmRules.organizationId, organizationId),
-          eq(pcgNcmRules.ncmCode, cleanNcm),
-          eq(pcgNcmRules.isActive, 1),
-          isNull(pcgNcmRules.deletedAt)
+    const exactMatch = await queryFirst<{
+      rule: typeof pcgNcmRules.$inferSelect;
+      pcg: typeof managementChartOfAccounts.$inferSelect | null;
+    }>(
+      db
+        .select({
+          rule: pcgNcmRules,
+          pcg: managementChartOfAccounts,
+        })
+        .from(pcgNcmRules)
+        .leftJoin(
+          managementChartOfAccounts,
+          eq(pcgNcmRules.pcgId, managementChartOfAccounts.id)
         )
-      )
-      .orderBy(asc(pcgNcmRules.priority))
-      .limit(1);
+        .where(
+          and(
+            eq(pcgNcmRules.organizationId, organizationId),
+            eq(pcgNcmRules.ncmCode, cleanNcm),
+            eq(pcgNcmRules.isActive, 1),
+            isNull(pcgNcmRules.deletedAt)
+          )
+        )
+        .orderBy(asc(pcgNcmRules.priority))
+    );
 
     if (exactMatch) {
       const { rule, pcg } = exactMatch;
@@ -321,6 +326,7 @@ export async function findPcgByNcm(
   
   return null;
 }
+
 
 
 

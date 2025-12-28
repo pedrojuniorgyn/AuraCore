@@ -1,0 +1,88 @@
+{
+  "epic": "E7-TS",
+  "corrections": [
+    {
+      "id": "LC-160941",
+      "date": "2025-12-27",
+      "epic": "E7-TS",
+      "error": "Agent Review detectou uso de 'as any' em 5 arquivos, violando regra crítica do projeto: '❌ NUNCA use as any'. Também detectou remoção de .limit(1) causando problema de performance.",
+      "correction": "Substituído 'as any' por interfaces tipadas com 'unknown'. Criadas 6 interfaces específicas (ExtendedGridApi, PaginationWithCurrent, ClientWithPaymentTerms, SignedXmlWithExtensions, SchemaWithDigitalCerts, ProposalInsert). Adicionado slice(0,1) para limitar resultados temporariamente até Fase 2.",
+      "files_affected": [
+        "src/components/financial/FinancialCharts.tsx",
+        "src/providers/data-provider.ts",
+        "src/services/financial/cte-receivable-generator.ts",
+        "src/services/fiscal/xml-signer.ts",
+        "src/app/api/comercial/proposals/route.ts"
+      ],
+      "pattern_created": "typed-interfaces-over-any",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-216866",
+      "date": "2025-12-28",
+      "epic": "E7-TS",
+      "error": "102 erros TS2339 relacionados ao Drizzle ORM com dialect mssql: Property 'limit' does not exist on type 'Omit<MsSqlSelectBase<...>>'. Problema: Drizzle com SQL Server não exporta tipagem completa para métodos .limit(), .offset(), etc.",
+      "correction": "Criado src/lib/db/query-helpers.ts com funções helper tipadas: queryWithLimit<T>() para .limit(n), queryFirst<T>() para .limit(1) retornando T | null, queryPaginated<T>() para paginação. Aplicado em seed/route.ts (15 erros eliminados). Padrão: usar 'as unknown as QueryWithLimit<T>' sem usar 'any', conformidade com LC-001.",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts",
+        "src/app/api/seed/route.ts"
+      ],
+      "pattern_created": "drizzle-mssql-limit-typing",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-629649",
+      "date": "2025-12-28",
+      "epic": "E7-TS",
+      "error": "102 erros TS2339 relacionados ao Drizzle ORM com dialect mssql: Property 'limit' does not exist on type 'Omit<MsSqlSelectBase<...>>'. Problema: Drizzle com SQL Server não exporta tipagem completa para método .limit().",
+      "correction": "Criado src/lib/db/query-helpers.ts com funções helper tipadas: queryWithLimit<T>() para .limit(n), queryFirst<T>() para .limit(1) retornando T | null, queryPaginated<T>() para paginação. Aplicado em 6 arquivos (seed, drivers, users, vehicles, tires). Padrão: usar 'as unknown as QueryWithLimit<T>' sem usar 'any'. Redução: 102 → 86 erros (-16 erros, -16%). Restam 86 erros Drizzle (.where, .$returningId, .limit em outros arquivos) para Fase 2 continuação.",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts",
+        "src/app/api/seed/route.ts",
+        "src/app/api/fleet/drivers/[id]/route.ts",
+        "src/app/api/users/[id]/route.ts",
+        "src/app/api/fleet/vehicles/[id]/route.ts",
+        "src/app/api/fleet/tires/[id]/route.ts"
+      ],
+      "pattern_created": "drizzle-mssql-limit-typing",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-975511",
+      "date": "2025-12-28",
+      "epic": "E7-TS",
+      "error": "28 erros TS2339 adicionais relacionados ao Drizzle ORM mssql .limit() em 7 arquivos de rotas [id] (trips, occurrences, work-orders, documents, receivables, payables, billing). Mesmo padrão já documentado no LC-629649.",
+      "correction": "Aplicado padrão drizzle-mssql-limit-typing em mais 7 arquivos usando queryFirst<T>() helper. Técnica: manual para primeiros 2 arquivos, automatizada com sed para demais. Corrigidas verificações .length === 0 para !result e acessos result[0] para result. Total: 28 erros eliminados. Redução cumulativa E7-TS Fase 2: 102 → 32 erros .limit() (-70 erros, -69%).",
+      "files_affected": [
+        "src/app/api/tms/trips/[id]/route.ts",
+        "src/app/api/tms/occurrences/[id]/route.ts",
+        "src/app/api/fleet/maintenance/work-orders/[id]/route.ts",
+        "src/app/api/fleet/documents/[id]/route.ts",
+        "src/app/api/financial/receivables/[id]/route.ts",
+        "src/app/api/financial/payables/[id]/route.ts",
+        "src/app/api/financial/billing/[id]/route.ts"
+      ],
+      "pattern_created": "drizzle-mssql-limit-typing",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-193278",
+      "date": "2025-12-28",
+      "epic": "E7-TS",
+      "error": "7 erros TS2339 relacionados ao Drizzle ORM mssql: 4 erros .limit() + 3 erros .$returningId(). Dialect mssql não exporta tipagem para método .returning() assim como .limit().",
+      "correction": "Criado helper insertReturning() em query-helpers.ts para encapsular type assertion do método .returning(). Aplicado em workflow-automator.ts (2 .$returningId) e wms/movements/route.ts (1 .$returningId). Também aplicado queryFirst() para 4 erros .limit(). Total: 7 erros eliminados (339 → 332). Padrão: usar 'as unknown as InsertWithReturning<T>' sem usar 'any'.",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts",
+        "src/services/tms/workflow-automator.ts",
+        "src/app/api/wms/movements/route.ts"
+      ],
+      "pattern_created": "drizzle-mssql-returning-typing",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

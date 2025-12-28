@@ -16,6 +16,7 @@ import {
 } from "@/lib/db/schema";
 import { and, eq, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { insertReturning } from "@/lib/db/query-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
 
     const tableId = await db.transaction(async (tx) => {
       // Criar tabela (SQL Server: sem .returning())
-      const [createdTableId] = await tx
+      const insertQuery = tx
         .insert(freightTables)
         .values({
           organizationId,
@@ -167,17 +168,17 @@ export async function POST(request: NextRequest) {
           status,
           description,
           createdBy,
-        })
-        .$returningId();
+        });
 
-      const tableId = (createdTableId as any)?.id;
+      const createdTableId = await insertReturning(insertQuery, { id: freightTables.id });
+      const tableId = createdTableId[0]?.id;
       if (!tableId) {
         throw new Error("Falha ao criar tabela de frete");
       }
 
       // Criar rotas e seus preços
       for (const route of routes) {
-        const [createdRouteId] = await tx
+        const insertRouteQuery = tx
           .insert(freightTableRoutes)
           .values({
             freightTableId: Number(tableId),
@@ -187,10 +188,10 @@ export async function POST(request: NextRequest) {
             destinationCityId: route.destinationCityId || null,
             notes: route.notes || null,
             displayOrder: route.displayOrder || 0,
-          })
-          .$returningId();
+          });
 
-        const routeId = (createdRouteId as any)?.id;
+        const createdRouteId = await insertReturning(insertRouteQuery, { id: freightTableRoutes.id });
+        const routeId = createdRouteId[0]?.id;
 
         // Criar preços para esta rota
         if (routeId && route.prices && route.prices.length > 0) {

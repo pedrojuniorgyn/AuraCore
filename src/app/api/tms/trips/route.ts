@@ -4,6 +4,7 @@ import { trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { shouldRequireCiot } from "@/services/validators/ciot-validator";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/tms/trips
@@ -115,7 +116,7 @@ export async function POST(req: Request) {
 
     const tripNumber = `VIA-${year}-${String(lastTrips.length + 1).padStart(4, "0")}`;
 
-    const [createdId] = await db
+    const insertQuery = db
       .insert(trips)
       .values({
         organizationId,
@@ -131,17 +132,19 @@ export async function POST(req: Request) {
         ciotValue: ciotValue?.toString(),
         status: "DRAFT",
         createdBy,
-      })
-      .$returningId();
+      });
 
-    const tripId = (createdId as any)?.id;
-    const [newTrip] = tripId
-      ? await db
-          .select()
-          .from(trips)
-          .where(and(eq(trips.id, Number(tripId)), eq(trips.organizationId, organizationId), isNull(trips.deletedAt)))
-          .limit(1)
-      : [];
+    const createdId = await insertReturning(insertQuery, { id: trips.id });
+    const tripId = createdId[0]?.id;
+
+    const newTrip = tripId
+      ? await queryFirst<typeof trips.$inferSelect>(
+          db
+            .select()
+            .from(trips)
+            .where(and(eq(trips.id, Number(tripId)), eq(trips.organizationId, organizationId), isNull(trips.deletedAt)))
+        )
+      : null;
 
     return NextResponse.json({
       success: true,
