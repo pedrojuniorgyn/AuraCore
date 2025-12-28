@@ -25,6 +25,13 @@ interface QueryWithOffset<T> {
 }
 
 /**
+ * Interface para inserts com método .returning()
+ */
+interface InsertWithReturning<T> {
+  returning<TReturn>(fields: TReturn): Promise<any[]>;
+}
+
+/**
  * Aplica .limit() com type-safety em queries Drizzle mssql
  * 
  * @example
@@ -71,5 +78,22 @@ export async function queryPaginated<T>(
   const offset = (pagination.page - 1) * pagination.pageSize;
   const withOffset = (query as unknown as QueryWithOffset<unknown>).offset(offset);
   return (withOffset as unknown as QueryWithLimit<T>).limit(pagination.pageSize);
+}
+
+/**
+ * Aplica .returning() com type-safety em inserts Drizzle mssql
+ * 
+ * @example
+ * const [inserted] = await insertReturning(
+ *   db.insert(users).values(data),
+ *   { id: users.id }
+ * );
+ * const newId = inserted.id;
+ */
+export async function insertReturning<TReturn>(
+  insertQuery: unknown,
+  fields: TReturn
+): Promise<any[]> {
+  return (insertQuery as unknown as InsertWithReturning<TReturn>).returning(fields);
 }
 

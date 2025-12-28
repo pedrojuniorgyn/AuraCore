@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { warehouseMovements, stockLocations } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, sql } from "drizzle-orm";
+import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
 
     const result = await db.transaction(async (tx) => {
       // Registrar movimento (SQL Server: sem .returning())
-      const [createdId] = await tx
+      const insertQuery = tx
         .insert(warehouseMovements)
         .values({
           organizationId: ctx.organizationId,
@@ -43,10 +44,10 @@ export async function POST(request: Request) {
           referenceType,
           referenceId,
           createdBy: ctx.userId,
-        })
-        .$returningId();
+        });
 
-      const movementId = (createdId as any)?.id;
+      const createdId = await insertReturning(insertQuery, { id: warehouseMovements.id });
+      const movementId = createdId[0]?.id;
 
       // Atualizar stock_locations de forma segura (sem string interpolation)
       if (fromLocationId) {
@@ -62,18 +63,19 @@ export async function POST(request: Request) {
       }
 
       if (toLocationId) {
-        const existing = await tx
-          .select()
-          .from(stockLocations)
-          .where(
-            and(
-              eq(stockLocations.locationId, Number(toLocationId)),
-              eq(stockLocations.productId, Number(productId))
+        const existing = await queryFirst<typeof stockLocations.$inferSelect>(
+          tx
+            .select()
+            .from(stockLocations)
+            .where(
+              and(
+                eq(stockLocations.locationId, Number(toLocationId)),
+                eq(stockLocations.productId, Number(productId))
+              )
             )
-          )
-          .limit(1);
+        );
 
-        if (existing.length > 0) {
+        if (existing) {
           await tx
             .update(stockLocations)
             .set({ quantity: sql`${stockLocations.quantity} + ${qty}` })
@@ -93,20 +95,21 @@ export async function POST(request: Request) {
         }
       }
 
-      const [movement] = movementId
-        ? await tx
-            .select()
-            .from(warehouseMovements)
-            .where(
-              and(
-                eq(warehouseMovements.id, Number(movementId)),
-                eq(warehouseMovements.organizationId, ctx.organizationId)
+      const movement = movementId
+        ? await queryFirst<typeof warehouseMovements.$inferSelect>(
+            tx
+              .select()
+              .from(warehouseMovements)
+              .where(
+                and(
+                  eq(warehouseMovements.id, Number(movementId)),
+                  eq(warehouseMovements.organizationId, ctx.organizationId)
+                )
               )
-            )
-            .limit(1)
-        : [];
+          )
+        : null;
 
-      return movement ?? null;
+      return movement;
     });
 
     return NextResponse.json({ success: true, data: result });

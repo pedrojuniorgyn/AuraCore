@@ -17,6 +17,7 @@ import {
   accountsPayable,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 
 // ==========================================
 // FASE 1: COTAÇÃO → ORDEM DE COLETA
@@ -47,7 +48,7 @@ export async function createPickupOrderFromQuote(
   const orderNumber = await generateOrderNumber(quote.branchId);
 
   // Criar Ordem de Coleta
-  const [createdOrderId] = await db
+  const insertQuery = db
     .insert(pickupOrders)
     .values({
       organizationId: quote.organizationId,
@@ -69,13 +70,16 @@ export async function createPickupOrderFromQuote(
       scheduledPickupDate: quote.pickupDate,
       status: "PENDING_ALLOCATION",
       createdBy,
-    })
-    .$returningId();
+    });
 
-  const pickupOrderId = Number((createdOrderId as any)?.id);
-  const [pickupOrder] = pickupOrderId
-    ? await db.select().from(pickupOrders).where(eq(pickupOrders.id, pickupOrderId)).limit(1)
-    : [];
+  const createdOrderId = await insertReturning(insertQuery, { id: pickupOrders.id });
+
+  const pickupOrderId = createdOrderId[0]?.id;
+  const pickupOrder = pickupOrderId
+    ? await queryFirst<typeof pickupOrders.$inferSelect>(
+        db.select().from(pickupOrders).where(eq(pickupOrders.id, pickupOrderId))
+      )
+    : null;
   if (!pickupOrder) {
     throw new Error("Falha ao criar ordem de coleta");
   }
@@ -125,7 +129,7 @@ export async function createCteFromPickupOrder(
   // Criar CTe (simplificado por enquanto)
   const cteNumber = await getNextCteNumber(order.branchId);
 
-  const [createdCteId] = await db
+  const insertCteQuery = db
     .insert(cteHeader)
     .values({
       organizationId: order.organizationId,
@@ -147,11 +151,16 @@ export async function createCteFromPickupOrder(
       insuranceCompany: order.insuranceCompany,
       status: "DRAFT",
       createdBy,
-    })
-    .$returningId();
+    });
 
-  const cteId = Number((createdCteId as any)?.id);
-  const [cte] = cteId ? await db.select().from(cteHeader).where(eq(cteHeader.id, cteId)).limit(1) : [];
+  const createdCteId = await insertReturning(insertCteQuery, { id: cteHeader.id });
+
+  const cteId = createdCteId[0]?.id;
+  const cte = cteId
+    ? await queryFirst<typeof cteHeader.$inferSelect>(
+        db.select().from(cteHeader).where(eq(cteHeader.id, cteId))
+      )
+    : null;
   if (!cte) {
     throw new Error("Falha ao criar CTe");
   }
