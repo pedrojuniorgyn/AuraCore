@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -433,6 +433,21 @@
         "src/services/sped-ecd-generator.ts"
       ],
       "pattern_created": "e9-ts-complete-three-phase-type-safety-under-100",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-428127",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "Bug 1: CellClassParams<any, any, any> viola regra 'NUNCA use any'. Bug 2: Conversão boolean→string (\"true\"/\"false\") para isAnalytical, acceptsCostCenter, requiresCostCenter está correta para o schema (nvarchar), mas pode quebrar código downstream que usa .filter(cc => cc.isAnalytical) porque \"false\" é truthy em JavaScript.",
+      "correction": "Bug 1: Removido tipos genéricos <any, any, any> de CellClassParams, permitindo inferência automática de tipos pelo TypeScript. Removido import de CellClassParams não utilizado. Bug 2: Mantida conversão boolean→string pois o schema define como nvarchar(\"is_analytical\", {length: 10}).default(\"false\"). Adicionados comentários ⚠️ alertando que código downstream deve usar comparação === \"true\" ao invés de truthy check.",
+      "files_affected": [
+        "src/app/(dashboard)/frota/documentacao/page.tsx",
+        "src/app/api/financial/chart-accounts/route.ts",
+        "src/app/api/financial/cost-centers/route.ts"
+      ],
+      "pattern_created": "ag-grid-inference-and-schema-string-booleans",
       "status": "APPROVED",
       "must_not_repeat": true
     }

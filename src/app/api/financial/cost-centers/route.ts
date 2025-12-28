@@ -138,6 +138,7 @@ export async function POST(req: Request) {
       parentId: parentId || null,
       level,
       linkedVehicleId: linkedVehicleId || null,
+      // ⚠️ Schema usa string "true"/"false". Código downstream deve usar === "true"
       isAnalytical: type === "ANALYTIC" ? "true" : "false",
       class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
       status: "ACTIVE",

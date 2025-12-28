@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Edit, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, CellClassParams } from "ag-grid-community";
+import { ColDef } from "ag-grid-community";
 
 export default function FleetDocsPage() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function FleetDocsPage() {
       headerName: "Vencimento", 
       width: 130,
       valueFormatter: (p) => new Date(p.value).toLocaleDateString("pt-BR"),
-      cellStyle: (p: CellClassParams<any, any, any>) => {
+      cellStyle: (p) => {
         const diff = new Date(p.value).getTime() - Date.now();
         const days = diff / (1000 * 60 * 60 * 24);
         if (days < 0) return { backgroundColor: "#ef4444", color: "white" };
@@ -63,7 +63,7 @@ export default function FleetDocsPage() {
       headerName: "Vencimento", 
       width: 130,
       valueFormatter: (p) => new Date(p.value).toLocaleDateString("pt-BR"),
-      cellStyle: (p: CellClassParams<any, any, any>) => {
+      cellStyle: (p) => {
         const diff = new Date(p.value).getTime() - Date.now();
         const days = diff / (1000 * 60 * 60 * 24);
         if (days < 0) return { backgroundColor: "#ef4444", color: "white" };

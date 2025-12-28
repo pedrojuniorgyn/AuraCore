@@ -164,6 +164,7 @@ export async function POST(req: Request) {
       category: category || null,
       parentId: parentId || null,
       level,
+      // ⚠️ Schema usa string "true"/"false". Código downstream deve usar === "true"
       isAnalytical: isAnalytical ? "true" : "false",
       acceptsCostCenter: acceptsCostCenter ? "true" : "false",
       requiresCostCenter: requiresCostCenter ? "true" : "false",
