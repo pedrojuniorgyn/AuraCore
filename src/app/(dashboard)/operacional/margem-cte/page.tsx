@@ -36,7 +36,7 @@ export default function MargemCtePage() {
       field: 'contributionMargin', 
       headerName: 'Margem R$', 
       valueFormatter: currencyFormatter,
-      cellStyle: params => ({
+      cellStyle: (params: { value: number }) => ({
         backgroundColor: params.value > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
         color: params.value > 0 ? '#10b981' : '#ef4444',
         fontWeight: 'bold'

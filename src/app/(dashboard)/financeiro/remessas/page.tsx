@@ -361,7 +361,7 @@ export default function RemittancesPage() {
                   </div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Valor Total</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={payables.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)} decimals={2} />
+                    R$ <NumberCounter value={payables.reduce((sum: number, p: typeof payables[0]) => sum + (parseFloat(p.amount) || 0), 0)} decimals={2} />
                   </div>
                 </div>
               </GlassmorphismCard>
