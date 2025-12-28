@@ -228,7 +228,7 @@ export default function FiscalDocumentsPage() {
   };
 
   // Column Definitions
-  const columnDefs: ColDef<FiscalDocument>[] = useMemo(() => [
+  const columnDefs = useMemo(() => [
     {
       headerName: "Tipo",
       field: "documentType",
@@ -370,7 +370,7 @@ export default function FiscalDocumentsPage() {
         </div>
       ),
     },
-  ], [handleDelete, handleReclassify]);
+  ] as ColDef[], [handleDelete, handleReclassify]);
 
   const defaultColDef: ColDef = useMemo(() => ({
     sortable: true,

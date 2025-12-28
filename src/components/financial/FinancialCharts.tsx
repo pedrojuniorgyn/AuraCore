@@ -8,7 +8,7 @@
 
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import { ModuleRegistry, AllCommunityModule, ColDef } from "ag-grid-community";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, PieChart, TrendingUp } from "lucide-react";
@@ -71,7 +71,7 @@ export const FinancialCharts: React.FC = () => {
     []
   );
 
-  const columnDefs = useMemo(
+  const columnDefs = useMemo<ColDef<CategoryData>[]>(
     () => [
       {
         field: "category",
@@ -203,9 +203,6 @@ export const FinancialCharts: React.FC = () => {
               type: "fitGridWidth",
               defaultMinWidth: 100,
             }}
-            // 📊 Aggregation
-            groupIncludeTotalFooter={true}
-            grandTotalRow="bottom"
             // 🌐 Localização
             localeText={{
               noRowsToShow: "Nenhum dado disponível",

@@ -31,9 +31,7 @@ export const createProductSchema = z.object({
     .nullable(),
   
   unit: z
-    .enum(["UN", "KG", "CX", "LT", "M", "M2", "M3", "TON"], {
-      errorMap: () => ({ message: "Unidade inválida" }),
-    })
+    .enum(["UN", "KG", "CX", "LT", "M", "M2", "M3", "TON"])
     .default("UN"),
   
   // Fiscal (NFe Compliance)
@@ -43,9 +41,7 @@ export const createProductSchema = z.object({
     .regex(/^\d{8}$/, "NCM deve conter apenas números"),
   
   origin: z
-    .enum(["0", "1", "2", "3", "4", "5", "6", "7", "8"], {
-      errorMap: () => ({ message: "Origem inválida (0=Nacional, 1=Importada...)" }),
-    })
+    .enum(["0", "1", "2", "3", "4", "5", "6", "7", "8"])
     .default("0"),
   
   // Logística & Precificação

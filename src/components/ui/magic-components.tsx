@@ -80,13 +80,17 @@ export function GradientText({
     );
   }
 
+  // Filter out conflicting props for motion.span
+  const { style: _style, ...htmlProps } = props;
+
   return (
     <motion.span
-      {...(props as unknown as Record<string, unknown>)}
+      {...(htmlProps as unknown as Record<string, unknown>)}
       className={cn(
         "inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent",
         className
       )}
+      style={{ backgroundSize: "200% 200%" }}
       animate={{
         backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
       }}
@@ -95,10 +99,6 @@ export function GradientText({
         repeat: Infinity,
         ease: "linear",
       }}
-      style={{
-        backgroundSize: "200% 200%",
-      }}
-      {...props}
     >
       {children}
     </motion.span>

@@ -64,7 +64,7 @@ export class BillingPDFGenerator {
     if (parseFloat(billing.invoice.discountValue || "0") > 0) {
       doc.text(`Desconto: R$ ${this.formatMoney(billing.invoice.discountValue)}`);
     }
-    doc.fontSize(14).fillColor("green").text(`VALOR TOTAL: R$ ${this.formatMoney(billing.invoice.netValue)}`, { bold: true });
+    doc.fontSize(14).fillColor("green").text(`VALOR TOTAL: R$ ${this.formatMoney(billing.invoice.netValue)}`);
     doc.fillColor("black");
     doc.moveDown(2);
 

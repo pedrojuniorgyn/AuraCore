@@ -279,7 +279,7 @@ export default function DREGerencialPage() {
                       labelKey: 'Filtros Avançados',
                       toolPanel: 'agFiltersToolPanel'
                     }
-                  ]
+                  ] as unknown as string[]
                 }}
                 
                 loading={loading}

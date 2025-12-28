@@ -7,7 +7,7 @@
 "use client";
 
 import React from "react";
-import { IDetailCellRendererParams } from "ag-grid-community";
+import { IDetailCellRendererParams, ColDef } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +54,7 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
     fetchItems();
   }, [invoiceId]);
 
-  const columnDefs = [
+  const columnDefs: ColDef<NFeItem>[] = [
     {
       field: "productCodeXml",
       headerName: "Código",
@@ -167,8 +167,6 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
             suppressHorizontalScroll={false}
             headerHeight={40}
             rowHeight={40}
-            groupIncludeTotalFooter={true}
-            grandTotalRow="bottom"
             localeText={{
               sum: "Total",
               noRowsToShow: "Nenhum item encontrado",

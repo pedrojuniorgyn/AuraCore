@@ -96,6 +96,19 @@
       "pattern_created": "multi-tenancy-bank-account-validation",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-767453",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "GradientText aceita ...props na assinatura mas não forwarda para motion.span (apenas para span estático), quebrando contrato do componente e impossibilitando passagem de atributos HTML customizados como id, data-*, aria-*, etc.",
+      "correction": "Adicionar spread de htmlProps filtradas no motion.span: extrair style (conflitante) e passar resto como {...(htmlProps as unknown as Record<string, unknown>)}. Mantém consistência com span estático que já recebia {...props}. Type assertion necessária devido a conflict entre React.ComponentPropsWithoutRef e HTMLMotionProps.",
+      "files_affected": [
+        "src/components/ui/magic-components.tsx"
+      ],
+      "pattern_created": "react-component-props-forwarding",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

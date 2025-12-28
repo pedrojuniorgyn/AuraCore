@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Edit, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, CellStyle } from "ag-grid-community";
 
 export default function FleetDocsPage() {
   const router = useRouter();
@@ -43,13 +43,13 @@ export default function FleetDocsPage() {
       headerName: "Vencimento", 
       width: 130,
       valueFormatter: (p) => new Date(p.value).toLocaleDateString("pt-BR"),
-      cellStyle: (p) => {
+      cellStyle: ((p: { value: string | Date }) => {
         const diff = new Date(p.value).getTime() - Date.now();
         const days = diff / (1000 * 60 * 60 * 24);
         if (days < 0) return { backgroundColor: "#ef4444", color: "white" };
         if (days < 30) return { backgroundColor: "#f59e0b", color: "white" };
         return {};
-      },
+      }) as unknown as CellStyle,
     },
     { field: "status", headerName: "Status", width: 120 },
   ];
@@ -63,13 +63,13 @@ export default function FleetDocsPage() {
       headerName: "Vencimento", 
       width: 130,
       valueFormatter: (p) => new Date(p.value).toLocaleDateString("pt-BR"),
-      cellStyle: (p) => {
+      cellStyle: ((p: { value: string | Date }) => {
         const diff = new Date(p.value).getTime() - Date.now();
         const days = diff / (1000 * 60 * 60 * 24);
         if (days < 0) return { backgroundColor: "#ef4444", color: "white" };
         if (days < 30) return { backgroundColor: "#f59e0b", color: "white" };
         return {};
-      },
+      }) as unknown as CellStyle,
     },
     { field: "status", headerName: "Status", width: 120 },
   ];
