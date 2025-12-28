@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { notifications } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryWithLimit } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/notifications
@@ -19,18 +20,20 @@ export async function GET(request: NextRequest) {
       ? Math.min(Math.max(Math.trunc(limitParam), 1), 200)
       : 50;
 
-    const resultsArray = await db
-      .select()
-      .from(notifications)
-      .where(
-        and(
-          eq(notifications.organizationId, ctx.organizationId),
-          eq(notifications.userId, ctx.userId),
-          ...(unreadOnly ? [eq(notifications.isRead, 0)] : [])
+    const resultsArray = await queryWithLimit<typeof notifications.$inferSelect>(
+      db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.organizationId, ctx.organizationId),
+            eq(notifications.userId, ctx.userId),
+            ...(unreadOnly ? [eq(notifications.isRead, 0)] : [])
+          )
         )
-      )
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit);
+        .orderBy(desc(notifications.createdAt)),
+      limit
+    );
 
     // Parse JSON data
     const parsed = resultsArray.map((notif) => ({

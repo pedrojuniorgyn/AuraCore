@@ -4,6 +4,7 @@ import { taxCredits, inboundInvoices } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull, sql } from "drizzle-orm";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    const [createdId] = await db
+    const insertQuery = db
       .insert(taxCredits)
       .values({
         ...safeBody,
@@ -82,17 +83,19 @@ export async function POST(request: NextRequest) {
         branchId,
         createdBy: ctx.userId,
         version: 1,
-      })
-      .$returningId();
+      });
 
-    const creditId = (createdId as any)?.id;
-    const [credit] = creditId
-      ? await db
-          .select()
-          .from(taxCredits)
-          .where(and(eq(taxCredits.id, Number(creditId)), eq(taxCredits.organizationId, ctx.organizationId)))
-          .limit(1)
-      : [];
+    const createdId = await insertReturning(insertQuery, { id: taxCredits.id });
+    const creditId = createdId[0]?.id;
+
+    const credit = creditId
+      ? await queryFirst<typeof taxCredits.$inferSelect>(
+          db
+            .select()
+            .from(taxCredits)
+            .where(and(eq(taxCredits.id, Number(creditId)), eq(taxCredits.organizationId, ctx.organizationId)))
+        )
+      : null;
 
     return NextResponse.json({ success: true, data: credit });
   } catch (error: unknown) {

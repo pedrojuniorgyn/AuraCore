@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // Interface para queries de contagem SQL
 interface CountResult {
@@ -184,11 +185,12 @@ export async function PUT(
       })
       .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)));
 
-    const [updated] = await db
-      .select()
-      .from(costCenters)
-      .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)))
-      .limit(1);
+    const updated = await queryFirst<typeof costCenters.$inferSelect>(
+      db
+        .select()
+        .from(costCenters)
+        .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)))
+    );
 
     return NextResponse.json({
       success: true,

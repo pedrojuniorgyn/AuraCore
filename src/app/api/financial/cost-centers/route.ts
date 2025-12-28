@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/financial/cost-centers
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
     }
 
     // Criar
-    const [createdId] = await db
+    const insertQuery = db
       .insert(costCenters)
       .values({
         organizationId: ctx.organizationId,
@@ -143,22 +144,24 @@ export async function POST(req: Request) {
         class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
         status: "ACTIVE",
         createdBy: ctx.userId,
-      })
-      .$returningId();
+      });
 
-    const newCostCenterId = (createdId as any)?.id;
-    const [newCostCenter] = newCostCenterId
-      ? await db
-          .select()
-          .from(costCenters)
-          .where(
-            and(
-              eq(costCenters.id, Number(newCostCenterId)),
-              eq(costCenters.organizationId, ctx.organizationId)
+    const createdId = await insertReturning(insertQuery, { id: costCenters.id });
+    const newCostCenterId = createdId[0]?.id;
+
+    const newCostCenter = newCostCenterId
+      ? await queryFirst<typeof costCenters.$inferSelect>(
+          db
+            .select()
+            .from(costCenters)
+            .where(
+              and(
+                eq(costCenters.id, Number(newCostCenterId)),
+                eq(costCenters.organizationId, ctx.organizationId)
+              )
             )
-          )
-          .limit(1)
-      : [];
+        )
+      : null;
 
     return NextResponse.json({
       success: true,

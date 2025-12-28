@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { pickupOrders } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/tms/pickup-orders
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
 
     const orderNumber = `OC-${year}-${String(lastOrders.length + 1).padStart(4, "0")}`;
 
-    const [createdId] = await db
+    const insertQuery = db
       .insert(pickupOrders)
       .values({
         ...safeBody,
@@ -99,17 +100,19 @@ export async function POST(req: Request) {
         orderNumber,
         status: "PENDING_ALLOCATION",
         createdBy,
-      })
-      .$returningId();
+      });
 
-    const orderId = (createdId as any)?.id;
-    const [newOrder] = orderId
-      ? await db
-          .select()
-          .from(pickupOrders)
-          .where(and(eq(pickupOrders.id, Number(orderId)), eq(pickupOrders.organizationId, organizationId), isNull(pickupOrders.deletedAt)))
-          .limit(1)
-      : [];
+    const createdId = await insertReturning(insertQuery, { id: pickupOrders.id });
+    const orderId = createdId[0]?.id;
+
+    const newOrder = orderId
+      ? await queryFirst<typeof pickupOrders.$inferSelect>(
+          db
+            .select()
+            .from(pickupOrders)
+            .where(and(eq(pickupOrders.id, Number(orderId)), eq(pickupOrders.organizationId, organizationId), isNull(pickupOrders.deletedAt)))
+        )
+      : null;
 
     return NextResponse.json({
       success: true,

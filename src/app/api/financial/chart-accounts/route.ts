@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/financial/chart-accounts
@@ -155,7 +156,7 @@ export async function POST(req: Request) {
     const isAnalytical = level > 0; // Simplificado: contas de nível 1+ são analíticas por padrão
 
     // Criar
-    const [createdId] = await db
+    const insertQuery = db
       .insert(chartOfAccounts)
       .values({
         organizationId: ctx.organizationId,
@@ -170,22 +171,24 @@ export async function POST(req: Request) {
         requiresCostCenter: requiresCostCenter || false,
         status: "ACTIVE",
         createdBy: ctx.userId,
-      })
-      .$returningId();
+      });
 
-    const newAccountId = (createdId as any)?.id;
-    const [newAccount] = newAccountId
-      ? await db
-          .select()
-          .from(chartOfAccounts)
-          .where(
-            and(
-              eq(chartOfAccounts.id, Number(newAccountId)),
-              eq(chartOfAccounts.organizationId, ctx.organizationId)
+    const createdId = await insertReturning(insertQuery, { id: chartOfAccounts.id });
+    const newAccountId = createdId[0]?.id;
+
+    const newAccount = newAccountId
+      ? await queryFirst<typeof chartOfAccounts.$inferSelect>(
+          db
+            .select()
+            .from(chartOfAccounts)
+            .where(
+              and(
+                eq(chartOfAccounts.id, Number(newAccountId)),
+                eq(chartOfAccounts.organizationId, ctx.organizationId)
+              )
             )
-          )
-          .limit(1)
-      : [];
+        )
+      : null;
 
     return NextResponse.json({
       success: true,

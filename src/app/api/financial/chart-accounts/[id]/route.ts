@@ -4,6 +4,7 @@ import { chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { logChartAccountChange } from "@/services/audit-logger";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // Interface para queries de contagem SQL
 interface CountResult {
@@ -201,11 +202,12 @@ export async function PUT(
       })
       .where(and(eq(chartOfAccounts.id, id), eq(chartOfAccounts.organizationId, organizationId)));
 
-    const [updated] = await db
-      .select()
-      .from(chartOfAccounts)
-      .where(and(eq(chartOfAccounts.id, id), eq(chartOfAccounts.organizationId, organizationId)))
-      .limit(1);
+    const updated = await queryFirst<typeof chartOfAccounts.$inferSelect>(
+      db
+        .select()
+        .from(chartOfAccounts)
+        .where(and(eq(chartOfAccounts.id, id), eq(chartOfAccounts.organizationId, organizationId)))
+    );
 
     // ✅ Registrar auditoria
     await logChartAccountChange({

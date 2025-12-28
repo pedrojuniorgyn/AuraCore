@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { tripOccurrences } from "@/lib/db/schema";
 import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, desc } from "drizzle-orm";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    const [createdId] = await db
+    const insertQuery = db
       .insert(tripOccurrences)
       .values({
         ...safeBody,
@@ -84,17 +85,19 @@ export async function POST(request: NextRequest) {
         branchId,
         createdBy: ctx.userId,
         version: 1,
-      })
-      .$returningId();
+      });
 
-    const occurrenceId = (createdId as any)?.id;
-    const [occurrence] = occurrenceId
-      ? await db
-          .select()
-          .from(tripOccurrences)
-          .where(and(eq(tripOccurrences.id, Number(occurrenceId)), eq(tripOccurrences.organizationId, ctx.organizationId)))
-          .limit(1)
-      : [];
+    const createdId = await insertReturning(insertQuery, { id: tripOccurrences.id });
+    const occurrenceId = createdId[0]?.id;
+
+    const occurrence = occurrenceId
+      ? await queryFirst<typeof tripOccurrences.$inferSelect>(
+          db
+            .select()
+            .from(tripOccurrences)
+            .where(and(eq(tripOccurrences.id, Number(occurrenceId)), eq(tripOccurrences.organizationId, ctx.organizationId)))
+        )
+      : null;
 
     return NextResponse.json({ success: true, data: occurrence });
   } catch (error: unknown) {

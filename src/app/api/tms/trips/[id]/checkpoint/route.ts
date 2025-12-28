@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { tripCheckpoints, trips } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { and, eq, isNull } from "drizzle-orm";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 export const runtime = "nodejs";
 
@@ -32,11 +33,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // Garantir isolamento por organização via tabela trips (trip_checkpoints não tem organization_id)
-    const [trip] = await db
-      .select({ id: trips.id })
-      .from(trips)
-      .where(and(eq(trips.id, tripId), eq(trips.organizationId, ctx.organizationId), isNull(trips.deletedAt)))
-      .limit(1);
+    const trip = await queryFirst<{ id: number }>(
+      db
+        .select({ id: trips.id })
+        .from(trips)
+        .where(and(eq(trips.id, tripId), eq(trips.organizationId, ctx.organizationId), isNull(trips.deletedAt)))
+    );
 
     if (!trip) {
       return NextResponse.json({ error: "Viagem não encontrada" }, { status: 404 });

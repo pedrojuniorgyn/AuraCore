@@ -4,6 +4,7 @@ import { products } from "@/lib/db/schema";
 import { createProductSchema } from "@/lib/validators/product";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, or, ilike, desc, sql } from "drizzle-orm";
+import { queryWithLimit } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/products
@@ -50,13 +51,15 @@ export async function GET(request: NextRequest) {
     const total = Number(count ?? 0);
 
     // Página (LIMIT/OFFSET no banco)
-    const paginatedProducts = await db
-      .select()
-      .from(products)
-      .where(where)
-      .orderBy(desc(products.createdAt))
-      .offset(_start)
-      .limit(limit);
+    const paginatedProducts = await queryWithLimit<typeof products.$inferSelect>(
+      db
+        .select()
+        .from(products)
+        .where(where)
+        .orderBy(desc(products.createdAt))
+        .offset(_start),
+      limit
+    );
 
     return NextResponse.json(
       {

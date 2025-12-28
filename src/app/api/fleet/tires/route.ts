@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { tires, tireMovements } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
+import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET() {
   try {
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    const [createdId] = await db
+    const insertQuery = db
       .insert(tires)
       .values({
         ...safeBody,
@@ -59,17 +60,19 @@ export async function POST(request: Request) {
           ? new Date((safeBody as any).purchaseDate as any)
           : null,
         status: "STOCK",
-      })
-      .$returningId();
+      });
 
-    const tireId = (createdId as any)?.id;
-    const [tire] = tireId
-      ? await db
-          .select()
-          .from(tires)
-          .where(and(eq(tires.id, Number(tireId)), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
-          .limit(1)
-      : [];
+    const createdId = await insertReturning(insertQuery, { id: tires.id });
+    const tireId = createdId[0]?.id;
+
+    const tire = tireId
+      ? await queryFirst<typeof tires.$inferSelect>(
+          db
+            .select()
+            .from(tires)
+            .where(and(eq(tires.id, Number(tireId)), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
+        )
+      : null;
 
     return NextResponse.json({ success: true, data: tire });
   } catch (error: unknown) {

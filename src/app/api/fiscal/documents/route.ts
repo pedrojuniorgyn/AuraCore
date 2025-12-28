@@ -6,6 +6,7 @@ import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 import { eq, and, gte, lte, desc, sql as rawSql, isNull } from "drizzle-orm";
+import { queryWithLimit } from "@/lib/db/query-helpers";
 
 /**
  * 📊 GET /api/fiscal/documents
@@ -96,13 +97,15 @@ export async function GET(request: NextRequest) {
       .where(and(...conditions));
     const total = Number(count ?? 0);
 
-    const documents = await db
-      .select()
-      .from(fiscalDocuments)
-      .where(and(...conditions))
-      .orderBy(desc(fiscalDocuments.issueDate))
-      .offset(offset)
-      .limit(limit);
+    const documents = await queryWithLimit<typeof fiscalDocuments.$inferSelect>(
+      db
+        .select()
+        .from(fiscalDocuments)
+        .where(and(...conditions))
+        .orderBy(desc(fiscalDocuments.issueDate))
+        .offset(offset),
+      limit
+    );
     
     return NextResponse.json({
       data: documents,
