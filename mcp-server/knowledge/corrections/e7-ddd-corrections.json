@@ -103,6 +103,63 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-831547",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.1 MARCO: Shared Kernel 100% completo - 6 Value Objects, 102 testes, base DDD sólida",
+      "correction": "Money (25 testes), CNPJ (10), CPF (13), Email (12), DateRange (18), TaxRate (24). Factories brasileiras implementadas: IRRF (1.5%), PIS (0.65%), COFINS (3%), CSLL (1%), ISS (customizável). Infraestrutura DDD completa: Result<T,E> pattern, AggregateRoot, Entity, ValueObject, DomainEvent (com generateUUID fallback), DomainError hierarchy. Vitest configurado (80% threshold), InMemoryRepository, 100% type-safe. Base sólida para E7.2 Financial e demais módulos de negócio.",
+      "files_affected": [
+        "src/shared/domain/value-objects/Money.ts",
+        "src/shared/domain/value-objects/CNPJ.ts",
+        "src/shared/domain/value-objects/CPF.ts",
+        "src/shared/domain/value-objects/Email.ts",
+        "src/shared/domain/value-objects/DateRange.ts",
+        "src/shared/domain/value-objects/TaxRate.ts",
+        "src/shared/domain/types/Result.ts",
+        "src/shared/domain/entities/AggregateRoot.ts",
+        "src/shared/domain/entities/Entity.ts",
+        "src/shared/domain/entities/ValueObject.ts",
+        "src/shared/domain/events/DomainEvent.ts",
+        "src/shared/domain/errors/DomainError.ts",
+        "tests/unit/shared/value-objects/Money.test.ts",
+        "tests/unit/shared/value-objects/CNPJ.test.ts",
+        "tests/unit/shared/value-objects/CPF.test.ts",
+        "tests/unit/shared/value-objects/Email.test.ts",
+        "tests/unit/shared/value-objects/DateRange.test.ts",
+        "tests/unit/shared/value-objects/TaxRate.test.ts",
+        "vitest.config.ts",
+        "docs/architecture/E7_DDD_HEXAGONAL_HIBRIDO.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-652573",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.2 Semana 1: Domain Entities Financial - AccountPayable, Payment, PaymentTerms com comportamento rico e testes",
+      "correction": "Aggregate Root AccountPayable com ciclo de vida completo (OPEN→PROCESSING→PARTIAL→PAID/CANCELLED), registerPayment() com validações e eventos, cancel() com propagação para payments. Entity Payment com confirm()/cancel(). Value Object PaymentTerms com cálculo automático de multa (2% default), juros pro-rata diário (1%/mês default), desconto por antecipação. Domain Events: PayableCreatedEvent, PaymentCompletedEvent, PayableCancelledEvent. Repository Interface IPayableRepository (Port) com métodos CRUD + findOverdue. 7 testes unitários passando com TDD. Bug corrigido: teste usava data vencida causando cálculo de multa/juros inesperado.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "src/modules/financial/domain/entities/Payment.ts",
+        "src/modules/financial/domain/entities/index.ts",
+        "src/modules/financial/domain/value-objects/PaymentTerms.ts",
+        "src/modules/financial/domain/value-objects/index.ts",
+        "src/modules/financial/domain/events/PayableEvents.ts",
+        "src/modules/financial/domain/events/index.ts",
+        "src/modules/financial/domain/errors/FinancialErrors.ts",
+        "src/modules/financial/domain/errors/index.ts",
+        "src/modules/financial/domain/ports/output/IPayableRepository.ts",
+        "src/modules/financial/domain/ports/output/index.ts",
+        "src/modules/financial/domain/index.ts",
+        "tests/unit/modules/financial/domain/entities/AccountPayable.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

@@ -1,0 +1,33 @@
+{
+  "epic": "E7.2",
+  "corrections": [
+    {
+      "id": "LC-049580",
+      "date": "2025-12-28",
+      "epic": "E7.2",
+      "error": "Bug de Consistência de Estado: registerPayment() calculava status baseado no valor do pagamento sendo adicionado, mas totalPaid só contava pagamentos CONFIRMED. Isso criava inconsistência onde status podia ser PAID mas totalPaid = 0 se o pagamento fosse PENDING.",
+      "correction": "Implementada abordagem híbrida DDD: (1) registerPayment() aceita PENDING/CONFIRMED mas valida projeção; (2) _recalculateStatus() garante que status sempre reflete totalPaid (apenas CONFIRMED); (3) Adicionados métodos confirmPayment() e cancelPayment() que recalculam status; (4) totalPaid getter filtra apenas CONFIRMED. Garantia de consistência: status = f(totalPaid CONFIRMED).",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "tests/unit/modules/financial/domain/entities/AccountPayable.test.ts"
+      ],
+      "pattern_created": "DDD State Consistency Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-545451",
+      "date": "2025-12-28",
+      "epic": "E7.2",
+      "error": "Bug no getter remainingAmount: quando calculateTotalDue() sucedia mas subtract() falhava, o método retornava terms.amount (valor original) em vez de totalDueResult.value (com multa/juros). Para payables vencidos com multa e juros acumulados, isso retornava valor incorreto, causando inconsistências contábeis.",
+      "correction": "Corrigido getter remainingAmount para retornar totalDue (com multa/juros) em caso de falha no subtract(), em vez de terms.amount (original). Adicionados 3 testes: (1) remainingAmount para payable não pago; (2) remainingAmount após pagamento parcial; (3) remainingAmount incluindo multa e juros para payables vencidos. Garante integridade contábil.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "tests/unit/modules/financial/domain/entities/AccountPayable.test.ts"
+      ],
+      "pattern_created": "DDD Getter Fallback Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
