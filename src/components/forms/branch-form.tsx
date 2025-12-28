@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -86,7 +86,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
   const NONE = "__none__";
 
   const form = useForm<BranchFormValues>({
-    resolver: zodResolver(branchFormSchema),
+    resolver: zodResolver(branchFormSchema) as Resolver<BranchFormValues>,
     defaultValues: {
       name: initialData?.name || "",
       tradeName: initialData?.tradeName || "",

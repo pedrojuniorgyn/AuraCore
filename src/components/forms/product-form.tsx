@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createProductSchema } from "@/lib/validators/product";
 import { z } from "zod";
@@ -56,7 +56,7 @@ interface ProductFormProps {
 
 export function ProductForm({ initialData, onSubmit, isLoading, isEdit }: ProductFormProps) {
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(createProductSchema),
+    resolver: zodResolver(createProductSchema) as Resolver<ProductFormData>,
     defaultValues: initialData || {
       sku: "",
       name: "",

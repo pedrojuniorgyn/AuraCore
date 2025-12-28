@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createBusinessPartnerSchema } from "@/lib/validators/business-partner";
 import { z } from "zod";
@@ -64,7 +64,7 @@ export function PartnerForm({ initialData, onSubmit, isLoading, isEdit }: Partne
   console.log("🔍 Document value:", initialData?.document);
 
   const form = useForm<BusinessPartnerFormData>({
-    resolver: zodResolver(createBusinessPartnerSchema),
+    resolver: zodResolver(createBusinessPartnerSchema) as Resolver<BusinessPartnerFormData>,
     defaultValues: initialData || {
       type: "CLIENT",
       document: "",
