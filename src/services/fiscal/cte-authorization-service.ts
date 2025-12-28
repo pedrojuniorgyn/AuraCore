@@ -62,7 +62,7 @@ export class CTeAuthorizationService {
       console.log("✅ XML assinado com sucesso");
 
       // 3. Extrair UF do emitente do XML
-      const ufMatch = xmlSemAssinatura.match(/<enderEmit>.*?<UF>(.*?)<\/UF>/s);
+      const ufMatch = xmlSemAssinatura.match(/<enderEmit>[\s\S]*?<UF>(.*?)<\/UF>/);
       const uf = ufMatch?.[1] || "SP"; // Default SP
 
       // 4. Enviar para Sefaz

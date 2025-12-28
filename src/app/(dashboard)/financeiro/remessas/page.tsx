@@ -548,7 +548,6 @@ export default function RemittancesPage() {
                         pagination={true}
                         paginationPageSize={20}
                         paginationPageSizeSelector={[10, 20, 50, 100]}
-                        paginationPageSizeSelector={[10, 20, 50]}
                         animateRows={true}
                         localeText={{
                           noRowsToShow: "Nenhuma remessa gerada",

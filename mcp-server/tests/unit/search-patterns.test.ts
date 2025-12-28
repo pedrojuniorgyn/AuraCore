@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { searchPatterns } from '../../src/tools/search-patterns.js';
 import * as fs from 'fs/promises';
+import { Dirent } from 'fs';
 import { 
   mockRepositoryPattern, 
   mockServicePattern,
@@ -21,7 +22,7 @@ describe('searchPatterns', () => {
   describe('casos felizes', () => {
     it('deve encontrar patterns por nome', async () => {
       // Mock readdir para retornar lista de arquivos
-      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json', 'service-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json', 'service-pattern.json'] as any);
       
       // Mock readFile para cada arquivo
       vi.mocked(fs.readFile)
@@ -37,7 +38,7 @@ describe('searchPatterns', () => {
     });
 
     it('deve encontrar patterns por descricao', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockRepositoryPattern));
 
       const result = await searchPatterns('acesso a dados', 'approved');
@@ -47,7 +48,7 @@ describe('searchPatterns', () => {
     });
 
     it('deve encontrar patterns por tags', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockRepositoryPattern));
 
       const result = await searchPatterns('prisma', 'approved');
@@ -57,7 +58,7 @@ describe('searchPatterns', () => {
     });
 
     it('deve encontrar patterns por rules', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockRepositoryPattern));
 
       const result = await searchPatterns('encapsular', 'approved');
@@ -67,7 +68,7 @@ describe('searchPatterns', () => {
     });
 
     it('deve buscar apenas em approved por padrao', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockRepositoryPattern));
 
       const result = await searchPatterns('repository');
@@ -76,7 +77,7 @@ describe('searchPatterns', () => {
     });
 
     it('deve buscar em proposed quando solicitado', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['test-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['test-pattern.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockProposedPattern));
 
       const result = await searchPatterns('test', 'proposed');
@@ -87,8 +88,8 @@ describe('searchPatterns', () => {
 
     it('deve buscar em all quando solicitado', async () => {
       vi.mocked(fs.readdir)
-        .mockResolvedValueOnce(['repository-pattern.json'] as unknown as fs.Dirent[])
-        .mockResolvedValueOnce(['test-pattern.json'] as unknown as fs.Dirent[]);
+        .mockResolvedValueOnce(['repository-pattern.json'] as any)
+        .mockResolvedValueOnce(['test-pattern.json'] as any);
       
       vi.mocked(fs.readFile)
         .mockResolvedValueOnce(JSON.stringify(mockRepositoryPattern))
@@ -134,7 +135,7 @@ describe('searchPatterns', () => {
     });
 
     it('deve ignorar arquivos corrompidos (graceful degradation)', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['good.json', 'bad.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['good.json', 'bad.json'] as any);
       vi.mocked(fs.readFile)
         .mockResolvedValueOnce(JSON.stringify(mockRepositoryPattern))
         .mockResolvedValueOnce('invalid json');
@@ -147,7 +148,7 @@ describe('searchPatterns', () => {
 
     it('deve ignorar patterns sem campos obrigatorios', async () => {
       const invalidPattern = { id: 'xyz' }; // Falta name
-      vi.mocked(fs.readdir).mockResolvedValue(['invalid.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['invalid.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(invalidPattern));
 
       const result = await searchPatterns('test', 'approved');
@@ -159,7 +160,7 @@ describe('searchPatterns', () => {
 
   describe('case insensitive search', () => {
     it('deve buscar case-insensitive', async () => {
-      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdir).mockResolvedValue(['repository-pattern.json'] as any);
       vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockRepositoryPattern));
 
       const result1 = await searchPatterns('REPOSITORY', 'approved');
