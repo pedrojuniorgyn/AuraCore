@@ -296,8 +296,8 @@ async function importNFeAutomatically(
         phone: parsedNFe.issuer.phone || null,
         dataSource: "XML_IMPORT",
         status: "ACTIVE",
-        createdBy: userIdNum,
-        updatedBy: userIdNum,
+        createdBy: String(userIdNum),
+        updatedBy: String(userIdNum),
         version: 1,
       };
       await db.insert(businessPartners).values(partnerData);
@@ -380,12 +380,12 @@ async function importNFeAutomatically(
       xmlHash: parsedNFe.xmlHash,
       
       // Controle
-      editable: 1,
+      editable: true,
       importedFrom: "SEFAZ",
       
       // Auditoria
-      createdBy: userIdNum,
-      updatedBy: userIdNum,
+      createdBy: String(userIdNum),
+      updatedBy: String(userIdNum),
       version: 1,
     };
     await db.insert(fiscalDocuments).values(documentData);
@@ -465,10 +465,6 @@ async function importNFeAutomatically(
         discountAmount: item.discount?.toString() || "0.00",
         netAmount: item.totalNet?.toString() || item.totalPrice?.toString() || "0.00",
         
-        freightAmount: item.freight?.toString() || "0.00",
-        insuranceAmount: item.insurance?.toString() || "0.00",
-        otherExpenses: item.otherExpenses?.toString() || "0.00",
-        
         // Impostos (se disponíveis)
         icmsAmount: item.icms?.value?.toString() || "0.00",
         ipiAmount: item.ipi?.value?.toString() || "0.00",
@@ -477,11 +473,6 @@ async function importNFeAutomatically(
         
         // CFOP
         cfop: item.cfop,
-        
-        // Auditoria
-        createdBy: userIdNum,
-        updatedBy: userIdNum,
-        version: 1,
       };
       await db.insert(fiscalDocumentItems).values(itemData);
     }
