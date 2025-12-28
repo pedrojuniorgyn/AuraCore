@@ -10,7 +10,7 @@ export async function GET(
     const cteId = parseInt(resolvedParams.id);
     const pdf = await generateDACTE(cteId);
 
-    return new NextResponse(pdf, {
+    return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="DACTE_${cteId}.pdf"`,

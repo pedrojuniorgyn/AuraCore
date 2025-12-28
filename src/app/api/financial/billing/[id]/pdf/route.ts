@@ -55,7 +55,7 @@ export async function GET(
       console.log("✅ PDF gerado com sucesso!");
 
       // Retornar PDF
-      return new NextResponse(pdfBuffer, {
+      return new NextResponse(new Uint8Array(pdfBuffer), {
         headers: {
           "Content-Type": "application/pdf",
           "Content-Disposition": `attachment; filename="fatura-${billingId}.pdf"`,

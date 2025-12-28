@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
+import { ColDef } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { NumberCounter } from "@/components/ui/magic-components";
@@ -19,7 +20,7 @@ export default function OccurrencesPage() {
     fetch("/api/tms/occurrences").then(r => r.json()).then(d => setOccurrences(d.data || []));
   }, []);
 
-  const columnDefs = [
+  const columnDefs: ColDef[] = [
     { field: "tripId", headerName: "Viagem", width: 100 },
     { field: "occurrenceType", headerName: "Tipo", width: 150 },
     { 

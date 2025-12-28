@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry } from "ag-grid-community";
+import { ModuleRegistry, ColDef } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 // AG Grid CSS (v34+ Theming API)
@@ -83,7 +83,7 @@ export default function DREGerencialPage() {
     });
   };
 
-  const columnDefs = [
+  const columnDefs: ColDef[] = [
     { 
       field: 'accountCode', 
       headerName: 'Código',

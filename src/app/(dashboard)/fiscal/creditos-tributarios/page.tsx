@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry } from "ag-grid-community";
+import { ModuleRegistry, ColDef } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 // AG Grid CSS (v34+ Theming API)
@@ -84,7 +84,7 @@ export default function CreditosFiscaisPage() {
     }
   };
 
-  const columnDefs = [
+  const columnDefs: ColDef[] = [
     { field: 'processedDate', headerName: 'Data', valueFormatter: dateFormatter, filter: 'agDateColumnFilter', floatingFilter: true, sort: 'desc', width: 120 },
     { field: 'documentNumber', headerName: 'NFe', filter: 'agTextColumnFilter', floatingFilter: true, width: 120 },
     { field: 'supplierName', headerName: 'Fornecedor', flex: 1, filter: 'agTextColumnFilter', floatingFilter: true },

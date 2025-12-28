@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Edit, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
+import { ColDef } from "ag-grid-community";
 
 export default function FleetDocsPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function FleetDocsPage() {
     fetch("/api/fleet/documents?type=driver").then(r => r.json()).then(d => setDriverDocs(d.data || []));
   }, []);
 
-  const vehicleColumns = [
+  const vehicleColumns: ColDef[] = [
     { field: "vehicleId", headerName: "Veículo ID", width: 120 },
     { field: "documentType", headerName: "Tipo", width: 150 },
     { field: "documentNumber", headerName: "Número", width: 150 },
@@ -53,7 +54,7 @@ export default function FleetDocsPage() {
     { field: "status", headerName: "Status", width: 120 },
   ];
 
-  const driverColumns = [
+  const driverColumns: ColDef[] = [
     { field: "driverId", headerName: "Motorista ID", width: 140 },
     { field: "documentType", headerName: "Tipo", width: 150 },
     { field: "documentNumber", headerName: "Número", width: 150 },

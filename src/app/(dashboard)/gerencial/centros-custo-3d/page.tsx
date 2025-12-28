@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry } from "ag-grid-community";
+import { ModuleRegistry, ColDef } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 // AG Grid CSS (v34+ Theming API)
@@ -42,7 +42,7 @@ export default function GestaoCC3DPage() {
     }
   };
 
-  const columnDefs = [
+  const columnDefs: ColDef[] = [
     { field: 'code', headerName: 'Código', width: 180, pinned: 'left', filter: 'agTextColumnFilter', floatingFilter: true },
     { field: 'name', headerName: 'Nome', flex: 2, filter: 'agTextColumnFilter', floatingFilter: true },
     { 
