@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type User } from "next-auth";
 import { MSSQLDrizzleAdapter } from "@/lib/auth/mssql-adapter";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
@@ -148,7 +148,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, _request: Request) {
+      async authorize(credentials, request: Request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -191,7 +191,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image,
           organizationId: user.organizationId,
           defaultBranchId: user.defaultBranchId,
-        };
+        } as User;
       },
     }),
   ],

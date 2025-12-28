@@ -33,8 +33,6 @@ export const auraTheme = themeQuartz.withParams({
   
   // Input de filtro
   inputBackgroundColor: "#1e293b",
-  inputBorderColor: "rgba(255, 255, 255, 0.1)",
-  inputFocusBorderColor: "#6366f1",
   
   // Fonte
   fontFamily: "Inter, system-ui, -apple-system, sans-serif",
