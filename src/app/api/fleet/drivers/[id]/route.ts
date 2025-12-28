@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { drivers } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar motorista específico
 export async function GET(
@@ -20,26 +21,27 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const driver = await db
-      .select()
-      .from(drivers)
-      .where(
-        and(
-          eq(drivers.id, driverId),
-          eq(drivers.organizationId, ctx.organizationId),
-          isNull(drivers.deletedAt)
+    const driver = await queryFirst<typeof drivers.$inferSelect>(
+      db
+        .select()
+        .from(drivers)
+        .where(
+          and(
+            eq(drivers.id, driverId),
+            eq(drivers.organizationId, ctx.organizationId),
+            isNull(drivers.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (driver.length === 0) {
+    if (!driver) {
       return NextResponse.json(
         { error: "Motorista não encontrado" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: driver[0] });
+    return NextResponse.json({ success: true, data: driver });
   } catch (error: unknown) {
     if (error instanceof Response) {
       return error;
@@ -79,19 +81,20 @@ export async function PUT(
     }
 
     // Verificar se motorista existe
-    const existing = await db
-      .select()
-      .from(drivers)
-      .where(
-        and(
-          eq(drivers.id, driverId),
-          eq(drivers.organizationId, ctx.organizationId),
-          isNull(drivers.deletedAt)
+    const existing = await queryFirst<typeof drivers.$inferSelect>(
+      db
+        .select()
+        .from(drivers)
+        .where(
+          and(
+            eq(drivers.id, driverId),
+            eq(drivers.organizationId, ctx.organizationId),
+            isNull(drivers.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Motorista não encontrado" },
         { status: 404 }
@@ -99,20 +102,21 @@ export async function PUT(
     }
 
     // Verificar CPF duplicado
-    if (body.cpf !== existing[0].cpf) {
-      const duplicateCpf = await db
-        .select()
-        .from(drivers)
-        .where(
-          and(
-            eq(drivers.cpf, body.cpf),
-            eq(drivers.organizationId, ctx.organizationId),
-            isNull(drivers.deletedAt)
+    if (body.cpf !== existing.cpf) {
+      const duplicateCpf = await queryFirst<typeof drivers.$inferSelect>(
+        db
+          .select()
+          .from(drivers)
+          .where(
+            and(
+              eq(drivers.cpf, body.cpf),
+              eq(drivers.organizationId, ctx.organizationId),
+              isNull(drivers.deletedAt)
+            )
           )
-        )
-        .limit(1);
+      );
 
-      if (duplicateCpf.length > 0 && duplicateCpf[0].id !== driverId) {
+      if (duplicateCpf && duplicateCpf.id !== driverId) {
         return NextResponse.json(
           { error: "Já existe um motorista com este CPF" },
           { status: 400 }
@@ -121,20 +125,21 @@ export async function PUT(
     }
 
     // Verificar CNH duplicada
-    if (body.cnhNumber !== existing[0].cnhNumber) {
-      const duplicateCnh = await db
-        .select()
-        .from(drivers)
-        .where(
-          and(
-            eq(drivers.cnhNumber, body.cnhNumber),
-            eq(drivers.organizationId, ctx.organizationId),
-            isNull(drivers.deletedAt)
+    if (body.cnhNumber !== existing.cnhNumber) {
+      const duplicateCnh = await queryFirst<typeof drivers.$inferSelect>(
+        db
+          .select()
+          .from(drivers)
+          .where(
+            and(
+              eq(drivers.cnhNumber, body.cnhNumber),
+              eq(drivers.organizationId, ctx.organizationId),
+              isNull(drivers.deletedAt)
+            )
           )
-        )
-        .limit(1);
+      );
 
-      if (duplicateCnh.length > 0 && duplicateCnh[0].id !== driverId) {
+      if (duplicateCnh && duplicateCnh.id !== driverId) {
         return NextResponse.json(
           { error: "Já existe um motorista com esta CNH" },
           { status: 400 }
@@ -174,11 +179,12 @@ export async function PUT(
       return NextResponse.json({ error: "Motorista não encontrado" }, { status: 404 });
     }
 
-    const [updated] = await db
-      .select()
-      .from(drivers)
-      .where(and(eq(drivers.id, driverId), eq(drivers.organizationId, ctx.organizationId), isNull(drivers.deletedAt)))
-      .limit(1);
+    const updated = await queryFirst<typeof drivers.$inferSelect>(
+      db
+        .select()
+        .from(drivers)
+        .where(and(eq(drivers.id, driverId), eq(drivers.organizationId, ctx.organizationId), isNull(drivers.deletedAt)))
+    );
 
     return NextResponse.json({
       success: true,
@@ -214,19 +220,20 @@ export async function DELETE(
     }
 
     // Verificar se motorista existe
-    const existing = await db
-      .select()
-      .from(drivers)
-      .where(
-        and(
-          eq(drivers.id, driverId),
-          eq(drivers.organizationId, ctx.organizationId),
-          isNull(drivers.deletedAt)
+    const existing = await queryFirst<typeof drivers.$inferSelect>(
+      db
+        .select()
+        .from(drivers)
+        .where(
+          and(
+            eq(drivers.id, driverId),
+            eq(drivers.organizationId, ctx.organizationId),
+            isNull(drivers.deletedAt)
+          )
         )
-      )
-      .limit(1);
+    );
 
-    if (existing.length === 0) {
+    if (!existing) {
       return NextResponse.json(
         { error: "Motorista não encontrado" },
         { status: 404 }
