@@ -138,7 +138,7 @@ export async function POST(req: Request) {
       parentId: parentId || null,
       level,
       linkedVehicleId: linkedVehicleId || null,
-      isAnalytical: type === "ANALYTIC",
+      isAnalytical: type === "ANALYTIC" ? "true" : "false",
       class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
       status: "ACTIVE",
       createdBy: ctx.userId,
