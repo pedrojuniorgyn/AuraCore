@@ -32,19 +32,21 @@ export async function POST(request: Request) {
 
     const result = await db.transaction(async (tx) => {
       // Registrar movimento (SQL Server: sem .returning())
+      const movementData: typeof warehouseMovements.$inferInsert = {
+        organizationId: ctx.organizationId,
+        movementType,
+        productId,
+        quantity: String(qty),
+        fromLocationId,
+        toLocationId,
+        referenceType,
+        referenceId,
+        createdBy: ctx.userId,
+      };
+
       const insertQuery = tx
         .insert(warehouseMovements)
-        .values({
-          organizationId: ctx.organizationId,
-          movementType,
-          productId,
-          quantity: qty,
-          fromLocationId,
-          toLocationId,
-          referenceType,
-          referenceId,
-          createdBy: ctx.userId,
-        });
+        .values(movementData);
 
       const createdId = await insertReturning(insertQuery, { id: warehouseMovements.id });
       const movementId = createdId[0]?.id;
@@ -86,12 +88,14 @@ export async function POST(request: Request) {
               )
             );
         } else {
-          await tx.insert(stockLocations).values({
+          const stockLocationData: typeof stockLocations.$inferInsert = {
             locationId: Number(toLocationId),
             productId: Number(productId),
-            quantity: qty,
+            quantity: String(qty),
             receivedAt: new Date(),
-          });
+          };
+
+          await tx.insert(stockLocations).values(stockLocationData);
         }
       }
 

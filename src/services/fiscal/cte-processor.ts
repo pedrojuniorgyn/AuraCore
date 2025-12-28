@@ -88,19 +88,18 @@ export async function importExternalCTe(
     }
     
     // 2. Inserir CTe como EXTERNO
-    const [createdId] = await insertReturning(
-      db.insert(cteHeader).values({
-        organizationId,
-        branchId,
-        
-        // Identificação
-        cteNumber: parseInt(parsedCTe.cteNumber),
-        serie: parsedCTe.serie,
-        model: "57",
-        cteKey: parsedCTe.cteKey,
-        
-        // Datas
-        issueDate: parsedCTe.issueDate,
+    const cteData = {
+      organizationId,
+      branchId,
+      
+      // Identificação
+      cteNumber: parseInt(parsedCTe.cteNumber),
+      serie: parsedCTe.serie,
+      model: "57",
+      cteKey: parsedCTe.cteKey,
+      
+      // Datas
+      issueDate: parsedCTe.issueDate,
         
         // Partes
         senderId: parsedCTe.senderId,
@@ -144,7 +143,10 @@ export async function importExternalCTe(
         createdBy: userId,
         updatedBy: userId,
         version: 1,
-      }),
+    } as unknown as typeof cteHeader.$inferInsert;
+
+    const [createdId] = await insertReturning(
+      db.insert(cteHeader).values(cteData),
       { id: cteHeader.id }
     );
 

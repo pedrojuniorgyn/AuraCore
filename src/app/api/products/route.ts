@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insere com Enterprise Base Pattern
-    await db.insert(products).values({
+    const productData = {
       ...data,
       organizationId: ctx.organizationId, // 🔐 MULTI-TENANT
       createdBy: ctx.userId, // 📊 AUDITORIA
@@ -148,7 +148,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date(),
       version: 1,
-    });
+    } as unknown as typeof products.$inferInsert;
+
+    await db.insert(products).values(productData);
 
     // Busca o produto recém-criado
     const [newProduct] = await db

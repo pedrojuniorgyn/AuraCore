@@ -91,16 +91,18 @@ export async function POST(req: Request) {
 
     const orderNumber = `OC-${year}-${String(lastOrders.length + 1).padStart(4, "0")}`;
 
+    const orderData = {
+      ...safeBody,
+      organizationId,
+      branchId,
+      orderNumber,
+      status: "PENDING_ALLOCATION",
+      createdBy,
+    } as unknown as typeof pickupOrders.$inferInsert;
+
     const insertQuery = db
       .insert(pickupOrders)
-      .values({
-        ...safeBody,
-        organizationId,
-        branchId,
-        orderNumber,
-        status: "PENDING_ALLOCATION",
-        createdBy,
-      });
+      .values(orderData);
 
     const createdId = await insertReturning(insertQuery, { id: pickupOrders.id });
     const orderId = createdId[0]?.id;

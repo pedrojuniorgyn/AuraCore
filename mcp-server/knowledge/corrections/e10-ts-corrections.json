@@ -15,6 +15,87 @@
       "pattern_created": "ag-grid-inference-and-schema-string-booleans",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-801935",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "TS2769 - Drizzle insert overload mismatch em 5 arquivos (payables, receivables, tax-credits, fleet/documents 2x, tires). Schema fields esperavam tipos específicos (string vs number).",
+      "correction": "Criado variáveis tipadas com `typeof table.$inferInsert` antes do `.values()`. Corrigido tipos: amountPaid/discount/interest/fine de number para string (\"0\"). Tax-credits usa `as unknown as typeof table.$inferInsert` devido ao spread de safeBody.",
+      "files_affected": [
+        "src/app/api/financial/payables/route.ts",
+        "src/app/api/financial/receivables/route.ts",
+        "src/app/api/financial/tax-credits/route.ts",
+        "src/app/api/fleet/documents/route.ts",
+        "src/app/api/fleet/tires/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-888596",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "TS2769 - Drizzle insert overload mismatch em 6 arquivos (products, tms/occurrences, tms/pickup-orders, tms/trips/checkpoint, wms/movements 2x)",
+      "correction": "Criado variáveis tipadas com `typeof table.$inferInsert` antes do `.values()`. Arquivos com spread de `safeBody` usam `as unknown as typeof table.$inferInsert`. Arquivos sem spread usam tipagem direta.",
+      "files_affected": [
+        "src/app/api/products/route.ts",
+        "src/app/api/tms/occurrences/route.ts",
+        "src/app/api/tms/pickup-orders/route.ts",
+        "src/app/api/tms/trips/[id]/checkpoint/route.ts",
+        "src/app/api/wms/movements/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-079562",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "TS2769 (Drizzle inserts) + TS2741/TS2739/TS2322 (campos faltantes ou tipos incorretos) em 5 arquivos (btg-dda-service, cte-processor, tms/trips/checkpoint, wms/movements, fleet/documents, fleet/tires)",
+      "correction": "Criado variáveis tipadas com `typeof table.$inferInsert`. Adicionado campos obrigatórios faltantes (branchId). Convertido tipos (latitude/longitude number→string, quantity number→string). Usou `as unknown as` para spread de safeBody com campos obrigatórios vindos do body.",
+      "files_affected": [
+        "src/services/banking/btg-dda-service.ts",
+        "src/services/fiscal/cte-processor.ts",
+        "src/app/api/tms/trips/[id]/checkpoint/route.ts",
+        "src/app/api/wms/movements/route.ts",
+        "src/app/api/fleet/documents/route.ts",
+        "src/app/api/fleet/tires/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-694449",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "3 bugs críticos: Bug 1: branchId hardcoded como 1 em btg-dda-service (violação multi-tenancy). Bug 2: Uso de 'as any' em fleet/tires/route.ts para acessar purchaseDate (violação regra NUNCA use as any). Bug 3: Uso de .toString() ao invés de String() em campos decimal (latitude/longitude/quantity) - Drizzle SQL Server espera string para decimal",
+      "correction": "Bug 1: Buscar branchId da conta bancária (bankAccounts) usando this.bankAccountId, com fallback para 1 se conta não tiver branch específico. Bug 2: Criar interface TireBody tipada para acessar purchaseDate de forma type-safe, eliminando as any. Bug 3: Usar String() ao invés de number para latitude/longitude/quantity pois schema Drizzle mssql define decimal como string",
+      "files_affected": [
+        "src/services/banking/btg-dda-service.ts",
+        "src/app/api/fleet/tires/route.ts",
+        "src/app/api/tms/trips/[id]/checkpoint/route.ts",
+        "src/app/api/wms/movements/route.ts"
+      ],
+      "pattern_created": "drizzle-mssql-decimal-string-and-multi-tenancy-branchid",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-161745",
+      "date": "2025-12-28",
+      "epic": "E10-TS",
+      "error": "Fallback silencioso branchId=1 quando bankAccount não existe viola multi-tenancy - pode associar dados financeiros à branch errada sem validação",
+      "correction": "Adicionar validação if (!bankAccount) throw Error antes do fallback. Mantém fallback apenas para caso em que conta existe mas não tem branch específico (branchId null no schema). Consistente com padrão de validação usado no próprio arquivo (linha 399: if (!dda) throw Error)",
+      "files_affected": [
+        "src/services/banking/btg-dda-service.ts"
+      ],
+      "pattern_created": "multi-tenancy-bank-account-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

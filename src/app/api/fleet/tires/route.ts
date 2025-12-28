@@ -51,16 +51,24 @@ export async function POST(request: Request) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
+    // Type-safe access to purchaseDate
+    interface TireBody {
+      purchaseDate?: string | Date;
+    }
+    const typedBody = safeBody as unknown as TireBody;
+
+    const tireData = {
+      ...safeBody,
+      organizationId: ctx.organizationId,
+      purchaseDate: typedBody.purchaseDate
+        ? new Date(typedBody.purchaseDate)
+        : null,
+      status: "STOCK",
+    } as unknown as typeof tires.$inferInsert;
+
     const insertQuery = db
       .insert(tires)
-      .values({
-        ...safeBody,
-        organizationId: ctx.organizationId,
-        purchaseDate: (safeBody as any)?.purchaseDate
-          ? new Date((safeBody as any).purchaseDate as any)
-          : null,
-        status: "STOCK",
-      });
+      .values(tireData);
 
     const createdId = await insertReturning(insertQuery, { id: tires.id });
     const tireId = createdId[0]?.id;

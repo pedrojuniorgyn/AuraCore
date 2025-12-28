@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
-    await db.insert(accountsPayable).values({
+    const payableData: typeof accountsPayable.$inferInsert = {
       organizationId: ctx.organizationId,
       // Política: header manda; body não decide filial.
       branchId,
@@ -117,17 +117,19 @@ export async function POST(request: NextRequest) {
       dueDate: new Date(body.dueDate),
       payDate: null,
       amount: body.amount,
-      amountPaid: 0,
-      discount: 0,
-      interest: 0,
-      fine: 0,
+      amountPaid: "0",
+      discount: "0",
+      interest: "0",
+      fine: "0",
       status: "OPEN",
       origin: "MANUAL",
       notes: body.notes || null,
       createdBy: ctx.userId,
       updatedBy: ctx.userId,
       version: 1,
-    });
+    };
+
+    await db.insert(accountsPayable).values(payableData);
 
     // Busca o registro criado
     const [newPayable] = await db

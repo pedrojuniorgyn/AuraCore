@@ -49,17 +49,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "recordedAt inválido" }, { status: 400 });
     }
 
-    await db.insert(tripCheckpoints).values({
+    const checkpointData: typeof tripCheckpoints.$inferInsert = {
       tripId,
       checkpointType: parsed.data.checkpointType,
       description: parsed.data.description ?? null,
-      latitude: parsed.data.latitude ?? null,
-      longitude: parsed.data.longitude ?? null,
+      latitude: parsed.data.latitude !== null && parsed.data.latitude !== undefined ? String(parsed.data.latitude) : null,
+      longitude: parsed.data.longitude !== null && parsed.data.longitude !== undefined ? String(parsed.data.longitude) : null,
       locationAddress: parsed.data.locationAddress ?? null,
       recordedAt,
       recordedBy: ctx.userId ?? null,
       createdAt: new Date(),
-    });
+    };
+
+    await db.insert(tripCheckpoints).values(checkpointData);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

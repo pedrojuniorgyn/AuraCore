@@ -75,15 +75,17 @@ export async function POST(request: NextRequest) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
+    const taxCreditData = {
+      ...safeBody,
+      organizationId: ctx.organizationId,
+      branchId,
+      createdBy: ctx.userId,
+      version: 1,
+    } as unknown as typeof taxCredits.$inferInsert;
+
     const insertQuery = db
       .insert(taxCredits)
-      .values({
-        ...safeBody,
-        organizationId: ctx.organizationId,
-        branchId,
-        createdBy: ctx.userId,
-        version: 1,
-      });
+      .values(taxCreditData);
 
     const createdId = await insertReturning(insertQuery, { id: taxCredits.id });
     const creditId = createdId[0]?.id;

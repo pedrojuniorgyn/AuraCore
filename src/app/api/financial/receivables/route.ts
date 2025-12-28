@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
-    await db.insert(accountsReceivable).values({
+    const receivableData: typeof accountsReceivable.$inferInsert = {
       organizationId: ctx.organizationId,
       // Política: header manda; body não decide filial.
       branchId,
@@ -108,17 +108,19 @@ export async function POST(request: NextRequest) {
       dueDate: new Date(body.dueDate),
       receiveDate: null,
       amount: body.amount,
-      amountReceived: 0,
-      discount: 0,
-      interest: 0,
-      fine: 0,
+      amountReceived: "0",
+      discount: "0",
+      interest: "0",
+      fine: "0",
       status: "OPEN",
       origin: "MANUAL",
       notes: body.notes || null,
       createdBy: ctx.userId,
       updatedBy: ctx.userId,
       version: 1,
-    });
+    };
+
+    await db.insert(accountsReceivable).values(receivableData);
 
     const [newReceivable] = await db
       .select()

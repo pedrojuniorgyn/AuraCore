@@ -99,15 +99,17 @@ export async function POST(request: NextRequest) {
     } = (body ?? {}) as Record<string, unknown>;
 
     if (body.type === "vehicle") {
+      const vehicleDocData = {
+        ...safeBody,
+        organizationId: ctx.organizationId,
+        branchId,
+        createdBy: ctx.userId,
+        version: 1,
+      } as unknown as typeof vehicleDocuments.$inferInsert;
+
       const insertQuery = db
         .insert(vehicleDocuments)
-        .values({
-          ...safeBody,
-          organizationId: ctx.organizationId,
-          branchId,
-          createdBy: ctx.userId,
-          version: 1,
-        });
+        .values(vehicleDocData);
 
       const createdId = await insertReturning(insertQuery, { id: vehicleDocuments.id });
       const docId = createdId[0]?.id;
@@ -125,15 +127,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.type === "driver") {
+      const driverDocData = {
+        ...safeBody,
+        organizationId: ctx.organizationId,
+        branchId,
+        createdBy: ctx.userId,
+        version: 1,
+      } as unknown as typeof driverDocuments.$inferInsert;
+
       const insertQuery = db
         .insert(driverDocuments)
-        .values({
-          ...safeBody,
-          organizationId: ctx.organizationId,
-          branchId,
-          createdBy: ctx.userId,
-          version: 1,
-        });
+        .values(driverDocData);
 
       const createdId = await insertReturning(insertQuery, { id: driverDocuments.id });
       const docId = createdId[0]?.id;

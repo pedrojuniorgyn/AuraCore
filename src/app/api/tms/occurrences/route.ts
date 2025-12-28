@@ -77,15 +77,17 @@ export async function POST(request: NextRequest) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
+    const occurrenceData = {
+      ...safeBody,
+      organizationId: ctx.organizationId,
+      branchId,
+      createdBy: ctx.userId,
+      version: 1,
+    } as unknown as typeof tripOccurrences.$inferInsert;
+
     const insertQuery = db
       .insert(tripOccurrences)
-      .values({
-        ...safeBody,
-        organizationId: ctx.organizationId,
-        branchId,
-        createdBy: ctx.userId,
-        version: 1,
-      });
+      .values(occurrenceData);
 
     const createdId = await insertReturning(insertQuery, { id: tripOccurrences.id });
     const occurrenceId = createdId[0]?.id;

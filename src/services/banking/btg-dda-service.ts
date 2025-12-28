@@ -417,23 +417,38 @@ export class BtgDdaService {
         partnerId = partner.id;
       }
 
+      // Buscar branchId da conta bancária
+      const [bankAccount] = await db
+        .select({ branchId: bankAccounts.branchId })
+        .from(bankAccounts)
+        .where(eq(bankAccounts.id, this.bankAccountId));
+
+      if (!bankAccount) {
+        throw new Error(`Conta bancária ${this.bankAccountId} não encontrada`);
+      }
+
+      const branchId = bankAccount.branchId ?? 1; // Fallback para branch principal apenas se conta não tiver branch específico
+
       // Criar Conta a Pagar
+      const payableData: typeof accountsPayable.$inferInsert = {
+        organizationId: this.organizationId,
+        branchId,
+        partnerId,
+        description: `${dda.beneficiaryName} - ${dda.externalId}`,
+        documentNumber: dda.externalId,
+        barcode: dda.barcode,
+        issueDate: dda.issueDate || new Date(),
+        dueDate: dda.dueDate,
+        amount: dda.amount.toString(),
+        status: "OPEN",
+        origin: "DDA_AUTOMATIC",
+        createdBy: "system",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
       const [newPayable] = await insertReturning(
-        db.insert(accountsPayable).values({
-          organizationId: this.organizationId,
-          partnerId,
-          description: `${dda.beneficiaryName} - ${dda.externalId}`,
-          documentNumber: dda.externalId,
-          barcode: dda.barcode,
-          issueDate: dda.issueDate || new Date(),
-          dueDate: dda.dueDate,
-          amount: dda.amount.toString(),
-          status: "OPEN",
-          origin: "DDA_AUTOMATIC",
-          createdBy: "system",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+        db.insert(accountsPayable).values(payableData),
         { id: accountsPayable.id }
       );
 
