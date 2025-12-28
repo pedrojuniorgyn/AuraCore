@@ -9,7 +9,6 @@ export function getOrCreateRequestId(headers: Headers): string {
   try {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-      // @ts-expect-error - TS lib pode não tipar randomUUID em todos os ambientes
       return crypto.randomUUID();
     }
   } catch {

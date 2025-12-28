@@ -226,7 +226,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     if (branches && branches.length > 0) {
       // Mantém a filial atual se ainda existir
       if (currentBranch) {
-        const stillExists = branches.find((b) => b.id === currentBranch.id);
+        const stillExists = branches.find((b: typeof branches[0]) => b.id === currentBranch.id);
         if (!stillExists) {
           selectInitialBranch(branches);
         }

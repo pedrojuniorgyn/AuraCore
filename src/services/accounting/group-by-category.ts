@@ -83,7 +83,7 @@ export async function groupItemsByCategory(
       chartAccountCode: classification.chartAccountCode,
       chartAccountName: classification.chartAccountName,
       costCenterId: classification.costCenterId,
-      items: categoryItems,
+      items: categoryItems as unknown as typeof categoryItems,
       totalAmount,
       itemCount: categoryItems.length,
     });

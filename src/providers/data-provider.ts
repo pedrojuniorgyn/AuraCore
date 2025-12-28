@@ -252,7 +252,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
   create: async ({ resource, variables, meta }) => {
     const url = `${apiUrl}/${resource}`;
 
-    const { data } = await httpClient.post(url, variables, meta);
+    const { data } = await httpClient.post(url, variables, meta as unknown as Record<string, unknown>);
 
     toast.success("Registro criado com sucesso!");
 
@@ -264,7 +264,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
   update: async ({ resource, id, variables, meta }) => {
     const url = `${apiUrl}/${resource}/${id}`;
 
-    const { data } = await httpClient.put(url, variables, meta);
+    const { data } = await httpClient.put(url, variables, meta as unknown as Record<string, unknown>);
 
     toast.success("Registro atualizado com sucesso!");
 
@@ -276,7 +276,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
   deleteOne: async ({ resource, id, meta }) => {
     const url = `${apiUrl}/${resource}/${id}`;
 
-    const { data } = await httpClient.delete(url, meta);
+    const { data } = await httpClient.delete(url, meta as unknown as Record<string, unknown>);
 
     toast.success("Registro excluído com sucesso!");
 

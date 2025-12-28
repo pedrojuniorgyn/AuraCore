@@ -86,7 +86,7 @@ export async function POST(
         );
 
       if (bankAccount) {
-        const newBalance = parseFloat(bankAccount.currentBalance) + amountReceived;
+        const newBalance = parseFloat(bankAccount.currentBalance ?? "0") + amountReceived;
         
         await db
           .update(bankAccounts)

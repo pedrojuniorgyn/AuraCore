@@ -5,9 +5,10 @@
  * Baseado no Design System Aurora
  */
 
-import { type ThemeOptions } from "ag-grid-community";
+// TODO: Update to ag-grid v34+ theme API
+// import { type ThemeOptions } from "ag-grid-community";
 
-export const auraThemePremium: ThemeOptions = {
+export const auraThemePremium = {
   theme: "quartz",
   accentColor: "#8B5CF6", // Aurora Purple
   backgroundColor: "rgba(15, 23, 42, 0.6)", // Slate 900 translúcido

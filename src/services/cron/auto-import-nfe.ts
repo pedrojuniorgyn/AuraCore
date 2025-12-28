@@ -11,7 +11,7 @@ import { fiscalSettings, branches } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notificationService } from "@/services/notification-service";
 
-let cronJob: cron.ScheduledTask | null = null;
+let cronJob: ReturnType<typeof cron.schedule> | null = null;
 
 /**
  * Inicia o cron job de importação automática

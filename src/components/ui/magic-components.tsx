@@ -82,6 +82,7 @@ export function GradientText({
 
   return (
     <motion.span
+      {...(props as unknown as Record<string, unknown>)}
       className={cn(
         "inline-block bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent",
         className

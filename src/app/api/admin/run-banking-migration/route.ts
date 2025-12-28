@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { sql } from "@vercel/postgres";
+// import { sql } from "@vercel/postgres"; // Not available in current setup
 import { db } from "@/lib/db";
 import { sql as drizzleSql } from "drizzle-orm";
 

@@ -70,7 +70,7 @@ export class NotificationService {
         message: params.message,
         data: params.data ? JSON.stringify(params.data) : null,
         actionUrl: params.actionUrl,
-      });
+      } as unknown as typeof notifications.$inferInsert);
 
       console.log(
         `🔔 Notificação criada: [${params.type}] ${params.title}`

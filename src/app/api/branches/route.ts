@@ -39,13 +39,14 @@ export async function GET(request: NextRequest) {
 
     // Filtro por busca (nome, trade_name, document)
     if (search) {
-      conditions.push(
-        or(
-          ilike(branches.name, `%${search}%`),
-          ilike(branches.tradeName, `%${search}%`),
-          ilike(branches.document, `%${search}%`)
-        )
+      const searchCondition = or(
+        ilike(branches.name, `%${search}%`),
+        ilike(branches.tradeName, `%${search}%`),
+        ilike(branches.document, `%${search}%`)
       );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     // Filtro por status

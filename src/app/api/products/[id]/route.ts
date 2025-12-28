@@ -177,7 +177,7 @@ export async function PUT(
         updatedBy: ctx.userId, // 📊 AUDITORIA: Quem atualizou
         updatedAt: new Date(),
         version: currentProduct.version + 1, // 🔒 OPTIMISTIC LOCK: Incrementa versão
-      })
+      } as unknown as typeof products.$inferInsert)
       .where(
         and(
           eq(products.id, id),

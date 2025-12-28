@@ -130,9 +130,12 @@ export async function POST(req: Request) {
         const calculation = await calculateFreight({
           organizationId,
           customerId,
-          weightKg: parseFloat(weightKg),
-          volumeM3: volumeM3 ? parseFloat(volumeM3) : 0,
+          realWeight: parseFloat(weightKg),
+          volume: volumeM3 ? parseFloat(volumeM3) : undefined,
           invoiceValue: invoiceValue ? parseFloat(invoiceValue) : 0,
+          originState: originUf,
+          destinationState: destinationUf,
+          transportType: transportType || "LTL_FRACIONADO",
         });
 
         calculatedPrice = calculation.total.toString();

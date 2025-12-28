@@ -40,13 +40,14 @@ export async function GET(request: NextRequest) {
 
     // Filtro por busca (nome, trade_name, document)
     if (search) {
-      conditions.push(
-        or(
-          ilike(businessPartners.name, `%${search}%`),
-          ilike(businessPartners.tradeName, `%${search}%`),
-          ilike(businessPartners.document, `%${search}%`)
-        )
+      const searchCondition = or(
+        ilike(businessPartners.name, `%${search}%`),
+        ilike(businessPartners.tradeName, `%${search}%`),
+        ilike(businessPartners.document, `%${search}%`)
       );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     // Filtro por tipo

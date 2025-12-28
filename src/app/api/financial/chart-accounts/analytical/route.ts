@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       .where(
         and(
           eq(chartOfAccounts.organizationId, organizationId),
-          eq(chartOfAccounts.isAnalytical, true),
+          eq(chartOfAccounts.isAnalytical, "true"),
           eq(chartOfAccounts.status, "ACTIVE"),
           isNull(chartOfAccounts.deletedAt)
         )

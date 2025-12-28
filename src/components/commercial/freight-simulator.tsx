@@ -227,7 +227,9 @@ export function FreightSimulator() {
                       {result.freightWeight.toFixed(2)} kg
                     </span>
                     {isCubicWeight && (
-                      <AlertCircle className="h-4 w-4 text-orange-500" title="Peso cubado aplicado" />
+                      <span title="Peso cubado aplicado">
+                        <AlertCircle className="h-4 w-4 text-orange-500" />
+                      </span>
                     )}
                   </div>
                 </div>
