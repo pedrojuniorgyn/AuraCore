@@ -192,7 +192,7 @@ export default function EditarDocumentoPage() {
               </label>
               <SearchableSelect
                 value={formData.fiscalClassification}
-                onValueChange={(value: string) =>
+                onChange={(value: string) =>
                   setFormData({ ...formData, fiscalClassification: value })
                 }
                 options={[
@@ -213,7 +213,7 @@ export default function EditarDocumentoPage() {
               </label>
               <SearchableSelect
                 value={formData.fiscalStatus}
-                onValueChange={(value: string) =>
+                onChange={(value: string) =>
                   setFormData({ ...formData, fiscalStatus: value })
                 }
                 options={[
@@ -231,7 +231,7 @@ export default function EditarDocumentoPage() {
               </label>
               <SearchableSelect
                 value={formData.accountingStatus}
-                onValueChange={(value: string) =>
+                onChange={(value: string) =>
                   setFormData({ ...formData, accountingStatus: value })
                 }
                 options={[
@@ -250,7 +250,7 @@ export default function EditarDocumentoPage() {
               </label>
               <SearchableSelect
                 value={formData.financialStatus}
-                onValueChange={(value: string) =>
+                onChange={(value: string) =>
                   setFormData({ ...formData, financialStatus: value })
                 }
                 options={[
@@ -322,7 +322,7 @@ export default function EditarDocumentoPage() {
                         <div className="relative z-10">
                           <SearchableSelect
                             value={item.categoryId?.toString() || ""}
-                            onValueChange={(value: string) =>
+                            onChange={(value: string) =>
                               handleItemUpdate(item.id, "categoryId", value ? parseInt(value) : null)
                             }
                             options={categories.map((cat: any) => ({
@@ -339,7 +339,7 @@ export default function EditarDocumentoPage() {
                         <div className="relative z-10">
                           <SearchableSelect
                             value={item.chartAccountId?.toString() || ""}
-                            onValueChange={(value: string) =>
+                            onChange={(value: string) =>
                               handleItemUpdate(item.id, "chartAccountId", value ? parseInt(value) : null)
                             }
                             options={chartAccounts.map((acc: any) => ({
@@ -356,7 +356,7 @@ export default function EditarDocumentoPage() {
                         <div className="relative z-10">
                           <SearchableSelect
                             value={item.costCenterId?.toString() || ""}
-                            onValueChange={(value: string) =>
+                            onChange={(value: string) =>
                               handleItemUpdate(item.id, "costCenterId", value ? parseInt(value) : null)
                             }
                             options={costCenters

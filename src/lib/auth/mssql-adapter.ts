@@ -1,12 +1,26 @@
 import { eq, and, isNull } from "drizzle-orm";
 import { db, ensureConnection } from "@/lib/db";
 import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema";
-import { type Adapter } from "next-auth/adapters";
+import { type Adapter, type AdapterUser } from "next-auth/adapters";
 
 export function MSSQLDrizzleAdapter(): Adapter {
   async function ensureDb() {
     // Evita race condition de pool desconectado no runtime do NextAuth
     await ensureConnection();
+  }
+
+  // Helper para mapear schema user para AdapterUser
+  function toAdapterUser(user: typeof users.$inferSelect): AdapterUser {
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      name: user.name,
+      image: user.image,
+      role: user.role ?? "USER",
+      organizationId: user.organizationId,
+      defaultBranchId: user.defaultBranchId,
+    };
   }
 
   return {
@@ -27,7 +41,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
         .select()
         .from(users)
         .where(and(eq(users.id, id), isNull(users.deletedAt)));
-      return user ?? null;
+      return user ? toAdapterUser(user) : null;
     },
     async getUserByEmail(email) {
       await ensureDb();
@@ -35,7 +49,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
         .select()
         .from(users)
         .where(and(eq(users.email, email), isNull(users.deletedAt)));
-      return user ?? null;
+      return user ? toAdapterUser(user) : null;
     },
     async getUserByAccount({ providerAccountId, provider }) {
       await ensureDb();
@@ -56,7 +70,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
         .from(users)
         .where(and(eq(users.id, account.userId), isNull(users.deletedAt)));
       
-      return user ?? null;
+      return user ? toAdapterUser(user) : null;
     },
     async updateUser(data) {
       await ensureDb();
@@ -68,7 +82,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
         .where(eq(users.id, data.id));
         
       const [user] = await db.select().from(users).where(eq(users.id, data.id));
-      return user;
+      return user ? toAdapterUser(user) : ({} as AdapterUser);
     },
     async linkAccount(data) {
       await ensureDb();
@@ -96,7 +110,7 @@ export function MSSQLDrizzleAdapter(): Adapter {
 
       if (!user) return null;
 
-      return { session, user };
+      return { session, user: toAdapterUser(user) };
     },
     async updateSession(data) {
       await ensureDb();
