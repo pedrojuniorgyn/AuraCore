@@ -160,6 +160,44 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-069209",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.2 SEMANA 2 MARCO: Application Layer completa - 5 Use Cases, 3 DTOs, multi-tenancy, 11 testes",
+      "correction": "CreatePayableUseCase, PayAccountPayableUseCase, CancelPayableUseCase, ListPayablesUseCase, GetPayableByIdUseCase. DTOs com Zod validation. ExecutionContext para multi-tenancy. Branch scoping (admin vs user). Dependency Injection com tsyringe. 11 testes passando.",
+      "files_affected": [
+        "src/modules/financial/application/use-cases/CreatePayableUseCase.ts",
+        "src/modules/financial/application/use-cases/PayAccountPayableUseCase.ts",
+        "src/modules/financial/application/use-cases/CancelPayableUseCase.ts",
+        "src/modules/financial/application/use-cases/ListPayablesUseCase.ts",
+        "src/modules/financial/application/use-cases/GetPayableByIdUseCase.ts",
+        "src/modules/financial/application/dtos/CreatePayableDTO.ts",
+        "src/modules/financial/application/dtos/PayAccountPayableDTO.ts",
+        "src/modules/financial/application/dtos/PayableResponseDTO.ts"
+      ],
+      "pattern_created": "E7.2 Week 2 Complete - Application Layer Marco",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-900194",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.2 Semana 3: Infrastructure Layer - DrizzlePayableRepository, Mapper, EventDispatcher, DI Module",
+      "correction": "DrizzlePayableRepository implementa IPayableRepository com Drizzle ORM. PayableMapper converte Domain<->Persistence. DomainEventDispatcher para eventos. FinancialModule registra todas dependências no container tsyringe. Schemas Drizzle para accounts_payable e payments. Usado char(36) para UUIDs ao invés de uniqueIdentifier. Usado sql`GETDATE()` ao invés de defaultNow(). Usado queryPaginated helper para .limit(). Implementado upsert manual (check + update/insert) pois mssql não suporta onConflictDoUpdate. 3 testes do Mapper passando.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/persistence/DrizzlePayableRepository.ts",
+        "src/modules/financial/infrastructure/persistence/PayableMapper.ts",
+        "src/modules/financial/infrastructure/persistence/PayableSchema.ts",
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts",
+        "src/modules/financial/infrastructure/di/FinancialModule.ts",
+        "tests/unit/modules/financial/infrastructure/persistence/PayableMapper.test.ts"
+      ],
+      "pattern_created": "E7.2 Week 3 - Infrastructure Layer with Repository, Mapper, Events, DI",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

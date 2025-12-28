@@ -1,0 +1,2 @@
+export { registerFinancialModule } from './FinancialModule';
+
