@@ -107,13 +107,14 @@ export async function PUT(
       );
     }
 
-    // Validar mudança de valor se estiver em remessa
-    if (existing.remittanceId && body.amount !== existing.amount) {
-      return NextResponse.json(
-        { error: "Não é possível alterar valor de conta incluída em remessa" },
-        { status: 400 }
-      );
-    }
+    // TODO: Validar mudança de valor se estiver em remessa
+    // Propriedade remittanceId não existe mais no schema atual
+    // if (existing.remittanceId && body.amount !== existing.amount) {
+    //   return NextResponse.json(
+    //     { error: "Não é possível alterar valor de conta incluída em remessa" },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Atualizar
     await db
@@ -192,12 +193,14 @@ export async function DELETE(
       );
     }
 
-    if (existing.remittanceId) {
-      return NextResponse.json(
-        { error: "Não é possível excluir conta incluída em remessa" },
-        { status: 400 }
-      );
-    }
+    // TODO: Validar exclusão se estiver em remessa
+    // Propriedade remittanceId não existe mais no schema atual
+    // if (existing.remittanceId) {
+    //   return NextResponse.json(
+    //     { error: "Não é possível excluir conta incluída em remessa" },
+    //     { status: 400 }
+    //   );
+    // }
 
     // TODO: Reverter lançamento contábil se houver
     // if (existing.journalEntryId) {

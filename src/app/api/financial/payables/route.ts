@@ -3,7 +3,7 @@ import { db, ensureConnection } from "@/lib/db";
 import { accountsPayable, businessPartners, financialCategories, bankAccounts, costCenters, chartOfAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
-import { eq, and, isNull, gte, lte, sql } from "drizzle-orm";
+import { eq, and, isNull, gte, lte, sql, type SQL } from "drizzle-orm";
 import { ensureFinancialData } from "@/lib/services/financial-init";
 
 /**
@@ -24,7 +24,25 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    let query = db
+    // Construir condições dinâmicas
+    const conditions: SQL<unknown>[] = [
+      eq(accountsPayable.organizationId, ctx.organizationId),
+      isNull(accountsPayable.deletedAt),
+    ];
+
+    if (status) {
+      conditions.push(eq(accountsPayable.status, status));
+    }
+
+    if (startDate) {
+      conditions.push(gte(accountsPayable.dueDate, new Date(startDate)));
+    }
+
+    if (endDate) {
+      conditions.push(lte(accountsPayable.dueDate, new Date(endDate)));
+    }
+
+    const payables = await db
       .select({
         id: accountsPayable.id,
         partnerId: accountsPayable.partnerId,
@@ -55,32 +73,8 @@ export async function GET(request: NextRequest) {
       .leftJoin(financialCategories, eq(accountsPayable.categoryId, financialCategories.id))
       .leftJoin(costCenters, eq(accountsPayable.costCenterId, costCenters.id))
       .leftJoin(chartOfAccounts, eq(accountsPayable.chartAccountId, chartOfAccounts.id))
-      .where(
-        and(
-          eq(accountsPayable.organizationId, ctx.organizationId),
-          isNull(accountsPayable.deletedAt)
-        )
-      );
-
-    // Filtros opcionais
-    const conditions: any[] = [
-      eq(accountsPayable.organizationId, ctx.organizationId),
-      isNull(accountsPayable.deletedAt),
-    ];
-
-    if (status) {
-      conditions.push(eq(accountsPayable.status, status));
-    }
-
-    if (startDate) {
-      conditions.push(gte(accountsPayable.dueDate, new Date(startDate)));
-    }
-
-    if (endDate) {
-      conditions.push(lte(accountsPayable.dueDate, new Date(endDate)));
-    }
-
-    const payables = await query.where(and(...conditions)).orderBy(accountsPayable.dueDate);
+      .where(and(...conditions))
+      .orderBy(accountsPayable.dueDate);
 
     return NextResponse.json({ data: payables, total: payables.length });
   } catch (error: unknown) {

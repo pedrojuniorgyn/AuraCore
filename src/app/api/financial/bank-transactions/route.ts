@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { queryWithLimit } from "@/lib/db/query-helpers";
 import { bankTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { and, desc, eq, gte, lte } from "drizzle-orm";
@@ -34,12 +35,14 @@ export async function GET(req: NextRequest) {
       ...(end ? [lte(bankTransactions.transactionDate, end)] : []),
     ];
 
-    const items = await db
-      .select()
-      .from(bankTransactions)
-      .where(and(...where))
-      .orderBy(desc(bankTransactions.transactionDate))
-      .limit(parsed.data.limit);
+    const items = await queryWithLimit<typeof bankTransactions.$inferSelect>(
+      db
+        .select()
+        .from(bankTransactions)
+        .where(and(...where))
+        .orderBy(desc(bankTransactions.transactionDate)),
+      parsed.data.limit
+    );
 
     return NextResponse.json({ success: true, data: items });
   } catch (error: unknown) {

@@ -107,13 +107,14 @@ export async function PUT(
       );
     }
 
-    // Validar mudança de valor se tiver boleto gerado
-    if (existing.boletoId && body.amount !== existing.amount) {
-      return NextResponse.json(
-        { error: "Não é possível alterar valor de conta com boleto gerado" },
-        { status: 400 }
-      );
-    }
+    // TODO: Validar mudança de valor se tiver boleto gerado
+    // Propriedade boletoId não existe mais no schema atual
+    // if (existing.boletoId && body.amount !== existing.amount) {
+    //   return NextResponse.json(
+    //     { error: "Não é possível alterar valor de conta com boleto gerado" },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Atualizar
     await db
@@ -192,12 +193,14 @@ export async function DELETE(
       );
     }
 
-    if (existing.boletoId) {
-      return NextResponse.json(
-        { error: "Não é possível excluir conta com boleto gerado. Cancele o boleto primeiro." },
-        { status: 400 }
-      );
-    }
+    // TODO: Validar exclusão se tiver boleto gerado
+    // Propriedade boletoId não existe mais no schema atual
+    // if (existing.boletoId) {
+    //   return NextResponse.json(
+    //     { error: "Não é possível excluir conta com boleto gerado. Cancele o boleto primeiro." },
+    //     { status: 400 }
+    //   );
+    // }
 
     // TODO: Reverter lançamento contábil se houver
     // if (existing.journalEntryId) {

@@ -6,6 +6,7 @@
  */
 
 import { db } from "@/lib/db";
+import { insertReturning } from "@/lib/db/query-helpers";
 import { cteHeader, cteCargoDocuments, cargoDocuments, inboundInvoices } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
@@ -87,9 +88,8 @@ export async function importExternalCTe(
     }
     
     // 2. Inserir CTe como EXTERNO
-    const [createdId] = await db
-      .insert(cteHeader)
-      .values({
+    const [createdId] = await insertReturning(
+      db.insert(cteHeader).values({
         organizationId,
         branchId,
         
@@ -144,10 +144,11 @@ export async function importExternalCTe(
         createdBy: userId,
         updatedBy: userId,
         version: 1,
-      })
-      .$returningId();
+      }),
+      { id: cteHeader.id }
+    );
 
-    const cteId = Number((createdId as any)?.id);
+    const cteId = Number(createdId?.id);
     if (!Number.isFinite(cteId) || cteId <= 0) {
       throw new Error(
         "Falha ao importar CTe externo: ID não retornado pelo banco"

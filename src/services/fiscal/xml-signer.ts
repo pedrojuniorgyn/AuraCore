@@ -140,24 +140,28 @@ export class XmlSigner {
  */
 export async function createXmlSignerFromDb(organizationId: number): Promise<XmlSigner> {
   const { db } = await import("@/lib/db");
-  const { digitalCertificates } = await import("@/lib/db/schema");
+  const { branches } = await import("@/lib/db/schema");
   const { eq, and, isNull } = await import("drizzle-orm");
 
   const [cert] = await db
-    .select()
-    .from(digitalCertificates)
+    .select({
+      pfx: branches.certificatePfx,
+      password: branches.certificatePassword,
+      expiry: branches.certificateExpiry,
+    })
+    .from(branches)
     .where(
       and(
-        eq(digitalCertificates.organizationId, organizationId),
-        isNull(digitalCertificates.deletedAt)
+        eq(branches.organizationId, organizationId),
+        isNull(branches.deletedAt)
       )
     );
 
-  if (!cert?.pfxContent || !cert.password) {
+  if (!cert?.pfx || !cert.password) {
     throw new Error("Certificado digital não configurado");
   }
 
-  const pfxBuffer = Buffer.from(cert.pfxContent, "base64");
+  const pfxBuffer = Buffer.from(cert.pfx, "base64");
   return new XmlSigner(pfxBuffer, cert.password);
 }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { queryFirst } from "@/lib/db/query-helpers";
 import { bankTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { and, eq } from "drizzle-orm";
@@ -30,11 +31,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const desired = parsed.data.reconciled ?? "S";
 
-    const [existing] = await db
+    const existing = await queryFirst<{ id: number }>(db
       .select({ id: bankTransactions.id })
       .from(bankTransactions)
       .where(and(eq(bankTransactions.id, txId), eq(bankTransactions.organizationId, ctx.organizationId)))
-      .limit(1);
+    );
 
     if (!existing) {
       return NextResponse.json({ error: "Transação não encontrada" }, { status: 404 });

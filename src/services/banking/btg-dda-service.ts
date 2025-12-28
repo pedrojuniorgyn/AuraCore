@@ -9,6 +9,7 @@ import https from "https";
 import fs from "fs";
 import path from "path";
 import { db } from "@/lib/db";
+import { insertReturning } from "@/lib/db/query-helpers";
 import { financialDdaInbox, accountsPayable, bankAccounts, businessPartners } from "@/lib/db/schema";
 import { and, eq, isNull, sql, between } from "drizzle-orm";
 
@@ -417,9 +418,8 @@ export class BtgDdaService {
       }
 
       // Criar Conta a Pagar
-      const [newPayable] = await db
-        .insert(accountsPayable)
-        .values({
+      const [newPayable] = await insertReturning(
+        db.insert(accountsPayable).values({
           organizationId: this.organizationId,
           partnerId,
           description: `${dda.beneficiaryName} - ${dda.externalId}`,
@@ -433,8 +433,9 @@ export class BtgDdaService {
           createdBy: "system",
           createdAt: new Date(),
           updatedAt: new Date(),
-        })
-        .$returningId();
+        }),
+        { id: accountsPayable.id }
+      );
 
       // Atualizar DDA
       await db

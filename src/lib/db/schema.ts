@@ -1,5 +1,5 @@
-// Coisas genéricas (sql, relations) vêm de "drizzle-orm"
-import { relations, sql } from "drizzle-orm"; 
+// Coisas genéricas (sql) vêm de "drizzle-orm"
+import { sql } from "drizzle-orm"; 
 
 // Coisas específicas do SQL Server (tabelas, tipos) vêm de "drizzle-orm/mssql-core"
 import { 

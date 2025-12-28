@@ -1,5 +1,6 @@
 import { SefazCTeClient } from "./sefaz-cte-client";
 import { db } from "@/lib/db";
+import { insertReturning } from "@/lib/db/query-helpers";
 import { cteInutilization, fiscalSettings } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createXmlSignerFromDb } from "./xml-signer";
@@ -72,9 +73,8 @@ export class CTeInutilizationService {
       );
 
       // 6. Registrar no banco
-      await db
-        .insert(cteInutilization)
-        .values({
+      await insertReturning(
+        db.insert(cteInutilization).values({
           organizationId: data.organizationId,
           branchId: data.branchId,
           serie: data.serie,
@@ -87,8 +87,9 @@ export class CTeInutilizationService {
           sefazReturnMessage: resultado.motivo,
           inutilizedAt: resultado.success ? new Date() : null,
           createdBy: data.userId,
-        })
-        .$returningId();
+        }),
+        { id: cteInutilization.id }
+      );
 
       console.log(resultado.success ? "✅ Inutilização confirmada!" : "❌ Inutilização rejeitada");
 
