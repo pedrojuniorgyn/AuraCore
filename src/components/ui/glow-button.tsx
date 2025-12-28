@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface GlowButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface GlowButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   className?: string;
   children?: React.ReactNode;
   glowColor?: string;
@@ -31,7 +31,7 @@ export function GlowButton({
       style={{
         boxShadow: `0 0 20px ${glowColor}40`,
       }}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       {/* Brilho pulsante */}
       <div

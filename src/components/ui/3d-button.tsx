@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface ThreeDButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ThreeDButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   className?: string;
   children?: React.ReactNode;
 }
@@ -47,7 +47,7 @@ export function ThreeDButton({
         transformStyle: "preserve-3d",
         perspective: 1000,
       }}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       <span className="relative z-10 drop-shadow-lg">{children}</span>
     </motion.button>

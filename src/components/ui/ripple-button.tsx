@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 type RippleButtonVariant = "default" | "secondary" | "outline" | "ghost";
 
-interface RippleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface RippleButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   className?: string;
   children?: React.ReactNode;
   /**
@@ -91,7 +91,7 @@ export function RippleButton({
         ],
         className
       )}
-      {...props}
+      {...(props as Record<string, unknown>)}
       onClick={handleClick}
     >
       {/* Conteúdo */}

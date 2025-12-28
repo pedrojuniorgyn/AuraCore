@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface ShimmerButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ShimmerButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   shimmerColor?: string;
   shimmerSize?: string;
   borderRadius?: string;
@@ -45,7 +45,7 @@ export function ShimmerButton({
         "shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/40",
         className
       )}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       {children}
     </motion.button>

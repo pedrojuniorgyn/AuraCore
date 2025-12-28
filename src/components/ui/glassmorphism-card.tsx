@@ -19,7 +19,7 @@ export function GlassmorphismCard({
   children,
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: Omit<React.ComponentPropsWithoutRef<"div">, "children"> & { children?: React.ReactNode }) {
   return (
     <div
       className={cn(
@@ -89,7 +89,7 @@ export function ThreeDCard({
         transformStyle: "preserve-3d",
       }}
       className={cn("relative", className)}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       <div
         style={{
@@ -112,7 +112,7 @@ export function HoverCard({
   children,
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: Omit<React.ComponentPropsWithoutRef<"div">, "children"> & { children?: React.ReactNode }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -128,7 +128,7 @@ export function HoverCard({
         duration: 0.3,
         ease: "easeOut",
       }}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       {/* Glow effect */}
       <motion.div

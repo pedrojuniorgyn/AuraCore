@@ -26,7 +26,7 @@ export function FadeIn({
   className?: string;
   delay?: number;
   direction?: "up" | "down" | "left" | "right";
-} & React.HTMLAttributes<HTMLDivElement>) {
+} & Omit<React.ComponentPropsWithoutRef<"div">, "children">) {
   const ref = React.useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -59,7 +59,7 @@ export function FadeIn({
         delay,
         ease: [0.21, 0.47, 0.32, 0.98],
       }}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       {children}
     </motion.div>

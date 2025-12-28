@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface GradientBorderButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface GradientBorderButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   className?: string;
   children?: React.ReactNode;
 }
@@ -32,7 +32,7 @@ export function GradientBorderButton({
           "before:-z-10 before:animate-gradient-rotate",
           className
         )}
-        {...props}
+        {...(props as Record<string, unknown>)}
       >
         {children}
       </motion.button>

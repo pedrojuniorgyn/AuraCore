@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MagneticButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   className?: string;
   children?: React.ReactNode;
   strength?: number; // Força do efeito magnético (0-1)
@@ -51,7 +51,7 @@ export function MagneticButton({
         "border border-white/10",
         className
       )}
-      {...props}
+      {...(props as Record<string, unknown>)}
     >
       {children}
     </motion.button>
