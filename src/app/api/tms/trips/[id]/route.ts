@@ -124,7 +124,7 @@ export async function PUT(
       );
     }
 
-    if (body.status === "CANCELED" && existing[0].status === "COMPLETED") {
+    if (body.status === "CANCELED" && existing.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Não é possível cancelar viagem já concluída" },
         { status: 400 }
@@ -215,14 +215,14 @@ export async function DELETE(
     }
 
     // Validar status antes de excluir
-    if (existing[0].status === "IN_TRANSIT") {
+    if (existing.status === "IN_TRANSIT") {
       return NextResponse.json(
         { error: "Não é possível excluir viagem em trânsito" },
         { status: 400 }
       );
     }
 
-    if (existing[0].status === "COMPLETED") {
+    if (existing.status === "COMPLETED") {
       return NextResponse.json(
         { error: "Não é possível excluir viagem já concluída" },
         { status: 400 }
