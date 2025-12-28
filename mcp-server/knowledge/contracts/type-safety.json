@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -584,6 +584,33 @@
         "LC-767453"
       ],
       "pattern_created": "e10-ts-complete-zero-typescript-errors",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-041712",
+      "date": "2025-12-28",
+      "epic": "E7-DDD",
+      "error": "E7.0: Setup + Infraestrutura de Testes - Criar estrutura base para migração DDD/Hexagonal Híbrido",
+      "correction": "Estrutura modular criada (src/modules/{financial,accounting,fiscal,tms,wms} + src/shared/domain + infrastructure + tests/), tsyringe configurado com TOKENS e container, Result<T,E> pattern implementado, AggregateRoot/Entity/ValueObject/DomainEvent/DomainError classes base implementadas, Vitest configurado com 80% coverage threshold + setup helpers + InMemoryRepository base, scripts npm (test, test:ui, test:coverage, test:watch) adicionados",
+      "files_affected": [
+        "src/shared/domain/types/Result.ts",
+        "src/shared/domain/entities/AggregateRoot.ts",
+        "src/shared/domain/entities/Entity.ts",
+        "src/shared/domain/entities/ValueObject.ts",
+        "src/shared/domain/events/DomainEvent.ts",
+        "src/shared/domain/errors/DomainError.ts",
+        "src/shared/infrastructure/di/tokens.ts",
+        "src/shared/infrastructure/di/container.ts",
+        "src/shared/infrastructure/di/index.ts",
+        "src/shared/domain/index.ts",
+        "src/shared/index.ts",
+        "vitest.config.ts",
+        "tests/setup.ts",
+        "tests/helpers/mocks/repositories/InMemoryRepository.ts",
+        "package.json"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }
