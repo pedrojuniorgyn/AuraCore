@@ -254,7 +254,6 @@ export async function DELETE(
       .update(drivers)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(drivers.id, driverId), eq(drivers.organizationId, ctx.organizationId)));
 

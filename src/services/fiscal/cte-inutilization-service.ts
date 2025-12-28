@@ -82,7 +82,7 @@ export class CTeInutilizationService {
           numberTo: data.numberTo,
           year: data.year,
           justification: data.justification,
-          protocolNumber: resultado.protocol,
+          protocolNumber: resultado.protocolo,
           status: resultado.success ? "CONFIRMED" : "REJECTED",
           sefazReturnMessage: resultado.motivo,
           inutilizedAt: resultado.success ? new Date() : null,

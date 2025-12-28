@@ -186,11 +186,11 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
 
         // Valores da Prestação
         .ele("vPrest")
-          .ele("vTPrest").txt(order.agreedPrice?.toFixed(2) || "0.00").up()
-          .ele("vRec").txt(order.agreedPrice?.toFixed(2) || "0.00").up()
+          .ele("vTPrest").txt(parseFloat(order.agreedPrice ?? "0").toFixed(2)).up()
+          .ele("vRec").txt(parseFloat(order.agreedPrice ?? "0").toFixed(2)).up()
           .ele("Comp")
             .ele("xNome").txt("FRETE PESO").up()
-            .ele("vComp").txt(order.agreedPrice?.toFixed(2) || "0.00").up()
+            .ele("vComp").txt(parseFloat(order.agreedPrice ?? "0").toFixed(2)).up()
           .up()
         .up()
 
@@ -209,12 +209,12 @@ export async function buildCteXml(params: CteBuilderParams): Promise<string> {
         // Informações da Carga
         .ele("infCTeNorm")
           .ele("infCarga")
-            .ele("vCarga").txt(order.invoiceValue?.toFixed(2) || "0.00").up()
+            .ele("vCarga").txt(parseFloat(order.invoiceValue ?? "0").toFixed(2)).up()
             .ele("proPred").txt(order.cargoDescription || "MERCADORIA EM GERAL").up()
             .ele("infQ")
               .ele("cUnid").txt("01").up() // 01=Kg
               .ele("tpMed").txt("PESO").up()
-              .ele("qCarga").txt(order.weightKg?.toFixed(4) || "0.0000").up()
+              .ele("qCarga").txt(parseFloat(order.weightKg ?? "0").toFixed(4)).up()
             .up()
           .up()
           

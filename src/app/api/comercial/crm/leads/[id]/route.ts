@@ -45,8 +45,6 @@ export async function PUT(
         ...(hasWonDate
           ? { wonDate: wonDateRaw ? new Date(wonDateRaw as any) : null }
           : {}),
-        updatedBy: ctx.userId,
-        updatedAt: new Date(),
       })
       .where(
         and(
@@ -127,7 +125,6 @@ export async function DELETE(
       .update(crmLeads)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(crmLeads.id, leadId), eq(crmLeads.organizationId, ctx.organizationId)));
 

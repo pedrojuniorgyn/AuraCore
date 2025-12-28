@@ -139,8 +139,6 @@ export async function PUT(
       .update(tires)
       .set({
         ...safeBody,
-        updatedBy: ctx.userId,
-        updatedAt: new Date(),
       })
       .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId)));
 
@@ -226,7 +224,6 @@ export async function DELETE(
       .update(tires)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId)));
 

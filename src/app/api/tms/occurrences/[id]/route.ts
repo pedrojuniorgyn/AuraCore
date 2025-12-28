@@ -215,7 +215,6 @@ export async function DELETE(
       .update(tripOccurrences)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
       })
       .where(
         and(

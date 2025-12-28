@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
 
     // TIPO 1: DRE Consolidado
     if (type === "consolidated") {
-      const totalRevenue = revenues.reduce((sum, r) => sum + (r.amount || 0), 0);
-      const totalExpense = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      const totalRevenue = revenues.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      const totalExpense = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
       const netProfit = totalRevenue - totalExpense;
 
       // Agrupar despesas por conta
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
               expense: 0,
             };
           }
-          byPlate[key].revenue += rev.amount || 0;
+          byPlate[key].revenue += Number(rev.amount) || 0;
         }
       });
 
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
               expense: 0,
             };
           }
-          byPlate[key].expense += exp.amount || 0;
+          byPlate[key].expense += Number(exp.amount) || 0;
         }
       });
 
@@ -192,11 +192,11 @@ export async function GET(request: NextRequest) {
       revenues.forEach((rev) => {
         const category = rev.chartAccountCategory;
         if (category === "OPERATIONAL_OWN_FLEET") {
-          dimensions.ownFleet.revenue += rev.amount || 0;
+          dimensions.ownFleet.revenue += Number(rev.amount) || 0;
         } else if (category === "OPERATIONAL_THIRD_PARTY") {
-          dimensions.thirdParty.revenue += rev.amount || 0;
+          dimensions.thirdParty.revenue += Number(rev.amount) || 0;
         } else {
-          dimensions.other.revenue += rev.amount || 0;
+          dimensions.other.revenue += Number(rev.amount) || 0;
         }
       });
 
@@ -204,11 +204,11 @@ export async function GET(request: NextRequest) {
       expenses.forEach((exp) => {
         const category = exp.chartAccountCategory;
         if (category === "OPERATIONAL_OWN_FLEET") {
-          dimensions.ownFleet.expense += exp.amount || 0;
+          dimensions.ownFleet.expense += Number(exp.amount) || 0;
         } else if (category === "OPERATIONAL_THIRD_PARTY") {
-          dimensions.thirdParty.expense += exp.amount || 0;
+          dimensions.thirdParty.expense += Number(exp.amount) || 0;
         } else if (category === "ADMINISTRATIVE") {
-          dimensions.administrative.expense += exp.amount || 0;
+          dimensions.administrative.expense += Number(exp.amount) || 0;
         } else if (category === "FINANCIAL") {
           dimensions.financial.expense += exp.amount || 0;
         } else {

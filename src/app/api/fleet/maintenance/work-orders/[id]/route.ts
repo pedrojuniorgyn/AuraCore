@@ -21,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 
-    const workOrder = await queryFirst<typeof workOrders.$inferSelect>(db
+    const workOrder = await queryFirst<typeof maintenanceWorkOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(
@@ -80,7 +80,7 @@ export async function PUT(
     }
 
     // Verificar se ordem existe
-    const existing = await queryFirst<typeof workOrders.$inferSelect>(db
+    const existing = await queryFirst<typeof maintenanceWorkOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(
@@ -126,7 +126,6 @@ export async function PUT(
       .update(maintenanceWorkOrders)
       .set({
         ...safeBody,
-        updatedBy: ctx.userId,
         updatedAt: new Date(),
       })
       .where(and(eq(maintenanceWorkOrders.id, workOrderId), eq(maintenanceWorkOrders.organizationId, ctx.organizationId)));
@@ -142,7 +141,7 @@ export async function PUT(
       );
     }
 
-    const updated = await queryFirst<typeof workOrders.$inferSelect>(db
+    const updated = await queryFirst<typeof maintenanceWorkOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(and(eq(maintenanceWorkOrders.id, workOrderId), eq(maintenanceWorkOrders.organizationId, ctx.organizationId), isNull(maintenanceWorkOrders.deletedAt)))
@@ -182,7 +181,7 @@ export async function DELETE(
     }
 
     // Verificar se ordem existe
-    const existing = await queryFirst<typeof workOrders.$inferSelect>(db
+    const existing = await queryFirst<typeof maintenanceWorkOrders.$inferSelect>(db
       .select()
       .from(maintenanceWorkOrders)
       .where(
@@ -214,7 +213,6 @@ export async function DELETE(
       .update(maintenanceWorkOrders)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(maintenanceWorkOrders.id, workOrderId), eq(maintenanceWorkOrders.organizationId, ctx.organizationId)));
 

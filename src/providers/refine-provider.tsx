@@ -61,7 +61,6 @@ export function RefineProvider({ children }: RefineProviderProps) {
       options={{
         syncWithLocation: true,
         warnWhenUnsavedChanges: true,
-        useNewQueryKeys: true,
         projectId: "auracore-erp",
         disableTelemetry: true,
       }}

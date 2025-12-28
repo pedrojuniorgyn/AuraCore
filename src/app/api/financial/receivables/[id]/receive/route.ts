@@ -53,10 +53,10 @@ export async function POST(
     await db
       .update(accountsReceivable)
       .set({
-        amountReceived,
-        discount,
-        interest,
-        fine,
+        amountReceived: amountReceived.toString(),
+        discount: discount.toString(),
+        interest: interest.toString(),
+        fine: fine.toString(),
         receiveDate,
         status,
         bankAccountId: body.bankAccountId || null,

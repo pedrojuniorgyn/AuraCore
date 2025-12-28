@@ -243,7 +243,6 @@ export async function DELETE(
       .update(trips)
       .set({
         deletedAt: new Date(),
-        deletedBy: session.user.id,
       })
       .where(and(eq(trips.id, tripId), eq(trips.organizationId, session.user.organizationId), isNull(trips.deletedAt)));
 

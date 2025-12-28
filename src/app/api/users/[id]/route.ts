@@ -290,7 +290,6 @@ export async function DELETE(
       .update(users)
       .set({
         deletedAt: new Date(),
-        status: "INACTIVE",
       })
       .where(
         and(

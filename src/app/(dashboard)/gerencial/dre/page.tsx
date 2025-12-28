@@ -165,7 +165,7 @@ export default function DREGerencialPage() {
                   <p className="text-gray-400 text-sm">Receita Líquida</p>
                   <div className="flex items-baseline gap-2">
                     <NumberCounter 
-                      end={kpis.receitaLiquida} 
+                      value={kpis.receitaLiquida} 
                       prefix="R$ "
                       duration={2}
                       className="text-2xl font-bold text-purple-300"
@@ -187,7 +187,7 @@ export default function DREGerencialPage() {
                 <div>
                   <p className="text-gray-400 text-sm">Custos Variáveis</p>
                   <NumberCounter 
-                    end={kpis.custosVariaveis} 
+                    value={kpis.custosVariaveis} 
                     prefix="R$ "
                     duration={2}
                     className="text-2xl font-bold text-blue-300"
@@ -207,7 +207,7 @@ export default function DREGerencialPage() {
                 <div>
                   <p className="text-gray-400 text-sm">Margem Contribuição</p>
                   <NumberCounter 
-                    end={kpis.margemContribuicao} 
+                    value={kpis.margemContribuicao} 
                     prefix="R$ "
                     duration={2}
                     className="text-2xl font-bold text-green-300"
@@ -227,7 +227,7 @@ export default function DREGerencialPage() {
                 <div>
                   <p className="text-gray-400 text-sm">EBITDA Gerencial</p>
                   <NumberCounter 
-                    end={kpis.ebitda} 
+                    value={kpis.ebitda} 
                     prefix="R$ "
                     duration={2}
                     className="text-2xl font-bold text-yellow-300"

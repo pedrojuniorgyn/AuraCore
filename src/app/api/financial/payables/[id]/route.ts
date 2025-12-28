@@ -209,7 +209,6 @@ export async function DELETE(
       .update(accountsPayable)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(accountsPayable.id, payableId), eq(accountsPayable.organizationId, ctx.organizationId)));
 

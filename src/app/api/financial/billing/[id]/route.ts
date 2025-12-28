@@ -215,7 +215,6 @@ export async function DELETE(
       .update(billingInvoices)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(billingInvoices.id, billingId), eq(billingInvoices.organizationId, ctx.organizationId)));
 

@@ -228,7 +228,6 @@ export async function DELETE(
       .update(vehicles)
       .set({
         deletedAt: new Date(),
-        deletedBy: ctx.userId,
       })
       .where(and(eq(vehicles.id, vehicleId), eq(vehicles.organizationId, ctx.organizationId)));
 

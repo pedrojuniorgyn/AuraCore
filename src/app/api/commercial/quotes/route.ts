@@ -130,11 +130,9 @@ export async function POST(req: Request) {
         const calculation = await calculateFreight({
           organizationId,
           customerId,
-          originUf,
-          destinationUf,
           weightKg: parseFloat(weightKg),
-          volumeM3: volumeM3 ? parseFloat(volumeM3) : undefined,
-          invoiceValue: invoiceValue ? parseFloat(invoiceValue) : undefined,
+          volumeM3: volumeM3 ? parseFloat(volumeM3) : 0,
+          invoiceValue: invoiceValue ? parseFloat(invoiceValue) : 0,
         });
 
         calculatedPrice = calculation.total.toString();
