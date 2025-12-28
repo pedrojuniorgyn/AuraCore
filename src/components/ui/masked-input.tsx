@@ -21,7 +21,7 @@ export const MaskedInput = forwardRef<HTMLInputElement, MaskedInputProps>(
         onBlur={onBlur}
         placeholder={placeholder}
         className={className}
-        inputRef={ref as unknown as React.Ref<HTMLElement>}
+        inputRef={ref as React.Ref<HTMLInputElement>}
         {...({ as: Input } as unknown as Record<string, unknown>)}
       />
     );

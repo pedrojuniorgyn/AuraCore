@@ -228,7 +228,7 @@ export default function FiscalDocumentsPage() {
   };
 
   // Column Definitions
-  const columnDefs = useMemo<ColDef[]>(() => [
+  const columnDefs: ColDef<FiscalDocument>[] = useMemo(() => [
     {
       headerName: "Tipo",
       field: "documentType",
