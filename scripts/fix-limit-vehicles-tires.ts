@@ -17,7 +17,7 @@ function fixLimitInFile(filePath: string) {
   let changes = 0;
 
   // Padrão 1: const existing = await db...limit(1); if (existing.length === 0)
-  const pattern1 = /const existing = await db\s+\.select\(\)\s+\.from\((\w+)\)\s+\.where\(\s+and\(\s+eq\(\1\.id, \w+\),\s+eq\(\1\.organizationId, ctx\.organizationId\),\s+isNull\(\1\.deletedAt\)\s+\)\s+\)\s+\.limit\(1\);\s+if \(existing\.length === 0\)/g;
+  const pattern1 = /const existing = await db\s+\.select\(\)\s+\.from\((\w+)\)\s+\.where\(\s+and\(\s+eq\(\1\.id, \w+\),\s+eq\(\1\.organizationId, ctx\.organizationId\),\s+isNull\(\1\.deletedAt\)\s+\)\s+\)\s+\.limit\(1\);\s+if \(existing\.length === 0\)/gs;
   
   content = content.replace(pattern1, (match, tableName) => {
     changes++;
@@ -25,7 +25,7 @@ function fixLimitInFile(filePath: string) {
   });
 
   // Padrão 2: const duplicatePlate = await db...limit(1); if (duplicatePlate.length > 0 && duplicatePlate[0].id !== vehicleId)
-  const pattern2 = /const (\w+) = await db\s+\.select\(\)\s+\.from\((\w+)\)\s+\.where\(\s+and\(\s+eq\(\2\.\w+, body\.\w+\),\s+eq\(\2\.organizationId, ctx\.organizationId\),\s+isNull\(\2\.deletedAt\)\s+\)\s+\)\s+\.limit\(1\);\s+if \(\1\.length > 0 && \1\[0\]\.id !== \w+Id\)/g;
+  const pattern2 = /const (\w+) = await db\s+\.select\(\)\s+\.from\((\w+)\)\s+\.where\(\s+and\(\s+eq\(\2\.\w+, body\.\w+\),\s+eq\(\2\.organizationId, ctx\.organizationId\),\s+isNull\(\2\.deletedAt\)\s+\)\s+\)\s+\.limit\(1\);\s+if \(\1\.length > 0 && \1\[0\]\.id !== \w+Id\)/gs;
   
   content = content.replace(pattern2, (match, varName, tableName) => {
     changes++;
@@ -33,7 +33,7 @@ function fixLimitInFile(filePath: string) {
   });
 
   // Padrão 3: const [updated] = await db...limit(1);
-  const pattern3 = /const \[updated\] = await db\s+\.select\(\)\s+\.from\((\w+)\)\s+\.where\(and\(eq\(\1\.id, \w+Id\), eq\(\1\.organizationId, ctx\.organizationId\), isNull\(\1\.deletedAt\)\)\)\s+\.limit\(1\);/g;
+  const pattern3 = /const \[updated\] = await db\s+\.select\(\)\s+\.from\((\w+)\)\s+\.where\(and\(eq\(\1\.id, \w+Id\), eq\(\1\.organizationId, ctx\.organizationId\), isNull\(\1\.deletedAt\)\)\)\s+\.limit\(1\);/gs;
   
   content = content.replace(pattern3, (match, tableName) => {
     changes++;

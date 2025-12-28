@@ -22,7 +22,7 @@ for (const file of files) {
 
   // Padrão 1: Substituir error.message por errorMessage
   // Apenas dentro de blocos catch (error: unknown)
-  const catchBlockRegex = /catch\s*\(\s*error\s*:\s*unknown\s*\)\s*\{[^}]*\}/g;
+  const catchBlockRegex = /catch\s*\(\s*error\s*:\s*unknown\s*\)\s*\{[^}]*\}/gs;
   
   content = content.replace(catchBlockRegex, (catchBlock) => {
     let modifiedBlock = catchBlock;
