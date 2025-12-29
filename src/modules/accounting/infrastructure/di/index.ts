@@ -1,0 +1,2 @@
+export { registerAccountingModule } from './AccountingModule';
+

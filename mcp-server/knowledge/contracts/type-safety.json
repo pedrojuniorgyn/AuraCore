@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.54",
+  "version": "1.0.57",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1047,6 +1047,53 @@
         "tests/unit/modules/accounting/application/use-cases/PostJournalEntryUseCase.test.ts"
       ],
       "pattern_created": "test-safe-result-unwrap",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-679075",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "E7.3 Semana 3: Infrastructure Layer Accounting - DrizzleJournalEntryRepository com saveMany, JournalEntryMapper (Domain<->Persistence), AccountingModule (DI), Drizzle schemas. Seguiu padrão Financial Module. Total: 36 testes passando (Domain 25 + Application 7 + Infrastructure 4), 0 TypeScript errors, 0 cursor issues.",
+      "correction": "DrizzleJournalEntryRepository implementa IJournalEntryRepository com Drizzle ORM (findById, findMany com queryPaginated, save, saveMany, findByPeriod, findBySourceId, exists, nextEntryNumber). JournalEntryMapper converte Domain<->Persistence (toPersistence, toDomain, lineToPersistence, lineToDomain). Drizzle schemas mssqlTable para journal_entries e journal_entry_lines com sql`GETDATE()` defaults. AccountingModule registra dependências (Repository + 6 Use Cases) com tsyringe. Índices exportam todos componentes. 4 testes Mapper passando. TODO: implementar db.transaction() em produção para saveMany.",
+      "files_affected": [
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts",
+        "src/modules/accounting/infrastructure/persistence/JournalEntryMapper.ts",
+        "src/modules/accounting/infrastructure/persistence/JournalEntrySchema.ts",
+        "src/modules/accounting/infrastructure/di/AccountingModule.ts",
+        "src/modules/accounting/infrastructure/persistence/index.ts",
+        "src/modules/accounting/infrastructure/di/index.ts",
+        "src/modules/accounting/infrastructure/index.ts",
+        "src/modules/accounting/index.ts",
+        "tests/unit/modules/accounting/infrastructure/persistence/JournalEntryMapper.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-606846",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "2 bugs críticos: (1) saveMany sem db.transaction() violando .cursorrules - múltiplas operações (SELECT, INSERT, UPDATE, DELETE) sem atomicidade, (2) linhas removidas do JournalEntry aggregate via removeLine() não eram deletadas do banco, causando inconsistência entre domain e persistence",
+      "correction": "Bug 1: Adicionado db.transaction() (Drizzle nativo) envolvendo todas operações do saveMany(), garantindo atomicidade (all-or-nothing) para estornos e updates. Bug 2: Implementada sincronização de linhas - após update do entry, deletar linhas órfãs (que existem no DB mas não no aggregate) usando notInArray(). Se aggregate não tem linhas, deletar todas. Adicionado notInArray ao import do drizzle-orm. Repository agora mantém consistência total entre domain model e database state.",
+      "files_affected": [
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-926373",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "findByPeriod retorna JournalEntry sem linhas (array vazio no mapper) - inconsistência com findById que busca linhas corretamente. Causava entries incompletos onde linhas contábeis eram perdidas, quebrando lógica de negócio que depende das linhas.",
+      "correction": "findByPeriod agora busca linhas em batch usando inArray() após buscar os entries, agrupa linhas por entry usando Map, e passa linhas corretas para o mapper. Segue exatamente o mesmo padrão de findMany(). Early return se rows.length === 0. Garante que entries retornados sempre têm suas linhas completas.",
+      "files_affected": [
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }
