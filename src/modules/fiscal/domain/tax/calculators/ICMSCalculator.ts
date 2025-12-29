@@ -4,9 +4,9 @@ import { CST, CSOSN, Aliquota, BaseCalculo, TaxAmount } from '../value-objects';
 import { InvalidTaxCalculationError, MissingTaxParametersError } from '../errors';
 
 /**
- * Tipo de regime tributário
+ * Tipo de regime tributário para ICMS
  */
-export type TaxRegime = 'NORMAL' | 'SIMPLES_NACIONAL';
+export type ICMSTaxRegime = 'NORMAL' | 'SIMPLES_NACIONAL';
 
 /**
  * Tipo de operação
@@ -17,7 +17,7 @@ export type OperationType = 'ENTRY' | 'EXIT';
  * Parâmetros para cálculo de ICMS
  */
 export interface ICMSCalculationParams {
-  regime: TaxRegime;
+  regime: ICMSTaxRegime;
   operationType: OperationType;
   baseValue: Money;
   cst?: CST;

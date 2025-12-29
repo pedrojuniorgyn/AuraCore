@@ -1,6 +1,6 @@
 export { ICMSCalculator } from './ICMSCalculator';
 export type {
-  TaxRegime,
+  ICMSTaxRegime,
   OperationType,
   ICMSCalculationParams,
   ICMSCalculationResult,

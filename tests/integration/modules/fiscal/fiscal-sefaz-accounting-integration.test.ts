@@ -328,8 +328,6 @@ function createMockDocument(type: 'NFE' | 'CTE' | 'MDFE' | 'NFSE'): FiscalDocume
     issuerId: 'issuer-123',
     issuerCnpj: '12345678000190',
     issuerName: 'Test Issuer Company',
-    totalDocument: totalValue.value,
-    fiscalKey: fiscalKeyResult.value,
   });
 
   if (Result.isFail(documentResult)) {
@@ -361,7 +359,6 @@ function createMockDocument(type: 'NFE' | 'CTE' | 'MDFE' | 'NFSE'): FiscalDocume
     unit: 'UN',
     quantity: 10,
     unitPrice: unitPrice.value,
-    totalPrice: totalPrice.value,
   });
 
   if (Result.isFail(itemResult)) {
