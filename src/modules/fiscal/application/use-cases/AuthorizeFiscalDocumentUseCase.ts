@@ -2,6 +2,8 @@ import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import type { ISefazService } from '../../domain/ports/output/ISefazService';
+import type { FiscalAccountingIntegration } from '../services/FiscalAccountingIntegration';
 import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
 import { FiscalKey } from '../../domain/value-objects/FiscalKey';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
@@ -24,12 +26,18 @@ export interface AuthorizeFiscalDocumentOutput {
  * Use Case: Authorize Fiscal Document
  *
  * Autoriza um documento fiscal após processamento pela SEFAZ.
- * Transição de estado: PROCESSING → AUTHORIZED
+ * Transição de estado: SUBMITTED → AUTHORIZED
+ * 
+ * Integrações:
+ * - SEFAZ: Solicita autorização do documento
+ * - Accounting: Gera lançamento contábil automático
  */
 @injectable()
 export class AuthorizeFiscalDocumentUseCase implements IUseCaseWithContext<AuthorizeFiscalDocumentInput, AuthorizeFiscalDocumentOutput> {
   constructor(
-    @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository
+    @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository,
+    @inject(TOKENS.SefazService) private sefazService: ISefazService,
+    @inject(TOKENS.FiscalAccountingIntegration) private accountingIntegration: FiscalAccountingIntegration
   ) {}
 
   async execute(
@@ -52,18 +60,52 @@ export class AuthorizeFiscalDocumentUseCase implements IUseCaseWithContext<Autho
         return Result.fail(`Invalid fiscal key: ${fiscalKeyResult.error}`);
       }
 
-      // Autorizar documento
+      // Solicitar autorização na SEFAZ
+      const sefazResult = await this.sefazService.authorize(input.fiscalKey);
+      if (Result.isFail(sefazResult)) {
+        return Result.fail(`SEFAZ authorization failed: ${sefazResult.error}`);
+      }
+
+      // Verificar se SEFAZ autorizou
+      if (!sefazResult.value.authorized) {
+        return Result.fail(
+          `SEFAZ rejected authorization: ${sefazResult.value.statusCode} - ${sefazResult.value.statusMessage}`
+        );
+      }
+
+      // Autorizar documento no domain
       const authorizeResult = document.authorize({
         fiscalKey: fiscalKeyResult.value,
-        protocolNumber: input.protocolNumber,
-        protocolDate: input.protocolDate,
+        protocolNumber: sefazResult.value.protocolNumber,
+        protocolDate: sefazResult.value.authorizedAt,
       });
       if (Result.isFail(authorizeResult)) {
         return Result.fail(authorizeResult.error);
       }
 
-      // Persistir
+      // Persistir documento autorizado
       await this.repository.save(document);
+
+      // Gerar lançamento contábil automático
+      const accountingResult = await this.accountingIntegration.generateJournalEntryForAuthorizedDocument(
+        document,
+        {
+          userId: context.userId,
+          organizationId: context.organizationId,
+          branchId: context.branchId
+        }
+      );
+
+      // Log accounting result (não falhamos o Use Case se contabilização falhar)
+      if (Result.isFail(accountingResult)) {
+        console.warn(
+          `[AuthorizeFiscalDocumentUseCase] Accounting integration failed for document ${document.id}: ${accountingResult.error}`
+        );
+      } else {
+        console.log(
+          `[AuthorizeFiscalDocumentUseCase] Journal entry created: ${accountingResult.value}`
+        );
+      }
 
       return Result.ok({
         id: document.id,

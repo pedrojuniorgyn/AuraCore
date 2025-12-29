@@ -124,7 +124,15 @@ describe('CancelFiscalDocumentUseCase', () => {
       saveMany: async () => {},
     };
 
-    useCase = new CancelFiscalDocumentUseCase(mockRepository);
+    // Mock SEFAZ Service
+    const mockSefazService = {
+      transmit: async () => Result.ok({ success: true, protocolNumber: 'PROT-TX-123', fiscalKey: '', transmittedAt: new Date() }),
+      authorize: async () => Result.ok({ authorized: true, protocolNumber: 'PROT-AUTH-123', fiscalKey: '', authorizedAt: new Date(), statusCode: '100', statusMessage: 'Authorized' }),
+      cancel: async () => Result.ok({ cancelled: true, protocolNumber: 'PROT-CANCEL-123', fiscalKey: '', cancelledAt: new Date(), statusCode: '101', statusMessage: 'Cancelled' }),
+      queryStatus: async () => Result.ok({ fiscalKey: '', status: 'AUTHORIZED' as const, statusCode: '100', statusMessage: 'Authorized', queriedAt: new Date() }),
+    };
+
+    useCase = new CancelFiscalDocumentUseCase(mockRepository, mockSefazService);
 
     context = {
       userId: 'user-123',
@@ -148,7 +156,7 @@ describe('CancelFiscalDocumentUseCase', () => {
       expect(result.value.id).toBe('doc-123');
       expect(result.value.status).toBe('CANCELLED');
       expect(result.value.cancelReason).toBe('Erro no valor do produto');
-      expect(result.value.cancelProtocolNumber).toBe('CANCEL-123456');
+      expect(result.value.cancelProtocolNumber).toBe('PROT-CANCEL-123'); // Protocol from SEFAZ mock
     }
   });
 

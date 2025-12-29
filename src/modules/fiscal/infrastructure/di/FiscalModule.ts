@@ -4,6 +4,11 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 // Repository
 import { DrizzleFiscalDocumentRepository } from '../persistence/DrizzleFiscalDocumentRepository';
 
+// Services
+import { MockSefazService } from '../services/MockSefazService';
+import { MockPdfGenerator } from '../services/MockPdfGenerator';
+import { FiscalAccountingIntegration } from '../../application/services/FiscalAccountingIntegration';
+
 // Use Cases
 import { CreateFiscalDocumentUseCase } from '../../application/use-cases/CreateFiscalDocumentUseCase';
 import { SubmitFiscalDocumentUseCase } from '../../application/use-cases/SubmitFiscalDocumentUseCase';
@@ -16,6 +21,7 @@ import { CalculateTaxesUseCase } from '../../application/use-cases/CalculateTaxe
  *
  * Registra todas as dependências do módulo Fiscal no container tsyringe:
  * - Repository
+ * - Services (Sefaz, PDF, Accounting Integration)
  * - Use Cases
  *
  * Este módulo deve ser inicializado no bootstrap da aplicação.
@@ -23,6 +29,11 @@ import { CalculateTaxesUseCase } from '../../application/use-cases/CalculateTaxe
 export function registerFiscalModule(): void {
   // Repository
   container.registerSingleton(TOKENS.FiscalDocumentRepository, DrizzleFiscalDocumentRepository);
+
+  // Services
+  container.registerSingleton(TOKENS.SefazService, MockSefazService);
+  container.registerSingleton(TOKENS.FiscalDocumentPdfGenerator, MockPdfGenerator);
+  container.registerSingleton(TOKENS.FiscalAccountingIntegration, FiscalAccountingIntegration);
 
   // Use Cases
   container.registerSingleton(TOKENS.CreateFiscalDocumentUseCase, CreateFiscalDocumentUseCase);

@@ -1,0 +1,2 @@
+export { FiscalAccountingIntegration } from './FiscalAccountingIntegration';
+

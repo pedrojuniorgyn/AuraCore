@@ -8,6 +8,7 @@ import { CFOP } from '@/modules/fiscal/domain/value-objects/CFOP';
 import { FiscalKey } from '@/modules/fiscal/domain/value-objects/FiscalKey';
 import type { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
 import type { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import type { FiscalAccountingIntegration } from '@/modules/fiscal/application/services/FiscalAccountingIntegration';
 
 describe('AuthorizeFiscalDocumentUseCase', () => {
   let useCase: AuthorizeFiscalDocumentUseCase;
@@ -91,7 +92,20 @@ describe('AuthorizeFiscalDocumentUseCase', () => {
       saveMany: async () => {},
     };
 
-    useCase = new AuthorizeFiscalDocumentUseCase(mockRepository);
+    // Mock SEFAZ Service
+    const mockSefazService = {
+      transmit: async () => Result.ok({ success: true, protocolNumber: 'PROT-TX-123', fiscalKey: '', transmittedAt: new Date() }),
+      authorize: async () => Result.ok({ authorized: true, protocolNumber: 'PROT-AUTH-123', fiscalKey: '', authorizedAt: new Date(), statusCode: '100', statusMessage: 'Authorized' }),
+      cancel: async () => Result.ok({ cancelled: true, protocolNumber: 'PROT-CANCEL-123', fiscalKey: '', cancelledAt: new Date(), statusCode: '101', statusMessage: 'Cancelled' }),
+      queryStatus: async () => Result.ok({ fiscalKey: '', status: 'AUTHORIZED' as const, statusCode: '100', statusMessage: 'Authorized', queriedAt: new Date() }),
+    };
+
+    // Mock Fiscal Accounting Integration
+    const mockAccountingIntegration = {
+      generateJournalEntryForAuthorizedDocument: async () => Result.ok('journal-entry-123'),
+    } as unknown as FiscalAccountingIntegration;
+
+    useCase = new AuthorizeFiscalDocumentUseCase(mockRepository, mockSefazService, mockAccountingIntegration);
 
     context = {
       userId: 'user-123',

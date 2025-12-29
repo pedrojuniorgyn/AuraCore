@@ -18,6 +18,11 @@ export const TOKENS = {
   CancelFiscalDocumentUseCase: Symbol('CancelFiscalDocumentUseCase'),
   CalculateTaxesUseCase: Symbol('CalculateTaxesUseCase'),
   
+  // Services - Fiscal
+  SefazService: Symbol('SefazService'),
+  FiscalDocumentPdfGenerator: Symbol('FiscalDocumentPdfGenerator'),
+  FiscalAccountingIntegration: Symbol('FiscalAccountingIntegration'),
+  
   // Gateways
   BtgGateway: Symbol('BtgGateway'),
   SefazGateway: Symbol('SefazGateway'),

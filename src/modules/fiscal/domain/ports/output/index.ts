@@ -5,3 +5,13 @@ export type {
   PaginatedResult,
 } from './IFiscalDocumentRepository';
 
+export type { 
+  ISefazService, 
+  TransmissionResult, 
+  AuthorizationResult, 
+  CancellationResult, 
+  StatusResult 
+} from './ISefazService';
+
+export type { IFiscalDocumentPdfGenerator } from './IFiscalDocumentPdfGenerator';
+
