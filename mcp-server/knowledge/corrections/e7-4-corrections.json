@@ -1,0 +1,25 @@
+{
+  "epic": "E7.4",
+  "corrections": [
+    {
+      "id": "LC-424614",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "E7.4 Semana 1: Domain Layer Fiscal - FiscalDocument, CFOP, FiscalKey, legislação BR",
+      "correction": "FiscalDocument (Aggregate Root) com ciclo de vida DRAFT→PENDING→PROCESSING→AUTHORIZED. FiscalDocumentItem (Entity) com NCM/CFOP. CFOP (Value Object) com validação 4 dígitos e classificação entrada/saída/interestadual. FiscalKey (Value Object) com 44 dígitos e dígito verificador Módulo 11. 10 Domain Errors específicos para fiscal. 5 Domain Events. IFiscalDocumentRepository port.",
+      "files_affected": [
+        "src/modules/fiscal/domain/entities/FiscalDocument.ts",
+        "src/modules/fiscal/domain/entities/FiscalDocumentItem.ts",
+        "src/modules/fiscal/domain/value-objects/CFOP.ts",
+        "src/modules/fiscal/domain/value-objects/FiscalKey.ts",
+        "src/modules/fiscal/domain/value-objects/DocumentType.ts",
+        "src/modules/fiscal/domain/errors/FiscalErrors.ts",
+        "src/modules/fiscal/domain/events/FiscalEvents.ts",
+        "src/modules/fiscal/domain/ports/output/IFiscalDocumentRepository.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
