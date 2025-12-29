@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.67",
+  "version": "1.0.69",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1276,6 +1276,42 @@
         "src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts"
       ],
       "pattern_created": "Timestamp preservation in entity reconstitution",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-393053",
+      "date": "2025-12-29",
+      "epic": "E7.4 Week 3",
+      "error": "Bug 1: Currency data loss - Money.create() calls without currency parameter default to BRL. Persistence layer didn't store currency information, causing all amounts reconstructed from database to lose original currency and default to BRL, resulting in data loss for non-BRL transactions.",
+      "correction": "Added 'currency' columns to fiscal_documents and fiscal_document_items schemas (varchar(3) default 'BRL'). Updated FiscalDocumentPersistence and FiscalDocumentItemPersistence interfaces to include currency field. Modified FiscalDocumentMapper.toPersistence() to save document.totalDocument.currency and item.unitPrice.currency. Modified FiscalDocumentMapper.toDomain() and itemToDomain() to pass persistence.currency to Money.create() calls, preserving original currency during reconstruction.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts"
+      ],
+      "pattern_created": "Currency preservation in Money Value Objects",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-403588",
+      "date": "2025-12-29",
+      "epic": "E7.4 Week 3",
+      "error": "Bug 2: Multi-tenancy incomplete - .cursorrules mandate filtering by organizationId AND branchId, but findById(), findByFiscalKey(), and exists() methods only filtered by organizationId. While use cases added branch permission checks, the repository layer should enforce this boundary to prevent accidental data exposure if a developer forgets the check.",
+      "correction": "Updated IFiscalDocumentRepository interface to add mandatory branchId parameter to findById(), findByFiscalKey(), and exists() methods. Updated DrizzleFiscalDocumentRepository implementation to add eq(fiscalDocuments.branchId, branchId) filters to all WHERE clauses. Updated all use cases (Submit, Authorize, Cancel, CalculateTaxes) to pass context.branchId to repository methods. Updated test mocks to validate branchId and only return documents when branchId matches. Updated test expectations to reflect that documents from other branches return 'not found' instead of 'permission denied'.",
+      "files_affected": [
+        "src/modules/fiscal/domain/ports/output/IFiscalDocumentRepository.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts",
+        "src/modules/fiscal/application/use-cases/SubmitFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/AuthorizeFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/CancelFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/CalculateTaxesUseCase.ts",
+        "tests/unit/modules/fiscal/application/use-cases/SubmitFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/AuthorizeFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/CancelFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase.test.ts"
+      ],
+      "pattern_created": "Multi-tenancy enforcement in repository layer",
       "status": "APPROVED",
       "must_not_repeat": true
     }

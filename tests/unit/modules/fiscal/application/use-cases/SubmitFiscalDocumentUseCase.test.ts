@@ -68,14 +68,20 @@ describe('SubmitFiscalDocumentUseCase', () => {
       throw new Error('Failed to add item');
     }
 
-    // Mock repository
+    // Mock repository (BUG 2 FIX: validar branchId no mock)
     mockRepository = {
-      findById: async (id) => (id === 'doc-123' ? testDocument : null),
+      findById: async (id, _organizationId, branchId) => {
+        // Repository agora filtra por branchId - só retorna se branch bater
+        if (id === 'doc-123' && branchId === testDocument.branchId) {
+          return testDocument;
+        }
+        return null;
+      },
       save: async () => {},
       nextDocumentNumber: async () => '000000001',
-      findByFiscalKey: async () => null,
+      findByFiscalKey: async (_fiscalKey, _organizationId, _branchId) => null,
       findMany: async () => ({ data: [], total: 0, page: 1, pageSize: 10, totalPages: 0 }),
-      exists: async () => false,
+      exists: async (_id, _organizationId, _branchId) => false,
       saveMany: async () => {},
     };
 
@@ -108,23 +114,30 @@ describe('SubmitFiscalDocumentUseCase', () => {
     }
   });
 
-  it('deve rejeitar acesso a documento de outra branch (não-admin)', async () => {
+  it('deve rejeitar acesso a documento de outra branch (não-admin) - BUG 2 FIX', async () => {
+    // Com multi-tenancy completo, o repository filtra por branchId
+    // Documento de branch 1 não é encontrado quando busca com branchId: 2
     const otherBranchContext = { ...context, branchId: 2 };
 
     const result = await useCase.execute({ id: 'doc-123' }, otherBranchContext);
 
     expect(Result.isFail(result)).toBe(true);
     if (Result.isFail(result)) {
-      expect(result.error).toContain('permission');
+      expect(result.error).toContain('not found'); // Repository retorna null
     }
   });
 
-  it('deve permitir acesso a documento de outra branch (admin)', async () => {
+  it('deve rejeitar acesso a documento de outra branch (admin) - BUG 2 FIX', async () => {
+    // Admin também não pode acessar documento de outra branch diretamente
+    // Precisa mudar o context.branchId antes (via middleware/API)
     const adminContext = { ...context, branchId: 2, isAdmin: true };
 
     const result = await useCase.execute({ id: 'doc-123' }, adminContext);
 
-    expect(Result.isOk(result)).toBe(true);
+    expect(Result.isFail(result)).toBe(true);
+    if (Result.isFail(result)) {
+      expect(result.error).toContain('not found'); // Repository retorna null
+    }
   });
 });
 

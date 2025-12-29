@@ -28,12 +28,13 @@ export interface PaginatedResult<T> {
 }
 
 export interface IFiscalDocumentRepository {
-  findById(id: string, organizationId: number): Promise<FiscalDocument | null>;
-  findByFiscalKey(fiscalKey: string, organizationId: number): Promise<FiscalDocument | null>;
+  // BUG 2 FIX: Adicionar branchId obrigatório para multi-tenancy completo
+  findById(id: string, organizationId: number, branchId: number): Promise<FiscalDocument | null>;
+  findByFiscalKey(fiscalKey: string, organizationId: number, branchId: number): Promise<FiscalDocument | null>;
   findMany(filter: FindFiscalDocumentsFilter, pagination: PaginationOptions): Promise<PaginatedResult<FiscalDocument>>;
   save(document: FiscalDocument): Promise<void>;
   saveMany(documents: FiscalDocument[]): Promise<void>;
-  exists(id: string, organizationId: number): Promise<boolean>;
+  exists(id: string, organizationId: number, branchId: number): Promise<boolean>;
   nextDocumentNumber(organizationId: number, branchId: number, documentType: DocumentType, series: string): Promise<string>;
 }
 

@@ -80,14 +80,14 @@ describe('AuthorizeFiscalDocumentUseCase', () => {
       throw new Error('Failed to process test document');
     }
 
-    // Mock repository
+    // Mock repository (BUG 2 FIX: adicionar branchId aos métodos)
     mockRepository = {
-      findById: async (id) => (id === 'doc-123' ? testDocument : null),
+      findById: async (id, _organizationId, _branchId) => (id === 'doc-123' ? testDocument : null),
       save: async () => {},
       nextDocumentNumber: async () => '000000001',
-      findByFiscalKey: async () => null,
+      findByFiscalKey: async (_fiscalKey, _organizationId, _branchId) => null,
       findMany: async () => ({ data: [], total: 0, page: 1, pageSize: 10, totalPages: 0 }),
-      exists: async () => false,
+      exists: async (_id, _organizationId, _branchId) => false,
       saveMany: async () => {},
     };
 

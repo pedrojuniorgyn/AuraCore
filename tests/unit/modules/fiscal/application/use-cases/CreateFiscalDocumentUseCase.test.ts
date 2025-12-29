@@ -13,14 +13,14 @@ describe('CreateFiscalDocumentUseCase', () => {
   let context: ExecutionContext;
 
   beforeEach(() => {
-    // Mock repository
+    // Mock repository (BUG 2 FIX: adicionar branchId aos métodos)
     mockRepository = {
       nextDocumentNumber: async () => '000000001',
       save: async () => {},
-      findById: async () => null,
-      findByFiscalKey: async () => null,
+      findById: async (_id, _organizationId, _branchId) => null,
+      findByFiscalKey: async (_fiscalKey, _organizationId, _branchId) => null,
       findMany: async () => ({ data: [], total: 0, page: 1, pageSize: 10, totalPages: 0 }),
-      exists: async () => false,
+      exists: async (_id, _organizationId, _branchId) => false,
       saveMany: async () => {},
     };
 

@@ -22,16 +22,14 @@ export class SubmitFiscalDocumentUseCase implements IUseCaseWithContext<{ id: st
     context: ExecutionContext
   ): Promise<Result<{ id: string; status: string }, string>> {
     try {
-      // Buscar documento
-      const document = await this.repository.findById(input.id, context.organizationId);
+      // Buscar documento (BUG 2 FIX: passar branchId)
+      const document = await this.repository.findById(input.id, context.organizationId, context.branchId);
       if (!document) {
         return Result.fail(new FiscalDocumentNotFoundError(input.id).message);
       }
 
-      // Validar branch (admin pode acessar qualquer branch)
-      if (!context.isAdmin && document.branchId !== context.branchId) {
-        return Result.fail('You do not have permission to access this fiscal document');
-      }
+      // Admin pode buscar qualquer branch, mas repository já filtrou por branchId do context
+      // Se admin precisa acessar outra branch, precisa mudar o context.branchId antes
 
       // Submeter documento
       const submitResult = document.submit();

@@ -37,16 +37,14 @@ export class AuthorizeFiscalDocumentUseCase implements IUseCaseWithContext<Autho
     context: ExecutionContext
   ): Promise<Result<AuthorizeFiscalDocumentOutput, string>> {
     try {
-      // Buscar documento
-      const document = await this.repository.findById(input.id, context.organizationId);
+      // Buscar documento (BUG 2 FIX: passar branchId)
+      const document = await this.repository.findById(input.id, context.organizationId, context.branchId);
       if (!document) {
         return Result.fail(new FiscalDocumentNotFoundError(input.id).message);
       }
 
-      // Validar branch (admin pode acessar qualquer branch)
-      if (!context.isAdmin && document.branchId !== context.branchId) {
-        return Result.fail('You do not have permission to access this fiscal document');
-      }
+      // Admin pode buscar qualquer branch, mas repository já filtrou por branchId do context
+      // Se admin precisa acessar outra branch, precisa mudar o context.branchId antes
 
       // Converter fiscal key para FiscalKey value object
       const fiscalKeyResult = FiscalKey.create(input.fiscalKey);

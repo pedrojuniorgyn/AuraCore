@@ -27,8 +27,9 @@ export const fiscalDocuments = mssqlTable('fiscal_documents', {
   recipientCnpjCpf: varchar('recipient_cnpj_cpf', { length: 14 }),
   recipientName: varchar('recipient_name', { length: 255 }),
   
-  // Valores
+  // Valores (BUG 1 FIX: adicionar currency)
   totalValue: decimal('total_value', { precision: 18, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('BRL'), // ISO 4217
   
   // Chave fiscal e protocolo (após autorização)
   fiscalKey: char('fiscal_key', { length: 44 }),
@@ -66,6 +67,7 @@ export const fiscalDocumentItems = mssqlTable('fiscal_document_items', {
   quantity: decimal('quantity', { precision: 18, scale: 4 }).notNull(),
   unitPrice: decimal('unit_price', { precision: 18, scale: 2 }).notNull(),
   totalValue: decimal('total_value', { precision: 18, scale: 2 }).notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('BRL'), // BUG 1 FIX: ISO 4217
   
   // Classificação fiscal
   ncm: char('ncm', { length: 8 }),

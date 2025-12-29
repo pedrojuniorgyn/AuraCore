@@ -24,6 +24,7 @@ export interface FiscalDocumentPersistence {
   recipientCnpjCpf: string | null;
   recipientName: string | null;
   totalValue: string; // decimal as string in MSSQL
+  currency: string; // BUG 1 FIX: ISO 4217 currency code
   fiscalKey: string | null;
   protocolNumber: string | null;
   rejectionCode: string | null;
@@ -43,6 +44,7 @@ export interface FiscalDocumentItemPersistence {
   quantity: string; // decimal as string
   unitPrice: string; // decimal as string
   totalValue: string; // decimal as string
+  currency: string; // BUG 1 FIX: ISO 4217 currency code
   ncm: string | null;
   cfop: string;
   unitOfMeasure: string;
@@ -73,6 +75,7 @@ export class FiscalDocumentMapper {
       recipientCnpjCpf: document.recipientCnpjCpf ?? null,
       recipientName: document.recipientName ?? null,
       totalValue: String(document.totalDocument.amount), // MSSQL decimal as string
+      currency: document.totalDocument.currency, // BUG 1 FIX: Salvar currency
       fiscalKey: document.fiscalKey?.value ?? null,
       protocolNumber: document.protocolNumber ?? null,
       rejectionCode: null, // TODO: Add to domain model if needed
@@ -99,8 +102,8 @@ export class FiscalDocumentMapper {
       domainItems.push(itemResult.value);
     }
 
-    // Converter totalValue
-    const totalValueResult = Money.create(parseFloat(persistence.totalValue));
+    // Converter totalValue (BUG 1 FIX: passar currency)
+    const totalValueResult = Money.create(parseFloat(persistence.totalValue), persistence.currency);
     if (Result.isFail(totalValueResult)) {
       return Result.fail(`Invalid total value: ${totalValueResult.error}`);
     }
@@ -174,6 +177,7 @@ export class FiscalDocumentMapper {
       quantity: String(item.quantity), // MSSQL decimal as string
       unitPrice: String(item.unitPrice.amount), // MSSQL decimal as string
       totalValue: String(item.unitPrice.amount * item.quantity), // Calculated
+      currency: item.unitPrice.currency, // BUG 1 FIX: Salvar currency
       ncm: item.ncm ?? null,
       cfop: item.cfop.code,
       unitOfMeasure: item.unit,
@@ -185,8 +189,8 @@ export class FiscalDocumentMapper {
    * Item: Persistence → Domain
    */
   static itemToDomain(persistence: FiscalDocumentItemPersistence): Result<FiscalDocumentItem, string> {
-    // Converter unitPrice
-    const unitPriceResult = Money.create(parseFloat(persistence.unitPrice));
+    // Converter unitPrice (BUG 1 FIX: passar currency)
+    const unitPriceResult = Money.create(parseFloat(persistence.unitPrice), persistence.currency);
     if (Result.isFail(unitPriceResult)) {
       return Result.fail(`Invalid unit price: ${unitPriceResult.error}`);
     }
@@ -198,8 +202,8 @@ export class FiscalDocumentMapper {
     }
 
     // BUG 2 FIX: Usar reconstitute() ao invés de create() para preservar createdAt
-    // Calcular totalPrice a partir do persistence ou recalcular
-    const totalPriceResult = Money.create(parseFloat(persistence.totalValue));
+    // Calcular totalPrice a partir do persistence ou recalcular (BUG 1 FIX: passar currency)
+    const totalPriceResult = Money.create(parseFloat(persistence.totalValue), persistence.currency);
     if (Result.isFail(totalPriceResult)) {
       return Result.fail(`Invalid total value: ${totalPriceResult.error}`);
     }

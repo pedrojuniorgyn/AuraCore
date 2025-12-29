@@ -21,8 +21,9 @@ import { queryWithLimit } from '@/lib/db/query-helpers';
 export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepository {
   /**
    * Buscar documento por ID
+   * BUG 2 FIX: Adicionar branchId para multi-tenancy completo
    */
-  async findById(id: string, organizationId: number): Promise<FiscalDocument | null> {
+  async findById(id: string, organizationId: number, branchId: number): Promise<FiscalDocument | null> {
     // Buscar documento
     const documentRows = await db
       .select()
@@ -30,7 +31,8 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
       .where(
         and(
           eq(fiscalDocuments.id, id),
-          eq(fiscalDocuments.organizationId, organizationId)
+          eq(fiscalDocuments.organizationId, organizationId),
+          eq(fiscalDocuments.branchId, branchId)
         )
       );
 
@@ -57,8 +59,9 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
 
   /**
    * Buscar documento por chave fiscal
+   * BUG 2 FIX: Adicionar branchId para multi-tenancy completo
    */
-  async findByFiscalKey(fiscalKey: string, organizationId: number): Promise<FiscalDocument | null> {
+  async findByFiscalKey(fiscalKey: string, organizationId: number, branchId: number): Promise<FiscalDocument | null> {
     // Buscar documento
     const documentRows = await db
       .select()
@@ -66,7 +69,8 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
       .where(
         and(
           eq(fiscalDocuments.fiscalKey, fiscalKey),
-          eq(fiscalDocuments.organizationId, organizationId)
+          eq(fiscalDocuments.organizationId, organizationId),
+          eq(fiscalDocuments.branchId, branchId)
         )
       );
 
@@ -264,15 +268,17 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
 
   /**
    * Verificar se documento existe
+   * BUG 2 FIX: Adicionar branchId para multi-tenancy completo
    */
-  async exists(id: string, organizationId: number): Promise<boolean> {
+  async exists(id: string, organizationId: number, branchId: number): Promise<boolean> {
     const result = await db
       .select({ id: fiscalDocuments.id })
       .from(fiscalDocuments)
       .where(
         and(
           eq(fiscalDocuments.id, id),
-          eq(fiscalDocuments.organizationId, organizationId)
+          eq(fiscalDocuments.organizationId, organizationId),
+          eq(fiscalDocuments.branchId, branchId)
         )
       );
 

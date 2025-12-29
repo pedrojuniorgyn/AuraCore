@@ -36,16 +36,14 @@ export class CalculateTaxesUseCase implements IUseCaseWithContext<CalculateTaxes
     context: ExecutionContext
   ): Promise<Result<CalculateTaxesOutput, string>> {
     try {
-      // Buscar documento
-      const document = await this.repository.findById(input.fiscalDocumentId, context.organizationId);
+      // Buscar documento (BUG 2 FIX: passar branchId)
+      const document = await this.repository.findById(input.fiscalDocumentId, context.organizationId, context.branchId);
       if (!document) {
         return Result.fail(new FiscalDocumentNotFoundError(input.fiscalDocumentId).message);
       }
 
-      // Validar branch (admin pode acessar qualquer branch)
-      if (!context.isAdmin && document.branchId !== context.branchId) {
-        return Result.fail('You do not have permission to access this fiscal document');
-      }
+      // Admin pode buscar qualquer branch, mas repository já filtrou por branchId do context
+      // Se admin precisa acessar outra branch, precisa mudar o context.branchId antes
 
       // TODO: Implementação completa do cálculo de impostos
       // Para E7.4 Semana 3, retornar estrutura básica

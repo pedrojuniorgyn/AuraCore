@@ -1376,3 +1376,4 @@ const itemFinalValue = itemValue + itemIpi + itemFreight + itemInsurance;
 
 
 
+
