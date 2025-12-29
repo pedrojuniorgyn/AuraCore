@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.59",
+  "version": "1.0.60",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1131,6 +1131,31 @@
         "src/modules/fiscal/domain/errors/FiscalErrors.ts",
         "src/modules/fiscal/domain/events/FiscalEvents.ts",
         "src/modules/fiscal/domain/ports/output/IFiscalDocumentRepository.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-139381",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "E7.4 Semana 2: Domain Layer Tax - Motor de cálculo tributário brasileiro (ICMS/ISS/IPI/PIS/COFINS)",
+      "correction": "Value Objects: CST (3 dígitos), CSOSN (Simples Nacional), Aliquota (0-300%), BaseCalculo (com redução), TaxAmount (validação). Calculators: ICMSCalculator (normal + ST + redução + Simples), IPICalculator, PISCalculator (cumulativo 0.65% / não cumulativo 1.65%), COFINSCalculator (cumulativo 3% / não cumulativo 7.6%), ISSCalculator (2-5%). CurrentTaxEngine: implementa ITaxEngine com todos os calculators. 10 Domain Errors. 83 testes unitários (100% passando).",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/value-objects/CST.ts",
+        "src/modules/fiscal/domain/tax/value-objects/CSOSN.ts",
+        "src/modules/fiscal/domain/tax/value-objects/Aliquota.ts",
+        "src/modules/fiscal/domain/tax/value-objects/BaseCalculo.ts",
+        "src/modules/fiscal/domain/tax/value-objects/TaxAmount.ts",
+        "src/modules/fiscal/domain/tax/calculators/ICMSCalculator.ts",
+        "src/modules/fiscal/domain/tax/calculators/IPICalculator.ts",
+        "src/modules/fiscal/domain/tax/calculators/PISCalculator.ts",
+        "src/modules/fiscal/domain/tax/calculators/COFINSCalculator.ts",
+        "src/modules/fiscal/domain/tax/calculators/ISSCalculator.ts",
+        "src/modules/fiscal/domain/tax/engines/ITaxEngine.ts",
+        "src/modules/fiscal/domain/tax/engines/CurrentTaxEngine.ts",
+        "src/modules/fiscal/domain/tax/errors/TaxErrors.ts"
       ],
       "pattern_created": null,
       "status": "APPROVED",

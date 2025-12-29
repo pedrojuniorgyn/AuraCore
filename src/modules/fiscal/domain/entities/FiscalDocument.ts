@@ -288,6 +288,23 @@ export class FiscalDocument {
   }
 
   /**
+   * Marca como em processamento na SEFAZ
+   */
+  process(): Result<void, string> {
+    if (this._props.status !== 'PENDING') {
+      return Result.fail(
+        new InvalidStatusTransitionError(this._props.status, 'PROCESSING').message
+      );
+    }
+
+    this._props.status = 'PROCESSING';
+    this._updatedAt = new Date();
+    this._props.version++;
+
+    return Result.ok(undefined);
+  }
+
+  /**
    * Marca como autorizado
    */
   authorize(params: {
