@@ -68,3 +68,4 @@ CREATE INDEX idx_freight_table_routes_destination ON freight_table_routes(destin
 
 
 
+

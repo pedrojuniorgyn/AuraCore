@@ -18,3 +18,12 @@ export type { COFINSRegime, COFINSCalculationParams } from './COFINSCalculator';
 export { ISSCalculator } from './ISSCalculator';
 export type { ISSCalculationParams } from './ISSCalculator';
 
+export { IBSCalculator } from './IBSCalculator';
+export type { IBSCalculationParams, IBSCalculationResult } from './IBSCalculator';
+
+export { CBSCalculator } from './CBSCalculator';
+export type { CBSCalculationParams, CBSCalculationResult } from './CBSCalculator';
+
+export { ISCalculator } from './ISCalculator';
+export type { ISCalculationParams, ISCalculationResult } from './ISCalculator';
+

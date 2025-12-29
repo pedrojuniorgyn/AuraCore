@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.74",
+  "version": "1.0.75",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1399,6 +1399,20 @@
         "tests/integration/modules/fiscal/fiscal-sefaz-accounting-integration.test.ts"
       ],
       "pattern_created": "Integration Layer Pattern - SEFAZ Mock + Accounting Integration",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-441890",
+      "date": "2025-12-29",
+      "epic": "E7.4.1",
+      "error": "Conflito de export: TaxRegime estava sendo exportado tanto de value-objects (novo) quanto de ICMSCalculator (antigo), causando erro TS2308",
+      "correction": "Renomeado TaxRegime em ICMSCalculator.ts para ICMSTaxRegime, evitando conflito com o novo TaxRegime do módulo de Reforma Tributária. Atualizado index.ts de calculators para exportar ICMSTaxRegime.",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/calculators/ICMSCalculator.ts",
+        "src/modules/fiscal/domain/tax/calculators/index.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

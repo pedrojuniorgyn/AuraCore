@@ -1,0 +1,19 @@
+{
+  "epic": "E7.4.1",
+  "corrections": [
+    {
+      "id": "LC-441890",
+      "date": "2025-12-29",
+      "epic": "E7.4.1",
+      "error": "Conflito de export: TaxRegime estava sendo exportado tanto de value-objects (novo) quanto de ICMSCalculator (antigo), causando erro TS2308",
+      "correction": "Renomeado TaxRegime em ICMSCalculator.ts para ICMSTaxRegime, evitando conflito com o novo TaxRegime do módulo de Reforma Tributária. Atualizado index.ts de calculators para exportar ICMSTaxRegime.",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/calculators/ICMSCalculator.ts",
+        "src/modules/fiscal/domain/tax/calculators/index.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
