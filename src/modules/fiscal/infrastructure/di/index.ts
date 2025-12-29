@@ -1,0 +1,2 @@
+export { registerFiscalModule } from './FiscalModule';
+

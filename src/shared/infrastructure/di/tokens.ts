@@ -11,6 +11,13 @@ export const TOKENS = {
   // Repositories - Fiscal
   FiscalDocumentRepository: Symbol('FiscalDocumentRepository'),
   
+  // Use Cases - Fiscal
+  CreateFiscalDocumentUseCase: Symbol('CreateFiscalDocumentUseCase'),
+  SubmitFiscalDocumentUseCase: Symbol('SubmitFiscalDocumentUseCase'),
+  AuthorizeFiscalDocumentUseCase: Symbol('AuthorizeFiscalDocumentUseCase'),
+  CancelFiscalDocumentUseCase: Symbol('CancelFiscalDocumentUseCase'),
+  CalculateTaxesUseCase: Symbol('CalculateTaxesUseCase'),
+  
   // Gateways
   BtgGateway: Symbol('BtgGateway'),
   SefazGateway: Symbol('SefazGateway'),

@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.60",
+  "version": "1.0.67",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1158,6 +1158,124 @@
         "src/modules/fiscal/domain/tax/errors/TaxErrors.ts"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-648170",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "Non-null assertion em CurrentTaxEngine.ts linha 103: Money.create(0).value sem verificar Result antes de acessar .value",
+      "correction": "Substituído acesso direto por padrão seguro: criar Result, verificar isFail(), só então acessar .value. Alinhado com padrão usado nas linhas 147-152 do mesmo arquivo.",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/engines/CurrentTaxEngine.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-822954",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "Gap na máquina de estados de FiscalDocument: authorize() requer status PROCESSING, mas não havia método para transição PENDING→PROCESSING. Após submit(), documento ficava em PENDING sem forma de chegar em PROCESSING, tornando authorize() inalcançável.",
+      "correction": "Adicionado método process() para transição PENDING→PROCESSING. Fluxo completo: DRAFT→submit()→PENDING→process()→PROCESSING→authorize()→AUTHORIZED. Adicionados 2 testes unitários para validar o novo método.",
+      "files_affected": [
+        "src/modules/fiscal/domain/entities/FiscalDocument.ts",
+        "tests/unit/modules/fiscal/domain/entities/FiscalDocument.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-180888",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "Perda de informação de moeda em 5 lugares: Aliquota.applyTo(), BaseCalculo.reducedValue, BaseCalculo.reductionAmount, ICMSCalculator.calculateST(), ICMSCalculator.createZeroResult(), TaxAmount.zero(). Todos chamavam Money.create() sem passar currency, resultando em BRL por padrão mesmo quando operando com USD, EUR ou outras moedas.",
+      "correction": "Adicionado segundo parâmetro (currency) em todas as chamadas Money.create() que derivam de outro Money existente. Agora a moeda é preservada através de todas as operações de cálculo tributário: applyTo() preserva value.currency, reducedValue preserva this._props.value.currency, calculateST() preserva baseValue.currency, zero() preserva baseCalculo.originalValue.currency.",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/value-objects/Aliquota.ts",
+        "src/modules/fiscal/domain/tax/value-objects/BaseCalculo.ts",
+        "src/modules/fiscal/domain/tax/calculators/ICMSCalculator.ts",
+        "src/modules/fiscal/domain/tax/value-objects/TaxAmount.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-089232",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "E7.4 Semana 3: Application + Infrastructure - Implementação das camadas Application e Infrastructure do módulo Fiscal seguindo padrão Hexagonal DDD",
+      "correction": "Application Layer: 3 DTOs com Zod (CreateFiscalDocument, FiscalDocumentResponse, CalculateTaxes), 5 Use Cases com ExecutionContext (Create, Submit, Authorize, Cancel, CalculateTaxes), BaseUseCase pattern, Result + DI tsyringe. Infrastructure Layer: 3 Drizzle schemas (fiscal_documents, fiscal_document_items, fiscal_document_taxes), FiscalDocumentMapper (Domain ↔ Persistence com reconstitution via private access), DrizzleFiscalDocumentRepository (paginação manual + queryWithLimit), FiscalModule DI. Detalhes: MSSQL decimal as string, branch scoping, admin override, validação Zod. Status: 0 TS errors, 0 cursor issues, 1370+ linhas, 23 arquivos.",
+      "files_affected": [
+        "src/modules/fiscal/application/dtos/CreateFiscalDocumentDTO.ts",
+        "src/modules/fiscal/application/dtos/FiscalDocumentResponseDTO.ts",
+        "src/modules/fiscal/application/dtos/CalculateTaxesDTO.ts",
+        "src/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/SubmitFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/AuthorizeFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/CancelFiscalDocumentUseCase.ts",
+        "src/modules/fiscal/application/use-cases/CalculateTaxesUseCase.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts",
+        "src/modules/fiscal/infrastructure/di/FiscalModule.ts",
+        "src/shared/infrastructure/di/tokens.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-775598",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "E7.4 Semana 3: Violação crítica - Implementação sem testes unitários. Application Layer (5 Use Cases) e Infrastructure Layer (DrizzleFiscalDocumentRepository + FiscalDocumentMapper) foram implementados mas não acompanhados de testes obrigatórios, violando padrão do projeto.",
+      "correction": "Criados 18 testes unitários obrigatórios: CreateFiscalDocumentUseCase (4 testes - sucesso, CFOP inválido, preço negativo, sem recipient), SubmitFiscalDocumentUseCase (4 testes - sucesso, não encontrado, branch permission, admin override), AuthorizeFiscalDocumentUseCase (3 testes - sucesso, chave inválida, não encontrado), CancelFiscalDocumentUseCase (3 testes - sucesso, não encontrado, branch permission), FiscalDocumentMapper (4 testes - domain→persistence, item→persistence, roundtrip, preservar moeda). Corrigido CreateFiscalDocumentUseCase para gerar documentId antes de criar items (evitar validação 'Document ID is required'). 127/127 testes passando. 0 TS errors. 0 cursor issues.",
+      "files_affected": [
+        "tests/unit/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/SubmitFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/AuthorizeFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/CancelFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.test.ts",
+        "src/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase.ts"
+      ],
+      "pattern_created": "Testes obrigatórios para Application + Infrastructure Layers",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-819778",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "Bug 1: Campos de emitente (issuerId, issuerCnpj, issuerName) faltavam completamente no schema FiscalDocumentSchema. O mapper usava placeholders 'TEMP' e '00000000000000' que eram perdidos no roundtrip, causando perda total de dados do emitente. Bug 2: Schema definia recipient como NOT NULL, mas domain/DTO tratavam como opcional, causando violação de constraint ao inserir documento sem recipient. Bug 3: registerFiscalModule() definido mas nunca chamado no bootstrap, causando falhas de DI em runtime. Bug 4: UPDATE no save() atualizava apenas 5 campos (status, fiscalKey, protocolNumber, notes, updatedAt), descartando modificações em recipient, totalValue, issueDate, e outros 10 campos.",
+      "correction": "Bug 1 FIX: Adicionados campos issuerId, issuerCnpj, issuerName no FiscalDocumentSchema e FiscalDocumentPersistence interface. Removidos placeholders do mapper - agora usa campos reais do domain. Bug 2 FIX: Schema alterado para recipient nullable (.notNull() removido). Mapper já estava correto (?? null). Bug 3 FIX: Criado bootstrap.ts com initializeFiscalModule() (idempotente) e documentado necessidade de chamar no app init. Bug 4 FIX: UPDATE agora persiste TODOS os 15 campos mutáveis (issueDate, emitente, recipient, totalValue, status, fiscalKey, protocol, rejection, notes). Adicionado teste específico para Bug 2 (recipient NULL roundtrip). 128/128 testes passando.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts",
+        "src/modules/fiscal/infrastructure/bootstrap.ts",
+        "src/modules/fiscal/infrastructure/index.ts",
+        "tests/unit/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.test.ts"
+      ],
+      "pattern_created": "Schema-Domain-Mapper consistency pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-503920",
+      "date": "2025-12-29",
+      "epic": "E7.4",
+      "error": "Bug 1 NEW: recipientId field (system identifier) não estava no schema. Mapper incorretamente usava recipientCnpjCpf (tax ID) para popular recipientId no toDomain (linha 128), causando perda permanente do ID do sistema e confusão entre identificador interno e documento fiscal. Bug 2: itemToDomain() usava FiscalDocumentItem.create() que gera novo timestamp, descartando createdAt original do persistence. Items carregados do banco perdiam timestamp original e recebiam data/hora atual.",
+      "correction": "Bug 1 NEW FIX: Adicionado campo recipientId (varchar 255, nullable) ao FiscalDocumentSchema. Adicionado recipientId à interface FiscalDocumentPersistence. Mapper toPersistence() agora persiste recipientId corretamente (document.recipientId). Mapper toDomain() corrigido para usar persistence.recipientId ao invés de persistence.recipientCnpjCpf. Bug 2 FIX: itemToDomain() substituído FiscalDocumentItem.create() por .reconstitute(props, persistence.createdAt), preservando timestamp original. Adicionado totalPrice ao reconstitute (parseado de persistence.totalValue). 128/128 testes passando. 0 TS errors. 0 cursor issues.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts"
+      ],
+      "pattern_created": "Timestamp preservation in entity reconstitution",
       "status": "APPROVED",
       "must_not_repeat": true
     }
