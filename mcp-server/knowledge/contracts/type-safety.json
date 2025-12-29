@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.57",
+  "version": "1.0.58",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1092,6 +1092,25 @@
       "correction": "findByPeriod agora busca linhas em batch usando inArray() após buscar os entries, agrupa linhas por entry usando Map, e passa linhas corretas para o mapper. Segue exatamente o mesmo padrão de findMany(). Early return se rows.length === 0. Garante que entries retornados sempre têm suas linhas completas.",
       "files_affected": [
         "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-773802",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "E7.3 Semana 4 FINAL: Presentation Layer Accounting - Controller + API Routes",
+      "correction": "JournalEntriesController com 6 métodos (create, list, getById, addLine, post, reverse). Bootstrap idempotente. 6 API Routes Next.js em /api/v2/accounting/journal-entries. handleError preserva Response de auth. Padrão E7.2 Financial replicado.",
+      "files_affected": [
+        "src/modules/accounting/presentation/controllers/JournalEntriesController.ts",
+        "src/modules/accounting/presentation/bootstrap.ts",
+        "src/app/api/v2/accounting/journal-entries/route.ts",
+        "src/app/api/v2/accounting/journal-entries/[id]/route.ts",
+        "src/app/api/v2/accounting/journal-entries/[id]/lines/route.ts",
+        "src/app/api/v2/accounting/journal-entries/[id]/post/route.ts",
+        "src/app/api/v2/accounting/journal-entries/[id]/reverse/route.ts"
       ],
       "pattern_created": null,
       "status": "APPROVED",
