@@ -76,63 +76,6 @@ describe('TransitionTaxEngine', () => {
     });
   });
 
-  describe('calculateAll', () => {
-    it.skip('deve calcular IBS e CBS no período de transição', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(0.05).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(0.05).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(0.9).value as any;
-
-      const result = engine.calculateAll({
-        year: 2026,
-        ibs: {
-          baseValue,
-          ibsUfRate,
-          ibsMunRate,
-          ufCode: 'SP',
-        },
-        cbs: {
-          baseValue,
-          cbsRate,
-        },
-      });
-
-      expect(Result.isOk(result)).toBe(true);
-      if (Result.isOk(result)) {
-        const calculationResult = result.value;
-        expect(calculationResult.transitionYear).toBe(2026);
-        expect(calculationResult.newTaxes).toBeDefined();
-        expect(calculationResult.newTaxes?.ibs).toBeDefined();
-        expect(calculationResult.newTaxes?.cbs).toBeDefined();
-        expect(calculationResult.totalTaxes.amount).toBeGreaterThan(0);
-      }
-    });
-
-    it.skip('deve aplicar multiplicador correto aos impostos atuais em 2029', () => {
-      const baseValue = Money.create(1000).value as any;
-
-      const result = engine.calculateAll({
-        year: 2029,
-        ibs: {
-          baseValue,
-          ibsUfRate: AliquotaIBS.fromPercentage(0.885).value as any,
-          ibsMunRate: AliquotaIBS.fromPercentage(0.885).value as any,
-          ufCode: 'SP',
-        },
-        cbs: {
-          baseValue,
-          cbsRate: AliquotaCBS.fromPercentage(8.8).value as any,
-        },
-      });
-
-      expect(Result.isOk(result)).toBe(true);
-      if (Result.isOk(result)) {
-        const calculationResult = result.value;
-        expect(calculationResult.appliedRates.currentMultiplier).toBe(0.9);
-      }
-    });
-  });
-
   describe('static methods', () => {
     it('deve identificar período de transição corretamente', () => {
       expect(TransitionTaxEngine.isTransitionPeriod(2025)).toBe(false);

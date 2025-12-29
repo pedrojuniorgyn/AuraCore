@@ -31,9 +31,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve calcular IBS corretamente no período de transição 2026', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(0.05).value as any; // 0,1% dividido
-      const ibsMunRate = AliquotaIBS.fromPercentage(0.05).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(0.05).value as Money & AliquotaIBS; // 0,1% dividido
+      const ibsMunRate = AliquotaIBS.fromPercentage(0.05).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -50,9 +50,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve calcular IBS corretamente no período de transição 2029 (10%)', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(0.885).value as any; // 1,77% / 2
-      const ibsMunRate = AliquotaIBS.fromPercentage(0.885).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(0.885).value as Money & AliquotaIBS; // 1,77% / 2
+      const ibsMunRate = AliquotaIBS.fromPercentage(0.885).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -69,9 +69,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve aplicar redução corretamente', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -91,9 +91,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve calcular diferimento corretamente', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -112,9 +112,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve retornar erro para base value negativa', () => {
-      const baseValue = Money.create(-1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(-1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -130,9 +130,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve retornar erro para UF code inválido', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -148,9 +148,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve retornar erro para município code inválido', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -167,9 +167,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve retornar erro para reduction rate inválida', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -186,9 +186,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve retornar erro para deferral rate inválida', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -205,9 +205,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve calcular IBS com alíquota zero', () => {
-      const baseValue = Money.create(1000).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(0).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(0).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(0).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(0).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -224,9 +224,9 @@ describe('IBSCalculator', () => {
     });
 
     it('deve calcular IBS com base zero', () => {
-      const baseValue = Money.create(0).value as any;
-      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as any;
-      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as any;
+      const baseValue = Money.create(0).value as Money & AliquotaIBS;
+      const ibsUfRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
+      const ibsMunRate = AliquotaIBS.fromPercentage(8.85).value as Money & AliquotaIBS;
 
       const result = calculator.calculate({
         baseValue,

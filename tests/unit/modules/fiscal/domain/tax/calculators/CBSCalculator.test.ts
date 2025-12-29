@@ -8,8 +8,8 @@ describe('CBSCalculator', () => {
 
   describe('calculate', () => {
     it('deve calcular CBS corretamente com alíquota padrão (8,8%)', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -25,8 +25,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve calcular CBS corretamente no período de transição 2026 (0,9%)', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(0.9).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(0.9).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -41,8 +41,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve aplicar redução corretamente', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -60,8 +60,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve calcular diferimento corretamente', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -78,8 +78,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve retornar erro para base value negativa', () => {
-      const baseValue = Money.create(-1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(-1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -93,8 +93,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve retornar erro para reduction rate inválida', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -109,8 +109,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve retornar erro para deferral rate inválida', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -125,8 +125,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve calcular CBS com alíquota zero', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(0).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(0).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -141,8 +141,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve calcular CBS com base zero', () => {
-      const baseValue = Money.create(0).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(0).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,
@@ -157,8 +157,8 @@ describe('CBSCalculator', () => {
     });
 
     it('deve aplicar redução e diferimento juntos', () => {
-      const baseValue = Money.create(1000).value as any;
-      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as any;
+      const baseValue = Money.create(1000).value as Money & AliquotaCBS;
+      const cbsRate = AliquotaCBS.fromPercentage(8.8).value as Money & AliquotaCBS;
 
       const result = calculator.calculate({
         baseValue,

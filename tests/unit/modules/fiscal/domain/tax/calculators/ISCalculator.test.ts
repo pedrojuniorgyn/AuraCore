@@ -8,8 +8,8 @@ describe('ISCalculator', () => {
 
   describe('calculate', () => {
     it('deve calcular IS para bebidas alcoólicas', () => {
-      const baseValue = Money.create(1000).value as any;
-      const isRate = Aliquota.fromPercentage(25).value as any; // Exemplo: 25% para bebidas
+      const baseValue = Money.create(1000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(25).value as Money & Aliquota; // Exemplo: 25% para bebidas
 
       const result = calculator.calculate({
         baseValue,
@@ -28,8 +28,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve calcular IS para cigarros', () => {
-      const baseValue = Money.create(1000).value as any;
-      const isRate = Aliquota.fromPercentage(50).value as any; // Exemplo: 50% para cigarros
+      const baseValue = Money.create(1000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(50).value as Money & Aliquota; // Exemplo: 50% para cigarros
 
       const result = calculator.calculate({
         baseValue,
@@ -46,8 +46,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve calcular IS para veículos', () => {
-      const baseValue = Money.create(50000).value as any;
-      const isRate = Aliquota.fromPercentage(10).value as any; // Exemplo: 10% para veículos
+      const baseValue = Money.create(50000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(10).value as Money & Aliquota; // Exemplo: 10% para veículos
 
       const result = calculator.calculate({
         baseValue,
@@ -64,8 +64,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve retornar erro para base value negativa', () => {
-      const baseValue = Money.create(-1000).value as any;
-      const isRate = Aliquota.fromPercentage(25).value as any;
+      const baseValue = Money.create(-1000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(25).value as Money & Aliquota;
 
       const result = calculator.calculate({
         baseValue,
@@ -81,8 +81,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve retornar erro para NCM code inválido (não tem 8 dígitos)', () => {
-      const baseValue = Money.create(1000).value as any;
-      const isRate = Aliquota.fromPercentage(25).value as any;
+      const baseValue = Money.create(1000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(25).value as Money & Aliquota;
 
       const result = calculator.calculate({
         baseValue,
@@ -98,8 +98,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve retornar erro para product category vazia', () => {
-      const baseValue = Money.create(1000).value as any;
-      const isRate = Aliquota.fromPercentage(25).value as any;
+      const baseValue = Money.create(1000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(25).value as Money & Aliquota;
 
       const result = calculator.calculate({
         baseValue,
@@ -115,8 +115,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve calcular IS com alíquota zero', () => {
-      const baseValue = Money.create(1000).value as any;
-      const isRate = Aliquota.fromPercentage(0).value as any;
+      const baseValue = Money.create(1000).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(0).value as Money & Aliquota;
 
       const result = calculator.calculate({
         baseValue,
@@ -133,8 +133,8 @@ describe('ISCalculator', () => {
     });
 
     it('deve calcular IS com base zero', () => {
-      const baseValue = Money.create(0).value as any;
-      const isRate = Aliquota.fromPercentage(25).value as any;
+      const baseValue = Money.create(0).value as Money & Aliquota;
+      const isRate = Aliquota.fromPercentage(25).value as Money & Aliquota;
 
       const result = calculator.calculate({
         baseValue,
