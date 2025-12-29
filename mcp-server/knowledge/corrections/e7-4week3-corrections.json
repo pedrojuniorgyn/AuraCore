@@ -67,6 +67,19 @@
       "pattern_created": "Complete field persistence in repository UPDATE statements",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-541976",
+      "date": "2025-12-29",
+      "epic": "E7.4 Week 3",
+      "error": "Bug 1: initializeFiscalModule nunca chamado - A função initializeFiscalModule() foi definida e exportada em src/modules/fiscal/infrastructure/bootstrap.ts, mas nunca era invocada durante o startup da aplicação. Isso significa que registerFiscalModule() nunca executava, deixando todas as dependências do módulo Fiscal (repositories e use cases) não registradas no container DI do tsyringe. Qualquer tentativa de usar CreateFiscalDocumentUseCase ou outros use cases falharia em runtime com erros de dependência faltando. O comentário no bootstrap.ts explicitamente diz 'DEVE ser chamado no bootstrap da aplicação', mas não era importado ou invocado em lugar nenhum.",
+      "correction": "Adicionado inicialização centralizada de todos os módulos DDD (Financial, Accounting, Fiscal) no src/instrumentation.ts. O Next.js instrumentation.ts executa uma vez no runtime do servidor antes de qualquer rota ser processada. Adicionado try-catch para segurança e log de sucesso/erro. As funções são idempotentes, então é seguro mesmo se rotas API individuais também as chamarem. A inicialização agora acontece em 2 pontos: 1) instrumentation.ts (global, no startup) e 2) rotas API individuais (redundância/segurança). Isso garante que o DI container está sempre registrado antes de qualquer use case ser usado.",
+      "files_affected": [
+        "src/instrumentation.ts"
+      ],
+      "pattern_created": "DDD module initialization in application bootstrap",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }
