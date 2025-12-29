@@ -1,0 +1,118 @@
+{
+  "id": "validate-infrastructure",
+  "name": "validate_infrastructure",
+  "description": "Valida implementação de Infrastructure Layer contra checklist de bugs conhecidos. DEVE ser executado antes de commit.",
+  "version": "1.0.0",
+  "category": "quality",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "module_name": {
+        "type": "string",
+        "description": "Nome do módulo (ex: fiscal, financial, accounting)"
+      },
+      "files_to_validate": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Lista de arquivos a validar"
+      }
+    },
+    "required": ["module_name"]
+  },
+  "validations": [
+    {
+      "id": "VAL-001",
+      "name": "Schema completo",
+      "check": "Verificar que Schema Drizzle tem TODOS os campos do Domain Model",
+      "how_to_check": "Listar campos do Aggregate + Entities, comparar com schema",
+      "failure_message": "Schema incompleto - campos do domain faltando"
+    },
+    {
+      "id": "VAL-002",
+      "name": "Money com 2 campos",
+      "check": "Verificar que Money é persistido como decimal + currency",
+      "how_to_check": "Buscar por 'Money' no domain, verificar schema tem 'currency' correspondente",
+      "failure_message": "Money sem campo currency - dados de moeda serão perdidos"
+    },
+    {
+      "id": "VAL-003",
+      "name": "Campos opcionais nullable",
+      "check": "Verificar que campos opcionais do domain são .nullable() no schema",
+      "how_to_check": "Buscar por '?' no domain, verificar schema não tem .notNull()",
+      "failure_message": "Campo opcional marcado como NOT NULL"
+    },
+    {
+      "id": "VAL-004",
+      "name": "Interface Persistence completa",
+      "check": "Verificar que interface tem TODOS os campos do schema",
+      "how_to_check": "Comparar campos da interface com colunas do schema",
+      "failure_message": "Interface Persistence incompleta"
+    },
+    {
+      "id": "VAL-005",
+      "name": "Mapper toPersistence completo",
+      "check": "Verificar que toPersistence mapeia CADA campo",
+      "how_to_check": "Listar campos da interface, verificar que cada um é mapeado",
+      "failure_message": "Mapper toPersistence incompleto - campos não mapeados"
+    },
+    {
+      "id": "VAL-006",
+      "name": "Mapper usa reconstitute",
+      "check": "Verificar que toDomain usa reconstitute() e não create()",
+      "how_to_check": "Buscar por '.create(' em toDomain - deve ser 0 ocorrências",
+      "failure_message": "Usando create() para reconstitution - timestamps serão perdidos"
+    },
+    {
+      "id": "VAL-007",
+      "name": "Repository multi-tenancy",
+      "check": "Verificar que TODOS os métodos filtram por organizationId + branchId",
+      "how_to_check": "Verificar findById, findByKey, findMany, exists",
+      "failure_message": "Multi-tenancy incompleto - brecha de segurança"
+    },
+    {
+      "id": "VAL-008",
+      "name": "branchId obrigatório",
+      "check": "Verificar que branchId NÃO é opcional em interfaces",
+      "how_to_check": "Buscar por 'branchId?' - deve ser 0 ocorrências em filter interfaces",
+      "failure_message": "branchId opcional - deve ser obrigatório"
+    },
+    {
+      "id": "VAL-009",
+      "name": "UPDATE completo",
+      "check": "Verificar que UPDATE atualiza TODOS os campos mutáveis",
+      "how_to_check": "Listar campos mutáveis, verificar que todos estão no .set()",
+      "failure_message": "UPDATE incompleto - dados serão perdidos"
+    },
+    {
+      "id": "VAL-010",
+      "name": "Bootstrap registrado",
+      "check": "Verificar que initializeModule é chamado em instrumentation.ts",
+      "how_to_check": "Buscar por 'initialize[Module]Module()' em instrumentation.ts",
+      "failure_message": "Bootstrap não registrado - DI falhará em runtime"
+    }
+  ],
+  "output_format": {
+    "passed": ["VAL-001", "VAL-002"],
+    "failed": [
+      {
+        "id": "VAL-003",
+        "message": "Campo opcional marcado como NOT NULL",
+        "file": "FiscalDocumentSchema.ts",
+        "line": 25,
+        "suggestion": "Remover .notNull() de recipientCnpjCpf"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "total": 10,
+      "passed": 8,
+      "failed": 2,
+      "warnings": 0
+    }
+  },
+  "integration": {
+    "when_to_run": "Antes de commit de qualquer arquivo de Infrastructure Layer",
+    "blocking": true,
+    "auto_register_correction": true
+  }
+}

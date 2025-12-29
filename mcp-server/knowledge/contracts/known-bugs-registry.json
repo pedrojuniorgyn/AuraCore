@@ -1,0 +1,222 @@
+{
+  "id": "known-bugs-registry",
+  "title": "Known Bugs Registry - Lessons Learned",
+  "version": "1.0.0",
+  "description": "Registro de bugs críticos encontrados para evitar reincidência. O agente DEVE consultar antes de implementar.",
+  "bugs": [
+    {
+      "id": "BUG-INFRA-001",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Schema Incompleto",
+      "title": "Campos do Domain não refletidos no Schema",
+      "description": "Schema Drizzle foi criado sem mapear todos os campos do Domain Model. Campos issuerId, issuerCnpj, issuerName não existiam no schema.",
+      "root_cause": "Agente não listou campos do Domain antes de criar Schema",
+      "impact": "Dados perdidos no roundtrip, placeholders 'TEMP' no código",
+      "prevention": [
+        "SEMPRE listar campos do Domain ANTES de criar Schema",
+        "Verificar 1-a-1 que cada campo existe",
+        "Comparar com módulos existentes"
+      ],
+      "detection": "Teste de roundtrip falha",
+      "mcp_correction": "LC-819778"
+    },
+    {
+      "id": "BUG-INFRA-002",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Schema Incorreto",
+      "title": "Campo opcional marcado como NOT NULL",
+      "description": "recipient é opcional no Domain mas schema tinha recipientCnpjCpf.notNull()",
+      "root_cause": "Não verificou quais campos são opcionais no Domain",
+      "impact": "Constraint violation ao inserir documento sem recipient",
+      "prevention": [
+        "Identificar campos opcionais ANTES de criar schema",
+        "Usar .nullable() para campos opcionais",
+        "Teste específico para campos opcionais"
+      ],
+      "detection": "Erro de banco ao inserir com campo NULL",
+      "mcp_correction": "LC-819778"
+    },
+    {
+      "id": "BUG-INFRA-003",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Bootstrap Esquecido",
+      "title": "initializeModule() nunca chamado",
+      "description": "Função de bootstrap definida mas não chamada em instrumentation.ts",
+      "root_cause": "Falta de checklist para integração de módulos",
+      "impact": "DI não registrado, runtime failure ao usar Use Cases",
+      "prevention": [
+        "SEMPRE adicionar chamada em instrumentation.ts",
+        "Verificar que módulos existentes (Financial, Accounting) são chamados",
+        "Testar que DI resolve os tokens"
+      ],
+      "detection": "Erro de DI ao executar Use Case",
+      "mcp_correction": "LC-541976"
+    },
+    {
+      "id": "BUG-INFRA-004",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "UPDATE Incompleto",
+      "title": "UPDATE com campos faltando",
+      "description": "Método save() UPDATE atualizava apenas 5 de 15 campos mutáveis",
+      "root_cause": "Copy-paste sem verificar todos os campos",
+      "impact": "Mudanças silenciosamente descartadas",
+      "prevention": [
+        "Listar TODOS os campos mutáveis",
+        "Verificar que cada um está no .set()",
+        "Teste que modifica cada campo e verifica persistência"
+      ],
+      "detection": "Dados não persistem após save()",
+      "mcp_correction": "LC-819778"
+    },
+    {
+      "id": "BUG-INFRA-005",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Mapeamento Incorreto",
+      "title": "Campo confundido no Mapper",
+      "description": "recipientId (system ID) confundido com recipientCnpjCpf (tax ID)",
+      "root_cause": "Nomes similares, falta de atenção",
+      "impact": "ID do sistema perdido, substituído por documento fiscal",
+      "prevention": [
+        "Nomear campos claramente",
+        "Comentar propósito de cada campo",
+        "Teste de roundtrip verifica cada campo"
+      ],
+      "detection": "Teste de roundtrip com verificação de campos",
+      "mcp_correction": "LC-503920"
+    },
+    {
+      "id": "BUG-INFRA-006",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Reconstitution Errado",
+      "title": "create() usado ao invés de reconstitute()",
+      "description": "itemToDomain() usava create() que gera novo timestamp, descartando original",
+      "root_cause": "Não entendeu diferença entre create (novo) e reconstitute (existente)",
+      "impact": "Timestamps originais perdidos",
+      "prevention": [
+        "SEMPRE usar reconstitute() para carregar do banco",
+        "create() é apenas para criar NOVO registro",
+        "Teste que verifica preservação de createdAt"
+      ],
+      "detection": "Teste verifica que createdAt é preservado",
+      "mcp_correction": "LC-503920"
+    },
+    {
+      "id": "BUG-INFRA-007",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Value Object Incompleto",
+      "title": "Money sem campo currency",
+      "description": "Schema só tinha decimal para valor, sem currency. Money.create(amount) perdia moeda.",
+      "root_cause": "Não entendeu que Money precisa de 2 campos para serialização",
+      "impact": "Transações em USD/EUR viravam BRL",
+      "prevention": [
+        "Money SEMPRE requer 2 campos: amount + currency",
+        "Money.create(amount, currency) - NUNCA omitir currency",
+        "Teste com moedas diferentes (USD, EUR)"
+      ],
+      "detection": "Teste com moeda diferente de BRL",
+      "mcp_correction": "LC-393053"
+    },
+    {
+      "id": "BUG-INFRA-008",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Multi-tenancy Incompleto",
+      "title": "branchId não filtrado em findById/exists",
+      "description": "Métodos filtravam só por organizationId, ignorando branchId",
+      "root_cause": "Não seguiu .cursorrules que exige organizationId + branchId",
+      "impact": "Usuário pode acessar documentos de outras branches",
+      "prevention": [
+        "TODOS os métodos DEVEM filtrar por organizationId + branchId",
+        "branchId NUNCA é opcional",
+        "Consultar .cursorrules antes de implementar"
+      ],
+      "detection": "Teste de multi-tenancy (usuário de branch A não vê docs de branch B)",
+      "mcp_correction": "LC-403588"
+    },
+    {
+      "id": "BUG-INFRA-009",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Interface Permissiva",
+      "title": "branchId opcional em findMany filter",
+      "description": "FindFiscalDocumentsFilter tinha branchId?: number (opcional)",
+      "root_cause": "Interface permissiva demais",
+      "impact": "Possível expor docs de todas as branches",
+      "prevention": [
+        "branchId é OBRIGATÓRIO em interfaces de filter",
+        "TypeScript deve forçar o campo (sem ?)",
+        "Revisão de interface antes de implementar"
+      ],
+      "detection": "Code review verifica que branchId não tem ?",
+      "mcp_correction": "LC-227571"
+    },
+    {
+      "id": "BUG-INFRA-010",
+      "epic": "E7.4",
+      "week": "Semana 3",
+      "category": "Campo Novo não Propagado",
+      "title": "Campo adicionado mas não incluído no UPDATE",
+      "description": "Adicionou recipientId e currency ao schema mas esqueceu de incluir no .set() do UPDATE",
+      "root_cause": "Mudança parcial - adicionou em um lugar, esqueceu em outro",
+      "impact": "Novos campos nunca persistidos em updates",
+      "prevention": [
+        "Ao adicionar campo: verificar Schema, Interface, Mapper, INSERT, UPDATE",
+        "Checklist de propagação de campo novo",
+        "Teste que modifica o novo campo e verifica persistência"
+      ],
+      "detection": "Teste modifica campo e verifica que foi salvo",
+      "mcp_correction": "LC-236254"
+    }
+  ],
+  "patterns_to_avoid": [
+    {
+      "pattern": "Criar Schema sem listar campos do Domain",
+      "consequence": "Campos faltando, dados perdidos",
+      "correct_approach": "Listar TODOS os campos ANTES de criar schema"
+    },
+    {
+      "pattern": "Usar create() para reconstituir do banco",
+      "consequence": "Timestamps perdidos, IDs regenerados",
+      "correct_approach": "Usar reconstitute() para dados existentes"
+    },
+    {
+      "pattern": "Money com apenas 1 campo (amount)",
+      "consequence": "Currency perdida, tudo vira BRL",
+      "correct_approach": "Money sempre com 2 campos: amount + currency"
+    },
+    {
+      "pattern": "branchId opcional em interfaces",
+      "consequence": "Brecha de multi-tenancy",
+      "correct_approach": "branchId SEMPRE obrigatório"
+    },
+    {
+      "pattern": "UPDATE com subset de campos",
+      "consequence": "Dados silenciosamente descartados",
+      "correct_approach": "UPDATE com TODOS os campos mutáveis"
+    },
+    {
+      "pattern": "Adicionar campo sem propagar para todos os lugares",
+      "consequence": "Campo não persiste em alguns fluxos",
+      "correct_approach": "Checklist: Schema, Interface, Mapper, INSERT, UPDATE"
+    }
+  ],
+  "mandatory_tests": {
+    "mapper": [
+      "Roundtrip completo: domain → persistence → domain (todos os campos iguais)",
+      "Currency preservation: Money com USD/EUR preserva moeda",
+      "Optional fields: campos null no domain viram null no persistence"
+    ],
+    "repository": [
+      "Multi-tenancy: usuário de branch A não vê docs de branch B",
+      "UPDATE completo: modificar todos os campos e verificar persistência",
+      "findMany: branchId obrigatório (TypeScript error se omitir)"
+    ]
+  }
+}

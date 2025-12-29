@@ -1,0 +1,214 @@
+{
+  "id": "pre-implementation-checklist",
+  "title": "Pre-Implementation Validation Checklist",
+  "version": "1.0.0",
+  "category": "quality",
+  "description": "Checklist obrigatório ANTES de implementar qualquer camada. Deve ser executado pelo agente e validado.",
+  "severity": "CRITICAL",
+  "layers": {
+    "domain": {
+      "name": "Domain Layer",
+      "checklist": [
+        {
+          "id": "DOM-01",
+          "item": "Aggregate Root identificado com ID único",
+          "validation": "Verificar que extends Entity<Props> ou AggregateRoot<Props>"
+        },
+        {
+          "id": "DOM-02",
+          "item": "Value Objects são imutáveis",
+          "validation": "Props são readonly, sem setters públicos"
+        },
+        {
+          "id": "DOM-03",
+          "item": "Factory method create() retorna Result<T, E>",
+          "validation": "Nunca retorna instância direta"
+        },
+        {
+          "id": "DOM-04",
+          "item": "Método reconstitute() para carregar do banco",
+          "validation": "Existe e preserva timestamps/IDs"
+        },
+        {
+          "id": "DOM-05",
+          "item": "Domain Events definidos para ações importantes",
+          "validation": "Created, Updated, Deleted events existem"
+        },
+        {
+          "id": "DOM-06",
+          "item": "Domain Errors específicos",
+          "validation": "Não usar Error genérico, criar XxxError extends DomainError"
+        },
+        {
+          "id": "DOM-07",
+          "item": "Testes unitários cobrem validações",
+          "validation": "Mínimo 5 testes por Aggregate/Entity principal"
+        }
+      ]
+    },
+    "application": {
+      "name": "Application Layer",
+      "checklist": [
+        {
+          "id": "APP-01",
+          "item": "Use Case tem ExecutionContext com organizationId + branchId",
+          "validation": "Contexto obrigatório no execute()"
+        },
+        {
+          "id": "APP-02",
+          "item": "Input DTO validado com Zod",
+          "validation": "Schema Zod define tipos e validações"
+        },
+        {
+          "id": "APP-03",
+          "item": "Output DTO não expõe domain internals",
+          "validation": "Mapeia domain para response limpa"
+        },
+        {
+          "id": "APP-04",
+          "item": "Use Case retorna Result<T, E>",
+          "validation": "Nunca throw, sempre Result"
+        },
+        {
+          "id": "APP-05",
+          "item": "Repository injetado via DI (tsyringe)",
+          "validation": "@inject(TOKENS.XxxRepository)"
+        },
+        {
+          "id": "APP-06",
+          "item": "Branch scoping aplicado",
+          "validation": "Admin pode acessar qualquer branch, user só sua branch"
+        },
+        {
+          "id": "APP-07",
+          "item": "Testes com mock de repository",
+          "validation": "Mínimo 3 testes por Use Case"
+        }
+      ]
+    },
+    "infrastructure": {
+      "name": "Infrastructure Layer",
+      "checklist": [
+        {
+          "id": "INF-01",
+          "item": "Schema Drizzle tem TODOS os campos do domain",
+          "validation": "Listar campos domain vs schema 1-a-1"
+        },
+        {
+          "id": "INF-02",
+          "item": "Money → decimal + currency (2 campos)",
+          "validation": "Value Object Money serializado corretamente"
+        },
+        {
+          "id": "INF-03",
+          "item": "Campos opcionais são .nullable()",
+          "validation": "Comparar domain optionals com schema"
+        },
+        {
+          "id": "INF-04",
+          "item": "Interface Persistence espelha Schema",
+          "validation": "TODOS os campos presentes"
+        },
+        {
+          "id": "INF-05",
+          "item": "Mapper toPersistence() mapeia TODOS os campos",
+          "validation": "Sem placeholders como 'TEMP'"
+        },
+        {
+          "id": "INF-06",
+          "item": "Mapper toDomain() usa reconstitute()",
+          "validation": "Não usa create() para carregar do banco"
+        },
+        {
+          "id": "INF-07",
+          "item": "Repository filtra por organizationId + branchId",
+          "validation": "TODOS os métodos, branchId OBRIGATÓRIO"
+        },
+        {
+          "id": "INF-08",
+          "item": "UPDATE atualiza TODOS os campos mutáveis",
+          "validation": "Listar campos no .set() vs campos mutáveis"
+        },
+        {
+          "id": "INF-09",
+          "item": "Bootstrap registra no instrumentation.ts",
+          "validation": "initializeModule() é chamado"
+        },
+        {
+          "id": "INF-10",
+          "item": "Testes de roundtrip (domain → persistence → domain)",
+          "validation": "Mínimo 5 testes de mapper + 5 de repository"
+        }
+      ]
+    },
+    "presentation": {
+      "name": "Presentation Layer",
+      "checklist": [
+        {
+          "id": "PRE-01",
+          "item": "API Route usa getTenantContext()",
+          "validation": "Contexto extraído de sessão/headers"
+        },
+        {
+          "id": "PRE-02",
+          "item": "API Route usa resolveBranchIdOrThrow()",
+          "validation": "Branch validado antes de processar"
+        },
+        {
+          "id": "PRE-03",
+          "item": "Request body validado com Zod",
+          "validation": "Schema.parse(body) antes de usar"
+        },
+        {
+          "id": "PRE-04",
+          "item": "Response segue padrão { success, data, error }",
+          "validation": "Consistência em todas as rotas"
+        },
+        {
+          "id": "PRE-05",
+          "item": "Erros retornam status HTTP correto",
+          "validation": "400 validação, 403 permissão, 404 not found, 500 interno"
+        },
+        {
+          "id": "PRE-06",
+          "item": "Transações para operações multi-step",
+          "validation": "withMssqlTransaction() quando necessário"
+        },
+        {
+          "id": "PRE-07",
+          "item": "Testes de integração para cada rota",
+          "validation": "Mínimo 2 testes por rota (success + error)"
+        }
+      ]
+    }
+  },
+  "workflow": {
+    "before_coding": [
+      "1. Identificar qual camada será implementada",
+      "2. Ler checklist da camada",
+      "3. Consultar módulos existentes (Financial, Accounting) para padrões",
+      "4. Listar todos os campos/métodos necessários",
+      "5. Planejar testes antes de codificar"
+    ],
+    "during_coding": [
+      "1. Implementar seguindo checklist item por item",
+      "2. Verificar cada item antes de prosseguir",
+      "3. Comparar com implementação de módulos existentes"
+    ],
+    "after_coding": [
+      "1. Executar todos os testes",
+      "2. Executar check_cursor_issues",
+      "3. Verificar checklist completo",
+      "4. Registrar correções no MCP se houver",
+      "5. Commit e aguardar aprovação"
+    ]
+  },
+  "minimum_tests": {
+    "domain_aggregate": 5,
+    "domain_value_object": 3,
+    "application_use_case": 3,
+    "infrastructure_mapper": 5,
+    "infrastructure_repository": 5,
+    "presentation_route": 2
+  }
+}

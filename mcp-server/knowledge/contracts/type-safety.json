@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.72",
+  "version": "1.0.73",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1356,6 +1356,27 @@
         "src/instrumentation.ts"
       ],
       "pattern_created": "DDD module initialization in application bootstrap",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-846940",
+      "date": "2025-12-29",
+      "epic": "E7.4 Week 4",
+      "error": "E7.4 Semana 4 - Presentation Layer (API Routes) implementada com sucesso. 7 rotas API criadas com validação Zod, multi-tenancy obrigatório, DI tsyringe, Result pattern, e response padronizado. 18 testes de integração passando (mínimo era 14). 0 erros TypeScript. 0 cursor issues.",
+      "correction": "Implementação completa da camada de apresentação do módulo Fiscal:\n\nVALIDATORS:\n- CreateFiscalDocumentSchema (Zod)\n- AuthorizeFiscalDocumentSchema (Zod)\n- CancelFiscalDocumentSchema (Zod)\n- CalculateTaxesSchema (Zod)\n- ListFiscalDocumentsQuerySchema (Zod)\n- Helpers: isValidUUID(), getHttpStatusFromError()\n\nAPI ROUTES (7 rotas):\n1. POST /api/fiscal/documents - Criar documento\n2. GET /api/fiscal/documents - Listar com filtros/paginação\n3. GET /api/fiscal/documents/[id] - Buscar por ID\n4. POST /api/fiscal/documents/[id]/submit - Submeter (DRAFT->SUBMITTED)\n5. POST /api/fiscal/documents/[id]/authorize - Autorizar (SUBMITTED->AUTHORIZED)\n6. POST /api/fiscal/documents/[id]/cancel - Cancelar (AUTHORIZED->CANCELLED)\n7. POST /api/fiscal/documents/[id]/calculate-taxes - Calcular impostos\n\nQUALIDADE:\n- Multi-tenancy obrigatório (organizationId + branchId) em todas as rotas\n- Validação Zod rigorosa em todos os endpoints\n- DI com tsyringe (initializeFiscalModule())\n- Result pattern para tratamento de erros\n- Response padronizado: { success, data, error }\n- Status HTTP corretos (400/403/404/409/422/500)\n- Next.js 15 async params compliance\n- 18 testes de integração (>14 mínimo)\n- 0 erros TypeScript\n- 0 cursor issues\n\nBUGS PREVENIDOS (aprendizados da Semana 3):\n- Multi-tenancy completo (branchId obrigatório)\n- Validação Zod em todas as rotas\n- Erro HTTP mapeado corretamente\n- Response consistente\n- DI inicializado no instrumentation.ts",
+      "files_affected": [
+        "src/modules/fiscal/presentation/validators/index.ts",
+        "src/modules/fiscal/presentation/index.ts",
+        "src/app/api/fiscal/documents/route.ts",
+        "src/app/api/fiscal/documents/[id]/route.ts",
+        "src/app/api/fiscal/documents/[id]/submit/route.ts",
+        "src/app/api/fiscal/documents/[id]/authorize/route.ts",
+        "src/app/api/fiscal/documents/[id]/cancel/route.ts",
+        "src/app/api/fiscal/documents/[id]/calculate-taxes/route.ts",
+        "tests/integration/api/fiscal/documents.test.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

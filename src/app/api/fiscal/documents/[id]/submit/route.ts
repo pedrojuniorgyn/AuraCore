@@ -2,24 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { container } from 'tsyringe';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
-import { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
-import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import { isValidUUID } from '@/modules/fiscal/presentation/validators';
-import { toFiscalDocumentResponseDTO } from '@/modules/fiscal/application/dtos';
+import { SubmitFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases';
+import { Result } from '@/shared/domain';
+import { isValidUUID, getHttpStatusFromError } from '@/modules/fiscal/presentation/validators';
 import { initializeFiscalModule } from '@/modules/fiscal/infrastructure/bootstrap';
 
 // Garantir DI registrado
 initializeFiscalModule();
 
 /**
- * GET /api/fiscal/documents/[id]
+ * POST /api/fiscal/documents/[id]/submit
  * 
- * Busca um documento fiscal por ID
+ * Submete um documento fiscal para transmissão (DRAFT -> SUBMITTED)
  * 
  * Multi-tenancy: ✅ organizationId + branchId
  * Validação: ✅ UUID
+ * DDD: ✅ Use Case
  */
-export async function GET(
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -37,29 +37,30 @@ export async function GET(
       }, { status: 400 });
     }
     
-    // 3. Buscar via repository (com branchId - multi-tenancy)
-    const repository = container.resolve<IFiscalDocumentRepository>(
-      TOKENS.FiscalDocumentRepository
+    // 3. Executar Use Case
+    const useCase = container.resolve(SubmitFiscalDocumentUseCase);
+    const result = await useCase.execute(
+      { id },
+      {
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        branchId,
+        isAdmin: ctx.isAdmin || false
+      }
     );
     
-    const document = await repository.findById(
-      id, 
-      ctx.organizationId, 
-      branchId // OBRIGATÓRIO - .cursorrules
-    );
-    
-    // 4. Validar existência
-    if (!document) {
+    // 4. Retornar resultado
+    if (Result.isFail(result)) {
+      const status = getHttpStatusFromError(result.error);
       return NextResponse.json({
         success: false,
-        error: 'Documento fiscal não encontrado'
-      }, { status: 404 });
+        error: result.error
+      }, { status });
     }
     
-    // 5. Retornar documento
     return NextResponse.json({
       success: true,
-      data: toFiscalDocumentResponseDTO(document)
+      data: result.value
     });
     
   } catch (error: unknown) {
@@ -69,11 +70,12 @@ export async function GET(
       return error;
     }
     
-    console.error('[GET /api/fiscal/documents/[id]]', error);
+    console.error('[POST /api/fiscal/documents/[id]/submit]', error);
     return NextResponse.json({
       success: false,
-      error: 'Erro interno ao buscar documento fiscal',
+      error: 'Erro interno ao submeter documento fiscal',
       details: errorMessage
     }, { status: 500 });
   }
 }
+

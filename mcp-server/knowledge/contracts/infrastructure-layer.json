@@ -1,0 +1,161 @@
+{
+  "id": "infrastructure-layer",
+  "title": "Infrastructure Layer Contract",
+  "version": "1.0.0",
+  "category": "architecture",
+  "description": "Regras obrigatórias para implementação de Mapper, Repository, Schema e Bootstrap. Criado após análise de 11 bugs críticos em E7.4 Semana 3.",
+  "severity": "CRITICAL",
+  "rules": [
+    {
+      "id": "INFRA-001",
+      "name": "Schema deve refletir Domain Model completo",
+      "description": "CADA campo do Domain Model (Aggregate Root + Entities) DEVE ter correspondente no Schema Drizzle",
+      "validation": "Listar campos do domain e verificar 1-a-1 com schema",
+      "violation_example": "Domain tem issuerId, issuerCnpj, issuerName mas schema não tem",
+      "correct_example": "Schema tem TODOS os campos: issuerId, issuerCnpj, issuerName, recipientId, etc.",
+      "related_bugs": ["E7.4-S3-BUG-001", "E7.4-S3-BUG-005"]
+    },
+    {
+      "id": "INFRA-002",
+      "name": "Money requer 2 campos: amount + currency",
+      "description": "Value Object Money DEVE ser persistido como decimal (amount) + varchar(3) (currency)",
+      "validation": "Verificar que Money.create(amount, currency) usa ambos os parâmetros",
+      "violation_example": "Money.create(parseFloat(persistence.totalValue)) - currency perdida",
+      "correct_example": "Money.create(parseFloat(persistence.totalValue), persistence.currency)",
+      "related_bugs": ["E7.4-S3-BUG-007"]
+    },
+    {
+      "id": "INFRA-003",
+      "name": "Campos opcionais devem ser .nullable()",
+      "description": "Campos opcionais no Domain DEVEM ser .nullable() no Schema",
+      "validation": "Comparar domain optionals com schema nullables",
+      "violation_example": "recipientCnpjCpf: varchar(14).notNull() quando recipient é opcional",
+      "correct_example": "recipientCnpjCpf: varchar(14) // sem .notNull()",
+      "related_bugs": ["E7.4-S3-BUG-002"]
+    },
+    {
+      "id": "INFRA-004",
+      "name": "Multi-tenancy obrigatório: organizationId + branchId",
+      "description": "TODOS os métodos de Repository DEVEM filtrar por organizationId E branchId. branchId NUNCA é opcional.",
+      "validation": "Verificar que findById, findByKey, findMany, exists filtram por ambos",
+      "violation_example": "findById(id, organizationId) - falta branchId",
+      "correct_example": "findById(id, organizationId, branchId)",
+      "related_bugs": ["E7.4-S3-BUG-008", "E7.4-S3-BUG-009"]
+    },
+    {
+      "id": "INFRA-005",
+      "name": "UPDATE deve atualizar TODOS os campos mutáveis",
+      "description": "Método save() UPDATE DEVE atualizar todos os campos que podem mudar, não apenas alguns",
+      "validation": "Listar campos mutáveis e verificar que todos estão no .set()",
+      "violation_example": "UPDATE com 5 campos quando existem 15 campos mutáveis",
+      "correct_example": "UPDATE com todos os 15 campos mutáveis listados",
+      "related_bugs": ["E7.4-S3-BUG-004", "E7.4-S3-BUG-010"]
+    },
+    {
+      "id": "INFRA-006",
+      "name": "Reconstitution usa .reconstitute(), não .create()",
+      "description": "Ao carregar do banco, usar .reconstitute() para preservar timestamps e IDs originais",
+      "validation": "Verificar que toDomain usa reconstitute, não create",
+      "violation_example": "FiscalDocumentItem.create(props) - gera novo timestamp",
+      "correct_example": "FiscalDocumentItem.reconstitute(props, persistence.createdAt)",
+      "related_bugs": ["E7.4-S3-BUG-006"]
+    },
+    {
+      "id": "INFRA-007",
+      "name": "Bootstrap deve ser chamado em instrumentation.ts",
+      "description": "Função initializeModule() DEVE ser chamada no instrumentation.ts para registrar DI",
+      "validation": "Verificar que instrumentation.ts importa e chama initializeModule",
+      "violation_example": "initializeFiscalModule() definida mas nunca chamada",
+      "correct_example": "instrumentation.ts: initializeFiscalModule(); // chamado no startup",
+      "related_bugs": ["E7.4-S3-BUG-003", "E7.4-S3-BUG-011"]
+    },
+    {
+      "id": "INFRA-008",
+      "name": "Interface Persistence deve espelhar Schema",
+      "description": "Interface TypeScript de Persistence DEVE ter TODOS os campos do Schema",
+      "validation": "Comparar campos da interface com colunas do schema",
+      "violation_example": "Schema tem recipientId mas interface não tem",
+      "correct_example": "Interface tem TODOS os campos: recipientId, currency, etc.",
+      "related_bugs": ["E7.4-S3-BUG-005"]
+    },
+    {
+      "id": "INFRA-009",
+      "name": "Mapper toPersistence deve mapear TODOS os campos",
+      "description": "Método toPersistence() DEVE mapear cada campo do domain para persistence",
+      "validation": "Verificar que nenhum campo usa placeholder como 'TEMP'",
+      "violation_example": "issuerId: 'TEMP' // placeholder que será perdido",
+      "correct_example": "issuerId: document.issuerId // valor real do domain",
+      "related_bugs": ["E7.4-S3-BUG-001"]
+    },
+    {
+      "id": "INFRA-010",
+      "name": "Comparar com módulos existentes",
+      "description": "Antes de implementar, SEMPRE comparar com Financial/Accounting para seguir mesmo padrão",
+      "validation": "Verificar estrutura similar em módulos já implementados",
+      "violation_example": "Implementar mapper sem olhar FinancialMapper",
+      "correct_example": "Copiar estrutura de FinancialMapper e adaptar para Fiscal",
+      "related_bugs": ["Prevenção geral"]
+    }
+  ],
+  "checklists": {
+    "pre_implementation": [
+      "Listar TODOS os campos do Domain Model (Aggregate + Entities)",
+      "Identificar campos opcionais vs obrigatórios",
+      "Identificar Value Objects que precisam serialização especial (Money → 2 campos)",
+      "Consultar módulos existentes (Financial, Accounting) para padrões"
+    ],
+    "schema": [
+      "CADA campo do domain tem correspondente no schema",
+      "Campos opcionais marcados como .nullable()",
+      "Money → decimal + currency (VARCHAR 3)",
+      "Date → datetime",
+      "UUID → varchar(36)",
+      "Índices para organizationId, branchId, deletedAt"
+    ],
+    "mapper": [
+      "Interface Persistence tem TODOS os campos do schema",
+      "toPersistence() mapeia CADA campo (sem placeholders)",
+      "toDomain() usa CADA campo do persistence",
+      "Money.create(amount, currency) - NÃO esquecer currency",
+      "Usar .reconstitute() para preservar timestamps",
+      "Roundtrip test: domain → persistence → domain deve ser igual"
+    ],
+    "repository": [
+      "TODOS os métodos filtram por organizationId + branchId",
+      "branchId é OBRIGATÓRIO na interface (não opcional)",
+      "deletedAt IS NULL em todos os filtros",
+      "INSERT persiste TODOS os campos",
+      "UPDATE atualiza TODOS os campos mutáveis",
+      "Paginação implementada corretamente"
+    ],
+    "bootstrap": [
+      "registerModule() registra TODOS os tokens",
+      "initializeModule() é idempotente",
+      "instrumentation.ts chama initializeModule()",
+      "Logs de inicialização para debug"
+    ],
+    "tests": [
+      "Mapper: roundtrip completo (domain → persistence → domain)",
+      "Mapper: preservação de currency em Money",
+      "Mapper: campos opcionais (null handling)",
+      "Repository: multi-tenancy (não retorna docs de outra branch)",
+      "Repository: UPDATE persiste todos os campos",
+      "Repository: branchId obrigatório em findMany"
+    ]
+  },
+  "enforcement": {
+    "when_to_apply": "Sempre que implementar Schema, Mapper, Repository ou Bootstrap",
+    "verification_tool": "check_cursor_issues + testes unitários",
+    "minimum_tests": {
+      "mapper": 5,
+      "repository": 5,
+      "total_infrastructure": 10
+    }
+  },
+  "created_from": {
+    "epic": "E7.4",
+    "week": "Semana 3",
+    "bugs_analyzed": 11,
+    "date": "2024-12-29"
+  }
+}
