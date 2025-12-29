@@ -97,17 +97,17 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
 
   /**
    * Buscar documentos com filtros e paginação
+   * BUG 1 FIX: branchId agora é obrigatório para multi-tenancy (.cursorrules)
    */
   async findMany(
     filter: FindFiscalDocumentsFilter,
     pagination: PaginationOptions
   ): Promise<PaginatedResult<FiscalDocument>> {
-    // Build WHERE clause
-    const conditions = [eq(fiscalDocuments.organizationId, filter.organizationId)];
-
-    if (filter.branchId) {
-      conditions.push(eq(fiscalDocuments.branchId, filter.branchId));
-    }
+    // Build WHERE clause - branchId sempre obrigatório
+    const conditions = [
+      eq(fiscalDocuments.organizationId, filter.organizationId),
+      eq(fiscalDocuments.branchId, filter.branchId), // BUG 1 FIX: Sempre filtrar por branch
+    ];
 
     if (filter.documentType && filter.documentType.length > 0) {
       conditions.push(inArray(fiscalDocuments.documentType, filter.documentType));
@@ -226,9 +226,11 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
           issuerId: documentPersistence.issuerId,
           issuerCnpj: documentPersistence.issuerCnpj,
           issuerName: documentPersistence.issuerName,
+          recipientId: documentPersistence.recipientId, // BUG 2 FIX: LC-403588
           recipientCnpjCpf: documentPersistence.recipientCnpjCpf,
           recipientName: documentPersistence.recipientName,
           totalValue: documentPersistence.totalValue,
+          currency: documentPersistence.currency, // BUG 2 FIX: LC-393053
           notes: documentPersistence.notes,
           // Audit
           updatedAt: new Date(),

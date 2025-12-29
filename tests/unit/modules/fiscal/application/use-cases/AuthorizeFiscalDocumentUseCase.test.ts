@@ -86,7 +86,7 @@ describe('AuthorizeFiscalDocumentUseCase', () => {
       save: async () => {},
       nextDocumentNumber: async () => '000000001',
       findByFiscalKey: async (_fiscalKey, _organizationId, _branchId) => null,
-      findMany: async () => ({ data: [], total: 0, page: 1, pageSize: 10, totalPages: 0 }),
+      findMany: async (_filter, _pagination) => ({ data: [], total: 0, page: 1, pageSize: 10, totalPages: 0 }),
       exists: async (_id, _organizationId, _branchId) => false,
       saveMany: async () => {},
     };

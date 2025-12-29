@@ -3,7 +3,7 @@ import { DocumentType, DocumentStatus } from '../../value-objects/DocumentType';
 
 export interface FindFiscalDocumentsFilter {
   organizationId: number;
-  branchId?: number;
+  branchId: number; // BUG 1 FIX: Obrigatório para multi-tenancy (.cursorrules)
   documentType?: DocumentType[];
   status?: DocumentStatus[];
   issueDateFrom?: Date;

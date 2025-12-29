@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.69",
+  "version": "1.0.71",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1312,6 +1312,37 @@
         "tests/unit/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase.test.ts"
       ],
       "pattern_created": "Multi-tenancy enforcement in repository layer",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-227571",
+      "date": "2025-12-29",
+      "epic": "E7.4 Week 3",
+      "error": "Bug 1: branchId opcional em findMany - FindFiscalDocumentsFilter tinha branchId como opcional, violando .cursorrules que mandam SEMPRE aplicar organizationId + branchId. Se um use case chamasse findMany sem branchId, documentos de outras branches seriam retornados, causando exposição de dados. A implementação fazia um check condicional 'if (filter.branchId)' ao invés de aplicar filtro obrigatório.",
+      "correction": "Mudado FindFiscalDocumentsFilter.branchId de opcional (branchId?: number) para obrigatório (branchId: number). Removido check condicional 'if (filter.branchId)' do DrizzleFiscalDocumentRepository.findMany(), agora sempre aplica eq(fiscalDocuments.branchId, filter.branchId) nas condições WHERE. Atualizado comentário do método para explicitar multi-tenancy obrigatório. Atualizado mocks nos 4 arquivos de teste para aceitar parâmetros (filter, pagination) ao invés de () vazio.",
+      "files_affected": [
+        "src/modules/fiscal/domain/ports/output/IFiscalDocumentRepository.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts",
+        "tests/unit/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/SubmitFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/AuthorizeFiscalDocumentUseCase.test.ts",
+        "tests/unit/modules/fiscal/application/use-cases/CancelFiscalDocumentUseCase.test.ts"
+      ],
+      "pattern_created": "Mandatory branchId enforcement in findMany repository method",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-236254",
+      "date": "2025-12-29",
+      "epic": "E7.4 Week 3",
+      "error": "Bug 2: recipientId e currency faltando no UPDATE - O método save() no DrizzleFiscalDocumentRepository realizava UPDATE sem incluir os campos recipientId (LC-403588) e currency (LC-393053). FiscalDocumentMapper.toPersistence() populava esses campos, mas o .set() do UPDATE os omitia. Resultado: mudanças a recipientId (system identifier) e currency (necessário para preservar moeda dos Money objects) eram silenciosamente descartadas, causando data loss.",
+      "correction": "Adicionado recipientId e currency ao objeto .set() do UPDATE statement no método save(). Agora a linha 'recipientId: documentPersistence.recipientId,' preserva LC-403588 e 'currency: documentPersistence.currency,' preserva LC-393053. Comentários BUG 2 FIX adicionados referenciando as correções originais.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts"
+      ],
+      "pattern_created": "Complete field persistence in repository UPDATE statements",
       "status": "APPROVED",
       "must_not_repeat": true
     }
