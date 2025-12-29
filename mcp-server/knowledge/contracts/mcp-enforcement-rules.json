@@ -1,0 +1,194 @@
+{
+  "id": "mcp-enforcement-rules",
+  "title": "MCP Enforcement Rules - Mandatory Compliance",
+  "version": "1.0.0",
+  "category": "governance",
+  "description": "Regras de enforcement que DEVEM ser seguidas em 100% das implementações. Violação resulta em rejeição do código.",
+  "severity": "CRITICAL",
+  "enforcement_level": "MANDATORY",
+  "pre_implementation_requirements": {
+    "description": "O agente DEVE executar estas ações ANTES de escrever qualquer código",
+    "actions": [
+      {
+        "order": 1,
+        "action": "Consultar infrastructure-layer.json",
+        "tool": "get_contract",
+        "args": { "contract_id": "infrastructure-layer" },
+        "reason": "Contém 10 regras obrigatórias para Infrastructure Layer"
+      },
+      {
+        "order": 2,
+        "action": "Consultar known-bugs-registry.json",
+        "tool": "get_contract",
+        "args": { "contract_id": "known-bugs-registry" },
+        "reason": "Contém 10 bugs conhecidos que DEVEM ser evitados"
+      },
+      {
+        "order": 3,
+        "action": "Consultar pre-implementation-checklist.json",
+        "tool": "get_contract",
+        "args": { "contract_id": "pre-implementation-checklist" },
+        "reason": "Contém checklists por camada (Domain, Application, Infrastructure, Presentation)"
+      },
+      {
+        "order": 4,
+        "action": "Buscar padrões existentes",
+        "tool": "search_patterns",
+        "args": { "query": "[tema relevante]" },
+        "reason": "Verificar se já existe padrão aprovado"
+      }
+    ],
+    "confirmation_required": true,
+    "confirmation_format": "✅ CONTRATOS MCP CONSULTADOS:\n- [x] infrastructure-layer.json\n- [x] known-bugs-registry.json\n- [x] pre-implementation-checklist.json"
+  },
+  "critical_rules": [
+    {
+      "id": "ENFORCE-001",
+      "name": "Zero any",
+      "description": "Uso de 'any' é PROIBIDO em qualquer circunstância",
+      "detection": "Buscar por ': any' ou 'as any' no código",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "alternative": "Usar 'unknown' com type guards ou tipos específicos"
+    },
+    {
+      "id": "ENFORCE-002",
+      "name": "Money com currency",
+      "description": "Money.create() DEVE sempre receber 2 parâmetros (amount, currency)",
+      "detection": "Buscar por 'Money.create(' com apenas 1 parâmetro",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-007"
+    },
+    {
+      "id": "ENFORCE-003",
+      "name": "Multi-tenancy completo",
+      "description": "TODOS os métodos de Repository DEVEM filtrar por organizationId E branchId",
+      "detection": "Verificar que findById, findByKey, findMany, exists têm ambos os parâmetros",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-008, E7.4-S3-BUG-009"
+    },
+    {
+      "id": "ENFORCE-004",
+      "name": "branchId obrigatório",
+      "description": "branchId NUNCA pode ser opcional (?) em interfaces de filter",
+      "detection": "Buscar por 'branchId?' em interfaces",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-009"
+    },
+    {
+      "id": "ENFORCE-005",
+      "name": "Reconstitute vs Create",
+      "description": "Ao carregar do banco, DEVE usar reconstitute(), não create()",
+      "detection": "Buscar por '.create(' em métodos toDomain",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-006"
+    },
+    {
+      "id": "ENFORCE-006",
+      "name": "UPDATE completo",
+      "description": "Método save() UPDATE DEVE atualizar TODOS os campos mutáveis",
+      "detection": "Comparar campos no .set() com campos mutáveis do domain",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-004, E7.4-S3-BUG-010"
+    },
+    {
+      "id": "ENFORCE-007",
+      "name": "Schema completo",
+      "description": "Schema Drizzle DEVE ter TODOS os campos do Domain Model",
+      "detection": "Comparar campos do Aggregate/Entity com colunas do Schema",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-001"
+    },
+    {
+      "id": "ENFORCE-008",
+      "name": "Campos opcionais nullable",
+      "description": "Campos opcionais do Domain DEVEM ser .nullable() no Schema",
+      "detection": "Comparar '?' no domain com .nullable() no schema",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-002"
+    },
+    {
+      "id": "ENFORCE-009",
+      "name": "Bootstrap registrado",
+      "description": "initializeModule() DEVE ser chamado em instrumentation.ts",
+      "detection": "Verificar que instrumentation.ts importa e chama a função",
+      "violation_action": "REJEITAR código e solicitar correção",
+      "bug_reference": "E7.4-S3-BUG-003, E7.4-S3-BUG-011"
+    },
+    {
+      "id": "ENFORCE-010",
+      "name": "Testes obrigatórios",
+      "description": "Cada camada DEVE ter testes mínimos antes de commit",
+      "minimum_tests": {
+        "domain_aggregate": 5,
+        "domain_value_object": 3,
+        "application_use_case": 3,
+        "infrastructure_mapper": 5,
+        "infrastructure_repository": 5,
+        "presentation_route": 2
+      },
+      "violation_action": "REJEITAR commit sem testes mínimos"
+    }
+  ],
+  "post_implementation_requirements": {
+    "description": "O agente DEVE executar estas verificações APÓS implementar",
+    "actions": [
+      {
+        "order": 1,
+        "action": "Executar todos os testes",
+        "command": "npm test",
+        "expected": "100% passando"
+      },
+      {
+        "order": 2,
+        "action": "Verificar TypeScript",
+        "command": "tsc --noEmit",
+        "expected": "0 erros"
+      },
+      {
+        "order": 3,
+        "action": "Verificar cursor issues",
+        "tool": "check_cursor_issues",
+        "expected": "0 issues"
+      },
+      {
+        "order": 4,
+        "action": "Registrar no MCP se houve correção",
+        "tool": "register_correction",
+        "condition": "Se corrigiu algum issue"
+      }
+    ]
+  },
+  "commit_workflow": {
+    "pre_commit": [
+      "Todos os testes passando",
+      "0 erros TypeScript",
+      "check_cursor_issues executado"
+    ],
+    "post_commit": [
+      "check_cursor_issues executado novamente",
+      "Se issues > 0: corrigir + register_correction + novo commit",
+      "Se issues = 0: reportar para aprovação"
+    ],
+    "push_rules": {
+      "push_allowed": false,
+      "requires_approval": true,
+      "approval_from": "usuário"
+    }
+  },
+  "violation_consequences": {
+    "first_violation": "Aviso + solicitação de correção",
+    "repeated_violation": "Código rejeitado + análise de causa raiz",
+    "pattern_violation": "Atualização das regras MCP"
+  },
+  "success_metrics": {
+    "target_bugs_per_week": "< 3",
+    "target_test_coverage": "> 80%",
+    "target_typescript_errors": 0,
+    "target_cursor_issues": 0,
+    "baseline": {
+      "e74_week3_bugs": 11,
+      "e74_week4_bugs": 0,
+      "e74_week5_bugs": 0
+    }
+  }
+}
