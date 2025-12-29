@@ -233,6 +233,49 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-106509",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "await em função síncrona resolveBranchIdOrThrow - Agent Review detectou",
+      "correction": "Removido await de resolveBranchIdOrThrow que retorna number (síncrono), não Promise. Todas outras usages no codebase estão corretas sem await.",
+      "files_affected": [
+        "src/modules/financial/presentation/controllers/PayablesController.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-214560",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "handleError não preservava NextResponse de auth/branch - convertia 401/403/400 para 500",
+      "correction": "Adicionado check 'if (error instanceof Response) return error;' no início de handleError para preservar NextResponse lançados por getTenantContext e resolveBranchIdOrThrow. Return types atualizados para NextResponse | Response. Padrão já usado em outros endpoints do AuraCore.",
+      "files_affected": [
+        "src/modules/financial/presentation/controllers/PayablesController.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-631357",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "🏆 E7.2 FINANCIAL MODULE COMPLETO - Marco Final após 4 semanas",
+      "correction": "Módulo Financial enterprise-ready com Arquitetura Hexagonal completa. 4 camadas: Domain (19 testes, 6 invariantes, 6 bugs corrigidos), Application (11 testes, 5 use cases), Infrastructure (3 testes, repository, mapper, events), Presentation (5 API routes, controller, bootstrap). Total: 33+ testes, 0 TypeScript errors, 0 cursor issues. 2 bugs críticos corrigidos no Agent Review final: await sync function e Response preservation.",
+      "files_affected": [
+        "src/modules/financial/domain/",
+        "src/modules/financial/application/",
+        "src/modules/financial/infrastructure/",
+        "src/modules/financial/presentation/",
+        "src/app/api/v2/financial/payables/"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

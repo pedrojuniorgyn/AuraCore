@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.45",
+  "version": "1.0.50",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -903,6 +903,84 @@
         "src/app/api/v2/financial/payables/[id]/cancel/route.ts"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-106509",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "await em função síncrona resolveBranchIdOrThrow - Agent Review detectou",
+      "correction": "Removido await de resolveBranchIdOrThrow que retorna number (síncrono), não Promise. Todas outras usages no codebase estão corretas sem await.",
+      "files_affected": [
+        "src/modules/financial/presentation/controllers/PayablesController.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-214560",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "handleError não preservava NextResponse de auth/branch - convertia 401/403/400 para 500",
+      "correction": "Adicionado check 'if (error instanceof Response) return error;' no início de handleError para preservar NextResponse lançados por getTenantContext e resolveBranchIdOrThrow. Return types atualizados para NextResponse | Response. Padrão já usado em outros endpoints do AuraCore.",
+      "files_affected": [
+        "src/modules/financial/presentation/controllers/PayablesController.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-631357",
+      "date": "2025-12-29",
+      "epic": "E7-DDD",
+      "error": "🏆 E7.2 FINANCIAL MODULE COMPLETO - Marco Final após 4 semanas",
+      "correction": "Módulo Financial enterprise-ready com Arquitetura Hexagonal completa. 4 camadas: Domain (19 testes, 6 invariantes, 6 bugs corrigidos), Application (11 testes, 5 use cases), Infrastructure (3 testes, repository, mapper, events), Presentation (5 API routes, controller, bootstrap). Total: 33+ testes, 0 TypeScript errors, 0 cursor issues. 2 bugs críticos corrigidos no Agent Review final: await sync function e Response preservation.",
+      "files_affected": [
+        "src/modules/financial/domain/",
+        "src/modules/financial/application/",
+        "src/modules/financial/infrastructure/",
+        "src/modules/financial/presentation/",
+        "src/app/api/v2/financial/payables/"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-798268",
+      "date": "2025-12-29",
+      "epic": "E7.3",
+      "error": "✅ E7.3 ACCOUNTING MODULE - DOMAIN LAYER COMPLETO. Implementado módulo Accounting com Arquitetura Hexagonal: AccountingPeriod VO, JournalEntry Aggregate Root (partidas dobradas), JournalEntryLine Entity, 8 Domain Errors, 4 Domain Events, IJournalEntryRepository Port. Total: 25 testes (100% passing), 0 TypeScript errors, 0 cursor issues. Segue padrão Financial Module.",
+      "correction": "Criado módulo Accounting completo: Value Objects (AccountingPeriod), Entities (JournalEntryLine), Aggregate Root (JournalEntry com invariante de partidas dobradas), Domain Errors (8 tipos), Domain Events (4 eventos), Repository Port (IJournalEntryRepository). Testes robustos incluindo validação de balanceamento, estorno, e estado.",
+      "files_affected": [
+        "src/modules/accounting/domain/value-objects/AccountingPeriod.ts",
+        "src/modules/accounting/domain/entities/JournalEntryLine.ts",
+        "src/modules/accounting/domain/entities/JournalEntry.ts",
+        "src/modules/accounting/domain/errors/AccountingErrors.ts",
+        "src/modules/accounting/domain/events/AccountingEvents.ts",
+        "src/modules/accounting/domain/ports/output/IJournalEntryRepository.ts",
+        "tests/unit/modules/accounting/domain/entities/JournalEntry.test.ts",
+        "tests/unit/modules/accounting/domain/value-objects/AccountingPeriod.test.ts"
+      ],
+      "pattern_created": "accounting-domain-ddd",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-233055",
+      "date": "2025-12-29",
+      "epic": "E7.3",
+      "error": "2 bugs críticos Agent Review: (1) Non-null assertion (!) em Money.create(0).value! em totalDebit/totalCredit violava .cursorrules, unsafe fallback. (2) endDate retornava 00:00:00 do último dia, causando falha em containsDate para datas com horário (ex: 30/06/2025 14:30 não era considerado dentro de Junho).",
+      "correction": "(1) Removido non-null assertion (!), substituído por fallback seguro com throw explícito para caso impossível (Money.create(0) sempre sucede). Segue padrão .cursorrules de zero uso de any/!. (2) Ajustado endDate para retornar 23:59:59.999 do último dia do mês, garantindo que QUALQUER horário no último dia seja incluído no período. Ajustado teste para usar Date constructor explícito evitando ambiguidade de timezone.",
+      "files_affected": [
+        "src/modules/accounting/domain/entities/JournalEntry.ts",
+        "src/modules/accounting/domain/value-objects/AccountingPeriod.ts",
+        "tests/unit/modules/accounting/domain/value-objects/AccountingPeriod.test.ts"
+      ],
+      "pattern_created": "accounting-safe-fallback",
       "status": "APPROVED",
       "must_not_repeat": true
     }
