@@ -60,6 +60,12 @@ export interface IJournalEntryRepository {
   save(entry: JournalEntry): Promise<void>;
 
   /**
+   * Salva múltiplos lançamentos atomicamente (em transação)
+   * Usado para operações que afetam múltiplos registros (ex: estorno)
+   */
+  saveMany(entries: JournalEntry[]): Promise<void>;
+
+  /**
    * Busca por período
    */
   findByPeriod(

@@ -19,4 +19,3 @@ export const TOKENS = {
   UnitOfWork: Symbol('UnitOfWork'),
   EventDispatcher: Symbol('EventDispatcher'),
 } as const;
-

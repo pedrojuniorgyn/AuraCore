@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.50",
+  "version": "1.0.54",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -981,6 +981,72 @@
         "tests/unit/modules/accounting/domain/value-objects/AccountingPeriod.test.ts"
       ],
       "pattern_created": "accounting-safe-fallback",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-211120",
+      "date": "2025-12-29",
+      "epic": "E7.3",
+      "error": "E7.3 Semana 2: Application Layer Accounting - 6 Use Cases (CreateJournalEntry, AddLineToEntry, PostJournalEntry, ReverseJournalEntry, ListJournalEntries, GetJournalEntryById) com DTOs e Zod validation, multi-tenancy via ExecutionContext, DI com tsyringe. Total: 7 testes unitários (32 testes acumulados com Domain), 0 TypeScript errors, 0 cursor issues.",
+      "correction": "Use Cases: CreateJournalEntryUseCase (criar DRAFT com linhas opcionais), AddLineToEntryUseCase (adicionar linha a DRAFT), PostJournalEntryUseCase (postar com validação partidas dobradas), ReverseJournalEntryUseCase (estornar com lançamento inverso), ListJournalEntriesUseCase (listagem paginada com filtros), GetJournalEntryByIdUseCase (busca por ID). DTOs: CreateJournalEntryInput/Output, AddLineInput/Output, JournalEntryResponseDTO com mapper toJournalEntryResponseDTO, PaginatedJournalEntriesDTO. ExecutionContext para multi-tenancy (userId, organizationId, branchId, isAdmin). Zod validation em todos inputs com validation.error.issues.map(). Result Pattern para erros. Dependency Injection com @injectable e @inject. Branch scoping com validação isAdmin. Atualizado TOKENS com JournalEntryRepository.",
+      "files_affected": [
+        "src/modules/accounting/application/use-cases/CreateJournalEntryUseCase.ts",
+        "src/modules/accounting/application/use-cases/PostJournalEntryUseCase.ts",
+        "src/modules/accounting/application/use-cases/ReverseJournalEntryUseCase.ts",
+        "src/modules/accounting/application/use-cases/ListJournalEntriesUseCase.ts",
+        "src/modules/accounting/application/use-cases/GetJournalEntryByIdUseCase.ts",
+        "src/modules/accounting/application/use-cases/AddLineToEntryUseCase.ts",
+        "src/modules/accounting/application/dtos/CreateJournalEntryDTO.ts",
+        "src/modules/accounting/application/dtos/JournalEntryResponseDTO.ts",
+        "src/modules/accounting/application/dtos/AddLineDTO.ts",
+        "tests/unit/modules/accounting/application/use-cases/CreateJournalEntryUseCase.test.ts",
+        "tests/unit/modules/accounting/application/use-cases/PostJournalEntryUseCase.test.ts"
+      ],
+      "pattern_created": "accounting-application-use-cases",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-558444",
+      "date": "2025-12-29",
+      "epic": "E7.3",
+      "error": "2 bugs Agent Review E7.3 Semana 2: (1) Non-null assertion (!) em postedAt/postedBy viola .cursorrules (linha 90-92 PostJournalEntryUseCase.ts). (2) Mudança Symbol() para Symbol.for() quebra DI existente - PayableRepository foi registrado com Symbol() mas agora tenta resolver com Symbol.for(), causando token mismatch e falha de injeção em runtime.",
+      "correction": "Bug 1: Substituído entry.postedAt!.toISOString() e entry.postedBy! por validação explícita com early return. Extraído postedAt e postedBy para variáveis, verificado if (!postedAt || !postedBy) com Result.fail('Internal error: posted entry missing postedAt or postedBy'), garantindo type-safety sem !. Bug 2: Revertido TOKENS para Symbol('TokenName') original, mantendo compatibilidade com registros DI existentes do Financial Module. JournalEntryRepository adicionado como Symbol('JournalEntryRepository') seguindo padrão consistente.",
+      "files_affected": [
+        "src/modules/accounting/application/use-cases/PostJournalEntryUseCase.ts",
+        "src/shared/infrastructure/di/tokens.ts"
+      ],
+      "pattern_created": "safe-di-tokens-and-no-assertions",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-996774",
+      "date": "2025-12-29",
+      "epic": "E7.3",
+      "error": "ReverseJournalEntryUseCase com dois repository.save() sequenciais sem transação - viola regra .cursorrules 'SEMPRE use transações em operações multi-step'. Se primeiro save(reversal) suceder mas segundo save(original) falhar, o lançamento de estorno existirá sem o lançamento original marcado como estornado, causando inconsistência de dados.",
+      "correction": "Adicionado método saveMany(entries: JournalEntry[]): Promise<void> em IJournalEntryRepository para operações atômicas multi-registro. ReverseJournalEntryUseCase agora usa await this.repository.saveMany([reversal, original]) garantindo atomicidade. Adicionado comentário documentando que saveMany deve ser implementado com withMssqlTransaction na Infrastructure Layer (E7.3 Week 3). Atualizados mocks nos testes para incluir saveMany.",
+      "files_affected": [
+        "src/modules/accounting/domain/ports/output/IJournalEntryRepository.ts",
+        "src/modules/accounting/application/use-cases/ReverseJournalEntryUseCase.ts",
+        "tests/unit/modules/accounting/application/use-cases/CreateJournalEntryUseCase.test.ts",
+        "tests/unit/modules/accounting/application/use-cases/PostJournalEntryUseCase.test.ts"
+      ],
+      "pattern_created": "atomic-multi-step-operations",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-435683",
+      "date": "2025-12-29",
+      "epic": "E7.3",
+      "error": "Non-null assertions (!) em arquivo de teste PostJournalEntryUseCase.test.ts - linhas 26, 29, 37, 45 usando result.value! e Result.value! viola .cursorrules que proíbe uso de ! operator mesmo em código de teste.",
+      "correction": "Criado helper unwrapOrFail<T>(result: Result<T, string>, context: string): T que valida Result.isOk() e retorna value ou lança erro com contexto. Substituído todos usos de .value! por unwrapOrFail() no beforeEach: entryResult.value! → unwrapOrFail(entryResult, 'JournalEntry.create'), Money.create(1000).value! → unwrapOrFail(Money.create(1000), 'Money.create'), JournalEntryLine.create({...}).value! → unwrapOrFail(JournalEntryLine.create({...}), 'JournalEntryLine.create'). Padrão aplicável a todos arquivos de teste do projeto.",
+      "files_affected": [
+        "tests/unit/modules/accounting/application/use-cases/PostJournalEntryUseCase.test.ts"
+      ],
+      "pattern_created": "test-safe-result-unwrap",
       "status": "APPROVED",
       "must_not_repeat": true
     }
