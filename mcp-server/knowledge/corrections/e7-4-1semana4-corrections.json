@@ -1,0 +1,31 @@
+{
+  "epic": "E7.4.1 Semana 4",
+  "corrections": [
+    {
+      "id": "LC-674117",
+      "date": "2025-12-30",
+      "epic": "E7.4.1 Semana 4",
+      "error": "FiscalDocument.authorize(), submit() e cancel() continham logica hardcoded de validacao de transicao de status, violando ENFORCE-014 e duplicando codigo da funcao centralizada canTransitionTo()",
+      "correction": "Substituida logica hardcoded por chamadas a canTransitionTo(status, newStatus, documentType) nos 3 metodos. Removidas 20+ linhas de codigo duplicado. Agora toda validacao de transicao usa a maquina de estados centralizada e especifica por tipo de documento.",
+      "files_affected": [
+        "src/modules/fiscal/domain/entities/FiscalDocument.ts"
+      ],
+      "pattern_created": "Centralizacao de maquina de estados",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-217409",
+      "date": "2025-12-30",
+      "epic": "E7.4.1 Semana 4",
+      "error": "Tag IssRetido aparecia 2 vezes no XML: dentro de Valores (linha 138) e como filho direto de Servico (linha 161). ABRASF 2.04 especifica que deve aparecer apenas 1 vez fora de Valores. XML invalido causa rejeicao pela prefeitura.",
+      "correction": "Removida tag IssRetido duplicada de dentro da secao Valores. Mantida apenas a tag na posicao correta (fora de Valores, como filho direto de Servico). Adicionado comentario explicativo sobre a localizacao correta conforme ABRASF 2.04.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/nfse/xml/NFSeXmlBuilder.ts"
+      ],
+      "pattern_created": "Tag XML duplicada em builder",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

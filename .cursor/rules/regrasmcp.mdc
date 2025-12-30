@@ -1,0 +1,195 @@
+# AURA CORE - REGRAS OBRIGATORIAS
+
+## MCP OBRIGATORIO - EXECUTAR ANTES DE QUALQUER CODIGO
+
+ANTES de implementar QUALQUER codigo, o agente DEVE:
+
+1. Consultar contratos MCP:
+   - get_contract("mcp-enforcement-rules")
+   - get_contract("infrastructure-layer")
+   - get_contract("known-bugs-registry")
+
+2. Confirmar leitura respondendo:
+   "Contratos MCP consultados. Iniciando implementacao."
+
+3. Se nao conseguir consultar, informar o usuario.
+
+NUNCA pular esta etapa.
+
+---
+
+## REGRAS CRITICAS (VIOLACAO = REJEICAO)
+
+### 1. TypeScript Strict
+- NUNCA usar `any` (usar `unknown` ou tipo explicito)
+- NUNCA usar `@ts-ignore`
+- NUNCA usar `as any`
+
+### 2. Validacao de Input
+- SEMPRE validar input com Zod em rotas API
+- SEMPRE usar .trim() antes de validar comprimento de strings
+- SEMPRE verificar Result.isFail() antes de acessar .value
+
+### 3. Multi-Tenancy
+- SEMPRE filtrar por organizationId + branchId
+- branchId NUNCA pode ser opcional em interfaces de filter
+
+### 4. Transacoes SQL
+- SEMPRE usar transacoes em operacoes multi-step (withMssqlTransaction)
+
+### 5. Mapeamento Domain-Persistence
+- Schema DEVE espelhar Domain COMPLETO
+- Money = 2 campos (amount + currency)
+- Campos opcionais = .nullable()
+- toDomain usa reconstitute(), NAO create()
+- UPDATE com TODOS os campos mutaveis
+
+### 6. Funcoes Utilitarias
+- Quando criar funcao utilitaria (ex: canTransitionTo):
+  - USAR a funcao em TODOS os lugares relevantes
+  - REMOVER codigo duplicado que a funcao substitui
+  - NUNCA deixar logica hardcoded quando existe funcao centralizada
+
+### 7. Maquina de Estados
+- Transicoes que diferem por tipo de documento DEVEM ter maquinas separadas
+- NUNCA modificar maquina global para caso especifico de um tipo
+- SEMPRE usar canTransitionTo(from, to, documentType)
+
+---
+
+## REGRA DE IMPACTO CRUZADO
+
+Antes de modificar metodo compartilhado (authorize, cancel, submit, etc):
+
+1. Listar TODOS os document types que usam esse metodo
+2. Verificar se a mudanca afeta cada tipo diferentemente
+3. Adicionar condicional por tipo se necessario
+4. Usar funcoes centralizadas ao inves de hardcode
+
+---
+
+## VALIDACOES PRE-COMMIT OBRIGATORIAS
+
+ANTES de fazer commit, executar TODOS:
+
+1. npx tsc --noEmit (deve retornar 0 erros)
+2. npm test -- --run (todos devem passar, 0 skipped)
+3. grep -r 'as any' src/ (deve retornar 0 resultados)
+4. git status (sem arquivos pendentes)
+5. check_cursor_issues (deve retornar 0 issues)
+
+Se QUALQUER verificacao falhar, corrigir antes de commit.
+
+---
+
+## FLUXO DE TRABALHO OBRIGATORIO
+
+### Implementacao
+1. Consultar contratos MCP
+2. Confirmar leitura
+3. Implementar seguindo regras
+4. Testar localmente
+
+### Pre-Commit
+1. Executar todas as validacoes
+2. Corrigir problemas encontrados
+3. Fazer UM commit limpo (nao multiplos commits de correcao)
+
+### Pos-Commit
+1. Executar check_cursor_issues novamente
+2. Se issues > 0: corrigir + git commit --amend
+3. Se issues = 0: reportar para aprovacao
+
+### Push
+1. NUNCA fazer push sem aprovacao explicita do usuario
+2. Aguardar mensagem "APROVADO - FAZER PUSH"
+3. Verificar git status antes do push (sem arquivos pendentes)
+
+---
+
+## PROIBICOES ABSOLUTAS
+
+- NUNCA usar `any` (nem em testes)
+- NUNCA fazer push sem aprovacao
+- NUNCA criar funcao utilitaria sem usa-la em todos os lugares
+- NUNCA modificar maquina de estados global para caso especifico
+- NUNCA validar string sem .trim()
+- NUNCA acessar .value sem verificar Result.isFail()
+- NUNCA deixar testes skipped
+- NUNCA usar placeholders como 'TEMP' ou 'TODO' em codigo de producao
+- NUNCA fazer commits incrementais de correcao (usar --amend)
+
+---
+
+## CONTEXTO BRASIL (ERP Logistico)
+
+### Legislacao Fiscal
+- ICMS (Lei Complementar 87/96 - Lei Kandir)
+- PIS/COFINS (Leis 10.637/02 e 10.833/03)
+- SPED Fiscal, SPED Contribuicoes, SPED ECD
+- CTe (Conhecimento de Transporte Eletronico)
+- NFe (Nota Fiscal Eletronica)
+- MDFe (Manifesto de Documentos Fiscais)
+- NFS-e (Nota Fiscal de Servicos Eletronica)
+
+### Reforma Tributaria 2026
+- IBS (Imposto sobre Bens e Servicos)
+- CBS (Contribuicao sobre Bens e Servicos)
+- IS (Imposto Seletivo)
+
+### Retencoes na Fonte
+- IRRF (1.5%)
+- PIS (0.65%)
+- COFINS (3%)
+- CSLL (1%)
+- ISS (2-5%)
+
+---
+
+## STACK TECNICA
+
+- Backend: Next.js 15 (App Router), TypeScript, Drizzle (mssql), SQL Server 2022
+- Frontend: React 19, Refine, AG Grid, Shadcn/UI
+- Deploy: Coolify
+- Testes: Vitest
+
+---
+
+## FORMATO DE RELATORIO
+
+Ao concluir implementacao, reportar:
+```
+SEMANA X - CONCLUIDA
+
+Verificacoes pre-commit:
+- npx tsc --noEmit: 0 erros
+- npm test -- --run: X/X passando
+- grep 'as any': 0 resultados
+- git status: limpo
+- check_cursor_issues: 0 issues
+
+Arquivos criados: X
+Arquivos modificados: X
+Testes novos: X
+Commit: [hash]
+
+NAO FOI FEITO PUSH. Aguardando aprovacao.
+```
+
+---
+
+## ARQUIVOS CRITICOS (CUIDADO EXTRA)
+
+1. `accounting-engine.ts` - Contabilizacao
+2. `financial-title-generator.ts` - Titulos financeiros
+3. `sped-fiscal-generator.ts` - SPED (multa R$ 5k+)
+4. `sped-ecd-generator.ts` - SPED Contabil
+5. `sped-contributions-generator.ts` - SPED PIS/COFINS
+6. `FiscalDocument.ts` - Documento fiscal base
+7. `DocumentType.ts` - Maquina de estados
+
+Modificacoes nesses arquivos exigem testes extras e revisao cuidadosa.
+
+---
+
+FIM DAS REGRAS - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMECAR

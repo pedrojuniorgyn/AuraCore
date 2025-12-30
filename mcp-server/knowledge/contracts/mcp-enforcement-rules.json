@@ -6,6 +6,36 @@
   "description": "Regras de enforcement que DEVEM ser seguidas em 100% das implementacoes. Violacao resulta em rejeicao do codigo.",
   "severity": "CRITICAL",
   "enforcement_level": "MANDATORY",
+  "agent_behavior_rules": {
+    "continuous_implementation": {
+      "rule": "NUNCA interromper implementacao por limite de token",
+      "description": "O agente DEVE continuar implementando ate completar TODAS as tarefas solicitadas, independente do consumo de tokens",
+      "forbidden_phrases": [
+        "Vou continuar na proxima mensagem",
+        "Devido ao limite de tokens",
+        "Por causa do limite de contexto",
+        "Interrompendo por tokens"
+      ],
+      "correct_behavior": "Implementar TODOS os arquivos solicitados em sequencia ate conclusao completa"
+    },
+    "cross_impact_validation": {
+      "rule": "Verificar impacto em todos os tipos de documento antes de modificar metodos compartilhados",
+      "description": "Antes de modificar authorize(), cancel(), submit() ou qualquer metodo usado por multiplos tipos de documento",
+      "required_checks": [
+        "Listar TODOS os document types que usam esse metodo",
+        "Verificar se a mudanca afeta cada tipo diferentemente",
+        "Adicionar condicional por tipo se necessario (ex: NFSe vs NFe/CTe/MDFe)"
+      ]
+    },
+    "string_validation": {
+      "rule": "SEMPRE usar .trim() antes de validar comprimento de strings",
+      "description": "Validacoes de comprimento devem aplicar .trim() para evitar espacos extras",
+      "examples": {
+        "wrong": "if (text.length < 15)",
+        "correct": "if (text.trim().length < 15)"
+      }
+    }
+  },
   "pre_implementation_requirements": {
     "description": "O agente DEVE executar estas acoes ANTES de escrever qualquer codigo",
     "actions": [
@@ -135,6 +165,15 @@
       "correct_example": "1 commit: 'feat: implementar X' (testado e funcionando)",
       "prevention": "Testar TUDO antes do primeiro commit",
       "violation_action": "Squash commits antes de reportar"
+    },
+    {
+      "id": "ENFORCE-014",
+      "name": "Maquina de estados por tipo de documento",
+      "description": "Transicoes de status que diferem por tipo de documento DEVEM ter maquinas de estado separadas",
+      "violation_example": "Adicionar transicao global (PENDING->AUTHORIZED) que so se aplica a NFS-e",
+      "correct_example": "Criar NFSE_STATUS_TRANSITIONS separado de DEFAULT_STATUS_TRANSITIONS e usar canTransitionTo(from, to, documentType)",
+      "prevention": "Verificar impacto em TODOS os tipos antes de modificar maquina de estados global",
+      "violation_action": "REJEITAR codigo"
     }
   ],
   "pre_commit_checklist": {

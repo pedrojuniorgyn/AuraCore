@@ -300,7 +300,8 @@ export class FiscalDocument {
    * Envia para autorização (DRAFT → PENDING)
    */
   submit(): Result<void, string> {
-    if (this._props.status !== 'DRAFT') {
+    // Usar funcao centralizada para validar transicao
+    if (!canTransitionTo(this._props.status, 'PENDING', this._props.documentType)) {
       return Result.fail(
         new InvalidStatusTransitionError(this._props.status, 'PENDING').message
       );
@@ -350,7 +351,11 @@ export class FiscalDocument {
     protocolNumber: string;
     protocolDate: Date;
   }): Result<void, string> {
-    if (this._props.status !== 'PROCESSING') {
+    // Usar funcao centralizada para validar transicao
+    // canTransitionTo() ja implementa logica especifica por tipo de documento:
+    // - NFS-e: PENDING -> AUTHORIZED permitido
+    // - NFe/CTe/MDFe: PENDING -> AUTHORIZED bloqueado (deve passar por PROCESSING)
+    if (!canTransitionTo(this._props.status, 'AUTHORIZED', this._props.documentType)) {
       return Result.fail(
         new InvalidStatusTransitionError(this._props.status, 'AUTHORIZED').message
       );
@@ -381,16 +386,21 @@ export class FiscalDocument {
     reason: string;
     protocolNumber: string;
   }): Result<void, string> {
-    if (this._props.status === 'CANCELLED') {
-      return Result.fail(
-        new DocumentAlreadyCancelledError(this.id).message
-      );
-    }
-
-    if (this._props.status !== 'AUTHORIZED') {
+    // Usar funcao centralizada para validar transicao
+    if (!canTransitionTo(this._props.status, 'CANCELLED', this._props.documentType)) {
       return Result.fail(
         new InvalidStatusTransitionError(this._props.status, 'CANCELLED').message
       );
+    }
+
+    // Validar motivo (sem espaços extras)
+    if (!params.reason || params.reason.trim() === '') {
+      return Result.fail('Cancellation reason is required');
+    }
+
+    // Validar comprimento do texto ÚTIL (sem espaços)
+    if (params.reason.trim().length < 15) {
+      return Result.fail('Cancellation reason must have at least 15 characters');
     }
 
     if (!this.canBeCancelled) {

@@ -58,11 +58,12 @@ export function isValidDocumentStatus(status: string): status is DocumentStatus 
 }
 
 /**
- * Transições de status permitidas
+ * Transições de status permitidas - PADRÃO (NFe, CTe, MDFe)
+ * Estes documentos DEVEM passar por PROCESSING (exigência SEFAZ)
  */
-export const ALLOWED_STATUS_TRANSITIONS: Record<DocumentStatus, DocumentStatus[]> = {
+const DEFAULT_STATUS_TRANSITIONS: Record<DocumentStatus, DocumentStatus[]> = {
   DRAFT: ['PENDING'],
-  PENDING: ['PROCESSING', 'DRAFT'],
+  PENDING: ['PROCESSING', 'DRAFT'], // DEVE ir para PROCESSING primeiro
   PROCESSING: ['AUTHORIZED', 'REJECTED'],
   AUTHORIZED: ['CANCELLED', 'CORRECTED'],
   REJECTED: ['DRAFT'],
@@ -71,9 +72,39 @@ export const ALLOWED_STATUS_TRANSITIONS: Record<DocumentStatus, DocumentStatus[]
 };
 
 /**
- * Verifica se transição de status é permitida
+ * Transições de status permitidas - NFS-e
+ * NFS-e pode pular PROCESSING (não usa SEFAZ)
  */
-export function canTransitionTo(from: DocumentStatus, to: DocumentStatus): boolean {
-  return ALLOWED_STATUS_TRANSITIONS[from].includes(to);
+const NFSE_STATUS_TRANSITIONS: Record<DocumentStatus, DocumentStatus[]> = {
+  DRAFT: ['PENDING'],
+  PENDING: ['PROCESSING', 'AUTHORIZED', 'REJECTED', 'DRAFT'], // Pode ir direto para AUTHORIZED
+  PROCESSING: ['AUTHORIZED', 'REJECTED'],
+  AUTHORIZED: ['CANCELLED', 'CORRECTED'],
+  REJECTED: ['DRAFT'],
+  CANCELLED: [],
+  CORRECTED: ['CANCELLED'],
+};
+
+/**
+ * Mantém compatibilidade com código existente
+ * @deprecated Use canTransitionTo() com documentType
+ */
+export const ALLOWED_STATUS_TRANSITIONS = DEFAULT_STATUS_TRANSITIONS;
+
+/**
+ * Verifica se transição de status é permitida
+ * @param from Status atual
+ * @param to Novo status
+ * @param documentType Tipo de documento (opcional, default: NFe/CTe/MDFe)
+ */
+export function canTransitionTo(
+  from: DocumentStatus, 
+  to: DocumentStatus,
+  documentType?: DocumentType
+): boolean {
+  const transitions = documentType === 'NFSE' 
+    ? NFSE_STATUS_TRANSITIONS 
+    : DEFAULT_STATUS_TRANSITIONS;
+  return transitions[from]?.includes(to) ?? false;
 }
 
