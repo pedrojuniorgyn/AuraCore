@@ -4,6 +4,7 @@ import { FiscalDocumentItem, FiscalDocumentItemProps } from '../../domain/entiti
 import { FiscalKey } from '../../domain/value-objects/FiscalKey';
 import { CFOP } from '../../domain/value-objects/CFOP';
 import { DocumentType, DocumentStatus } from '../../domain/value-objects/DocumentType';
+import { TaxRegime, TaxRegimeType } from '../../domain/tax/value-objects/TaxRegime';
 
 /**
  * Persistence model types (from Drizzle)
@@ -25,6 +26,18 @@ export interface FiscalDocumentPersistence {
   recipientName: string | null;
   totalValue: string; // decimal as string in MSSQL
   currency: string; // BUG 1 FIX: ISO 4217 currency code
+  taxRegime: string;
+  totalIbs: string | null;
+  totalIbsCurrency: string | null;
+  totalCbs: string | null;
+  totalCbsCurrency: string | null;
+  totalIs: string | null;
+  totalIsCurrency: string | null;
+  totalDFeValue: string | null;
+  totalDFeValueCurrency: string | null;
+  ibsCbsMunicipalityCode: string | null;
+  governmentPurchaseEntityType: number | null;
+  governmentPurchaseRateReduction: string | null;
   fiscalKey: string | null;
   protocolNumber: string | null;
   rejectionCode: string | null;
@@ -76,6 +89,18 @@ export class FiscalDocumentMapper {
       recipientName: document.recipientName ?? null,
       totalValue: String(document.totalDocument.amount), // MSSQL decimal as string
       currency: document.totalDocument.currency, // BUG 1 FIX: Salvar currency
+      taxRegime: document.taxRegime.toString(),
+      totalIbs: document.totalIbs ? String(document.totalIbs.amount) : null,
+      totalIbsCurrency: document.totalIbs?.currency ?? null,
+      totalCbs: document.totalCbs ? String(document.totalCbs.amount) : null,
+      totalCbsCurrency: document.totalCbs?.currency ?? null,
+      totalIs: document.totalIs ? String(document.totalIs.amount) : null,
+      totalIsCurrency: document.totalIs?.currency ?? null,
+      totalDFeValue: document.totalDFeValue ? String(document.totalDFeValue.amount) : null,
+      totalDFeValueCurrency: document.totalDFeValue?.currency ?? null,
+      ibsCbsMunicipalityCode: document.ibsCbsMunicipalityCode ?? null,
+      governmentPurchaseEntityType: document.governmentPurchase?.entityType ?? null,
+      governmentPurchaseRateReduction: document.governmentPurchase ? String(document.governmentPurchase.rateReduction) : null,
       fiscalKey: document.fiscalKey?.value ?? null,
       protocolNumber: document.protocolNumber ?? null,
       rejectionCode: null, // TODO: Add to domain model if needed
@@ -118,6 +143,63 @@ export class FiscalDocumentMapper {
       fiscalKey = fiscalKeyResult.value;
     }
 
+    // Parse taxRegime
+    const taxRegimeStr = persistence.taxRegime as 'CURRENT' | 'TRANSITION' | 'NEW';
+    if (!['CURRENT', 'TRANSITION', 'NEW'].includes(taxRegimeStr)) {
+      return Result.fail(`Invalid tax regime: ${persistence.taxRegime}`);
+    }
+    
+    const taxRegimeResult = TaxRegime.create(TaxRegimeType[taxRegimeStr]);
+    if (Result.isFail(taxRegimeResult)) {
+      return Result.fail(`Failed to create tax regime: ${taxRegimeResult.error}`);
+    }
+    const taxRegime = taxRegimeResult.value;
+
+    // Parse optional Money fields
+    let totalIbs: Money | undefined;
+    if (persistence.totalIbs && persistence.totalIbsCurrency) {
+      const result = Money.create(parseFloat(persistence.totalIbs), persistence.totalIbsCurrency);
+      if (Result.isFail(result)) {
+        return Result.fail(`Invalid totalIbs: ${result.error}`);
+      }
+      totalIbs = result.value;
+    }
+
+    let totalCbs: Money | undefined;
+    if (persistence.totalCbs && persistence.totalCbsCurrency) {
+      const result = Money.create(parseFloat(persistence.totalCbs), persistence.totalCbsCurrency);
+      if (Result.isFail(result)) {
+        return Result.fail(`Invalid totalCbs: ${result.error}`);
+      }
+      totalCbs = result.value;
+    }
+
+    let totalIs: Money | undefined;
+    if (persistence.totalIs && persistence.totalIsCurrency) {
+      const result = Money.create(parseFloat(persistence.totalIs), persistence.totalIsCurrency);
+      if (Result.isFail(result)) {
+        return Result.fail(`Invalid totalIs: ${result.error}`);
+      }
+      totalIs = result.value;
+    }
+
+    let totalDFeValue: Money | undefined;
+    if (persistence.totalDFeValue && persistence.totalDFeValueCurrency) {
+      const result = Money.create(parseFloat(persistence.totalDFeValue), persistence.totalDFeValueCurrency);
+      if (Result.isFail(result)) {
+        return Result.fail(`Invalid totalDFeValue: ${result.error}`);
+      }
+      totalDFeValue = result.value;
+    }
+
+    let governmentPurchase: { entityType: number; rateReduction: number } | undefined;
+    if (persistence.governmentPurchaseEntityType !== null && persistence.governmentPurchaseRateReduction !== null) {
+      governmentPurchase = {
+        entityType: persistence.governmentPurchaseEntityType,
+        rateReduction: parseFloat(persistence.governmentPurchaseRateReduction),
+      };
+    }
+
     // Reconstitute aggregate with minimal required fields
     // FiscalDocument.create() always creates DRAFT, we'll restore state after
     const documentResult = FiscalDocument.create({
@@ -137,6 +219,9 @@ export class FiscalDocumentMapper {
       notes: persistence.notes ?? undefined,
       organizationId: persistence.organizationId,
       branchId: persistence.branchId,
+      taxRegime,
+      ibsCbsMunicipalityCode: persistence.ibsCbsMunicipalityCode ?? undefined,
+      governmentPurchase,
     });
 
     if (Result.isFail(documentResult)) {
@@ -159,6 +244,10 @@ export class FiscalDocumentMapper {
     props['status'] = persistence.status as DocumentStatus;
     props['fiscalKey'] = fiscalKey;
     props['protocolNumber'] = persistence.protocolNumber ?? undefined;
+    props['totalIbs'] = totalIbs;
+    props['totalCbs'] = totalCbs;
+    props['totalIs'] = totalIs;
+    props['totalDFeValue'] = totalDFeValue;
     docAsAny['_createdAt'] = persistence.createdAt;
     docAsAny['_updatedAt'] = persistence.updatedAt;
 

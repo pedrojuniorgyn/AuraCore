@@ -7,6 +7,8 @@ import {
   DOCUMENT_MODEL_BY_TYPE 
 } from '../value-objects/DocumentType';
 import { FiscalKey } from '../value-objects/FiscalKey';
+import { TaxRegime } from '../tax/value-objects/TaxRegime';
+import { IBSCBSGroup } from '../tax/value-objects/IBSCBSGroup';
 import {
   DocumentAlreadyAuthorizedError,
   DocumentAlreadyCancelledError,
@@ -57,6 +59,19 @@ export interface FiscalDocumentProps {
   totalPis: Money;
   totalCofins: Money;
   totalDocument: Money;
+  
+  // Reforma Tributária (Week 2)
+  taxRegime: TaxRegime;
+  totalIbs?: Money;
+  totalCbs?: Money;
+  totalIs?: Money;
+  totalDFeValue?: Money;
+  ibsCbsMunicipalityCode?: string;
+  ibsCbsGroup?: IBSCBSGroup;
+  governmentPurchase?: {
+    entityType: number;
+    rateReduction: number;
+  };
   
   // Itens
   items: FiscalDocumentItem[];
@@ -128,6 +143,17 @@ export class FiscalDocument {
   get totalCofins(): Money { return this._props.totalCofins; }
   get totalDocument(): Money { return this._props.totalDocument; }
   
+  get taxRegime(): TaxRegime { return this._props.taxRegime; }
+  get totalIbs(): Money | undefined { return this._props.totalIbs; }
+  get totalCbs(): Money | undefined { return this._props.totalCbs; }
+  get totalIs(): Money | undefined { return this._props.totalIs; }
+  get totalDFeValue(): Money | undefined { return this._props.totalDFeValue; }
+  get ibsCbsMunicipalityCode(): string | undefined { return this._props.ibsCbsMunicipalityCode; }
+  get ibsCbsGroup(): IBSCBSGroup | undefined { return this._props.ibsCbsGroup; }
+  get governmentPurchase(): { entityType: number; rateReduction: number } | undefined { 
+    return this._props.governmentPurchase; 
+  }
+  
   get items(): readonly FiscalDocumentItem[] { return [...this._props.items]; }
   get itemCount(): number { return this._props.items.length; }
   
@@ -156,13 +182,25 @@ export class FiscalDocument {
   }
 
   /**
-   * Total de impostos
+   * Total de impostos (sistema atual + novo)
    */
   get totalTaxes(): Money {
-    const total = this._props.totalIcms.amount +
-                  this._props.totalIpi.amount +
-                  this._props.totalPis.amount +
-                  this._props.totalCofins.amount;
+    let total = this._props.totalIcms.amount +
+                this._props.totalIpi.amount +
+                this._props.totalPis.amount +
+                this._props.totalCofins.amount;
+    
+    // Adicionar impostos do novo sistema se existirem
+    if (this._props.totalIbs) {
+      total += this._props.totalIbs.amount;
+    }
+    if (this._props.totalCbs) {
+      total += this._props.totalCbs.amount;
+    }
+    if (this._props.totalIs) {
+      total += this._props.totalIs.amount;
+    }
+    
     const result = Money.create(total, this._props.totalDocument.currency);
     if (Result.isOk(result)) {
       return result.value;
@@ -462,6 +500,9 @@ export class FiscalDocument {
     exitDate?: Date;
     notes?: string;
     internalNotes?: string;
+    taxRegime?: TaxRegime;
+    ibsCbsMunicipalityCode?: string;
+    governmentPurchase?: { entityType: number; rateReduction: number };
   }): Result<FiscalDocument, string> {
     // Validações
     if (!props.id || props.id.trim() === '') {
@@ -491,6 +532,16 @@ export class FiscalDocument {
     const zeroMoney = Money.create(0, 'BRL');
     if (Result.isFail(zeroMoney)) {
       return Result.fail('Failed to initialize money values');
+    }
+
+    // Determinar regime tributário baseado na data de emissão
+    let taxRegime = props.taxRegime;
+    if (!taxRegime) {
+      const regimeResult = TaxRegime.fromDate(props.issueDate);
+      if (Result.isFail(regimeResult)) {
+        return Result.fail(`Failed to determine tax regime: ${regimeResult.error}`);
+      }
+      taxRegime = regimeResult.value;
     }
 
     const now = new Date();
@@ -523,6 +574,9 @@ export class FiscalDocument {
         totalPis: zeroMoney.value,
         totalCofins: zeroMoney.value,
         totalDocument: zeroMoney.value,
+        taxRegime,
+        ibsCbsMunicipalityCode: props.ibsCbsMunicipalityCode,
+        governmentPurchase: props.governmentPurchase,
         items: [],
         notes: props.notes,
         internalNotes: props.internalNotes,

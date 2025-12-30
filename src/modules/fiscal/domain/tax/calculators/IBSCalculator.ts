@@ -1,6 +1,6 @@
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
-import { AliquotaIBS, BaseCalculo, TaxAmount } from '../value-objects';
+import { AliquotaIBS, BaseCalculo, TaxAmount, Aliquota } from '../value-objects';
 import { InvalidTaxCalculationError } from '../errors';
 
 /**
@@ -130,14 +130,22 @@ export class IBSCalculator {
     }
 
     // Calcular IBS UF
-    const ibsUfValueResult = TaxAmount.calculate(baseCalculoEfetiva, params.ibsUfRate);
+    const aliquotaUfGeneric = Aliquota.fromPercentage(params.ibsUfRate.percentual);
+    if (Result.isFail(aliquotaUfGeneric)) {
+      return Result.fail(`Failed to convert IBS UF rate: ${aliquotaUfGeneric.error}`);
+    }
+    const ibsUfValueResult = TaxAmount.calculate(baseCalculoEfetiva, aliquotaUfGeneric.value);
     if (Result.isFail(ibsUfValueResult)) {
       return Result.fail(ibsUfValueResult.error);
     }
     const ibsUfValue = ibsUfValueResult.value;
 
     // Calcular IBS Municipal
-    const ibsMunValueResult = TaxAmount.calculate(baseCalculoEfetiva, params.ibsMunRate);
+    const aliquotaMunGeneric = Aliquota.fromPercentage(params.ibsMunRate.percentual);
+    if (Result.isFail(aliquotaMunGeneric)) {
+      return Result.fail(`Failed to convert IBS Mun rate: ${aliquotaMunGeneric.error}`);
+    }
+    const ibsMunValueResult = TaxAmount.calculate(baseCalculoEfetiva, aliquotaMunGeneric.value);
     if (Result.isFail(ibsMunValueResult)) {
       return Result.fail(ibsMunValueResult.error);
     }

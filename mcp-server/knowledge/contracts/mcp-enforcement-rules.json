@@ -1,123 +1,100 @@
 {
-  "id": "mcp-enforcement-rules",
+  "id": "mcp-enforcement-rules-v2",
   "title": "MCP Enforcement Rules - Mandatory Compliance",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "category": "governance",
-  "description": "Regras de enforcement que DEVEM ser seguidas em 100% das implementações. Violação resulta em rejeição do código.",
+  "description": "Regras de enforcement que DEVEM ser seguidas em 100% das implementacoes. Violacao resulta em rejeicao do codigo.",
   "severity": "CRITICAL",
   "enforcement_level": "MANDATORY",
   "pre_implementation_requirements": {
-    "description": "O agente DEVE executar estas ações ANTES de escrever qualquer código",
+    "description": "O agente DEVE executar estas acoes ANTES de escrever qualquer codigo",
     "actions": [
       {
         "order": 1,
         "action": "Consultar infrastructure-layer.json",
         "tool": "get_contract",
         "args": { "contract_id": "infrastructure-layer" },
-        "reason": "Contém 10 regras obrigatórias para Infrastructure Layer"
+        "reason": "Contem 10 regras obrigatorias para Infrastructure Layer"
       },
       {
         "order": 2,
         "action": "Consultar known-bugs-registry.json",
         "tool": "get_contract",
         "args": { "contract_id": "known-bugs-registry" },
-        "reason": "Contém 10 bugs conhecidos que DEVEM ser evitados"
+        "reason": "Contem bugs conhecidos que DEVEM ser evitados"
       },
       {
         "order": 3,
-        "action": "Consultar pre-implementation-checklist.json",
-        "tool": "get_contract",
-        "args": { "contract_id": "pre-implementation-checklist" },
-        "reason": "Contém checklists por camada (Domain, Application, Infrastructure, Presentation)"
-      },
-      {
-        "order": 4,
-        "action": "Buscar padrões existentes",
-        "tool": "search_patterns",
-        "args": { "query": "[tema relevante]" },
-        "reason": "Verificar se já existe padrão aprovado"
+        "action": "Verificar estrutura de Value Objects/Entities existentes",
+        "tool": "view",
+        "args": { "path": "[arquivo relevante]" },
+        "reason": "Evitar erros de propriedades inexistentes"
       }
     ],
-    "confirmation_required": true,
-    "confirmation_format": "✅ CONTRATOS MCP CONSULTADOS:\n- [x] infrastructure-layer.json\n- [x] known-bugs-registry.json\n- [x] pre-implementation-checklist.json"
+    "confirmation_required": true
   },
   "critical_rules": [
     {
       "id": "ENFORCE-001",
       "name": "Zero any",
-      "description": "Uso de 'any' é PROIBIDO em qualquer circunstância",
-      "detection": "Buscar por ': any' ou 'as any' no código",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "alternative": "Usar 'unknown' com type guards ou tipos específicos"
+      "description": "Uso de 'any' e PROIBIDO em qualquer circunstancia",
+      "detection": "grep -r 'as any' src/",
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-002",
       "name": "Money com currency",
-      "description": "Money.create() DEVE sempre receber 2 parâmetros (amount, currency)",
-      "detection": "Buscar por 'Money.create(' com apenas 1 parâmetro",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-007"
+      "description": "Money.create() DEVE sempre receber 2 parametros (amount, currency)",
+      "detection": "Buscar Money.create com apenas 1 parametro",
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-003",
       "name": "Multi-tenancy completo",
-      "description": "TODOS os métodos de Repository DEVEM filtrar por organizationId E branchId",
-      "detection": "Verificar que findById, findByKey, findMany, exists têm ambos os parâmetros",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-008, E7.4-S3-BUG-009"
+      "description": "TODOS os metodos de Repository DEVEM filtrar por organizationId E branchId",
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-004",
-      "name": "branchId obrigatório",
-      "description": "branchId NUNCA pode ser opcional (?) em interfaces de filter",
-      "detection": "Buscar por 'branchId?' em interfaces",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-009"
+      "name": "branchId obrigatorio",
+      "description": "branchId NUNCA pode ser opcional em interfaces de filter",
+      "detection": "grep -r 'branchId?' src/",
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-005",
       "name": "Reconstitute vs Create",
-      "description": "Ao carregar do banco, DEVE usar reconstitute(), não create()",
-      "detection": "Buscar por '.create(' em métodos toDomain",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-006"
+      "description": "Ao carregar do banco, DEVE usar reconstitute(), nao create()",
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-006",
       "name": "UPDATE completo",
-      "description": "Método save() UPDATE DEVE atualizar TODOS os campos mutáveis",
-      "detection": "Comparar campos no .set() com campos mutáveis do domain",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-004, E7.4-S3-BUG-010"
+      "description": "Metodo save() UPDATE DEVE atualizar TODOS os campos mutaveis",
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-007",
       "name": "Schema completo",
       "description": "Schema Drizzle DEVE ter TODOS os campos do Domain Model",
-      "detection": "Comparar campos do Aggregate/Entity com colunas do Schema",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-001"
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-008",
       "name": "Campos opcionais nullable",
       "description": "Campos opcionais do Domain DEVEM ser .nullable() no Schema",
-      "detection": "Comparar '?' no domain com .nullable() no schema",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-002"
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-009",
       "name": "Bootstrap registrado",
       "description": "initializeModule() DEVE ser chamado em instrumentation.ts",
-      "detection": "Verificar que instrumentation.ts importa e chama a função",
-      "violation_action": "REJEITAR código e solicitar correção",
-      "bug_reference": "E7.4-S3-BUG-003, E7.4-S3-BUG-011"
+      "violation_action": "REJEITAR codigo"
     },
     {
       "id": "ENFORCE-010",
-      "name": "Testes obrigatórios",
-      "description": "Cada camada DEVE ter testes mínimos antes de commit",
+      "name": "Testes obrigatorios",
+      "description": "Cada camada DEVE ter testes minimos antes de commit",
       "minimum_tests": {
         "domain_aggregate": 5,
         "domain_value_object": 3,
@@ -126,69 +103,97 @@
         "infrastructure_repository": 5,
         "presentation_route": 2
       },
-      "violation_action": "REJEITAR commit sem testes mínimos"
+      "violation_action": "REJEITAR commit"
+    },
+    {
+      "id": "ENFORCE-011",
+      "name": "TypeScript deve compilar sem erros",
+      "description": "Antes de reportar conclusao, o codigo DEVE compilar sem erros TypeScript",
+      "validation_command": "npx tsc --noEmit",
+      "expected_result": "exit code 0, zero erros",
+      "when_to_run": "ANTES de fazer commit, ANTES de reportar conclusao",
+      "violation_action": "NAO REPORTAR como concluido ate corrigir todos os erros",
+      "notes": [
+        "Erros em arquivos de semanas anteriores TAMBEM devem ser corrigidos",
+        "Nao e aceitavel reportar 'X erros restantes em arquivos de Week N'",
+        "O projeto inteiro deve compilar limpo"
+      ]
+    },
+    {
+      "id": "ENFORCE-012",
+      "name": "Verificar estrutura antes de usar",
+      "description": "Antes de acessar propriedades de Value Objects ou Entities, DEVE verificar a estrutura real do arquivo",
+      "violation_example": "Acessar group.classificacaoTributaria quando a propriedade real e group.classificationCode",
+      "prevention": "Ler o arquivo do Value Object/Entity antes de usar suas propriedades",
+      "violation_action": "REJEITAR codigo com propriedades inexistentes"
+    },
+    {
+      "id": "ENFORCE-013",
+      "name": "Commit unico por feature",
+      "description": "Cada feature/fix deve ter UM commit limpo, nao multiplos commits de correcao",
+      "violation_example": "3 commits: 'fix: X', 'fix: corrigir X', 'fix: corrigir X de novo'",
+      "correct_example": "1 commit: 'feat: implementar X' (testado e funcionando)",
+      "prevention": "Testar TUDO antes do primeiro commit",
+      "violation_action": "Squash commits antes de reportar"
     }
   ],
-  "post_implementation_requirements": {
-    "description": "O agente DEVE executar estas verificações APÓS implementar",
-    "actions": [
+  "pre_commit_checklist": {
+    "description": "DEVE executar ANTES de fazer commit",
+    "commands": [
       {
         "order": 1,
-        "action": "Executar todos os testes",
-        "command": "npm test",
-        "expected": "100% passando"
+        "command": "npx tsc --noEmit",
+        "expected": "0 erros",
+        "blocking": true
       },
       {
         "order": 2,
-        "action": "Verificar TypeScript",
-        "command": "tsc --noEmit",
-        "expected": "0 erros"
+        "command": "npm test",
+        "expected": "todos passando, 0 skipped",
+        "blocking": true
       },
       {
         "order": 3,
-        "action": "Verificar cursor issues",
-        "tool": "check_cursor_issues",
-        "expected": "0 issues"
+        "command": "grep -r 'as any' src/",
+        "expected": "0 resultados",
+        "blocking": true
       },
       {
         "order": 4,
-        "action": "Registrar no MCP se houve correção",
-        "tool": "register_correction",
-        "condition": "Se corrigiu algum issue"
+        "tool": "check_cursor_issues",
+        "expected": "0 issues",
+        "blocking": true
       }
     ]
   },
-  "commit_workflow": {
-    "pre_commit": [
-      "Todos os testes passando",
-      "0 erros TypeScript",
-      "check_cursor_issues executado"
+  "post_implementation_report_format": {
+    "description": "Formato obrigatorio para reportar conclusao",
+    "template": [
+      "SEMANA X - CONCLUIDA",
+      "",
+      "Verificacoes pre-commit:",
+      "- npx tsc --noEmit: 0 erros",
+      "- npm test: X/X passando",
+      "- grep 'as any': 0 resultados", 
+      "- check_cursor_issues: 0 issues",
+      "",
+      "Arquivos: X criados, X modificados",
+      "Testes novos: X",
+      "Commit: [hash unico]",
+      "",
+      "NAO FOI FEITO PUSH. Aguardando aprovacao."
     ],
-    "post_commit": [
-      "check_cursor_issues executado novamente",
-      "Se issues > 0: corrigir + register_correction + novo commit",
-      "Se issues = 0: reportar para aprovação"
-    ],
-    "push_rules": {
-      "push_allowed": false,
-      "requires_approval": true,
-      "approval_from": "usuário"
-    }
+    "forbidden_phrases": [
+      "X erros restantes",
+      "erros em arquivos de Week anterior",
+      "sera corrigido depois",
+      "fora do escopo"
+    ]
   },
-  "violation_consequences": {
-    "first_violation": "Aviso + solicitação de correção",
-    "repeated_violation": "Código rejeitado + análise de causa raiz",
-    "pattern_violation": "Atualização das regras MCP"
-  },
-  "success_metrics": {
-    "target_bugs_per_week": "< 3",
-    "target_test_coverage": "> 80%",
-    "target_typescript_errors": 0,
-    "target_cursor_issues": 0,
-    "baseline": {
-      "e74_week3_bugs": 11,
-      "e74_week4_bugs": 0,
-      "e74_week5_bugs": 0
-    }
+  "push_rules": {
+    "push_allowed": false,
+    "requires_approval": true,
+    "approval_phrase": "APROVADO - FAZER PUSH",
+    "violation_action": "Push sem aprovacao resulta em advertencia"
   }
 }

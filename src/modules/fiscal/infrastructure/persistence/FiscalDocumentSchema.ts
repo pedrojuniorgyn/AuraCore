@@ -31,6 +31,20 @@ export const fiscalDocuments = mssqlTable('fiscal_documents', {
   totalValue: decimal('total_value', { precision: 18, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 3 }).notNull().default('BRL'), // ISO 4217
   
+  // Reforma Tributária (Week 3)
+  taxRegime: varchar('tax_regime', { length: 20 }).notNull().default('CURRENT'), // CURRENT, TRANSITION, NEW
+  totalIbs: decimal('total_ibs', { precision: 18, scale: 2 }),
+  totalIbsCurrency: varchar('total_ibs_currency', { length: 3 }),
+  totalCbs: decimal('total_cbs', { precision: 18, scale: 2 }),
+  totalCbsCurrency: varchar('total_cbs_currency', { length: 3 }),
+  totalIs: decimal('total_is', { precision: 18, scale: 2 }),
+  totalIsCurrency: varchar('total_is_currency', { length: 3 }),
+  totalDFeValue: decimal('total_dfe_value', { precision: 18, scale: 2 }),
+  totalDFeValueCurrency: varchar('total_dfe_value_currency', { length: 3 }),
+  ibsCbsMunicipalityCode: varchar('ibs_cbs_municipality_code', { length: 7 }),
+  governmentPurchaseEntityType: int('government_purchase_entity_type'),
+  governmentPurchaseRateReduction: decimal('government_purchase_rate_reduction', { precision: 5, scale: 2 }),
+  
   // Chave fiscal e protocolo (após autorização)
   fiscalKey: char('fiscal_key', { length: 44 }),
   protocolNumber: varchar('protocol_number', { length: 50 }),

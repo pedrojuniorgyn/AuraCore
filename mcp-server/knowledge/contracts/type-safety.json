@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.75",
+  "version": "1.0.78",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1413,6 +1413,47 @@
         "src/modules/fiscal/domain/tax/calculators/index.ts"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-626240",
+      "date": "2025-12-29",
+      "epic": "E7.4.1-Week3",
+      "error": "FiscalDocumentIbsCbsMapper tinha 3 bugs de validação incompleta em campos opcionais: (1) deferral não verificava currency fields antes de usar non-null assertion, (2) refund não verificava currency fields antes de usar non-null assertion, (3) presumedCredit não verificava creditRate nem currency fields, permitindo objetos incompletos com rate default 0%",
+      "correction": "Adicionadas verificações completas de todos os campos obrigatórios para cada grupo opcional (deferral, refund, presumedCredit). Todas as verificações agora exigem: valor + currency (para Money), rate (para presumedCredit). Removidas todas as non-null assertions (!) após adicionar as verificações. Removido fallback para creditRate = 0 que criava objetos inconsistentes",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts"
+      ],
+      "pattern_created": "optional-money-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-929048",
+      "date": "2025-12-30",
+      "epic": "E7.4.1-Week3",
+      "error": "NewTaxEngine.createIBSCBSGroup passava baseCalculo.originalValue (base antes de reducoes) como baseValue, mas os valores de imposto (ibsUfValue, ibsMunValue, cbsValue) foram calculados sobre baseCalculoEfetiva (base apos reducoes). Isso causava falha na validacao de IBSCBSGroup.create() que verifica taxValue ≈ baseValue * rate. Quando havia reducao de base, a validacao falhava porque taxValue = baseEfetiva * rate, nao baseOriginal * rate",
+      "correction": "Corrigido para passar ibsResult.baseCalculoEfetiva.originalValue ao inves de ibsResult.baseCalculo.originalValue. Agora a base passada ao IBSCBSGroup eh a mesma base usada nos calculos dos impostos, garantindo consistencia na validacao",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts"
+      ],
+      "pattern_created": "effective-base-for-tax-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-518346",
+      "date": "2025-12-30",
+      "epic": "E7.4.1-Week3",
+      "error": "3 bugs encontrados: (1) NewTaxEngine usava baseCalculoEfetiva.originalValue mas deveria usar reducedValue pois os impostos sao calculados sobre a base reduzida; (2) FiscalDocumentMapper acessava .value em Result sem verificar se falhou, violando Result pattern; (3) GrupoCompraGov.ENTITY_TYPES tinha DISTRITO_FEDERAL: 4 mas IBSCBSGroup so aceita tipos 1|2|3, tipo 2 ja inclui Estado/DF",
+      "correction": "Correcoes aplicadas: (1) NewTaxEngine agora usa baseCalculoEfetiva.reducedValue garantindo consistencia entre base usada para calcular impostos e base passada para validacao; (2) FiscalDocumentMapper agora valida Result com isFail antes de acessar .value; (3) Removido DISTRITO_FEDERAL: 4, atualizado validacao para 1-3, atualizado getEntityTypeName para retornar Estadual/DF no tipo 2",
+      "files_affected": [
+        "src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts",
+        "src/modules/fiscal/infrastructure/xml/builders/GrupoCompraGov.ts"
+      ],
+      "pattern_created": "result-pattern-and-reduced-base",
       "status": "APPROVED",
       "must_not_repeat": true
     }

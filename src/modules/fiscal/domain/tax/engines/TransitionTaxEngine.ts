@@ -322,7 +322,7 @@ export class TransitionTaxEngine implements ITaxEngine {
       const cbsResult = this.calculateCBSTransition(typedParams.cbs);
       if (Result.isOk(cbsResult)) {
         newTax.cbs = cbsResult.value;
-        const addResult = newTotal.add(cbsResult.value.totalCBS);
+        const addResult = newTotal.add(cbsResult.value.cbsValue.value);
         if (Result.isOk(addResult)) {
           newTotal = addResult.value;
         }

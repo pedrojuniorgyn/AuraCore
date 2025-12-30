@@ -1,5 +1,6 @@
 import { Result, Money } from '@/shared/domain';
 import { CFOP } from '../value-objects/CFOP';
+import { IBSCBSGroup } from '../tax/value-objects/IBSCBSGroup';
 import { InvalidItemValueError, InvalidNCMError } from '../errors/FiscalErrors';
 
 /**
@@ -28,6 +29,8 @@ export interface FiscalDocumentItemProps {
   ipiRate?: number;
   pisValue?: Money;
   cofinsValue?: Money;
+  // Reforma Tributária (Week 3)
+  ibsCbsGroup?: IBSCBSGroup;
 }
 
 /**
@@ -64,6 +67,7 @@ export class FiscalDocumentItem {
   get ipiRate(): number | undefined { return this._props.ipiRate; }
   get pisValue(): Money | undefined { return this._props.pisValue; }
   get cofinsValue(): Money | undefined { return this._props.cofinsValue; }
+  get ibsCbsGroup(): IBSCBSGroup | undefined { return this._props.ibsCbsGroup; }
   get createdAt(): Date { return this._createdAt; }
 
   /**
@@ -82,13 +86,20 @@ export class FiscalDocumentItem {
   }
 
   /**
-   * Total de impostos do item
+   * Total de impostos do item (sistema atual + novo)
    */
   get totalTaxes(): number {
-    return (this._props.icmsValue?.amount ?? 0) +
-           (this._props.ipiValue?.amount ?? 0) +
-           (this._props.pisValue?.amount ?? 0) +
-           (this._props.cofinsValue?.amount ?? 0);
+    let total = (this._props.icmsValue?.amount ?? 0) +
+                (this._props.ipiValue?.amount ?? 0) +
+                (this._props.pisValue?.amount ?? 0) +
+                (this._props.cofinsValue?.amount ?? 0);
+    
+    // Adicionar impostos do novo sistema se existirem
+    if (this._props.ibsCbsGroup) {
+      total += this._props.ibsCbsGroup.totalTax.amount;
+    }
+    
+    return total;
   }
 
   /**
@@ -126,6 +137,7 @@ export class FiscalDocumentItem {
     ipiRate?: number;
     pisValue?: Money;
     cofinsValue?: Money;
+    ibsCbsGroup?: IBSCBSGroup;
   }): Result<FiscalDocumentItem, string> {
     // Validações
     if (!props.id || props.id.trim() === '') {
@@ -198,6 +210,7 @@ export class FiscalDocumentItem {
         ipiRate: props.ipiRate,
         pisValue: props.pisValue,
         cofinsValue: props.cofinsValue,
+        ibsCbsGroup: props.ibsCbsGroup,
       },
       new Date()
     ));

@@ -26,6 +26,11 @@ export interface TaxRegimeProps {
 export class TaxRegime {
   private readonly _props: TaxRegimeProps;
 
+  // Constantes estáticas para acesso direto
+  static readonly CURRENT = 'CURRENT' as const;
+  static readonly TRANSITION = 'TRANSITION' as const;
+  static readonly NEW = 'NEW' as const;
+
   private constructor(props: TaxRegimeProps) {
     this._props = Object.freeze({ ...props });
   }
@@ -35,6 +40,13 @@ export class TaxRegime {
   }
 
   get value(): string {
+    return this._props.type;
+  }
+
+  /**
+   * Converte para string (para persistence)
+   */
+  toString(): string {
     return this._props.type;
   }
 

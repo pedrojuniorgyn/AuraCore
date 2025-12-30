@@ -232,6 +232,19 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
           totalValue: documentPersistence.totalValue,
           currency: documentPersistence.currency, // BUG 2 FIX: LC-393053
           notes: documentPersistence.notes,
+          // Reforma Tributária (Week 3)
+          taxRegime: documentPersistence.taxRegime,
+          totalIbs: documentPersistence.totalIbs,
+          totalIbsCurrency: documentPersistence.totalIbsCurrency,
+          totalCbs: documentPersistence.totalCbs,
+          totalCbsCurrency: documentPersistence.totalCbsCurrency,
+          totalIs: documentPersistence.totalIs,
+          totalIsCurrency: documentPersistence.totalIsCurrency,
+          totalDFeValue: documentPersistence.totalDFeValue,
+          totalDFeValueCurrency: documentPersistence.totalDFeValueCurrency,
+          ibsCbsMunicipalityCode: documentPersistence.ibsCbsMunicipalityCode,
+          governmentPurchaseEntityType: documentPersistence.governmentPurchaseEntityType,
+          governmentPurchaseRateReduction: documentPersistence.governmentPurchaseRateReduction,
           // Audit
           updatedAt: new Date(),
         })

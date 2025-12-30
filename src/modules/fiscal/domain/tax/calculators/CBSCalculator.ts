@@ -1,6 +1,6 @@
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
-import { AliquotaCBS, BaseCalculo, TaxAmount } from '../value-objects';
+import { AliquotaCBS, BaseCalculo, TaxAmount, Aliquota } from '../value-objects';
 
 /**
  * Parâmetros para cálculo de CBS
@@ -106,7 +106,11 @@ export class CBSCalculator {
     }
 
     // Calcular CBS
-    const cbsValueResult = TaxAmount.calculate(baseCalculoEfetiva, params.cbsRate);
+    const aliquotaGeneric = Aliquota.fromPercentage(params.cbsRate.percentual);
+    if (Result.isFail(aliquotaGeneric)) {
+      return Result.fail(`Failed to convert CBS rate: ${aliquotaGeneric.error}`);
+    }
+    const cbsValueResult = TaxAmount.calculate(baseCalculoEfetiva, aliquotaGeneric.value);
     if (Result.isFail(cbsValueResult)) {
       return Result.fail(cbsValueResult.error);
     }

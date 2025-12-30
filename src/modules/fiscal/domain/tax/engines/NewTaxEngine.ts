@@ -246,12 +246,12 @@ export class NewTaxEngine implements ITaxEngine {
     ibsResult: IBSCalculationResult,
     cbsResult: CBSCalculationResult
   ): Result<IBSCBSGroup, string> {
-    // Obter base de cálculo (deve ser a mesma para IBS e CBS)
-    const baseValue = ibsResult.baseCalculo.value;
+    // Obter base de cálculo reduzida - os impostos foram calculados sobre o valor reduzido
+    const baseValue = ibsResult.baseCalculoEfetiva.reducedValue;
 
     return IBSCBSGroup.create({
       cst,
-      cClassTrib,
+      classificationCode: cClassTrib,
       baseValue,
       ibsUfRate: ibsResult.ibsUfRate,
       ibsUfValue: ibsResult.ibsUfValue.value,
