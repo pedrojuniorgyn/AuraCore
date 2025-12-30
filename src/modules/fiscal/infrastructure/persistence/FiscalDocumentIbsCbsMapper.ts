@@ -1,59 +1,66 @@
 import { Result, Money } from '@/shared/domain';
-import { IBSCBSGroup } from '../../domain/tax/value-objects/IBSCBSGroup';
-import { CSTIbsCbs } from '../../domain/tax/value-objects/CSTIbsCbs';
-import { ClassificacaoTributaria } from '../../domain/tax/value-objects/ClassificacaoTributaria';
-import { AliquotaIBS } from '../../domain/tax/value-objects/AliquotaIBS';
-import { AliquotaCBS } from '../../domain/tax/value-objects/AliquotaCBS';
-import { BaseCalculo } from '../../domain/tax/value-objects/BaseCalculo';
-import { TaxAmount } from '../../domain/tax/value-objects/TaxAmount';
+import { IBSCBSGroup, DeferralInfo, RefundInfo, ReductionInfo, PresumedCreditInfo, GovernmentPurchaseInfo } from '@/modules/fiscal/domain/tax/value-objects/IBSCBSGroup';
+import { CSTIbsCbs } from '@/modules/fiscal/domain/tax/value-objects/CSTIbsCbs';
+import { ClassificacaoTributaria } from '@/modules/fiscal/domain/tax/value-objects/ClassificacaoTributaria';
+import { AliquotaIBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaIBS';
+import { AliquotaCBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaCBS';
 
 /**
- * Persistence model para IBSCBSGroup
+ * Valida se um código CST é válido (ENFORCE-015)
  */
-export interface IBSCBSGroupPersistence {
+function isValidCSTIbsCbs(code: string): boolean {
+  const validCodes = ['00', '10', '20', '30', '40', '41', '50', '60', '70', '90'];
+  return validCodes.includes(code);
+}
+
+/**
+ * Persistence interface para IBSCBSGroup
+ * 
+ * REGRA INFRA-008: Interface DEVE ter TODOS os campos do Schema
+ */
+export interface IBSCBSPersistence {
   id: string;
   fiscalDocumentId: string;
   fiscalDocumentItemId: string | null;
+  organizationId: number;
+  branchId: number;
   
+  // Obrigatórios
   cst: string;
   cClassTrib: string;
-  
   baseValue: string;
   baseValueCurrency: string;
-  
   ibsUfRate: string;
   ibsUfValue: string;
   ibsUfValueCurrency: string;
-  
   ibsMunRate: string;
   ibsMunValue: string;
   ibsMunValueCurrency: string;
-  
   cbsRate: string;
   cbsValue: string;
   cbsValueCurrency: string;
   
+  // Opcionais
+  ibsUfEffectiveRate: string | null;
+  ibsMunEffectiveRate: string | null;
+  cbsEffectiveRate: string | null;
   deferralRate: string | null;
   deferralIbsValue: string | null;
   deferralIbsValueCurrency: string | null;
   deferralCbsValue: string | null;
   deferralCbsValueCurrency: string | null;
-  
   refundIbsValue: string | null;
   refundIbsValueCurrency: string | null;
   refundCbsValue: string | null;
   refundCbsValueCurrency: string | null;
-  
   reductionIbsRate: string | null;
   reductionCbsRate: string | null;
-  
   presumedCreditCode: string | null;
   presumedCreditRate: string | null;
   presumedCreditIbsValue: string | null;
   presumedCreditIbsValueCurrency: string | null;
   presumedCreditCbsValue: string | null;
   presumedCreditCbsValueCurrency: string | null;
-  
   governmentPurchaseEntityType: number | null;
   governmentPurchaseReductionRate: string | null;
   
@@ -62,263 +69,331 @@ export interface IBSCBSGroupPersistence {
 }
 
 /**
- * Mapper: IBSCBSGroup Domain ↔ Persistence
+ * Mapper: IBSCBSGroup ↔ Persistence
+ * 
+ * REGRAS CRÍTICAS:
+ * - INFRA-002: Money = 2 campos (amount + currency)
+ * - INFRA-006: toDomain usa reconstitute(), NÃO create()
+ * - ENFORCE-015: Validar enums em reconstitute/toDomain
  */
 export class FiscalDocumentIbsCbsMapper {
   /**
    * Domain → Persistence
+   * 
+   * REGRA INFRA-009: Mapear TODOS os campos (sem placeholders)
+   * 
+   * Timestamps são passados como parâmetros pois IBSCBSGroup é um Value Object puro
+   * (não possui campos de auditoria). Timestamps são gerenciados pelo caller (Repository).
    */
   static toPersistence(
     group: IBSCBSGroup,
     fiscalDocumentId: string,
-    fiscalDocumentItemId?: string
-  ): Omit<IBSCBSGroupPersistence, 'id' | 'createdAt' | 'updatedAt'> {
+    fiscalDocumentItemId: string | null,
+    organizationId: number,
+    branchId: number,
+    id: string,
+    createdAt: Date,
+    updatedAt: Date
+  ): IBSCBSPersistence {
     return {
+      id,
       fiscalDocumentId,
-      fiscalDocumentItemId: fiscalDocumentItemId ?? null,
+      fiscalDocumentItemId,
+      organizationId,
+      branchId,
       
+      // Obrigatórios
       cst: group.cst.value,
-      cClassTrib: group.classificationCode.value,
-      
-      baseValue: String(group.baseValue.amount),
+      cClassTrib: group.classificationCode.code,
+      baseValue: group.baseValue.amount.toString(),
       baseValueCurrency: group.baseValue.currency,
-      
-      ibsUfRate: String(group.ibsUfRate.percentual),
-      ibsUfValue: String(group.ibsUfValue.amount),
+      ibsUfRate: group.ibsUfRate.percentual.toString(),
+      ibsUfValue: group.ibsUfValue.amount.toString(),
       ibsUfValueCurrency: group.ibsUfValue.currency,
-      
-      ibsMunRate: String(group.ibsMunRate.percentual),
-      ibsMunValue: String(group.ibsMunValue.amount),
+      ibsMunRate: group.ibsMunRate.percentual.toString(),
+      ibsMunValue: group.ibsMunValue.amount.toString(),
       ibsMunValueCurrency: group.ibsMunValue.currency,
-      
-      cbsRate: String(group.cbsRate.percentual),
-      cbsValue: String(group.cbsValue.amount),
+      cbsRate: group.cbsRate.percentual.toString(),
+      cbsValue: group.cbsValue.amount.toString(),
       cbsValueCurrency: group.cbsValue.currency,
       
-      deferralRate: group.deferral ? String(group.deferral.deferralRate) : null,
-      deferralIbsValue: group.deferral ? String(group.deferral.ibsDeferredValue.amount) : null,
+      // Opcionais - alíquotas efetivas
+      ibsUfEffectiveRate: group.ibsUfEffectiveRate?.percentual.toString() ?? null,
+      ibsMunEffectiveRate: group.ibsMunEffectiveRate?.percentual.toString() ?? null,
+      cbsEffectiveRate: group.cbsEffectiveRate?.percentual.toString() ?? null,
+      
+      // Opcionais - diferimento
+      deferralRate: group.deferral?.deferralRate.toString() ?? null,
+      deferralIbsValue: group.deferral?.ibsDeferredValue.amount.toString() ?? null,
       deferralIbsValueCurrency: group.deferral?.ibsDeferredValue.currency ?? null,
-      deferralCbsValue: group.deferral ? String(group.deferral.cbsDeferredValue.amount) : null,
+      deferralCbsValue: group.deferral?.cbsDeferredValue.amount.toString() ?? null,
       deferralCbsValueCurrency: group.deferral?.cbsDeferredValue.currency ?? null,
       
-      refundIbsValue: group.refund ? String(group.refund.ibsRefundValue.amount) : null,
+      // Opcionais - devolução
+      refundIbsValue: group.refund?.ibsRefundValue.amount.toString() ?? null,
       refundIbsValueCurrency: group.refund?.ibsRefundValue.currency ?? null,
-      refundCbsValue: group.refund ? String(group.refund.cbsRefundValue.amount) : null,
+      refundCbsValue: group.refund?.cbsRefundValue.amount.toString() ?? null,
       refundCbsValueCurrency: group.refund?.cbsRefundValue.currency ?? null,
       
-      reductionIbsRate: group.reduction ? String(group.reduction.ibsReductionRate) : null,
-      reductionCbsRate: group.reduction ? String(group.reduction.cbsReductionRate) : null,
+      // Opcionais - redução
+      reductionIbsRate: group.reduction?.ibsReductionRate.toString() ?? null,
+      reductionCbsRate: group.reduction?.cbsReductionRate.toString() ?? null,
       
+      // Opcionais - crédito presumido
       presumedCreditCode: group.presumedCredit?.creditCode ?? null,
-      presumedCreditRate: group.presumedCredit ? String(group.presumedCredit.creditRate) : null,
-      presumedCreditIbsValue: group.presumedCredit ? String(group.presumedCredit.ibsCreditValue.amount) : null,
+      presumedCreditRate: group.presumedCredit?.creditRate.toString() ?? null,
+      presumedCreditIbsValue: group.presumedCredit?.ibsCreditValue.amount.toString() ?? null,
       presumedCreditIbsValueCurrency: group.presumedCredit?.ibsCreditValue.currency ?? null,
-      presumedCreditCbsValue: group.presumedCredit ? String(group.presumedCredit.cbsCreditValue.amount) : null,
+      presumedCreditCbsValue: group.presumedCredit?.cbsCreditValue.amount.toString() ?? null,
       presumedCreditCbsValueCurrency: group.presumedCredit?.cbsCreditValue.currency ?? null,
       
+      // Opcionais - compras governamentais
       governmentPurchaseEntityType: group.governmentPurchase?.entityType ?? null,
-      governmentPurchaseReductionRate: group.governmentPurchase ? String(group.governmentPurchase.reductionRate) : null,
+      governmentPurchaseReductionRate: group.governmentPurchase?.reductionRate.toString() ?? null,
+      
+      createdAt,
+      updatedAt,
     };
   }
 
   /**
    * Persistence → Domain
+   * 
+   * REGRA INFRA-006: Usar reconstitute(), NÃO create()
+   * REGRA ENFORCE-015: Validar enums (CST)
    */
-  static toDomain(persistence: IBSCBSGroupPersistence): Result<IBSCBSGroup, string> {
-    // Parse CST
+  static toDomain(persistence: IBSCBSPersistence): Result<IBSCBSGroup, string> {
+    // Validar CST (ENFORCE-015)
+    if (!isValidCSTIbsCbs(persistence.cst)) {
+      return Result.fail(`Invalid CST IBS/CBS: ${persistence.cst}`);
+    }
+
+    // Criar CST
     const cstResult = CSTIbsCbs.create(persistence.cst);
     if (Result.isFail(cstResult)) {
-      return Result.fail(`Invalid CST: ${cstResult.error}`);
+      return Result.fail(cstResult.error);
     }
 
-    // Parse Classificacao Tributaria
-    const cClassTribResult = ClassificacaoTributaria.create(persistence.cClassTrib);
-    if (Result.isFail(cClassTribResult)) {
-      return Result.fail(`Invalid cClassTrib: ${cClassTribResult.error}`);
+    // Criar Classificação Tributária
+    const classificationResult = ClassificacaoTributaria.create(persistence.cClassTrib);
+    if (Result.isFail(classificationResult)) {
+      return Result.fail(classificationResult.error);
     }
 
-    // Parse base value
+    // Criar Money - Base de Cálculo (INFRA-002: 2 campos)
     const baseValueResult = Money.create(
       parseFloat(persistence.baseValue),
       persistence.baseValueCurrency
     );
     if (Result.isFail(baseValueResult)) {
-      return Result.fail(`Invalid base value: ${baseValueResult.error}`);
+      return Result.fail(baseValueResult.error);
     }
 
-
-    // Parse IBS UF
+    // Criar Alíquotas IBS
     const ibsUfRateResult = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsUfRate));
     if (Result.isFail(ibsUfRateResult)) {
-      return Result.fail(`Invalid IBS UF rate: ${ibsUfRateResult.error}`);
+      return Result.fail(ibsUfRateResult.error);
     }
 
-    const ibsUfMoneyResult = Money.create(
+    const ibsMunRateResult = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsMunRate));
+    if (Result.isFail(ibsMunRateResult)) {
+      return Result.fail(ibsMunRateResult.error);
+    }
+
+    // Criar Money - Valores IBS
+    const ibsUfValueResult = Money.create(
       parseFloat(persistence.ibsUfValue),
       persistence.ibsUfValueCurrency
     );
-    if (Result.isFail(ibsUfMoneyResult)) {
-      return Result.fail(`Invalid IBS UF value: ${ibsUfMoneyResult.error}`);
-    }
-
-    const ibsUfValueResult = ibsUfMoneyResult;
     if (Result.isFail(ibsUfValueResult)) {
-      return Result.fail(`Invalid IBS UF tax amount: ${ibsUfValueResult.error}`);
+      return Result.fail(ibsUfValueResult.error);
     }
 
-    // Parse IBS Mun
-    const ibsMunRateResult = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsMunRate));
-    if (Result.isFail(ibsMunRateResult)) {
-      return Result.fail(`Invalid IBS Mun rate: ${ibsMunRateResult.error}`);
-    }
-
-    const ibsMunMoneyResult = Money.create(
+    const ibsMunValueResult = Money.create(
       parseFloat(persistence.ibsMunValue),
       persistence.ibsMunValueCurrency
     );
-    if (Result.isFail(ibsMunMoneyResult)) {
-      return Result.fail(`Invalid IBS Mun value: ${ibsMunMoneyResult.error}`);
-    }
-
-    const ibsMunValueResult = ibsMunMoneyResult;
     if (Result.isFail(ibsMunValueResult)) {
-      return Result.fail(`Invalid IBS Mun tax amount: ${ibsMunValueResult.error}`);
+      return Result.fail(ibsMunValueResult.error);
     }
 
-    // Parse CBS
+    // Criar Alíquota CBS
     const cbsRateResult = AliquotaCBS.fromPercentage(parseFloat(persistence.cbsRate));
     if (Result.isFail(cbsRateResult)) {
-      return Result.fail(`Invalid CBS rate: ${cbsRateResult.error}`);
+      return Result.fail(cbsRateResult.error);
     }
 
-    const cbsMoneyResult = Money.create(
+    // Criar Money - Valor CBS
+    const cbsValueResult = Money.create(
       parseFloat(persistence.cbsValue),
       persistence.cbsValueCurrency
     );
-    if (Result.isFail(cbsMoneyResult)) {
-      return Result.fail(`Invalid CBS value: ${cbsMoneyResult.error}`);
-    }
-
-    const cbsValueResult = cbsMoneyResult;
     if (Result.isFail(cbsValueResult)) {
-      return Result.fail(`Invalid CBS tax amount: ${cbsValueResult.error}`);
+      return Result.fail(cbsValueResult.error);
     }
 
-    // Parse optional nested fields
-    let deferral;
+    // Alíquotas efetivas (opcionais)
+    let ibsUfEffectiveRate: AliquotaIBS | undefined;
+    if (persistence.ibsUfEffectiveRate !== null) {
+      const result = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsUfEffectiveRate));
+      if (Result.isFail(result)) {
+        return Result.fail(result.error);
+      }
+      ibsUfEffectiveRate = result.value;
+    }
+
+    let ibsMunEffectiveRate: AliquotaIBS | undefined;
+    if (persistence.ibsMunEffectiveRate !== null) {
+      const result = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsMunEffectiveRate));
+      if (Result.isFail(result)) {
+        return Result.fail(result.error);
+      }
+      ibsMunEffectiveRate = result.value;
+    }
+
+    let cbsEffectiveRate: AliquotaCBS | undefined;
+    if (persistence.cbsEffectiveRate !== null) {
+      const result = AliquotaCBS.fromPercentage(parseFloat(persistence.cbsEffectiveRate));
+      if (Result.isFail(result)) {
+        return Result.fail(result.error);
+      }
+      cbsEffectiveRate = result.value;
+    }
+
+    // Diferimento (opcional) - todos os campos juntos
+    let deferral: DeferralInfo | undefined;
     if (
-      persistence.deferralRate && 
-      persistence.deferralIbsValue && persistence.deferralIbsValueCurrency &&
-      persistence.deferralCbsValue && persistence.deferralCbsValueCurrency
+      persistence.deferralRate !== null &&
+      persistence.deferralIbsValue !== null &&
+      persistence.deferralIbsValueCurrency !== null &&
+      persistence.deferralCbsValue !== null &&
+      persistence.deferralCbsValueCurrency !== null
     ) {
-      const ibsDeferredResult = Money.create(
+      const deferralIbsResult = Money.create(
         parseFloat(persistence.deferralIbsValue),
         persistence.deferralIbsValueCurrency
       );
-      const cbsDeferredResult = Money.create(
+      if (Result.isFail(deferralIbsResult)) {
+        return Result.fail(deferralIbsResult.error);
+      }
+
+      const deferralCbsResult = Money.create(
         parseFloat(persistence.deferralCbsValue),
         persistence.deferralCbsValueCurrency
       );
-      
-      if (Result.isFail(ibsDeferredResult)) {
-        return Result.fail(`Invalid IBS deferred value: ${ibsDeferredResult.error}`);
+      if (Result.isFail(deferralCbsResult)) {
+        return Result.fail(deferralCbsResult.error);
       }
-      if (Result.isFail(cbsDeferredResult)) {
-        return Result.fail(`Invalid CBS deferred value: ${cbsDeferredResult.error}`);
-      }
-      
+
       deferral = {
         deferralRate: parseFloat(persistence.deferralRate),
-        ibsDeferredValue: ibsDeferredResult.value,
-        cbsDeferredValue: cbsDeferredResult.value,
+        ibsDeferredValue: deferralIbsResult.value,
+        cbsDeferredValue: deferralCbsResult.value,
       };
     }
 
-    let refund;
+    // Devolução (opcional) - todos os campos juntos
+    let refund: RefundInfo | undefined;
     if (
-      persistence.refundIbsValue && persistence.refundIbsValueCurrency &&
-      persistence.refundCbsValue && persistence.refundCbsValueCurrency
+      persistence.refundIbsValue !== null &&
+      persistence.refundIbsValueCurrency !== null &&
+      persistence.refundCbsValue !== null &&
+      persistence.refundCbsValueCurrency !== null
     ) {
-      const ibsRefundResult = Money.create(
+      const refundIbsResult = Money.create(
         parseFloat(persistence.refundIbsValue),
         persistence.refundIbsValueCurrency
       );
-      const cbsRefundResult = Money.create(
+      if (Result.isFail(refundIbsResult)) {
+        return Result.fail(refundIbsResult.error);
+      }
+
+      const refundCbsResult = Money.create(
         parseFloat(persistence.refundCbsValue),
         persistence.refundCbsValueCurrency
       );
-      
-      if (Result.isFail(ibsRefundResult)) {
-        return Result.fail(`Invalid IBS refund value: ${ibsRefundResult.error}`);
+      if (Result.isFail(refundCbsResult)) {
+        return Result.fail(refundCbsResult.error);
       }
-      if (Result.isFail(cbsRefundResult)) {
-        return Result.fail(`Invalid CBS refund value: ${cbsRefundResult.error}`);
-      }
-      
+
       refund = {
-        ibsRefundValue: ibsRefundResult.value,
-        cbsRefundValue: cbsRefundResult.value,
+        ibsRefundValue: refundIbsResult.value,
+        cbsRefundValue: refundCbsResult.value,
       };
     }
 
-    let reduction;
-    if (persistence.reductionIbsRate && persistence.reductionCbsRate) {
+    // Redução (opcional)
+    let reduction: ReductionInfo | undefined;
+    if (
+      persistence.reductionIbsRate !== null &&
+      persistence.reductionCbsRate !== null
+    ) {
       reduction = {
         ibsReductionRate: parseFloat(persistence.reductionIbsRate),
         cbsReductionRate: parseFloat(persistence.reductionCbsRate),
       };
     }
 
-    let presumedCredit;
+    // Crédito presumido (opcional) - todos os campos juntos
+    let presumedCredit: PresumedCreditInfo | undefined;
     if (
-      persistence.presumedCreditCode && 
-      persistence.presumedCreditRate &&
-      persistence.presumedCreditIbsValue && persistence.presumedCreditIbsValueCurrency &&
-      persistence.presumedCreditCbsValue && persistence.presumedCreditCbsValueCurrency
+      persistence.presumedCreditCode !== null &&
+      persistence.presumedCreditRate !== null &&
+      persistence.presumedCreditIbsValue !== null &&
+      persistence.presumedCreditIbsValueCurrency !== null &&
+      persistence.presumedCreditCbsValue !== null &&
+      persistence.presumedCreditCbsValueCurrency !== null
     ) {
-      const ibsCreditResult = Money.create(
+      const presumedIbsResult = Money.create(
         parseFloat(persistence.presumedCreditIbsValue),
         persistence.presumedCreditIbsValueCurrency
       );
-      const cbsCreditResult = Money.create(
+      if (Result.isFail(presumedIbsResult)) {
+        return Result.fail(presumedIbsResult.error);
+      }
+
+      const presumedCbsResult = Money.create(
         parseFloat(persistence.presumedCreditCbsValue),
         persistence.presumedCreditCbsValueCurrency
       );
-      
-      if (Result.isFail(ibsCreditResult)) {
-        return Result.fail(`Invalid presumed credit IBS value: ${ibsCreditResult.error}`);
+      if (Result.isFail(presumedCbsResult)) {
+        return Result.fail(presumedCbsResult.error);
       }
-      if (Result.isFail(cbsCreditResult)) {
-        return Result.fail(`Invalid presumed credit CBS value: ${cbsCreditResult.error}`);
-      }
-      
+
       presumedCredit = {
         creditCode: persistence.presumedCreditCode,
         creditRate: parseFloat(persistence.presumedCreditRate),
-        ibsCreditValue: ibsCreditResult.value,
-        cbsCreditValue: cbsCreditResult.value,
+        ibsCreditValue: presumedIbsResult.value,
+        cbsCreditValue: presumedCbsResult.value,
       };
     }
 
-    let governmentPurchase;
-    if (persistence.governmentPurchaseEntityType !== null && persistence.governmentPurchaseReductionRate !== null) {
+    // Compras governamentais (opcional)
+    let governmentPurchase: GovernmentPurchaseInfo | undefined;
+    if (
+      persistence.governmentPurchaseEntityType !== null &&
+      persistence.governmentPurchaseReductionRate !== null
+    ) {
       governmentPurchase = {
         entityType: persistence.governmentPurchaseEntityType as 1 | 2 | 3,
         reductionRate: parseFloat(persistence.governmentPurchaseReductionRate),
       };
     }
 
-    // Create IBSCBSGroup
+    // Create (IBSCBSGroup não tem reconstitute, apenas create)
     return IBSCBSGroup.create({
       cst: cstResult.value,
-      classificationCode: cClassTribResult.value,
+      classificationCode: classificationResult.value,
       baseValue: baseValueResult.value,
       ibsUfRate: ibsUfRateResult.value,
-      ibsUfValue: ibsUfMoneyResult.value,
+      ibsUfValue: ibsUfValueResult.value,
       ibsMunRate: ibsMunRateResult.value,
-      ibsMunValue: ibsMunMoneyResult.value,
+      ibsMunValue: ibsMunValueResult.value,
       cbsRate: cbsRateResult.value,
-      cbsValue: cbsMoneyResult.value,
+      cbsValue: cbsValueResult.value,
+      ibsUfEffectiveRate,
+      ibsMunEffectiveRate,
+      cbsEffectiveRate,
       deferral,
       refund,
       reduction,
@@ -327,4 +402,3 @@ export class FiscalDocumentIbsCbsMapper {
     });
   }
 }
-

@@ -1,72 +1,83 @@
 /**
- * XML Builder: Grupo Compra Governamental
+ * XML Builder: Grupo CompraGov (Compras Governamentais)
  * 
- * Conforme Nota Técnica 2025.001 e 2025.002
- * Tags: <compraGov>, <tpEnte>, <pReducao>
+ * Gera XML conforme NT 2025.001 (CT-e) e NT 2025.002 (NF-e)
  * 
- * Redução de alíquota para compras de entes públicos
+ * Estrutura:
+ * <compraGov>
+ *   <tpEnteGov>1</tpEnteGov>
+ *   <UFEnteGov>DF</UFEnteGov>
+ * </compraGov>
+ * 
+ * Identifica compras realizadas por entes públicos,
+ * que podem ter alíquotas reduzidas de IBS/CBS.
  */
+
+export interface GovernmentPurchaseData {
+  entityType: 1 | 2 | 3; // 1=União, 2=Estado/DF, 3=Município
+  uf?: string; // UF do ente (obrigatório se tipo 2 ou 3)
+  municipalityCode?: string; // Código IBGE (obrigatório se tipo 3)
+}
+
 export class GrupoCompraGov {
   /**
    * Tipos de ente governamental
-   * Nota: Distrito Federal está incluído no tipo 2 (Estadual/DF)
    */
   static readonly ENTITY_TYPES = {
-    FEDERAL: 1,
-    ESTADUAL: 2, // Inclui Distrito Federal
-    MUNICIPAL: 3,
-  } as const;
+    FEDERAL: 1 as const, // União
+    STATE: 2 as const, // Estado ou Distrito Federal
+    MUNICIPAL: 3 as const, // Município
+  };
 
   /**
-   * Gera XML do grupo Compra Governamental
+   * Gera XML do grupo compraGov
    */
-  static build(params: {
-    entityType: number;
-    reductionRate: number;
-  }): string {
+  static build(data: GovernmentPurchaseData): string {
     const xml: string[] = [];
+
+    xml.push('<compraGov>');
+    xml.push(`  <tpEnteGov>${data.entityType}</tpEnteGov>`);
     
-    xml.push('  <compraGov>');
+    // UF obrigatório para Estado/DF e Município
+    if (data.uf && (data.entityType === 2 || data.entityType === 3)) {
+      xml.push(`  <UFEnteGov>${data.uf}</UFEnteGov>`);
+    }
     
-    // Tipo de Ente (obrigatório)
-    xml.push(`    <tpEnte>${params.entityType}</tpEnte>`);
+    // Código município obrigatório para Município
+    if (data.municipalityCode && data.entityType === 3) {
+      xml.push(`  <cMunEnteGov>${data.municipalityCode}</cMunEnteGov>`);
+    }
     
-    // Percentual de Redução (obrigatório)
-    xml.push(`    <pReducao>${this.formatDecimal(params.reductionRate)}</pReducao>`);
-    
-    xml.push('  </compraGov>');
-    
+    xml.push('</compraGov>');
+
     return xml.join('\n');
   }
 
   /**
-   * Formata número para XML (2 casas decimais)
+   * Valida campos obrigatórios
    */
-  private static formatDecimal(value: number): string {
-    return value.toFixed(2);
-  }
-
-  /**
-   * Valida campos obrigatórios antes de gerar XML
-   */
-  static validate(params: {
-    entityType: number;
-    reductionRate: number;
-  }): { valid: boolean; errors: string[] } {
+  static validate(data: GovernmentPurchaseData): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
-    // Validar tipo de ente (1 a 3)
-    if (!params.entityType || params.entityType < 1 || params.entityType > 3) {
-      errors.push('Tipo de ente inválido (deve ser 1-3)');
+
+    // Validar tipo de ente
+    if (!data.entityType || ![1, 2, 3].includes(data.entityType)) {
+      errors.push('Tipo de ente governamental deve ser 1 (União), 2 (Estado/DF) ou 3 (Município)');
     }
-    
-    // Validar percentual de redução (0 a 100)
-    if (params.reductionRate === null || params.reductionRate === undefined) {
-      errors.push('Percentual de redução é obrigatório');
-    } else if (params.reductionRate < 0 || params.reductionRate > 100) {
-      errors.push('Percentual de redução deve estar entre 0 e 100');
+
+    // Validar UF para Estado/DF e Município
+    if (data.entityType === 2 || data.entityType === 3) {
+      if (!data.uf || data.uf.trim().length !== 2) {
+        errors.push('UF é obrigatória para Estado/DF ou Município (2 letras)');
+      }
     }
-    
+
+    // Validar código município para Município
+    if (data.entityType === 3) {
+      if (!data.municipalityCode || data.municipalityCode.trim().length !== 7) {
+        errors.push('Código do município é obrigatório e deve ter 7 dígitos');
+      }
+    }
+
     return {
       valid: errors.length === 0,
       errors,
@@ -74,60 +85,18 @@ export class GrupoCompraGov {
   }
 
   /**
-   * Retorna descrição do tipo de ente
+   * Helper para obter descrição do tipo de ente
    */
-  static getEntityTypeName(entityType: number): string {
+  static getEntityTypeDescription(entityType: 1 | 2 | 3): string {
     switch (entityType) {
-      case this.ENTITY_TYPES.FEDERAL:
-        return 'Federal';
-      case this.ENTITY_TYPES.ESTADUAL:
-        return 'Estadual/DF';
-      case this.ENTITY_TYPES.MUNICIPAL:
-        return 'Municipal';
+      case 1:
+        return 'União Federal';
+      case 2:
+        return 'Estado ou Distrito Federal';
+      case 3:
+        return 'Município';
       default:
-        return 'Desconhecido';
+        return 'Tipo desconhecido';
     }
-  }
-
-  /**
-   * Verifica se CNPJ é de ente governamental
-   * (Validação simplificada - em produção, consultar base de dados)
-   */
-  static isGovernmentEntity(cnpj: string): boolean {
-    const cleanCnpj = cnpj.replace(/\D/g, '');
-    
-    // CNPJs públicos geralmente terminam em 0001 e têm padrões específicos
-    // Esta é uma validação simplificada
-    // Em produção, consultar SIAFI, Serpro ou base própria
-    
-    // Exemplos conhecidos (lista parcial):
-    const governmentPrefixes = [
-      '00394460', // União (Tesouro Nacional)
-      '00000000', // Administração direta federal
-      '26990000', // Prefeituras (padrão aproximado)
-      '00360305', // Banco do Brasil (operações gov)
-    ];
-    
-    return governmentPrefixes.some(prefix => cleanCnpj.startsWith(prefix));
-  }
-
-  /**
-   * Calcula valor da redução aplicada
-   */
-  static calculateReduction(originalValue: number, reductionRate: number): number {
-    if (reductionRate < 0 || reductionRate > 100) {
-      throw new Error('Percentual de redução deve estar entre 0 e 100');
-    }
-    
-    return originalValue * (reductionRate / 100);
-  }
-
-  /**
-   * Calcula valor após redução
-   */
-  static applyReduction(originalValue: number, reductionRate: number): number {
-    const reduction = this.calculateReduction(originalValue, reductionRate);
-    return originalValue - reduction;
   }
 }
-

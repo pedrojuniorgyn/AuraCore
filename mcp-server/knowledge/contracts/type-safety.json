@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.89",
+  "version": "1.0.90",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1645,6 +1645,19 @@
         "mcp-server/knowledge/corrections/e7-7-corrections.json"
       ],
       "pattern_created": "reconstitute-document-type-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-550957",
+      "date": "2025-12-30",
+      "epic": "E7.7",
+      "error": "BUG: Receipt.cancel() criava três objetos Date separados (new Date() em três linhas diferentes) para canceladoEm, updatedAt e _updatedAt, causando inconsistência de microsegundos entre timestamps. O timestamp em _updatedAt (usado pelo getter) podia diferir do timestamp em _props.updatedAt (persistido no banco), criando dessincronia entre o estado do objeto e os dados persistidos.",
+      "correction": "Criado variável const now = new Date() única antes das atribuições, reutilizada para canceladoEm, updatedAt e _updatedAt. Garante que todos os três campos tenham exatamente o mesmo timestamp, mantendo consistência entre o estado interno do objeto e os dados persistidos no banco. Padrão já implementado corretamente em create() foi replicado em cancel(). 0 erros TypeScript, 703 testes passando, 0 cursor issues.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/receipt/Receipt.ts"
+      ],
+      "pattern_created": "single-timestamp-consistency",
       "status": "APPROVED",
       "must_not_repeat": true
     }

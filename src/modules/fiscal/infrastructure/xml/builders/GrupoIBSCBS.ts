@@ -1,84 +1,111 @@
-import { IBSCBSGroup } from '../../../domain/tax/value-objects/IBSCBSGroup';
+import { IBSCBSGroup } from '@/modules/fiscal/domain/tax/value-objects/IBSCBSGroup';
 
 /**
- * XML Builder: Grupo IBS/CBS (NFe/CTe)
+ * XML Builder: Grupo IBSCBS
  * 
- * Conforme Nota Técnica 2025.001 e 2025.002
- * Tags: <IBSCBS>, <vBC>, <pIBSUF>, etc.
+ * Gera XML conforme NT 2025.001 (CT-e) e NT 2025.002 (NF-e)
+ * 
+ * Estrutura:
+ * <IBSCBS>
+ *   <CST>00</CST>
+ *   <cClassTrib>010101001</cClassTrib>
+ *   <vBC>1000.00</vBC>
+ *   <pIBSUF>0.10</pIBSUF>
+ *   <vIBSUF>1.00</vIBSUF>
+ *   <pIBSMun>0.10</pIBSMun>
+ *   <vIBSMun>1.00</vIBSMun>
+ *   <pCBS>0.90</pCBS>
+ *   <vCBS>9.00</vCBS>
+ *   <!-- campos opcionais: diferimento, devolução, redução, crédito presumido -->
+ * </IBSCBS>
  */
 export class GrupoIBSCBS {
   /**
-   * Gera XML do grupo IBS/CBS
+   * Gera XML do grupo IBSCBS
    */
   static build(group: IBSCBSGroup): string {
     const xml: string[] = [];
+
+    xml.push('<IBSCBS>');
     
-    xml.push('  <IBSCBS>');
+    // CST (obrigatório)
+    xml.push(`  <CST>${group.cst.value}</CST>`);
     
-    // CST e Classificação Tributária (obrigatórios)
-    xml.push(`    <CST>${group.cst.value}</CST>`);
-    xml.push(`    <cClassTrib>${group.classificationCode.value}</cClassTrib>`);
+    // Classificação Tributária (obrigatório)
+    xml.push(`  <cClassTrib>${group.classificationCode.code}</cClassTrib>`);
     
     // Base de Cálculo (obrigatório)
-    xml.push(`    <vBC>${this.formatDecimal(group.baseValue.amount)}</vBC>`);
+    xml.push(`  <vBC>${group.baseValue.amount.toFixed(2)}</vBC>`);
     
     // IBS UF (obrigatório)
-    xml.push(`    <pIBSUF>${this.formatDecimal(group.ibsUfRate.percentual)}</pIBSUF>`);
-    xml.push(`    <vIBSUF>${this.formatDecimal(group.ibsUfValue.amount)}</vIBSUF>`);
+    xml.push(`  <pIBSUF>${group.ibsUfRate.percentual.toFixed(4)}</pIBSUF>`);
+    xml.push(`  <vIBSUF>${group.ibsUfValue.amount.toFixed(2)}</vIBSUF>`);
     
     // IBS Municipal (obrigatório)
-    xml.push(`    <pIBSMun>${this.formatDecimal(group.ibsMunRate.percentual)}</pIBSMun>`);
-    xml.push(`    <vIBSMun>${this.formatDecimal(group.ibsMunValue.amount)}</vIBSMun>`);
+    xml.push(`  <pIBSMun>${group.ibsMunRate.percentual.toFixed(4)}</pIBSMun>`);
+    xml.push(`  <vIBSMun>${group.ibsMunValue.amount.toFixed(2)}</vIBSMun>`);
     
     // CBS (obrigatório)
-    xml.push(`    <pCBS>${this.formatDecimal(group.cbsRate.percentual)}</pCBS>`);
-    xml.push(`    <vCBS>${this.formatDecimal(group.cbsValue.amount)}</vCBS>`);
+    xml.push(`  <pCBS>${group.cbsRate.percentual.toFixed(4)}</pCBS>`);
+    xml.push(`  <vCBS>${group.cbsValue.amount.toFixed(2)}</vCBS>`);
     
-    // Diferimento (opcional)
+    // Alíquotas efetivas (opcionais)
+    if (group.ibsUfEffectiveRate) {
+      xml.push(`  <pIBSUFEfet>${group.ibsUfEffectiveRate.percentual.toFixed(4)}</pIBSUFEfet>`);
+    }
+    if (group.ibsMunEffectiveRate) {
+      xml.push(`  <pIBSMunEfet>${group.ibsMunEffectiveRate.percentual.toFixed(4)}</pIBSMunEfet>`);
+    }
+    if (group.cbsEffectiveRate) {
+      xml.push(`  <pCBSEfet>${group.cbsEffectiveRate.percentual.toFixed(4)}</pCBSEfet>`);
+    }
+    
+    // Diferimento (gDif) - opcional
     if (group.deferral) {
-      xml.push(`    <pDiferimento>${this.formatDecimal(group.deferral.deferralRate)}</pDiferimento>`);
-      xml.push(`    <vDiferimentoIBS>${this.formatDecimal(group.deferral.ibsDeferredValue.amount)}</vDiferimentoIBS>`);
-      xml.push(`    <vDiferimentoCBS>${this.formatDecimal(group.deferral.cbsDeferredValue.amount)}</vDiferimentoCBS>`);
+      xml.push('  <gDif>');
+      xml.push(`    <pDif>${group.deferral.deferralRate.toFixed(2)}</pDif>`);
+      xml.push(`    <vIBSDif>${group.deferral.ibsDeferredValue.amount.toFixed(2)}</vIBSDif>`);
+      xml.push(`    <vCBSDif>${group.deferral.cbsDeferredValue.amount.toFixed(2)}</vCBSDif>`);
+      xml.push('  </gDif>');
     }
     
-    // Devolução/Ressarcimento (opcional)
+    // Devolução (gDev) - opcional
     if (group.refund) {
-      xml.push(`    <vDevolucaoIBS>${this.formatDecimal(group.refund.ibsRefundValue.amount)}</vDevolucaoIBS>`);
-      xml.push(`    <vDevolucaoCBS>${this.formatDecimal(group.refund.cbsRefundValue.amount)}</vDevolucaoCBS>`);
+      xml.push('  <gDev>');
+      xml.push(`    <vIBSDev>${group.refund.ibsRefundValue.amount.toFixed(2)}</vIBSDev>`);
+      xml.push(`    <vCBSDev>${group.refund.cbsRefundValue.amount.toFixed(2)}</vCBSDev>`);
+      xml.push('  </gDev>');
     }
     
-    // Redução (opcional)
+    // Redução (gRed) - opcional
     if (group.reduction) {
-      xml.push(`    <pReducaoIBS>${this.formatDecimal(group.reduction.ibsReductionRate)}</pReducaoIBS>`);
-      xml.push(`    <pReducaoCBS>${this.formatDecimal(group.reduction.cbsReductionRate)}</pReducaoCBS>`);
+      xml.push('  <gRed>');
+      xml.push(`    <pRedIBS>${group.reduction.ibsReductionRate.toFixed(2)}</pRedIBS>`);
+      xml.push(`    <pRedCBS>${group.reduction.cbsReductionRate.toFixed(2)}</pRedCBS>`);
+      xml.push('  </gRed>');
     }
     
-    // Crédito Presumido (opcional)
+    // Crédito Presumido (gCredPres) - opcional
     if (group.presumedCredit) {
-      xml.push(`    <cCredPresumido>${group.presumedCredit.creditCode}</cCredPresumido>`);
-      xml.push(`    <pCredPresumido>${this.formatDecimal(group.presumedCredit.creditRate)}</pCredPresumido>`);
-      xml.push(`    <vCredPresumidoIBS>${this.formatDecimal(group.presumedCredit.ibsCreditValue.amount)}</vCredPresumidoIBS>`);
-      xml.push(`    <vCredPresumidoCBS>${this.formatDecimal(group.presumedCredit.cbsCreditValue.amount)}</vCredPresumidoCBS>`);
+      xml.push('  <gCredPres>');
+      xml.push(`    <cCredPres>${group.presumedCredit.creditCode}</cCredPres>`);
+      xml.push(`    <pCredPres>${group.presumedCredit.creditRate.toFixed(2)}</pCredPres>`);
+      xml.push(`    <vCredPresIBS>${group.presumedCredit.ibsCreditValue.amount.toFixed(2)}</vCredPresIBS>`);
+      xml.push(`    <vCredPresCBS>${group.presumedCredit.cbsCreditValue.amount.toFixed(2)}</vCredPresCBS>`);
+      xml.push('  </gCredPres>');
     }
     
-    // Compra Governamental (opcional)
+    // Compras Governamentais (gCompraGov) - opcional
     if (group.governmentPurchase) {
-      xml.push('    <compraGov>');
-      xml.push(`      <tpEnte>${group.governmentPurchase.entityType}</tpEnte>`);
-      xml.push(`      <pReducao>${this.formatDecimal(group.governmentPurchase.reductionRate)}</pReducao>`);
-      xml.push('    </compraGov>');
+      xml.push('  <gCompraGov>');
+      xml.push(`    <tpEnteGov>${group.governmentPurchase.entityType}</tpEnteGov>`);
+      xml.push(`    <pRedCompraGov>${group.governmentPurchase.reductionRate.toFixed(2)}</pRedCompraGov>`);
+      xml.push('  </gCompraGov>');
     }
     
-    xml.push('  </IBSCBS>');
-    
-    return xml.join('\n');
-  }
+    xml.push('</IBSCBS>');
 
-  /**
-   * Formata número para XML (2 casas decimais)
-   */
-  private static formatDecimal(value: number): string {
-    return value.toFixed(2);
+    return xml.join('\n');
   }
 
   /**
@@ -86,47 +113,46 @@ export class GrupoIBSCBS {
    */
   static validate(group: IBSCBSGroup): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
-    if (!group.cst || !group.cst.value) {
-      errors.push('CST é obrigatório');
+
+    if (!group.cst) {
+      errors.push('CST é obrigatório no grupo IBSCBS');
     }
-    
-    if (!group.classificationCode || !group.classificationCode.value) {
-      errors.push('cClassTrib é obrigatório');
+
+    if (!group.classificationCode) {
+      errors.push('Classificação Tributária (cClassTrib) é obrigatória');
     }
-    
+
     if (!group.baseValue || group.baseValue.amount < 0) {
-      errors.push('Base de cálculo inválida');
+      errors.push('Base de Cálculo não pode ser negativa');
     }
-    
-    if (!group.ibsUfRate || group.ibsUfRate.percentual < 0) {
-      errors.push('Alíquota IBS UF inválida');
+
+    if (!group.ibsUfRate) {
+      errors.push('Alíquota IBS UF é obrigatória');
     }
-    
+
     if (!group.ibsUfValue || group.ibsUfValue.amount < 0) {
-      errors.push('Valor IBS UF inválido');
+      errors.push('Valor IBS UF não pode ser negativo');
     }
-    
-    if (!group.ibsMunRate || group.ibsMunRate.percentual < 0) {
-      errors.push('Alíquota IBS Municipal inválida');
+
+    if (!group.ibsMunRate) {
+      errors.push('Alíquota IBS Municipal é obrigatória');
     }
-    
+
     if (!group.ibsMunValue || group.ibsMunValue.amount < 0) {
-      errors.push('Valor IBS Municipal inválido');
+      errors.push('Valor IBS Municipal não pode ser negativo');
     }
-    
-    if (!group.cbsRate || group.cbsRate.percentual < 0) {
-      errors.push('Alíquota CBS inválida');
+
+    if (!group.cbsRate) {
+      errors.push('Alíquota CBS é obrigatória');
     }
-    
+
     if (!group.cbsValue || group.cbsValue.amount < 0) {
-      errors.push('Valor CBS inválido');
+      errors.push('Valor CBS não pode ser negativo');
     }
-    
+
     return {
       valid: errors.length === 0,
       errors,
     };
   }
 }
-

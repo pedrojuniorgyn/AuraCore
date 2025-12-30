@@ -1,131 +1,113 @@
 import { describe, it, expect } from 'vitest';
-import { GrupoCompraGov } from '@/modules/fiscal/infrastructure/xml/builders/GrupoCompraGov';
+import { GrupoCompraGov, GovernmentPurchaseData } from '@/modules/fiscal/infrastructure/xml/builders/GrupoCompraGov';
 
-describe('GrupoCompraGov XML Builder', () => {
-  describe('build', () => {
-    it('should generate valid XML for government purchase', () => {
-      const xml = GrupoCompraGov.build({
-        entityType: 2,
-        reductionRate: 20.5,
-      });
+describe('GrupoCompraGov', () => {
+  it('should generate XML for federal government (União)', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: GrupoCompraGov.ENTITY_TYPES.FEDERAL,
+    };
 
-      expect(xml).toContain('<compraGov>');
-      expect(xml).toContain('<tpEnte>2</tpEnte>');
-      expect(xml).toContain('<pReducao>20.50</pReducao>');
-      expect(xml).toContain('</compraGov>');
-    });
+    const xml = GrupoCompraGov.build(data);
 
-    it('should format decimal with 2 places', () => {
-      const xml = GrupoCompraGov.build({
-        entityType: 1,
-        reductionRate: 15,
-      });
-
-      expect(xml).toContain('<pReducao>15.00</pReducao>');
-    });
+    expect(xml).toContain('<compraGov>');
+    expect(xml).toContain('<tpEnteGov>1</tpEnteGov>');
+    expect(xml).toContain('</compraGov>');
+    expect(xml).not.toContain('<UFEnteGov>');
+    expect(xml).not.toContain('<cMunEnteGov>');
   });
 
-  describe('validate', () => {
-    it('should validate valid government purchase params', () => {
-      const validation = GrupoCompraGov.validate({
-        entityType: 2,
-        reductionRate: 20.5,
-      });
+  it('should generate XML for state government with UF', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: GrupoCompraGov.ENTITY_TYPES.STATE,
+      uf: 'SP',
+    };
 
-      expect(validation.valid).toBe(true);
-      expect(validation.errors).toHaveLength(0);
-    });
+    const xml = GrupoCompraGov.build(data);
 
-    it('should fail validation with invalid entity type (too low)', () => {
-      const validation = GrupoCompraGov.validate({
-        entityType: 0,
-        reductionRate: 20,
-      });
-
-      expect(validation.valid).toBe(false);
-      expect(validation.errors.some(e => e.includes('Tipo de ente'))).toBe(true);
-    });
-
-    it('should fail validation with invalid entity type (too high)', () => {
-      const validation = GrupoCompraGov.validate({
-        entityType: 4,
-        reductionRate: 20,
-      });
-
-      expect(validation.valid).toBe(false);
-      expect(validation.errors.some(e => e.includes('Tipo de ente'))).toBe(true);
-    });
-
-    it('should fail validation with negative reduction rate', () => {
-      const validation = GrupoCompraGov.validate({
-        entityType: 2,
-        reductionRate: -10,
-      });
-
-      expect(validation.valid).toBe(false);
-      expect(validation.errors.some(e => e.includes('entre 0 e 100'))).toBe(true);
-    });
-
-    it('should fail validation with reduction rate > 100', () => {
-      const validation = GrupoCompraGov.validate({
-        entityType: 2,
-        reductionRate: 101,
-      });
-
-      expect(validation.valid).toBe(false);
-      expect(validation.errors.some(e => e.includes('entre 0 e 100'))).toBe(true);
-    });
+    expect(xml).toContain('<compraGov>');
+    expect(xml).toContain('<tpEnteGov>2</tpEnteGov>');
+    expect(xml).toContain('<UFEnteGov>SP</UFEnteGov>');
+    expect(xml).toContain('</compraGov>');
   });
 
-  describe('getEntityTypeName', () => {
-    it('should return correct names for entity types', () => {
-      expect(GrupoCompraGov.getEntityTypeName(1)).toBe('Federal');
-      expect(GrupoCompraGov.getEntityTypeName(2)).toBe('Estadual/DF');
-      expect(GrupoCompraGov.getEntityTypeName(3)).toBe('Municipal');
-      expect(GrupoCompraGov.getEntityTypeName(99)).toBe('Desconhecido');
-    });
+  it('should generate XML for municipal government with UF and municipality code', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: GrupoCompraGov.ENTITY_TYPES.MUNICIPAL,
+      uf: 'SP',
+      municipalityCode: '3550308',
+    };
+
+    const xml = GrupoCompraGov.build(data);
+
+    expect(xml).toContain('<compraGov>');
+    expect(xml).toContain('<tpEnteGov>3</tpEnteGov>');
+    expect(xml).toContain('<UFEnteGov>SP</UFEnteGov>');
+    expect(xml).toContain('<cMunEnteGov>3550308</cMunEnteGov>');
+    expect(xml).toContain('</compraGov>');
   });
 
-  describe('calculateReduction', () => {
-    it('should calculate reduction correctly', () => {
-      const reduction = GrupoCompraGov.calculateReduction(1000, 20);
-      expect(reduction).toBe(200);
-    });
+  it('should validate federal government successfully', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: 1,
+    };
 
-    it('should handle 0% reduction', () => {
-      const reduction = GrupoCompraGov.calculateReduction(1000, 0);
-      expect(reduction).toBe(0);
-    });
+    const validation = GrupoCompraGov.validate(data);
 
-    it('should handle 100% reduction', () => {
-      const reduction = GrupoCompraGov.calculateReduction(1000, 100);
-      expect(reduction).toBe(1000);
-    });
-
-    it('should throw error for negative rate', () => {
-      expect(() => GrupoCompraGov.calculateReduction(1000, -10)).toThrow();
-    });
-
-    it('should throw error for rate > 100', () => {
-      expect(() => GrupoCompraGov.calculateReduction(1000, 101)).toThrow();
-    });
+    expect(validation.valid).toBe(true);
+    expect(validation.errors).toHaveLength(0);
   });
 
-  describe('applyReduction', () => {
-    it('should apply reduction correctly', () => {
-      const finalValue = GrupoCompraGov.applyReduction(1000, 20);
-      expect(finalValue).toBe(800);
-    });
+  it('should fail validation for state without UF', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: 2,
+      // UF missing
+    };
 
-    it('should handle 0% reduction', () => {
-      const finalValue = GrupoCompraGov.applyReduction(1000, 0);
-      expect(finalValue).toBe(1000);
-    });
+    const validation = GrupoCompraGov.validate(data);
 
-    it('should handle 100% reduction', () => {
-      const finalValue = GrupoCompraGov.applyReduction(1000, 100);
-      expect(finalValue).toBe(0);
-    });
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.some(e => e.includes('UF é obrigatória'))).toBe(true);
+  });
+
+  it('should fail validation for municipality without municipality code', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: 3,
+      uf: 'SP',
+      // municipalityCode missing
+    };
+
+    const validation = GrupoCompraGov.validate(data);
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.some(e => e.includes('Código do município é obrigatório'))).toBe(true);
+  });
+
+  it('should fail validation with invalid entity type', () => {
+    const data = {
+      entityType: 4 as 1, // Cast para contornar validação de tipo
+    };
+
+    const validation = GrupoCompraGov.validate(data as GovernmentPurchaseData);
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.some(e => e.includes('Tipo de ente governamental deve ser'))).toBe(true);
+  });
+
+  it('should return correct entity type descriptions', () => {
+    expect(GrupoCompraGov.getEntityTypeDescription(1)).toBe('União Federal');
+    expect(GrupoCompraGov.getEntityTypeDescription(2)).toBe('Estado ou Distrito Federal');
+    expect(GrupoCompraGov.getEntityTypeDescription(3)).toBe('Município');
+  });
+
+  it('should fail validation when UF has incorrect length', () => {
+    const data: GovernmentPurchaseData = {
+      entityType: 2,
+      uf: 'SAO', // 3 letras, deveria ser 2
+    };
+
+    const validation = GrupoCompraGov.validate(data);
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors.some(e => e.includes('2 letras'))).toBe(true);
   });
 });
-
