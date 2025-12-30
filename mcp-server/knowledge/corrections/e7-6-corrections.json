@@ -1,0 +1,65 @@
+{
+  "epic": "E7.6",
+  "corrections": [
+    {
+      "id": "LC-467101",
+      "date": "2025-12-30",
+      "epic": "E7.6",
+      "error": "Implementacao COMPLETA do E7.6 - Financial Expense Reports Module seguindo regra MCP continuous_implementation (NAO interromper por limite de token)",
+      "correction": "Implementados TODOS os arquivos solicitados sem interrupcao: Domain (6 arquivos), Infrastructure (5 arquivos), Application (3 arquivos), Tests (40 novos testes). Corrigidos erros TypeScript relacionados a import type em decorators e sintaxe Drizzle para limit. Todos testes passando, 0 cursor issues.",
+      "files_affected": [
+        "src/modules/financial/domain/value-objects/expense/ExpenseCategory.ts",
+        "src/modules/financial/domain/value-objects/expense/ExpenseReportStatus.ts",
+        "src/modules/financial/domain/value-objects/expense/Advance.ts",
+        "src/modules/financial/domain/entities/expense/ExpenseItem.ts",
+        "src/modules/financial/domain/entities/expense/ExpenseReport.ts",
+        "src/modules/financial/domain/services/IExpensePolicyService.ts",
+        "src/modules/financial/domain/ports/output/IExpenseReportRepository.ts",
+        "src/modules/financial/infrastructure/persistence/expense/ExpenseReportSchema.ts",
+        "src/modules/financial/infrastructure/persistence/expense/ExpenseItemSchema.ts",
+        "src/modules/financial/infrastructure/persistence/expense/ExpenseReportMapper.ts",
+        "src/modules/financial/infrastructure/persistence/expense/DrizzleExpenseReportRepository.ts",
+        "src/modules/financial/infrastructure/services/ExpensePolicyService.ts",
+        "src/modules/financial/application/use-cases/expense/SubmitExpenseReportUseCase.ts",
+        "src/modules/financial/application/use-cases/expense/ApproveExpenseReportUseCase.ts",
+        "src/modules/financial/application/use-cases/expense/RejectExpenseReportUseCase.ts",
+        "tests/unit/modules/financial/domain/value-objects/expense/Advance.test.ts",
+        "tests/unit/modules/financial/domain/entities/expense/ExpenseItem.test.ts",
+        "tests/unit/modules/financial/domain/entities/expense/ExpenseReport.test.ts",
+        "tests/unit/modules/financial/infrastructure/persistence/expense/ExpenseReportMapper.test.ts"
+      ],
+      "pattern_created": "continuous_implementation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-927511",
+      "date": "2025-12-30",
+      "epic": "E7.6",
+      "error": "BUG 1: Type cast com precedência incorreta em ExpenseReportMapper.ts (linha 313) - `as ComprovanteType || undefined` permitia null ser castado antes do || operator. BUG 2: Acesso direto a .value sem verificar Result em ExpenseReport.ts (linha 437) - `Money.create(0, 'BRL').value` violava Result pattern.",
+      "correction": "BUG 1: Substituído cast direto por ternário `persistence.comprovanteType !== null ? (persistence.comprovanteType as ComprovanteType) : undefined` para garantir precedência correta. BUG 2: Adicionada verificação de Result antes de acessar .value com `if (Result.isFail(zeroMoneyResult))` e throw de erro explicativo.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/persistence/expense/ExpenseReportMapper.ts",
+        "src/modules/financial/domain/entities/expense/ExpenseReport.ts"
+      ],
+      "pattern_created": "type_safety_cast_precedence",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-348799",
+      "date": "2025-12-30",
+      "epic": "E7.6",
+      "error": "BUG: Advance.reconstitute() e ExpenseReport.reconstitute() não validavam statusAprovacao/status, permitindo que valores inválidos do banco fossem reconstituídos como objetos de domínio inválidos, violando invariante do domínio (AdvanceApprovalStatus = PENDING|APPROVED|REJECTED e ExpenseReportStatus = DRAFT|SUBMITTED|UNDER_REVIEW|APPROVED|REJECTED|PAID).",
+      "correction": "Advance.reconstitute(): Adicionada função helper isValidAdvanceStatus() e validação de statusAprovacao antes de criar instância. ExpenseReport.reconstitute(): Adicionado import e uso de isValidExpenseReportStatus() para validar status. Adicionados 3 novos testes para validar reconstitute com status inválido, status válido e valor inválido.",
+      "files_affected": [
+        "src/modules/financial/domain/value-objects/expense/Advance.ts",
+        "src/modules/financial/domain/entities/expense/ExpenseReport.ts",
+        "tests/unit/modules/financial/domain/value-objects/expense/Advance.test.ts"
+      ],
+      "pattern_created": "reconstitute_validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
