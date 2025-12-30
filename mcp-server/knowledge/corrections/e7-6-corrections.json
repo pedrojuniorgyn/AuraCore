@@ -60,6 +60,20 @@
       "pattern_created": "reconstitute_validation",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-056355",
+      "date": "2025-12-30",
+      "epic": "E7.6",
+      "error": "BUG LC-348799: Advance.reconstitute() não validava statusAprovacao contra enum válido, permitindo que dados corrompidos do banco criassem objetos com status inválido, violando invariante do domínio (AdvanceApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED')",
+      "correction": "Adicionado VALID_ADVANCE_STATUSES constant e isValidAdvanceStatus() function. Integrada validação em Advance.reconstitute() que retorna Result.fail() se statusAprovacao for inválido. Verificado que ExpenseCategory, ExpenseReportStatus, ExpenseItem e ExpenseReport já possuíam validações similares em seus métodos reconstitute/create. Adicionado teste unitário para validar falha com status inválido.",
+      "files_affected": [
+        "src/modules/financial/domain/value-objects/expense/Advance.ts",
+        "tests/unit/modules/financial/domain/value-objects/expense/Advance.test.ts"
+      ],
+      "pattern_created": "reconstitute-enum-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

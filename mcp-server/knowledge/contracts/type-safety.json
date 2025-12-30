@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.84",
+  "version": "1.0.89",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1558,6 +1558,93 @@
         "tests/unit/modules/financial/domain/value-objects/expense/Advance.test.ts"
       ],
       "pattern_created": "reconstitute_validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-056355",
+      "date": "2025-12-30",
+      "epic": "E7.6",
+      "error": "BUG LC-348799: Advance.reconstitute() não validava statusAprovacao contra enum válido, permitindo que dados corrompidos do banco criassem objetos com status inválido, violando invariante do domínio (AdvanceApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED')",
+      "correction": "Adicionado VALID_ADVANCE_STATUSES constant e isValidAdvanceStatus() function. Integrada validação em Advance.reconstitute() que retorna Result.fail() se statusAprovacao for inválido. Verificado que ExpenseCategory, ExpenseReportStatus, ExpenseItem e ExpenseReport já possuíam validações similares em seus métodos reconstitute/create. Adicionado teste unitário para validar falha com status inválido.",
+      "files_affected": [
+        "src/modules/financial/domain/value-objects/expense/Advance.ts",
+        "tests/unit/modules/financial/domain/value-objects/expense/Advance.test.ts"
+      ],
+      "pattern_created": "reconstitute-enum-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-069769",
+      "date": "2025-12-30",
+      "epic": "E7.7",
+      "error": "E7.7 - RECIBOS: Implementação completa do módulo de gestão de recibos com validação CPF/CNPJ, numeração sequencial por tipo/série, valor por extenso automático, multi-tenancy, escape HTML no PDF, Money com 2 campos, e 43 testes unitários",
+      "correction": "Criados 11 arquivos de produção e 5 de teste. Domain: Receipt (Aggregate Root), ReceiptType, ReceiptParty com validação CPF/CNPJ (11 dígitos) e CNPJ (14 dígitos), MoneyInWords para conversão automática. Infrastructure: ReceiptSchema espelhando Domain completo, ReceiptMapper com roundtrip validado, DrizzleReceiptRepository com multi-tenancy obrigatório, ReceiptNumberGenerator sequencial por org/branch/tipo/série, ReceiptPdfGenerator com escape HTML de TODOS valores incluindo IDs. Validações: status em reconstitute(), Result.isFail() antes de .value, Money sempre com 2 campos (amount + currency). 0 erros TypeScript, 0 uso de any, 0 cursor issues. 118 testes passando (43 novos).",
+      "files_affected": [
+        "src/modules/financial/domain/entities/receipt/Receipt.ts",
+        "src/modules/financial/domain/value-objects/receipt/ReceiptType.ts",
+        "src/modules/financial/domain/value-objects/receipt/ReceiptParty.ts",
+        "src/modules/financial/domain/value-objects/receipt/MoneyInWords.ts",
+        "src/modules/financial/domain/ports/output/IReceiptRepository.ts",
+        "src/modules/financial/domain/services/IReceiptNumberGenerator.ts",
+        "src/modules/financial/infrastructure/persistence/receipt/ReceiptSchema.ts",
+        "src/modules/financial/infrastructure/persistence/receipt/ReceiptMapper.ts",
+        "src/modules/financial/infrastructure/persistence/receipt/DrizzleReceiptRepository.ts",
+        "src/modules/financial/infrastructure/services/ReceiptNumberGenerator.ts",
+        "src/modules/financial/infrastructure/pdf/ReceiptPdfGenerator.ts",
+        "tests/unit/modules/financial/domain/entities/receipt/Receipt.test.ts",
+        "tests/unit/modules/financial/domain/value-objects/receipt/ReceiptParty.test.ts",
+        "tests/unit/modules/financial/domain/value-objects/receipt/MoneyInWords.test.ts",
+        "tests/unit/modules/financial/infrastructure/persistence/receipt/ReceiptMapper.test.ts",
+        "tests/unit/modules/financial/infrastructure/services/ReceiptNumberGenerator.test.ts"
+      ],
+      "pattern_created": "receipt-management-complete-implementation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-430724",
+      "date": "2025-12-30",
+      "epic": "E7.7",
+      "error": "BUG LC-348799: Receipt.reconstitute() não validava tipo contra enum válido, permitindo que dados corrompidos do banco criassem objetos com ReceiptType inválido, violando invariante do domínio (ReceiptType = 'FRETE' | 'ADIANTAMENTO' | 'REEMBOLSO' | 'DEVOLUCAO' | 'SERVICO' | 'GENERICO'). Repete padrão já corrigido em LC-056355 (Advance).",
+      "correction": "Importado isValidReceiptType de ReceiptType.ts. Adicionada validação de tipo em Receipt.reconstitute() que retorna Result.fail() se tipo for inválido. Adicionado teste unitário 'should validate tipo during reconstitution' para verificar falha com tipo inválido. 0 erros TypeScript, 119 testes passando (1 novo), 0 cursor issues.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/receipt/Receipt.ts",
+        "tests/unit/modules/financial/domain/entities/receipt/Receipt.test.ts"
+      ],
+      "pattern_created": "reconstitute-receipt-type-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-055821",
+      "date": "2025-12-30",
+      "epic": "E7.7",
+      "error": "BUG: Receipt.reconstitute() validava tipo e status mas NÃO validava formaPagamento contra enum válido (PaymentMethod = 'DINHEIRO' | 'PIX' | 'TRANSFERENCIA' | 'CHEQUE' | 'CARTAO' | 'BOLETO' | 'OUTRO'), permitindo que dados corrompidos do banco criassem objetos com formaPagamento inválido. Segue mesmo padrão dos bugs anteriores LC-056355 (Advance) e LC-430724 (Receipt tipo).",
+      "correction": "Criado VALID_PAYMENT_METHODS constant e isValidPaymentMethod() function em Receipt.ts. Adicionada validação de formaPagamento em Receipt.reconstitute() que retorna Result.fail() se formaPagamento for inválido. Adicionado teste unitário 'should validate formaPagamento during reconstitution' para verificar falha com formaPagamento inválido. Criada regra ENFORCE-015 em mcp-enforcement-rules.json: 'Validação de enums em reconstitute()' que exige validação de TODOS os enums (status, tipo, categoria, formaPagamento, tipoDocumento, especieEmbalagem) em métodos reconstitute() e toDomain(). 0 erros TypeScript, 120 testes passando (1 novo), 0 cursor issues.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/receipt/Receipt.ts",
+        "tests/unit/modules/financial/domain/entities/receipt/Receipt.test.ts",
+        "mcp-server/knowledge/contracts/mcp-enforcement-rules.json"
+      ],
+      "pattern_created": "reconstitute-payment-method-validation",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-039121",
+      "date": "2025-12-30",
+      "epic": "E7.7",
+      "error": "BUG: ReceiptParty.reconstitute() não validava tipoDocumento contra enum válido (DocumentType = 'CPF' | 'CNPJ'), permitindo que dados corrompidos do banco criassem objetos com tipoDocumento inválido. Viola regra ENFORCE-015 que lista tipoDocumento como exemplo de enum que deve ser validado em reconstitute().",
+      "correction": "Criado VALID_TIPO_DOCUMENTO constant e isValidTipoDocumento() function em ReceiptParty.ts. Adicionada validação de tipoDocumento em ReceiptParty.reconstitute() que retorna Result.fail() se tipoDocumento for inválido. Adicionado teste unitário 'should validate tipoDocumento during reconstitution' para verificar falha com tipoDocumento inválido. 0 erros TypeScript, 702 testes passando (1 novo teste), 0 cursor issues.",
+      "files_affected": [
+        "src/modules/financial/domain/value-objects/receipt/ReceiptParty.ts",
+        "tests/unit/modules/financial/domain/value-objects/receipt/ReceiptParty.test.ts",
+        "mcp-server/knowledge/contracts/type-safety.json",
+        "mcp-server/knowledge/corrections/e7-7-corrections.json"
+      ],
+      "pattern_created": "reconstitute-document-type-validation",
       "status": "APPROVED",
       "must_not_repeat": true
     }
