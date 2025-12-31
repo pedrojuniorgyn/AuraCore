@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.92",
+  "version": "1.0.93",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1690,6 +1690,65 @@
         "tests/helpers/test-client.ts"
       ],
       "pattern_created": "Result Pattern Verification",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-012",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "name": "Result Type Pattern",
+      "error": "Uso de Result<T, Error> ao invés de Result<T> ou Result<T, string>. O tipo Result no AuraCore não aceita Error como segundo argumento genérico, causando 158 erros TypeScript no WMS.",
+      "correction": "Substituir todas as ocorrências de Result<T, Error> por Result<T> (para retornos void) ou Result<T, string> (para retornos com valor). Usar Result.fail('mensagem string') ao invés de Result.fail(new Error()). Pattern: static create(): Result<Entity> e Result.fail('error message').",
+      "files_affected": [
+        "src/modules/wms/domain/entities/*.ts",
+        "src/modules/wms/domain/value-objects/*.ts",
+        "src/modules/wms/domain/aggregates/*.ts",
+        "src/modules/wms/domain/services/*.ts"
+      ],
+      "detection": "grep -r 'Result<.*,.*Error>' src/",
+      "correct_pattern": "Result<Entity> ou Result<Entity, string>",
+      "incorrect_pattern": "Result<Entity, Error>",
+      "violation_action": "REJEITAR código imediatamente",
+      "pattern_created": "result-type-pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-013",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "name": "Result Static Methods",
+      "error": "Uso de result.isOk() e result.isFail() (métodos de instância) ao invés de Result.isOk(result) e Result.isFail(result) (métodos estáticos). A implementação do Result no AuraCore expõe apenas métodos estáticos, causando TypeError: result.isOk is not a function em 3 testes do WMS.",
+      "correction": "Substituir todas as verificações de result.isOk() por Result.isOk(result) e result.isFail() por Result.isFail(result). Adicionar import { Result } from '@/shared/domain' quando necessário. Pattern aplicável em código de produção e testes.",
+      "files_affected": [
+        "tests/unit/modules/wms/**/*.test.ts",
+        "src/modules/wms/domain/**/*.ts"
+      ],
+      "detection": "grep -rn '\\.isOk()\\|\\.isFail()' src/ tests/",
+      "correct_pattern": "Result.isOk(result) e Result.isFail(result)",
+      "incorrect_pattern": "result.isOk() e result.isFail()",
+      "violation_action": "REJEITAR código imediatamente",
+      "pattern_created": "result-static-methods",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-014",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "name": "Verificar Imports Existentes",
+      "error": "Import de ExecutionContext de @/shared/domain, mas o tipo não existe nesse módulo. Causou múltiplos erros TypeScript TS2307: Cannot find module. O padrão AuraCore para multi-tenancy é passar organizationId e branchId explicitamente como parâmetros.",
+      "correction": "ANTES de adicionar qualquer import de @/shared/domain, verificar se o tipo/módulo realmente existe. Comando: grep -r 'export.*NomeTipo' src/shared/domain/. Para repositories, usar organizationId: number e branchId: number como parâmetros explícitos ao invés de ExecutionContext.",
+      "files_affected": [
+        "src/modules/wms/domain/ports/*.ts"
+      ],
+      "detection": "npx tsc --noEmit 2>&1 | grep 'Cannot find module'",
+      "action_before_import": "grep -r 'export.*[nome]' src/shared/domain/ para confirmar existência",
+      "example_error": "import { ExecutionContext } from '@/shared/domain' - NÃO EXISTE",
+      "correct_pattern": "Verificar existência do tipo antes de importar",
+      "violation_action": "REJEITAR código imediatamente",
+      "pattern_created": "verify-imports-exist",
       "status": "APPROVED",
       "must_not_repeat": true
     }
