@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.90",
+  "version": "1.0.91",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1658,6 +1658,24 @@
         "src/modules/financial/domain/entities/receipt/Receipt.ts"
       ],
       "pattern_created": "single-timestamp-consistency",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-091839",
+      "date": "2025-12-31",
+      "epic": "E7.4.1 Semana 6",
+      "error": "BUG 1: FiscalDocumentIbsCbsMapper violava idempotência - toPersistence() criava new Date() para createdAt e updatedAt a cada chamada, causando saídas diferentes para mesma entrada. BUG 2: GrupoIS.validate() não terminava execução após detectar erros em baseValue/value null, tentando acessar .amount causando TypeError. BUG 3: GrupoIBSCBS.validate() e GrupoIS.validate() rejeitavam baseValue.amount <= 0 mas IBSCBSGroup (Domain) aceita zero, violando regra que Infrastructure Layer NUNCA deve ser mais restritiva que Domain Layer.",
+      "correction": "BUG 1: Adicionados parâmetros createdAt e updatedAt ao toPersistence(), timestamps agora são passados pelo caller (Repository), mapper preserva os recebidos garantindo idempotência. BUG 2: Adicionado return early após detectar erros críticos (if errors.length > 0 return), cálculo agora é seguro pois campos são validados antes. BUG 3: Alterado validação de baseValue.amount <= 0 para < 0, alinhando Infrastructure Layer com Domain Layer (permite zero conforme Domain permite). Testes atualizados para verificar que zero é aceito.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts",
+        "src/modules/fiscal/infrastructure/xml/builders/GrupoIS.ts",
+        "src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts",
+        "tests/unit/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.test.ts",
+        "tests/unit/modules/fiscal/infrastructure/xml/GrupoIS.test.ts",
+        "tests/unit/modules/fiscal/infrastructure/xml/GrupoIBSCBS.test.ts"
+      ],
+      "pattern_created": "mapper-idempotency-and-infrastructure-domain-alignment",
       "status": "APPROVED",
       "must_not_repeat": true
     }
