@@ -1,4 +1,4 @@
-import { Money } from '@/shared/domain';
+import { Money, Result } from '@/shared/domain';
 import { ISplitPaymentService } from './ISplitPaymentService';
 import {
   TaxBreakdown,
@@ -179,10 +179,16 @@ export class MockSplitPaymentService implements ISplitPaymentService {
    * Gera resumo do split payment
    */
   generateSummary(split: SplitInstruction[]): SplitPaymentSummary {
-    const totalAmount = Money.create(
+    const totalAmountResult = Money.create(
       split.reduce((sum, s) => sum + s.amount.amount, 0),
       'BRL'
-    ).value!;
+    );
+    
+    // Verificação de Result (não deve falhar com valores válidos)
+    if (!Result.isOk(totalAmountResult)) {
+      throw new Error(`Failed to create totalAmount: ${totalAmountResult.error}`);
+    }
+    const totalAmount = totalAmountResult.value;
 
     const breakdownByTributo = new Map<TributoSplit, Money>();
     const breakdownByRecipient = new Map<string, Money>();
@@ -191,10 +197,14 @@ export class MockSplitPaymentService implements ISplitPaymentService {
       // Por tributo
       const currentTributo = breakdownByTributo.get(instruction.tributo);
       if (currentTributo) {
-        breakdownByTributo.set(
-          instruction.tributo,
-          Money.create(currentTributo.amount + instruction.amount.amount, 'BRL').value!
+        const tributoMoneyResult = Money.create(
+          currentTributo.amount + instruction.amount.amount,
+          'BRL'
         );
+        if (!Result.isOk(tributoMoneyResult)) {
+          throw new Error(`Failed to create tributo Money: ${tributoMoneyResult.error}`);
+        }
+        breakdownByTributo.set(instruction.tributo, tributoMoneyResult.value);
       } else {
         breakdownByTributo.set(instruction.tributo, instruction.amount);
       }
@@ -203,10 +213,14 @@ export class MockSplitPaymentService implements ISplitPaymentService {
       const recipientKey = `${instruction.recipient.type}-${instruction.recipient.code}`;
       const currentRecipient = breakdownByRecipient.get(recipientKey);
       if (currentRecipient) {
-        breakdownByRecipient.set(
-          recipientKey,
-          Money.create(currentRecipient.amount + instruction.amount.amount, 'BRL').value!
+        const recipientMoneyResult = Money.create(
+          currentRecipient.amount + instruction.amount.amount,
+          'BRL'
         );
+        if (!Result.isOk(recipientMoneyResult)) {
+          throw new Error(`Failed to create recipient Money: ${recipientMoneyResult.error}`);
+        }
+        breakdownByRecipient.set(recipientKey, recipientMoneyResult.value);
       } else {
         breakdownByRecipient.set(recipientKey, instruction.amount);
       }

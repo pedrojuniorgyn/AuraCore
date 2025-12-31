@@ -54,6 +54,11 @@ class TestClientMock {
     return this.execute();
   }
 
+  /**
+   * STUB: Returns hardcoded success for structural E2E testing.
+   * This validates test structure, not actual API behavior.
+   * Replace with real HTTP client (e.g., supertest) for full integration testing.
+   */
   private async execute(): Promise<Response> {
     // Mock: retorna sucesso por padrão
     // Em testes reais, fazer requisição HTTP de verdade

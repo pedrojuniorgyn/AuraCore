@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.91",
+  "version": "1.0.92",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1676,6 +1676,20 @@
         "tests/unit/modules/fiscal/infrastructure/xml/GrupoIBSCBS.test.ts"
       ],
       "pattern_created": "mapper-idempotency-and-infrastructure-domain-alignment",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-844781",
+      "date": "2025-12-31",
+      "epic": "E7.4.1",
+      "error": "Non-null assertion (.value!) em Result sem verificação no método MockSplitPaymentService.generateSummary(). Três ocorrências: totalAmount, tributoMoney e recipientMoney usavam .value! diretamente, violando o Result pattern e podendo causar erro runtime se Money.create() falhasse.",
+      "correction": "Substituir .value! por verificação com Result.isOk() antes de acessar .value. Adicionar throw Error se Result falhar (não deve ocorrer com valores numéricos válidos). Adicionar import de Result do @/shared/domain. Adicionar disclaimer no test-client.ts documentando que é STUB intencional.",
+      "files_affected": [
+        "src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts",
+        "tests/helpers/test-client.ts"
+      ],
+      "pattern_created": "Result Pattern Verification",
       "status": "APPROVED",
       "must_not_repeat": true
     }
