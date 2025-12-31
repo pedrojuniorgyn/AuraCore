@@ -312,3 +312,4 @@ Caso contrário → OPERACIONAL (padrão)
 
 
 
+

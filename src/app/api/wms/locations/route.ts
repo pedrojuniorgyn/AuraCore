@@ -1,112 +1,76 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { warehouseLocations, warehouseZones } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { getTenantContext } from "@/lib/auth/context";
-import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
+import { NextRequest, NextResponse } from 'next/server';
+import { container } from 'tsyringe';
+import { CreateLocation } from '@/modules/wms/application/use-cases/CreateLocation';
+import { CreateLocationSchema } from '@/modules/wms/application/dtos/CreateLocationDTO';
+import { getTenantContext } from '@/lib/auth/context';
+import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
+import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
+import { Result } from '@/shared/domain';
 
-export async function GET(request: Request) {
+/**
+ * POST /api/wms/locations - Create Location
+ * E7.8 WMS Semana 2
+ */
+export async function POST(request: NextRequest) {
   try {
-    const { ensureConnection } = await import("@/lib/db");
-    await ensureConnection();
+    // Get tenant context (multi-tenancy)
+    const tenantContext = await getTenantContext();
+    const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
 
-    const ctx = await getTenantContext();
-    // ⚠️ Tabelas warehouse_zones/warehouse_locations não possuem organization_id.
-    // Por enquanto, restringimos a ADMIN para reduzir risco de vazamento.
-    if (!ctx.isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden", message: "Apenas ADMIN pode acessar WMS locations" },
-        { status: 403 }
-      );
-    }
+    // Parse and validate input
+    const body = await request.json();
+    const validation = CreateLocationSchema.safeParse(body);
 
-    const { searchParams } = new URL(request.url);
-    const warehouseId = searchParams.get("warehouseId");
-    if (!warehouseId) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Informe warehouseId" },
+        {
+          success: false,
+          error: 'Validation failed',
+          details: validation.error.issues.map(i => `${i.path.join('.')}: ${i.message}`)
+        },
         { status: 400 }
       );
     }
 
-    let locations;
-    locations = await db
-      .select({
-        location: warehouseLocations,
-        zone: warehouseZones,
-      })
-      .from(warehouseLocations)
-      .leftJoin(warehouseZones, eq(warehouseLocations.zoneId, warehouseZones.id))
-      .where(eq(warehouseZones.warehouseId, parseInt(warehouseId)));
+    // Build execution context
+    const context: ExecutionContext = {
+      userId: tenantContext.userId,
+      organizationId: tenantContext.organizationId,
+      branchId: branchId,
+      isAdmin: tenantContext.isAdmin
+    };
 
-    return NextResponse.json({ success: true, data: locations });
-  } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-    if (error instanceof Response) {
-      return error;
-    }
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
-  }
-}
+    // Execute use case
+    const useCase = container.resolve(CreateLocation);
+    const result = await useCase.execute(validation.data, context);
 
-export async function POST(request: Request) {
-  try {
-    const { ensureConnection } = await import("@/lib/db");
-    await ensureConnection();
-
-    const ctx = await getTenantContext();
-    if (!ctx.isAdmin) {
+    if (!Result.isOk(result)) {
+      const status = result.error.includes('not found') ? 404 : 400;
       return NextResponse.json(
-        { error: "Forbidden", message: "Apenas ADMIN pode criar WMS locations" },
-        { status: 403 }
+        {
+          success: false,
+          error: result.error
+        },
+        { status }
       );
     }
 
-    const body = await request.json();
-
-    const insertQuery = db
-      .insert(warehouseLocations)
-      .values({
-        zoneId: body.zoneId,
-        code: body.code,
-        locationType: body.locationType,
-        maxWeightKg: body.maxWeightKg,
-        status: "AVAILABLE",
-      });
-
-    const createdId = await insertReturning(insertQuery, { id: warehouseLocations.id });
-    const locationId = createdId[0]?.id;
-
-    const location = locationId
-      ? await queryFirst<typeof warehouseLocations.$inferSelect>(
-          db
-            .select()
-            .from(warehouseLocations)
-            .where(eq(warehouseLocations.id, Number(locationId)))
-        )
-      : null;
-
-    return NextResponse.json({ success: true, data: location });
+    return NextResponse.json(
+      {
+        success: true,
+        data: result.value
+      },
+      { status: 201 }
+    );
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-    if (error instanceof Response) {
-      return error;
-    }
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Internal server error',
+        message: errorMessage
+      },
+      { status: 500 }
+    );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

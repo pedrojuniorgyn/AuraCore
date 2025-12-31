@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.93",
+  "version": "1.0.97",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1749,6 +1749,61 @@
       "correct_pattern": "Verificar existência do tipo antes de importar",
       "violation_action": "REJEITAR código imediatamente",
       "pattern_created": "verify-imports-exist",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-324023",
+      "date": "2025-12-31",
+      "epic": "E7.8",
+      "error": "Bug 7: Movement/stock inconsistency - Movement was saved before stock was updated. If stock update failed, movement would exist without corresponding stock change, causing data inconsistency.",
+      "correction": "Reordered operations to save stock BEFORE saving movement in RegisterStockEntry, RegisterStockExit, and TransferStock. This ensures that if any stock operation fails, the movement is never saved, maintaining data integrity.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/RegisterStockEntry.ts",
+        "src/modules/wms/application/use-cases/RegisterStockExit.ts",
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Stock-First Persistence Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-325920",
+      "date": "2025-12-31",
+      "epic": "E7.8",
+      "error": "Bug 8: Silent cost calculation failures - When Money.create() failed during weighted average cost calculation, the error was silently ignored and stock was saved with incorrect (old) unit cost, causing financial data corruption.",
+      "correction": "Changed all Money.create() calls for cost calculation to return Result.fail() immediately if the operation fails, instead of silently continuing. Weighted average cost is now calculated BEFORE modifying stock, and any failure prevents the entire operation from proceeding.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/RegisterStockEntry.ts",
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Fail-Fast Cost Calculation Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-632694",
+      "date": "2025-12-31",
+      "epic": "E7.8",
+      "error": "Bug 9: DI tokens removed from tokens.ts without verifying usage - Tokens for FiscalAccountingIntegration, Fiscal Use Cases (Create/Submit/Authorize/Cancel/CalculateTaxes), and EventDispatcher were removed, but FiscalModule.ts and FinancialModule.ts still referenced them, causing runtime DI resolution failures at application startup.",
+      "correction": "Restored all removed tokens to tokens.ts. Verified all tokens used in any *Module.ts file are defined in tokens.ts. Added comments to organize tokens by module (Shared, Financial, Accounting, Fiscal, WMS) for better maintainability.",
+      "files_affected": [
+        "src/shared/infrastructure/di/tokens.ts"
+      ],
+      "pattern_created": "Complete DI Token Registry Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-798889",
+      "date": "2025-12-31",
+      "epic": "E7.8",
+      "error": "Bug 10: CompleteInventoryCount violated Stock-First Pattern - Movement was saved at line 111 before stock was updated and saved at line 135. This contradicted the documented pattern and created risk of movement records existing without corresponding stock changes if stock save failed.",
+      "correction": "Reordered persistence in CompleteInventoryCount to match pattern used in RegisterStockEntry, RegisterStockExit, and TransferStock. New order: 1) Update and save stock (line 133), 2) Save movement (line 136), 3) Save inventory count (line 147). This ensures movement only exists if stock was successfully updated, maintaining data integrity.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/CompleteInventoryCount.ts"
+      ],
+      "pattern_created": "Stock-First Persistence Pattern (CompleteInventoryCount)",
       "status": "APPROVED",
       "must_not_repeat": true
     }

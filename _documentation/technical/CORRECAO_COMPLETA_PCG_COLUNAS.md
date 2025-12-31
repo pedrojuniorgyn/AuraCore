@@ -189,3 +189,4 @@ ALTER TABLE management_chart_of_accounts ADD updated_by NVARCHAR(255) NULL;
 
 
 
+

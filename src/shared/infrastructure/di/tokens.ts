@@ -1,33 +1,39 @@
+/**
+ * Dependency Injection Tokens
+ * 
+ * Central registry for DI tokens using Symbol
+ */
+
 export const TOKENS = {
-  // Repositories - Financial
+  // Shared Infrastructure
+  EventDispatcher: Symbol('EventDispatcher'),
+
+  // Financial Module
   PayableRepository: Symbol('PayableRepository'),
-  ReceivableRepository: Symbol('ReceivableRepository'),
-  BankAccountRepository: Symbol('BankAccountRepository'),
-  
-  // Repositories - Accounting
+  ExpenseReportRepository: Symbol('ExpenseReportRepository'),
+  ExpensePolicyService: Symbol('ExpensePolicyService'),
+  ReceiptRepository: Symbol('ReceiptRepository'),
+  ReceiptNumberGenerator: Symbol('ReceiptNumberGenerator'),
+
+  // Accounting Module
   JournalEntryRepository: Symbol('JournalEntryRepository'),
-  ChartOfAccountsRepository: Symbol('ChartOfAccountsRepository'),
-  
-  // Repositories - Fiscal
+
+  // Fiscal Module - Repositories & Services
   FiscalDocumentRepository: Symbol('FiscalDocumentRepository'),
+  SefazService: Symbol('SefazService'),
+  FiscalDocumentPdfGenerator: Symbol('FiscalDocumentPdfGenerator'),
+  FiscalAccountingIntegration: Symbol('FiscalAccountingIntegration'),
   
-  // Use Cases - Fiscal
+  // Fiscal Module - Use Cases
   CreateFiscalDocumentUseCase: Symbol('CreateFiscalDocumentUseCase'),
   SubmitFiscalDocumentUseCase: Symbol('SubmitFiscalDocumentUseCase'),
   AuthorizeFiscalDocumentUseCase: Symbol('AuthorizeFiscalDocumentUseCase'),
   CancelFiscalDocumentUseCase: Symbol('CancelFiscalDocumentUseCase'),
   CalculateTaxesUseCase: Symbol('CalculateTaxesUseCase'),
-  
-  // Services - Fiscal
-  SefazService: Symbol('SefazService'),
-  FiscalDocumentPdfGenerator: Symbol('FiscalDocumentPdfGenerator'),
-  FiscalAccountingIntegration: Symbol('FiscalAccountingIntegration'),
-  
-  // Gateways
-  BtgGateway: Symbol('BtgGateway'),
-  SefazGateway: Symbol('SefazGateway'),
-  
-  // Infrastructure
-  UnitOfWork: Symbol('UnitOfWork'),
-  EventDispatcher: Symbol('EventDispatcher'),
+
+  // WMS Module - E7.8 Semana 2
+  LocationRepository: Symbol('LocationRepository'),
+  StockRepository: Symbol('StockRepository'),
+  MovementRepository: Symbol('MovementRepository'),
+  InventoryCountRepository: Symbol('InventoryCountRepository'),
 } as const;

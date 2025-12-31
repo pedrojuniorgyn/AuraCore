@@ -18,12 +18,14 @@ export async function register() {
     const { initializeFinancialModule } = await import("@/modules/financial/presentation/bootstrap");
     const { initializeAccountingModule } = await import("@/modules/accounting/presentation/bootstrap");
     const { initializeFiscalModule } = await import("@/modules/fiscal/infrastructure/bootstrap");
+    const { initializeWmsModule } = await import("@/modules/wms/infrastructure/di/WmsModule");
 
     initializeFinancialModule();
     initializeAccountingModule();
     initializeFiscalModule();
+    initializeWmsModule();
 
-    console.log("[Instrumentation] DDD modules initialized (Financial, Accounting, Fiscal)");
+    console.log("[Instrumentation] DDD modules initialized (Financial, Accounting, Fiscal, WMS)");
   } catch (error) {
     console.error("[Instrumentation] Failed to initialize DDD modules:", error);
   }

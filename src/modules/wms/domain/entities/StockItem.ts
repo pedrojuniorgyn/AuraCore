@@ -87,6 +87,11 @@ export class StockItem {
       return Result.fail('Quantity and reserved quantity must have the same unit');
     }
 
+    // Validação: não permitir criar item com data de expiração no passado
+    if (props.expirationDate && props.expirationDate < new Date()) {
+      return Result.fail('Cannot create stock item with past expiration date');
+    }
+
     // Timestamps padrão
     const now = new Date();
     const stockItem = new StockItem({
@@ -96,7 +101,7 @@ export class StockItem {
       updatedAt: props.updatedAt || now,
     });
 
-    // Validar invariantes
+    // Validar invariantes (exceto expiração, já validada acima)
     const invariantsResult = stockItem.validateInvariants();
     if (!Result.isOk(invariantsResult)) {
       return Result.fail(invariantsResult.error);
@@ -106,16 +111,33 @@ export class StockItem {
   }
 
   /**
-   * Reconstitui StockItem sem validação (para carregar do banco)
+   * Reconstitui StockItem a partir de dados persistidos
+   * 
+   * NÃO valida expiração - produtos podem estar legitimamente expirados no banco.
+   * Valida apenas integridade estrutural dos dados.
    * 
    * @param props Propriedades do item de estoque
    * @returns Result<StockItem, string>
    */
   static reconstitute(props: StockItemProps): Result<StockItem, string> {
+    // Validações básicas de integridade (não de negócio)
+    if (!props.id || props.id.trim().length === 0) {
+      return Result.fail('Corrupted stock item data: missing ID');
+    }
+
+    if (!props.productId || props.productId.trim().length === 0) {
+      return Result.fail('Corrupted stock item data: missing product ID');
+    }
+
+    if (!props.locationId || props.locationId.trim().length === 0) {
+      return Result.fail('Corrupted stock item data: missing location ID');
+    }
+
     const stockItem = new StockItem(props);
     
-    // Validar invariantes mesmo no reconstitute (dados corrompidos no banco)
-    const invariantsResult = stockItem.validateInvariants();
+    // Validar invariantes estruturais (quantidade >= reservado, etc)
+    // NÃO validar expiração - item pode estar expirado legitimamente
+    const invariantsResult = stockItem.validateStructuralInvariants();
     if (!Result.isOk(invariantsResult)) {
       return Result.fail(`Corrupted stock item data: ${invariantsResult.error}`);
     }
@@ -124,9 +146,10 @@ export class StockItem {
   }
 
   /**
-   * Valida invariantes do item de estoque
+   * Valida invariantes estruturais (usado em reconstitute)
+   * NÃO valida regras de negócio como expiração
    */
-  private validateInvariants(): Result<void, string> {
+  private validateStructuralInvariants(): Result<void, string> {
     // Invariante: quantity >= 0
     if (this.props.quantity.isNegative()) {
       return Result.fail('Quantity cannot be negative');
@@ -147,7 +170,22 @@ export class StockItem {
       return Result.fail('Quantity and reserved quantity must have the same unit');
     }
 
-    // Validação: expirationDate não pode ser no passado (se definida)
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Valida invariantes completos (usado em create e operações de negócio)
+   * Inclui validação de expiração
+   */
+  private validateInvariants(): Result<void, string> {
+    // Validar invariantes estruturais
+    const structuralResult = this.validateStructuralInvariants();
+    if (!Result.isOk(structuralResult)) {
+      return structuralResult;
+    }
+
+    // Validação de negócio: não permitir criar item já expirado
+    // (mas reconstitute não chama este método, então items expirados podem ser carregados)
     if (this.props.expirationDate && this.props.expirationDate < new Date()) {
       return Result.fail('Product is expired');
     }

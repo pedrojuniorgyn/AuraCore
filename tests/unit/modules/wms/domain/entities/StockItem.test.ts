@@ -223,7 +223,7 @@ describe('StockItem', () => {
       });
 
       expect(Result.isFail(stockItem)).toBe(true);
-      expect(stockItem.error).toContain('expired');
+      expect(stockItem.error).toContain('past expiration date');
     });
 
     it('should detect near expiration', () => {
@@ -252,6 +252,34 @@ describe('StockItem', () => {
       expect(Result.isOk(result)).toBe(true);
       expect(result.value.isNearExpiration(30)).toBe(true); // Dentro de 30 dias
       expect(result.value.isNearExpiration(10)).toBe(false); // Não dentro de 10 dias
+    });
+
+    it('should reconstitute expired product from database (Bug 11 fix)', () => {
+      const quantity = StockQuantity.create(50, UnitOfMeasure.UNIT).value;
+      const reserved = StockQuantity.create(0, UnitOfMeasure.UNIT).value;
+      const unitCost = Money.create(15, 'BRL').value;
+      const pastDate = new Date('2020-01-01');
+
+      // reconstitute() DEVE aceitar items expirados (dados históricos)
+      const result = StockItem.reconstitute({
+        id: 'stock-expired-001',
+        organizationId: 1,
+        branchId: 1,
+        productId: 'prod-expired',
+        locationId: 'loc-001',
+        quantity,
+        reservedQuantity: reserved,
+        expirationDate: pastDate,
+        unitCost,
+        createdAt: new Date('2019-01-01'),
+        updatedAt: new Date('2019-12-01'),
+      });
+
+      expect(Result.isOk(result)).toBe(true);
+      if (Result.isOk(result)) {
+        expect(result.value.isExpired()).toBe(true);
+        expect(result.value.expirationDate).toEqual(pastDate);
+      }
     });
   });
 });
