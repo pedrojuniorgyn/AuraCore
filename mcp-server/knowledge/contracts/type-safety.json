@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.98",
+  "version": "1.0.100",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1870,6 +1870,51 @@
       "pattern_created": "Reconstitute vs Create Validation",
       "correct_pattern": "reconstitute() aceita dados históricos; create() aplica regras de negócio; isExpired() método separado para verificação",
       "incorrect_pattern": "reconstitute() com mesmas validações de create()",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-018",
+      "name": "Transfer Uses Reconstitute Pattern",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "error": "TransferStock usava create() para item no destino, falhando para produtos expirados",
+      "correction": "Ao transferir/mover entidades entre locais, usar reconstitute() para criar no destino (dados já validados na entrada original)",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Transfer Uses Reconstitute Pattern",
+      "detection": "Use cases de transferência/movimentação que usam Entity.create() para destino",
+      "correct_pattern": "Entity.reconstitute({...sourceItem, id: newId, locationId: newLocation})",
+      "incorrect_pattern": "Entity.create({...sourceItem, locationId: newLocation})",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-199195",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 12: Date comparison using expirationDate < new Date() compared timestamps instead of calendar dates. Products with expiration date set to today at midnight were rejected after midnight on the same day, even though the calendar date hadn't passed yet.",
+      "correction": "Added isDateInPast() static method that normalizes both dates to midnight (setHours(0,0,0,0)) before comparing. This ensures comparison is based on calendar date only, not timestamp. Applied to create() validation, validateInvariants(), and isExpired() method. Pattern registered as ENFORCE-015 in MCP.",
+      "files_affected": [
+        "src/modules/wms/domain/entities/StockItem.ts"
+      ],
+      "pattern_created": "Date Comparison Pattern (ENFORCE-015)",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-201817",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 13: StartInventoryCount did not verify if an inventory count already existed for the product/location combination. Concurrent requests could create duplicate InventoryCount records, causing ambiguity when CompleteInventoryCount retrieved only the first result.",
+      "correction": "Added findPendingByProductAndLocation() method to IInventoryCountRepository and DrizzleInventoryCountRepository. Modified StartInventoryCount to check for existing pending count before creating new one. If pending count exists, returns Result.fail('Inventory count already in progress for this product/location'). Pattern registered as ENFORCE-016 in MCP.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/StartInventoryCount.ts",
+        "src/modules/wms/domain/ports/IInventoryCountRepository.ts",
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleInventoryCountRepository.ts"
+      ],
+      "pattern_created": "Idempotency Check Pattern (ENFORCE-016)",
       "status": "APPROVED",
       "must_not_repeat": true
     }

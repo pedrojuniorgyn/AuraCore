@@ -160,7 +160,10 @@ export class TransferStock {
         return Result.fail(reservedQty.error);
       }
 
-      const stockItemResult = StockItem.create({
+      // Bug 14 Fix: Usar reconstitute() ao invés de create() para transferências
+      // Estamos "movendo" dados já validados na entrada original, não criando novos
+      // Isso permite transferir produtos expirados sem falhar na validação
+      const stockItemResult = StockItem.reconstitute({
         id: crypto.randomUUID(),
         organizationId: context.organizationId,
         branchId: context.branchId,

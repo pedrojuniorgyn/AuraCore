@@ -3,8 +3,8 @@
   "module": "WMS",
   "week": 2,
   "date": "2025-01-01",
-  "total_bugs_found": 13,
-  "total_bugs_fixed": 13,
+  "total_bugs_found": 14,
+  "total_bugs_fixed": 14,
   "categories": {
     "tenant_auth": 2,
     "http_status": 2,
@@ -102,6 +102,14 @@
       "files": ["StartInventoryCount.ts", "IInventoryCountRepository.ts", "DrizzleInventoryCountRepository.ts"],
       "correction": "Add findPendingByProductAndLocation() and check before creating",
       "status": "FIXED"
+    },
+    {
+      "id": "Bug 14",
+      "category": "domain_logic",
+      "description": "TransferStock fails when transferring expired products to new location",
+      "files": ["TransferStock.ts"],
+      "correction": "Use reconstitute() instead of create() when creating stock item at destination (data already validated at original entry)",
+      "status": "FIXED"
     }
   ],
   "patterns_created": [
@@ -119,6 +127,11 @@
       "id": "ENFORCE-017",
       "name": "Reconstitute vs Create Validation",
       "description": "create() validates business rules; reconstitute() only validates structural integrity"
+    },
+    {
+      "id": "ENFORCE-018",
+      "name": "Transfer Uses Reconstitute Pattern",
+      "description": "When transferring/moving entities between locations, use reconstitute() for destination (data already validated at original entry)"
     }
   ],
   "lessons_learned": [
