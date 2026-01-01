@@ -3,17 +3,18 @@
   "module": "WMS",
   "week": 2,
   "date": "2026-01-01",
-  "total_bugs_found": 16,
-  "total_bugs_fixed": 16,
+  "total_bugs_found": 17,
+  "total_bugs_fixed": 17,
   "categories": {
     "tenant_auth": 2,
     "http_status": 4,
-    "persistence_order": 4,
+    "persistence_order": 5,
     "silent_failures": 1,
     "di_tokens": 1,
     "domain_logic": 2,
     "concurrency": 1,
-    "api_responses": 2
+    "api_responses": 2,
+    "data_consistency": 1
   },
   "bugs": [
     {
@@ -127,6 +128,16 @@
       "files": ["src/app/api/wms/locations/route.ts"],
       "correction": "Applied getHttpStatusFromError() helper (same as Bug 15)",
       "status": "FIXED"
+    },
+    {
+      "id": "Bug 17",
+      "category": "data_consistency",
+      "description": "TransferStock saves source stock BEFORE completing destination operations. If destination fails (cost calculation or save), database is left inconsistent: source decremented but destination not updated. Result: stock 'disappeared' from system!",
+      "files": ["src/modules/wms/application/use-cases/TransferStock.ts"],
+      "correction": "Refactored to 3-phase pattern: PHASE 1: Fetch data (read-only); PHASE 2: Calculate and validate EVERYTHING in memory (no saves); PHASE 3: Persist ALL (only if PHASE 2 passed). Persistence order: Destination → Source → Movement",
+      "severity": "CRITICAL",
+      "impact": "Data integrity violation - financial reconciliation impossible",
+      "status": "FIXED"
     }
   ],
   "patterns_created": [
@@ -154,6 +165,11 @@
       "id": "ENFORCE-019",
       "name": "HTTP Status Code Pattern",
       "description": "Map errors to correct HTTP status codes: 404 (not found), 409 (conflict/already exists/insufficient), 401 (unauthorized), 403 (forbidden), 400 (validation)"
+    },
+    {
+      "id": "ENFORCE-020",
+      "name": "Calculate Before Persist Pattern",
+      "description": "In multi-step operations, ALL validations and calculations must be done BEFORE any persistence. If any calculation fails, no data should have been modified in database. Pattern: PHASE 1: Fetch (read-only); PHASE 2: Calculate & Validate (in-memory); PHASE 3: Persist (only if PHASE 2 passed)"
     }
   ],
   "lessons_learned": [
@@ -168,23 +184,31 @@
     "SEMPRE usar getTenantContext() sem parâmetros + resolveBranchIdOrThrow()",
     "SEMPRE persistir entidades relacionadas (InventoryCount, não apenas StockItem)",
     "SEMPRE criar helper para lógica repetida (ex: getHttpStatusFromError)",
-    "SEMPRE aplicar padrões consistentemente em todas as rotas relacionadas"
+    "SEMPRE aplicar padrões consistentemente em todas as rotas relacionadas",
+    "NUNCA salvar dados parciais - calcular TUDO antes de persistir QUALQUER COISA",
+    "SEMPRE seguir 3 fases: Buscar → Calcular/Validar → Persistir",
+    "SEMPRE considerar: 'O que acontece se esta linha falhar? Já salvei algo?'"
   ],
   "root_causes": [
     "Falta de consulta aos contratos MCP antes de codificar",
     "Padrões não sendo seguidos consistentemente",
     "Edge cases não considerados (concorrência, datas, produtos expirados)",
     "Validação insuficiente de requisitos de negócio",
-    "Testes não cobrindo cenários de concorrência e edge cases"
+    "Testes não cobrindo cenários de concorrência e edge cases",
+    "Pensamento sequencial ao invés de atomicidade em operações multi-step",
+    "Falta de análise: 'E se falhar AQUI? O que já salvei?'"
   ],
   "prevention_measures": [
-    "Adicionar ENFORCE-015, 016, 017, 018, 019 ao type-safety.json",
+    "Adicionar ENFORCE-015, 016, 017, 018, 019, 020 ao type-safety.json",
     "Criar testes para cenários de concorrência",
     "Criar testes para produtos expirados (hoje, ontem, amanhã)",
     "Revisar todos os use cases para idempotency",
     "Adicionar lint rule para detectar comparação de datas sem normalização",
     "Criar helpers para lógica repetida (ex: error status mapping)",
-    "Code review focado em consistência de padrões entre rotas similares"
+    "Code review focado em consistência de padrões entre rotas similares",
+    "Criar lint rule: detectar 'await.*save' seguido de cálculos/validações",
+    "Template obrigatório para use cases multi-step: FASE 1 → FASE 2 → FASE 3",
+    "Análise obrigatória: marcar TODAS as linhas que podem falhar APÓS primeiro save"
   ]
 }
 

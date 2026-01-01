@@ -73,24 +73,109 @@ export class TransferStock {
       return Result.fail('Product not found in from location');
     }
 
-    // Criar StockQuantity
+    // ========================================
+    // FASE 1: BUSCAR DADOS (Read-Only)
+    // ========================================
+    
+    // Buscar estoque no destino (pode não existir)
+    let toStockItem = await this.stockRepository.findByProductAndLocation(
+      input.productId,
+      input.toLocationId,
+      context.organizationId,
+      context.branchId
+    );
+
+    // ========================================
+    // FASE 2: CALCULAR E VALIDAR TUDO (Em Memória - Sem Salvar)
+    // ========================================
+    
+    // 2.1 Criar quantidade de transferência
     const quantityResult = StockQuantity.create(input.quantity, input.unit as UnitOfMeasure);
     if (!Result.isOk(quantityResult)) {
       return Result.fail(quantityResult.error);
     }
 
-    // Verificar disponibilidade
+    // 2.2 Verificar disponibilidade na origem
     if (fromStockItem.availableQuantity.value < input.quantity) {
       return Result.fail(`Insufficient stock in from location. Available: ${fromStockItem.availableQuantity.value} ${fromStockItem.availableQuantity.unit}`);
     }
 
-    // Criar MovementType
+    // 2.3 Calcular custo médio no destino (se já existir estoque)
+    let destinationUnitCost = fromStockItem.unitCost;
+    if (toStockItem) {
+      const oldQuantity = toStockItem.quantity.value;
+      const newTotalQuantity = oldQuantity + input.quantity;
+      
+      const totalExistingValue = oldQuantity * toStockItem.unitCost.amount;
+      const totalNewValue = input.quantity * fromStockItem.unitCost.amount;
+      const avgCost = (totalExistingValue + totalNewValue) / newTotalQuantity;
+      
+      // Bug 17 Fix: Validar Money.create() ANTES de salvar qualquer coisa
+      const avgCostResult = Money.create(avgCost, toStockItem.unitCost.currency);
+      if (!Result.isOk(avgCostResult)) {
+        return Result.fail(`Failed to calculate weighted average cost: ${avgCostResult.error}`);
+      }
+      destinationUnitCost = avgCostResult.value;
+    }
+
+    // 2.4 Preparar origem atualizada (em memória)
+    const removeResult = fromStockItem.removeQuantity(quantityResult.value);
+    if (!Result.isOk(removeResult)) {
+      return Result.fail(removeResult.error);
+    }
+
+    // 2.5 Preparar destino atualizado (em memória)
+    let updatedToStockItem: StockItem;
+    if (toStockItem) {
+      // Atualizar estoque existente
+      const addResult = toStockItem.addQuantity(quantityResult.value);
+      if (!Result.isOk(addResult)) {
+        return Result.fail(addResult.error);
+      }
+      
+      // Bug 17 Fix: Validar updateUnitCost() ANTES de salvar qualquer coisa
+      const updateCostResult = toStockItem.updateUnitCost(destinationUnitCost);
+      if (!Result.isOk(updateCostResult)) {
+        return Result.fail(updateCostResult.error);
+      }
+      
+      updatedToStockItem = toStockItem;
+    } else {
+      // Criar novo estoque no destino
+      const reservedQty = StockQuantity.create(0, input.unit as UnitOfMeasure);
+      if (!Result.isOk(reservedQty)) {
+        return Result.fail(reservedQty.error);
+      }
+
+      // Bug 14 Fix: Usar reconstitute() ao invés de create() para transferências
+      const stockItemResult = StockItem.reconstitute({
+        id: crypto.randomUUID(),
+        organizationId: context.organizationId,
+        branchId: context.branchId,
+        productId: input.productId,
+        locationId: input.toLocationId,
+        quantity: quantityResult.value,
+        reservedQuantity: reservedQty.value,
+        lotNumber: fromStockItem.lotNumber,
+        expirationDate: fromStockItem.expirationDate,
+        unitCost: fromStockItem.unitCost,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      if (!Result.isOk(stockItemResult)) {
+        return Result.fail(stockItemResult.error);
+      }
+      
+      updatedToStockItem = stockItemResult.value;
+    }
+
+    // 2.6 Criar movimentação (em memória)
     const movementTypeResult = MovementType.create(MovementTypeEnum.TRANSFER);
     if (!Result.isOk(movementTypeResult)) {
       return Result.fail(movementTypeResult.error);
     }
 
-    // Criar StockMovement
     const movementResult = StockMovement.create({
       id: crypto.randomUUID(),
       organizationId: context.organizationId,
@@ -111,92 +196,26 @@ export class TransferStock {
       return Result.fail(movementResult.error);
     }
 
-    // STEP 1: Remover da origem
-    const removeResult = fromStockItem.removeQuantity(quantityResult.value);
-    if (!Result.isOk(removeResult)) {
-      return Result.fail(removeResult.error);
-    }
-
+    // ========================================
+    // FASE 3: PERSISTIR TUDO (Ordem: Destino → Origem → Movimento)
+    // ========================================
+    // Bug 17 Fix: Persistir DESTINO primeiro, depois ORIGEM, por último MOVIMENTO
+    // Se destino falhar, nada foi modificado
+    // Se origem falhar após destino, temos estoque extra (melhor que perder)
+    // Se movimento falhar, estoque está correto mas sem registro de movimentação
+    
+    await this.stockRepository.save(updatedToStockItem);
     await this.stockRepository.save(fromStockItem);
-
-    // STEP 2: Buscar ou criar estoque no destino
-    let toStockItem = await this.stockRepository.findByProductAndLocation(
-      input.productId,
-      input.toLocationId,
-      context.organizationId,
-      context.branchId
-    );
-
-    if (toStockItem) {
-      // Calcular nova quantidade e custo médio ANTES de modificar
-      const oldQuantity = toStockItem.quantity.value;
-      const newTotalQuantity = oldQuantity + input.quantity;
-      
-      // Calcular custo médio ponderado
-      const totalExistingValue = oldQuantity * toStockItem.unitCost.amount;
-      const totalNewValue = input.quantity * fromStockItem.unitCost.amount;
-      const avgCost = (totalExistingValue + totalNewValue) / newTotalQuantity;
-      
-      const avgCostResult = Money.create(avgCost, toStockItem.unitCost.currency);
-      if (!Result.isOk(avgCostResult)) {
-        return Result.fail(`Failed to calculate weighted average cost: ${avgCostResult.error}`);
-      }
-      
-      // Aplicar mudanças
-      const addResult = toStockItem.addQuantity(quantityResult.value);
-      if (!Result.isOk(addResult)) {
-        return Result.fail(addResult.error);
-      }
-      
-      const updateCostResult = toStockItem.updateUnitCost(avgCostResult.value);
-      if (!Result.isOk(updateCostResult)) {
-        return Result.fail(updateCostResult.error);
-      }
-
-      await this.stockRepository.save(toStockItem);
-    } else {
-      const reservedQty = StockQuantity.create(0, input.unit as UnitOfMeasure);
-      if (!Result.isOk(reservedQty)) {
-        return Result.fail(reservedQty.error);
-      }
-
-      // Bug 14 Fix: Usar reconstitute() ao invés de create() para transferências
-      // Estamos "movendo" dados já validados na entrada original, não criando novos
-      // Isso permite transferir produtos expirados sem falhar na validação
-      const stockItemResult = StockItem.reconstitute({
-        id: crypto.randomUUID(),
-        organizationId: context.organizationId,
-        branchId: context.branchId,
-        productId: input.productId,
-        locationId: input.toLocationId,
-        quantity: quantityResult.value,
-        reservedQuantity: reservedQty.value,
-        lotNumber: fromStockItem.lotNumber,
-        expirationDate: fromStockItem.expirationDate,
-        unitCost: fromStockItem.unitCost,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      if (!Result.isOk(stockItemResult)) {
-        return Result.fail(stockItemResult.error);
-      }
-
-      await this.stockRepository.save(stockItemResult.value);
-      toStockItem = stockItemResult.value;
-    }
-
-    // STEP 3: Salvar movimentação APÓS ambos os estoques estarem atualizados
     await this.movementRepository.save(movementResult.value);
 
     return Result.ok({
       movementId: movementResult.value.id,
       fromStockItemId: fromStockItem.id,
-      toStockItemId: toStockItem.id,
+      toStockItemId: updatedToStockItem.id,
       quantity: quantityResult.value.value,
       unit: quantityResult.value.unit,
       fromRemainingQuantity: fromStockItem.quantity.value,
-      toNewQuantity: toStockItem.quantity.value,
+      toNewQuantity: updatedToStockItem.quantity.value,
       executedAt: movementResult.value.executedAt
     });
   }

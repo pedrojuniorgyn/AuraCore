@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.102",
+  "version": "1.0.103",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1938,6 +1938,28 @@
       "correct_pattern": "const status = getHttpStatusFromError(result.error);",
       "incorrect_pattern": "const status = result.error.includes('not found') ? 404 : 400;",
       "detection": "grep -rn 'error.includes.*404.*400' src/app/api/",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-020",
+      "name": "Calculate Before Persist Pattern",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "TransferStock salvava origem antes de validar destino, causando inconsistência se destino falhasse",
+      "correction": "FASE 1: Buscar dados (read-only); FASE 2: Calcular e validar TUDO em memória; FASE 3: Persistir TUDO somente se FASE 2 passou",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Calculate Before Persist Pattern",
+      "phases": [
+        "FASE 1: Buscar dados (sem modificar)",
+        "FASE 2: Calcular e validar TUDO (em memória, sem salvar)",
+        "FASE 3: Persistir (somente se FASE 2 passou)"
+      ],
+      "correct_pattern": "Buscar → Validar tudo → Calcular tudo → Salvar tudo",
+      "incorrect_pattern": "Buscar → Modificar e salvar origem → Calcular destino → Salvar destino",
+      "detection": "grep -rn 'await.*save' use-cases/ | verificar se há cálculos após primeiro save",
       "status": "APPROVED",
       "must_not_repeat": true
     },
