@@ -40,6 +40,16 @@ export class CreateLocation {
       return Result.fail(`Location with code ${input.code} already exists in this warehouse`);
     }
 
+    // Bug 20 Fix: Validar parentId para tipos não-WAREHOUSE (fail-fast)
+    if (input.type !== 'WAREHOUSE' && !input.parentId) {
+      return Result.fail(`Parent location is required for type ${input.type}`);
+    }
+
+    // Se é WAREHOUSE, parentId deve ser null/undefined
+    if (input.type === 'WAREHOUSE' && input.parentId) {
+      return Result.fail('WAREHOUSE type cannot have a parent location');
+    }
+
     // Validar parent se fornecido
     if (input.parentId) {
       const parent = await this.locationRepository.findById(

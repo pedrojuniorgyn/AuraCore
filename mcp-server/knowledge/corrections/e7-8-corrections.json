@@ -110,6 +110,21 @@
       "pattern_created": "Transfer Uses Reconstitute Pattern (ENFORCE-018)",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-628924",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 19: RegisterStockExit não validava location.isActive antes de permitir saída de estoque. RegisterStockEntry e TransferStock validam isActive, mas RegisterStockExit não. Inconsistência permite operações em localizações inativas.",
+      "correction": "Adicionado validação location.isActive após check de existência em RegisterStockExit. Template padrão criado: 1) Check exists, 2) Check isActive. Pattern ENFORCE-022: Consistent Business Validations Pattern registrado no MCP.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/RegisterStockExit.ts",
+        "mcp-server/knowledge/contracts/type-safety.json",
+        "mcp-server/knowledge/corrections/e7-8-wms-week2-corrections.json"
+      ],
+      "pattern_created": "ENFORCE-022: Consistent Business Validations Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

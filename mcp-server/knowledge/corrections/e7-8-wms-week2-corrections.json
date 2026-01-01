@@ -3,8 +3,8 @@
   "module": "WMS",
   "week": 2,
   "date": "2026-01-01",
-  "total_bugs_found": 19,
-  "total_bugs_fixed": 19,
+  "total_bugs_found": 20,
+  "total_bugs_fixed": 20,
   "categories": {
     "tenant_auth": 2,
     "http_status": 4,
@@ -16,7 +16,8 @@
     "api_responses": 2,
     "data_consistency": 2,
     "financial_integrity": 1,
-    "validation_consistency": 1
+    "validation_consistency": 1,
+    "fail_fast_violation": 1
   },
   "bugs": [
     {
@@ -160,6 +161,19 @@
       "severity": "MEDIUM",
       "impact": "Business rule violation - allows operations on inactive locations",
       "status": "FIXED"
+    },
+    {
+      "id": "Bug 20",
+      "category": "fail_fast_violation",
+      "description": "CreateLocationSchema DTO makes parentId optional for ALL types, but Location.create() domain method requires non-WAREHOUSE types (AISLE, SHELF, POSITION) to have a parent. The CreateLocation use case only validates parentId IF provided, leaving gap where clients can submit AISLE/SHELF/POSITION without parent. This violates fail-fast principle: validation should happen in Use Case BEFORE calling domain, not let domain reject with generic error.",
+      "files": [
+        "src/modules/wms/application/use-cases/CreateLocation.ts",
+        "src/modules/wms/application/dtos/CreateLocationDTO.ts"
+      ],
+      "correction": "Added fail-fast validation in Use Case: 1) If type !== WAREHOUSE && !parentId, return fail. 2) If type === WAREHOUSE && parentId, return fail. Also added .refine() to DTO schema for conditional validation. Validation order established: DTO format → Use Case business rules → Repository existence → Domain invariants. Pattern registered as ENFORCE-023 in MCP.",
+      "severity": "MEDIUM",
+      "impact": "Poor error messages, unnecessary domain operations, violation of separation of concerns",
+      "status": "FIXED"
     }
   ],
   "patterns_created": [
@@ -202,6 +216,11 @@
       "id": "ENFORCE-022",
       "name": "Consistent Business Validations Pattern",
       "description": "Similar operations (Entry, Exit, Transfer) MUST have identical validation patterns. Template for location operations: 1) Check exists, 2) Check isActive. Inconsistencies create bugs and maintenance nightmares."
+    },
+    {
+      "id": "ENFORCE-023",
+      "name": "Fail-Fast Business Rules Validation Pattern",
+      "description": "Validations that CAN be done before calling domain MUST be done in Use Case. Order: 1) Format (DTO), 2) Simple business rules (Use Case), 3) Existence (Repository), 4) Complex invariants (Domain). Improves error messages and avoids unnecessary operations."
     }
   ],
   "lessons_learned": [
@@ -223,7 +242,9 @@
     "SEMPRE usar variáveis calculadas em TODOS os lugares subsequentes",
     "NUNCA misturar uso de variável calculada e variável original (ex: destinationUnitCost vs fromStockItem.unitCost)",
     "SEMPRE aplicar validações IDÊNTICAS em operações similares (Entry, Exit, Transfer)",
-    "SEMPRE criar template de validação para operações do mesmo tipo"
+    "SEMPRE criar template de validação para operações do mesmo tipo",
+    "SEMPRE validar regras de negócio simples no Use Case ANTES de chamar domínio (fail-fast)",
+    "SEMPRE seguir ordem: DTO format → Use Case business rules → Repository existence → Domain invariants"
   ],
   "root_causes": [
     "Falta de consulta aos contratos MCP antes de codificar",
@@ -236,7 +257,9 @@
     "Copy-paste de código sem adaptar para contexto (usar original ao invés de calculado)",
     "Falta de revisão: 'Por que calculei isso se não vou usar?'",
     "Implementação parcial de validações (copiar parte do código, esquecer validações)",
-    "Falta de comparação entre use cases similares durante code review"
+    "Falta de comparação entre use cases similares durante code review",
+    "Deixar validações simples para o domínio ao invés de validar no Use Case",
+    "Não perguntar: 'Esta validação poderia ser feita ANTES de chamar o domínio?'"
   ],
   "prevention_measures": [
     "Adicionar ENFORCE-015, 016, 017, 018, 019, 020, 021 ao type-safety.json",
@@ -252,7 +275,9 @@
     "Criar lint rule: detectar variável calculada (const.*=.*calculate) não usada em todos locais",
     "Code review: verificar que variáveis calculadas são usadas consistentemente",
     "Template obrigatório para validações de localização: exists → isActive",
-    "Code review: comparar side-by-side use cases similares para garantir validações idênticas"
+    "Code review: comparar side-by-side use cases similares para garantir validações idênticas",
+    "Template de ordem de validação: DTO → Use Case → Repository → Domain",
+    "Code review: verificar se validações simples estão no Use Case (fail-fast) e não apenas no domínio"
   ]
 }
 

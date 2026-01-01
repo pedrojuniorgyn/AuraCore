@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.105",
+  "version": "1.0.107",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -2000,6 +2000,25 @@
       "must_not_repeat": true
     },
     {
+      "id": "ENFORCE-023",
+      "name": "Fail-Fast Business Rules Validation Pattern",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "CreateLocation não validava que tipos não-WAREHOUSE requerem parentId ANTES de chamar domínio. Violação do princípio fail-fast: deixa o domínio rejeitar dados que poderiam ser validados antes.",
+      "correction": "Validações de regras de negócio que podem ser verificadas ANTES de chamar o domínio DEVEM ser feitas no Use Case. Ordem: 1) Validação formato (DTO), 2) Validação regras simples (Use Case), 3) Validação existência (Repository), 4) Invariantes complexas (Domain)",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/CreateLocation.ts",
+        "src/modules/wms/application/dtos/CreateLocationDTO.ts"
+      ],
+      "pattern_created": "Fail-Fast Business Rules Validation Pattern",
+      "correct_pattern": "// Use Case\nif (type !== 'WAREHOUSE' && !parentId) return Result.fail('Parent required');\n// DTO\n.refine((data) => {...validation logic...})",
+      "incorrect_pattern": "// Deixar Location.create() falhar com erro genérico do domínio",
+      "detection": "grep -rn 'Result.fail' em entidades do domínio e verificar se validação poderia ser feita antes no Use Case",
+      "rationale": "Fail-fast melhora mensagens de erro, evita operações desnecessárias, separa responsabilidades corretamente",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
       "id": "LC-122846",
       "date": "2026-01-01",
       "epic": "E7.8",
@@ -2009,6 +2028,21 @@
         "src/modules/wms/application/use-cases/TransferStock.ts"
       ],
       "pattern_created": "Transfer Uses Reconstitute Pattern (ENFORCE-018)",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-628924",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 19: RegisterStockExit não validava location.isActive antes de permitir saída de estoque. RegisterStockEntry e TransferStock validam isActive, mas RegisterStockExit não. Inconsistência permite operações em localizações inativas.",
+      "correction": "Adicionado validação location.isActive após check de existência em RegisterStockExit. Template padrão criado: 1) Check exists, 2) Check isActive. Pattern ENFORCE-022: Consistent Business Validations Pattern registrado no MCP.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/RegisterStockExit.ts",
+        "mcp-server/knowledge/contracts/type-safety.json",
+        "mcp-server/knowledge/corrections/e7-8-wms-week2-corrections.json"
+      ],
+      "pattern_created": "ENFORCE-022: Consistent Business Validations Pattern",
       "status": "APPROVED",
       "must_not_repeat": true
     }

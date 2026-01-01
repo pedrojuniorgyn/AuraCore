@@ -13,7 +13,18 @@ export const CreateLocationSchema = z.object({
   capacity: z.number().positive('Capacity must be positive').optional(),
   capacityUnit: z.string().max(10, 'Capacity unit too long').optional(),
   isActive: z.boolean().optional()
-});
+}).refine(
+  (data) => {
+    // Bug 20 Fix: WAREHOUSE não pode ter parent
+    if (data.type === 'WAREHOUSE' && data.parentId) return false;
+    // Outros tipos DEVEM ter parent
+    if (data.type !== 'WAREHOUSE' && !data.parentId) return false;
+    return true;
+  },
+  {
+    message: 'WAREHOUSE cannot have parent; AISLE/SHELF/POSITION require parent',
+  }
+);
 
 export type CreateLocationInput = z.infer<typeof CreateLocationSchema>;
 
