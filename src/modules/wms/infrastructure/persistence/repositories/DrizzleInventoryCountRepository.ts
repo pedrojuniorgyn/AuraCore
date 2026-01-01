@@ -51,6 +51,36 @@ export class DrizzleInventoryCountRepository implements IInventoryCountRepositor
     return Result.isOk(result) ? result.value : null;
   }
 
+  /**
+   * Bug 13 Fix: Encontrar contagem pendente para produto/localização específicos
+   * Usado para evitar duplicação em requisições concorrentes
+   */
+  async findPendingByProductAndLocation(
+    productId: string,
+    locationId: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<InventoryCount | null> {
+    const rows = await db
+      .select()
+      .from(wmsInventoryCounts)
+      .where(
+        and(
+          eq(wmsInventoryCounts.productId, productId),
+          eq(wmsInventoryCounts.locationId, locationId),
+          eq(wmsInventoryCounts.status, 'PENDING'),
+          eq(wmsInventoryCounts.organizationId, organizationId),
+          eq(wmsInventoryCounts.branchId, branchId),
+          isNull(wmsInventoryCounts.deletedAt)
+        )
+      );
+
+    if (rows.length === 0) return null;
+
+    const result = InventoryCountMapper.toDomain(rows[0]);
+    return Result.isOk(result) ? result.value : null;
+  }
+
   async findPendingByLocation(
     locationId: string,
     organizationId: number,

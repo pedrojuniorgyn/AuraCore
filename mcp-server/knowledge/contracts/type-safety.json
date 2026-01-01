@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.97",
+  "version": "1.0.98",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1804,6 +1804,72 @@
         "src/modules/wms/application/use-cases/CompleteInventoryCount.ts"
       ],
       "pattern_created": "Stock-First Persistence Pattern (CompleteInventoryCount)",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-583196",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 11: StockItem.reconstitute() called validateInvariants() which rejected expired products, causing repository to return null for legitimately expired items in the database. This broke audit trails and prevented access to historical expired inventory data. Products appeared as 'not found' instead of 'expired'.",
+      "correction": "Separated validation logic: create() validates expiration date and rejects new items with past dates; reconstitute() only validates structural invariants (quantity >= reserved, etc) and allows loading expired items from DB; added isExpired() public method for use cases to check expiration when needed; added validateStructuralInvariants() for data integrity checks without business rules. Repository now returns expired items successfully, and use cases decide if they can be used. Added test case to verify expired products can be reconstituted.",
+      "files_affected": [
+        "src/modules/wms/domain/entities/StockItem.ts",
+        "tests/unit/modules/wms/domain/entities/StockItem.test.ts"
+      ],
+      "pattern_created": "Separate Create vs Reconstitute Validation Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-015",
+      "name": "Date Comparison Pattern",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "error": "Comparação de data com timestamp rejeita produtos no mesmo dia da expiração",
+      "correction": "Normalizar datas para meia-noite (setHours(0,0,0,0)) antes de comparar",
+      "files_affected": [
+        "src/modules/wms/domain/entities/StockItem.ts"
+      ],
+      "pattern_created": "Date Comparison Pattern",
+      "detection": "grep -rn 'Date()' src/ | grep -E '<|>|<='",
+      "correct_pattern": "private static isDateInPast(date: Date): boolean { const today = new Date(); today.setHours(0,0,0,0); const compareDate = new Date(date); compareDate.setHours(0,0,0,0); return compareDate < today; }",
+      "incorrect_pattern": "if (expirationDate < new Date())",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-016",
+      "name": "Idempotency Check Pattern",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "error": "StartInventoryCount permite duplicação em requisições concorrentes",
+      "correction": "SEMPRE verificar existência antes de criar recursos únicos",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/StartInventoryCount.ts",
+        "src/modules/wms/domain/ports/IInventoryCountRepository.ts",
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleInventoryCountRepository.ts"
+      ],
+      "pattern_created": "Idempotency Check Pattern",
+      "detection": "Use cases que criam recursos sem verificar existência",
+      "correct_pattern": "const existing = await repo.findPendingByProductAndLocation(...); if (existing) return Result.fail('Already in progress');",
+      "incorrect_pattern": "const entity = Entity.create(); await repo.save(entity);",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-017",
+      "name": "Reconstitute vs Create Validation",
+      "date": "2025-01-01",
+      "epic": "E7.8",
+      "error": "reconstitute() rejeitava produtos expirados, quebrando trilha de auditoria",
+      "correction": "create() valida regras de negócio; reconstitute() apenas valida integridade estrutural",
+      "files_affected": [
+        "src/modules/wms/domain/entities/StockItem.ts"
+      ],
+      "pattern_created": "Reconstitute vs Create Validation",
+      "correct_pattern": "reconstitute() aceita dados históricos; create() aplica regras de negócio; isExpired() método separado para verificação",
+      "incorrect_pattern": "reconstitute() com mesmas validações de create()",
       "status": "APPROVED",
       "must_not_repeat": true
     }

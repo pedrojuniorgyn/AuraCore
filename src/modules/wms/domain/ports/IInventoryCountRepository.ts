@@ -14,6 +14,17 @@ export interface IInventoryCountRepository {
     branchId: number
   ): Promise<InventoryCount | null>;
   
+  /**
+   * Bug 13 Fix: Encontrar contagem pendente para produto/localização específicos
+   * Usado para evitar duplicação em requisições concorrentes
+   */
+  findPendingByProductAndLocation(
+    productId: string,
+    locationId: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<InventoryCount | null>;
+  
   findPendingByLocation(
     locationId: string,
     organizationId: number,

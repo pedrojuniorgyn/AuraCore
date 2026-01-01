@@ -55,6 +55,20 @@
       "pattern_created": "Stock-First Persistence Pattern (CompleteInventoryCount)",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-583196",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 11: StockItem.reconstitute() called validateInvariants() which rejected expired products, causing repository to return null for legitimately expired items in the database. This broke audit trails and prevented access to historical expired inventory data. Products appeared as 'not found' instead of 'expired'.",
+      "correction": "Separated validation logic: create() validates expiration date and rejects new items with past dates; reconstitute() only validates structural invariants (quantity >= reserved, etc) and allows loading expired items from DB; added isExpired() public method for use cases to check expiration when needed; added validateStructuralInvariants() for data integrity checks without business rules. Repository now returns expired items successfully, and use cases decide if they can be used. Added test case to verify expired products can be reconstituted.",
+      "files_affected": [
+        "src/modules/wms/domain/entities/StockItem.ts",
+        "tests/unit/modules/wms/domain/entities/StockItem.test.ts"
+      ],
+      "pattern_created": "Separate Create vs Reconstitute Validation Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

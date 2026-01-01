@@ -36,6 +36,20 @@ export class StockItem {
   private constructor(private props: StockItemProps) {}
 
   /**
+   * Verifica se uma data está no passado (comparando apenas o dia, ignorando hora)
+   * Bug 12 Fix: Normalizar para meia-noite para evitar rejeição no mesmo dia
+   */
+  private static isDateInPast(date: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    return compareDate < today;
+  }
+
+  /**
    * Cria um novo StockItem validando as propriedades e invariantes
    * 
    * @param props Propriedades do item de estoque
@@ -88,7 +102,8 @@ export class StockItem {
     }
 
     // Validação: não permitir criar item com data de expiração no passado
-    if (props.expirationDate && props.expirationDate < new Date()) {
+    // Bug 12 Fix: Usar isDateInPast() para comparar apenas o dia, não o timestamp
+    if (props.expirationDate && StockItem.isDateInPast(props.expirationDate)) {
       return Result.fail('Cannot create stock item with past expiration date');
     }
 
@@ -186,7 +201,8 @@ export class StockItem {
 
     // Validação de negócio: não permitir criar item já expirado
     // (mas reconstitute não chama este método, então items expirados podem ser carregados)
-    if (this.props.expirationDate && this.props.expirationDate < new Date()) {
+    // Bug 12 Fix: Usar isDateInPast() para comparar apenas o dia, não o timestamp
+    if (this.props.expirationDate && StockItem.isDateInPast(this.props.expirationDate)) {
       return Result.fail('Product is expired');
     }
 
@@ -303,10 +319,11 @@ export class StockItem {
 
   /**
    * Verifica se o produto está expirado
+   * Bug 12 Fix: Usar isDateInPast() para comparar apenas o dia, não o timestamp
    */
   isExpired(): boolean {
     if (!this.props.expirationDate) return false;
-    return this.props.expirationDate < new Date();
+    return StockItem.isDateInPast(this.props.expirationDate);
   }
 
   /**

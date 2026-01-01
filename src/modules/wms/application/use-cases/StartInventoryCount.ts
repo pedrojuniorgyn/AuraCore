@@ -24,6 +24,18 @@ export class StartInventoryCount {
     input: StartInventoryCountInput,
     context: ExecutionContext
   ): Promise<Result<StartInventoryCountOutput, string>> {
+    // Bug 13 Fix: Verificar se já existe contagem pendente para evitar duplicação
+    const existingPendingCount = await this.inventoryCountRepository.findPendingByProductAndLocation(
+      input.productId,
+      input.locationId,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (existingPendingCount) {
+      return Result.fail('Inventory count already in progress for this product/location');
+    }
+
     // Buscar estoque existente
     const stockItem = await this.stockRepository.findByProductAndLocation(
       input.productId,

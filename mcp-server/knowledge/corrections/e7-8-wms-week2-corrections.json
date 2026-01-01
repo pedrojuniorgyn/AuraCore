@@ -1,0 +1,151 @@
+{
+  "epic": "E7.8",
+  "module": "WMS",
+  "week": 2,
+  "date": "2025-01-01",
+  "total_bugs_found": 13,
+  "total_bugs_fixed": 13,
+  "categories": {
+    "tenant_auth": 2,
+    "http_status": 2,
+    "persistence_order": 4,
+    "silent_failures": 1,
+    "di_tokens": 1,
+    "domain_logic": 2,
+    "concurrency": 1
+  },
+  "bugs": [
+    {
+      "id": "Bug 1-2",
+      "category": "tenant_auth",
+      "description": "getTenantContext(request) pattern incorrect + branchId resolution",
+      "files": ["src/app/api/wms/*/route.ts"],
+      "correction": "Use getTenantContext() without params + resolveBranchIdOrThrow()",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 3-4",
+      "category": "http_status",
+      "description": "Generic 400 for 'not found' errors",
+      "files": ["src/app/api/wms/*/route.ts"],
+      "correction": "Return 404 for 'not found', 409 for 'Insufficient stock'",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 5",
+      "category": "persistence_order",
+      "description": "InventoryCount not persisted",
+      "files": ["StartInventoryCount.ts", "CompleteInventoryCount.ts"],
+      "correction": "Inject IInventoryCountRepository and call save()",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 6",
+      "category": "silent_failures",
+      "description": "Silent failure in stock adjustment",
+      "files": ["CompleteInventoryCount.ts"],
+      "correction": "Check Result.isOk() for StockQuantity.create() and fail if error",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 7",
+      "category": "persistence_order",
+      "description": "Movement saved before stock",
+      "files": ["RegisterStockEntry.ts", "RegisterStockExit.ts", "TransferStock.ts"],
+      "correction": "Save stock BEFORE movement (Stock-First Pattern)",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 8",
+      "category": "silent_failures",
+      "description": "Silent failure in weighted average cost calculation",
+      "files": ["RegisterStockEntry.ts", "TransferStock.ts"],
+      "correction": "Check Money.create() result and return Result.fail() if error",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 9",
+      "category": "di_tokens",
+      "description": "DI tokens removed but still used by Fiscal/Financial modules",
+      "files": ["tokens.ts"],
+      "correction": "Tokens were already present - no action needed",
+      "status": "ALREADY_FIXED"
+    },
+    {
+      "id": "Bug 10",
+      "category": "persistence_order",
+      "description": "CompleteInventoryCount violates Stock-First Pattern",
+      "files": ["CompleteInventoryCount.ts"],
+      "correction": "Reorder: Stock → Movement → InventoryCount",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 11",
+      "category": "domain_logic",
+      "description": "Expired products cannot be loaded from database",
+      "files": ["StockItem.ts", "DrizzleStockRepository.ts"],
+      "correction": "Separate create() vs reconstitute() validation; add isExpired() method",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 12",
+      "category": "domain_logic",
+      "description": "Date comparison with timestamp rejects products on expiration day",
+      "files": ["StockItem.ts"],
+      "correction": "Add isDateInPast() method that normalizes dates to midnight before comparing",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 13",
+      "category": "concurrency",
+      "description": "StartInventoryCount allows duplicate records in concurrent requests",
+      "files": ["StartInventoryCount.ts", "IInventoryCountRepository.ts", "DrizzleInventoryCountRepository.ts"],
+      "correction": "Add findPendingByProductAndLocation() and check before creating",
+      "status": "FIXED"
+    }
+  ],
+  "patterns_created": [
+    {
+      "id": "ENFORCE-015",
+      "name": "Date Comparison Pattern",
+      "description": "Normalize dates to midnight before comparing to avoid timezone/hour issues"
+    },
+    {
+      "id": "ENFORCE-016",
+      "name": "Idempotency Check Pattern",
+      "description": "Always verify existence before creating unique resources"
+    },
+    {
+      "id": "ENFORCE-017",
+      "name": "Reconstitute vs Create Validation",
+      "description": "create() validates business rules; reconstitute() only validates structural integrity"
+    }
+  ],
+  "lessons_learned": [
+    "SEMPRE consultar MCP antes de implementar novos use cases",
+    "SEMPRE verificar existência antes de criar recursos únicos (idempotency)",
+    "SEMPRE separar validação de create() vs reconstitute()",
+    "SEMPRE comparar datas normalizadas para meia-noite (sem hora)",
+    "SEMPRE verificar uso de tokens DI antes de remover",
+    "SEMPRE salvar estoque ANTES de movimento (Stock-First Pattern)",
+    "SEMPRE propagar erros de Money.create() e StockQuantity.create()",
+    "SEMPRE retornar HTTP status correto (404 para 'not found', 409 para conflito)",
+    "SEMPRE usar getTenantContext() sem parâmetros + resolveBranchIdOrThrow()",
+    "SEMPRE persistir entidades relacionadas (InventoryCount, não apenas StockItem)"
+  ],
+  "root_causes": [
+    "Falta de consulta aos contratos MCP antes de codificar",
+    "Padrões não sendo seguidos consistentemente",
+    "Edge cases não considerados (concorrência, datas, produtos expirados)",
+    "Validação insuficiente de requisitos de negócio",
+    "Testes não cobrindo cenários de concorrência e edge cases"
+  ],
+  "prevention_measures": [
+    "Adicionar ENFORCE-015, 016, 017 ao type-safety.json",
+    "Criar testes para cenários de concorrência",
+    "Criar testes para produtos expirados (hoje, ontem, amanhã)",
+    "Revisar todos os use cases para idempotency",
+    "Adicionar lint rule para detectar comparação de datas sem normalização"
+  ]
+}
+
