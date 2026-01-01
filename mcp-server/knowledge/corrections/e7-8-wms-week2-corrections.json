@@ -3,8 +3,8 @@
   "module": "WMS",
   "week": 2,
   "date": "2026-01-01",
-  "total_bugs_found": 18,
-  "total_bugs_fixed": 18,
+  "total_bugs_found": 19,
+  "total_bugs_fixed": 19,
   "categories": {
     "tenant_auth": 2,
     "http_status": 4,
@@ -15,7 +15,8 @@
     "concurrency": 1,
     "api_responses": 2,
     "data_consistency": 2,
-    "financial_integrity": 1
+    "financial_integrity": 1,
+    "validation_consistency": 1
   },
   "bugs": [
     {
@@ -149,6 +150,16 @@
       "severity": "HIGH",
       "impact": "Incorrect unit cost for new destination stock - financial reports inaccurate",
       "status": "FIXED"
+    },
+    {
+      "id": "Bug 19",
+      "category": "validation_consistency",
+      "description": "RegisterStockExit validates that location exists but does NOT check if location.isActive before allowing stock exit. In contrast, RegisterStockEntry checks location.isActive and TransferStock validates both source and destination locations are active. This inconsistency allows stock exits from inactive locations, violating expected business rule that operations should only occur at active locations.",
+      "files": ["src/modules/wms/application/use-cases/RegisterStockExit.ts"],
+      "correction": "Added location.isActive validation after location exists check (line 42-44). Pattern: ALWAYS apply SAME validations to similar operations. Created template: 1) Check exists, 2) Check isActive. Applied to ALL stock operations (Entry, Exit, Transfer). Pattern registered as ENFORCE-022 in MCP.",
+      "severity": "MEDIUM",
+      "impact": "Business rule violation - allows operations on inactive locations",
+      "status": "FIXED"
     }
   ],
   "patterns_created": [
@@ -186,6 +197,11 @@
       "id": "ENFORCE-021",
       "name": "Use Calculated Variables Pattern",
       "description": "When a value is calculated and stored in a variable (ex: destinationUnitCost), ALWAYS use that variable in ALL subsequent places, even if the original value seems equal. Guarantees consistency and prevents bugs when calculation logic is modified."
+    },
+    {
+      "id": "ENFORCE-022",
+      "name": "Consistent Business Validations Pattern",
+      "description": "Similar operations (Entry, Exit, Transfer) MUST have identical validation patterns. Template for location operations: 1) Check exists, 2) Check isActive. Inconsistencies create bugs and maintenance nightmares."
     }
   ],
   "lessons_learned": [
@@ -205,7 +221,9 @@
     "SEMPRE seguir 3 fases: Buscar → Calcular/Validar → Persistir",
     "SEMPRE considerar: 'O que acontece se esta linha falhar? Já salvei algo?'",
     "SEMPRE usar variáveis calculadas em TODOS os lugares subsequentes",
-    "NUNCA misturar uso de variável calculada e variável original (ex: destinationUnitCost vs fromStockItem.unitCost)"
+    "NUNCA misturar uso de variável calculada e variável original (ex: destinationUnitCost vs fromStockItem.unitCost)",
+    "SEMPRE aplicar validações IDÊNTICAS em operações similares (Entry, Exit, Transfer)",
+    "SEMPRE criar template de validação para operações do mesmo tipo"
   ],
   "root_causes": [
     "Falta de consulta aos contratos MCP antes de codificar",
@@ -216,7 +234,9 @@
     "Pensamento sequencial ao invés de atomicidade em operações multi-step",
     "Falta de análise: 'E se falhar AQUI? O que já salvei?'",
     "Copy-paste de código sem adaptar para contexto (usar original ao invés de calculado)",
-    "Falta de revisão: 'Por que calculei isso se não vou usar?'"
+    "Falta de revisão: 'Por que calculei isso se não vou usar?'",
+    "Implementação parcial de validações (copiar parte do código, esquecer validações)",
+    "Falta de comparação entre use cases similares durante code review"
   ],
   "prevention_measures": [
     "Adicionar ENFORCE-015, 016, 017, 018, 019, 020, 021 ao type-safety.json",
@@ -230,7 +250,9 @@
     "Template obrigatório para use cases multi-step: FASE 1 → FASE 2 → FASE 3",
     "Análise obrigatória: marcar TODAS as linhas que podem falhar APÓS primeiro save",
     "Criar lint rule: detectar variável calculada (const.*=.*calculate) não usada em todos locais",
-    "Code review: verificar que variáveis calculadas são usadas consistentemente"
+    "Code review: verificar que variáveis calculadas são usadas consistentemente",
+    "Template obrigatório para validações de localização: exists → isActive",
+    "Code review: comparar side-by-side use cases similares para garantir validações idênticas"
   ]
 }
 

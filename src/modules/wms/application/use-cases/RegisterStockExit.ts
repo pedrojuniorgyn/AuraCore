@@ -38,6 +38,11 @@ export class RegisterStockExit {
       return Result.fail('Location not found');
     }
 
+    // Bug 19 Fix: Validar localização ativa (consistência com RegisterStockEntry e TransferStock)
+    if (!location.isActive) {
+      return Result.fail('Location is not active');
+    }
+
     // Buscar StockItem
     const stockItem = await this.stockRepository.findByProductAndLocation(
       input.productId,

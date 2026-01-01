@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.104",
+  "version": "1.0.105",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1978,6 +1978,24 @@
       "incorrect_pattern": "const calculated = calculate(); if (cond) use(calculated) else use(original);",
       "detection": "grep -rn 'const.*=.*calculate\\|compute\\|avg' seguido de uso de variável original",
       "rationale": "Garante consistência, evita bugs quando cálculo for modificado, torna intenção clara",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-022",
+      "name": "Consistent Business Validations Pattern",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "RegisterStockExit não validava location.isActive, enquanto RegisterStockEntry e TransferStock validavam. Inconsistência permite operações em localizações inativas.",
+      "correction": "TODAS as operações de estoque (Entry, Exit, Transfer) DEVEM validar location.isActive de forma consistente. Criar template de validação padrão para garantir consistência entre use cases similares.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/RegisterStockExit.ts"
+      ],
+      "pattern_created": "Consistent Business Validations Pattern",
+      "correct_pattern": "// Template de validação para operações de estoque\nif (!location) return fail('not found');\nif (!location.isActive) return fail('not active');",
+      "incorrect_pattern": "// Validação inconsistente entre use cases similares\nif (!location) return fail('not found'); // falta validar isActive",
+      "detection": "grep -rn 'await.*locationRepository.findById' seguido de verificação de todos use cases para padrão consistente",
+      "rationale": "Operações similares devem ter validações idênticas. Inconsistências criam bugs e dificultam manutenção",
       "status": "APPROVED",
       "must_not_repeat": true
     },
