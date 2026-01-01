@@ -148,6 +148,7 @@ export class TransferStock {
       }
 
       // Bug 14 Fix: Usar reconstitute() ao invés de create() para transferências
+      // Bug 18 Fix: SEMPRE usar destinationUnitCost (variável calculada), não fromStockItem.unitCost
       const stockItemResult = StockItem.reconstitute({
         id: crypto.randomUUID(),
         organizationId: context.organizationId,
@@ -158,7 +159,7 @@ export class TransferStock {
         reservedQuantity: reservedQty.value,
         lotNumber: fromStockItem.lotNumber,
         expirationDate: fromStockItem.expirationDate,
-        unitCost: fromStockItem.unitCost,
+        unitCost: destinationUnitCost, // Bug 18 fix: usar variável calculada
         createdAt: new Date(),
         updatedAt: new Date()
       });

@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.103",
+  "version": "1.0.104",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1960,6 +1960,24 @@
       "correct_pattern": "Buscar → Validar tudo → Calcular tudo → Salvar tudo",
       "incorrect_pattern": "Buscar → Modificar e salvar origem → Calcular destino → Salvar destino",
       "detection": "grep -rn 'await.*save' use-cases/ | verificar se há cálculos após primeiro save",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-021",
+      "name": "Use Calculated Variables Pattern",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "TransferStock calculava destinationUnitCost mas não usava ao criar novo item no destino, usando fromStockItem.unitCost ao invés",
+      "correction": "Quando um valor é calculado e armazenado em variável (ex: destinationUnitCost), SEMPRE usar essa variável em todos lugares subsequentes, mesmo que valor original pareça igual",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Use Calculated Variables Pattern",
+      "correct_pattern": "const calculated = calculate(); useEverywhere(calculated);",
+      "incorrect_pattern": "const calculated = calculate(); if (cond) use(calculated) else use(original);",
+      "detection": "grep -rn 'const.*=.*calculate\\|compute\\|avg' seguido de uso de variável original",
+      "rationale": "Garante consistência, evita bugs quando cálculo for modificado, torna intenção clara",
       "status": "APPROVED",
       "must_not_repeat": true
     },

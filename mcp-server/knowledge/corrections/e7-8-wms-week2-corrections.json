@@ -3,8 +3,8 @@
   "module": "WMS",
   "week": 2,
   "date": "2026-01-01",
-  "total_bugs_found": 17,
-  "total_bugs_fixed": 17,
+  "total_bugs_found": 18,
+  "total_bugs_fixed": 18,
   "categories": {
     "tenant_auth": 2,
     "http_status": 4,
@@ -14,7 +14,8 @@
     "domain_logic": 2,
     "concurrency": 1,
     "api_responses": 2,
-    "data_consistency": 1
+    "data_consistency": 2,
+    "financial_integrity": 1
   },
   "bugs": [
     {
@@ -138,6 +139,16 @@
       "severity": "CRITICAL",
       "impact": "Data integrity violation - financial reconciliation impossible",
       "status": "FIXED"
+    },
+    {
+      "id": "Bug 18",
+      "category": "financial_integrity",
+      "description": "When creating new stock at destination location during transfer, code uses fromStockItem.unitCost instead of pre-calculated destinationUnitCost variable. This bypasses weighted average cost calculation when toStockItem doesn't exist, causing incorrect financial data. The destinationUnitCost was calculated at lines 103-119 but only applied when existing destination stock was present, not when creating new destination stock.",
+      "files": ["src/modules/wms/application/use-cases/TransferStock.ts"],
+      "correction": "Changed line 161 to use destinationUnitCost (calculated variable) instead of fromStockItem.unitCost. Pattern: ALWAYS use calculated variables in ALL subsequent places, even if value seems equal. This ensures consistency and prevents bugs when calculation logic is modified. Pattern registered as ENFORCE-021 in MCP.",
+      "severity": "HIGH",
+      "impact": "Incorrect unit cost for new destination stock - financial reports inaccurate",
+      "status": "FIXED"
     }
   ],
   "patterns_created": [
@@ -170,6 +181,11 @@
       "id": "ENFORCE-020",
       "name": "Calculate Before Persist Pattern",
       "description": "In multi-step operations, ALL validations and calculations must be done BEFORE any persistence. If any calculation fails, no data should have been modified in database. Pattern: PHASE 1: Fetch (read-only); PHASE 2: Calculate & Validate (in-memory); PHASE 3: Persist (only if PHASE 2 passed)"
+    },
+    {
+      "id": "ENFORCE-021",
+      "name": "Use Calculated Variables Pattern",
+      "description": "When a value is calculated and stored in a variable (ex: destinationUnitCost), ALWAYS use that variable in ALL subsequent places, even if the original value seems equal. Guarantees consistency and prevents bugs when calculation logic is modified."
     }
   ],
   "lessons_learned": [
@@ -187,7 +203,9 @@
     "SEMPRE aplicar padrões consistentemente em todas as rotas relacionadas",
     "NUNCA salvar dados parciais - calcular TUDO antes de persistir QUALQUER COISA",
     "SEMPRE seguir 3 fases: Buscar → Calcular/Validar → Persistir",
-    "SEMPRE considerar: 'O que acontece se esta linha falhar? Já salvei algo?'"
+    "SEMPRE considerar: 'O que acontece se esta linha falhar? Já salvei algo?'",
+    "SEMPRE usar variáveis calculadas em TODOS os lugares subsequentes",
+    "NUNCA misturar uso de variável calculada e variável original (ex: destinationUnitCost vs fromStockItem.unitCost)"
   ],
   "root_causes": [
     "Falta de consulta aos contratos MCP antes de codificar",
@@ -196,10 +214,12 @@
     "Validação insuficiente de requisitos de negócio",
     "Testes não cobrindo cenários de concorrência e edge cases",
     "Pensamento sequencial ao invés de atomicidade em operações multi-step",
-    "Falta de análise: 'E se falhar AQUI? O que já salvei?'"
+    "Falta de análise: 'E se falhar AQUI? O que já salvei?'",
+    "Copy-paste de código sem adaptar para contexto (usar original ao invés de calculado)",
+    "Falta de revisão: 'Por que calculei isso se não vou usar?'"
   ],
   "prevention_measures": [
-    "Adicionar ENFORCE-015, 016, 017, 018, 019, 020 ao type-safety.json",
+    "Adicionar ENFORCE-015, 016, 017, 018, 019, 020, 021 ao type-safety.json",
     "Criar testes para cenários de concorrência",
     "Criar testes para produtos expirados (hoje, ontem, amanhã)",
     "Revisar todos os use cases para idempotency",
@@ -208,7 +228,9 @@
     "Code review focado em consistência de padrões entre rotas similares",
     "Criar lint rule: detectar 'await.*save' seguido de cálculos/validações",
     "Template obrigatório para use cases multi-step: FASE 1 → FASE 2 → FASE 3",
-    "Análise obrigatória: marcar TODAS as linhas que podem falhar APÓS primeiro save"
+    "Análise obrigatória: marcar TODAS as linhas que podem falhar APÓS primeiro save",
+    "Criar lint rule: detectar variável calculada (const.*=.*calculate) não usada em todos locais",
+    "Code review: verificar que variáveis calculadas são usadas consistentemente"
   ]
 }
 
