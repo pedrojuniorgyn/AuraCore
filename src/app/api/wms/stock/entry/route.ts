@@ -6,6 +6,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
+import { getHttpStatusFromError } from '@/lib/api/error-status';
 
 /**
  * POST /api/wms/stock/entry - Register Stock Entry
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     const result = await useCase.execute(validation.data, context);
 
     if (!Result.isOk(result)) {
-      const status = result.error.includes('not found') ? 404 : 400;
+      const status = getHttpStatusFromError(result.error);
       return NextResponse.json(
         {
           success: false,

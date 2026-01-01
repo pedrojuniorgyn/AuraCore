@@ -97,6 +97,19 @@
       "pattern_created": "Idempotency Check Pattern (ENFORCE-016)",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-122846",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 14: TransferStock used StockItem.create() when creating stock at destination location. If the source product was expired, create() rejected it due to expiration validation, causing the entire transfer to fail. This broke warehouse operations for expired inventory and prevented historical tracking.",
+      "correction": "Changed TransferStock to use StockItem.reconstitute() instead of create() when creating stock item at destination location. Rationale: Transfer is moving already-validated data from source, not creating new inventory. The product was validated when it originally entered the system. This allows expired products to be moved/reorganized in warehouse while maintaining audit trail. Pattern registered as ENFORCE-018 in MCP.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Transfer Uses Reconstitute Pattern (ENFORCE-018)",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

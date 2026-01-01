@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.100",
+  "version": "1.0.102",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -1915,6 +1915,42 @@
         "src/modules/wms/infrastructure/persistence/repositories/DrizzleInventoryCountRepository.ts"
       ],
       "pattern_created": "Idempotency Check Pattern (ENFORCE-016)",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-019",
+      "name": "HTTP Status Code Pattern",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "API routes retornam 400 para todos os erros, incluindo conflitos (já existe) e insuficiência de estoque",
+      "correction": "Mapear erros para status HTTP corretos: 404 (not found), 409 (conflict/already exists/insufficient), 401 (unauthorized), 403 (forbidden), 400 (validation). Usar helper getHttpStatusFromError()",
+      "files_affected": [
+        "src/lib/api/error-status.ts",
+        "src/app/api/wms/inventory/route.ts",
+        "src/app/api/wms/inventory/complete/route.ts",
+        "src/app/api/wms/locations/route.ts",
+        "src/app/api/wms/stock/entry/route.ts",
+        "src/app/api/wms/stock/exit/route.ts",
+        "src/app/api/wms/stock/transfer/route.ts"
+      ],
+      "pattern_created": "HTTP Status Code Pattern",
+      "correct_pattern": "const status = getHttpStatusFromError(result.error);",
+      "incorrect_pattern": "const status = result.error.includes('not found') ? 404 : 400;",
+      "detection": "grep -rn 'error.includes.*404.*400' src/app/api/",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-122846",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 14: TransferStock used StockItem.create() when creating stock at destination location. If the source product was expired, create() rejected it due to expiration validation, causing the entire transfer to fail. This broke warehouse operations for expired inventory and prevented historical tracking.",
+      "correction": "Changed TransferStock to use StockItem.reconstitute() instead of create() when creating stock item at destination location. Rationale: Transfer is moving already-validated data from source, not creating new inventory. The product was validated when it originally entered the system. This allows expired products to be moved/reorganized in warehouse while maintaining audit trail. Pattern registered as ENFORCE-018 in MCP.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/TransferStock.ts"
+      ],
+      "pattern_created": "Transfer Uses Reconstitute Pattern (ENFORCE-018)",
       "status": "APPROVED",
       "must_not_repeat": true
     }

@@ -2,17 +2,18 @@
   "epic": "E7.8",
   "module": "WMS",
   "week": 2,
-  "date": "2025-01-01",
-  "total_bugs_found": 14,
-  "total_bugs_fixed": 14,
+  "date": "2026-01-01",
+  "total_bugs_found": 16,
+  "total_bugs_fixed": 16,
   "categories": {
     "tenant_auth": 2,
-    "http_status": 2,
+    "http_status": 4,
     "persistence_order": 4,
     "silent_failures": 1,
     "di_tokens": 1,
     "domain_logic": 2,
-    "concurrency": 1
+    "concurrency": 1,
+    "api_responses": 2
   },
   "bugs": [
     {
@@ -110,6 +111,22 @@
       "files": ["TransferStock.ts"],
       "correction": "Use reconstitute() instead of create() when creating stock item at destination (data already validated at original entry)",
       "status": "FIXED"
+    },
+    {
+      "id": "Bug 15",
+      "category": "api_responses",
+      "description": "StartInventoryCount returns 400 for 'already in progress', should be 409 (Conflict)",
+      "files": ["src/app/api/wms/inventory/route.ts"],
+      "correction": "Created getHttpStatusFromError() helper and applied to all 6 WMS routes",
+      "status": "FIXED"
+    },
+    {
+      "id": "Bug 16",
+      "category": "api_responses",
+      "description": "CreateLocation returns 400 for 'already exists', should be 409 (Conflict)",
+      "files": ["src/app/api/wms/locations/route.ts"],
+      "correction": "Applied getHttpStatusFromError() helper (same as Bug 15)",
+      "status": "FIXED"
     }
   ],
   "patterns_created": [
@@ -132,6 +149,11 @@
       "id": "ENFORCE-018",
       "name": "Transfer Uses Reconstitute Pattern",
       "description": "When transferring/moving entities between locations, use reconstitute() for destination (data already validated at original entry)"
+    },
+    {
+      "id": "ENFORCE-019",
+      "name": "HTTP Status Code Pattern",
+      "description": "Map errors to correct HTTP status codes: 404 (not found), 409 (conflict/already exists/insufficient), 401 (unauthorized), 403 (forbidden), 400 (validation)"
     }
   ],
   "lessons_learned": [
@@ -144,7 +166,9 @@
     "SEMPRE propagar erros de Money.create() e StockQuantity.create()",
     "SEMPRE retornar HTTP status correto (404 para 'not found', 409 para conflito)",
     "SEMPRE usar getTenantContext() sem parâmetros + resolveBranchIdOrThrow()",
-    "SEMPRE persistir entidades relacionadas (InventoryCount, não apenas StockItem)"
+    "SEMPRE persistir entidades relacionadas (InventoryCount, não apenas StockItem)",
+    "SEMPRE criar helper para lógica repetida (ex: getHttpStatusFromError)",
+    "SEMPRE aplicar padrões consistentemente em todas as rotas relacionadas"
   ],
   "root_causes": [
     "Falta de consulta aos contratos MCP antes de codificar",
@@ -154,11 +178,13 @@
     "Testes não cobrindo cenários de concorrência e edge cases"
   ],
   "prevention_measures": [
-    "Adicionar ENFORCE-015, 016, 017 ao type-safety.json",
+    "Adicionar ENFORCE-015, 016, 017, 018, 019 ao type-safety.json",
     "Criar testes para cenários de concorrência",
     "Criar testes para produtos expirados (hoje, ontem, amanhã)",
     "Revisar todos os use cases para idempotency",
-    "Adicionar lint rule para detectar comparação de datas sem normalização"
+    "Adicionar lint rule para detectar comparação de datas sem normalização",
+    "Criar helpers para lógica repetida (ex: error status mapping)",
+    "Code review focado em consistência de padrões entre rotas similares"
   ]
 }
 
