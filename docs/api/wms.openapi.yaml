@@ -1,0 +1,1102 @@
+openapi: 3.1.0
+info:
+  title: AuraCore WMS API
+  description: |
+    Warehouse Management System (WMS) API para AuraCore ERP
+    
+    ## Funcionalidades
+    
+    - **Locations**: Gerenciamento hierárquico de localizações (Warehouse → Aisle → Shelf → Position)
+    - **Stock**: Controle de estoque com entrada, saída e transferência
+    - **Inventory**: Contagem de inventário com ajustes automáticos
+    - **Movements**: Rastreamento de todas as movimentações de estoque
+    
+    ## Multi-tenancy
+    
+    Todos os endpoints requerem headers de multi-tenancy:
+    - `x-organization-id`: ID da organização
+    - `x-branch-id`: ID da filial
+    - `x-user-id`: ID do usuário executando a operação
+    
+    ## Autenticação
+    
+    Bearer token JWT no header `Authorization`
+  version: 1.0.0
+  contact:
+    name: AuraCore Team
+    email: dev@auracore.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.auracore.com
+    description: Production
+  - url: https://staging.auracore.com
+    description: Staging
+  - url: http://localhost:3000
+    description: Development
+
+tags:
+  - name: Locations
+    description: Gerenciamento de localizações do warehouse
+  - name: Stock
+    description: Operações de estoque (entrada, saída, transferência)
+  - name: Inventory
+    description: Contagem e ajuste de inventário
+  - name: Movements
+    description: Consulta de movimentações
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ========================================
+  # LOCATIONS ENDPOINTS
+  # ========================================
+  
+  /api/wms/locations:
+    get:
+      tags: [Locations]
+      summary: Listar localizações
+      description: Lista localizações com paginação e filtros opcionais
+      operationId: listLocations
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: type
+          in: query
+          description: Filtrar por tipo de localização
+          schema:
+            $ref: '#/components/schemas/LocationType'
+        - name: warehouseId
+          in: query
+          description: Filtrar por warehouse
+          schema:
+            type: string
+            format: uuid
+        - name: parentId
+          in: query
+          description: Filtrar por localização pai
+          schema:
+            type: string
+            format: uuid
+        - name: isActive
+          in: query
+          description: Filtrar por status ativo/inativo
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de localizações
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LocationListItem'
+              example:
+                items:
+                  - id: "loc-123"
+                    code: "WH-001"
+                    name: "Main Warehouse"
+                    type: "WAREHOUSE"
+                    warehouseId: "loc-123"
+                    parentId: null
+                    capacity: 10000
+                    capacityUnit: "UNIT"
+                    isActive: true
+                    createdAt: "2026-01-02T10:00:00Z"
+                  - id: "loc-124"
+                    code: "A-001"
+                    name: "Aisle 1"
+                    type: "AISLE"
+                    warehouseId: "loc-123"
+                    parentId: "loc-123"
+                    capacity: 1000
+                    capacityUnit: "UNIT"
+                    isActive: true
+                    createdAt: "2026-01-02T10:05:00Z"
+                total: 2
+                page: 1
+                limit: 10
+                totalPages: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Locations]
+      summary: Criar localização
+      description: Cria uma nova localização no warehouse
+      operationId: createLocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLocationRequest'
+            examples:
+              warehouse:
+                summary: Criar Warehouse
+                value:
+                  code: "WH-001"
+                  name: "Main Warehouse"
+                  type: "WAREHOUSE"
+                  capacity:
+                    value: 10000
+                    unit: "UNIT"
+              aisle:
+                summary: Criar Aisle
+                value:
+                  code: "A-001"
+                  name: "Aisle 1"
+                  type: "AISLE"
+                  parentId: "loc-123"
+                  warehouseId: "loc-123"
+                  capacity:
+                    value: 1000
+                    unit: "UNIT"
+      responses:
+        '201':
+          description: Localização criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/wms/locations/{id}:
+    get:
+      tags: [Locations]
+      summary: Buscar localização por ID
+      operationId: getLocationById
+      parameters:
+        - $ref: '#/components/parameters/LocationId'
+      responses:
+        '200':
+          description: Localização encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Locations]
+      summary: Atualizar localização
+      operationId: updateLocation
+      parameters:
+        - $ref: '#/components/parameters/LocationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocationRequest'
+            example:
+              name: "Updated Warehouse Name"
+              capacity:
+                value: 15000
+                unit: "UNIT"
+              isActive: true
+      responses:
+        '200':
+          description: Localização atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Locations]
+      summary: Deletar localização (soft delete)
+      operationId: deleteLocation
+      parameters:
+        - $ref: '#/components/parameters/LocationId'
+      responses:
+        '200':
+          description: Localização deletada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deletedAt:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========================================
+  # STOCK ENDPOINTS
+  # ========================================
+
+  /api/wms/stock:
+    get:
+      tags: [Stock]
+      summary: Listar itens de estoque
+      operationId: listStockItems
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: productId
+          in: query
+          schema:
+            type: string
+        - name: locationId
+          in: query
+          schema:
+            type: string
+        - name: warehouseId
+          in: query
+          schema:
+            type: string
+        - name: hasStock
+          in: query
+          description: Filtrar por items com estoque disponível
+          schema:
+            type: boolean
+        - name: minQuantity
+          in: query
+          description: Quantidade mínima
+          schema:
+            type: number
+        - name: expired
+          in: query
+          description: Filtrar por items expirados
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de itens de estoque
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StockItemListItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/wms/stock/{id}:
+    get:
+      tags: [Stock]
+      summary: Buscar item de estoque por ID
+      operationId: getStockItemById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item de estoque encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/wms/stock/entry:
+    post:
+      tags: [Stock]
+      summary: Registrar entrada de estoque
+      operationId: registerStockEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockEntryRequest'
+            example:
+              productId: "prod-123"
+              locationId: "loc-124"
+              quantity:
+                value: 100
+                unit: "UNIT"
+              unitCost:
+                amount: 10.50
+                currency: "BRL"
+              lotNumber: "LOT-2026-001"
+              expirationDate: "2027-01-01"
+      responses:
+        '201':
+          description: Entrada registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stockItemId:
+                    type: string
+                  movementId:
+                    type: string
+                  quantity:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/wms/stock/exit:
+    post:
+      tags: [Stock]
+      summary: Registrar saída de estoque
+      operationId: registerStockExit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockExitRequest'
+            example:
+              stockItemId: "stock-123"
+              quantity:
+                value: 30
+                unit: "UNIT"
+              reason: "SALE"
+      responses:
+        '200':
+          description: Saída registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  movementId:
+                    type: string
+                  remainingQuantity:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Estoque insuficiente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Insufficient stock available"
+
+  /api/wms/stock/transfer:
+    post:
+      tags: [Stock]
+      summary: Transferir estoque entre localizações
+      operationId: transferStock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockTransferRequest'
+            example:
+              sourceStockItemId: "stock-123"
+              destinationLocationId: "loc-125"
+              quantity:
+                value: 20
+                unit: "UNIT"
+      responses:
+        '200':
+          description: Transferência realizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sourceMovementId:
+                    type: string
+                  destinationMovementId:
+                    type: string
+                  sourceRemainingQuantity:
+                    type: number
+                  destinationStockItemId:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ========================================
+  # INVENTORY ENDPOINTS
+  # ========================================
+
+  /api/wms/inventory:
+    get:
+      tags: [Inventory]
+      summary: Listar contagens de inventário
+      operationId: listInventoryCounts
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/InventoryStatus'
+        - name: locationId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de contagens
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InventoryCountListItem'
+
+    post:
+      tags: [Inventory]
+      summary: Iniciar contagem de inventário
+      operationId: startInventoryCount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - locationId
+              properties:
+                productId:
+                  type: string
+                locationId:
+                  type: string
+            example:
+              productId: "prod-123"
+              locationId: "loc-124"
+      responses:
+        '201':
+          description: Contagem iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCount'
+        '409':
+          description: Contagem já em andamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Inventory count already in progress for this product and location"
+
+  /api/wms/inventory/{id}:
+    get:
+      tags: [Inventory]
+      summary: Buscar contagem por ID
+      operationId: getInventoryCountById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contagem encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryCount'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/wms/inventory/complete:
+    post:
+      tags: [Inventory]
+      summary: Completar contagem de inventário
+      description: |
+        Completa a contagem e cria movimento de ajuste se houver diferença
+      operationId: completeInventoryCount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - inventoryCountId
+                - countedQuantity
+              properties:
+                inventoryCountId:
+                  type: string
+                countedQuantity:
+                  $ref: '#/components/schemas/StockQuantity'
+            example:
+              inventoryCountId: "inv-123"
+              countedQuantity:
+                value: 95
+                unit: "UNIT"
+      responses:
+        '200':
+          description: Contagem completada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    $ref: '#/components/schemas/InventoryStatus'
+                  difference:
+                    type: number
+                    description: Diferença (contado - sistema)
+                  adjustmentMovementId:
+                    type: string
+                    nullable: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========================================
+  # MOVEMENTS ENDPOINTS
+  # ========================================
+
+  /api/wms/movements:
+    get:
+      tags: [Movements]
+      summary: Listar movimentações
+      operationId: listMovements
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/MovementType'
+        - name: productId
+          in: query
+          schema:
+            type: string
+        - name: locationId
+          in: query
+          description: Busca por fromLocationId OU toLocationId
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Lista de movimentações
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MovementListItem'
+
+  /api/wms/movements/{id}:
+    get:
+      tags: [Movements]
+      summary: Buscar movimentação por ID
+      operationId: getMovementById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Movimentação encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ========================================
+# COMPONENTS
+# ========================================
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Número da página (1-indexed)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    Limit:
+      name: limit
+      in: query
+      description: Itens por página
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    
+    LocationId:
+      name: id
+      in: path
+      required: true
+      description: ID da localização
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    # ========================================
+    # ENUMS
+    # ========================================
+
+    LocationType:
+      type: string
+      enum:
+        - WAREHOUSE
+        - AISLE
+        - SHELF
+        - POSITION
+      description: |
+        Tipo hierárquico de localização:
+        - WAREHOUSE: Armazém (nível raiz)
+        - AISLE: Corredor
+        - SHELF: Prateleira
+        - POSITION: Posição específica
+
+    MovementType:
+      type: string
+      enum:
+        - ENTRY
+        - EXIT
+        - TRANSFER
+        - ADJUSTMENT
+      description: |
+        Tipo de movimentação de estoque
+
+    InventoryStatus:
+      type: string
+      enum:
+        - PENDING
+        - COMPLETED
+      description: Status da contagem de inventário
+
+    # ========================================
+    # VALUE OBJECTS
+    # ========================================
+
+    StockQuantity:
+      type: object
+      required:
+        - value
+        - unit
+      properties:
+        value:
+          type: number
+          minimum: 0
+        unit:
+          type: string
+          enum:
+            - UNIT
+            - KG
+            - BOX
+            - PALLET
+
+    Money:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+          enum:
+            - BRL
+            - USD
+            - EUR
+
+    # ========================================
+    # LOCATIONS
+    # ========================================
+
+    Location:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/LocationType'
+        warehouseId:
+          type: string
+          nullable: true
+        parentId:
+          type: string
+          nullable: true
+        capacity:
+          type: number
+          nullable: true
+        capacityUnit:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LocationListItem:
+      allOf:
+        - $ref: '#/components/schemas/Location'
+        - type: object
+          properties:
+            currentOccupancy:
+              type: number
+              description: Ocupação atual (calculado)
+
+    CreateLocationRequest:
+      type: object
+      required:
+        - code
+        - name
+        - type
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Z0-9-]+$'
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/LocationType'
+        parentId:
+          type: string
+          description: Obrigatório para tipos não-WAREHOUSE
+        warehouseId:
+          type: string
+        capacity:
+          $ref: '#/components/schemas/StockQuantity'
+
+    UpdateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        capacity:
+          $ref: '#/components/schemas/StockQuantity'
+        isActive:
+          type: boolean
+
+    # ========================================
+    # STOCK
+    # ========================================
+
+    StockItem:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        locationId:
+          type: string
+        quantity:
+          type: number
+        unit:
+          type: string
+        reservedQuantity:
+          type: number
+        availableQuantity:
+          type: number
+        lotNumber:
+          type: string
+          nullable: true
+        expirationDate:
+          type: string
+          format: date
+          nullable: true
+        isExpired:
+          type: boolean
+        unitCost:
+          type: number
+        currency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    StockItemListItem:
+      $ref: '#/components/schemas/StockItem'
+
+    StockEntryRequest:
+      type: object
+      required:
+        - productId
+        - locationId
+        - quantity
+        - unitCost
+      properties:
+        productId:
+          type: string
+        locationId:
+          type: string
+        quantity:
+          $ref: '#/components/schemas/StockQuantity'
+        unitCost:
+          $ref: '#/components/schemas/Money'
+        lotNumber:
+          type: string
+        expirationDate:
+          type: string
+          format: date
+
+    StockExitRequest:
+      type: object
+      required:
+        - stockItemId
+        - quantity
+        - reason
+      properties:
+        stockItemId:
+          type: string
+        quantity:
+          $ref: '#/components/schemas/StockQuantity'
+        reason:
+          type: string
+
+    StockTransferRequest:
+      type: object
+      required:
+        - sourceStockItemId
+        - destinationLocationId
+        - quantity
+      properties:
+        sourceStockItemId:
+          type: string
+        destinationLocationId:
+          type: string
+        quantity:
+          $ref: '#/components/schemas/StockQuantity'
+
+    # ========================================
+    # INVENTORY
+    # ========================================
+
+    InventoryCount:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        locationId:
+          type: string
+        systemQuantity:
+          type: number
+        systemUnit:
+          type: string
+        countedQuantity:
+          type: number
+          nullable: true
+        countedUnit:
+          type: string
+          nullable: true
+        difference:
+          type: number
+          nullable: true
+        status:
+          $ref: '#/components/schemas/InventoryStatus'
+        adjustmentMovementId:
+          type: string
+          nullable: true
+        countedBy:
+          type: string
+          nullable: true
+        countedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    InventoryCountListItem:
+      $ref: '#/components/schemas/InventoryCount'
+
+    # ========================================
+    # MOVEMENTS
+    # ========================================
+
+    Movement:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        fromLocationId:
+          type: string
+          nullable: true
+        toLocationId:
+          type: string
+          nullable: true
+        type:
+          $ref: '#/components/schemas/MovementType'
+        quantity:
+          type: number
+        unit:
+          type: string
+        unitCost:
+          type: number
+        currency:
+          type: string
+        totalCost:
+          type: number
+        reason:
+          type: string
+          nullable: true
+        executedBy:
+          type: string
+        executedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    MovementListItem:
+      $ref: '#/components/schemas/Movement'
+
+    # ========================================
+    # COMMON
+    # ========================================
+
+    PaginatedResponse:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - limit
+        - totalPages
+      properties:
+        total:
+          type: integer
+          description: Total de itens
+        page:
+          type: integer
+          description: Página atual
+        limit:
+          type: integer
+          description: Itens por página
+        totalPages:
+          type: integer
+          description: Total de páginas
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid input"
+            details:
+              - "Field 'code' is required"
+
+    Unauthorized:
+      description: Não autenticado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+
+    Conflict:
+      description: Conflito (ex: código duplicado)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Location with code WH-001 already exists"
+
