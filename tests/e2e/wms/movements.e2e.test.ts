@@ -42,11 +42,13 @@ describe('WMS Movements API', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should return 400 for invalid date', async () => {
+    it('should ignore invalid date and return results', async () => {
       const response = await ctx.api.get('/api/wms/movements?startDate=invalid-date');
 
-      // Bug 4 fix: invalid dates should be handled gracefully
-      expect(response.status).toBe(200); // Or 400 depending on implementation
+      // Bug 6 fix: Invalid dates are silently ignored (parseDateParam returns undefined)
+      // This matches the behavior of the date-params helper
+      expect(response.status).toBe(200);
+      expect(response.body.items).toBeInstanceOf(Array);
     });
   });
 
