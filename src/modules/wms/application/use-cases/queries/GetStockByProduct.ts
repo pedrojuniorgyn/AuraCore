@@ -1,6 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IStockRepository } from '@/modules/wms/domain/ports/IStockRepository';
+import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 import type { StockItem } from '@/modules/wms/domain/entities/StockItem';
 
@@ -35,7 +36,9 @@ export interface GetStockByProductOutput {
 export class GetStockByProduct {
   constructor(
     @inject('StockRepository')
-    private stockRepository: IStockRepository
+    private stockRepository: IStockRepository,
+    @inject('LocationRepository')
+    private locationRepository: ILocationRepository
   ) {}
 
   async execute(
@@ -52,6 +55,26 @@ export class GetStockByProduct {
       return Result.fail('No stock found for this product');
     }
 
+    // Buscar todas as locations de uma vez (otimização)
+    const locationIds = [...new Set(stockItems.map((item: StockItem) => item.locationId))];
+    const locationsMap = new Map<string, { code: string; name: string }>();
+
+    for (const locationId of locationIds) {
+      const location = await this.locationRepository.findById(
+        locationId,
+        context.organizationId,
+        context.branchId
+      );
+      
+      if (location) {
+        locationsMap.set(locationId, {
+          code: location.code.value,
+          name: location.name
+        });
+      }
+    }
+
+    // Mapear stock items com totalizadores e location data
     let totalQuantity = 0;
     let totalReserved = 0;
     let totalAvailable = 0;
@@ -61,10 +84,12 @@ export class GetStockByProduct {
       totalReserved += item.reservedQuantity.value;
       totalAvailable += item.availableQuantity.value;
 
+      const locationData = locationsMap.get(item.locationId);
+
       return {
         locationId: item.locationId,
-        locationCode: '',
-        locationName: '',
+        locationCode: locationData?.code ?? 'UNKNOWN',
+        locationName: locationData?.name ?? 'Unknown Location',
         quantity: item.quantity.value,
         unit: item.quantity.unit,
         reservedQuantity: item.reservedQuantity.value,

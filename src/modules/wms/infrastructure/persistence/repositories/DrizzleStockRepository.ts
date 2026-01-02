@@ -4,7 +4,9 @@ import { StockItem } from '../../../domain/entities/StockItem';
 import { StockQuantity, UnitOfMeasure } from '../../../domain/value-objects/StockQuantity';
 import { StockItemMapper } from '../mappers/StockItemMapper';
 import { wmsStockItems } from '../schemas/StockItemSchema';
+import { wmsLocations } from '../schemas/LocationSchema';
 import { db } from '@/lib/db';
+import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleStockRepository implements IStockRepository {
@@ -313,17 +315,40 @@ export class DrizzleStockRepository implements IStockRepository {
     if (filters.locationId) {
       conditions.push(eq(wmsStockItems.locationId, filters.locationId));
     }
+    if (filters.warehouseId) {
+      // Filter by warehouseId using subquery (StockItem -> Location -> Warehouse)
+      conditions.push(sql`${wmsStockItems.locationId} IN (
+        SELECT id FROM wms_locations 
+        WHERE warehouse_id = ${filters.warehouseId}
+          AND organization_id = ${organizationId}
+          AND branch_id = ${branchId}
+          AND deleted_at IS NULL
+      )`);
+    }
     if (filters.lotNumber) {
       conditions.push(eq(wmsStockItems.lotNumber, filters.lotNumber));
     }
-    if (filters.hasStock) {
-      conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) > 0`);
+    // Bug Fix (Etapa 2.5): Use !== undefined for boolean filters to distinguish false from undefined
+    if (filters.hasStock !== undefined) {
+      if (filters.hasStock) {
+        // hasStock=true → quantity > 0
+        conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) > 0`);
+      } else {
+        // hasStock=false → quantity = 0 or <= 0
+        conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) <= 0`);
+      }
     }
     if (filters.minQuantity !== undefined) {
       conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) >= ${filters.minQuantity}`);
     }
-    if (filters.expired) {
-      conditions.push(sql`${wmsStockItems.expirationDate} < GETDATE()`);
+    if (filters.expired !== undefined) {
+      if (filters.expired) {
+        // expired=true → expirationDate < now
+        conditions.push(sql`${wmsStockItems.expirationDate} < GETDATE()`);
+      } else {
+        // expired=false → expirationDate >= now OR expirationDate IS NULL
+        conditions.push(sql`(${wmsStockItems.expirationDate} >= GETDATE() OR ${wmsStockItems.expirationDate} IS NULL)`);
+      }
     }
 
     // Get paginated items (MS SQL Server pagination)
@@ -331,10 +356,12 @@ export class DrizzleStockRepository implements IStockRepository {
       .select()
       .from(wmsStockItems)
       .where(conditions.length > 1 ? and(...conditions) : conditions[0])
-      .orderBy(desc(wmsStockItems.createdAt))
-      .$dynamic();
+      .orderBy(desc(wmsStockItems.createdAt));
     
-    const records = await query;
+    const records = await queryPaginated<typeof wmsStockItems.$inferSelect>(
+      query,
+      { page, pageSize: limit }
+    );
 
     // Map to domain
     return records
@@ -373,17 +400,40 @@ export class DrizzleStockRepository implements IStockRepository {
     if (filters.locationId) {
       conditions.push(eq(wmsStockItems.locationId, filters.locationId));
     }
+    if (filters.warehouseId) {
+      // Filter by warehouseId using subquery (StockItem -> Location -> Warehouse)
+      conditions.push(sql`${wmsStockItems.locationId} IN (
+        SELECT id FROM wms_locations 
+        WHERE warehouse_id = ${filters.warehouseId}
+          AND organization_id = ${organizationId}
+          AND branch_id = ${branchId}
+          AND deleted_at IS NULL
+      )`);
+    }
     if (filters.lotNumber) {
       conditions.push(eq(wmsStockItems.lotNumber, filters.lotNumber));
     }
-    if (filters.hasStock) {
-      conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) > 0`);
+    // Bug Fix (Etapa 2.5): Use !== undefined for boolean filters to distinguish false from undefined
+    if (filters.hasStock !== undefined) {
+      if (filters.hasStock) {
+        // hasStock=true → quantity > 0
+        conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) > 0`);
+      } else {
+        // hasStock=false → quantity = 0 or <= 0
+        conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) <= 0`);
+      }
     }
     if (filters.minQuantity !== undefined) {
       conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) >= ${filters.minQuantity}`);
     }
-    if (filters.expired) {
-      conditions.push(sql`${wmsStockItems.expirationDate} < GETDATE()`);
+    if (filters.expired !== undefined) {
+      if (filters.expired) {
+        // expired=true → expirationDate < now
+        conditions.push(sql`${wmsStockItems.expirationDate} < GETDATE()`);
+      } else {
+        // expired=false → expirationDate >= now OR expirationDate IS NULL
+        conditions.push(sql`(${wmsStockItems.expirationDate} >= GETDATE() OR ${wmsStockItems.expirationDate} IS NULL)`);
+      }
     }
 
     const result = await db

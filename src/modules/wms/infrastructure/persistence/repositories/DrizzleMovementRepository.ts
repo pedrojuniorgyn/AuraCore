@@ -5,6 +5,7 @@ import type { MovementType } from '../../../domain/value-objects/MovementType';
 import { StockMovementMapper } from '../mappers/StockMovementMapper';
 import { wmsStockMovements } from '../schemas/StockMovementSchema';
 import { db } from '@/lib/db';
+import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleMovementRepository implements IMovementRepository {
@@ -286,10 +287,12 @@ export class DrizzleMovementRepository implements IMovementRepository {
       .select()
       .from(wmsStockMovements)
       .where(whereClause)
-      .orderBy(desc(wmsStockMovements.executedAt))
-      .$dynamic();
+      .orderBy(desc(wmsStockMovements.executedAt));
     
-    const records = await query;
+    const records = await queryPaginated<typeof wmsStockMovements.$inferSelect>(
+      query,
+      { page, pageSize: limit }
+    );
 
     // Map to domain
     return records

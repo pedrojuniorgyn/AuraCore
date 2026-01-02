@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.108",
+  "version": "1.0.111",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -2019,6 +2019,62 @@
       "must_not_repeat": true
     },
     {
+      "id": "ENFORCE-024",
+      "name": "Boolean Filter Pattern",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Filtros boolean opcionais (hasStock, expired) usam if (filters.hasStock) que trata false como undefined. Isso impede filtrar explicitamente por negação: hasStock=false (itens SEM estoque) ou expired=false (itens NÃO expirados), pois if(false) não executa.",
+      "correction": "Filtros boolean opcionais DEVEM usar !== undefined para distinguir entre 'não filtrar' (undefined) e 'filtrar por false' (false). Implementar lógica completa: if (filter !== undefined) { if (filter) { /* caso true */ } else { /* caso false */ } }",
+      "files_affected": [
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleStockRepository.ts"
+      ],
+      "pattern_created": "Boolean Filter Pattern",
+      "correct_pattern": "if (filters.hasStock !== undefined) {\n  if (filters.hasStock) {\n    conditions.push(gt(quantity, 0));\n  } else {\n    conditions.push(lte(quantity, 0));\n  }\n}",
+      "incorrect_pattern": "if (filters.hasStock) {\n  conditions.push(gt(quantity, 0));\n}\n// false é ignorado!",
+      "detection": "grep -rn 'if (filters\\.' em repositories e verificar se filtros boolean usam !== undefined",
+      "rationale": "false e undefined têm significados diferentes: false = 'filtrar por não', undefined = 'não filtrar'. Tratar igual quebra funcionalidade",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-025",
+      "name": "Undefined vs Falsy Check Pattern",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "UpdateLocation usava if (!input.name) para verificar se campo foi fornecido. Isso trata string vazia (''), 0, e false como 'não fornecido', impedindo atualizações legítimas para valores falsy e confundindo ausência de valor (undefined) com valor falsy.",
+      "correction": "Para campos opcionais em updates, usar !== undefined para distinguir 'não fornecido' (undefined) de 'valor falsy' ('', 0, false). Adicionar validações explícitas APÓS check: if (input.field !== undefined) { if (input.field.trim() === '') return fail; /* atualizar */ }",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/UpdateLocation.ts"
+      ],
+      "pattern_created": "Undefined vs Falsy Check Pattern",
+      "correct_pattern": "if (input.name !== undefined) {\n  if (input.name.trim() === '') {\n    return Result.fail('Name cannot be empty');\n  }\n  location.updateName(input.name);\n}",
+      "incorrect_pattern": "if (!input.name) {\n  // Não atualiza se name = '' ou name = 0\n}\nif (input.name) {\n  location.updateName(input.name);\n}",
+      "detection": "grep -rn 'if (!input\\.' ou 'if (input\\..*) {' em Update use cases",
+      "rationale": "undefined, null, '', false, 0 têm significados diferentes. undefined = 'não fornecido', outros = 'fornecido com valor específico'. Misturar semânticas quebra funcionalidade de updates parciais.",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-026",
+      "name": "Boolean Query Param Validation Pattern",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Boolean query params (isActive, hasStock, expired) usavam lógica ternária === 'true' ? true : false que trata qualquer valor não-'true' como false. Isso faz ?isActive=invalid silenciosamente virar isActive=false ao invés de retornar erro 400. Usuários não percebem que o filtro está errado.",
+      "correction": "Criar helper parseBooleanParam() que valida valores permitidos (true/false/1/0/yes/no case-insensitive) e retorna erro 400 com mensagem descritiva para valores inválidos. Retorna undefined para parâmetro não fornecido.",
+      "files_affected": [
+        "src/app/api/wms/locations/route.ts",
+        "src/app/api/wms/stock/route.ts",
+        "src/lib/api/boolean-params.ts"
+      ],
+      "pattern_created": "Boolean Query Param Validation Pattern",
+      "correct_pattern": "const result = parseBooleanParam(searchParams.get('isActive'), 'isActive');\nif (!result.success) {\n  return NextResponse.json({ error: result.error }, { status: 400 });\n}\nconst isActive = result.value; // undefined, true, ou false",
+      "incorrect_pattern": "const isActive = searchParams.get('isActive') === 'true' ? true : false;\n// isActive=invalid vira false silenciosamente",
+      "detection": "grep -rn \"=== 'true' ? true : false\" em API routes",
+      "rationale": "Valores inválidos devem retornar erro 400, não serem silenciosamente convertidos. Isso previne bugs sutis onde usuários acham que estão filtrando corretamente mas o filtro está errado.",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
       "id": "LC-122846",
       "date": "2026-01-01",
       "epic": "E7.8",
@@ -2059,6 +2115,49 @@
         "mcp-server/knowledge/corrections/e7-8-wms-week2-corrections.json"
       ],
       "pattern_created": "ENFORCE-023: Fail-Fast Business Rules Validation Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-990505",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Bug: Filtros boolean opcionais usam if (filters.hasStock) que trata false como undefined. Isso impede filtrar explicitamente por itens SEM estoque (hasStock=false) ou itens NÃO expirados (expired=false), pois if(false) não executa.",
+      "correction": "Usar !== undefined para filtros boolean: if (filters.hasStock !== undefined) { if (filters.hasStock) {...} else {...} }. Isso distingue 'não filtrar' (undefined) de 'filtrar por false' (false). Implementado lógica completa: hasStock=false → quantity <= 0, expired=false → expirationDate >= now OR NULL.",
+      "files_affected": [
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleStockRepository.ts"
+      ],
+      "pattern_created": "ENFORCE-024: Boolean Filter Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-990506",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Bug 7: UpdateLocation usava if (!input.name) que trata string vazia como 'não fornecido'. Isso impede atualizar campo para string vazia e confunde 'valor não fornecido' (undefined) com 'valor falsy' ('' / false / 0).",
+      "correction": "Usar !== undefined para campos opcionais em updates: if (input.name !== undefined). Adicionar validação explícita para string vazia APÓS check de !== undefined: if (input.name.trim() === '') return fail. Pattern ENFORCE-025 criado: Undefined vs Falsy Check Pattern.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/UpdateLocation.ts",
+        "mcp-server/knowledge/contracts/type-safety.json"
+      ],
+      "pattern_created": "ENFORCE-025: Undefined vs Falsy Check Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-990507",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Bug 8: Boolean query params (isActive, hasStock, expired) usam lógica ternária que trata qualquer valor não-'true' como false. Isso faz ?isActive=invalid silenciosamente virar isActive=false, filtrando por localizações inativas ao invés de rejeitar o input inválido. Mesma issue para hasStock e expired.",
+      "correction": "Criar helper parseBooleanParam() que valida explicitamente valores permitidos (true/false/1/0/yes/no) e retorna erro 400 para valores inválidos. Aplicado em locations/route.ts (isActive) e stock/route.ts (hasStock, expired). Pattern ENFORCE-026 criado: Boolean Query Param Validation Pattern.",
+      "files_affected": [
+        "src/app/api/wms/locations/route.ts",
+        "src/app/api/wms/stock/route.ts",
+        "src/lib/api/boolean-params.ts",
+        "mcp-server/knowledge/contracts/type-safety.json"
+      ],
+      "pattern_created": "ENFORCE-026: Boolean Query Param Validation Pattern",
       "status": "APPROVED",
       "must_not_repeat": true
     }

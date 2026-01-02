@@ -8,6 +8,8 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
+import { parsePaginationParams } from '@/lib/api/pagination';
+import { parseBooleanParam } from '@/lib/api/boolean-params';
 
 /**
  * GET /api/wms/locations - List Locations
@@ -21,12 +23,34 @@ export async function GET(request: NextRequest) {
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    
+    // Validate pagination parameters
+    const paginationResult = parsePaginationParams(searchParams);
+    if (!paginationResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: paginationResult.error
+        },
+        { status: 400 }
+      );
+    }
+    
+    const { page, limit } = paginationResult.data;
     const type = searchParams.get('type') || undefined;
     const warehouseId = searchParams.get('warehouseId') || undefined;
-    const isActiveStr = searchParams.get('isActive');
-    const isActive = isActiveStr ? isActiveStr === 'true' : undefined;
+    
+    // Bug Fix: Validate boolean parameter to reject invalid values
+    const isActiveResult = parseBooleanParam(searchParams.get('isActive'), 'isActive');
+    if (!isActiveResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: isActiveResult.error
+        },
+        { status: 400 }
+      );
+    }
 
     // Build execution context
     const context: ExecutionContext = {
@@ -39,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Execute use case
     const useCase = container.resolve(ListLocations);
     const result = await useCase.execute(
-      { page, limit, type, warehouseId, isActive },
+      { page, limit, type, warehouseId, isActive: isActiveResult.value },
       context
     );
 

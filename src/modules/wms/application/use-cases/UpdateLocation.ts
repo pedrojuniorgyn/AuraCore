@@ -34,7 +34,8 @@ export class UpdateLocation {
     input: UpdateLocationInput,
     context: ExecutionContext
   ): Promise<Result<UpdateLocationOutput, string>> {
-    if (!input.name && input.capacity === undefined && input.capacityUnit === undefined && input.isActive === undefined) {
+    // Bug Fix: Use !== undefined to distinguish "not provided" from "empty string"
+    if (input.name === undefined && input.capacity === undefined && input.capacityUnit === undefined && input.isActive === undefined) {
       return Result.fail('At least one field must be provided for update');
     }
 
@@ -48,7 +49,12 @@ export class UpdateLocation {
       return Result.fail('Location not found');
     }
 
-    if (input.name) {
+    // Bug Fix: Use !== undefined to allow empty string (if business rules permit)
+    if (input.name !== undefined) {
+      // Validate that name is not empty (business rule)
+      if (input.name.trim() === '') {
+        return Result.fail('Name cannot be empty');
+      }
       location.updateName(input.name);
     }
 

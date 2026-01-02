@@ -20,7 +20,6 @@ export interface GetInventoryCountByIdOutput {
   adjustmentMovementId: string | null;
   countedBy: string | null;
   countedAt: Date | null;
-  createdBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,7 +58,6 @@ export class GetInventoryCountById {
       adjustmentMovementId: count.adjustmentMovementId ?? null,
       countedBy: count.countedBy ?? null,
       countedAt: count.countedAt ?? null,
-      createdBy: 'system',
       createdAt: count.createdAt,
       updatedAt: count.updatedAt
     });

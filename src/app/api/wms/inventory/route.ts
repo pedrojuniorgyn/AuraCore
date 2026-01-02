@@ -8,6 +8,7 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
+import { parsePaginationParams } from '@/lib/api/pagination';
 
 /**
  * GET /api/wms/inventory - List Inventory Counts
@@ -21,8 +22,20 @@ export async function GET(request: NextRequest) {
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    
+    // Validate pagination parameters
+    const paginationResult = parsePaginationParams(searchParams);
+    if (!paginationResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: paginationResult.error
+        },
+        { status: 400 }
+      );
+    }
+    
+    const { page, limit } = paginationResult.data;
     const status = searchParams.get('status') || undefined;
     const locationId = searchParams.get('locationId') || undefined;
     const productId = searchParams.get('productId') || undefined;

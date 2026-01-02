@@ -5,6 +5,7 @@ import type { LocationCode } from '../../../domain/value-objects/LocationCode';
 import { LocationMapper } from '../mappers/LocationMapper';
 import { wmsLocations } from '../schemas/LocationSchema';
 import { db } from '@/lib/db';
+import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleLocationRepository implements ILocationRepository {
@@ -211,10 +212,12 @@ export class DrizzleLocationRepository implements ILocationRepository {
       .select()
       .from(wmsLocations)
       .where(conditions.length > 1 ? and(...conditions) : conditions[0])
-      .orderBy(desc(wmsLocations.createdAt))
-      .$dynamic();
+      .orderBy(desc(wmsLocations.createdAt));
     
-    const records = await query;
+    const records = await queryPaginated<typeof wmsLocations.$inferSelect>(
+      query,
+      { page, pageSize: limit }
+    );
 
     // Map to domain
     return records
