@@ -1,12 +1,78 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from 'tsyringe';
 import { CreateLocation } from '@/modules/wms/application/use-cases/CreateLocation';
+import { ListLocations } from '@/modules/wms/application/use-cases/queries/ListLocations';
 import { CreateLocationSchema } from '@/modules/wms/application/dtos/CreateLocationDTO';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
+
+/**
+ * GET /api/wms/locations - List Locations
+ * E7.8 WMS Semana 3
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Get tenant context (multi-tenancy)
+    const tenantContext = await getTenantContext();
+    const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
+
+    // Parse query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const type = searchParams.get('type') || undefined;
+    const warehouseId = searchParams.get('warehouseId') || undefined;
+    const isActiveStr = searchParams.get('isActive');
+    const isActive = isActiveStr ? isActiveStr === 'true' : undefined;
+
+    // Build execution context
+    const context: ExecutionContext = {
+      userId: tenantContext.userId,
+      organizationId: tenantContext.organizationId,
+      branchId: branchId,
+      isAdmin: tenantContext.isAdmin
+    };
+
+    // Execute use case
+    const useCase = container.resolve(ListLocations);
+    const result = await useCase.execute(
+      { page, limit, type, warehouseId, isActive },
+      context
+    );
+
+    if (!Result.isOk(result)) {
+      const status = getHttpStatusFromError(result.error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error
+        },
+        { status }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: result.value
+      },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Internal server error',
+        message: errorMessage
+      },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * POST /api/wms/locations - Create Location

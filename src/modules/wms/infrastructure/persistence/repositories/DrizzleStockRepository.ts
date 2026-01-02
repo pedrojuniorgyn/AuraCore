@@ -1,4 +1,4 @@
-import { eq, and, isNull, sql, lte, isNotNull } from 'drizzle-orm';
+import { eq, and, isNull, sql, lte, isNotNull, desc } from 'drizzle-orm';
 import type { IStockRepository } from '../../../domain/ports/IStockRepository';
 import { StockItem } from '../../../domain/entities/StockItem';
 import { StockQuantity, UnitOfMeasure } from '../../../domain/value-objects/StockQuantity';
@@ -277,6 +277,121 @@ export class DrizzleStockRepository implements IStockRepository {
           eq(wmsStockItems.branchId, branchId)
         )
       );
+  }
+
+  /**
+   * Lista itens de estoque com paginação e filtros
+   * E7.8 WMS Semana 3
+   */
+  async findMany(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      warehouseId?: string;
+      minQuantity?: number;
+      hasStock?: boolean;
+      lotNumber?: string;
+      expired?: boolean;
+    },
+    pagination: { page: number; limit: number }
+  ): Promise<StockItem[]> {
+    const { page, limit } = pagination;
+    const offset = (page - 1) * limit;
+
+    // Build conditions (multi-tenancy + soft delete)
+    const conditions = [
+      eq(wmsStockItems.organizationId, organizationId),
+      eq(wmsStockItems.branchId, branchId),
+      isNull(wmsStockItems.deletedAt)
+    ];
+
+    if (filters.productId) {
+      conditions.push(eq(wmsStockItems.productId, filters.productId));
+    }
+    if (filters.locationId) {
+      conditions.push(eq(wmsStockItems.locationId, filters.locationId));
+    }
+    if (filters.lotNumber) {
+      conditions.push(eq(wmsStockItems.lotNumber, filters.lotNumber));
+    }
+    if (filters.hasStock) {
+      conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) > 0`);
+    }
+    if (filters.minQuantity !== undefined) {
+      conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) >= ${filters.minQuantity}`);
+    }
+    if (filters.expired) {
+      conditions.push(sql`${wmsStockItems.expirationDate} < GETDATE()`);
+    }
+
+    // Get paginated items (MS SQL Server pagination)
+    const query = db
+      .select()
+      .from(wmsStockItems)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0])
+      .orderBy(desc(wmsStockItems.createdAt))
+      .$dynamic();
+    
+    const records = await query;
+
+    // Map to domain
+    return records
+      .map((record: any) => StockItemMapper.toDomain(record))
+      .filter((result: any) => Result.isOk(result))
+      .map((r: any) => r.value);
+  }
+
+  /**
+   * Conta itens de estoque com filtros
+   * E7.8 WMS Semana 3
+   */
+  async count(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      warehouseId?: string;
+      minQuantity?: number;
+      hasStock?: boolean;
+      lotNumber?: string;
+      expired?: boolean;
+    }
+  ): Promise<number> {
+    // Build conditions (multi-tenancy + soft delete)
+    const conditions = [
+      eq(wmsStockItems.organizationId, organizationId),
+      eq(wmsStockItems.branchId, branchId),
+      isNull(wmsStockItems.deletedAt)
+    ];
+
+    if (filters.productId) {
+      conditions.push(eq(wmsStockItems.productId, filters.productId));
+    }
+    if (filters.locationId) {
+      conditions.push(eq(wmsStockItems.locationId, filters.locationId));
+    }
+    if (filters.lotNumber) {
+      conditions.push(eq(wmsStockItems.lotNumber, filters.lotNumber));
+    }
+    if (filters.hasStock) {
+      conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) > 0`);
+    }
+    if (filters.minQuantity !== undefined) {
+      conditions.push(sql`CAST(${wmsStockItems.quantity} AS DECIMAL) >= ${filters.minQuantity}`);
+    }
+    if (filters.expired) {
+      conditions.push(sql`${wmsStockItems.expirationDate} < GETDATE()`);
+    }
+
+    const result = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(wmsStockItems)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]);
+
+    return Number(result[0]?.count ?? 0);
   }
 }
 

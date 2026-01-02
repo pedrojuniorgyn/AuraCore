@@ -1,4 +1,4 @@
-import { eq, and, isNull, gte, lte, or } from 'drizzle-orm';
+import { eq, and, isNull, gte, lte, or, desc, sql } from 'drizzle-orm';
 import type { IMovementRepository } from '../../../domain/ports/IMovementRepository';
 import { StockMovement } from '../../../domain/entities/StockMovement';
 import type { MovementType } from '../../../domain/value-objects/MovementType';
@@ -226,6 +226,133 @@ export class DrizzleMovementRepository implements IMovementRepository {
     if (!existing) {
       await db.insert(wmsStockMovements).values(persistence);
     }
+  }
+
+  /**
+   * Lista movimentações com paginação e filtros
+   * E7.8 WMS Semana 3
+   */
+  async findMany(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      type?: string;
+      startDate?: Date;
+      endDate?: Date;
+    },
+    pagination: { page: number; limit: number }
+  ): Promise<StockMovement[]> {
+    const { page, limit } = pagination;
+    const offset = (page - 1) * limit;
+
+    // Build conditions (multi-tenancy + soft delete)
+    const conditions = [
+      eq(wmsStockMovements.organizationId, organizationId),
+      eq(wmsStockMovements.branchId, branchId),
+      isNull(wmsStockMovements.deletedAt)
+    ];
+
+    if (filters.productId) {
+      conditions.push(eq(wmsStockMovements.productId, filters.productId));
+    }
+    if (filters.type) {
+      conditions.push(eq(wmsStockMovements.type, filters.type));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(wmsStockMovements.executedAt, filters.startDate));
+    }
+    if (filters.endDate) {
+      conditions.push(lte(wmsStockMovements.executedAt, filters.endDate));
+    }
+
+    // Location filter handled separately due to OR condition
+    let locationCondition: any = null;
+    if (filters.locationId) {
+      locationCondition = or(
+        eq(wmsStockMovements.fromLocationId, filters.locationId),
+        eq(wmsStockMovements.toLocationId, filters.locationId)
+      );
+    }
+
+    // Build final where clause
+    const whereClause = locationCondition 
+      ? and(...conditions, locationCondition)
+      : (conditions.length > 1 ? and(...conditions) : conditions[0]);
+
+    // Get paginated items (MS SQL Server pagination)
+    const query = db
+      .select()
+      .from(wmsStockMovements)
+      .where(whereClause)
+      .orderBy(desc(wmsStockMovements.executedAt))
+      .$dynamic();
+    
+    const records = await query;
+
+    // Map to domain
+    return records
+      .map((record: any) => StockMovementMapper.toDomain(record))
+      .filter((result: any) => Result.isOk(result))
+      .map((r: any) => r.value);
+  }
+
+  /**
+   * Conta movimentações com filtros
+   * E7.8 WMS Semana 3
+   */
+  async count(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      type?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<number> {
+    // Build conditions (multi-tenancy + soft delete)
+    const conditions = [
+      eq(wmsStockMovements.organizationId, organizationId),
+      eq(wmsStockMovements.branchId, branchId),
+      isNull(wmsStockMovements.deletedAt)
+    ];
+
+    if (filters.productId) {
+      conditions.push(eq(wmsStockMovements.productId, filters.productId));
+    }
+    if (filters.type) {
+      conditions.push(eq(wmsStockMovements.type, filters.type));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(wmsStockMovements.executedAt, filters.startDate));
+    }
+    if (filters.endDate) {
+      conditions.push(lte(wmsStockMovements.executedAt, filters.endDate));
+    }
+
+    // Location filter handled separately due to OR condition
+    let locationCondition: any = null;
+    if (filters.locationId) {
+      locationCondition = or(
+        eq(wmsStockMovements.fromLocationId, filters.locationId),
+        eq(wmsStockMovements.toLocationId, filters.locationId)
+      );
+    }
+
+    // Build final where clause
+    const whereClause = locationCondition 
+      ? and(...conditions, locationCondition)
+      : (conditions.length > 1 ? and(...conditions) : conditions[0]);
+
+    const result = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(wmsStockMovements)
+      .where(whereClause);
+
+    return Number(result[0]?.count ?? 0);
   }
 }
 

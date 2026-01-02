@@ -123,6 +123,39 @@ export interface IMovementRepository {
   exists(id: string, organizationId: number, branchId: number): Promise<boolean>;
 
   /**
+   * Lista movimentações com paginação e filtros
+   * E7.8 WMS Semana 3
+   */
+  findMany(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      type?: string;
+      startDate?: Date;
+      endDate?: Date;
+    },
+    pagination: { page: number; limit: number }
+  ): Promise<StockMovement[]>;
+
+  /**
+   * Conta movimentações com filtros
+   * E7.8 WMS Semana 3
+   */
+  count(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      type?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<number>;
+
+  /**
    * Salva uma movimentação (insert apenas - movimentações não são alteradas)
    * 
    * @param movement Movimentação a salvar

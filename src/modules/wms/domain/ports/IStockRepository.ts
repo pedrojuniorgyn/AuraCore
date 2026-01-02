@@ -116,6 +116,43 @@ export interface IStockRepository {
   exists(id: string, organizationId: number, branchId: number): Promise<boolean>;
 
   /**
+   * Lista itens de estoque com paginação e filtros
+   * E7.8 WMS Semana 3
+   */
+  findMany(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      warehouseId?: string;
+      minQuantity?: number;
+      hasStock?: boolean;
+      lotNumber?: string;
+      expired?: boolean;
+    },
+    pagination: { page: number; limit: number }
+  ): Promise<StockItem[]>;
+
+  /**
+   * Conta itens de estoque com filtros
+   * E7.8 WMS Semana 3
+   */
+  count(
+    organizationId: number,
+    branchId: number,
+    filters: {
+      productId?: string;
+      locationId?: string;
+      warehouseId?: string;
+      minQuantity?: number;
+      hasStock?: boolean;
+      lotNumber?: string;
+      expired?: boolean;
+    }
+  ): Promise<number>;
+
+  /**
    * Salva um item de estoque (insert ou update)
    * 
    * @param stockItem Item de estoque a salvar

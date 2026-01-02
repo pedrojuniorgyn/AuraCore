@@ -125,6 +125,22 @@
       "pattern_created": "ENFORCE-022: Consistent Business Validations Pattern",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-990504",
+      "date": "2026-01-01",
+      "epic": "E7.8",
+      "error": "Bug 20: CreateLocation não validava que tipos não-WAREHOUSE (AISLE, SHELF, POSITION) requerem parentId ANTES de chamar o domínio. DTO fazia parentId opcional, Use Case só validava SE fornecido. Violação fail-fast: deixa domínio rejeitar com erro genérico ao invés de validar no Use Case.",
+      "correction": "Adicionado validação fail-fast no Use Case: 1) Se type !== WAREHOUSE && !parentId, return fail. 2) Se type === WAREHOUSE && parentId, return fail. Adicionado .refine() no DTO para validação condicional. Ordem estabelecida: DTO format → Use Case business rules → Repository existence → Domain invariants. Pattern ENFORCE-023 registrado no MCP.",
+      "files_affected": [
+        "src/modules/wms/application/use-cases/CreateLocation.ts",
+        "src/modules/wms/application/dtos/CreateLocationDTO.ts",
+        "mcp-server/knowledge/contracts/type-safety.json",
+        "mcp-server/knowledge/corrections/e7-8-wms-week2-corrections.json"
+      ],
+      "pattern_created": "ENFORCE-023: Fail-Fast Business Rules Validation Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

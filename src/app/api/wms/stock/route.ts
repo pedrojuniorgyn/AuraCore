@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from 'tsyringe';
-import { ListMovements } from '@/modules/wms/application/use-cases/queries/ListMovements';
+import { ListStockItems } from '@/modules/wms/application/use-cases/queries/ListStockItems';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
@@ -8,7 +8,7 @@ import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
 
 /**
- * GET /api/wms/movements - List Stock Movements
+ * GET /api/wms/stock - List Stock Items
  * E7.8 WMS Semana 3
  */
 export async function GET(request: NextRequest) {
@@ -23,9 +23,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const productId = searchParams.get('productId') || undefined;
     const locationId = searchParams.get('locationId') || undefined;
-    const type = searchParams.get('type') || undefined;
-    const startDate = searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : undefined;
-    const endDate = searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : undefined;
+    const warehouseId = searchParams.get('warehouseId') || undefined;
+    const minQuantity = searchParams.get('minQuantity') ? parseFloat(searchParams.get('minQuantity')!) : undefined;
+    const hasStockStr = searchParams.get('hasStock');
+    const hasStock = hasStockStr ? hasStockStr === 'true' : undefined;
+    const lotNumber = searchParams.get('lotNumber') || undefined;
+    const expiredStr = searchParams.get('expired');
+    const expired = expiredStr ? expiredStr === 'true' : undefined;
 
     // Build execution context
     const context: ExecutionContext = {
@@ -36,16 +40,18 @@ export async function GET(request: NextRequest) {
     };
 
     // Execute use case
-    const useCase = container.resolve(ListMovements);
+    const useCase = container.resolve(ListStockItems);
     const result = await useCase.execute(
       {
         page,
         limit,
         productId,
         locationId,
-        type,
-        startDate,
-        endDate
+        warehouseId,
+        minQuantity,
+        hasStock,
+        lotNumber,
+        expired
       },
       context
     );
@@ -80,3 +86,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

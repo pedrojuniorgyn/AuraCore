@@ -1,4 +1,4 @@
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import type { ILocationRepository } from '../../../domain/ports/ILocationRepository';
 import { Location } from '../../../domain/entities/Location';
 import type { LocationCode } from '../../../domain/value-objects/LocationCode';
@@ -175,5 +175,85 @@ export class DrizzleLocationRepository implements ILocationRepository {
         )
       );
   }
-}
 
+  /**
+   * Lista localizações com paginação e filtros
+   * E7.8 WMS Semana 3
+   */
+  async findMany(
+    organizationId: number,
+    branchId: number,
+    filters: { type?: string; warehouseId?: string; isActive?: boolean },
+    pagination: { page: number; limit: number }
+  ): Promise<Location[]> {
+    const { page, limit } = pagination;
+    const offset = (page - 1) * limit;
+
+    // Build conditions (multi-tenancy + soft delete)
+    const conditions = [
+      eq(wmsLocations.organizationId, organizationId),
+      eq(wmsLocations.branchId, branchId),
+      isNull(wmsLocations.deletedAt)
+    ];
+
+    if (filters.type) {
+      conditions.push(eq(wmsLocations.type, filters.type));
+    }
+    if (filters.warehouseId) {
+      conditions.push(eq(wmsLocations.warehouseId, filters.warehouseId));
+    }
+    if (filters.isActive !== undefined) {
+      conditions.push(sql`${wmsLocations.isActive} = ${filters.isActive ? 1 : 0}`);
+    }
+
+    // Get paginated items (MS SQL Server pagination)
+    const query = db
+      .select()
+      .from(wmsLocations)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0])
+      .orderBy(desc(wmsLocations.createdAt))
+      .$dynamic();
+    
+    const records = await query;
+
+    // Map to domain
+    return records
+      .map((record: any) => LocationMapper.toDomain(record))
+      .filter((result: any) => Result.isOk(result))
+      .map((r: any) => r.value);
+  }
+
+  /**
+   * Conta localizações com filtros
+   * E7.8 WMS Semana 3
+   */
+  async count(
+    organizationId: number,
+    branchId: number,
+    filters: { type?: string; warehouseId?: string; isActive?: boolean }
+  ): Promise<number> {
+    // Build conditions (multi-tenancy + soft delete)
+    const conditions = [
+      eq(wmsLocations.organizationId, organizationId),
+      eq(wmsLocations.branchId, branchId),
+      isNull(wmsLocations.deletedAt)
+    ];
+
+    if (filters.type) {
+      conditions.push(eq(wmsLocations.type, filters.type));
+    }
+    if (filters.warehouseId) {
+      conditions.push(eq(wmsLocations.warehouseId, filters.warehouseId));
+    }
+    if (filters.isActive !== undefined) {
+      conditions.push(sql`${wmsLocations.isActive} = ${filters.isActive ? 1 : 0}`);
+    }
+
+    const result = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(wmsLocations)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]);
+
+    return Number(result[0]?.count ?? 0);
+  }
+}

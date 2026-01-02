@@ -77,6 +77,28 @@ export interface ILocationRepository {
   exists(id: string, organizationId: number, branchId: number): Promise<boolean>;
 
   /**
+   * Lista localizações com paginação e filtros
+   * E7.8 WMS Semana 3
+   */
+  findMany(
+    organizationId: number,
+    branchId: number,
+    filters: { type?: string; warehouseId?: string; isActive?: boolean },
+    pagination: { page: number; limit: number }
+  ): Promise<Location[]>;
+
+  /**
+   * Conta localizações com filtros
+   * E7.8 WMS Semana 3
+   */
+  count(
+    organizationId: number,
+    branchId: number,
+    filters: { type?: string; warehouseId?: string; isActive?: boolean }
+  ): Promise<number>;
+
+
+  /**
    * Salva uma localização (insert ou update)
    * 
    * @param location Localização a salvar
