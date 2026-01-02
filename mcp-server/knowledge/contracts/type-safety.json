@@ -1,7 +1,7 @@
 {
   "id": "type-safety",
   "title": "Type Safety Contract",
-  "version": "1.0.111",
+  "version": "1.0.114",
   "category": "typescript",
   "description": "Regras obrigatórias para garantir type-safety completo no código TypeScript do AuraCore. Este contrato é VIVO e atualizado automaticamente quando novos erros são corrigidos.",
   "rules": [
@@ -2158,6 +2158,62 @@
         "mcp-server/knowledge/contracts/type-safety.json"
       ],
       "pattern_created": "ENFORCE-026: Boolean Query Param Validation Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-027",
+      "name": "Execute Tests Before Reporting",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Testes E2E criados mas NUNCA executados. Reportado como 'completo' mas os testes falhariam em runtime devido a 6 bugs nos mocks (response wrapper, status codes sempre 200/201, campos faltando). Violação da regra fundamental: 'testes DEVEM passar 100% ANTES de reportar conclusão'.",
+      "correction": "SEMPRE executar 'npm test -- --run [path]' e INCLUIR output REAL no relatório. Testes que não foram executados = trabalho incompleto. Relatório DEVE mostrar: Test Files X passed (X), Tests Y passed (Y), não apenas 'X testes criados'.",
+      "files_affected": [
+        "tests/e2e/wms/*.ts",
+        "tests/helpers/test-context.ts"
+      ],
+      "pattern_created": "Execute Tests Before Reporting Pattern",
+      "correct_pattern": "npm test -- --run tests/e2e/wms/ 2>&1\n\n✓ locations.e2e.test.ts (13)\n✓ stock-operations.e2e.test.ts (5)\nTest Files 5 passed (5)\nTests 34 passed (34)",
+      "incorrect_pattern": "Testes E2E: 34 testes criados ✅\n(sem mostrar output de execução)",
+      "verification": "npm test -- --run [path] 2>&1 | grep -E 'PASS|FAIL|Test Files'",
+      "detection": "Relatórios que dizem 'X testes criados' mas não mostram output de npm test",
+      "rationale": "Código não testado é código quebrado. Bugs só são descobertos executando testes. Reportar sem executar mascara problemas críticos.",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-028",
+      "name": "Mocks Must Simulate Real Behavior",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Mocks de API sempre retornavam 200/201 com request body. Testes esperavam 400/404/409 mas mocks não validavam inputs. Isso faz testes passarem sem testar nada, mascarando bugs que só aparecem em produção.",
+      "correction": "Mocks DEVEM simular comportamento real: validações (parentId obrigatório, quantidade positiva), estados (itens deletados, códigos duplicados), status codes corretos (400/404/409), campos completos na resposta. Mock com lógica = teste útil.",
+      "files_affected": [
+        "tests/helpers/test-context.ts"
+      ],
+      "pattern_created": "Realistic Mock Pattern",
+      "correct_pattern": "// Mock com estado e validações\nclass TestApiClient {\n  private deletedIds = new Set<string>();\n  private createdCodes = new Set<string>();\n\n  async post(path, body) {\n    // Validação\n    if (body.type !== 'WAREHOUSE' && !body.parentId) {\n      return { status: 400, body: { error: 'Parent required' } };\n    }\n    // Duplicata\n    if (this.createdCodes.has(body.code)) {\n      return { status: 409, body: { error: 'Already exists' } };\n    }\n    this.createdCodes.add(body.code);\n    return { status: 201, body: { id: 'mock-id', ...body } };\n  }\n\n  async delete(path) {\n    const id = path.split('/').pop();\n    this.deletedIds.add(id);\n    return { status: 200 };\n  }\n\n  async get(path) {\n    const id = path.split('/').pop();\n    // Verificar se deletado\n    if (this.deletedIds.has(id)) {\n      return { status: 404, body: { error: 'Not found' } };\n    }\n    return { status: 200, body: { id, data: 'mock' } };\n  }\n}",
+      "incorrect_pattern": "// Mock burro - sempre sucesso\nclass TestApiClient {\n  async post(path, body) {\n    return { status: 201, body: { id: 'mock', ...body } };\n  }\n  async get(path) {\n    return { status: 200, body: { items: [] } };\n  }\n}",
+      "detection": "Mocks com métodos que sempre retornam mesmo status code",
+      "rationale": "Mocks burros fazem testes passarem sem testar comportamento. Mock realista = bugs encontrados antes de produção.",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "ENFORCE-029",
+      "name": "No Ambiguous Test Assertions",
+      "date": "2026-01-02",
+      "epic": "E7.8",
+      "error": "Teste com comentário 'expect(status).toBe(200); // Or 400 depending on implementation'. Assertion ambígua mascara bug ao invés de testar comportamento específico. Teste passa independente da implementação, não valida nada.",
+      "correction": "Cada teste DEVE verificar UM comportamento ESPECÍFICO e ESPERADO. Comentários como 'Or X' indicam teste mal definido. Definir comportamento explícito: datas inválidas são ignoradas (200) OU retornam erro (400), não ambos.",
+      "files_affected": [
+        "tests/e2e/wms/movements.e2e.test.ts"
+      ],
+      "pattern_created": "Explicit Test Assertion Pattern",
+      "correct_pattern": "it('should ignore invalid date and return all results', async () => {\n  // Design decision: parseDateParam returns undefined for invalid dates\n  const response = await api.get('/movements?startDate=invalid');\n  expect(response.status).toBe(200);\n  expect(response.body.items).toBeInstanceOf(Array);\n});",
+      "incorrect_pattern": "it('should handle invalid date', async () => {\n  const response = await api.get('/movements?startDate=invalid');\n  expect(response.status).toBe(200); // Or 400 depending on implementation\n});",
+      "detection": "grep -rn '// Or ' em arquivos de teste",
+      "rationale": "Teste ambíguo = teste inútil. Comportamento deve ser definido, documentado e testado explicitamente. Ambiguidade mascara bugs.",
       "status": "APPROVED",
       "must_not_repeat": true
     }

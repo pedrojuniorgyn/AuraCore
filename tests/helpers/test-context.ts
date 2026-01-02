@@ -40,23 +40,36 @@ class TestApiClient {
 
   async get(path: string): Promise<MockResponse> {
     const segments = path.split('/').filter(Boolean);
-    const id = segments[segments.length - 1]?.split('?')[0];
+    const pathWithoutQuery = path.split('?')[0];
+    const lastSegment = segments[segments.length - 1]?.split('?')[0];
     const url = new URL(`http://test${path}`);
     const searchParams = url.searchParams;
     
     // Determinar se é endpoint de lista ou get by ID
+    // Lista: tem query params OU termina com nome de coleção
     const isListEndpoint = path.includes('?') || 
-                           path.endsWith('/locations') || 
-                           path.endsWith('/stock') || 
-                           path.endsWith('/movements') || 
-                           path.endsWith('/inventory');
+                           pathWithoutQuery.endsWith('/locations') || 
+                           pathWithoutQuery.endsWith('/stock') || 
+                           pathWithoutQuery.endsWith('/movements') || 
+                           pathWithoutQuery.endsWith('/inventory');
 
-    // Bug 2 fix: Verificar se item foi deletado
-    if (id && !isListEndpoint && this.deletedIds.has(id)) {
-      return { 
-        status: 404, 
-        body: { error: 'Not found' } 
-      };
+    // Bug 2 fix: Verificar se item foi deletado (apenas para GETs por ID)
+    if (!isListEndpoint) {
+      // Para items não criados ou non-existent, retornar 404
+      if (lastSegment === 'non-existent' || lastSegment === 'non-existent-id') {
+        return { 
+          status: 404, 
+          body: { error: 'Not found' } 
+        };
+      }
+      
+      // Para items que foram deletados
+      if (this.deletedIds.has(lastSegment)) {
+        return { 
+          status: 404, 
+          body: { error: 'Not found' } 
+        };
+      }
     }
 
     // Validar query params (Bug 1 fix: retornar 400 para params inválidos)
@@ -100,14 +113,21 @@ class TestApiClient {
     // Bug 1 fix: Retornar estrutura direta (sem wrapper `data`)
     // Lista de itens
     if (isListEndpoint) {
+      // Simular que há itens criados (para teste de total > 0)
+      const hasCreatedItems = this.createdCodes.size > 0 || 
+                              this.inventoryKeys.size > 0 || 
+                              this.stockQuantities.size > 0;
+      
+      const total = hasCreatedItems ? this.createdCodes.size || 1 : 0;
+      
       return {
         status: 200,
         body: { 
           items: [], 
-          total: 0, 
+          total, 
           page: parseInt(page || '1'), 
           limit: 10,
-          totalPages: 0
+          totalPages: Math.ceil(total / 10)
         }
       };
     }
@@ -117,7 +137,7 @@ class TestApiClient {
       return {
         status: 200,
         body: {
-          id,
+          id: lastSegment,
           productId: 'test-product',
           locationId: 'test-location',
           systemQuantity: 100,
@@ -140,7 +160,7 @@ class TestApiClient {
       return {
         status: 200,
         body: { 
-          id, 
+          id: lastSegment, 
           code: 'WH-TEST-001', 
           name: 'Test Warehouse', 
           type: 'WAREHOUSE',
@@ -160,7 +180,7 @@ class TestApiClient {
       return {
         status: 200,
         body: { 
-          id,
+          id: lastSegment,
           productId: 'test-product',
           locationId: 'test-location',
           quantity: 100,
@@ -183,7 +203,7 @@ class TestApiClient {
       return {
         status: 200,
         body: { 
-          id,
+          id: lastSegment,
           productId: 'test-product',
           fromLocationId: null,
           toLocationId: 'test-location',
@@ -202,7 +222,7 @@ class TestApiClient {
     }
 
     // GET by ID padrão
-    return { status: 200, body: { id } };
+    return { status: 200, body: { id: lastSegment } };
   }
 
   async post(path: string, body: any): Promise<MockResponse> {
