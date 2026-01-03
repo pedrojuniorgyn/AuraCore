@@ -38,16 +38,18 @@ export function initializeIntegrationsModule(): void {
     process.env.USE_MOCK_INTEGRATIONS === 'true';
 
   // SEFAZ
-  if (useMocks) {
-    container.registerSingleton<ISefazGateway>(
-      TOKENS.SefazGateway,
-      MockSefazGateway
-    );
-  } else {
-    container.registerSingleton<ISefazGateway>(
-      TOKENS.SefazGateway,
-      SefazGatewayAdapter
-    );
+  // ⚠️ IMPORTANTE: SefazGatewayAdapter ainda não está implementado para produção
+  // Mesmo que useMocks seja false, vamos usar MockSefazGateway até E7.9 Semana 2
+  // TODO: E7.9 Semana 2 - Implementar integração SEFAZ real com mTLS
+  // Motivo: Ambos SefazGatewayAdapter e sefaz-client.ts retornam failure em produção
+  // Usar mock é mais honesto do que falhar silenciosamente
+  container.registerSingleton<ISefazGateway>(
+    TOKENS.SefazGateway,
+    MockSefazGateway
+  );
+  
+  if (!useMocks) {
+    console.warn('⚠️ SEFAZ: Usando MockSefazGateway mesmo em produção (implementação real pendente)');
   }
 
   // Banking

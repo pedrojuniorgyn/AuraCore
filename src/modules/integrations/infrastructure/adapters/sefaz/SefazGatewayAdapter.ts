@@ -2,6 +2,20 @@
  * SefazGatewayAdapter - Implementação real da comunicação com SEFAZ
  * E7.9 Integrações - Semana 1
  * 
+ * ⚠️ STATUS: STUB - NÃO USAR EM PRODUÇÃO
+ * 
+ * Este adapter foi criado como stub para E7.9 Semana 1.
+ * Funciona em development mode, mas FALHA em produção.
+ * 
+ * TODO: E7.9 Semana 2 - Implementar integração SEFAZ real:
+ * - [ ] Implementar cancelCte com mTLS
+ * - [ ] Implementar queryCteStatus com consulta real
+ * - [ ] Implementar queryDistribuicaoDFe com DFe
+ * - [ ] Implementar manifestNfe com manifestação real
+ * - [ ] Implementar closeMdfe com encerramento real
+ * 
+ * Enquanto isso, IntegrationsModule.ts usa MockSefazGateway.
+ * 
  * Usa certificado digital A1 para autenticação mTLS
  * Reutiliza lógica existente em src/services/fiscal/sefaz-client.ts
  */
