@@ -36,4 +36,10 @@ export const TOKENS = {
   StockRepository: Symbol('StockRepository'),
   MovementRepository: Symbol('MovementRepository'),
   InventoryCountRepository: Symbol('InventoryCountRepository'),
+
+  // Integrations Module - E7.9 Semana 1
+  SefazGateway: Symbol('SefazGateway'),
+  BankingGateway: Symbol('BankingGateway'),
+  NotificationService: Symbol('NotificationService'),
+  BankStatementParser: Symbol('BankStatementParser'),
 } as const;
