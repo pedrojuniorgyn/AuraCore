@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Integration Test Database Helper
  * E7.8 WMS Semana 4
@@ -7,8 +6,6 @@
  */
 
 import sql from 'mssql';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 
 export interface TestDbConfig {
   server: string;

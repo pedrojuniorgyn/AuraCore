@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
@@ -44,7 +43,7 @@ describe.skip('E2E: Regime Detection', () => {
       expect(response.status).toBe(200);
       
       // Em 2025, ainda não há IBS/CBS (ou valores mínimos de teste)
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // IBS/CBS devem ser zero ou muito baixos em 2025
       expect(item.ibsUfValue + item.ibsMunValue + item.cbsValue).toBeLessThan(10);
@@ -65,7 +64,7 @@ describe.skip('E2E: Regime Detection', () => {
 
       expect(response.status).toBe(200);
       
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // 2026: IBS em alíquota de teste (0.10%)
       expect(item.ibsUfRate + item.ibsMunRate).toBeCloseTo(0.10, 2);
@@ -87,7 +86,7 @@ describe.skip('E2E: Regime Detection', () => {
 
       expect(response.status).toBe(200);
       
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // 2027: CBS em alíquota cheia (8.80%)
       expect(item.cbsRate).toBeCloseTo(8.80, 2);
@@ -106,7 +105,7 @@ describe.skip('E2E: Regime Detection', () => {
 
       expect(response.status).toBe(200);
       
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // 2030: IBS progressivo
       expect(item.ibsUfRate + item.ibsMunRate).toBeGreaterThan(3);
@@ -125,7 +124,7 @@ describe.skip('E2E: Regime Detection', () => {
 
       expect(response.status).toBe(200);
       
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // 2032: IBS próximo ao valor cheio
       expect(item.ibsUfRate + item.ibsMunRate).toBeGreaterThan(10);
@@ -146,7 +145,7 @@ describe.skip('E2E: Regime Detection', () => {
 
       expect(response.status).toBe(200);
       
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // 2033: Alíquotas cheias
       // IBS: 17.70% (UF 60% + Mun 40%)
@@ -169,7 +168,7 @@ describe.skip('E2E: Regime Detection', () => {
 
       expect(response.status).toBe(200);
       
-      const item = response.body.data.items[0];
+      const item = response.body.data!.items[0];
       
       // Mesmo em 2040, usar alíquotas de 2033 (não progressivas)
       expect(item.ibsUfRate + item.ibsMunRate).toBeCloseTo(17.70, 2);
@@ -193,7 +192,7 @@ describe.skip('E2E: Regime Detection', () => {
           .set(headers)
           .send(payload);
 
-        const item = response.body.data.items[0];
+        const item = response.body.data!.items[0];
         ibsTotals.push(item.ibsUfRate + item.ibsMunRate);
       }
 

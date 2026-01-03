@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
@@ -49,7 +48,7 @@ describe.skip('E2E: Calculate IBS/CBS', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
       
-      const data = response.body.data;
+      const data = response.body.data!;
       expect(data.items).toHaveLength(1);
       
       const item = data.items[0];
@@ -170,10 +169,10 @@ describe.skip('E2E: Calculate IBS/CBS', () => {
         .send(payload);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.items).toHaveLength(2);
+      expect(response.body.data!.items).toHaveLength(2);
       
-      const item1 = response.body.data.items[0];
-      const item2 = response.body.data.items[1];
+      const item1 = response.body.data!.items[0];
+      const item2 = response.body.data!.items[1];
       
       // Item 2 tem base 2x maior, deve ter valores 2x maiores
       expect(Math.abs(item2.ibsUfValue - (item1.ibsUfValue * 2))).toBeLessThan(0.01);

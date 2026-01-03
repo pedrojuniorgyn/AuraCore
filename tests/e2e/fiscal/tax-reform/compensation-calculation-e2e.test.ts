@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
@@ -38,9 +37,9 @@ describe.skip('E2E: Compensation Calculation', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
+      expect(response.body.data!).toBeDefined();
       
-      const data = response.body.data;
+      const data = response.body.data!;
       expect(data.compensationAllowed).toBeDefined();
       expect(data.compensatedAmount).toBeDefined();
       expect(data.remainingCredits).toBeDefined();
@@ -69,7 +68,7 @@ describe.skip('E2E: Compensation Calculation', () => {
 
       expect(response.status).toBe(200);
       
-      const data = response.body.data;
+      const data = response.body.data!;
       expect(data.compensationAllowed).toBe(true);
       expect(data.compensatedAmount).toBeGreaterThan(0);
     });
@@ -97,7 +96,7 @@ describe.skip('E2E: Compensation Calculation', () => {
 
       expect(response.status).toBe(200);
       
-      const data = response.body.data;
+      const data = response.body.data!;
       // Compensação parcial ou negada
       if (data.compensationAllowed) {
         expect(data.compensatedAmount).toBeLessThan(450.00);
@@ -148,7 +147,7 @@ describe.skip('E2E: Compensation Calculation', () => {
 
       expect(response.status).toBe(200);
       
-      const data = response.body.data;
+      const data = response.body.data!;
       if (data.compensationAllowed) {
         expect(data.remainingCredits).toBeDefined();
         

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { GrupoIBSCBS } from '@/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS';
 import { IBSCBSGroup } from '@/modules/fiscal/domain/tax/value-objects/IBSCBSGroup';

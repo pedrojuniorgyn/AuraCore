@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Integration Tests - WMS Multi-Tenancy Isolation
  * E7.8 WMS Semana 4
@@ -23,6 +22,8 @@ import { Result } from '@/shared/domain';
 
 /** SKIP: Requer SQL Server de teste - TODO E7.11 */
 describe.skip('WMS Multi-Tenancy - Integration Tests', () => {
+  // NOTE: Type errors expected - these tests use Value Objects but interfaces expect primitives
+  // Will be fixed when implementing real SQL Server integration (E7.11)
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {
@@ -63,9 +64,9 @@ describe.skip('WMS Multi-Tenancy - Integration Tests', () => {
         { organizationId: 2, branchId: 1, userId: 'user-org2' }
       );
 
-      expect(Result.isErr(getResult)).toBe(true);
+      expect(Result.isFail(getResult)).toBe(true);
       
-      if (Result.isErr(getResult)) {
+      if (Result.isFail(getResult)) {
         expect(getResult.error).toContain('not found');
       }
     });
@@ -143,9 +144,9 @@ describe.skip('WMS Multi-Tenancy - Integration Tests', () => {
         { organizationId: 1, branchId: 2, userId: 'user-branch2' }
       );
 
-      expect(Result.isErr(getResult)).toBe(true);
+      expect(Result.isFail(getResult)).toBe(true);
       
-      if (Result.isErr(getResult)) {
+      if (Result.isFail(getResult)) {
         expect(getResult.error).toContain('not found');
       }
     });

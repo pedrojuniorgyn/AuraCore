@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Integration Tests - WMS Movements (Query & Tracking)
  * E7.8 WMS Semana 4
@@ -19,6 +18,8 @@ import { Result } from '@/shared/domain';
 
 /** SKIP: Requer SQL Server de teste - TODO E7.11 */
 describe.skip('WMS Movements - Integration Tests', () => {
+  // NOTE: Type errors expected - these tests use Value Objects but interfaces expect primitives
+  // Will be fixed when implementing real SQL Server integration (E7.11)
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {

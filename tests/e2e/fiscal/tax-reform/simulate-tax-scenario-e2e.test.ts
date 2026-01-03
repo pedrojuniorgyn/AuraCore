@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
@@ -34,9 +33,9 @@ describe.skip('E2E: Simulate Tax Scenario', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
+      expect(response.body.data!).toBeDefined();
       
-      const data = response.body.data;
+      const data = response.body.data!;
       expect(data.scenarios).toHaveLength(4);
       
       // Verificar que cada ano tem resultado
@@ -66,7 +65,7 @@ describe.skip('E2E: Simulate Tax Scenario', () => {
 
       expect(response.status).toBe(200);
       
-      const scenarios = response.body.data.scenarios;
+      const scenarios = response.body.data!.scenarios;
       
       // IBS deve aumentar progressivamente
       const ibsRates = scenarios.map((s: { ibsUfRate: number; ibsMunRate: number }) => 
@@ -97,7 +96,7 @@ describe.skip('E2E: Simulate Tax Scenario', () => {
 
       expect(response.status).toBe(200);
       
-      const scenarios = response.body.data.scenarios;
+      const scenarios = response.body.data!.scenarios;
       const scenario2026 = scenarios.find((s: { year: number }) => s.year === 2026);
       const scenario2027 = scenarios.find((s: { year: number }) => s.year === 2027);
       

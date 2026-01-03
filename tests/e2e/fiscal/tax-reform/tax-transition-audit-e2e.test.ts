@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
@@ -45,8 +44,8 @@ describe.skip('E2E: Tax Transition Audit', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
-      expect(response.body.data.auditId).toBeDefined();
+      expect(response.body.data!).toBeDefined();
+      expect(response.body.data!.auditId).toBeDefined();
     });
 
     it('should validate required fields', async () => {
@@ -86,7 +85,7 @@ describe.skip('E2E: Tax Transition Audit', () => {
 
       expect(response.status).toBe(201);
       
-      const data = response.body.data;
+      const data = response.body.data!;
       const expectedDifference = 2650.00 - 1800.00;
       expect(Math.abs((data.difference || 0) - expectedDifference)).toBeLessThan(0.01);
     });
@@ -129,7 +128,7 @@ describe.skip('E2E: Tax Transition Audit', () => {
         .send(payload);
 
       expect(response.status).toBe(201);
-      expect(response.body.data.items).toHaveLength(2);
+      expect(response.body.data!.items).toHaveLength(2);
     });
   });
 });

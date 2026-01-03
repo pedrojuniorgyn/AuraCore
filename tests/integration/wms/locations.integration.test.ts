@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Integration Tests - WMS Locations
  * E7.8 WMS Semana 4
@@ -26,6 +25,8 @@ import { Result } from '@/shared/domain';
  * TODO E7.11: Configurar CI/CD com banco de teste
  */
 describe.skip('WMS Locations - Integration Tests', () => {
+  // NOTE: Type errors expected - these tests use Value Objects but interfaces expect primitives
+  // Will be fixed when implementing real SQL Server integration (E7.11)
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {
@@ -116,9 +117,9 @@ describe.skip('WMS Locations - Integration Tests', () => {
         userId: 'test-user',
       });
 
-      expect(Result.isErr(result)).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       
-      if (Result.isErr(result)) {
+      if (Result.isFail(result)) {
         expect(result.error).toContain('Parent location is required');
       }
     });
@@ -156,9 +157,9 @@ describe.skip('WMS Locations - Integration Tests', () => {
         userId: 'test-user',
       });
 
-      expect(Result.isErr(result2)).toBe(true);
+      expect(Result.isFail(result2)).toBe(true);
       
-      if (Result.isErr(result2)) {
+      if (Result.isFail(result2)) {
         expect(result2.error).toContain('already exists');
       }
     });
@@ -239,9 +240,9 @@ describe.skip('WMS Locations - Integration Tests', () => {
         userId: 'test-user',
       });
 
-      expect(Result.isErr(result)).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       
-      if (Result.isErr(result)) {
+      if (Result.isFail(result)) {
         expect(result.error).toContain('cannot be empty');
       }
     });
@@ -266,9 +267,9 @@ describe.skip('WMS Locations - Integration Tests', () => {
         { organizationId: 1, branchId: 1, userId: 'test-user' }
       );
 
-      expect(Result.isErr(getResult)).toBe(true);
+      expect(Result.isFail(getResult)).toBe(true);
       
-      if (Result.isErr(getResult)) {
+      if (Result.isFail(getResult)) {
         expect(getResult.error).toContain('not found');
       }
     });
@@ -360,9 +361,9 @@ describe.skip('WMS Locations - Integration Tests', () => {
         { organizationId: 999, branchId: 1, userId: 'test-user' }
       );
 
-      expect(Result.isErr(result)).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       
-      if (Result.isErr(result)) {
+      if (Result.isFail(result)) {
         expect(result.error).toContain('not found');
       }
     });
@@ -376,9 +377,9 @@ describe.skip('WMS Locations - Integration Tests', () => {
         { organizationId: 1, branchId: 999, userId: 'test-user' }
       );
 
-      expect(Result.isErr(result)).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       
-      if (Result.isErr(result)) {
+      if (Result.isFail(result)) {
         expect(result.error).toContain('not found');
       }
     });
