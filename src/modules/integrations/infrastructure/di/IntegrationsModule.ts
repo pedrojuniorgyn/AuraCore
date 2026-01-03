@@ -15,15 +15,17 @@ import type { IBankingGateway } from '../../domain/ports/output/IBankingGateway'
 import type { INotificationService } from '../../domain/ports/output/INotificationService';
 import type { IBankStatementParser } from '../../domain/ports/output/IBankStatementParser';
 
-// Adapters
-import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
+// Adapters - Mocks (usados até implementação real estar pronta)
 import { MockSefazGateway } from '../adapters/sefaz/MockSefazGateway';
-import { BtgBankingAdapter } from '../adapters/banking/BtgBankingAdapter';
 import { MockBankingGateway } from '../adapters/banking/MockBankingGateway';
-import { NodemailerAdapter } from '../adapters/notification/NodemailerAdapter';
 import { MockNotificationService } from '../adapters/notification/MockNotificationService';
-import { OfxParserAdapter } from '../adapters/ofx/OfxParserAdapter';
 import { MockBankStatementParser } from '../adapters/ofx/MockBankStatementParser';
+
+// Adapters - Real (não usados ainda - stubs incompletos)
+// import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
+// import { BtgBankingAdapter } from '../adapters/banking/BtgBankingAdapter';
+// import { NodemailerAdapter } from '../adapters/notification/NodemailerAdapter';
+// import { OfxParserAdapter } from '../adapters/ofx/OfxParserAdapter';
 
 let initialized = false;
 
@@ -53,46 +55,48 @@ export function initializeIntegrationsModule(): void {
   }
 
   // Banking
-  if (useMocks) {
-    container.registerSingleton<IBankingGateway>(
-      TOKENS.BankingGateway,
-      MockBankingGateway
-    );
-  } else {
-    container.registerSingleton<IBankingGateway>(
-      TOKENS.BankingGateway,
-      BtgBankingAdapter
-    );
+  // ⚠️ IMPORTANTE: BtgBankingAdapter não está implementado
+  // Sempre usar MockBankingGateway até E7.9 Semana 2
+  // TODO: E7.9 Semana 2 - Implementar integração BTG Pactual real com OAuth2
+  // Motivo: BtgBankingAdapter retorna Result.fail() para todos os métodos
+  container.registerSingleton<IBankingGateway>(
+    TOKENS.BankingGateway,
+    MockBankingGateway
+  );
+  
+  if (!useMocks) {
+    console.warn('⚠️ BANKING: Usando MockBankingGateway mesmo em produção (implementação real pendente)');
   }
 
   // Notification
-  if (useMocks) {
-    container.registerSingleton<INotificationService>(
-      TOKENS.NotificationService,
-      MockNotificationService
-    );
-  } else {
-    container.registerSingleton<INotificationService>(
-      TOKENS.NotificationService,
-      NodemailerAdapter
-    );
+  // ⚠️ IMPORTANTE: NodemailerAdapter não está implementado
+  // Sempre usar MockNotificationService até E7.9 Semana 2
+  // TODO: E7.9 Semana 2 - Implementar integração Nodemailer real
+  // Motivo: NodemailerAdapter retorna Result.fail() para todos os métodos
+  container.registerSingleton<INotificationService>(
+    TOKENS.NotificationService,
+    MockNotificationService
+  );
+  
+  if (!useMocks) {
+    console.warn('⚠️ NOTIFICATION: Usando MockNotificationService mesmo em produção (implementação real pendente)');
   }
 
   // Bank Statement Parser
-  // Sempre usar o adapter real, pois parsing é local
-  if (useMocks) {
-    container.registerSingleton<IBankStatementParser>(
-      TOKENS.BankStatementParser,
-      MockBankStatementParser
-    );
-  } else {
-    container.registerSingleton<IBankStatementParser>(
-      TOKENS.BankStatementParser,
-      OfxParserAdapter
-    );
+  // ⚠️ IMPORTANTE: OfxParserAdapter não está implementado
+  // Sempre usar MockBankStatementParser até E7.9 Semana 2
+  // TODO: E7.9 Semana 2 - Implementar parsing OFX real
+  // Motivo: OfxParserAdapter retorna Result.fail() para todos os métodos
+  container.registerSingleton<IBankStatementParser>(
+    TOKENS.BankStatementParser,
+    MockBankStatementParser
+  );
+  
+  if (!useMocks) {
+    console.warn('⚠️ OFX_PARSER: Usando MockBankStatementParser mesmo em produção (implementação real pendente)');
   }
 
   initialized = true;
-  console.log(`✅ IntegrationsModule initialized (mocks: ${useMocks})`);
+  console.log('✅ IntegrationsModule initialized - ALL ADAPTERS USING MOCKS (real implementations pending E7.9 Semana 2)');
 }
 

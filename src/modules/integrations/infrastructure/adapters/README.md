@@ -2,20 +2,16 @@
 
 ## 📋 Status de Implementação
 
+**✅ CORREÇÃO APLICADA (LC-222829 + LC-XXXXXX):**  
+Todos os adapters agora usam **Mocks em produção** até implementação real estar pronta.
+
 ### SEFAZ Gateway
-**Status:** ⚠️ **STUB - Mock em Produção**
+**Status:** ✅ **Mock em Produção (Explícito)**
 
-| Método | Development | Production | Notas |
-|--------|-------------|------------|-------|
-| `authorizeCte` | ✅ Delega para sefaz-client.ts | ⚠️ Falha (sefaz-client.ts stub) | Assina XML, monta SOAP |
-| `cancelCte` | ✅ Mock | ❌ Retorna fail | Não implementado |
-| `queryCteStatus` | ✅ Mock | ❌ Retorna fail | Não implementado |
-| `queryDistribuicaoDFe` | ✅ Mock | ❌ Retorna fail | Não implementado |
-| `manifestNfe` | ✅ Mock | ❌ Retorna fail | Não implementado |
-| `authorizeMdfe` | ✅ Delega para sefaz-client.ts | ⚠️ Falha (sefaz-client.ts stub) | Assina XML, monta SOAP |
-| `closeMdfe` | ✅ Mock | ❌ Retorna fail | Não implementado |
-
-**Solução Atual:** `IntegrationsModule.ts` **sempre usa `MockSefazGateway`** (mesmo em produção) para evitar falhas silenciosas.
+| Adapter | Registrado | Comportamento |
+|---------|-----------|---------------|
+| `MockSefazGateway` | ✅ Sempre | Retorna respostas mock previsíveis |
+| `SefazGatewayAdapter` | ❌ Nunca | Stub não usado (delega para sefaz-client.ts stub) |
 
 **TODO E7.9 Semana 2:**
 - Implementar requisição HTTPS real com mTLS
@@ -26,9 +22,12 @@
 ---
 
 ### BTG Banking Gateway
-**Status:** 🔴 **NÃO IMPLEMENTADO - Mock em Produção**
+**Status:** ✅ **Mock em Produção (Explícito)**
 
-Todos os métodos retornam `Result.fail('BTG adapter not implemented yet')`.
+| Adapter | Registrado | Comportamento |
+|---------|-----------|---------------|
+| `MockBankingGateway` | ✅ Sempre | Retorna respostas mock previsíveis |
+| `BtgBankingAdapter` | ❌ Nunca | Stub não usado (todos métodos retornam fail) |
 
 **TODO E7.9 Semana 2:**
 - Implementar autenticação OAuth2 (BtgAuthManager)
@@ -39,7 +38,12 @@ Todos os métodos retornam `Result.fail('BTG adapter not implemented yet')`.
 ---
 
 ### Nodemailer Notification
-**Status:** 🔴 **NÃO IMPLEMENTADO - Mock em Produção**
+**Status:** ✅ **Mock em Produção (Explícito)**
+
+| Adapter | Registrado | Comportamento |
+|---------|-----------|---------------|
+| `MockNotificationService` | ✅ Sempre | Retorna respostas mock previsíveis |
+| `NodemailerAdapter` | ❌ Nunca | Stub não usado (todos métodos retornam fail) |
 
 **TODO E7.9 Semana 2:**
 - Configurar transporte SMTP
@@ -49,7 +53,12 @@ Todos os métodos retornam `Result.fail('BTG adapter not implemented yet')`.
 ---
 
 ### OFX Parser
-**Status:** 🔴 **NÃO IMPLEMENTADO - Mock em Produção**
+**Status:** ✅ **Mock em Produção (Explícito)**
+
+| Adapter | Registrado | Comportamento |
+|---------|-----------|---------------|
+| `MockBankStatementParser` | ✅ Sempre | Retorna respostas mock previsíveis |
+| `OfxParserAdapter` | ❌ Nunca | Stub não usado (todos métodos retornam fail) |
 
 **TODO E7.9 Semana 2:**
 - Implementar parsing OFX 1.0 e 2.0
@@ -122,14 +131,27 @@ Usar `??` ao invés de `||` para defaults numéricos onde 0 é válido.
 ### LC-707344: Result Pattern Verification
 Sempre verificar `Result.isOk()` antes de acessar `.value`.
 
-### LC-XXXXXX: Stub Registration (Este Bug)
+### LC-222829: SEFAZ Stub Registration
 **NUNCA registrar adapters stubs para produção.**
 
-Quando um adapter não está pronto:
-1. ✅ Usar mock explicitamente
+SefazGatewayAdapter era registrado para produção mas 5 de 7 métodos retornavam `Result.fail()`.
+
+### LC-XXXXXX: All Stubs Registration (Este Bug)
+**EXTENSÃO do LC-222829: TODOS os adapters stubs falhavam em produção.**
+
+Não apenas SEFAZ, mas também:
+- `BtgBankingAdapter` → sempre `Result.fail()`
+- `NodemailerAdapter` → sempre `Result.fail()`
+- `OfxParserAdapter` → sempre `Result.fail()`
+
+**Pattern violado:** Registrar stubs incompletos para produção.
+
+**Correção aplicada:**
+1. ✅ Usar mocks **explicitamente** para TODOS os adapters
 2. ✅ Documentar claramente a limitação
-3. ✅ Adicionar warnings em logs
-4. ❌ NÃO retornar failure silenciosamente
+3. ✅ Adicionar warnings em logs quando não é ambiente de teste
+4. ✅ Comentar imports de stubs não usados
+5. ❌ NUNCA registrar stubs que retornam failure
 
 ---
 
