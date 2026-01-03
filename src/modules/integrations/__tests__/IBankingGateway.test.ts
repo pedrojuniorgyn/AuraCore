@@ -42,6 +42,9 @@ describe('IBankingGateway (Mock)', () => {
       gateway.setFailure('Bank slip creation failed');
 
       const moneyResult = Money.create(10000, 'BRL');
+      expect(Result.isOk(moneyResult)).toBe(true);
+      if (!Result.isOk(moneyResult)) return;
+
       const result = await gateway.createBankSlip({
         amount: moneyResult.value,
         dueDate: new Date('2024-12-31'),
@@ -96,6 +99,9 @@ describe('IBankingGateway (Mock)', () => {
       gateway.setFailure('Pix charge creation failed');
 
       const moneyResult = Money.create(5000, 'BRL');
+      expect(Result.isOk(moneyResult)).toBe(true);
+      if (!Result.isOk(moneyResult)) return;
+
       const result = await gateway.createPixCharge({
         amount: moneyResult.value,
         recipientName: 'Jane Doe',

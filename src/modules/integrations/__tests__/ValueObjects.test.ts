@@ -64,6 +64,8 @@ describe('Value Objects', () => {
 
     it('should fail when required fields are missing', () => {
       const moneyResult = Money.create(10000, 'BRL');
+      expect(Result.isOk(moneyResult)).toBe(true);
+      if (!Result.isOk(moneyResult)) return;
 
       const result = BankSlip.create({
         id: '',
@@ -103,6 +105,8 @@ describe('Value Objects', () => {
 
     it('should fail when status is COMPLETED but completedAt is missing', () => {
       const moneyResult = Money.create(5000, 'BRL');
+      expect(Result.isOk(moneyResult)).toBe(true);
+      if (!Result.isOk(moneyResult)) return;
 
       const result = PixCharge.create({
         txId: 'PIX-123',
@@ -139,6 +143,8 @@ describe('Value Objects', () => {
 
     it('should create debit transaction', () => {
       const moneyResult = Money.create(20000, 'BRL');
+      expect(Result.isOk(moneyResult)).toBe(true);
+      if (!Result.isOk(moneyResult)) return;
 
       const result = BankTransaction.create({
         id: 'TXN-002',
@@ -155,6 +161,8 @@ describe('Value Objects', () => {
 
     it('should fail when required fields are missing', () => {
       const moneyResult = Money.create(10000, 'BRL');
+      expect(Result.isOk(moneyResult)).toBe(true);
+      if (!Result.isOk(moneyResult)) return;
 
       const result = BankTransaction.create({
         id: '',
