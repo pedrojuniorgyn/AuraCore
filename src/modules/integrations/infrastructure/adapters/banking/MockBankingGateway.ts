@@ -73,7 +73,7 @@ export class MockBankingGateway implements IBankingGateway {
     }
 
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + (request.expirationMinutes || 30));
+    expiresAt.setMinutes(expiresAt.getMinutes() + (request.expirationMinutes ?? 30));
 
     return Result.ok({
       txId: `MOCK-PIX-${Date.now()}`,
