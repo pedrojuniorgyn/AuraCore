@@ -6,7 +6,7 @@
 import { ValueObject } from '@/shared/domain/entities/ValueObject';
 import { Result } from '@/shared/domain';
 
-interface SefazResponseProps {
+interface SefazResponseProps extends Record<string, unknown> {
   code: string;
   message: string;
   protocol?: string;

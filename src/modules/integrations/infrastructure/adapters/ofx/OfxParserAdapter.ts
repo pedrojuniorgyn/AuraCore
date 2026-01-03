@@ -9,6 +9,52 @@ import type {
 } from '../../../domain/ports/output/IBankStatementParser';
 
 /**
+ * Type definitions for OFX parsed data
+ * The ofx-parser library returns generic types, so we define the expected structure
+ */
+interface OfxTransaction {
+  TRNTYPE?: string;
+  DTPOSTED?: string;
+  TRNAMT?: string;
+  FITID?: string;
+  CHECKNUM?: string;
+  MEMO?: string;
+  NAME?: string;
+}
+
+interface OfxBankAccount {
+  BANKACCTFROM?: {
+    BANKID?: string;
+    ACCTID?: string;
+  };
+  BANKTRANLIST?: {
+    DTSTART?: string;
+    DTEND?: string;
+    STMTTRN?: OfxTransaction[];
+  };
+  LEDGERBAL?: {
+    BALAMT?: string;
+    DTASOF?: string;
+  };
+  AVAILBAL?: {
+    BALAMT?: string;
+    DTASOF?: string;
+  };
+}
+
+interface OfxStatement {
+  STMTRS?: OfxBankAccount;
+}
+
+interface OfxParsedData {
+  OFX?: {
+    BANKMSGSRSV1?: {
+      STMTTRNRS?: OfxStatement[];
+    };
+  };
+}
+
+/**
  * OfxParserAdapter - Parser de extratos bancários OFX e CSV
  * 
  * E7.9 Integrações - Semana 2
@@ -21,7 +67,7 @@ export class OfxParserAdapter implements IBankStatementParser {
   async parseOFX(content: string): Promise<Result<BankStatement, string>> {
     try {
       // Processar OFX (parseOFX retorna Promise)
-      const parsed = await parseOFX(content);
+      const parsed = (await parseOFX(content)) as OfxParsedData;
 
       if (!parsed || !parsed.OFX) {
         return Result.fail('OFX_INVALID_FORMAT: Could not parse OFX content');
@@ -35,7 +81,16 @@ export class OfxParserAdapter implements IBankStatementParser {
 
       const account = bankAccounts[0];
       const statement = account.STMTRS;
+      
+      if (!statement) {
+        return Result.fail('OFX_INVALID_FORMAT: No statement found in OFX file');
+      }
+      
       const accountInfo = statement.BANKACCTFROM;
+      
+      if (!accountInfo) {
+        return Result.fail('OFX_INVALID_FORMAT: No account info found in OFX file');
+      }
 
       // Extrair transações
       const transactions: BankTransaction[] = [];

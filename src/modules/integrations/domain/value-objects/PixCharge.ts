@@ -7,7 +7,7 @@ import { ValueObject } from '@/shared/domain/entities/ValueObject';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 
-interface PixChargeProps {
+interface PixChargeProps extends Record<string, unknown> {
   txId: string;
   qrCode: string;
   qrCodeImage: string;

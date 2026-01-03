@@ -7,7 +7,7 @@ import { ValueObject } from '@/shared/domain/entities/ValueObject';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 
-interface BankTransactionProps {
+interface BankTransactionProps extends Record<string, unknown> {
   id: string;
   date: Date;
   amount: Money;

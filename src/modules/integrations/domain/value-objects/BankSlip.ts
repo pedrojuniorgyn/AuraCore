@@ -7,7 +7,7 @@ import { ValueObject } from '@/shared/domain/entities/ValueObject';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 
-interface BankSlipProps {
+interface BankSlipProps extends Record<string, unknown> {
   id: string;
   barcode: string;
   digitableLine: string;
