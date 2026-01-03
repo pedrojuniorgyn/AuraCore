@@ -18,7 +18,7 @@ interface BankSlipProps {
   pdfUrl?: string;
 }
 
-export class BankSlip extends ValueObject<BankSlipProps> {
+export class BankSlip extends ValueObject<BankSlipProps & Record<string, unknown>> {
   get id(): string {
     return this.props.id;
   }

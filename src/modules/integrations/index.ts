@@ -1,12 +1,17 @@
 /**
  * Integrations Module
- * E7.9 Integrações - Semana 1
+ * E7.9 Integrações - Semana 2
  * 
  * Hexagonal Architecture para integrações externas
  */
 
 // Ports (Domain Layer)
-export * from './domain/ports/output';
+export type {
+  ISefazGateway,
+  IBankingGateway,
+  INotificationService,
+  IBankStatementParser,
+} from './domain/ports/output';
 
 // Value Objects
 export * from './domain/value-objects';

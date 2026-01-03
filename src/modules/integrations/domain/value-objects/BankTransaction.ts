@@ -19,7 +19,7 @@ interface BankTransactionProps {
   memo?: string;
 }
 
-export class BankTransaction extends ValueObject<BankTransactionProps> {
+export class BankTransaction extends ValueObject<BankTransactionProps & Record<string, unknown>> {
   get id(): string {
     return this.props.id;
   }

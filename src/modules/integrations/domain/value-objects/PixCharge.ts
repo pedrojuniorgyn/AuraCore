@@ -17,7 +17,7 @@ interface PixChargeProps {
   completedAt?: Date;
 }
 
-export class PixCharge extends ValueObject<PixChargeProps> {
+export class PixCharge extends ValueObject<PixChargeProps & Record<string, unknown>> {
   get txId(): string {
     return this.props.txId;
   }

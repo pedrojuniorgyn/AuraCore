@@ -14,7 +14,7 @@ interface SefazResponseProps {
   isSuccess: boolean;
 }
 
-export class SefazResponse extends ValueObject<SefazResponseProps> {
+export class SefazResponse extends ValueObject<SefazResponseProps & Record<string, unknown>> {
   get code(): string {
     return this.props.code;
   }
