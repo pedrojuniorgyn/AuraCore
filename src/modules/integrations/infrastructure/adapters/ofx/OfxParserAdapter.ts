@@ -253,7 +253,7 @@ export class OfxParserAdapter implements IBankStatementParser {
     // Remover símbolos monetários e espaços
     const cleaned = value
       .replace(/[R$\s]/g, '')
-      .replace('.', '') // Remover separador de milhares
+      .replace(/\./g, '') // Remover TODOS os separadores de milhares (regex global)
       .replace(',', '.'); // Trocar vírgula decimal por ponto
 
     return parseFloat(cleaned) || 0;
