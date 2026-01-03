@@ -1,0 +1,22 @@
+{
+  "epic": "E7.10",
+  "corrections": [
+    {
+      "id": "LC-423326",
+      "date": "2026-01-03",
+      "epic": "E7.10",
+      "error": "5 erros TypeScript no módulo integrations: ValueObject Props não satisfaziam constraint Record<string, unknown> (BankSlip, BankTransaction, PixCharge, SefazResponse); OFX parser sem tipos adequados, causando erro 'Property STMTTRNRS does not exist on type OfxValue'",
+      "correction": "Adicionado extends Record<string, unknown> em todas as Props interfaces para satisfazer constraint de ValueObject<T>. Criado interfaces tipadas completas para OFX parsing (OfxParsedData, OfxStatement, OfxBankAccount, OfxTransaction). Adicionado null safety checks para statement e accountInfo. Adicionado campo AVAILBAL à interface OfxBankAccount.",
+      "files_affected": [
+        "src/modules/integrations/domain/value-objects/BankSlip.ts",
+        "src/modules/integrations/domain/value-objects/BankTransaction.ts",
+        "src/modules/integrations/domain/value-objects/PixCharge.ts",
+        "src/modules/integrations/domain/value-objects/SefazResponse.ts",
+        "src/modules/integrations/infrastructure/adapters/ofx/OfxParserAdapter.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

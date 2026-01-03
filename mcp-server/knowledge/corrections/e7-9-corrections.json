@@ -1,0 +1,93 @@
+{
+  "epic": "E7.9",
+  "corrections": [
+    {
+      "id": "LC-707344",
+      "date": "2026-01-03",
+      "epic": "E7.9",
+      "error": "Testes acessavam Result.value sem verificar Result.isOk() primeiro (violação ENFORCE-011). Linhas afetadas: ValueObjects.test.ts (66-73, 105-111, 141-146, 157-162), IBankingGateway.test.ts (44-46, 98-100)",
+      "correction": "Adicionado verificação expect(Result.isOk(moneyResult)).toBe(true) e guard clause if (!Result.isOk(moneyResult)) return antes de acessar .value em todos os testes afetados",
+      "files_affected": [
+        "src/modules/integrations/__tests__/ValueObjects.test.ts",
+        "src/modules/integrations/__tests__/IBankingGateway.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-471837",
+      "date": "2026-01-03",
+      "epic": "E7.9",
+      "error": "Uso de || (OR lógico) ao invés de ?? (nullish coalescing) para expirationMinutes. O operador || trata 0 como falsy, então expirationMinutes: 0 seria silenciosamente substituído por 30 minutos",
+      "correction": "Substituído request.expirationMinutes || 30 por request.expirationMinutes ?? 30, permitindo que valor explícito 0 seja respeitado (para Pix sem expiração ou expiração imediata)",
+      "files_affected": [
+        "src/modules/integrations/infrastructure/adapters/banking/MockBankingGateway.ts"
+      ],
+      "pattern_created": "Use ?? (nullish coalescing) for numeric defaults",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-222829",
+      "date": "2026-01-03",
+      "epic": "E7.9",
+      "error": "SefazGatewayAdapter era registrado para produção mesmo sendo um stub que retorna Result.fail() para 5 de 7 métodos. Isso quebrava 100% das operações SEFAZ críticas (cancelamento, consulta, manifestação, encerramento) em produção. sefaz-client.ts também é stub que falha em produção.",
+      "correction": "IntegrationsModule.ts agora SEMPRE usa MockSefazGateway até que a implementação real esteja pronta (E7.9 Semana 2). Adicionado warnings em logs e documentação clara em README.md. Padrão: adapters stubs NUNCA devem ser registrados para produção - usar mock explicitamente é mais honesto.",
+      "files_affected": [
+        "src/modules/integrations/infrastructure/di/IntegrationsModule.ts",
+        "src/modules/integrations/infrastructure/adapters/sefaz/SefazGatewayAdapter.ts",
+        "src/modules/integrations/infrastructure/adapters/README.md"
+      ],
+      "pattern_created": "Never register stub adapters for production use",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-896237",
+      "date": "2026-01-03",
+      "epic": "E7.9",
+      "error": "IntegrationsModule registrava stubs incompletos (BtgBankingAdapter, NodemailerAdapter, OfxParserAdapter) para produção quando useMocks=false. Todos esses adapters retornam Result.fail() para 100% dos métodos, causando falhas silenciosas em TODAS as operações de banking, notification e OFX em produção. O próprio README.md documentava isso como anti-pattern a evitar.",
+      "correction": "Modificado IntegrationsModule.ts para SEMPRE usar mocks (MockBankingGateway, MockNotificationService, MockBankStatementParser) até implementação real na Semana 2. Removidos imports de stubs não usados. Adicionados warnings em console quando não é ambiente de teste. Atualizado README.md com status correto de todos adapters.",
+      "files_affected": [
+        "src/modules/integrations/infrastructure/di/IntegrationsModule.ts",
+        "src/modules/integrations/infrastructure/adapters/README.md"
+      ],
+      "pattern_created": "Never register ANY stub adapters for production",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-603360",
+      "date": "2026-01-03",
+      "epic": "E7.9",
+      "error": "SefazGatewayAdapter tinha lógica de mock apenas para development, mas falhava 100% em produção/test. MockBankingGateway usava || ao invés de ?? para expirationMinutes, tratando 0 como falsy incorretamente.",
+      "correction": "1) SefazGatewayAdapter: Adicionado verificação de USE_MOCK_SEFAZ em todos os métodos para retornar mocks consistentemente em dev/test. 2) MockBankingGateway: Substituído || por ?? (nullish coalescing) na linha 75 para permitir valor 0 explícito em expirationMinutes. 3) IntegrationsModule: Corrigido para verificar USE_MOCK_SEFAZ ao invés de apenas NODE_ENV. 4) Criados testes de integração para todos os adapters.",
+      "files_affected": [
+        "src/modules/integrations/infrastructure/adapters/sefaz/SefazGatewayAdapter.ts",
+        "src/modules/integrations/infrastructure/adapters/banking/MockBankingGateway.ts",
+        "src/modules/integrations/infrastructure/di/IntegrationsModule.ts",
+        "src/modules/integrations/__tests__/integration/SefazGatewayAdapter.integration.test.ts",
+        "src/modules/integrations/__tests__/integration/BtgBankingAdapter.integration.test.ts",
+        "src/modules/integrations/__tests__/integration/NodemailerAdapter.integration.test.ts",
+        "src/modules/integrations/__tests__/integration/OfxParserAdapter.integration.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-254773",
+      "date": "2026-01-03",
+      "epic": "E7.9",
+      "error": "parseMoneyString usava .replace('.', '') que só remove o primeiro ponto, falhando para valores brasileiros com múltiplos separadores de milhar (ex: R$ 1.000.500,00). String.replace com literal só substitui primeira ocorrência.",
+      "correction": "Substituído .replace('.', '') por .replace(/\\./g, '') para remover TODOS os pontos de milhar usando regex global. Agora suporta valores brasileiros grandes corretamente (ex: R$ 10.000.000,00).",
+      "files_affected": [
+        "src/modules/integrations/infrastructure/adapters/ofx/OfxParserAdapter.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

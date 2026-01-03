@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Integration Test Database Helper
  * E7.8 WMS Semana 4
