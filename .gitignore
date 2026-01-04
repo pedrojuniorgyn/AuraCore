@@ -76,3 +76,6 @@ test-data/
 # Temporary test files
 test-*.mjs
 *.test.mjs
+
+# Husky
+.husky/_
