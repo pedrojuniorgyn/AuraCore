@@ -5,11 +5,14 @@
  * Configura DI para todas as integrações externas
  * Switch entre adapters reais e mocks via env vars
  * 
- * ✅ REAL IMPLEMENTATIONS AVAILABLE:
- * - SefazGatewayAdapter (partial - authorizeCte functional)
- * - BtgBankingAdapter (partial - boletos/pix functional)
- * - NodemailerAdapter (full - SMTP email)
- * - OfxParserAdapter (full - OFX/CSV parsing)
+ * ⚠️ IMPLEMENTATION STATUS (LC-896237):
+ * - SefazGatewayAdapter: 1/7 methods (authorizeCte only) → DEFAULT MOCK
+ * - BtgBankingAdapter: 6/11 methods (boletos/pix) → DEFAULT MOCK
+ * - NodemailerAdapter: 100% implemented → Can use real
+ * - OfxParserAdapter: 100% implemented → Can use real
+ * 
+ * PRODUCTION SAFETY: Defaults to mocks for partial adapters to prevent
+ * 100% failure rate when unimplemented methods are called.
  */
 
 import { container } from 'tsyringe';
@@ -46,39 +49,44 @@ export function initializeIntegrationsModule(): void {
     process.env.USE_MOCK_INTEGRATIONS === 'true';
 
   // === SEFAZ Gateway ===
-  // Partial implementation: authorizeCte functional, others return descriptive errors
-  if (useMocks || process.env.USE_MOCK_SEFAZ === 'true') {
+  // ⚠️ PARTIAL (1/7 methods): Only authorizeCte is functional
+  // Default to mock to prevent production failures on unimplemented methods
+  // Use real adapter ONLY if explicitly enabled via USE_MOCK_SEFAZ=false
+  if (useMocks || process.env.USE_MOCK_SEFAZ !== 'false') {
     container.registerSingleton<ISefazGateway>(
       TOKENS.SefazGateway,
       MockSefazGateway
     );
-    console.log('📝 SEFAZ: Using MockSefazGateway');
+    console.log('📝 SEFAZ: Using MockSefazGateway (safe default)');
   } else {
     container.registerSingleton<ISefazGateway>(
       TOKENS.SefazGateway,
       SefazGatewayAdapter
     );
-    console.log('🔌 SEFAZ: Using SefazGatewayAdapter (authorizeCte functional, others pending)');
+    console.warn('⚠️ SEFAZ: Using SefazGatewayAdapter (6/7 methods will fail! Only authorizeCte works)');
   }
 
   // === Banking Gateway ===
-  // Partial implementation: boletos and pix functional, payment/dda/balance pending
-  if (useMocks || process.env.USE_MOCK_BANKING === 'true') {
+  // ⚠️ PARTIAL (6/11 methods): Boletos/Pix work, payment/dda/balance are stub
+  // Default to mock to prevent production failures on unimplemented methods
+  // Use real adapter ONLY if explicitly enabled via USE_MOCK_BANKING=false
+  if (useMocks || process.env.USE_MOCK_BANKING !== 'false') {
     container.registerSingleton<IBankingGateway>(
       TOKENS.BankingGateway,
       MockBankingGateway
     );
-    console.log('📝 BANKING: Using MockBankingGateway');
+    console.log('📝 BANKING: Using MockBankingGateway (safe default)');
   } else {
     container.registerSingleton<IBankingGateway>(
       TOKENS.BankingGateway,
       BtgBankingAdapter
     );
-    console.log('🔌 BANKING: Using BtgBankingAdapter (boletos/pix functional, payment/dda/balance pending)');
+    console.warn('⚠️ BANKING: Using BtgBankingAdapter (5/11 methods will fail! Only boletos/pix work)');
   }
 
   // === Notification Service ===
-  // Full implementation: SMTP email via Nodemailer
+  // ✅ COMPLETE (2/2 methods): Full SMTP email via Nodemailer
+  // Safe to use in production when SMTP credentials are configured
   if (useMocks || process.env.USE_MOCK_NOTIFICATION === 'true') {
     container.registerSingleton<INotificationService>(
       TOKENS.NotificationService,
@@ -90,11 +98,12 @@ export function initializeIntegrationsModule(): void {
       TOKENS.NotificationService,
       NodemailerAdapter
     );
-    console.log('🔌 NOTIFICATION: Using NodemailerAdapter (full SMTP support)');
+    console.log('✅ NOTIFICATION: Using NodemailerAdapter (full implementation)');
   }
 
   // === Bank Statement Parser ===
-  // Full implementation: OFX and CSV parsing
+  // ✅ COMPLETE (2/2 methods): Full OFX and CSV parsing
+  // Safe to use in production (local parsing, no external dependencies)
   if (useMocks || process.env.USE_MOCK_OFX === 'true') {
     container.registerSingleton<IBankStatementParser>(
       TOKENS.BankStatementParser,
@@ -106,7 +115,7 @@ export function initializeIntegrationsModule(): void {
       TOKENS.BankStatementParser,
       OfxParserAdapter
     );
-    console.log('🔌 OFX_PARSER: Using OfxParserAdapter (full OFX/CSV support)');
+    console.log('✅ OFX_PARSER: Using OfxParserAdapter (full implementation)');
   }
 
   initialized = true;
