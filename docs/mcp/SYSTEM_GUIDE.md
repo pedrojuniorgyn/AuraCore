@@ -916,7 +916,103 @@ graph TD
 
 ---
 
-## 15. HISTÓRICO DE VERSÕES
+## 15. REGRA DE PUSH COM AUTORIZAÇÃO HUMANA (OBRIGATÓRIO) 🔥
+
+### 15.1 Regra Absoluta
+
+**NUNCA fazer `git push` sem autorização EXPLÍCITA do usuário.**
+
+Esta regra é adicional ao fluxo de Agent Review e garante que:
+1. Cursor Bot possa verificar issues após o commit
+2. O usuário tenha chance de revisar antes do push
+3. Erros não sejam propagados para o repositório remoto
+
+### 15.2 Fluxo Completo
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Fazer alterações no código                               │
+├─────────────────────────────────────────────────────────────┤
+│ 2. git add .                                                │
+├─────────────────────────────────────────────────────────────┤
+│ 3. git commit -m "mensagem"                                 │
+├─────────────────────────────────────────────────────────────┤
+│ 4. ⏸️ PARAR E REPORTAR AO USUÁRIO                           │
+│    - Mostrar resumo do commit                               │
+│    - Mostrar validações (TypeScript, testes)                │
+│    - Perguntar: "Posso fazer push?"                         │
+├─────────────────────────────────────────────────────────────┤
+│ 5. AGUARDAR Cursor Bot verificar issues (2-3 minutos)       │
+├─────────────────────────────────────────────────────────────┤
+│ 6. AGUARDAR autorização EXPLÍCITA do usuário:               │
+│    - "pode fazer push"                                      │
+│    - "push autorizado"                                      │
+│    - "sim, pode"                                            │
+├─────────────────────────────────────────────────────────────┤
+│ 7. SOMENTE APÓS AUTORIZAÇÃO: git push                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 15.3 Template de Relatório (Antes do Push)
+
+```markdown
+## COMMIT REALIZADO
+
+### Alterações
+- [lista de alterações]
+
+### Commit
+- Hash: [hash]
+- Mensagem: [mensagem]
+
+### Validações
+- TypeScript: X erros
+- Testes: X passando
+
+### ⏸️ AGUARDANDO
+
+1. Cursor Bot verificar issues
+2. Sua autorização para push
+
+**Posso fazer push?**
+```
+
+### 15.4 Violação da Regra
+
+**NUNCA** assumir que pode fazer push. Mesmo que:
+- ✅ Todos os testes passem
+- ✅ TypeScript tenha 0 erros
+- ✅ Lint esteja OK
+- ✅ Agent Review não encontre issues
+
+O push **AINDA** requer autorização explícita do usuário.
+
+### 15.5 Por quê?
+
+1. **Cursor Bot precisa de tempo** para analisar o commit
+2. **Usuário pode querer revisar** as mudanças antes
+3. **Múltiplos commits** podem precisar ser agrupados
+4. **Decisões de negócio** podem afetar timing do push
+5. **Prevenção de erros** em cascata no repositório
+
+### 15.6 Consequências de Violação
+
+- ❌ Issues não detectadas vão para o repositório
+- ❌ Usuário perde controle do fluxo de trabalho
+- ❌ Possível necessidade de revert
+- ❌ Quebra de confiança no processo
+
+### 15.7 Registro
+
+Esta regra foi estabelecida em **E7.10 Fase 3** após múltiplas violações durante a implementação do CI/CD Pipeline. 
+
+**Commits violadores:** 7 pushes não autorizados entre commits `d6b2ce5d` e `7048d97a`.
+
+**Correção:** Regra adicionada ao MCP SYSTEM_GUIDE para prevenir recorrência.
+
+---
+
+## 16. HISTÓRICO DE VERSÕES
 
 | Versão | Data | Alterações |
 |--------|------|------------|
@@ -924,4 +1020,5 @@ graph TD
 | 1.1.0 | 27/12/2025 | + Seção 12: Prevenção de Regressões (lição E2 BATCH 1) |
 | 1.2.0 | 27/12/2025 | + Seção 13: Limitações do check_cursor_issues (lição E3) |
 | 1.3.0 | 27/12/2025 | + Seção 14: Fluxo de Commit com Agent Review (OBRIGATÓRIO) |
+| 1.4.0 | 03/01/2026 | + Seção 15: Regra de Push com Autorização Humana (E7.10) |
 

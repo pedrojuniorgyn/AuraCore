@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx,.mjs,.js",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
@@ -14,7 +14,7 @@
     "test:integration": "vitest run --dir tests/integration",
     "test:e2e": "vitest run --dir tests/e2e",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run tests/unit --coverage",
     "test:watch": "vitest --watch",
     "validate": "npm run typecheck && npm run test:unit",
     "prepare": "husky"
