@@ -1,37 +1,67 @@
-# Docker Compose para Testes de Integração
-# E7.8 WMS Semana 4
-#
-# Uso:
-#   docker-compose -f docker-compose.test.yml up -d
-#   npm run test:integration
-#   docker-compose -f docker-compose.test.yml down -v
+version: '3.8'
 
 services:
-  sql-test:
+  # SQL Server para testes de integração
+  sqlserver-test:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: auracore-sql-test
+    container_name: auracore-sqlserver-test
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Test@1234567890"
-      MSSQL_PID: "Developer"
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=TestPassword123!
+      - MSSQL_PID=Developer
     ports:
-      - "14330:1433"  # Porta diferente para não conflitar com dev
-    volumes:
-      - sql_test_data:/var/opt/mssql
-    networks:
-      - auracore-test
+      - "1434:1433"  # Porta diferente para não conflitar com instância de dev
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "Test@1234567890" -Q "SELECT 1"
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "TestPassword123!" -C -Q "SELECT 1" || exit 1
       interval: 10s
-      timeout: 3s
-      retries: 5
+      timeout: 5s
+      retries: 10
       start_period: 30s
+    volumes:
+      - sqlserver-test-data:/var/opt/mssql
+
+  # Serviço para criar database auracore_test
+  db-init:
+    image: mcr.microsoft.com/mssql-tools18:latest
+    container_name: auracore-db-init
+    depends_on:
+      sqlserver-test:
+        condition: service_healthy
+    command: >
+      /bin/bash -c "
+        echo 'Creating database auracore_test...';
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver-test -U sa -P 'TestPassword123!' -C -Q \"IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'auracore_test') CREATE DATABASE auracore_test\";
+        echo 'Database auracore_test ready!';
+      "
+
+  # Serviço para rodar migrations no banco de teste
+  migrations:
+    image: node:20-alpine
+    container_name: auracore-migrations
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules  # Evitar conflito com node_modules do host
+    environment:
+      # Connection string completa (para libs que usam DATABASE_URL)
+      - DATABASE_URL=sqlserver://sa:TestPassword123%21@sqlserver-test:1433/auracore_test;trustServerCertificate=true
+      # Variáveis individuais (para drizzle.config.ts)
+      - DB_HOST=sqlserver-test
+      - DB_PORT=1433
+      - DB_USER=sa
+      - DB_PASSWORD=TestPassword123!
+      - DB_NAME=auracore_test
+      - DB_TRUST_CERT=true
+      - DB_ENCRYPT=false
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    command: sh -c "npm ci --legacy-peer-deps && npx drizzle-kit push"
 
 volumes:
-  sql_test_data:
-    driver: local
+  sqlserver-test-data:
+    name: auracore-test-data
 
 networks:
-  auracore-test:
-    driver: bridge
-
+  default:
+    name: auracore-test-network

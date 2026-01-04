@@ -17,10 +17,10 @@ export interface TestDbConfig {
 
 const TEST_DB_CONFIG: TestDbConfig = {
   server: 'localhost',
-  port: 14330, // docker-compose.test.yml
-  database: 'AuraCoreTest',
-  user: 'SA',
-  password: 'Test@1234567890',
+  port: 1434, // E7.11: docker-compose.test.yml expõe porta 1434
+  database: 'auracore_test',
+  user: 'sa',
+  password: 'TestPassword123!',
 };
 
 let connection: sql.ConnectionPool | null = null;

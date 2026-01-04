@@ -17,7 +17,16 @@
     "test:coverage": "vitest run tests/unit --coverage",
     "test:watch": "vitest --watch",
     "validate": "npm run typecheck && npm run test:unit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:test:up": "docker-compose -f docker-compose.test.yml up -d sqlserver-test",
+    "docker:test:down": "docker-compose -f docker-compose.test.yml down -v",
+    "docker:test:logs": "docker-compose -f docker-compose.test.yml logs -f",
+    "docker:test:restart": "npm run docker:test:down && npm run docker:test:up",
+    "docker:test:init-db": "docker-compose -f docker-compose.test.yml run --rm db-init",
+    "docker:test:migrate": "docker-compose -f docker-compose.test.yml run --rm migrations",
+    "db:migrate:test": "drizzle-kit push",
+    "test:integration:docker": "npm run docker:test:up && sleep 30 && npm run docker:test:init-db && npm run docker:test:migrate && (npm run test:integration; TEST_EXIT=$?; npm run docker:test:down; exit $TEST_EXIT)",
+    "test:all": "npm run test:unit && npm run test:integration:docker"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
@@ -105,6 +114,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
     "autoprefixer": "^10.4.22",

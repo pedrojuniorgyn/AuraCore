@@ -79,3 +79,6 @@ test-*.mjs
 
 # Husky
 .husky/_
+
+# E7.11 Test environment (create .env.test locally from .env.test.example)
+.env.test
