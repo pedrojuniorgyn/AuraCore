@@ -122,7 +122,7 @@
     "vitest": "^4.0.16"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "*.{ts,tsx,mjs,js}": [
       "eslint --fix"
     ]
   }
