@@ -48,6 +48,33 @@ export function initializeIntegrationsModule(): void {
     process.env.NODE_ENV === 'test' ||
     process.env.USE_MOCK_INTEGRATIONS === 'true';
 
+  // ⚠️ BREAKING CHANGE WARNING (LC-896237)
+  // If no explicit mock configuration is set, warn about the safe defaults
+  if (
+    process.env.NODE_ENV !== 'test' &&
+    process.env.USE_MOCK_INTEGRATIONS !== 'true' &&
+    process.env.USE_MOCK_SEFAZ === undefined &&
+    process.env.USE_MOCK_BANKING === undefined
+  ) {
+    console.warn(
+      '\n⚠️  [IntegrationsModule] IMPORTANT: No USE_MOCK_* environment variables set.\n' +
+      '   Defaulting to MOCKS for SEFAZ and Banking adapters (LC-896237).\n' +
+      '   This is a SAFE DEFAULT because real adapters have stub methods that will fail.\n' +
+      '\n' +
+      '   Implementation Status:\n' +
+      '     - SefazGatewayAdapter: 1/7 methods (14%) → Using MockSefazGateway\n' +
+      '     - BtgBankingAdapter: 6/11 methods (55%) → Using MockBankingGateway\n' +
+      '\n' +
+      '   To use REAL adapters (not recommended until E7.11):\n' +
+      '     USE_MOCK_SEFAZ=false\n' +
+      '     USE_MOCK_BANKING=false\n' +
+      '\n' +
+      '   To silence this warning:\n' +
+      '     USE_MOCK_SEFAZ=true\n' +
+      '     USE_MOCK_BANKING=true\n'
+    );
+  }
+
   // === SEFAZ Gateway ===
   // ⚠️ PARTIAL (1/7 methods): Only authorizeCte is functional
   // Default to mock to prevent production failures on unimplemented methods
