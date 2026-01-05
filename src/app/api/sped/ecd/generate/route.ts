@@ -87,27 +87,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // 8. Converter para texto com encoding ISO-8859-1
-    const textContent = result.value.toFileContent();
-    
-    // SPED requer encoding ISO-8859-1 (latin1), não UTF-8
-    const encoder = new TextEncoder();
-    const utf8Bytes = encoder.encode(textContent);
-    
-    // Converter UTF-8 para ISO-8859-1
-    // Para caracteres ASCII (0-127), UTF-8 = ISO-8859-1
-    // Para caracteres especiais, manter mapeamento 1:1
-    const latin1Bytes = new Uint8Array(utf8Bytes.length);
-    for (let i = 0; i < utf8Bytes.length; i++) {
-      latin1Bytes[i] = utf8Bytes[i] & 0xFF;
-    }
+    // 8. Gerar buffer com encoding ISO-8859-1 (método já faz isso corretamente)
+    const buffer = result.value.toBuffer();
 
     const fileName = `ECD_${referenceYear}_${bookType}.txt`;
 
     console.log(`✅ SPED ECD gerado com sucesso: ${fileName}`);
 
     // 9. Retornar arquivo
-    return new NextResponse(latin1Bytes, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
         'Content-Type': 'text/plain; charset=ISO-8859-1',

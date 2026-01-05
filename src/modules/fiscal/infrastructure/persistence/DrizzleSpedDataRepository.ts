@@ -486,27 +486,61 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
     period: SpedContributionsPeriod
   ): Promise<Result<TaxTotalsContribData, Error>> {
     try {
-      // Buscar totais de débito e crédito de transações relacionadas a PIS/COFINS
-      const result = await db.execute(sql`
+      // Calcular PIS/COFINS a partir dos documentos fiscais
+      // Débitos = CTes de saída (receitas)
+      // Créditos = NFes de entrada (compras com direito a crédito)
+      
+      // Alíquotas: PIS 1.65%, COFINS 7.6%
+      const PIS_RATE = 0.0165;
+      const COFINS_RATE = 0.076;
+
+      // Buscar débitos (CTes de saída)
+      const debitResult = await db.execute(sql`
         SELECT 
-          ISNULL(SUM(CASE WHEN je.source_type = 'TAX_DEBIT' THEN je.total_debit ELSE 0 END), 0) as totalDebit,
-          ISNULL(SUM(CASE WHEN je.source_type = 'TAX_CREDIT' THEN je.total_credit ELSE 0 END), 0) as totalCredit
-        FROM journal_entries je
-        WHERE je.organization_id = ${period.organizationId}
-          AND MONTH(je.entry_date) = ${period.referenceMonth}
-          AND YEAR(je.entry_date) = ${period.referenceYear}
-          AND je.status = 'POSTED'
-          AND je.deleted_at IS NULL
+          ISNULL(SUM(CAST(cd.total_amount AS DECIMAL(18,2))), 0) as totalCtesAmount
+        FROM cargo_documents cd
+        WHERE cd.organization_id = ${period.organizationId}
+          AND MONTH(cd.issue_date) = ${period.referenceMonth}
+          AND YEAR(cd.issue_date) = ${period.referenceYear}
+          AND cd.deleted_at IS NULL
       `);
 
-      const rows = (result.recordset || result) as unknown as {
-        totalDebit: number;
-        totalCredit: number;
+      const debitRows = (debitResult.recordset || debitResult) as unknown as {
+        totalCtesAmount: number;
       }[];
 
+      const totalCtesAmount = debitRows[0]?.totalCtesAmount ?? 0;
+      const pisDebit = totalCtesAmount * PIS_RATE;
+      const cofinsDebit = totalCtesAmount * COFINS_RATE;
+      const totalDebit = pisDebit + cofinsDebit;
+
+      // Buscar créditos (NFes de entrada - CFOP iniciado com 1, 2 ou 3)
+      const creditResult = await db.execute(sql`
+        SELECT 
+          ISNULL(SUM(
+            CAST(fd.net_amount AS DECIMAL(18,2)) - ISNULL(CAST(fd.icms_amount AS DECIMAL(18,2)), 0)
+          ), 0) as totalNfesBaseAmount
+        FROM fiscal_documents fd
+        WHERE fd.organization_id = ${period.organizationId}
+          AND MONTH(fd.issue_date) = ${period.referenceMonth}
+          AND YEAR(fd.issue_date) = ${period.referenceYear}
+          AND fd.document_type = 'NFE'
+          AND fd.operation_type = 'ENTRADA'
+          AND fd.deleted_at IS NULL
+      `);
+
+      const creditRows = (creditResult.recordset || creditResult) as unknown as {
+        totalNfesBaseAmount: number;
+      }[];
+
+      const totalNfesBaseAmount = creditRows[0]?.totalNfesBaseAmount ?? 0;
+      const pisCredit = totalNfesBaseAmount * PIS_RATE;
+      const cofinsCredit = totalNfesBaseAmount * COFINS_RATE;
+      const totalCredit = pisCredit + cofinsCredit;
+
       const totals: TaxTotalsContribData = {
-        totalDebit: rows[0]?.totalDebit ?? 0,
-        totalCredit: rows[0]?.totalCredit ?? 0,
+        totalDebit,
+        totalCredit,
       };
 
       return Result.ok(totals);
