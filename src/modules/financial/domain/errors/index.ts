@@ -1,2 +1,1 @@
-export * from './FinancialErrors';
-
+export * from './FinancialTitleError';

@@ -1,39 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getTenantContext } from "@/lib/auth/context";
 import {
-  generatePayableFromNFe,
-  generateReceivableFromCTe,
-} from "@/services/financial-title-generator";
+  createGeneratePayableTitleUseCase,
+  createGenerateReceivableTitleUseCase,
+} from "@/modules/financial/infrastructure/di/FinancialModule";
 
 /**
  * 💰 POST /api/fiscal/documents/:id/generate-titles
  * 
  * Gera títulos financeiros (Contas a Pagar/Receber) automaticamente
+ * 
+ * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    // 1. Validar contexto de tenant
+    const ctx = await getTenantContext();
+    if (!ctx) {
+      return NextResponse.json(
+        { error: 'Contexto de tenant não encontrado' },
+        { status: 401 }
+      );
+    }
+
+    // 2. Garantir que os valores são números válidos
+    const orgId = typeof ctx.organizationId === 'number'
+      ? ctx.organizationId
+      : Number(ctx.organizationId);
+
+    if (isNaN(orgId)) {
+      return NextResponse.json(
+        { error: 'IDs de organização inválidos' },
+        { status: 400 }
+      );
     }
 
     const resolvedParams = await params;
-    const fiscalDocumentId = parseInt(resolvedParams.id);
-    const userId = session.user.id;
+    const fiscalDocumentId = BigInt(resolvedParams.id);
+    const userId = ctx.userId;
 
-    // Buscar documento para saber qual função chamar
+    // 3. Buscar documento para determinar o tipo de título
     const { db } = await import("@/lib/db");
     const { fiscalDocuments } = await import("@/lib/db/schema");
-    const { eq } = await import("drizzle-orm");
+    const { eq, and } = await import("drizzle-orm");
 
     const [document] = await db
       .select()
       .from(fiscalDocuments)
-      .where(eq(fiscalDocuments.id, fiscalDocumentId));
+      .where(
+        and(
+          eq(fiscalDocuments.id, Number(fiscalDocumentId)),
+          eq(fiscalDocuments.organizationId, orgId)
+        )
+      );
 
     if (!document) {
       return NextResponse.json(
@@ -42,16 +64,26 @@ export async function POST(
       );
     }
 
-    // Escolher função baseado na classificação
+    // 4. Executar Use Case apropriado
     let result;
 
     if (document.fiscalClassification === "PURCHASE") {
-      result = await generatePayableFromNFe(fiscalDocumentId, userId);
+      const useCase = createGeneratePayableTitleUseCase();
+      result = await useCase.execute({
+        fiscalDocumentId,
+        userId,
+        organizationId: BigInt(orgId),
+      });
     } else if (
       document.fiscalClassification === "CARGO" ||
       document.documentType === "CTE"
     ) {
-      result = await generateReceivableFromCTe(fiscalDocumentId, userId);
+      const useCase = createGenerateReceivableTitleUseCase();
+      result = await useCase.execute({
+        fiscalDocumentId,
+        userId,
+        organizationId: BigInt(orgId),
+      });
     } else {
       return NextResponse.json(
         {
@@ -62,16 +94,20 @@ export async function POST(
       );
     }
 
-    if (!result.success) {
+    // 5. Processar resultado
+    if (result.isFailure) {
       return NextResponse.json(
-        { error: result.error || "Erro ao gerar títulos" },
+        { error: result.error.message },
         { status: 400 }
       );
     }
 
     return NextResponse.json({
-      ...result,
-      message: `${result.titlesGenerated} título(s) gerado(s) com sucesso`,
+      success: true,
+      titleId: result.value.titleId.toString(), // BigInt como string
+      type: result.value.type,
+      amount: result.value.amount,
+      message: `Título ${result.value.type} gerado com sucesso`,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

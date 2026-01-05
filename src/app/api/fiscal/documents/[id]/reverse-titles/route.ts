@@ -1,31 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { reverseTitles } from "@/services/financial-title-generator";
+import { getTenantContext } from "@/lib/auth/context";
+import { createReverseTitlesUseCase } from "@/modules/financial/infrastructure/di/FinancialModule";
 
 /**
  * 🔄 POST /api/fiscal/documents/:id/reverse-titles
  * 
- * Reverte geração de títulos (híbrido - reversível)
+ * Reverte geração de títulos (soft delete)
+ * 
+ * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    // 1. Validar contexto de tenant
+    const ctx = await getTenantContext();
+    if (!ctx) {
+      return NextResponse.json(
+        { error: 'Contexto de tenant não encontrado' },
+        { status: 401 }
+      );
+    }
+
+    // 2. Garantir que os valores são números válidos
+    const orgId = typeof ctx.organizationId === 'number'
+      ? ctx.organizationId
+      : Number(ctx.organizationId);
+
+    if (isNaN(orgId)) {
+      return NextResponse.json(
+        { error: 'IDs de organização inválidos' },
+        { status: 400 }
+      );
     }
 
     const resolvedParams = await params;
-    const fiscalDocumentId = parseInt(resolvedParams.id);
+    const fiscalDocumentId = BigInt(resolvedParams.id);
 
-    const result = await reverseTitles(fiscalDocumentId);
+    // 3. Executar Use Case
+    const useCase = createReverseTitlesUseCase();
+    const result = await useCase.execute({
+      fiscalDocumentId,
+      organizationId: BigInt(orgId),
+    });
 
-    if (!result.success) {
+    // 4. Processar resultado
+    if (result.isFailure) {
       return NextResponse.json(
-        { error: result.error || "Erro ao reverter títulos" },
+        { error: result.error.message },
         { status: 400 }
       );
     }
@@ -43,6 +66,10 @@ export async function POST(
     );
   }
 }
+
+
+
+
 
 
 

@@ -1,43 +1,58 @@
-import { container } from 'tsyringe';
-import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import type { IPayableRepository } from '../../domain/ports/output/IPayableRepository';
-import { DrizzlePayableRepository } from '../persistence/DrizzlePayableRepository';
-import { DomainEventDispatcher, PaymentCompletedHandler, type IEventDispatcher } from '../events/DomainEventDispatcher';
-import { CreatePayableUseCase } from '../../application/use-cases/CreatePayableUseCase';
-import { PayAccountPayableUseCase } from '../../application/use-cases/PayAccountPayableUseCase';
-import { CancelPayableUseCase } from '../../application/use-cases/CancelPayableUseCase';
-import { ListPayablesUseCase } from '../../application/use-cases/ListPayablesUseCase';
-import { GetPayableByIdUseCase } from '../../application/use-cases/GetPayableByIdUseCase';
+/**
+ * 💰 FINANCIAL MODULE - DEPENDENCY INJECTION
+ * 
+ * Dependency injection configuration for the Financial module
+ * 
+ * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
+ */
+
+import { DrizzleFinancialTitleRepository } from "../persistence/DrizzleFinancialTitleRepository";
+import { FinancialTitleGenerator } from "../../domain/services/FinancialTitleGenerator";
+import {
+  GeneratePayableTitleUseCase,
+  GenerateReceivableTitleUseCase,
+  ReverseTitlesUseCase,
+} from "../../application/use-cases";
+import { ConsoleLogger } from "@/shared/infrastructure/logging/ConsoleLogger";
 
 /**
- * Registra todas as dependências do módulo Financial
+ * Factory: Create Financial Title Repository
  */
-export function registerFinancialModule(): void {
-  // Repositories
-  container.registerSingleton<IPayableRepository>(
-    TOKENS.PayableRepository,
-    DrizzlePayableRepository
-  );
-
-  // Event Dispatcher
-  container.registerSingleton<IEventDispatcher>(
-    TOKENS.EventDispatcher,
-    DomainEventDispatcher
-  );
-
-  // Event Handlers
-  container.registerSingleton(PaymentCompletedHandler);
-
-  // Use Cases
-  container.registerSingleton(CreatePayableUseCase);
-  container.registerSingleton(PayAccountPayableUseCase);
-  container.registerSingleton(CancelPayableUseCase);
-  container.registerSingleton(ListPayablesUseCase);
-  container.registerSingleton(GetPayableByIdUseCase);
-
-  // Registrar handlers de eventos
-  const dispatcher = container.resolve<IEventDispatcher>(TOKENS.EventDispatcher);
-  const paymentHandler = container.resolve(PaymentCompletedHandler);
-  dispatcher.register('PaymentCompleted', paymentHandler);
+export function createFinancialTitleRepository(): DrizzleFinancialTitleRepository {
+  return new DrizzleFinancialTitleRepository();
 }
 
+/**
+ * Factory: Create Financial Title Generator (Domain Service)
+ */
+export function createFinancialTitleGenerator(): FinancialTitleGenerator {
+  const repository = createFinancialTitleRepository();
+  return new FinancialTitleGenerator(repository);
+}
+
+/**
+ * Factory: Create Generate Payable Title Use Case
+ */
+export function createGeneratePayableTitleUseCase(): GeneratePayableTitleUseCase {
+  const generator = createFinancialTitleGenerator();
+  const logger = new ConsoleLogger();
+  return new GeneratePayableTitleUseCase(generator, logger);
+}
+
+/**
+ * Factory: Create Generate Receivable Title Use Case
+ */
+export function createGenerateReceivableTitleUseCase(): GenerateReceivableTitleUseCase {
+  const generator = createFinancialTitleGenerator();
+  const logger = new ConsoleLogger();
+  return new GenerateReceivableTitleUseCase(generator, logger);
+}
+
+/**
+ * Factory: Create Reverse Titles Use Case
+ */
+export function createReverseTitlesUseCase(): ReverseTitlesUseCase {
+  const generator = createFinancialTitleGenerator();
+  const logger = new ConsoleLogger();
+  return new ReverseTitlesUseCase(generator, logger);
+}
