@@ -21,6 +21,38 @@ export interface PreInvoice {
   events: BillingEvent[];
 }
 
+export interface MeasurementResult {
+  customerId: number;
+  period: string;
+  totalStorage: number;
+  totalInbound: number;
+  totalOutbound: number;
+  totalExtras: number;
+  subtotal: number;
+}
+
+export interface BillingEventRow {
+  event_type: string;
+  total_quantity: number;
+  total_amount: number;
+}
+
+export interface PreInvoiceResult {
+  success: boolean;
+  preInvoice: {
+    customerId: number;
+    period: string;
+    totalStorage: number;
+    totalInbound: number;
+    totalOutbound: number;
+    totalExtras: number;
+    subtotal: number;
+    issRate: number;
+    issAmount: number;
+    netAmount: number;
+  };
+}
+
 export class WMSBillingEngine {
   
   /**
@@ -42,7 +74,7 @@ export class WMSBillingEngine {
   /**
    * Fechar medição do período e consolidar eventos
    */
-  static async closeMeasurement(organizationId: number, customerId: number, period: string): Promise<any> {
+  static async closeMeasurement(organizationId: number, customerId: number, period: string): Promise<MeasurementResult> {
     // Buscar todos os eventos pendentes do cliente no período
     const events = await db.execute(sql`
       SELECT 
@@ -57,7 +89,8 @@ export class WMSBillingEngine {
       GROUP BY event_type
     `);
 
-    const eventsList = events.recordset || events;
+    // Extrair recordset do resultado da query (ENFORCE-031: verificar estrutura real)
+    const eventsList = (events.recordset || events) as unknown as BillingEventRow[];
     
     let totalStorage = 0;
     let totalInbound = 0;
@@ -105,7 +138,7 @@ export class WMSBillingEngine {
   /**
    * Gerar pré-fatura
    */
-  static async generatePreInvoice(organizationId: number, customerId: number, period: string): Promise<any> {
+  static async generatePreInvoice(organizationId: number, customerId: number, period: string): Promise<PreInvoiceResult> {
     const measurement = await this.closeMeasurement(organizationId, customerId, period);
     
     const issRate = 5.00;
@@ -166,6 +199,7 @@ export class WMSBillingEngine {
     `);
   }
 }
+
 
 
 
