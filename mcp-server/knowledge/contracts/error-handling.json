@@ -1,0 +1,77 @@
+{
+  "id": "error-handling",
+  "title": "Padrões de Tratamento de Erros",
+  "version": "1.0.0",
+  "created": "2026-01-06",
+  "category": "error-handling",
+  "description": "Regras derivadas das Lessons Learned #8, #13. Todo código deve ter tratamento de erro robusto e NUNCA silenciar erros desconhecidos.",
+  "severity": "HIGH",
+  "source_lessons": [8, 13],
+  "rules": [
+    "ENFORCE-050: Try-catch OBRIGATÓRIO em todos handlers e operações I/O (Lesson #8)",
+    "ENFORCE-051: SEMPRE re-throw erros desconhecidos - nunca silenciar (Lesson #13)"
+  ],
+  "examples": {
+    "ENFORCE-050": {
+      "lesson": "#8 Error Handling",
+      "bad": "async function handler() { const data = await fetch(url); return data; }",
+      "good": "async function handler() { try { const data = await fetch(url); return data; } catch (error: unknown) { const msg = error instanceof Error ? error.message : String(error); throw new Error(`Failed to fetch: ${msg}`); } }",
+      "reason": "Operações I/O podem falhar - erro não tratado vira 500"
+    },
+    "ENFORCE-051": {
+      "lesson": "#13 Re-throw Unknown",
+      "bad": "catch (error: unknown) { if (error instanceof KnownError) { /* handle */ } /* SILÊNCIO para outros erros! */ }",
+      "good": "catch (error: unknown) { if (error instanceof KnownError) { /* handle */ return; } throw new Error(`Unexpected error: ${String(error)}`); }",
+      "reason": "Silenciar erros desconhecidos esconde bugs críticos"
+    }
+  },
+  "patterns": {
+    "error_message_extraction": {
+      "description": "Extrair mensagem de erro de forma segura",
+      "code": "const message = error instanceof Error ? error.message : String(error);"
+    },
+    "type_guard_in_catch": {
+      "description": "Type guard específico para erros conhecidos",
+      "code": "if (error instanceof Error && 'code' in error && error.code === 'ENOENT') { /* handle file not found */ }"
+    },
+    "always_rethrow_unknown": {
+      "description": "Re-throw erros não reconhecidos",
+      "code": "else { throw new Error(`Unexpected error: ${String(error)}`); }"
+    },
+    "api_route_error_handling": {
+      "description": "Padrão para rotas API",
+      "code": "try { /* logic */ } catch (error: unknown) { const msg = error instanceof Error ? error.message : String(error); return NextResponse.json({ error: msg }, { status: 500 }); }"
+    }
+  },
+  "mandatory_locations": {
+    "api_routes": "Todas as rotas API devem ter try-catch",
+    "io_operations": "fetch(), fs.readFile(), db.execute(), etc",
+    "external_calls": "Chamadas a APIs externas, serviços, etc",
+    "parsers": "JSON.parse(), XML parsing, etc"
+  },
+  "error_handling_checklist": [
+    "Try-catch em TODAS as rotas API",
+    "Try-catch em TODAS as operações I/O (file, network, database)",
+    "SEMPRE extrair mensagem de erro de forma segura (instanceof Error)",
+    "SEMPRE re-throw erros desconhecidos",
+    "NUNCA catch vazio ou que apenas loga e continua",
+    "NUNCA silenciar erros - sempre propagar ou retornar erro estruturado"
+  ],
+  "anti_patterns": [
+    "catch (error) { console.log(error); } // Loga e continua",
+    "catch (error) { } // Catch vazio - silencia tudo",
+    "catch (error: any) { error.message } // any sem type guard",
+    "catch (error) { if (known) { handle } } // Não re-throw unknown"
+  ],
+  "examples_complete": {
+    "api_route": {
+      "description": "Padrão completo para rota API",
+      "code": "export async function POST(req: Request) {\n  try {\n    const session = await auth();\n    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\n    \n    const body = await req.json();\n    // ... logic ...\n    \n    return NextResponse.json({ success: true, data: result });\n  } catch (error: unknown) {\n    const errorMessage = error instanceof Error ? error.message : String(error);\n    console.error('Error in POST:', error);\n    return NextResponse.json({ error: errorMessage }, { status: 500 });\n  }\n}"
+    },
+    "database_operation": {
+      "description": "Operação de banco com erro específico",
+      "code": "try {\n  const result = await db.execute(sql`SELECT * FROM users WHERE id = ${id}`);\n  return Result.ok(result[0]);\n} catch (error: unknown) {\n  if (error instanceof Error && 'code' in error) {\n    if (error.code === 'ECONNREFUSED') return Result.fail(new Error('Database unavailable'));\n  }\n  // Re-throw unknown\n  throw new Error(`Database error: ${error instanceof Error ? error.message : String(error)}`);\n}"
+    }
+  }
+}
+

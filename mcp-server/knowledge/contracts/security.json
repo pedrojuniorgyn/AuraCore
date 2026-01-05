@@ -1,0 +1,83 @@
+{
+  "id": "security",
+  "title": "Padrões de Segurança",
+  "version": "1.0.0",
+  "created": "2026-01-06",
+  "category": "security",
+  "description": "Regras derivadas das Lessons Learned #1, #14. Prevenção de vulnerabilidades de segurança críticas.",
+  "severity": "CRITICAL",
+  "source_lessons": [1, 14],
+  "rules": [
+    "ENFORCE-055: SEMPRE sanitizar IDs/inputs antes de usar em paths (Lesson #1)",
+    "ENFORCE-056: Regex deve ser específico - verificar contexto primeiro (Lesson #14)"
+  ],
+  "vulnerabilities_prevented": [
+    "Path Traversal (../../../etc/passwd)",
+    "Command Injection via path manipulation",
+    "False positives em validações regex muito permissivas",
+    "Bypass de validações por regex inadequada"
+  ],
+  "examples": {
+    "ENFORCE-055": {
+      "lesson": "#1 Path Traversal Protection",
+      "bad": "const filepath = path.join(baseDir, userInput); // userInput pode ser '../../../etc/passwd'",
+      "good": "const sanitized = userInput.replace(/[^a-zA-Z0-9-_]/g, ''); if (sanitized !== userInput) throw new Error('Invalid resource ID'); const filepath = path.join(baseDir, sanitized);",
+      "reason": "Inputs não sanitizados permitem path traversal",
+      "vulnerability": "CWE-22: Path Traversal",
+      "severity": "CRITICAL"
+    },
+    "ENFORCE-056": {
+      "lesson": "#14 Regex Specificity",
+      "bad": "const hasProblem = /['\"'].*\\+/.test(code); // Muito permissivo - falsos positivos",
+      "good": "// 1. Verificar contexto primeiro\nconst hasContext = /\\b(select|insert|update)\\b/i.test(code);\nif (hasContext) {\n  // 2. Regex específico apenas no contexto relevante\n  const hasSqlInjection = /\\b(select|insert|update)\\s+.*(\\+\\s*['\"']|['\"']\\s*\\+)/i.test(code);\n}",
+      "reason": "Regex muito permissivo causa falsos positivos",
+      "impact": "Bloqueia código legítimo ou permite código malicioso"
+    }
+  },
+  "sanitization_patterns": {
+    "resource_id": {
+      "description": "IDs de recursos (filenames, keys, etc)",
+      "pattern": "const sanitized = id.replace(/[^a-zA-Z0-9-_]/g, '');",
+      "validation": "if (sanitized !== id) throw new Error('Invalid ID format');"
+    },
+    "path_component": {
+      "description": "Componentes de path",
+      "pattern": "if (input.includes('..') || input.includes('/') || input.includes('\\\\')) throw new Error('Invalid path component');",
+      "additional": "Use path.normalize() e path.resolve() para garantir que está dentro de baseDir"
+    },
+    "filename": {
+      "description": "Nomes de arquivo",
+      "pattern": "const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, ''); if (!sanitized || sanitized.startsWith('.')) throw new Error('Invalid filename');"
+    }
+  },
+  "regex_best_practices": {
+    "verify_context_first": "Antes de aplicar regex complexo, verificar se contexto relevante existe",
+    "specific_over_generic": "Regex específico para SQL é diferente de regex para XSS",
+    "test_edge_cases": "Testar com strings legítimas e maliciosas",
+    "avoid_catastrophic_backtracking": "Evitar regex como (a+)+ que causa DoS"
+  },
+  "security_checklist": [
+    "NUNCA usar input do usuário diretamente em paths",
+    "SEMPRE sanitizar IDs antes de usar em filesystem",
+    "SEMPRE validar que path resolved está dentro de baseDir",
+    "SEMPRE verificar contexto antes de aplicar regex complexo",
+    "NUNCA confiar em regex como única linha de defesa",
+    "SEMPRE ter testes de segurança para inputs maliciosos"
+  ],
+  "examples_complete": {
+    "safe_file_access": {
+      "description": "Acesso seguro a arquivo baseado em ID do usuário",
+      "code": "import path from 'path';\nimport fs from 'fs';\n\nfunction getResourceFile(baseDir: string, resourceId: string): string {\n  // 1. Sanitizar ID\n  const sanitized = resourceId.replace(/[^a-zA-Z0-9-_]/g, '');\n  if (sanitized !== resourceId) {\n    throw new Error('Invalid resource ID');\n  }\n  \n  // 2. Construir path\n  const filepath = path.join(baseDir, `${sanitized}.json`);\n  \n  // 3. Verificar que está dentro de baseDir (path traversal protection)\n  const resolved = path.resolve(filepath);\n  const resolvedBase = path.resolve(baseDir);\n  if (!resolved.startsWith(resolvedBase)) {\n    throw new Error('Path traversal detected');\n  }\n  \n  // 4. Verificar existência\n  if (!fs.existsSync(resolved)) {\n    throw new Error('Resource not found');\n  }\n  \n  return resolved;\n}"
+    },
+    "context_aware_validation": {
+      "description": "Validação com verificação de contexto",
+      "code": "function validateCode(code: string): { valid: boolean; reason?: string } {\n  // 1. Verificar contexto SQL primeiro\n  const hasSqlContext = /\\b(select|insert|update|delete|drop|create|alter)\\b/i.test(code);\n  \n  if (hasSqlContext) {\n    // 2. Regex específico para SQL injection\n    const hasSqlInjection = /\\b(select|insert|update|delete)\\s+.*(\\+\\s*['\"']|['\"']\\s*\\+|;.*--|union\\s+select)/i.test(code);\n    if (hasSqlInjection) {\n      return { valid: false, reason: 'Potential SQL injection detected' };\n    }\n  }\n  \n  return { valid: true };\n}"
+    }
+  },
+  "references": {
+    "cwe_22": "https://cwe.mitre.org/data/definitions/22.html",
+    "owasp_path_traversal": "https://owasp.org/www-community/attacks/Path_Traversal",
+    "owasp_regex_dos": "https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS"
+  }
+}
+

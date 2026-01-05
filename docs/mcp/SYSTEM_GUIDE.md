@@ -94,7 +94,7 @@ mcp-server/
 
 ---
 
-## 4. CONTRATOS DISPONÍVEIS (7)
+## 4. CONTRATOS DISPONÍVEIS (12)
 
 | Contrato | Categoria | Descrição |
 |----------|-----------|-----------|
@@ -105,6 +105,38 @@ mcp-server/
 | `error-contract` | Erros | Padrões de erro HTTP |
 | `rbac-contract` | Segurança | Regras de permissão |
 | `sqlserver-performance-contract` | Performance | Regras de performance SQL |
+| `verify-before-code` | Processo | Verificação obrigatória antes de codificar (Lessons #5,6,9,11,12) |
+| `code-consistency` | Qualidade | Padrões consistentes (Lessons #3,4,7,10,15,16) |
+| `error-handling` | Erros | Tratamento de erros (Lessons #8,13) |
+| `security` | Segurança | Proteção contra vulnerabilidades (Lessons #1,14) |
+| `sped-contract` | Fiscal | Regras específicas para SPED (E7.13) |
+
+### 4.1 Mapeamento Lessons Learned → Contratos
+
+As 16 Lessons Learned (registradas em `docs/mcp/LESSONS_LEARNED.md`) foram consolidadas em 22 regras ENFORCE distribuídas em 5 novos contratos:
+
+| Lesson | Descrição | Contrato | Regra |
+|--------|-----------|----------|-------|
+| #1 | Path Traversal Protection | security | ENFORCE-055 |
+| #3 | Type Safety - Forbidden any | code-consistency | ENFORCE-040 |
+| #4 | Array Safety | code-consistency | ENFORCE-041 |
+| #5 | Property Access Safety | verify-before-code | ENFORCE-030 |
+| #6 | Schema Validation | verify-before-code | ENFORCE-031 |
+| #7 | MIME Types Consistency | code-consistency | ENFORCE-042 |
+| #8 | Error Handling | error-handling | ENFORCE-050 |
+| #9 | Type Guards | verify-before-code | ENFORCE-032 |
+| #10 | Promise Handling | code-consistency | ENFORCE-043 |
+| #11 | Schema Consistency | verify-before-code | ENFORCE-033 |
+| #12 | Type Assertions | verify-before-code | ENFORCE-034 |
+| #13 | Re-throw Unknown | error-handling | ENFORCE-051 |
+| #14 | Regex Specificity | security | ENFORCE-056 |
+| #15 | Array Element Validation | code-consistency | ENFORCE-044 |
+| #16 | String Non-Empty | code-consistency | ENFORCE-045 |
+
+**Origem:**
+- 15 regras das Lessons Learned #1-16 (exceto #2: específica demais - tsc stdout vs stderr)
+- 7 regras dos bugs E7.13 (SPED, encoding, source_type, etc)
+- **Total: 22 regras ENFORCE** (ENFORCE-030 a ENFORCE-067)
 
 ---
 

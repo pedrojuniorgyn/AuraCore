@@ -1,0 +1,119 @@
+{
+  "id": "sped-contract",
+  "title": "Contrato SPED - Padrões Obrigatórios",
+  "version": "1.0.0",
+  "created": "2026-01-06",
+  "category": "fiscal",
+  "description": "Regras específicas para geração de arquivos SPED (Sistema Público de Escrituração Digital) derivadas dos bugs críticos E7.13. Estes arquivos são fiscais e devem seguir especificação EXATA da Receita Federal.",
+  "severity": "CRITICAL",
+  "applies_to": [
+    "EFD-ICMS/IPI (SPED Fiscal)",
+    "ECD (Escrituração Contábil Digital)",
+    "EFD-Contribuições (PIS/COFINS)"
+  ],
+  "rules": [
+    "ENFORCE-060: Encoding DEVE ser ISO-8859-1 via toBuffer(), NUNCA conversão manual",
+    "ENFORCE-061: Formato DEVE ser pipe-delimited: |REG|CAMPO1|CAMPO2|",
+    "ENFORCE-062: Quebra de linha DEVE ser CRLF (\\r\\n)",
+    "ENFORCE-063: Datas DEVEM estar no formato DDMMAAAA",
+    "ENFORCE-064: Valores numéricos SEM separador de milhar, COM vírgula decimal",
+    "ENFORCE-065: Bloco 9 DEVE totalizar corretamente todos os registros",
+    "ENFORCE-066: SpedDocument.create() DEVE receber { documentType, blocks }",
+    "ENFORCE-067: SEMPRE verificar TenantContext para usar defaultBranchId (não branchId)"
+  ],
+  "encoding": {
+    "rule": "ENFORCE-060",
+    "correct_method": "toBuffer()",
+    "forbidden_patterns": [
+      "TextEncoder().encode()",
+      "& 0xFF",
+      "charCodeAt()",
+      "String.fromCharCode()",
+      "Conversão manual byte-a-byte"
+    ],
+    "reason": "Conversão manual UTF-8 → ISO-8859-1 não trata multi-byte corretamente. Caracteres acentuados (2-3 bytes UTF-8) não convertem para single-byte ISO-8859-1 com & 0xFF.",
+    "example_bad": "const utf8 = encoder.encode(text); const iso = new Uint8Array(utf8.length); for (let i = 0; i < utf8.length; i++) { iso[i] = utf8[i] & 0xFF; }",
+    "example_good": "const buffer = spedDocument.toBuffer(); // Usa Buffer.from(content, 'latin1')",
+    "why_bad": "UTF-8 multi-byte: 'ã' = [0xC3, 0xA3]. Aplicar & 0xFF: [0xC3, 0xA3]. Mas ISO-8859-1 'ã' = [0xE3]. Resultado: texto corrompido."
+  },
+  "format": {
+    "rule": "ENFORCE-061",
+    "pipe_delimited": "|REG|CAMPO1|CAMPO2|CAMPO3|",
+    "start_pipe": "Obrigatório: linha inicia com |",
+    "end_pipe": "Obrigatório: linha termina com |",
+    "separator": "Apenas | como separador",
+    "example": "|0000|009|AURA CORE TMS|01012024|31122024|0||"
+  },
+  "line_break": {
+    "rule": "ENFORCE-062",
+    "correct": "\\r\\n (CRLF - Windows style)",
+    "incorrect": "\\n (LF - Unix style)",
+    "reason": "Receita Federal exige CRLF conforme especificação",
+    "code": "lines.join('\\r\\n')"
+  },
+  "date_format": {
+    "rule": "ENFORCE-063",
+    "format": "DDMMAAAA",
+    "example": "31122024 (31 de dezembro de 2024)",
+    "code": "const day = String(date.getDate()).padStart(2, '0');\nconst month = String(date.getMonth() + 1).padStart(2, '0');\nconst year = date.getFullYear();\nreturn `${day}${month}${year}`;"
+  },
+  "number_format": {
+    "rule": "ENFORCE-064",
+    "no_thousand_separator": "1000000.00 → 1000000,00 (não 1.000.000,00)",
+    "comma_decimal": "1234.56 → 1234,56",
+    "code": "value.toFixed(2).replace('.', ',')"
+  },
+  "block9_totalization": {
+    "rule": "ENFORCE-065",
+    "description": "Bloco 9 (Encerramento) deve contar TODOS os registros de TODOS os blocos anteriores",
+    "formula": "total = Σ(registros bloco 0) + Σ(registros bloco C) + ... + (registros bloco 9)",
+    "registers": "9900: Totalizador por tipo de registro (ex: 9900|0000|1 = 1 registro tipo 0000)",
+    "final": "9999: Total GERAL de todos os registros do arquivo"
+  },
+  "document_creation": {
+    "rule": "ENFORCE-066",
+    "correct": "SpedDocument.create({ documentType: 'ECD', blocks: allBlocks })",
+    "wrong": "SpedDocument.create(allBlocks) // Array direto",
+    "valid_document_types": [
+      "EFD_ICMS_IPI",
+      "ECD",
+      "EFD_CONTRIBUTIONS"
+    ],
+    "signature": "static create(props: SpedDocumentProps): Result<SpedDocument, string>",
+    "interface": "interface SpedDocumentProps { documentType: SpedDocumentType; blocks: SpedBlock[]; }"
+  },
+  "context_usage": {
+    "rule": "ENFORCE-067",
+    "correct": "ctx.defaultBranchId",
+    "wrong": "ctx.branchId // NÃO EXISTE",
+    "verification": "grep -n 'defaultBranchId\\|branchId' src/lib/auth/context.ts",
+    "interface": "interface TenantContext { organizationId: number; defaultBranchId: number; /* ... */ }"
+  },
+  "examples_complete": {
+    "generate_sped_route": {
+      "description": "Padrão completo para rota de geração SPED",
+      "code": "export async function POST(req: Request) {\n  try {\n    const session = await auth();\n    if (!session) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });\n    \n    const ctx = await getTenantContext();\n    if (!ctx) return NextResponse.json({ error: 'Contexto indisponível' }, { status: 401 });\n    \n    const body = await req.json();\n    const { year } = body;\n    \n    // Criar Use Case\n    const useCase = createGenerateSpedEcdUseCase();\n    \n    // Executar\n    const result = await useCase.execute({\n      organizationId: ctx.organizationId,\n      branchId: ctx.defaultBranchId, // ✅ Correto\n      referenceYear: parseInt(year, 10),\n      bookType: 'G',\n    });\n    \n    if (Result.isFail(result)) {\n      return NextResponse.json({ error: result.error.message }, { status: 400 });\n    }\n    \n    // Encoding correto via toBuffer()\n    const buffer = result.value.toBuffer(); // ✅ ISO-8859-1 correto\n    \n    return new NextResponse(buffer, {\n      status: 200,\n      headers: {\n        'Content-Type': 'text/plain; charset=ISO-8859-1',\n        'Content-Disposition': `attachment; filename=\"ECD_${year}.txt\"`,\n      },\n    });\n  } catch (error: unknown) {\n    const msg = error instanceof Error ? error.message : String(error);\n    return NextResponse.json({ error: msg }, { status: 500 });\n  }\n}"
+    },
+    "sped_generator_service": {
+      "description": "Domain Service que gera documento SPED",
+      "code": "export class SpedEcdGenerator {\n  generate(input: SpedEcdInput, data: SpedEcdData): Result<SpedDocument, SpedError> {\n    try {\n      const blocks: SpedBlock[] = [];\n      \n      // Gerar blocos\n      const block0 = this.generateBlock0(input, data.company);\n      if (Result.isFail(block0)) return block0;\n      blocks.push(block0.value);\n      \n      // ... outros blocos ...\n      \n      const block9 = this.generateBlock9(blocks); // Totaliza todos\n      if (Result.isFail(block9)) return block9;\n      blocks.push(block9.value);\n      \n      // Criar documento\n      return SpedDocument.create({\n        documentType: 'ECD', // ✅ Correto\n        blocks: blocks,\n      });\n    } catch (error: unknown) {\n      return Result.fail(new SpedError(`Erro: ${String(error)}`));\n    }\n  }\n}"
+    }
+  },
+  "validation_checklist": [
+    "Encoding: Usar toBuffer(), NUNCA conversão manual",
+    "Formato: Pipe-delimited correto (|REG|CAMPO1|...| )",
+    "Datas: DDMMAAAA",
+    "Números: Sem milhar, vírgula decimal",
+    "Bloco 9: Totalização correta",
+    "SpedDocument.create: Passar objeto com documentType",
+    "Context: Usar defaultBranchId, não branchId",
+    "Quebra de linha: CRLF (\\r\\n)"
+  ],
+  "references": {
+    "sped_fiscal": "http://sped.rfb.gov.br/pasta/show/1573",
+    "sped_ecd": "http://sped.rfb.gov.br/pasta/show/1644",
+    "sped_contributions": "http://sped.rfb.gov.br/pasta/show/1644",
+    "leiaute_spec": "Guia Prático ECD versão 10.0.0"
+  }
+}
+

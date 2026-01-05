@@ -1,0 +1,78 @@
+{
+  "id": "code-consistency",
+  "title": "Padrões de Código Consistentes",
+  "version": "1.0.0",
+  "created": "2026-01-06",
+  "category": "code-quality",
+  "description": "Regras derivadas das Lessons Learned #3, #4, #7, #10, #15, #16. Garante consistência e qualidade em todo o código.",
+  "severity": "CRITICAL",
+  "source_lessons": [3, 4, 7, 10, 15, 16],
+  "rules": [
+    "ENFORCE-040: NUNCA any - SEMPRE unknown ou tipo explícito (Lesson #3)",
+    "ENFORCE-041: Array.isArray() ANTES de usar métodos de array (Lesson #4)",
+    "ENFORCE-042: Manter consistência entre declaração e retorno de MIME types (Lesson #7)",
+    "ENFORCE-043: Usar Promise.allSettled() para graceful degradation (Lesson #10)",
+    "ENFORCE-044: Validar TIPO dos elementos APÓS confirmar que é array (Lesson #15)",
+    "ENFORCE-045: Validar que string não é vazia ALÉM de verificar tipo (Lesson #16)"
+  ],
+  "examples": {
+    "ENFORCE-040": {
+      "lesson": "#3 Type Safety - Forbidden any",
+      "bad": "catch (error: any) { console.log(error.message); }",
+      "good": "catch (error: unknown) { const msg = error instanceof Error ? error.message : String(error); }",
+      "reason": "any desabilita type checking e permite acesso inseguro"
+    },
+    "ENFORCE-041": {
+      "lesson": "#4 Array Safety",
+      "bad": "items.map(x => x.name); // Pode não ser array",
+      "good": "if (!Array.isArray(items)) throw new Error('items must be array'); items.map(x => x.name);",
+      "reason": "Métodos de array em não-array causam TypeError"
+    },
+    "ENFORCE-042": {
+      "lesson": "#7 MIME Types Consistency",
+      "bad": "// Tool declara: application/json  // Código retorna: text/plain",
+      "good": "// Tool e código SEMPRE retornam o mesmo mimeType",
+      "reason": "Inconsistência causa problemas no consumidor da API"
+    },
+    "ENFORCE-043": {
+      "lesson": "#10 Promise Handling",
+      "bad": "const results = await Promise.all(promises); // Falha total com 1 erro",
+      "good": "const results = await Promise.allSettled(promises); results.forEach(r => { if (r.status === 'fulfilled') { /* use r.value */ } else { /* handle r.reason */ } });",
+      "reason": "Promise.all falha totalmente se 1 promise rejeitar"
+    },
+    "ENFORCE-044": {
+      "lesson": "#15 Array Element Validation",
+      "bad": "if (!Array.isArray(ids)) throw error; // Incompleto - não valida elementos",
+      "good": "if (!Array.isArray(ids)) throw error; const invalid = ids.filter(id => typeof id !== 'string'); if (invalid.length > 0) throw new Error(`Invalid IDs: ${invalid}`);",
+      "reason": "Array pode conter elementos de tipos incorretos"
+    },
+    "ENFORCE-045": {
+      "lesson": "#16 String Validation",
+      "bad": "if (typeof value !== 'string') throw error; // Aceita string vazia",
+      "good": "if (typeof value !== 'string') throw error; if (value.trim() === '') throw new Error('String cannot be empty');",
+      "reason": "Strings vazias causam bugs sutis em lógica de negócio"
+    }
+  },
+  "checklist": [
+    "Zero uso de any (usar unknown com type guards)",
+    "Array.isArray() antes de métodos array (.map, .filter, etc)",
+    "Validar elementos do array após confirmar tipo do array",
+    "Strings validadas por tipo E conteúdo não vazio",
+    "Promise.allSettled para operações paralelas que não devem falhar totalmente",
+    "MIME types consistentes entre declaração de tool e código de retorno"
+  ],
+  "patterns": {
+    "type_guard_error": "if (error instanceof Error) { return error.message; } return String(error);",
+    "array_validation": "if (!Array.isArray(data)) throw new Error('Expected array'); const valid = data.filter(x => typeof x === 'string');",
+    "string_validation": "if (typeof str !== 'string' || str.trim() === '') throw new Error('Invalid string');",
+    "promise_settling": "const results = await Promise.allSettled(promises); const fulfilled = results.filter(r => r.status === 'fulfilled').map(r => r.value);"
+  },
+  "anti_patterns": [
+    "Usar any para 'resolver rápido'",
+    "Chamar .map/.filter sem verificar Array.isArray()",
+    "Declarar application/json mas retornar text/plain",
+    "Promise.all quando deveria usar Promise.allSettled",
+    "Validar tipo mas não conteúdo (ex: string vazia)"
+  ]
+}
+

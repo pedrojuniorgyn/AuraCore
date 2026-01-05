@@ -1,0 +1,107 @@
+{
+  "id": "verify-before-code",
+  "title": "Verificação Obrigatória Antes de Codificar",
+  "version": "1.0.0",
+  "created": "2026-01-06",
+  "category": "development-process",
+  "description": "Regras derivadas das Lessons Learned #5, #6, #9, #11, #12 e bugs E7.13. NUNCA assuma que propriedades, métodos ou valores existem - SEMPRE verifique antes.",
+  "severity": "CRITICAL",
+  "source_lessons": [5, 6, 9, 11, 12],
+  "rules": [
+    "ENFORCE-030: Validar existência de propriedade ANTES de acessar (Lesson #5)",
+    "ENFORCE-031: NUNCA assumir schema - sempre verificar estrutura real (Lesson #6)",
+    "ENFORCE-032: Validar tipo ANTES de fazer cast/assertion (Lesson #9)",
+    "ENFORCE-033: Verificar JSON/dados reais ANTES de criar interface (Lesson #11)",
+    "ENFORCE-034: NUNCA usar 'as Type' sem validação prévia (Lesson #12)",
+    "ENFORCE-035: Verificar interface TenantContext antes de usar propriedades (E7.13)",
+    "ENFORCE-036: Verificar métodos existentes na classe antes de chamar (E7.13)",
+    "ENFORCE-037: Verificar valores válidos de enum no schema.ts (E7.13)",
+    "ENFORCE-038: Verificar assinatura de método (parâmetros) antes de chamar (E7.13)",
+    "ENFORCE-039: NUNCA implementar encoding/conversão manualmente se método existe (E7.13)"
+  ],
+  "examples": {
+    "ENFORCE-030": {
+      "lesson": "#5 Property Access Safety",
+      "bad": "const value = obj.prop;",
+      "good": "if (obj && typeof obj.prop === 'string') { const value = obj.prop; }",
+      "reason": "Propriedades podem não existir no objeto real"
+    },
+    "ENFORCE-031": {
+      "lesson": "#6 Schema Validation",
+      "bad": "const rules = data.rules; // Assumiu que existe",
+      "good": "if (!data || !Array.isArray(data.rules)) throw new Error('Invalid schema');",
+      "reason": "Schema JSON pode ter estrutura diferente da assumida"
+    },
+    "ENFORCE-032": {
+      "lesson": "#9 Type Guards",
+      "bad": "const result = data as MyType;",
+      "good": "if (!data || typeof data !== 'object') throw error; // Agora é seguro",
+      "reason": "Type assertions sem validação causam runtime errors"
+    },
+    "ENFORCE-033": {
+      "lesson": "#11 Schema Consistency",
+      "bad": "interface Contract { name: string } // Assumiu 'name'",
+      "good": "// 1. cat arquivo.json  2. Verificar campos  3. interface Contract { title: string }",
+      "reason": "Arquivos JSON reais podem ter propriedades diferentes"
+    },
+    "ENFORCE-034": {
+      "lesson": "#12 Type Assertions",
+      "bad": "const rules = args.rules as string[];",
+      "good": "if (!Array.isArray(args.rules)) throw error; const rules = args.rules.filter(...);",
+      "reason": "Type cast sem validação permite dados inválidos passarem"
+    },
+    "ENFORCE-035": {
+      "lesson": "E7.13 Bug ctx.branchId",
+      "bad": "ctx.branchId // Não existe em TenantContext",
+      "good": "ctx.defaultBranchId // Propriedade real",
+      "reason": "ANTES: grep -n 'branchId\\|defaultBranchId' src/lib/auth/context.ts"
+    },
+    "ENFORCE-036": {
+      "lesson": "E7.13 Bug toText()",
+      "bad": "document.toText() // Método não existe",
+      "good": "document.toFileContent() // Método real",
+      "reason": "ANTES: grep -n 'toText\\|toFileContent' src/modules/.../SpedDocument.ts"
+    },
+    "ENFORCE-037": {
+      "lesson": "E7.13 Bug source_type",
+      "bad": "source_type = 'TAX_DEBIT' // Não existe no schema",
+      "good": "// grep -A20 'source_type' schema.ts → usar FISCAL_DOC, PAYMENT, RECEIPT, etc",
+      "reason": "Valores de enum devem existir no schema.ts"
+    },
+    "ENFORCE-038": {
+      "lesson": "E7.13 Bug SpedDocument.create",
+      "bad": "SpedDocument.create(blocks) // Array direto",
+      "good": "SpedDocument.create({ documentType: 'ECD', blocks }) // Objeto correto",
+      "reason": "ANTES: grep -A5 'static create' SpedDocument.ts → verificar assinatura"
+    },
+    "ENFORCE-039": {
+      "lesson": "E7.13 Bug encoding manual",
+      "bad": "utf8Bytes.map(b => b & 0xFF) // Conversão manual",
+      "good": "document.toBuffer() // Método existente que já faz encoding",
+      "reason": "Métodos existentes já implementam conversões corretamente"
+    }
+  },
+  "verification_commands": {
+    "find_interface": "grep -rn 'interface {Nome}' src/",
+    "find_property": "grep -n '{prop}:' src/lib/auth/context.ts",
+    "find_method": "grep -n '{metodo}(' src/modules/",
+    "find_enum": "grep -A20 '{campo}' src/lib/db/schema.ts",
+    "find_signature": "grep -A5 '{metodo}(' {arquivo}.ts"
+  },
+  "mandatory_checks": [
+    "Antes de acessar obj.prop → verificar se obj existe e tem prop",
+    "Antes de usar enums → grep no schema.ts para valores válidos",
+    "Antes de chamar método → grep na classe para verificar existência",
+    "Antes de criar interface → cat no arquivo JSON/resposta real",
+    "Antes de type cast → validar tipo com type guard",
+    "Antes de implementar conversão → verificar se método já existe"
+  ],
+  "anti_patterns": [
+    "Assumir que propriedade existe sem verificar",
+    "Usar valores de enum sem consultar schema",
+    "Chamar métodos sem verificar assinatura",
+    "Fazer type cast sem validação prévia",
+    "Implementar conversão quando método já existe"
+  ]
+}
+
