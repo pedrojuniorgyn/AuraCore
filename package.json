@@ -12,7 +12,7 @@
     "test": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run --dir tests/integration",
-    "test:e2e": "vitest run --dir tests/e2e",
+    "test:e2e": "vitest run --dir tests/e2e --fileParallelism=false",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run tests/unit --coverage",
     "test:watch": "vitest --watch",

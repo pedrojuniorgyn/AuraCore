@@ -1,21 +1,23 @@
-import { describe, it, expect } from 'vitest';
-import { testClient } from '../../../helpers/test-client';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { setupTestServer, teardownTestServer, testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
 
 /**
  * E2E Test: Fluxo completo de cálculo IBS/CBS
  * 
- * E7.4.1 Semana 10 - Integração Final + E2E Tests
+ * E7.11 Semana 2: Habilitado com testClient real (supertest + Next.js)
  * 
- * SKIP: testClient é um stub que retorna data: {}
- * TODO E7.11: Implementar testClient real com supertest
- * 
- * Para executar:
- * 1. Implementar testClient com supertest/msw
- * 2. Garantir que Next.js API routes estão acessíveis em testes
- * 3. Remover .skip
+ * Para executar: npm run test:e2e
  */
-describe.skip('E2E: Calculate IBS/CBS', () => {
+describe('E2E: Calculate IBS/CBS', () => {
+  beforeAll(async () => {
+    await setupTestServer();
+  });
+
+  afterAll(async () => {
+    await teardownTestServer();
+  });
+
   const headers = {
     'x-organization-id': '1',
     'x-branch-id': '1',

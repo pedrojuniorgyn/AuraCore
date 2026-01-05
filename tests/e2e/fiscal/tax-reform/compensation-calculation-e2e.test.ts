@@ -1,13 +1,21 @@
-import { describe, it, expect } from 'vitest';
-import { testClient } from '../../../helpers/test-client';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { setupTestServer, teardownTestServer, testClient } from '../../../helpers/test-client';
 import crypto from 'crypto';
 
 /**
  * E2E Test: Fluxo de cálculo de compensação tributária
  * 
- * SKIP: testClient stub - TODO E7.11: Implementar supertest
+ * E7.11 Semana 2: Habilitado com testClient real (supertest + Next.js)
  */
-describe.skip('E2E: Compensation Calculation', () => {
+describe('E2E: Compensation Calculation', () => {
+  beforeAll(async () => {
+    await setupTestServer();
+  });
+
+  afterAll(async () => {
+    await teardownTestServer();
+  });
+
   const headers = {
     'x-organization-id': '1',
     'x-branch-id': '1',

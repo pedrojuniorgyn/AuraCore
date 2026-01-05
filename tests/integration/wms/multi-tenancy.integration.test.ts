@@ -5,7 +5,7 @@
  * Garante que organizações/branches não acessam dados de outros tenants
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { container } from 'tsyringe';
 import { CreateLocation } from '@/modules/wms/application/use-cases/CreateLocation';
 import { RegisterStockEntry } from '@/modules/wms/application/use-cases/RegisterStockEntry';
@@ -20,10 +20,11 @@ import {
 } from '../../helpers/integration-db';
 import { Result } from '@/shared/domain';
 
-/** SKIP: Requer SQL Server de teste - TODO E7.11 */
-describe.skip('WMS Multi-Tenancy - Integration Tests', () => {
-  // NOTE: Type errors expected - these tests use Value Objects but interfaces expect primitives
-  // Will be fixed when implementing real SQL Server integration (E7.11)
+/**
+ * E7.11 Semana 2: Testes de integração habilitados
+ * Requer: npm run test:integration:docker
+ */
+describe('WMS Multi-Tenancy - Integration Tests', () => {
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {
@@ -33,6 +34,12 @@ describe.skip('WMS Multi-Tenancy - Integration Tests', () => {
   afterAll(async () => {
     await ctx.cleanup();
     await disconnectTestDb();
+  });
+
+  beforeEach(async () => {
+    await ctx.cleanup();
+    const newData = await createIntegrationContext();
+    ctx.testData = newData.testData;
   });
 
   describe('Organization Isolation', () => {

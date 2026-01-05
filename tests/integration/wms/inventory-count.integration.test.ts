@@ -17,17 +17,14 @@ import {
 import { Result } from '@/shared/domain';
 
 /**
- * SKIP: Testes de integração requerem SQL Server de teste rodando
+ * E7.11 Semana 2: Testes de integração habilitados
  * 
- * Para executar:
- * 1. docker-compose -f docker-compose.test.yml up -d
- * 2. npm test -- tests/integration/wms/inventory-count.integration.test.ts
+ * Requer SQL Server de teste rodando:
+ * npm run docker:test:up && npm run docker:test:init-db && npm run docker:test:migrate
  * 
- * TODO E7.11: Configurar CI/CD com banco de teste
+ * Ou usar: npm run test:integration:docker
  */
-describe.skip('WMS Inventory Count - Integration Tests', () => {
-  // NOTE: Type errors expected - these tests use Value Objects but interfaces expect primitives
-  // Will be fixed when implementing real SQL Server integration (E7.11)
+describe('WMS Inventory Count - Integration Tests', () => {
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {

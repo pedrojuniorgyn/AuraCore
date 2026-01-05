@@ -21,12 +21,12 @@ import {
 import { Result } from '@/shared/domain';
 
 /**
- * SKIP: Testes de integração requerem SQL Server de teste rodando
- * TODO E7.11: Configurar CI/CD com banco de teste
+ * E7.11 Semana 2: Testes de integração habilitados
+ * 
+ * Requer SQL Server de teste rodando:
+ * npm run test:integration:docker
  */
-describe.skip('WMS Locations - Integration Tests', () => {
-  // NOTE: Type errors expected - these tests use Value Objects but interfaces expect primitives
-  // Will be fixed when implementing real SQL Server integration (E7.11)
+describe('WMS Locations - Integration Tests', () => {
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {
