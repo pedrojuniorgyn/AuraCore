@@ -145,8 +145,8 @@ export interface NFeContribData {
 }
 
 export interface TaxTotalsContribData {
-  totalDebit: number;
-  totalCredit: number;
+  baseDebito: number;   // Base de cálculo para débitos (receitas de CTes)
+  baseCredito: number;  // Base de cálculo para créditos (compras em NFes)
 }
 
 // ============================================================================

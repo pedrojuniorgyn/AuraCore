@@ -342,11 +342,19 @@ export class SpedContributionsGenerator {
     if (Result.isFail(regM001)) return regM001;
     registers.push(regM001.value);
 
-    // Cálculo dos valores a pagar
-    // Proporção PIS = 1.65 / (1.65 + 7.6) = 0.179
-    // Proporção COFINS = 7.6 / (1.65 + 7.6) = 0.821
-    const pisAPagar = Math.max(taxTotals.totalDebit - taxTotals.totalCredit, 0) * 0.179;
-    const cofinsAPagar = Math.max(taxTotals.totalDebit - taxTotals.totalCredit, 0) * 0.821;
+    // Alíquotas PIS/COFINS (regime não-cumulativo)
+    const ALIQUOTA_PIS = 0.0165;    // 1.65%
+    const ALIQUOTA_COFINS = 0.076;  // 7.6%
+
+    // Calcular impostos a partir da BASE DE CÁLCULO
+    const pisDebito = taxTotals.baseDebito * ALIQUOTA_PIS;
+    const cofinsDebito = taxTotals.baseDebito * ALIQUOTA_COFINS;
+    const pisCredito = taxTotals.baseCredito * ALIQUOTA_PIS;
+    const cofinsCredito = taxTotals.baseCredito * ALIQUOTA_COFINS;
+
+    // Saldo a pagar (débito - crédito)
+    const pisAPagar = Math.max(pisDebito - pisCredito, 0);
+    const cofinsAPagar = Math.max(cofinsDebito - cofinsCredito, 0);
 
     // M200: Contribuição para o PIS/PASEP do Período
     const regM200 = SpedRegister.create(

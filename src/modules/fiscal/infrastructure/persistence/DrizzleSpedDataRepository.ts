@@ -486,18 +486,14 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
     period: SpedContributionsPeriod
   ): Promise<Result<TaxTotalsContribData, Error>> {
     try {
-      // Calcular PIS/COFINS a partir dos documentos fiscais
-      // Débitos = CTes de saída (receitas)
-      // Créditos = NFes de entrada (compras com direito a crédito)
+      // Retornar BASE DE CÁLCULO (não impostos calculados)
+      // Débitos = CTes de saída (receitas de frete)
+      // Créditos = NFes de entrada (compras - base = valor líquido - ICMS)
       
-      // Alíquotas: PIS 1.65%, COFINS 7.6%
-      const PIS_RATE = 0.0165;
-      const COFINS_RATE = 0.076;
-
-      // Buscar débitos (CTes de saída)
+      // Buscar BASE de débitos (CTes de saída)
       const debitResult = await db.execute(sql`
         SELECT 
-          ISNULL(SUM(CAST(cd.total_amount AS DECIMAL(18,2))), 0) as totalCtesAmount
+          ISNULL(SUM(CAST(cd.total_amount AS DECIMAL(18,2))), 0) as baseDebito
         FROM cargo_documents cd
         WHERE cd.organization_id = ${period.organizationId}
           AND MONTH(cd.issue_date) = ${period.referenceMonth}
@@ -506,20 +502,18 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
       `);
 
       const debitRows = (debitResult.recordset || debitResult) as unknown as {
-        totalCtesAmount: number;
+        baseDebito: number;
       }[];
 
-      const totalCtesAmount = debitRows[0]?.totalCtesAmount ?? 0;
-      const pisDebit = totalCtesAmount * PIS_RATE;
-      const cofinsDebit = totalCtesAmount * COFINS_RATE;
-      const totalDebit = pisDebit + cofinsDebit;
+      const baseDebito = debitRows[0]?.baseDebito ?? 0;
 
-      // Buscar créditos (NFes de entrada - CFOP iniciado com 1, 2 ou 3)
+      // Buscar BASE de créditos (NFes de entrada)
+      // Base PIS/COFINS = valor líquido - ICMS (conforme legislação)
       const creditResult = await db.execute(sql`
         SELECT 
           ISNULL(SUM(
             CAST(fd.net_amount AS DECIMAL(18,2)) - ISNULL(CAST(fd.icms_amount AS DECIMAL(18,2)), 0)
-          ), 0) as totalNfesBaseAmount
+          ), 0) as baseCredito
         FROM fiscal_documents fd
         WHERE fd.organization_id = ${period.organizationId}
           AND MONTH(fd.issue_date) = ${period.referenceMonth}
@@ -530,24 +524,21 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
       `);
 
       const creditRows = (creditResult.recordset || creditResult) as unknown as {
-        totalNfesBaseAmount: number;
+        baseCredito: number;
       }[];
 
-      const totalNfesBaseAmount = creditRows[0]?.totalNfesBaseAmount ?? 0;
-      const pisCredit = totalNfesBaseAmount * PIS_RATE;
-      const cofinsCredit = totalNfesBaseAmount * COFINS_RATE;
-      const totalCredit = pisCredit + cofinsCredit;
+      const baseCredito = creditRows[0]?.baseCredito ?? 0;
 
       const totals: TaxTotalsContribData = {
-        totalDebit,
-        totalCredit,
+        baseDebito,
+        baseCredito,
       };
 
       return Result.ok(totals);
     } catch (error) {
       return Result.fail(
         new Error(
-          `Erro ao buscar totais de PIS/COFINS: ${
+          `Erro ao buscar base de cálculo PIS/COFINS: ${
             error instanceof Error ? error.message : 'Unknown'
           }`
         )
