@@ -1,11 +1,13 @@
+/**
+ * Domain Errors
+ * 
+ * Exporta erros de domínio do módulo Accounting
+ */
+
 export {
-  JournalEntryNotFoundError,
-  JournalEntryAlreadyPostedError,
+  AccountingError,
+  SyntheticAccountError,
+  DocumentAlreadyPostedError,
   JournalEntryAlreadyReversedError,
   UnbalancedEntryError,
-  PeriodClosedError,
-  SyntheticAccountError,
-  EmptyJournalEntryError,
-  InvalidLineAmountError,
-} from './AccountingErrors';
-
+} from './AccountingError';

@@ -1,8 +1,17 @@
-export type { IUseCase, IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
-export { CreateJournalEntryUseCase } from './CreateJournalEntryUseCase';
-export { AddLineToEntryUseCase } from './AddLineToEntryUseCase';
-export { PostJournalEntryUseCase } from './PostJournalEntryUseCase';
-export { ReverseJournalEntryUseCase } from './ReverseJournalEntryUseCase';
-export { ListJournalEntriesUseCase } from './ListJournalEntriesUseCase';
-export { GetJournalEntryByIdUseCase } from './GetJournalEntryByIdUseCase';
+/**
+ * Application Use Cases
+ * 
+ * Exporta casos de uso do módulo Accounting
+ */
 
+export { GenerateJournalEntryUseCase } from './GenerateJournalEntryUseCase';
+export type {
+  GenerateJournalEntryInput,
+  GenerateJournalEntryOutput,
+} from './GenerateJournalEntryUseCase';
+
+export { ReverseJournalEntryUseCase } from './ReverseJournalEntryUseCase';
+export type {
+  ReverseJournalEntryInput,
+  ReverseJournalEntryOutput,
+} from './ReverseJournalEntryUseCase';
