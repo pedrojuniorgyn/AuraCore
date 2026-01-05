@@ -6,3 +6,6 @@
 
 export { SefazDocumentProcessor } from './SefazDocumentProcessor';
 export type { ProcessDocumentResult, DocumentImporter, SefazDocZip, SefazDistDFeResponse } from './SefazDocumentProcessor';
+
+export { TaxCreditCalculator, TaxCreditCalculationError } from './TaxCreditCalculator';
+export type { FiscalDocumentData } from './TaxCreditCalculator';

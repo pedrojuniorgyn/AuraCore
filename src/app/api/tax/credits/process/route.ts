@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { processPendingTaxCredits } from "@/services/tax-credit-engine";
+import { TaxCreditCalculator } from "@/modules/fiscal/domain/services/TaxCreditCalculator";
+import { createTaxCreditRepository } from "@/modules/fiscal/infrastructure/persistence/DrizzleTaxCreditRepository";
+import { createProcessTaxCreditsUseCase } from "@/modules/fiscal/application/use-cases/ProcessTaxCreditsUseCase";
+import { Result } from "@/shared/domain";
 
 /**
  * POST /api/tax/credits/process
@@ -18,14 +21,33 @@ export async function POST(req: Request) {
 
     console.log("🔍 Processando créditos fiscais pendentes...");
 
-    const result = await processPendingTaxCredits(organizationId, userId);
+    // Criar dependências
+    const calculator = new TaxCreditCalculator();
+    const repository = createTaxCreditRepository();
+    const useCase = createProcessTaxCreditsUseCase(calculator, repository);
+
+    // Executar use case
+    const result = await useCase.execute({
+      organizationId,
+      userId,
+    });
+
+    if (Result.isFail(result)) {
+      return NextResponse.json(
+        { error: result.error.message },
+        { status: 500 }
+      );
+    }
+
+    const response = result.value;
 
     return NextResponse.json({
       success: true,
-      message: `Processados ${result.processed} documentos`,
+      message: `Processados ${response.processed} documentos`,
       data: {
-        documentsProcessed: result.processed,
-        totalCreditGenerated: result.totalCredit,
+        documentsProcessed: response.processed,
+        totalCreditGenerated: response.totalCredit,
+        errors: response.errors,
       },
     });
   } catch (error: unknown) {
@@ -37,6 +59,10 @@ export async function POST(req: Request) {
     );
   }
 }
+
+
+
+
 
 
 
