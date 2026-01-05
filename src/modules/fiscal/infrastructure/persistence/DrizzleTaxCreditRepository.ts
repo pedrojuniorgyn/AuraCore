@@ -183,7 +183,28 @@ export class DrizzleTaxCreditRepository implements TaxCreditRepository {
 
       const entryId = entry.id;
 
-      // 3. Criar linhas de lançamento (D: Crédito PIS/COFINS)
+      // 3. Buscar conta de contrapartida (Custo da Mercadoria)
+      // TODO: Buscar dinamicamente do plano de contas (4.1.x.xx.xxx)
+      const costAccountResult = await db.execute(sql`
+        SELECT TOP 1 id, code, name 
+        FROM chart_of_accounts
+        WHERE organization_id = ${organizationId}
+          AND code LIKE '4.1%'
+          AND name LIKE '%Custo%Mercadoria%'
+          AND deleted_at IS NULL
+      `);
+
+      const costAccounts = (costAccountResult.recordset || costAccountResult) as unknown as ChartOfAccountsResult[];
+      const costAccount = costAccounts[0];
+
+      if (!costAccount) {
+        return Result.fail(new Error("Conta de Custo da Mercadoria não encontrada (4.1.x)"));
+      }
+
+      // 4. Criar linhas de lançamento - PARTIDAS DOBRADAS
+      // DÉBITO: PIS a Recuperar (Ativo ↑)
+      // DÉBITO: COFINS a Recuperar (Ativo ↑)
+      // CRÉDITO: Custo da Mercadoria (Resultado ↓)
       await db.execute(sql`
         INSERT INTO journal_entry_lines (
           journal_entry_id,
@@ -195,11 +216,26 @@ export class DrizzleTaxCreditRepository implements TaxCreditRepository {
           description
         )
         VALUES 
-        (${entryId}, ${organizationId}, 1, ${pisAccount.id}, ${credit.pisCredit.amount}, 0, 'Crédito PIS'),
-        (${entryId}, ${organizationId}, 2, ${cofinsAccount.id}, ${credit.cofinsCredit.amount}, 0, 'Crédito COFINS')
+        (${entryId}, ${organizationId}, 1, ${pisAccount.id}, ${credit.pisCredit.amount}, 0, 'Crédito PIS a Recuperar'),
+        (${entryId}, ${organizationId}, 2, ${cofinsAccount.id}, ${credit.cofinsCredit.amount}, 0, 'Crédito COFINS a Recuperar'),
+        (${entryId}, ${organizationId}, 3, ${costAccount.id}, 0, ${credit.totalCredit.amount}, 'Redução Custo - Recuperação PIS/COFINS')
       `);
 
-      console.log(`✅ Crédito fiscal registrado: R$ ${credit.totalCredit.amount.toFixed(2)}`);
+      // 5. Validar balanceamento (Débitos = Créditos)
+      const totalDebits = credit.pisCredit.amount + credit.cofinsCredit.amount;
+      const totalCredits = credit.totalCredit.amount;
+
+      if (Math.abs(totalDebits - totalCredits) > 0.01) {
+        return Result.fail(
+          new Error(`Lançamento desbalanceado: Débitos=${totalDebits.toFixed(2)}, Créditos=${totalCredits.toFixed(2)}`)
+        );
+      }
+
+      console.log(`✅ Crédito fiscal registrado (balanceado): R$ ${credit.totalCredit.amount.toFixed(2)}`);
+      console.log(`   D - PIS a Recuperar: R$ ${credit.pisCredit.amount.toFixed(2)}`);
+      console.log(`   D - COFINS a Recuperar: R$ ${credit.cofinsCredit.amount.toFixed(2)}`);
+      console.log(`   C - ${costAccount.name}: R$ ${totalCredits.toFixed(2)}`);
+      
       return Result.ok(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
