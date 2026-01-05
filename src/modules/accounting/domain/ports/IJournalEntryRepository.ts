@@ -116,10 +116,11 @@ export interface IJournalEntryRepository {
   ): Promise<Result<void, Error>>;
 
   /**
-   * Busca lançamento contábil por ID
+   * Busca lançamento contábil por ID (com validação de organizationId)
    */
   getJournalEntryById(
-    journalEntryId: bigint
+    journalEntryId: bigint,
+    organizationId: bigint
   ): Promise<Result<JournalEntryData | null, Error>>;
 
   /**

@@ -14,6 +14,7 @@ import { AccountingError } from "@/modules/accounting/domain/errors";
 
 export interface ReverseJournalEntryInput {
   journalEntryId: bigint;
+  organizationId: bigint;
   userId: string;
 }
 
@@ -41,8 +42,11 @@ export class ReverseJournalEntryUseCase {
     input: ReverseJournalEntryInput
   ): Promise<Result<ReverseJournalEntryOutput, Error>> {
     try {
-      // 1. Buscar lançamento contábil
-      const entryResult = await this.repository.getJournalEntryById(input.journalEntryId);
+      // 1. Buscar lançamento contábil (com validação de organizationId)
+      const entryResult = await this.repository.getJournalEntryById(
+        input.journalEntryId,
+        input.organizationId
+      );
 
       if (Result.isFail(entryResult)) {
         return Result.fail(entryResult.error);
@@ -51,7 +55,7 @@ export class ReverseJournalEntryUseCase {
       const entry = entryResult.value;
 
       if (!entry) {
-        return Result.fail(new Error("Lançamento contábil não encontrado"));
+        return Result.fail(new Error("Lançamento contábil não encontrado ou acesso negado"));
       }
 
       // 2. Validar se pode ser revertido (Domain Service)

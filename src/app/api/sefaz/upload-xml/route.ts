@@ -3,6 +3,17 @@ import { getTenantContext } from "@/lib/auth/context";
 import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
 import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
 import { Result } from "@/shared/domain";
+import { gzipSync } from "zlib";
+
+interface FileProcessResult {
+  fileName: string;
+  type: "NFE" | "CTE" | "UNKNOWN";
+  success: boolean;
+  imported?: number;
+  duplicates?: number;
+  errors?: number;
+  error?: string;
+}
 
 /**
  * 📤 UPLOAD MANUAL DE XMLs DE NFe/CTe
@@ -53,7 +64,7 @@ export async function POST(request: NextRequest) {
       duplicates: 0,
       errors: 0,
       errorMessages: [] as string[],
-      fileResults: [] as any[],
+      fileResults: [] as FileProcessResult[],
     };
 
     // Processa cada arquivo
@@ -81,10 +92,22 @@ export async function POST(request: NextRequest) {
         // Simula resposta SEFAZ para reusar o processor
         const soapEnvelope = wrapInSoapEnvelope(content, isNFe ? "procNFe" : "procCTe");
 
+        // Garantir que os valores são números válidos
+        const orgId = typeof ctx.organizationId === 'number' 
+          ? ctx.organizationId 
+          : Number(ctx.organizationId);
+        const branchIdNum = typeof ctx.defaultBranchId === 'number' 
+          ? ctx.defaultBranchId 
+          : Number(ctx.defaultBranchId);
+
+        if (isNaN(orgId) || isNaN(branchIdNum)) {
+          throw new Error('IDs de organização/filial inválidos');
+        }
+
         // Cria adapter de importação
         const importAdapter = createFiscalDocumentImportAdapter(
-          ctx.organizationId,
-          ctx.defaultBranchId!, // Já validado acima
+          orgId,
+          branchIdNum,
           ctx.userId
         );
 
@@ -126,16 +149,17 @@ export async function POST(request: NextRequest) {
 
         console.log(`✅ ${fileName}: ${processResult.imported} importado(s)`);
 
-      } catch (fileError: any) {
-        console.error(`❌ Erro ao processar ${fileName}:`, fileError.message);
+      } catch (fileError: unknown) {
+        const errorMessage = fileError instanceof Error ? fileError.message : 'Erro desconhecido';
+        console.error(`❌ Erro ao processar ${fileName}:`, errorMessage);
         results.errors++;
-        results.errorMessages.push(`${fileName}: ${fileError.message}`);
+        results.errorMessages.push(`${fileName}: ${errorMessage}`);
         
         results.fileResults.push({
           fileName,
           type: "UNKNOWN",
           success: false,
-          error: fileError.message,
+          error: errorMessage,
         });
       }
     }
@@ -167,8 +191,7 @@ export async function POST(request: NextRequest) {
  */
 function wrapInSoapEnvelope(xmlContent: string, schema: "procNFe" | "procCTe"): string {
   // Compacta e codifica em Base64 (simula docZip da SEFAZ)
-  const zlib = require("zlib");
-  const compressed = zlib.gzipSync(Buffer.from(xmlContent, "utf-8"));
+  const compressed = gzipSync(Buffer.from(xmlContent, "utf-8"));
   const base64Content = compressed.toString("base64");
 
   // NSU fictício para upload manual

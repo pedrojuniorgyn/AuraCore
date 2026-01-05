@@ -360,7 +360,8 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
   }
 
   async getJournalEntryById(
-    journalEntryId: bigint
+    journalEntryId: bigint,
+    organizationId: bigint
   ): Promise<Result<JournalEntryData | null, Error>> {
     try {
       const result = await db.execute(sql`
@@ -378,6 +379,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
           created_by
         FROM journal_entries
         WHERE id = ${journalEntryId}
+          AND organization_id = ${organizationId}
       `);
 
       const rows = (result.recordset || result) as unknown as JournalEntryQueryResult[];

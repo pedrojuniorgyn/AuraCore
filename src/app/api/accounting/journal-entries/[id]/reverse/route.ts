@@ -20,13 +20,14 @@ export async function POST(
   try {
     const session = await auth();
     
-    if (!session?.user?.id) {
+    if (!session?.user?.id || !session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
     const resolvedParams = await params;
     const journalEntryId = BigInt(resolvedParams.id);
     const userId = session.user.id;
+    const organizationId = BigInt(session.user.organizationId);
 
     // DDD: Instanciar Use Case com dependências
     const repository = createJournalEntryRepository();
@@ -36,6 +37,7 @@ export async function POST(
     // Executar Use Case
     const result = await useCase.execute({
       journalEntryId,
+      organizationId,
       userId,
     });
 
@@ -49,7 +51,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: "Lançamento contábil revertido com sucesso",
-      journalEntryId: Number(result.value.journalEntryId),
+      journalEntryId: result.value.journalEntryId.toString(), // BigInt → string para preservar precisão
       status: result.value.status,
     });
   } catch (error: unknown) {

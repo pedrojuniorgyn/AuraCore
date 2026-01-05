@@ -51,7 +51,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: "Lançamento contábil gerado com sucesso",
-      journalEntryId: Number(result.value.journalEntryId),
+      journalEntryId: result.value.journalEntryId.toString(), // BigInt → string para preservar precisão
       totalDebit: result.value.totalDebit,
       totalCredit: result.value.totalCredit,
       lines: result.value.linesCount,

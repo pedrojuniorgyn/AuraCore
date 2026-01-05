@@ -32,10 +32,25 @@ export async function POST(request: NextRequest) {
     console.log(`📦 Processando XML salvo para branch ${finalBranchId}...`);
     console.log(`📄 Tamanho do XML: ${xmlContent.length} bytes`);
 
+    // Garantir que os valores são números válidos
+    const orgId = typeof ctx.organizationId === 'number' 
+      ? ctx.organizationId 
+      : Number(ctx.organizationId);
+    const branchIdNum = typeof finalBranchId === 'number' 
+      ? finalBranchId 
+      : Number(finalBranchId);
+
+    if (isNaN(orgId) || isNaN(branchIdNum)) {
+      return NextResponse.json(
+        { success: false, error: 'IDs de organização/filial inválidos' },
+        { status: 400 }
+      );
+    }
+
     // Cria adapter de importação
     const importAdapter = createFiscalDocumentImportAdapter(
-      ctx.organizationId,
-      finalBranchId,
+      orgId,
+      branchIdNum,
       ctx.userId
     );
 

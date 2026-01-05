@@ -60,10 +60,25 @@ export async function POST(request: NextRequest) {
       console.log("🤖 Iniciando processamento automático...");
 
       try {
+        // Garantir que os valores são números válidos
+        const orgId = typeof ctx.organizationId === 'number' 
+          ? ctx.organizationId 
+          : Number(ctx.organizationId);
+        const branchIdNum = typeof branchId === 'number' 
+          ? branchId 
+          : Number(branchId);
+
+        if (isNaN(orgId) || isNaN(branchIdNum)) {
+          return NextResponse.json(
+            { success: false, error: 'IDs de organização/filial inválidos' },
+            { status: 400 }
+          );
+        }
+
         // Cria adapter de importação
         const importAdapter = createFiscalDocumentImportAdapter(
-          ctx.organizationId,
-          branchId,
+          orgId,
+          branchIdNum,
           ctx.userId
         );
 
