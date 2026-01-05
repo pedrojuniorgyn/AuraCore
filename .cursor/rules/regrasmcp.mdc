@@ -1,143 +1,273 @@
-# AURA CORE - REGRAS OBRIGATORIAS
+---
+description: Regras MCP obrigatórias do AuraCore - Consultar contratos e verificar com grep ANTES de codificar. Zero bugs por falta de verificação.
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: true
+---
 
-## MCP OBRIGATORIO - EXECUTAR ANTES DE QUALQUER CODIGO
+# AURA CORE - REGRAS MCP OBRIGATÓRIAS
 
-ANTES de implementar QUALQUER codigo, o agente DEVE:
+## 🚨 REGRA FUNDAMENTAL (INVIOLÁVEL)
 
-1. Consultar contratos MCP:
-   - get_contract("mcp-enforcement-rules")
-   - get_contract("infrastructure-layer")
-   - get_contract("known-bugs-registry")
+ANTES de implementar QUALQUER código, o agente DEVE:
 
-2. Confirmar leitura respondendo:
-   "Contratos MCP consultados. Iniciando implementacao."
+### 1. Consultar Contratos MCP
+```
+Tool: get_contract
+Args: { "contract_id": "verify-before-code" }
 
-3. Se nao conseguir consultar, informar o usuario.
+Tool: get_contract
+Args: { "contract_id": "code-consistency" }
 
-NUNCA pular esta etapa.
+Tool: get_contract
+Args: { "contract_id": "type-safety" }
+
+Tool: get_contract
+Args: { "contract_id": "mcp-enforcement-rules" }
+
+Tool: get_contract
+Args: { "contract_id": "infrastructure-layer" }
+
+Tool: get_contract
+Args: { "contract_id": "known-bugs-registry" }
+```
+
+### 2. Buscar Padrões Relacionados
+```
+Tool: search_patterns
+Args: { "query": "[tema da tarefa]" }
+```
+
+### 3. Verificar com GREP Antes de Usar (OBRIGATÓRIO)
+```bash
+# Interface
+grep -rn "interface NomeInterface" src/
+
+# Enum
+grep -A10 "NomeEnum" src/lib/db/schema.ts
+
+# Método
+grep -n "nomeMetodo(" src/modules/
+
+# Propriedade de contexto
+grep -n "propriedade:" src/lib/auth/context.ts
+
+# SpedDocumentType (para SPED)
+grep -A10 "SpedDocumentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
+```
+
+### 4. Confirmar Leitura
+Responder: **"Contratos MCP consultados. Verificações grep realizadas. Iniciando implementação."**
+
+**NUNCA pular esta etapa. Se não conseguir consultar, informar o usuário.**
 
 ---
 
-## REGRAS CRITICAS (VIOLACAO = REJEICAO)
+## 📋 REGRAS ENFORCE CRÍTICAS (MEMORIZAR)
 
-### 1. TypeScript Strict
-- NUNCA usar `any` (usar `unknown` ou tipo explicito)
+### Verificação Obrigatória (ENFORCE-030 a 039)
+- **ENFORCE-030:** Validar existência de propriedade ANTES de acessar
+- **ENFORCE-031:** NUNCA assumir schema - sempre verificar estrutura real
+- **ENFORCE-032:** Validar tipo ANTES de fazer cast/assertion
+- **ENFORCE-033:** Verificar JSON/dados reais ANTES de criar interface
+- **ENFORCE-034:** NUNCA usar `as Type` sem validação prévia
+- **ENFORCE-035:** Verificar interface TenantContext antes de usar propriedades
+- **ENFORCE-036:** Verificar métodos existentes na classe antes de chamar
+- **ENFORCE-037:** Verificar valores válidos de enum no schema.ts
+- **ENFORCE-038:** Verificar assinatura de método (parâmetros) antes de chamar
+- **ENFORCE-039:** NUNCA implementar encoding/conversão manualmente se método existe
+
+### Consistência de Código (ENFORCE-040 a 045)
+- **ENFORCE-040:** NUNCA any - SEMPRE unknown ou tipo explícito
+- **ENFORCE-041:** Array.isArray() ANTES de usar métodos de array
+- **ENFORCE-042:** Manter consistência entre declaração e retorno de MIME types
+- **ENFORCE-043:** Usar Promise.allSettled() para graceful degradation
+- **ENFORCE-044:** Validar TIPO dos elementos APÓS confirmar que é array
+- **ENFORCE-045:** Validar que string não é vazia ALÉM de verificar tipo
+
+### Error Handling (ENFORCE-050 a 051)
+- **ENFORCE-050:** Try-catch OBRIGATÓRIO em todos handlers e operações I/O
+- **ENFORCE-051:** SEMPRE re-throw erros desconhecidos - nunca silenciar
+
+### Segurança (ENFORCE-055 a 056)
+- **ENFORCE-055:** SEMPRE sanitizar IDs/inputs antes de usar em paths
+- **ENFORCE-056:** Regex deve ser específico - verificar contexto primeiro
+
+### SPED Específico (ENFORCE-060 a 067)
+- **ENFORCE-060:** Encoding DEVE ser ISO-8859-1 via toBuffer(), NUNCA conversão manual
+- **ENFORCE-061:** Formato DEVE ser pipe-delimited: |REG|CAMPO1|CAMPO2|
+- **ENFORCE-062:** Quebra de linha DEVE ser CRLF (\r\n)
+- **ENFORCE-063:** Datas DEVEM estar no formato DDMMAAAA
+- **ENFORCE-064:** Valores numéricos SEM separador de milhar, COM vírgula decimal
+- **ENFORCE-065:** Bloco 9 DEVE totalizar corretamente todos os registros
+- **ENFORCE-066:** SpedDocument.create() DEVE receber { documentType, blocks }
+- **ENFORCE-067:** SEMPRE usar ctx.defaultBranchId (não ctx.branchId)
+
+---
+
+## ❌ PROIBIÇÕES ABSOLUTAS (VIOLAÇÃO = REJEIÇÃO)
+
+### TypeScript Strict
+- NUNCA usar `any` (usar `unknown` ou tipo explícito)
 - NUNCA usar `@ts-ignore`
 - NUNCA usar `as any`
 
-### 2. Validacao de Input
-- SEMPRE validar input com Zod em rotas API
-- SEMPRE usar .trim() antes de validar comprimento de strings
-- SEMPRE verificar Result.isFail() antes de acessar .value
+### Verificação
+- NUNCA inventar valores de enum sem verificar com grep
+- NUNCA assumir nome de propriedade sem verificar interface
+- NUNCA chamar método sem verificar se existe
+- NUNCA acessar `result.error.message` sem type guard
+- NUNCA acessar `.value` sem verificar `Result.isFail()`
 
-### 3. Multi-Tenancy
-- SEMPRE filtrar por organizationId + branchId
-- branchId NUNCA pode ser opcional em interfaces de filter
+### Implementação
+- NUNCA converter BigInt para Number
+- NUNCA implementar encoding manualmente
+- NUNCA modificar interface sem atualizar TODOS os consumidores
+- NUNCA criar função utilitária sem usá-la em todos os lugares
+- NUNCA modificar máquina de estados global para caso específico
+- NUNCA validar string sem .trim()
+- NUNCA deixar testes skipped
+- NUNCA usar placeholders como 'TEMP' ou 'TODO' em código de produção
 
-### 4. Transacoes SQL
-- SEMPRE usar transacoes em operacoes multi-step (withMssqlTransaction)
+### Git
+- NUNCA fazer push sem aprovação explícita
+- NUNCA fazer commits incrementais de correção (usar --amend)
 
-### 5. Mapeamento Domain-Persistence
+---
+
+## ✅ SEMPRE FAZER (OBRIGATÓRIO)
+
+1. **SEMPRE** consultar MCP antes de codificar
+2. **SEMPRE** usar grep para verificar definições
+3. **SEMPRE** validar propriedades nullable antes de usar
+4. **SEMPRE** usar Result pattern para operações falíveis
+5. **SEMPRE** incluir organizationId + branchId (multi-tenancy)
+6. **SEMPRE** registrar correções com register_correction
+7. **SEMPRE** aguardar autorização para push
+8. **SEMPRE** validar input com Zod em rotas API
+9. **SEMPRE** usar .trim() antes de validar comprimento de strings
+10. **SEMPRE** usar transações em operações multi-step (withMssqlTransaction)
+
+---
+
+## 📋 FLUXO DE COMMIT OBRIGATÓRIO
+
+### Pré-Codificação
+```
+1. get_contract("verify-before-code")
+2. get_contract("code-consistency")
+3. search_patterns("[tema]")
+4. grep para verificar interfaces/enums/métodos
+5. Confirmar: "Contratos consultados. Iniciando."
+```
+
+### Pré-Commit
+```
+1. npx tsc --noEmit (deve retornar 0 erros)
+2. npm test -- --run (todos devem passar, 0 skipped)
+3. grep -r "as any" src/ (deve retornar 0 resultados)
+4. check_cursor_issues (deve retornar 0 issues)
+5. Se QUALQUER verificação falhar: corrigir antes de commit
+6. Se tudo passar: fazer UM commit limpo
+```
+
+### Pós-Commit
+```
+1. check_cursor_issues novamente
+2. Se issues > 0: corrigir + register_correction + git commit --amend
+3. Se issues = 0: reportar para aprovação
+```
+
+### Push
+```
+1. NUNCA fazer push sem aprovação explícita
+2. Aguardar mensagem "APROVADO - FAZER PUSH"
+3. Verificar git status antes do push (sem arquivos pendentes)
+```
+
+---
+
+## 📊 TEMPLATE DE VERIFICAÇÃO PRÉ-CÓDIGO
+
+Antes de escrever código, executar:
+
+```bash
+# 1. Se vai usar interface
+grep -rn "interface NomeDaInterface" src/
+
+# 2. Se vai usar enum
+grep -A10 "NomeDoEnum" src/lib/db/schema.ts
+
+# 3. Se vai chamar método
+grep -n "nomeDoMetodo(" src/modules/
+
+# 4. Se vai usar propriedade de contexto
+grep -n "defaultBranchId" src/lib/auth/context.ts
+
+# 5. Se vai criar arquivo SPED
+grep -A10 "SpedDocumentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
+
+# 6. Se vai usar tipo de documento
+grep -A20 "documentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
+```
+
+---
+
+## 🔄 REGRA DE IMPACTO CRUZADO
+
+Antes de modificar método compartilhado (authorize, cancel, submit, etc):
+
+1. Listar TODOS os document types que usam esse método
+2. Verificar se a mudança afeta cada tipo diferentemente
+3. Adicionar condicional por tipo se necessário
+4. Usar funções centralizadas ao invés de hardcode
+5. Atualizar TODOS os consumidores da interface modificada
+
+---
+
+## 📐 MAPEAMENTO DOMAIN-PERSISTENCE
+
 - Schema DEVE espelhar Domain COMPLETO
 - Money = 2 campos (amount + currency)
 - Campos opcionais = .nullable()
-- toDomain usa reconstitute(), NAO create()
-- UPDATE com TODOS os campos mutaveis
+- toDomain usa reconstitute(), NÃO create()
+- UPDATE com TODOS os campos mutáveis
 
-### 6. Funcoes Utilitarias
-- Quando criar funcao utilitaria (ex: canTransitionTo):
-  - USAR a funcao em TODOS os lugares relevantes
-  - REMOVER codigo duplicado que a funcao substitui
-  - NUNCA deixar logica hardcoded quando existe funcao centralizada
+---
 
-### 7. Maquina de Estados
-- Transicoes que diferem por tipo de documento DEVEM ter maquinas separadas
-- NUNCA modificar maquina global para caso especifico de um tipo
+## 🔧 FUNÇÕES UTILITÁRIAS
+
+Quando criar função utilitária (ex: canTransitionTo):
+- USAR a função em TODOS os lugares relevantes
+- REMOVER código duplicado que a função substitui
+- NUNCA deixar lógica hardcoded quando existe função centralizada
+
+---
+
+## ⚙️ MÁQUINA DE ESTADOS
+
+- Transições que diferem por tipo de documento DEVEM ter máquinas separadas
+- NUNCA modificar máquina global para caso específico de um tipo
 - SEMPRE usar canTransitionTo(from, to, documentType)
 
 ---
 
-## REGRA DE IMPACTO CRUZADO
+## 🇧🇷 CONTEXTO BRASIL (ERP Logístico)
 
-Antes de modificar metodo compartilhado (authorize, cancel, submit, etc):
-
-1. Listar TODOS os document types que usam esse metodo
-2. Verificar se a mudanca afeta cada tipo diferentemente
-3. Adicionar condicional por tipo se necessario
-4. Usar funcoes centralizadas ao inves de hardcode
-
----
-
-## VALIDACOES PRE-COMMIT OBRIGATORIAS
-
-ANTES de fazer commit, executar TODOS:
-
-1. npx tsc --noEmit (deve retornar 0 erros)
-2. npm test -- --run (todos devem passar, 0 skipped)
-3. grep -r 'as any' src/ (deve retornar 0 resultados)
-4. git status (sem arquivos pendentes)
-5. check_cursor_issues (deve retornar 0 issues)
-
-Se QUALQUER verificacao falhar, corrigir antes de commit.
-
----
-
-## FLUXO DE TRABALHO OBRIGATORIO
-
-### Implementacao
-1. Consultar contratos MCP
-2. Confirmar leitura
-3. Implementar seguindo regras
-4. Testar localmente
-
-### Pre-Commit
-1. Executar todas as validacoes
-2. Corrigir problemas encontrados
-3. Fazer UM commit limpo (nao multiplos commits de correcao)
-
-### Pos-Commit
-1. Executar check_cursor_issues novamente
-2. Se issues > 0: corrigir + git commit --amend
-3. Se issues = 0: reportar para aprovacao
-
-### Push
-1. NUNCA fazer push sem aprovacao explicita do usuario
-2. Aguardar mensagem "APROVADO - FAZER PUSH"
-3. Verificar git status antes do push (sem arquivos pendentes)
-
----
-
-## PROIBICOES ABSOLUTAS
-
-- NUNCA usar `any` (nem em testes)
-- NUNCA fazer push sem aprovacao
-- NUNCA criar funcao utilitaria sem usa-la em todos os lugares
-- NUNCA modificar maquina de estados global para caso especifico
-- NUNCA validar string sem .trim()
-- NUNCA acessar .value sem verificar Result.isFail()
-- NUNCA deixar testes skipped
-- NUNCA usar placeholders como 'TEMP' ou 'TODO' em codigo de producao
-- NUNCA fazer commits incrementais de correcao (usar --amend)
-
----
-
-## CONTEXTO BRASIL (ERP Logistico)
-
-### Legislacao Fiscal
+### Legislação Fiscal
 - ICMS (Lei Complementar 87/96 - Lei Kandir)
 - PIS/COFINS (Leis 10.637/02 e 10.833/03)
-- SPED Fiscal, SPED Contribuicoes, SPED ECD
-- CTe (Conhecimento de Transporte Eletronico)
-- NFe (Nota Fiscal Eletronica)
+- SPED Fiscal, SPED Contribuições, SPED ECD
+- CTe (Conhecimento de Transporte Eletrônico)
+- NFe (Nota Fiscal Eletrônica)
 - MDFe (Manifesto de Documentos Fiscais)
-- NFS-e (Nota Fiscal de Servicos Eletronica)
+- NFS-e (Nota Fiscal de Serviços Eletrônica)
 
-### Reforma Tributaria 2026
-- IBS (Imposto sobre Bens e Servicos)
-- CBS (Contribuicao sobre Bens e Servicos)
+### Reforma Tributária 2026
+- IBS (Imposto sobre Bens e Serviços)
+- CBS (Contribuição sobre Bens e Serviços)
 - IS (Imposto Seletivo)
 
-### Retencoes na Fonte
+### Retenções na Fonte
 - IRRF (1.5%)
 - PIS (0.65%)
 - COFINS (3%)
@@ -146,7 +276,7 @@ Se QUALQUER verificacao falhar, corrigir antes de commit.
 
 ---
 
-## STACK TECNICA
+## 🛠️ STACK TÉCNICA
 
 - Backend: Next.js 15 (App Router), TypeScript, Drizzle (mssql), SQL Server 2022
 - Frontend: React 19, Refine, AG Grid, Shadcn/UI
@@ -155,41 +285,69 @@ Se QUALQUER verificacao falhar, corrigir antes de commit.
 
 ---
 
-## FORMATO DE RELATORIO
+## ⚠️ ARQUIVOS CRÍTICOS (CUIDADO EXTRA)
 
-Ao concluir implementacao, reportar:
-```
-SEMANA X - CONCLUIDA
+| Arquivo | Motivo | Risco |
+|---------|--------|-------|
+| accounting-engine.ts | Contabilização | Multa R$ 5.000+ |
+| financial-title-generator.ts | Títulos financeiros | Multa R$ 5.000+ |
+| sped-fiscal-generator.ts | SPED Fiscal | Multa R$ 5.000+ |
+| sped-ecd-generator.ts | SPED Contábil | Multa R$ 5.000+ |
+| sped-contributions-generator.ts | SPED PIS/COFINS | Multa R$ 5.000+ |
+| FiscalDocument.ts | Documento fiscal base | Alto |
+| DocumentType.ts | Máquina de estados | Alto |
 
-Verificacoes pre-commit:
+Modificações nesses arquivos exigem:
+- Verificação tripla
+- Testes extras
+- Revisão cuidadosa
+
+---
+
+## 📝 FORMATO DE RELATÓRIO FINAL
+
+```markdown
+## TAREFA CONCLUÍDA
+
+### Verificações MCP
+- Contratos consultados: ✅
+- grep executado: ✅
+- check_cursor_issues (pré-commit): ✅ 0 issues
+- check_cursor_issues (pós-commit): ✅ 0 issues
+
+### Validações Pré-Commit
 - npx tsc --noEmit: 0 erros
 - npm test -- --run: X/X passando
-- grep 'as any': 0 resultados
-- git status: limpo
-- check_cursor_issues: 0 issues
+- grep "as any": 0 resultados
 
-Arquivos criados: X
-Arquivos modificados: X
-Testes novos: X
-Commit: [hash]
+### Commits
+- Hash: [hash]
+- Mensagem: [mensagem]
 
-NAO FOI FEITO PUSH. Aguardando aprovacao.
+### Push
+- Status: ⏳ AGUARDANDO AUTORIZAÇÃO
+
+### Correções Registradas
+- [LC-XXXXX]: [descrição] (se houver)
+
+NÃO FOI FEITO PUSH. Aguardando aprovação.
 ```
 
 ---
 
-## ARQUIVOS CRITICOS (CUIDADO EXTRA)
+## 🎯 OBJETIVO FINAL
 
-1. `accounting-engine.ts` - Contabilizacao
-2. `financial-title-generator.ts` - Titulos financeiros
-3. `sped-fiscal-generator.ts` - SPED (multa R$ 5k+)
-4. `sped-ecd-generator.ts` - SPED Contabil
-5. `sped-contributions-generator.ts` - SPED PIS/COFINS
-6. `FiscalDocument.ts` - Documento fiscal base
-7. `DocumentType.ts` - Maquina de estados
+**Zero bugs por falta de verificação.**
 
-Modificacoes nesses arquivos exigem testes extras e revisao cuidadosa.
+Cada linha de código deve ser baseada em:
+- ✅ Contratos MCP consultados
+- ✅ Interfaces verificadas com grep
+- ✅ Enums confirmados no schema
+- ✅ Métodos existentes na classe
+- ✅ Propriedades nullable tratadas
+
+**Se não verificou, NÃO ESCREVA O CÓDIGO.**
 
 ---
 
-FIM DAS REGRAS - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMECAR
+FIM DAS REGRAS - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR

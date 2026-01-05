@@ -248,6 +248,131 @@
       "pattern_created": "Result Error Message Type Guard Pattern",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-979539",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "ctx.branchId não existe em TenantContext, deve ser defaultBranchId",
+      "correction": "Substituir ctx.branchId por ctx.defaultBranchId",
+      "files_affected": [
+        "src/app/api/sped/contributions/generate/route.ts",
+        "src/app/api/sped/ecd/generate/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-980053",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "SpedDocument não tem método toText(), apenas toFileContent() e toBuffer()",
+      "correction": "Substituir toText() por toFileContent()",
+      "files_affected": [
+        "src/app/api/sped/contributions/generate/route.ts",
+        "src/app/api/sped/ecd/generate/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-980501",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "SpedDocument.create() requer objeto { documentType, blocks }, não apenas array",
+      "correction": "Passar objeto com documentType e blocks para SpedDocument.create()",
+      "files_affected": [
+        "src/modules/fiscal/domain/services/SpedContributionsGenerator.ts",
+        "src/modules/fiscal/domain/services/SpedEcdGenerator.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-078930",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "Conversao manual UTF-8 para ISO-8859-1 com & 0xFF corrompe caracteres acentuados multi-byte",
+      "correction": "Usar toBuffer() que ja implementa encoding ISO-8859-1 corretamente com Buffer.from(content, 'latin1')",
+      "files_affected": [
+        "src/app/api/sped/contributions/generate/route.ts",
+        "src/app/api/sped/ecd/generate/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-080989",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "source_type TAX_DEBIT e TAX_CREDIT nao existem no schema. Valores validos: FISCAL_DOC, PAYMENT, RECEIPT, MANUAL, ADJUSTMENT, DEPRECIATION",
+      "correction": "Calcular PIS/COFINS diretamente de CTes (debitos) e NFes entrada (creditos) ao inves de buscar por source_type inexistente",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/DrizzleSpedDataRepository.ts"
+      ],
+      "pattern_created": "Verify Schema Values Before Using Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-594800",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "getTaxTotalsContributions retornava impostos já calculados (totalDebit = PIS+COFINS), mas generateBlockM tratava como base e multiplicava novamente por proporções (0.179 PIS, 0.821 COFINS), causando cálculo duplicado de impostos",
+      "correction": "Repository alterado para retornar BASE DE CÁLCULO (baseDebito, baseCredito). Generator calcula PIS (1.65%) e COFINS (7.6%) separadamente a partir da base. Interface TaxTotalsContribData atualizada para refletir base ao invés de impostos calculados",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/persistence/DrizzleSpedDataRepository.ts",
+        "src/modules/fiscal/domain/services/SpedContributionsGenerator.ts",
+        "src/modules/fiscal/domain/ports/ISpedDataRepository.ts"
+      ],
+      "pattern_created": "Calculate Taxes From Base Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-127302",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "Interface TaxTotalsContrib no Generator usava totalDebit/totalCredit, mas TaxTotalsContribData no Repository foi atualizada para baseDebito/baseCredito. Use Case acessava propriedades antigas que não existiam mais (undefined em runtime)",
+      "correction": "Alinhar ambas interfaces para usar baseDebito/baseCredito. Atualizar Use Case para acessar propriedades corretas. Quando uma interface é refatorada, grep para encontrar TODOS os usos e atualizá-los",
+      "files_affected": [
+        "src/modules/fiscal/domain/services/SpedContributionsGenerator.ts",
+        "src/modules/fiscal/application/use-cases/GenerateSpedContributionsUseCase.ts"
+      ],
+      "pattern_created": "Align Interface Properties After Refactoring Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-787130",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "SpedDocument.create() chamado com documentType 'EFD_CONTRIBUTIONS' que não existe no enum SpedDocumentType (valor correto: 'EFD_CONTRIBUICOES')",
+      "correction": "Verificar enum com grep -rn SpedDocumentType antes de usar. Usar valor correto 'EFD_CONTRIBUICOES'. SEMPRE verificar valores válidos de enum ANTES de codificar (ENFORCE-037)",
+      "files_affected": [
+        "src/modules/fiscal/domain/services/SpedContributionsGenerator.ts"
+      ],
+      "pattern_created": "Verify Enum Values Before Using Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-789531",
+      "date": "2026-01-05",
+      "epic": "E7.13",
+      "error": "ctx.defaultBranchId é number|null mas foi passado direto para Use Case que espera number não-null, causando potencial erro de contrato de tipo",
+      "correction": "Verificar tipo de defaultBranchId com grep antes de usar. Adicionar validação if (ctx.defaultBranchId === null || ctx.defaultBranchId === undefined) retornando erro 400. SEMPRE verificar se propriedade é nullable ANTES de passar para função (ENFORCE-033, ENFORCE-035)",
+      "files_affected": [
+        "src/app/api/sped/contributions/generate/route.ts",
+        "src/app/api/sped/ecd/generate/route.ts"
+      ],
+      "pattern_created": "Validate Nullable Properties Before Using Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }
