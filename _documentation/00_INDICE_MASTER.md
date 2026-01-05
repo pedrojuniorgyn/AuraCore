@@ -1,371 +1,220 @@
-# 📚 ÍNDICE MASTER - DOCUMENTAÇÃO AURACORE
+# ============================================
+# ATUALIZAÇÃO _documentation/00_INDICE_MASTER.md
+# ============================================
+# Data/Hora: 2026-01-05 17:10:00 UTC
+# Épico: E7.12
+# Autor: Claude (Arquiteto Enterprise)
+# 
+# INSTRUÇÕES: Adicionar seção E7 DDD/Hexagonal ao índice master
+# ============================================
 
-**Última atualização:** 08/12/2025  
-**Versão do Sistema:** 1.0  
-**Status:** ✅ **SISTEMA OPERACIONAL**
+# 📚 ÍNDICE MASTER - AURACORE DOCUMENTATION
 
----
-
-## 🎯 **LEIA PRIMEIRO:**
-
-### **📊 RELATÓRIOS EXECUTIVOS:**
-
-1. **RELATORIO_EXECUTIVO_FINAL.md** ⭐ **COMECE AQUI!**
-   - Visão geral completa do sistema
-   - Estatísticas e conquistas
-   - Nota final: 4.7/5
-   - Recomendação de produção
-
-2. **RELATORIO_DETALHADO_FRONTENDS.md**
-   - Análise minuciosa de 7 frontends
-   - Qualidade de código
-   - Pontos fortes e melhorias
-   - 1923 linhas analisadas
-
-3. **TESTES_AUTENTICACAO_FINAL.md**
-   - Teste de 6 APIs corrigidas
-   - Resultados validados
-   - 100% de aprovação
-
-4. **AUTENTICACAO_CORRIGIDA.md**
-   - Detalhes das correções
-   - Before/After
-   - Arquivos modificados
+**Data de Atualização:** 2026-01-05 17:10:00 UTC  
+**Versão:** 3.0.0
 
 ---
 
-## 🏗️ **ARQUITETURA FORMAL (CONTRATOS + ADR + RUNBOOKS):**
+## 📁 Estrutura de Diretórios
 
-### **📌 START AQUI (Fonte de verdade técnica):**
+```
+_documentation/
+├── 00_INDICE_MASTER.md          ← ESTE ARQUIVO
+├── planning/                     # Planejamentos e roadmaps
+├── reports/                      # Relatórios de execução
+├── technical/                    # Documentação técnica
+└── decisions/                    # Decisões de projeto
 
-- **docs/architecture/INDEX.md** ⭐ **ARQUITETURA CANÔNICA**
-  - Contratos (Tenant/Branch/RBAC/API/Erros/Transações/Performance)
-  - ADRs (decisões arquiteturais)
-  - Diagramas Mermaid (C4 + sequências + estados)
-  - Runbooks (Coolify/SQL Server/migrações/incidentes)
-  - Link: `../docs/architecture/INDEX.md`
-
-### **🧭 Domínios (visão rápida):**
-- Financeiro: `../docs/architecture/domains/FINANCEIRO.md`
-- Contábil: `../docs/architecture/domains/CONTABIL.md`
-- Admin: `../docs/architecture/domains/ADMIN.md`
-- TMS: `../docs/architecture/domains/TMS.md`
-
-### **🔎 Auditoria (GlobalTCL → AuditFinDB):**
-- Retrospectiva (14/12→23/12): `./technical/RETROSPECTIVA_2025-12-14_A_2025-12-23.md`
-- Dossiê do módulo Auditoria: `./technical/MODULO_AUDITORIA_GLOBALTCL_AUDITFINDB.md`
-
-### **🛠️ Runbooks (operação):**
-- Deploy Coolify: `../docs/architecture/runbooks/RUNBOOK_COOLIFY_DEPLOY.md`
-- Migrations/Seeds: `../docs/architecture/runbooks/RUNBOOK_MIGRATIONS_SEEDS.md`
-- SQL Server 2022: `../docs/architecture/runbooks/RUNBOOK_SQLSERVER_2022.md`
-- Incidentes: `../docs/architecture/runbooks/RUNBOOK_INCIDENTS.md`
-
-### **🧩 Portal (Backstage / TechDocs) — opcional:**
-- Manifesto do catálogo: `../catalog-info.yaml`
-- Fonte dos docs renderizados: `../docs/architecture/`
-
-## 🏦 **INTEGRAÇÃO BTG PACTUAL:**
-
-### **📋 GUIAS DE CONFIGURAÇÃO:**
-
-5. **BTG_SETUP.md**
-   - Configuração inicial
-   - Variáveis de ambiente
-   - Primeiros passos
-
-6. **BTG_CONFIGURACAO_COMPLETA.md**
-   - Guia passo a passo completo
-   - Troubleshooting
-   - Links úteis
-
-7. **BTG_CHECKLIST_FINAL.md**
-   - Checklist de validação
-   - Passo a passo obrigatório
-   - Verificação de saúde
-
-### **📊 STATUS E IMPLEMENTAÇÃO:**
-
-8. **BTG_STATUS_FINAL.md**
-   - Status da implementação
-   - Funcionalidades completas
-   - Arquivos criados
-
-9. **BTG_IMPLEMENTACAO_COMPLETA.md**
-   - Roadmap completo
-   - Fases de implementação
-   - Código exemplo
-
-10. **BTG_DDA_STATUS.md**
-    - Status específico do DDA
-    - Como funciona
-    - Fluxos de uso
-
-### **🧪 TESTES E CORREÇÕES:**
-
-11. **BTG_PLANO_DE_TESTES.md**
-    - Plano estruturado de testes
-    - 5 fases detalhadas
-    - Comandos de teste
-
-12. **BTG_PIX_CORRECAO.md**
-    - Correção do endpoint Pix
-    - Before/After
-    - Como testar
-
-### **📚 REFERÊNCIAS:**
-
-13. **BTG_AMBIENTES.md**
-    - Sandbox vs Produção
-    - CNPJ fictício para sandbox
-    - Mudança de ambiente
-
-14. **BTG_ENV_VARS.txt**
-    - Template de variáveis
-    - Onde encontrar credenciais
-    - Exemplos
-
-15. **RESTART_NEXTJS.md**
-    - Quando reiniciar
-    - Como limpar cache
-    - Troubleshooting
+docs/
+├── architecture/                 # Arquitetura formal
+│   ├── adr/                      # Architecture Decision Records
+│   ├── contracts/                # Contratos invariáveis
+│   ├── diagrams/                 # Diagramas C4, sequência
+│   ├── domains/                  # Documentação por domínio
+│   └── runbooks/                 # Guias operacionais
+├── mcp/                          # MCP Server documentation
+└── fiscal/                       # Documentação fiscal
+```
 
 ---
 
-## 🎯 **PLANEJAMENTO E SPRINTS:**
+## 🗂️ ÍNDICE POR CATEGORIA
 
-16. **MASTER_PLAN_MARATONA.md**
-    - Planejamento completo da "maratona"
-    - Todos os módulos
-    - Benchmarks e análises
+### 1. Arquitetura
 
-17. **MARATONA_FINALIZADA.md**
-    - Status de conclusão
-    - Ondas de implementação
-    - Resultados alcançados
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| INDEX.md | docs/architecture/ | Índice da arquitetura |
+| GLOSSARY.md | docs/architecture/ | Glossário de termos |
+| ENTERPRISE_BASE_PATTERN.md | docs/ | Padrões enterprise |
+| DATA_SCOPING_BY_BRANCH.md | docs/ | Multi-tenancy e branch |
 
-18. **PRÓXIMOS_PASSOS_IMPLEMENTADOS.md**
-    - Implementações pós-maratona
-    - Bibliotecas instaladas
-    - Cron jobs criados
+### 2. ADRs (Architecture Decision Records)
 
-19. **RELATÓRIO_TESTES_COMPLETO.md**
-    - Testes gerais do sistema
-    - Problemas identificados
-    - Soluções aplicadas
+| ADR | Título | Data |
+|-----|--------|------|
+| ADR-0001 | SQL Server only | 2024-12 |
+| ADR-0002 | Tenant Context | 2024-12 |
+| ADR-0003 | UserId UUID string | 2024-12 |
+| ADR-0004 | Admin HTTP OFF em PROD | 2024-12 |
+| ADR-0005 | Transações obrigatórias | 2024-12 |
+| ADR-0006 | Paginação SQL Server | 2024-12 |
+| ADR-0010 | IBS/CBS Implementation | 2025-12 |
+| ADR-0011 | Split Payment Structure | 2025-12 |
+| **ADR-0012** | **Full DDD Migration** | **2026-01** |
+| **ADR-0013** | **Eliminate Hybrid Architecture** | **2026-01** |
 
-20. **ROADMAP_ONDAS_5A_A_9_EXECUTIVO.md** ⭐
-    - Roadmap incremental (Coolify + SQL Server)
-    - Ondas 5A–9 com DoD, checklists e estimativas
-    - Execução segura sem big-bang refactor
+### 3. Contracts
 
----
+| Contrato | Localização | Categoria |
+|----------|-------------|-----------|
+| TENANT_BRANCH_CONTRACT.md | docs/architecture/contracts/ | Multi-tenancy |
+| RBAC_CONTRACT.md | docs/architecture/contracts/ | Segurança |
+| API_CONTRACT.md | docs/architecture/contracts/ | API |
+| ERROR_CONTRACT.md | docs/architecture/contracts/ | Erros |
+| TRANSACTIONS_CONTRACT.md | docs/architecture/contracts/ | SQL |
+| SQLSERVER_PERFORMANCE_CONTRACT.md | docs/architecture/contracts/ | Performance |
 
-## 📁 **ORGANIZAÇÃO DOS DOCUMENTOS:**
+### 4. Domínios
 
-### **POR CATEGORIA:**
-
-**🏆 EXECUTIVOS (Leitura Rápida):**
-- RELATORIO_EXECUTIVO_FINAL.md
-- RELATORIO_DETALHADO_FRONTENDS.md
-- ONDAS_5PLUS_EXECUCAO_LOG.md
-
-**🔧 TÉCNICOS (Implementação):**
-- AUTENTICACAO_CORRIGIDA.md
-- TESTES_AUTENTICACAO_FINAL.md
-- ONDA_5A_OBSERVABILIDADE.md
-
-**🏦 BTG PACTUAL (9 docs):**
-- BTG_SETUP.md
-- BTG_CONFIGURACAO_COMPLETA.md
-- BTG_CHECKLIST_FINAL.md
-- BTG_STATUS_FINAL.md
-- BTG_IMPLEMENTACAO_COMPLETA.md
-- BTG_DDA_STATUS.md
-- BTG_PLANO_DE_TESTES.md
-- BTG_PIX_CORRECAO.md
-- BTG_AMBIENTES.md
-
-**📋 PLANEJAMENTO:**
-- MASTER_PLAN_MARATONA.md
-- MARATONA_FINALIZADA.md
-- PRÓXIMOS_PASSOS_IMPLEMENTADOS.md
-- ROADMAP_ONDAS_5A_A_9_EXECUTIVO.md
+| Domínio | Localização | Status |
+|---------|-------------|--------|
+| FINANCEIRO.md | docs/architecture/domains/ | ✅ Completo |
+| CONTABIL.md | docs/architecture/domains/ | ✅ Completo |
+| ADMIN.md | docs/architecture/domains/ | ✅ Completo |
+| TMS.md | docs/architecture/domains/ | ✅ Completo |
+| WMS.md | docs/architecture/domains/ | ✅ Completo (E7.8) |
+| AUDITORIA_V2.md | docs/architecture/domains/ | 🔄 Em progresso |
 
 ---
 
-## 🎯 **ROTEIRO DE LEITURA RECOMENDADO:**
+## 🎯 E7 DDD/HEXAGONAL MIGRATION ← **NOVA SEÇÃO**
 
-### **PARA DESENVOLVEDORES:**
+### Visão Geral
 
-**Dia 1 - Visão Geral:**
-1. RELATORIO_EXECUTIVO_FINAL.md
-2. MASTER_PLAN_MARATONA.md
-3. MARATONA_FINALIZADA.md
+O épico E7 migrou o AuraCore de arquitetura Vertical Slice para DDD/Hexagonal. Iniciado em Dezembro 2024, foi completado (E7.0-E7.11) em Dezembro 2025.
 
-**Dia 2 - Frontends:**
-1. RELATORIO_DETALHADO_FRONTENDS.md
-2. Explorar código dos frontends
-3. Testar manualmente
+### Documentos Principais
 
-**Dia 3 - BTG Pactual:**
-1. BTG_SETUP.md
-2. BTG_CONFIGURACAO_COMPLETA.md
-3. BTG_CHECKLIST_FINAL.md
-4. Configurar e testar
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| **E7_DDD_HEXAGONAL.md** | docs/architecture/ | Visão geral da migração |
+| **E7_STATUS_FINAL.md** | docs/ | Consolidação E7.0-E7.11 |
+| **E7.12_DOCUMENTATION_MASTER.md** | docs/ | Master document E7.12 |
 
-**Dia 4 - Autenticação:**
-1. AUTENTICACAO_CORRIGIDA.md
-2. TESTES_AUTENTICACAO_FINAL.md
-3. Revisar código das APIs
+### Roadmaps
 
-**Dia 5 - Deploy:**
-1. BTG_AMBIENTES.md (prod vs sandbox)
-2. Preparar ambiente de produção
-3. Configurar CI/CD
+| Documento | Localização | Período |
+|-----------|-------------|---------|
+| ROADMAP_E7.12_A_E7.17.md | _documentation/planning/ | Jan-Abr 2026 |
+| ROADMAP_ONDAS_5A_A_9_ATUALIZADO.md | _documentation/planning/ | Atualizado |
 
----
+### Épicos E7
 
-### **PARA GESTORES/PMs:**
+| Épico | Nome | Status | Semanas |
+|-------|------|--------|---------|
+| E7.0 | Setup + Infraestrutura | ✅ COMPLETO | 1 |
+| E7.1 | Shared Kernel + Value Objects | ✅ COMPLETO | 1 |
+| E7.2 | Módulo Financial | ✅ COMPLETO | 4 |
+| E7.3 | Módulo Accounting | ✅ COMPLETO | 4 |
+| E7.4 | Módulo Fiscal | ✅ COMPLETO | 5 |
+| E7.4.1 | Reforma Tributária 2026 | ✅ COMPLETO | 10 |
+| E7.5 | Módulo TMS | ✅ COMPLETO | 1 |
+| E7.6 | Módulo WMS Inicial | ✅ COMPLETO | 2 |
+| E7.7 | Integrações (absorvido E7.9) | ✅ COMPLETO | - |
+| E7.8 | Módulo WMS Completo | ✅ COMPLETO | 4 |
+| E7.9 | Integrações Externas | ✅ COMPLETO | 2 |
+| E7.10 | Cleanup + CI/CD | ✅ COMPLETO | 3 |
+| E7.11 | Test Infrastructure | ✅ COMPLETO | 2 |
+| **E7.12** | **Documentação 100%** | **🟡 EM EXECUÇÃO** | **1** |
+| E7.13 | Services → DDD | ⬜ PLANEJADO | 3 |
+| E7.14 | APIs → Features | ⬜ PLANEJADO | 2 |
+| E7.15 | SPED → DDD | ⬜ PLANEJADO | 4 |
+| E7.16 | Verificação Semântica | ⬜ PLANEJADO | 1 |
+| E7.17 | Limpeza Final | ⬜ PLANEJADO | 1 |
 
-**Leitura Essencial (30min):**
-1. ✅ RELATORIO_EXECUTIVO_FINAL.md
-2. ✅ RELATORIO_DETALHADO_FRONTENDS.md
-3. ✅ BTG_STATUS_FINAL.md
-
-**Opcional (mais detalhes):**
-- MASTER_PLAN_MARATONA.md
-- MARATONA_FINALIZADA.md
-
----
-
-### **PARA NOVOS DESENVOLVEDORES:**
-
-**Onboarding (2 horas):**
-
-**Parte 1 - Entender o Sistema (30min):**
-1. RELATORIO_EXECUTIVO_FINAL.md
-2. MASTER_PLAN_MARATONA.md
-
-**Parte 2 - Configuração (30min):**
-1. BTG_CONFIGURACAO_COMPLETA.md
-2. BTG_CHECKLIST_FINAL.md
-3. Configurar .env
-
-**Parte 3 - Código (1 hora):**
-1. RELATORIO_DETALHADO_FRONTENDS.md
-2. Explorar arquivos mencionados
-3. Rodar testes
+**Total realizado:** ~40 semanas  
+**Total planejado (E7.12-E7.17):** 13 semanas
 
 ---
 
-## 🔍 **BUSCA RÁPIDA:**
+## 📊 MCP SERVER
 
-### **"Como configurar BTG?"**
-→ `BTG_CONFIGURACAO_COMPLETA.md`
+### Documentação
 
-### **"Quais frontends estão prontos?"**
-→ `RELATORIO_DETALHADO_FRONTENDS.md`
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| SYSTEM_GUIDE.md | docs/mcp/ | Guia completo do MCP |
+| LESSONS_LEARNED.md | docs/mcp/ | Lições aprendidas |
+| PHASE_2_COMPLETE.md | docs/mcp/ | Status fase 2 |
 
-### **"Como corrigir autenticação?"**
-→ `AUTENTICACAO_CORRIGIDA.md`
+### ENFORCE Rules
 
-### **"O que foi implementado?"**
-→ `RELATORIO_EXECUTIVO_FINAL.md`
+| Range | Módulo | Quantidade |
+|-------|--------|------------|
+| ENFORCE-001 a ENFORCE-010 | Financial | 10 |
+| ENFORCE-011 a ENFORCE-015 | Accounting | 5 |
+| ENFORCE-016 a ENFORCE-020 | Fiscal | 5 |
+| ENFORCE-021 a ENFORCE-029 | WMS | 9 |
 
-### **"Como testar BTG?"**
-→ `BTG_PLANO_DE_TESTES.md`
-
-### **"Sandbox ou Produção?"**
-→ `BTG_AMBIENTES.md`
-
-### **"Status do projeto?"**
-→ `MARATONA_FINALIZADA.md`
+**Total:** 29 regras ENFORCE
 
 ---
 
-## 📊 **DOCUMENTOS POR PRIORIDADE:**
+## 📅 PLANNING
 
-### **🔴 ALTA PRIORIDADE (LEIA PRIMEIRO):**
-1. RELATORIO_EXECUTIVO_FINAL.md
-2. BTG_CONFIGURACAO_COMPLETA.md
-3. AUTENTICACAO_CORRIGIDA.md
-
-### **🟡 MÉDIA PRIORIDADE:**
-1. RELATORIO_DETALHADO_FRONTENDS.md
-2. BTG_STATUS_FINAL.md
-3. TESTES_AUTENTICACAO_FINAL.md
-
-### **🟢 BAIXA PRIORIDADE (REFERÊNCIA):**
-1. BTG_PLANO_DE_TESTES.md
-2. BTG_PIX_CORRECAO.md
-3. MASTER_PLAN_MARATONA.md
-4. Demais docs BTG
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| ROADMAP_MASTER_AURACORE.md | _documentation/planning/ | Roadmap master |
+| ROADMAP_ONDAS_5A_A_9_ATUALIZADO.md | _documentation/planning/ | Ondas infra |
+| ROADMAP_E7.12_A_E7.17.md | _documentation/planning/ | E7 fase 2 |
 
 ---
 
-## 📈 **ESTATÍSTICAS DA DOCUMENTAÇÃO:**
+## 📋 REPORTS
 
-| Categoria | Quantidade | Páginas Estimadas |
-|-----------|------------|-------------------|
-| **Relatórios** | 4 | ~40 |
-| **BTG Pactual** | 9 | ~90 |
-| **Planejamento** | 3 | ~60 |
-| **Índices** | 1 | ~5 |
-| **TOTAL** | **17** | **~195** 📄 |
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| RESULTADO_FINAL_MARATONA.md | _documentation/reports/ | Maratona inicial |
+| MARATONA_FINALIZADA.md | _documentation/reports/ | Conclusão maratona |
 
 ---
 
-## 🎯 **COMO USAR ESTE ÍNDICE:**
+## 🔧 TECHNICAL
 
-**1. Identifique sua necessidade:**
-- Configurar? → Seção "Configuração"
-- Entender? → Seção "Executivos"
-- Testar? → Seção "Testes"
-
-**2. Encontre o documento:**
-- Use a busca rápida acima
-- Ou navegue por categoria
-
-**3. Leia e aplique:**
-- Siga os passos
-- Use os checklists
-- Valide os resultados
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| REFATORACAO_NCM_PCG.md | _documentation/technical/ | Refatoração NCM |
+| AURORA_PREMIUM_GRID_SHOWCASE.md | _documentation/technical/ | AG Grid premium |
 
 ---
 
-## ✅ **VALIDAÇÃO DO ÍNDICE:**
+## 📝 FISCAL
 
-- [x] Todos os documentos listados
-- [x] Links funcionais
-- [x] Categorização clara
-- [x] Priorização definida
-- [x] Busca rápida
-- [x] Roteiros de leitura
-- [x] Estatísticas
+| Documento | Localização | Descrição |
+|-----------|-------------|-----------|
+| TAX_REFORM_2026_README.md | docs/fiscal/ | Reforma Tributária |
+| TRANSITION_RATES.md | docs/fiscal/ | Alíquotas transição |
 
 ---
 
-## 🎉 **BEM-VINDO AO AURACORE!**
+## 🏷️ QUICK LINKS
 
-**Você tem em mãos:**
-- ✅ Sistema completo e funcional
-- ✅ Documentação extensa
-- ✅ Código de qualidade
-- ✅ Integrações de mercado
+### Para Novos Desenvolvedores
+1. [GLOSSARY.md](docs/architecture/GLOSSARY.md) - Entender os termos
+2. [E7_DDD_HEXAGONAL.md](docs/architecture/E7_DDD_HEXAGONAL.md) - Arquitetura atual
+3. [SYSTEM_GUIDE.md](docs/mcp/SYSTEM_GUIDE.md) - Como usar MCP
 
-**Este índice é seu guia!** Use-o para navegar pela documentação e aproveitar ao máximo o AuraCore!
+### Para Arquitetos
+1. [INDEX.md](docs/architecture/INDEX.md) - Índice completo
+2. [ADRs](docs/architecture/adr/) - Decisões arquiteturais
+3. [Contracts](docs/architecture/contracts/) - Regras invariáveis
+
+### Para DevOps
+1. [Runbooks](docs/architecture/runbooks/) - Guias operacionais
+2. [CI/CD](.github/workflows/) - Pipelines
 
 ---
 
-**📚 Total de Documentos:** 17  
-**📄 Páginas Totais:** ~195  
-**🎯 Cobertura:** 100%  
-**✅ Status:** Completo e organizado
-
-**Desenvolvido com ❤️ em Dezembro 2025**
-
-
-
-
-
+*Índice atualizado em: 2026-01-05 17:10:00 UTC*
+*Versão: 3.0.0*

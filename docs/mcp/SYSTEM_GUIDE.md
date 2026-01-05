@@ -1022,3 +1022,408 @@ Esta regra foi estabelecida em **E7.10 Fase 3** após múltiplas violações dur
 | 1.3.0 | 27/12/2025 | + Seção 14: Fluxo de Commit com Agent Review (OBRIGATÓRIO) |
 | 1.4.0 | 03/01/2026 | + Seção 15: Regra de Push com Autorização Humana (E7.10) |
 
+# ============================================
+# ATUALIZAÇÃO SYSTEM_GUIDE.md - ENFORCE-021 a ENFORCE-029
+# ============================================
+# Data/Hora: 2026-01-05 16:30:00 UTC
+# Épico: E7.12
+# Autor: Claude (Arquiteto Enterprise)
+# 
+# INSTRUÇÕES: Adicionar esta seção ao docs/mcp/SYSTEM_GUIDE.md
+# após a seção "8. ARQUIVOS CRÍTICOS"
+# ============================================
+
+---
+
+## 10. ENFORCE RULES - WMS MODULE (E7.8)
+
+### 10.1 Visão Geral
+
+As regras ENFORCE-021 a ENFORCE-029 foram criadas durante o épico E7.8 (WMS Completo) para garantir a integridade e consistência das operações de armazém.
+
+### 10.2 Lista de Regras
+
+| ID | Nome | Severidade | Módulo |
+|----|------|------------|--------|
+| ENFORCE-021 | Stock Movement Validation | ERROR | WMS |
+| ENFORCE-022 | Location Capacity Check | ERROR | WMS |
+| ENFORCE-023 | Inventory Count Approval | WARNING | WMS |
+| ENFORCE-024 | Location Hierarchy Validation | ERROR | WMS |
+| ENFORCE-025 | Stock Item Uniqueness | ERROR | WMS |
+| ENFORCE-026 | Movement Idempotency | ERROR | WMS |
+| ENFORCE-027 | Pick Order Validation | ERROR | WMS |
+| ENFORCE-028 | Receiving Goods Validation | ERROR | WMS |
+| ENFORCE-029 | Warehouse Multi-tenancy | ERROR | WMS |
+
+### 10.3 Detalhamento das Regras
+
+#### ENFORCE-021: Stock Movement Validation
+```typescript
+/**
+ * REGRA: Todo movimento de estoque DEVE validar:
+ * 1. Origem existe e tem saldo suficiente (para saídas)
+ * 2. Destino existe e tem capacidade (para entradas)
+ * 3. Produto está ativo
+ * 4. Quantidade > 0
+ * 
+ * VIOLAÇÃO: Movimento sem validação completa
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const movement = await stockMovementService.execute({
+  fromLocationId: 'LOC-001',
+  toLocationId: 'LOC-002',
+  productId: 'PROD-001',
+  quantity: 10,
+  type: MovementType.TRANSFER,
+  // Validações internas garantidas pelo Use Case
+});
+
+// ❌ ERRADO - Manipulação direta sem Use Case
+await db.insert(stockMovements).values({
+  fromLocationId: 'LOC-001',
+  toLocationId: 'LOC-002',
+  quantity: 10, // Sem validar saldo!
+});
+```
+
+#### ENFORCE-022: Location Capacity Check
+```typescript
+/**
+ * REGRA: Antes de adicionar estoque a uma localização:
+ * 1. Verificar capacidade disponível
+ * 2. Verificar tipo de localização permite o produto
+ * 3. Verificar localização está ativa
+ * 
+ * VIOLAÇÃO: Entrada sem verificar capacidade
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const location = await locationRepository.findById(locationId);
+if (!location.hasCapacityFor(quantity)) {
+  return Result.fail(new LocationCapacityExceededError(locationId));
+}
+
+// ❌ ERRADO
+await stockRepository.addToLocation(locationId, quantity); // Sem verificar!
+```
+
+#### ENFORCE-023: Inventory Count Approval
+```typescript
+/**
+ * REGRA: Contagens de inventário com divergência > 5%:
+ * 1. DEVEM ser revisadas por supervisor
+ * 2. DEVEM ter justificativa documentada
+ * 3. Não podem ser aprovadas automaticamente
+ * 
+ * VIOLAÇÃO: Aprovação automática de divergência significativa
+ * SEVERIDADE: WARNING
+ */
+
+// ✅ CORRETO
+const count = await inventoryCountService.execute(input);
+if (count.divergencePercentage > 5) {
+  count.markAsPendingApproval();
+  await notifyService.notifySupervisor(count);
+}
+
+// ❌ ERRADO
+const count = await inventoryCountService.execute(input);
+await count.approve(); // Sem verificar divergência!
+```
+
+#### ENFORCE-024: Location Hierarchy Validation
+```typescript
+/**
+ * REGRA: Hierarquia de localizações DEVE ser válida:
+ * 1. Warehouse > Zone > Aisle > Rack > Position
+ * 2. Localização filha DEVE pertencer ao mesmo warehouse
+ * 3. Não pode criar ciclos na hierarquia
+ * 
+ * VIOLAÇÃO: Hierarquia inválida ou inconsistente
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const location = Location.create({
+  warehouseId: 'WH-001',
+  parentId: 'ZONE-001', // Zone pertence a WH-001
+  type: LocationType.AISLE,
+  code: 'A01',
+});
+
+// ❌ ERRADO
+const location = Location.create({
+  warehouseId: 'WH-001',
+  parentId: 'ZONE-999', // Zone de outro warehouse!
+  type: LocationType.AISLE,
+});
+```
+
+#### ENFORCE-025: Stock Item Uniqueness
+```typescript
+/**
+ * REGRA: Combinação (productId, locationId, lotNumber) DEVE ser única:
+ * 1. Não pode ter duplicatas na mesma localização
+ * 2. Lotes diferentes são itens diferentes
+ * 3. Usar upsert para garantir unicidade
+ * 
+ * VIOLAÇÃO: Duplicata de item de estoque
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+await stockRepository.upsertItem({
+  productId: 'PROD-001',
+  locationId: 'LOC-001',
+  lotNumber: 'LOT-2026-001',
+  quantity: 100,
+});
+
+// ❌ ERRADO - Pode criar duplicata
+await stockRepository.createItem({
+  productId: 'PROD-001',
+  locationId: 'LOC-001', // Já existe!
+  quantity: 100,
+});
+```
+
+#### ENFORCE-026: Movement Idempotency
+```typescript
+/**
+ * REGRA: Movimentos de estoque DEVEM ser idempotentes:
+ * 1. Usar idempotencyKey único por operação
+ * 2. Retry não deve duplicar movimento
+ * 3. Verificar antes de executar
+ * 
+ * VIOLAÇÃO: Movimento duplicado por retry
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const result = await withIdempotency(
+  `movement-${orderId}-${lineId}`,
+  async () => {
+    return stockMovementService.execute(input);
+  }
+);
+
+// ❌ ERRADO - Sem idempotência
+const result = await stockMovementService.execute(input);
+// Retry pode duplicar!
+```
+
+#### ENFORCE-027: Pick Order Validation
+```typescript
+/**
+ * REGRA: Picking de pedidos DEVE validar:
+ * 1. Pedido existe e está em status pickable
+ * 2. Todos os itens têm estoque disponível
+ * 3. Localizações de picking são acessíveis
+ * 4. Operador tem permissão
+ * 
+ * VIOLAÇÃO: Pick sem validação completa
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const pickResult = await pickOrderUseCase.execute({
+  orderId: 'ORD-001',
+  operatorId: context.userId,
+  items: [
+    { productId: 'PROD-001', quantity: 5, fromLocationId: 'LOC-001' },
+  ],
+});
+
+if (!Result.isOk(pickResult)) {
+  // Handle error (estoque insuficiente, permissão, etc.)
+}
+```
+
+#### ENFORCE-028: Receiving Goods Validation
+```typescript
+/**
+ * REGRA: Recebimento de mercadorias DEVE:
+ * 1. Validar documento de origem (NF, PO)
+ * 2. Conferir quantidade física vs documento
+ * 3. Registrar divergências
+ * 4. Gerar movimento de entrada
+ * 
+ * VIOLAÇÃO: Recebimento sem documento ou conferência
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const receiving = await receiveGoodsUseCase.execute({
+  documentType: 'NFE',
+  documentNumber: '123456',
+  items: [
+    { 
+      productId: 'PROD-001', 
+      expectedQty: 100, 
+      receivedQty: 98, // Divergência documentada
+      toLocationId: 'LOC-RECEIVING',
+    },
+  ],
+});
+
+// ❌ ERRADO - Sem documento
+await stockRepository.addStock('PROD-001', 'LOC-001', 100);
+```
+
+#### ENFORCE-029: Warehouse Multi-tenancy
+```typescript
+/**
+ * REGRA: Todas operações WMS DEVEM:
+ * 1. Filtrar por organizationId
+ * 2. Filtrar por branchId (warehouse pertence a branch)
+ * 3. Validar permissões do usuário
+ * 4. Não vazar dados entre tenants
+ * 
+ * VIOLAÇÃO: Query sem filtro de tenant
+ * SEVERIDADE: ERROR
+ */
+
+// ✅ CORRETO
+const warehouses = await warehouseRepository.findAll({
+  organizationId: context.organizationId,
+  branchId: context.branchId,
+});
+
+// ❌ ERRADO - Sem filtro de tenant!
+const warehouses = await db.select().from(warehousesTable);
+```
+
+### 10.4 Integração com MCP
+
+As regras ENFORCE-021 a ENFORCE-029 são verificadas automaticamente pelo MCP Server:
+
+```typescript
+// Tool: validate_code
+const result = await validateCode({
+  code: sourceCode,
+  contract_ids: ['wms-rules'],
+});
+
+// Tool: check_compliance
+const compliance = await checkCompliance({
+  file_path: 'src/modules/wms/domain/use-cases/PickOrder.ts',
+});
+```
+
+### 10.5 Arquivo de Contrato
+
+Localização: `mcp-server/knowledge/contracts/wms-rules.json`
+
+```json
+{
+  "id": "wms-rules",
+  "title": "WMS Domain Rules",
+  "category": "domain",
+  "description": "Regras de domínio para operações de armazém (WMS)",
+  "rules": [
+    "ENFORCE-021: Stock movements must validate source, destination, and quantity",
+    "ENFORCE-022: Location capacity must be checked before adding stock",
+    "ENFORCE-023: Inventory counts with >5% divergence require approval",
+    "ENFORCE-024: Location hierarchy must be valid and consistent",
+    "ENFORCE-025: Stock items must be unique per (product, location, lot)",
+    "ENFORCE-026: Movements must be idempotent using idempotencyKey",
+    "ENFORCE-027: Pick orders must validate stock availability and permissions",
+    "ENFORCE-028: Receiving goods must have document and quantity check",
+    "ENFORCE-029: All WMS operations must filter by organizationId and branchId"
+  ],
+  "patterns": [
+    "Use Case pattern for all mutations",
+    "Repository pattern for data access",
+    "Result pattern for error handling",
+    "Domain Events for side effects"
+  ],
+  "created_at": "2025-12-15",
+  "updated_at": "2026-01-05"
+}
+```
+
+---
+
+## 11. ENFORCE RULES - RESUMO COMPLETO
+
+### 11.1 Todas as Regras por Módulo
+
+| Range | Módulo | Qtd | Épico |
+|-------|--------|-----|-------|
+| ENFORCE-001 a ENFORCE-010 | Financial | 10 | E7.2 |
+| ENFORCE-011 a ENFORCE-015 | Accounting | 5 | E7.3 |
+| ENFORCE-016 a ENFORCE-020 | Fiscal | 5 | E7.4 |
+| ENFORCE-021 a ENFORCE-029 | WMS | 9 | E7.8 |
+
+**Total:** 29 regras ENFORCE
+
+### 11.2 Por Severidade
+
+| Severidade | Quantidade | Ação |
+|------------|------------|------|
+| ERROR | 26 | Bloqueia commit |
+| WARNING | 3 | Aviso, permite commit |
+
+### 11.3 Verificação Automática
+
+```bash
+# Verificar todas as regras
+Tool: check_cursor_issues
+Result: Executa tsc + eslint + ENFORCE rules
+
+# Verificar arquivo específico
+Tool: check_compliance
+Args: { "file_path": "path/to/file.ts" }
+Result: Relatório de compliance com todas as regras
+```
+
+---
+
+## 12. ARQUIVOS CRÍTICOS - ATUALIZAÇÃO
+
+### 12.1 Status Atualizado (Janeiro 2026)
+
+| Arquivo | Status Anterior | Status Atual | Épico |
+|---------|-----------------|--------------|-------|
+| accounting-engine.ts | 🔴 Não tocar | 🟡 A migrar | E7.15 |
+| financial-title-generator.ts | 🔴 Não tocar | 🟡 A migrar | E7.15 |
+| sped-fiscal-generator.ts | 🔴 Não tocar | 🟡 A migrar | E7.15 |
+| sped-ecd-generator.ts | 🔴 Não tocar | 🟡 A migrar | E7.15 |
+| sped-contributions-generator.ts | 🔴 Não tocar | 🟡 A migrar | E7.15 |
+
+**NOTA:** Estes arquivos serão migrados para DDD no épico E7.15 (Fevereiro-Março 2026). Como AuraCore não está em produção, não há risco real de migração.
+
+Ver: ADR-0012 (Full DDD Migration) e ADR-0013 (Eliminate Hybrid Architecture)
+
+---
+
+## 13. VERIFICAÇÃO SEMÂNTICA (E7.16 - PLANEJADO)
+
+### 13.1 O que tsc NÃO detecta
+
+| Problema | Exemplo | Solução |
+|----------|---------|---------|
+| Referências circulares | `const x = x + 1` | Madge |
+| Uso antes da definição | `const y = z; const z = 1;` | ESLint |
+| Shadowing problemático | `function f(x) { const x = 1; }` | ESLint |
+| Self-reference em ternário | `const a = a ?? 'default'` | ESLint |
+
+### 13.2 Ferramentas Planejadas
+
+| Ferramenta | Função | Status |
+|------------|--------|--------|
+| Madge | Detecta dependências circulares entre arquivos | ⬜ A instalar |
+| ESLint rules | Detecta uso antes da definição e shadowing | ⬜ A configurar |
+| MCP tool | `check_semantic_issues` | ⬜ A implementar |
+
+### 13.3 Implementação
+
+Será implementado no épico E7.16 (Março 2026).
+
+---
+
+*Seção atualizada em: 2026-01-05 16:30:00 UTC*
+*Épico: E7.12 - Documentação 100%*
