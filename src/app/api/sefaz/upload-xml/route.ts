@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
-import { processSefazResponse } from "@/services/sefaz-processor";
+import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
+import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
+import { Result } from "@/shared/domain";
 
 /**
  * 📤 UPLOAD MANUAL DE XMLs DE NFe/CTe
@@ -79,13 +81,24 @@ export async function POST(request: NextRequest) {
         // Simula resposta SEFAZ para reusar o processor
         const soapEnvelope = wrapInSoapEnvelope(content, isNFe ? "procNFe" : "procCTe");
 
-        // REUSA o processor existente!
-        const processResult = await processSefazResponse(
-          soapEnvelope,
+        // Cria adapter de importação
+        const importAdapter = createFiscalDocumentImportAdapter(
           ctx.organizationId,
           ctx.defaultBranchId!, // Já validado acima
           ctx.userId
         );
+
+        // Cria processor
+        const processor = new SefazDocumentProcessor(importAdapter);
+
+        // Processa o XML
+        const result = await processor.processResponse(soapEnvelope);
+
+        if (Result.isFail(result)) {
+          throw new Error(result.error.message);
+        }
+
+        const processResult = result.value;
 
         // Atualiza contadores
         if (isNFe) {

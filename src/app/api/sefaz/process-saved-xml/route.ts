@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
-import { processSefazResponse } from "@/services/sefaz-processor";
 import { ensureConnection } from "@/lib/db";
+import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
+import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
+import { Result } from "@/shared/domain";
 
 /**
  * POST /api/sefaz/process-saved-xml
@@ -30,13 +32,27 @@ export async function POST(request: NextRequest) {
     console.log(`📦 Processando XML salvo para branch ${finalBranchId}...`);
     console.log(`📄 Tamanho do XML: ${xmlContent.length} bytes`);
 
-    // Processa o XML da Sefaz
-    const result = await processSefazResponse(
-      xmlContent,
+    // Cria adapter de importação
+    const importAdapter = createFiscalDocumentImportAdapter(
       ctx.organizationId,
       finalBranchId,
       ctx.userId
     );
+
+    // Cria processor
+    const processor = new SefazDocumentProcessor(importAdapter);
+
+    // Processa o XML da Sefaz
+    const processResult = await processor.processResponse(xmlContent);
+
+    if (Result.isFail(processResult)) {
+      return NextResponse.json(
+        { error: "Falha ao processar XML.", details: processResult.error.message },
+        { status: 500 }
+      );
+    }
+
+    const result = processResult.value;
 
     return NextResponse.json({
       success: true,
@@ -55,6 +71,10 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+
+
 
 
 

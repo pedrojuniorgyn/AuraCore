@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
 import { createSefazService } from "@/services/sefaz-service";
-import { processSefazResponse } from "@/services/sefaz-processor";
+import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
+import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
+import { Result } from "@/shared/domain";
 
 /**
  * POST /api/sefaz/download-nfes
@@ -58,16 +60,28 @@ export async function POST(request: NextRequest) {
       console.log("🤖 Iniciando processamento automático...");
 
       try {
-        processResult = await processSefazResponse(
-          downloadResult.xml,
+        // Cria adapter de importação
+        const importAdapter = createFiscalDocumentImportAdapter(
           ctx.organizationId,
           branchId,
           ctx.userId
         );
 
-        console.log("✅ Processamento concluído:", processResult);
+        // Cria processor
+        const processor = new SefazDocumentProcessor(importAdapter);
+
+        // Processa o XML da Sefaz
+        const result = await processor.processResponse(downloadResult.xml);
+
+        if (Result.isOk(result)) {
+          processResult = result.value;
+          console.log("✅ Processamento concluído:", processResult);
+        } else {
+          console.error("❌ Erro ao processar documentos:", result.error.message);
+          // Continua e retorna os dados da consulta mesmo se o processamento falhar
+        }
       } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("❌ Erro ao processar documentos:", errorMessage);
         // Continua e retorna os dados da consulta mesmo se o processamento falhar
       }

@@ -5,6 +5,7 @@
  */
 
 export * from './sefaz';
+export * from './document-import';
 
 
 

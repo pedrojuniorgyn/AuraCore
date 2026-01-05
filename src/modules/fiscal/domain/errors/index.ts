@@ -1,13 +1,7 @@
-export {
-  FiscalDocumentNotFoundError,
-  DocumentAlreadyAuthorizedError,
-  DocumentAlreadyCancelledError,
-  InvalidCFOPError,
-  InvalidFiscalKeyError,
-  EmptyDocumentError,
-  InvalidItemValueError,
-  InvalidStatusTransitionError,
-  InvalidNCMError,
-  CancellationDeadlineExpiredError,
-} from './FiscalErrors';
+/**
+ * Domain Errors
+ * 
+ * Exporta erros de domínio do módulo Fiscal
+ */
 
+export { FiscalDocumentError } from './FiscalDocumentError';

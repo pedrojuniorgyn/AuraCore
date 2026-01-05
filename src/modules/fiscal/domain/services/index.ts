@@ -1,17 +1,8 @@
 /**
- * Fiscal Domain Services - Public Exports
+ * Domain Services
  * 
- * E7.4.1 Reforma Tributária 2026
+ * Exporta serviços de domínio do módulo Fiscal
  */
 
-// Tax Engines (from engines directory)
-export * from '../tax/engines/CurrentTaxEngine';
-export * from '../tax/engines/TransitionTaxEngine';
-export * from '../tax/engines/NewTaxEngine';
-export * from '../tax/engines/TaxEngineFactory';
-
-// Domain Services - TODO: Implementar quando necessário
-// export * from '../tax/services/IbsCbsCalculationService';
-// export * from '../tax/services/TaxComparisonService';
-// export * from '../tax/services/CompensationCalculationService';
-
+export { SefazDocumentProcessor } from './SefazDocumentProcessor';
+export type { ProcessDocumentResult, DocumentImporter, SefazDocZip, SefazDistDFeResponse } from './SefazDocumentProcessor';
