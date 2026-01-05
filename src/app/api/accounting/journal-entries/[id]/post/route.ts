@@ -27,7 +27,16 @@ export async function POST(
     const resolvedParams = await params;
     const fiscalDocumentId = BigInt(resolvedParams.id);
     const userId = session.user.id;
-    const organizationId = BigInt(session.user.organizationId);
+    
+    // Validar organizationId antes de converter para BigInt
+    const rawOrgId = session.user.organizationId;
+    if (!rawOrgId || isNaN(Number(rawOrgId))) {
+      return NextResponse.json(
+        { success: false, error: 'organizationId inválido ou ausente' },
+        { status: 400 }
+      );
+    }
+    const organizationId = BigInt(rawOrgId);
 
     // DDD: Instanciar Use Case com dependências
     const repository = createJournalEntryRepository();

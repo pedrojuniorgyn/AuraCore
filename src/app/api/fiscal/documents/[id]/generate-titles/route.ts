@@ -96,8 +96,14 @@ export async function POST(
 
     // 5. Processar resultado
     if (result.isFailure) {
+      const errorMessage = result.error instanceof Error 
+        ? result.error.message 
+        : typeof result.error === 'string'
+          ? result.error
+          : 'Erro desconhecido ao processar requisição';
+      
       return NextResponse.json(
-        { error: result.error.message },
+        { error: errorMessage },
         { status: 400 }
       );
     }
