@@ -116,8 +116,8 @@ export class GenerateSpedContributionsUseCase {
       }
 
       const taxTotals: TaxTotalsContrib = {
-        totalDebit: totalsResult.value.totalDebit,
-        totalCredit: totalsResult.value.totalCredit,
+        baseDebito: totalsResult.value.baseDebito,
+        baseCredito: totalsResult.value.baseCredito,
       };
 
       // Preparar dados para o generator
