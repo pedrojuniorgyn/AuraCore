@@ -51,8 +51,14 @@ export async function POST(
     });
 
     if (Result.isFail(result)) {
+      const errorMessage = result.error instanceof Error 
+        ? result.error.message 
+        : typeof result.error === 'string'
+          ? result.error
+          : 'Erro desconhecido ao gerar lançamento contábil';
+      
       return NextResponse.json(
-        { error: result.error.message },
+        { error: errorMessage },
         { status: 400 }
       );
     }

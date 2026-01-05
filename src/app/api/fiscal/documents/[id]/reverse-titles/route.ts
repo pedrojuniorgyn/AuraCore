@@ -15,13 +15,8 @@ export async function POST(
 ) {
   try {
     // 1. Validar contexto de tenant
+    // getTenantContext() lança NextResponse se não autenticado
     const ctx = await getTenantContext();
-    if (!ctx) {
-      return NextResponse.json(
-        { error: 'Contexto de tenant não encontrado' },
-        { status: 401 }
-      );
-    }
 
     // 2. Garantir que os valores são números válidos
     const orgId = typeof ctx.organizationId === 'number'
@@ -64,6 +59,11 @@ export async function POST(
       message: "Títulos revertidos com sucesso",
     });
   } catch (error: unknown) {
+    // Se getTenantContext() lançou um NextResponse, retornar diretamente
+    if (error instanceof NextResponse) {
+      return error;
+    }
+
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao reverter títulos:", error);
     return NextResponse.json(
