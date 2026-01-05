@@ -6,6 +6,7 @@ import { DrizzleFiscalDocumentRepository } from '../persistence/DrizzleFiscalDoc
 
 // Services
 import { MockSefazService } from '../services/MockSefazService';
+import { SefazGatewayAdapter, createSefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
 import { MockPdfGenerator } from '../services/MockPdfGenerator';
 import { FiscalAccountingIntegration } from '../../application/services/FiscalAccountingIntegration';
 
@@ -31,7 +32,11 @@ export function registerFiscalModule(): void {
   container.registerSingleton(TOKENS.FiscalDocumentRepository, DrizzleFiscalDocumentRepository);
 
   // Services
-  container.registerSingleton(TOKENS.SefazService, MockSefazService);
+  // SEFAZ: Usar adapter real (com modo mock interno) ao invés de MockSefazService
+  // O adapter detecta automaticamente NODE_ENV e usa mock em development/test
+  const sefazAdapter = createSefazGatewayAdapter();
+  container.registerInstance(TOKENS.SefazService, sefazAdapter);
+  
   container.registerSingleton(TOKENS.FiscalDocumentPdfGenerator, MockPdfGenerator);
   container.registerSingleton(TOKENS.FiscalAccountingIntegration, FiscalAccountingIntegration);
 
