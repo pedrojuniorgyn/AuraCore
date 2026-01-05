@@ -194,6 +194,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
         SELECT TOP 5 id, code, name, is_analytical
         FROM chart_of_accounts
         WHERE parent_id = ${parentAccountId}
+          AND organization_id = ${organizationId}
           AND is_analytical = 1
           AND deleted_at IS NULL
         ORDER BY code ASC
