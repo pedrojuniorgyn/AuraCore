@@ -8,3 +8,4 @@ export { ProcessTaxCreditsUseCase, createProcessTaxCreditsUseCase } from './Proc
 export type { ProcessTaxCreditsRequest, ProcessTaxCreditsResponse } from './ProcessTaxCreditsUseCase';
 
 export { GenerateSpedFiscalUseCase } from './GenerateSpedFiscalUseCase';
+export { GenerateSpedEcdUseCase } from './GenerateSpedEcdUseCase';

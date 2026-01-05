@@ -17,12 +17,17 @@ import { Result } from "@/shared/domain";
 import {
   ISpedDataRepository,
   SpedFiscalPeriod,
+  SpedEcdPeriod,
   OrganizationData,
   PartnerData,
   ProductData,
   InvoiceData,
   CteData,
   ApurationData,
+  ChartAccountData,
+  JournalEntryDataEcd,
+  JournalEntryLineData,
+  AccountBalanceData,
 } from "../../domain/ports/ISpedDataRepository";
 
 export class DrizzleSpedDataRepository implements ISpedDataRepository {
@@ -230,6 +235,166 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
       return Result.fail(
         new Error(
           `Erro ao buscar apuração: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  // ============================================================================
+  // Métodos para SPED ECD (Contábil)
+  // ============================================================================
+
+  async getChartOfAccounts(
+    period: SpedEcdPeriod
+  ): Promise<Result<ChartAccountData[], Error>> {
+    try {
+      const result = await db.execute(sql`
+        WITH RECURSIVE AccountHierarchy AS (
+          -- Contas raiz
+          SELECT 
+            ca.code,
+            ca.name,
+            ca.type,
+            CAST(NULL AS VARCHAR(50)) as parentCode,
+            ca.is_analytical as isAnalytical
+          FROM chart_of_accounts ca
+          WHERE ca.organization_id = ${period.organizationId}
+            AND ca.parent_id IS NULL
+            AND ca.deleted_at IS NULL
+          
+          UNION ALL
+          
+          -- Contas filhas
+          SELECT 
+            ca.code,
+            ca.name,
+            ca.type,
+            parent.code as parentCode,
+            ca.is_analytical as isAnalytical
+          FROM chart_of_accounts ca
+          INNER JOIN AccountHierarchy parent ON parent.code = (
+            SELECT code FROM chart_of_accounts WHERE id = ca.parent_id
+          )
+          WHERE ca.organization_id = ${period.organizationId}
+            AND ca.deleted_at IS NULL
+        )
+        SELECT code, name, type, parentCode, isAnalytical
+        FROM AccountHierarchy
+        ORDER BY code
+      `);
+
+      const rows = (result.recordset || result) as unknown as ChartAccountData[];
+
+      return Result.ok(rows);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar plano de contas: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  async getJournalEntries(
+    period: SpedEcdPeriod
+  ): Promise<Result<JournalEntryDataEcd[], Error>> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          CAST(je.id AS VARCHAR(50)) as id,
+          je.entry_number as entryNumber,
+          je.entry_date as entryDate,
+          je.description
+        FROM journal_entries je
+        WHERE je.organization_id = ${period.organizationId}
+          AND YEAR(je.entry_date) = ${period.referenceYear}
+          AND je.status = 'POSTED'
+          AND je.deleted_at IS NULL
+        ORDER BY je.entry_date, je.entry_number
+      `);
+
+      const rows = (result.recordset || result) as unknown as JournalEntryDataEcd[];
+
+      return Result.ok(rows);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar lançamentos contábeis: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  async getJournalEntryLines(
+    entryId: string,
+    period: SpedEcdPeriod
+  ): Promise<Result<JournalEntryLineData[], Error>> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          jel.line_number as lineNumber,
+          ca.code as accountCode,
+          jel.debit_amount as debitAmount,
+          jel.credit_amount as creditAmount,
+          jel.description
+        FROM journal_entry_lines jel
+        INNER JOIN chart_of_accounts ca ON ca.id = jel.chart_account_id
+        WHERE jel.journal_entry_id = ${entryId}
+          AND ca.organization_id = ${period.organizationId}
+        ORDER BY jel.line_number
+      `);
+
+      const rows = (result.recordset || result) as unknown as JournalEntryLineData[];
+
+      return Result.ok(rows);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar partidas do lançamento: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  async getAccountBalances(
+    period: SpedEcdPeriod
+  ): Promise<Result<AccountBalanceData[], Error>> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          ca.code,
+          ISNULL(SUM(jel.debit_amount), 0) as totalDebit,
+          ISNULL(SUM(jel.credit_amount), 0) as totalCredit
+        FROM chart_of_accounts ca
+        LEFT JOIN journal_entry_lines jel ON jel.chart_account_id = ca.id
+        LEFT JOIN journal_entries je ON je.id = jel.journal_entry_id
+        WHERE ca.organization_id = ${period.organizationId}
+          AND ca.deleted_at IS NULL
+          AND (je.id IS NULL OR (
+            YEAR(je.entry_date) = ${period.referenceYear} 
+            AND je.status = 'POSTED'
+            AND je.deleted_at IS NULL
+          ))
+        GROUP BY ca.code
+        HAVING ISNULL(SUM(jel.debit_amount), 0) <> 0 OR ISNULL(SUM(jel.credit_amount), 0) <> 0
+        ORDER BY ca.code
+      `);
+
+      const rows = (result.recordset || result) as unknown as AccountBalanceData[];
+
+      return Result.ok(rows);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar saldos das contas: ${
             error instanceof Error ? error.message : 'Unknown'
           }`
         )

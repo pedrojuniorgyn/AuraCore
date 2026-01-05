@@ -76,6 +76,45 @@ export interface ApurationData {
 }
 
 // ============================================================================
+// Types para SPED ECD (Contábil)
+// ============================================================================
+
+export interface SpedEcdPeriod {
+  organizationId: bigint;
+  referenceYear: number;
+  bookType: 'G' | 'R'; // G = Livro Geral, R = Livro Razão Auxiliar
+}
+
+export interface ChartAccountData {
+  code: string;
+  name: string;
+  type: string; // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  parentCode: string | null;
+  isAnalytical: boolean;
+}
+
+export interface JournalEntryDataEcd {
+  id: string;
+  entryNumber: string;
+  entryDate: Date;
+  description: string;
+}
+
+export interface JournalEntryLineData {
+  lineNumber: number;
+  accountCode: string;
+  debitAmount: number;
+  creditAmount: number;
+  description: string;
+}
+
+export interface AccountBalanceData {
+  code: string;
+  totalDebit: number;
+  totalCredit: number;
+}
+
+// ============================================================================
 // Repository Interface
 // ============================================================================
 
@@ -109,5 +148,29 @@ export interface ISpedDataRepository {
    * Busca dados de apuração de ICMS no período
    */
   getApuration(period: SpedFiscalPeriod): Promise<Result<ApurationData, Error>>;
+
+  // ============================================================================
+  // Métodos para SPED ECD (Contábil)
+  // ============================================================================
+
+  /**
+   * Busca plano de contas da organização
+   */
+  getChartOfAccounts(period: SpedEcdPeriod): Promise<Result<ChartAccountData[], Error>>;
+
+  /**
+   * Busca lançamentos contábeis do período
+   */
+  getJournalEntries(period: SpedEcdPeriod): Promise<Result<JournalEntryDataEcd[], Error>>;
+
+  /**
+   * Busca linhas (partidas) de um lançamento contábil
+   */
+  getJournalEntryLines(entryId: string, period: SpedEcdPeriod): Promise<Result<JournalEntryLineData[], Error>>;
+
+  /**
+   * Busca saldos das contas no período
+   */
+  getAccountBalances(period: SpedEcdPeriod): Promise<Result<AccountBalanceData[], Error>>;
 }
 

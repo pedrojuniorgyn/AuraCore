@@ -69,3 +69,16 @@ export function createGenerateSpedFiscalUseCase(): GenerateSpedFiscalUseCase {
   return new GenerateSpedFiscalUseCase(generator, logger);
 }
 
+// SPED ECD (Contábil) imports
+import { SpedEcdGenerator } from '../../domain/services/SpedEcdGenerator';
+import { GenerateSpedEcdUseCase } from '../../application/use-cases/GenerateSpedEcdUseCase';
+
+/**
+ * Factory: Create SPED ECD Generator Use Case
+ */
+export function createGenerateSpedEcdUseCase(): GenerateSpedEcdUseCase {
+  const repository = createSpedDataRepository();
+  const generator = new SpedEcdGenerator();
+  return new GenerateSpedEcdUseCase(repository, generator);
+}
+
