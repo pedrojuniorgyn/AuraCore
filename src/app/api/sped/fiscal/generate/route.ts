@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { generateSpedFiscal, validateSpedData } from "@/services/sped-fiscal-generator";
+import { createGenerateSpedFiscalUseCase } from "@/modules/fiscal/infrastructure/di/FiscalModule";
 
 /**
  * POST /api/sped/fiscal/generate
  * Gera arquivo SPED Fiscal (EFD-ICMS/IPI)
  * 
  * Body: { month: 12, year: 2024, finality: "ORIGINAL" }
+ * 
+ * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
  */
 export async function POST(req: Request) {
   try {
@@ -25,36 +27,54 @@ export async function POST(req: Request) {
       );
     }
 
-    const config = {
-      organizationId: BigInt(session.user.organizationId),
-      referenceMonth: parseInt(month),
-      referenceYear: parseInt(year),
-      finality,
-    };
-
-    // Validar dados antes de gerar
-    const validation = await validateSpedData(config);
-    if (!validation.valid) {
+    // Validar organizationId antes de converter para BigInt
+    const rawOrgId = session.user.organizationId;
+    if (!rawOrgId || isNaN(Number(rawOrgId))) {
       return NextResponse.json(
-        { 
-          error: "Dados inválidos para geração do SPED",
-          details: validation.errors 
-        },
+        { error: 'organizationId inválido ou ausente' },
         { status: 400 }
       );
     }
 
     console.log(`📄 Gerando SPED Fiscal ${month}/${year}...`);
 
-    const spedContent = await generateSpedFiscal(config);
+    // DDD: Instanciar Use Case com dependências
+    const useCase = createGenerateSpedFiscalUseCase();
+
+    // Executar Use Case
+    const result = await useCase.execute({
+      period: {
+        organizationId: BigInt(rawOrgId),
+        referenceMonth: parseInt(month),
+        referenceYear: parseInt(year),
+        finality,
+      },
+    });
+
+    // Processar resultado
+    if (result.isFailure) {
+      const errorMessage = result.error instanceof Error 
+        ? result.error.message 
+        : typeof result.error === 'string'
+          ? result.error
+          : 'Erro desconhecido ao gerar SPED Fiscal';
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: 400 }
+      );
+    }
+
+    // Obter conteúdo do documento SPED como Buffer (ISO-8859-1)
+    const spedBuffer = result.value.toBuffer();
 
     // Gerar nome do arquivo
-    const fileName = `SPED_FISCAL_${config.referenceMonth.toString().padStart(2, '0')}_${config.referenceYear}.txt`;
+    const fileName = `SPED_FISCAL_${String(month).padStart(2, '0')}_${year}.txt`;
 
-    return new NextResponse(spedContent, {
+    return new NextResponse(spedBuffer, {
       status: 200,
       headers: {
-        "Content-Type": "text/plain; charset=UTF-8",
+        "Content-Type": "text/plain; charset=ISO-8859-1",
         "Content-Disposition": `attachment; filename="${fileName}"`,
       },
     });
@@ -67,6 +87,10 @@ export async function POST(req: Request) {
     );
   }
 }
+
+
+
+
 
 
 

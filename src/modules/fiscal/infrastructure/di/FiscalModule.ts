@@ -48,3 +48,24 @@ export function registerFiscalModule(): void {
   container.registerSingleton(TOKENS.CalculateTaxesUseCase, CalculateTaxesUseCase);
 }
 
+/**
+ * SPED Module Factories (DDD Architecture)
+ * 
+ * Factories para criação de Use Cases SPED sem container DI
+ */
+
+import { createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
+import { SpedFiscalGenerator } from '../../domain/services/SpedFiscalGenerator';
+import { GenerateSpedFiscalUseCase } from '../../application/use-cases/GenerateSpedFiscalUseCase';
+import { ConsoleLogger } from '@/shared/infrastructure/logging/ConsoleLogger';
+
+/**
+ * Factory: Create SPED Fiscal Generator Use Case
+ */
+export function createGenerateSpedFiscalUseCase(): GenerateSpedFiscalUseCase {
+  const repository = createSpedDataRepository();
+  const generator = new SpedFiscalGenerator(repository);
+  const logger = new ConsoleLogger();
+  return new GenerateSpedFiscalUseCase(generator, logger);
+}
+

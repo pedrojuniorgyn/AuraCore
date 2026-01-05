@@ -5,3 +5,4 @@
  */
 
 export { FiscalDocumentError } from './FiscalDocumentError';
+export { SpedError } from './SpedError';
