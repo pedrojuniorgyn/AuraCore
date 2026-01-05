@@ -82,3 +82,16 @@ export function createGenerateSpedEcdUseCase(): GenerateSpedEcdUseCase {
   return new GenerateSpedEcdUseCase(repository, generator);
 }
 
+// SPED Contributions (PIS/COFINS) imports
+import { SpedContributionsGenerator } from '../../domain/services/SpedContributionsGenerator';
+import { GenerateSpedContributionsUseCase } from '../../application/use-cases/GenerateSpedContributionsUseCase';
+
+/**
+ * Factory: Create SPED Contributions Generator Use Case
+ */
+export function createGenerateSpedContributionsUseCase(): GenerateSpedContributionsUseCase {
+  const repository = createSpedDataRepository();
+  const generator = new SpedContributionsGenerator();
+  return new GenerateSpedContributionsUseCase(repository, generator);
+}
+

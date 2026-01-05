@@ -18,6 +18,7 @@ import {
   ISpedDataRepository,
   SpedFiscalPeriod,
   SpedEcdPeriod,
+  SpedContributionsPeriod,
   OrganizationData,
   PartnerData,
   ProductData,
@@ -28,6 +29,9 @@ import {
   JournalEntryDataEcd,
   JournalEntryLineData,
   AccountBalanceData,
+  CteContribData,
+  NFeContribData,
+  TaxTotalsContribData,
 } from "../../domain/ports/ISpedDataRepository";
 
 export class DrizzleSpedDataRepository implements ISpedDataRepository {
@@ -395,6 +399,121 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
       return Result.fail(
         new Error(
           `Erro ao buscar saldos das contas: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  // ============================================================================
+  // Métodos para SPED Contributions (PIS/COFINS)
+  // ============================================================================
+
+  async getCtesForContributions(
+    period: SpedContributionsPeriod
+  ): Promise<Result<CteContribData[], Error>> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          cd.cte_number as cteNumber,
+          cd.access_key as accessKey,
+          cd.issue_date as issueDate,
+          cd.customer_document as customerDocument,
+          cd.cfop,
+          cd.total_amount as totalAmount,
+          ISNULL(cd.icms_amount, 0) as icmsAmount
+        FROM cargo_documents cd
+        WHERE cd.organization_id = ${period.organizationId}
+          AND MONTH(cd.issue_date) = ${period.referenceMonth}
+          AND YEAR(cd.issue_date) = ${period.referenceYear}
+          AND cd.deleted_at IS NULL
+        ORDER BY cd.issue_date, cd.cte_number
+      `);
+
+      const rows = (result.recordset || result) as unknown as CteContribData[];
+
+      return Result.ok(rows);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar CTes para Contribuições: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  async getNFesEntradaForContributions(
+    period: SpedContributionsPeriod
+  ): Promise<Result<NFeContribData[], Error>> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          fd.document_number as documentNumber,
+          fd.access_key as accessKey,
+          fd.issue_date as issueDate,
+          bp.document as partnerDocument,
+          fd.net_amount as netAmount,
+          fd.cfop
+        FROM fiscal_documents fd
+        INNER JOIN business_partners bp ON bp.id = fd.partner_id
+        WHERE fd.organization_id = ${period.organizationId}
+          AND MONTH(fd.issue_date) = ${period.referenceMonth}
+          AND YEAR(fd.issue_date) = ${period.referenceYear}
+          AND fd.document_type = 'NFE'
+          AND fd.operation_type = 'ENTRADA'
+          AND fd.deleted_at IS NULL
+        ORDER BY fd.issue_date, fd.document_number
+      `);
+
+      const rows = (result.recordset || result) as unknown as NFeContribData[];
+
+      return Result.ok(rows);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar NFes de entrada para Contribuições: ${
+            error instanceof Error ? error.message : 'Unknown'
+          }`
+        )
+      );
+    }
+  }
+
+  async getTaxTotalsContributions(
+    period: SpedContributionsPeriod
+  ): Promise<Result<TaxTotalsContribData, Error>> {
+    try {
+      // Buscar totais de débito e crédito de transações relacionadas a PIS/COFINS
+      const result = await db.execute(sql`
+        SELECT 
+          ISNULL(SUM(CASE WHEN je.source_type = 'TAX_DEBIT' THEN je.total_debit ELSE 0 END), 0) as totalDebit,
+          ISNULL(SUM(CASE WHEN je.source_type = 'TAX_CREDIT' THEN je.total_credit ELSE 0 END), 0) as totalCredit
+        FROM journal_entries je
+        WHERE je.organization_id = ${period.organizationId}
+          AND MONTH(je.entry_date) = ${period.referenceMonth}
+          AND YEAR(je.entry_date) = ${period.referenceYear}
+          AND je.status = 'POSTED'
+          AND je.deleted_at IS NULL
+      `);
+
+      const rows = (result.recordset || result) as unknown as {
+        totalDebit: number;
+        totalCredit: number;
+      }[];
+
+      const totals: TaxTotalsContribData = {
+        totalDebit: rows[0]?.totalDebit ?? 0,
+        totalCredit: rows[0]?.totalCredit ?? 0,
+      };
+
+      return Result.ok(totals);
+    } catch (error) {
+      return Result.fail(
+        new Error(
+          `Erro ao buscar totais de PIS/COFINS: ${
             error instanceof Error ? error.message : 'Unknown'
           }`
         )

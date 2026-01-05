@@ -115,6 +115,41 @@ export interface AccountBalanceData {
 }
 
 // ============================================================================
+// Types para SPED Contributions (PIS/COFINS)
+// ============================================================================
+
+export interface SpedContributionsPeriod {
+  organizationId: bigint;
+  referenceMonth: number; // 1-12
+  referenceYear: number;
+  finality: 'ORIGINAL' | 'SUBSTITUTION';
+}
+
+export interface CteContribData {
+  cteNumber: string;
+  accessKey: string;
+  issueDate: Date;
+  customerDocument: string;
+  cfop: string;
+  totalAmount: number;
+  icmsAmount: number;
+}
+
+export interface NFeContribData {
+  documentNumber: string;
+  accessKey: string;
+  issueDate: Date;
+  partnerDocument: string;
+  netAmount: number;
+  cfop: string;
+}
+
+export interface TaxTotalsContribData {
+  totalDebit: number;
+  totalCredit: number;
+}
+
+// ============================================================================
 // Repository Interface
 // ============================================================================
 
@@ -172,5 +207,24 @@ export interface ISpedDataRepository {
    * Busca saldos das contas no período
    */
   getAccountBalances(period: SpedEcdPeriod): Promise<Result<AccountBalanceData[], Error>>;
+
+  // ============================================================================
+  // Métodos para SPED Contributions (PIS/COFINS)
+  // ============================================================================
+
+  /**
+   * Busca CTes de saída do período (receitas)
+   */
+  getCtesForContributions(period: SpedContributionsPeriod): Promise<Result<CteContribData[], Error>>;
+
+  /**
+   * Busca NFes de entrada do período (créditos)
+   */
+  getNFesEntradaForContributions(period: SpedContributionsPeriod): Promise<Result<NFeContribData[], Error>>;
+
+  /**
+   * Busca totais de débito e crédito de PIS/COFINS do período
+   */
+  getTaxTotalsContributions(period: SpedContributionsPeriod): Promise<Result<TaxTotalsContribData, Error>>;
 }
 
