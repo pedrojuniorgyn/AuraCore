@@ -75,21 +75,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5. Criar Use Case
+    // 5. Validar que defaultBranchId não é null (ENFORCE-033)
+    if (ctx.defaultBranchId === null || ctx.defaultBranchId === undefined) {
+      return NextResponse.json(
+        { success: false, error: 'Branch não configurado para este usuário' },
+        { status: 400 }
+      );
+    }
+
+    // 6. Criar Use Case
     const useCase = createGenerateSpedContributionsUseCase();
 
-    // 6. Executar geração
+    // 7. Executar geração
     console.log(`📄 Gerando SPED Contributions ${referenceMonth}/${referenceYear} (${finality}) para org ${ctx.organizationId}...`);
 
     const result = await useCase.execute({
       organizationId: ctx.organizationId,
-      branchId: ctx.defaultBranchId,
+      branchId: ctx.defaultBranchId,  // Agora garantido não-null
       referenceMonth,
       referenceYear,
       finality: finality as 'ORIGINAL' | 'SUBSTITUTION',
     });
 
-    // 7. Tratar resultado
+    // 8. Tratar resultado
     if (Result.isFail(result)) {
       console.error('❌ Erro ao gerar SPED Contributions:', result.error);
       return NextResponse.json(
@@ -98,14 +106,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // 8. Gerar buffer com encoding ISO-8859-1 (método já faz isso corretamente)
+    // 9. Gerar buffer com encoding ISO-8859-1 (método já faz isso corretamente)
     const buffer = result.value.toBuffer();
 
     const fileName = `SPED_CONTRIBUICOES_${String(referenceMonth).padStart(2, '0')}_${referenceYear}.txt`;
 
     console.log(`✅ SPED Contributions gerado com sucesso: ${fileName}`);
 
-    // 9. Retornar arquivo
+    // 10. Retornar arquivo
     return new NextResponse(buffer, {
       status: 200,
       headers: {

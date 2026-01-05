@@ -115,7 +115,7 @@ export class SpedContributionsGenerator {
 
       // Criar documento final
       return SpedDocument.create({
-        documentType: 'EFD_CONTRIBUTIONS',
+        documentType: 'EFD_CONTRIBUICOES',  // Valor correto do enum SpedDocumentType
         blocks: blocks,
       });
     } catch (error: unknown) {
