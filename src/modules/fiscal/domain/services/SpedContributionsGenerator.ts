@@ -114,7 +114,10 @@ export class SpedContributionsGenerator {
       blocks.push(block9Result.value);
 
       // Criar documento final
-      return SpedDocument.create(blocks);
+      return SpedDocument.create({
+        documentType: 'EFD_CONTRIBUTIONS',
+        blocks: blocks,
+      });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return Result.fail(new SpedError(`Erro ao gerar SPED Contribuições: ${errorMessage}`));

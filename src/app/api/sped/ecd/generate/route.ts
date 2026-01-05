@@ -73,7 +73,7 @@ export async function POST(req: Request) {
 
     const result = await useCase.execute({
       organizationId: ctx.organizationId,
-      branchId: ctx.branchId,
+      branchId: ctx.defaultBranchId,
       referenceYear,
       bookType,
     });
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     }
 
     // 8. Converter para texto com encoding ISO-8859-1
-    const textContent = result.value.toText();
+    const textContent = result.value.toFileContent();
     
     // SPED requer encoding ISO-8859-1 (latin1), não UTF-8
     const encoder = new TextEncoder();

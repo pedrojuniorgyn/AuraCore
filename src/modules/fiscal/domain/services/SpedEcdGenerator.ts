@@ -121,7 +121,10 @@ export class SpedEcdGenerator {
       blocks.push(block9Result.value);
 
       // Criar documento final
-      return SpedDocument.create(blocks);
+      return SpedDocument.create({
+        documentType: 'ECD',
+        blocks: blocks,
+      });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return Result.fail(new SpedError(`Erro ao gerar SPED ECD: ${errorMessage}`));
