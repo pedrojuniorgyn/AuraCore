@@ -7,19 +7,185 @@
   "severity": "critical",
   "rules": [
     {
+      "id": "TYPE-HIERARCHY",
+      "name": "Hierarquia de tipos obrigatória",
+      "description": "Seguir ordem de preferência: 1.Interface → 2.Union → 3.Generic → 4.Record → 5.unknown → ❌any",
+      "pattern": "**/*.ts",
+      "severity": "critical",
+      "hierarchy": [
+        "1️⃣ Interface/Type específico (melhor) - FiscalDocument, ICellRendererParams",
+        "2️⃣ Union types - string | number | null",
+        "3️⃣ Generics - Result<T, E>, Array<T>",
+        "4️⃣ Record<K, V> - Record<string, string>",
+        "5️⃣ unknown (último recurso válido) - catch blocks, JSON.parse",
+        "❌ any (PROIBIDO)"
+      ],
+      "message": "Use tipo mais específico possível. Consulte hierarquia TYPE-HIERARCHY",
+      "examples": {
+        "correct": [
+          "params: ICellRendererParams // 1️⃣ tipo específico do AG Grid",
+          "status: 'pending' | 'approved' // 2️⃣ union type",
+          "items: Array<T> // 3️⃣ generic",
+          "config: Record<string, string> // 4️⃣ Record",
+          "catch (error: unknown) // 5️⃣ unknown com type guard"
+        ],
+        "incorrect": [
+          "params: any // ❌ tipo específico existe",
+          "params: unknown // ❌ tipo específico existe (ICellRendererParams)",
+          "status: string // ❌ union type é mais preciso"
+        ]
+      }
+    },
+    {
       "id": "TYPE-001",
       "name": "Zero uso de any",
       "description": "NUNCA usar any, nem em testes",
       "pattern": "**/*.ts",
       "forbidden_patterns": [": any", "as any", "<any>", "any[]"],
       "severity": "critical",
-      "message": "Proibido usar 'any'. Use tipo explícito ou 'unknown'",
+      "message": "Proibido usar 'any'. Use tipo explícito seguindo TYPE-HIERARCHY",
       "alternatives": [
-        "unknown - quando tipo é realmente desconhecido",
-        "T extends Record<string, unknown> - para objetos genéricos",
-        "void - para funções sem retorno",
-        "never - para código inalcançável"
+        "Interface/Type específico - quando estrutura é conhecida",
+        "Union types - quando poucos tipos possíveis",
+        "Generics - quando tipo varia mas mantém consistência",
+        "Record<K, V> - para objetos de configuração",
+        "unknown - quando tipo é genuinamente desconhecido (+ type guard obrigatório)"
       ]
+    },
+    {
+      "id": "TYPE-UNKNOWN-001",
+      "name": "unknown permitido em catch blocks",
+      "description": "catch (error: unknown) com type guard obrigatório",
+      "pattern": "**/*.ts",
+      "context": "try-catch",
+      "severity": "high",
+      "message": "Em catch blocks, use 'unknown' + type guard",
+      "examples": {
+        "correct": [
+          "catch (error: unknown) {",
+          "  const message = error instanceof Error ? error.message : String(error);",
+          "  console.error(message);",
+          "}"
+        ],
+        "incorrect": [
+          "catch (error: any) { ... }",
+          "catch (error) { ... } // tipo implícito any"
+        ]
+      },
+      "utilities": ["getErrorMessage(error: unknown): string from @/shared/types"]
+    },
+    {
+      "id": "TYPE-UNKNOWN-002",
+      "name": "unknown permitido em JSON.parse não validado",
+      "description": "JSON.parse retorna unknown até validação",
+      "pattern": "**/*.ts",
+      "context": "json-parsing",
+      "severity": "high",
+      "message": "Após JSON.parse, validar antes de usar",
+      "examples": {
+        "correct": [
+          "const data: unknown = JSON.parse(jsonString);",
+          "if (isFiscalDocument(data)) {",
+          "  // TypeScript sabe que é FiscalDocument",
+          "  console.log(data.documentNumber);",
+          "}"
+        ],
+        "incorrect": [
+          "const data = JSON.parse(jsonString); // tipo implícito any",
+          "const data = JSON.parse(jsonString) as FiscalDocument; // sem validação"
+        ]
+      },
+      "utilities": ["parseJsonSafe<T>(json, validator) from @/shared/types"]
+    },
+    {
+      "id": "TYPE-UNKNOWN-003",
+      "name": "unknown permitido em APIs externas sem contrato",
+      "description": "APIs sem tipos disponíveis retornam unknown",
+      "pattern": "**/*.ts",
+      "context": "external-api",
+      "severity": "medium",
+      "message": "Para APIs externas sem tipos, use unknown + validação",
+      "examples": {
+        "correct": [
+          "const response: unknown = await externalApi.call();",
+          "if (isApiResponse(response, isFiscalDocument)) {",
+          "  // response.data é FiscalDocument",
+          "}"
+        ]
+      },
+      "utilities": ["isApiResponse<T>(value, validator) from @/shared/types"]
+    },
+    {
+      "id": "TYPE-UNKNOWN-004",
+      "name": "unknown permitido em event handlers genéricos customizados",
+      "description": "Eventos customizados sem tipo definido",
+      "pattern": "**/*.ts",
+      "context": "custom-events",
+      "severity": "low",
+      "message": "Eventos customizados podem usar unknown, mas prefira tipo específico",
+      "examples": {
+        "correct_prefer": "onDocumentEvent: (data: DocumentEventData) => void",
+        "correct_fallback": "onCustomEvent: (data: unknown) => void // quando tipo varia muito"
+      },
+      "note": "Para eventos React/DOM, SEMPRE use tipo específico (React.MouseEvent, etc.)"
+    },
+    {
+      "id": "TYPE-UNKNOWN-005",
+      "name": "unknown permitido em formulários dinâmicos como valor de Record",
+      "description": "Campos de formulário com tipos variados",
+      "pattern": "**/*.ts",
+      "context": "dynamic-forms",
+      "severity": "medium",
+      "message": "Para formulários dinâmicos, use Record<string, unknown>",
+      "examples": {
+        "correct": [
+          "formData: Record<string, unknown>",
+          "const name = getFormValue(formData, 'name', isString)"
+        ],
+        "incorrect": [
+          "formData: Record<string, any>",
+          "formData: unknown // Record é mais preciso"
+        ]
+      },
+      "utilities": [
+        "isFormData(value: unknown): value is Record<string, unknown>",
+        "getFormValue<T>(formData, key, validator)"
+      ]
+    },
+    {
+      "id": "TYPE-UNKNOWN-INCORRECT",
+      "name": "Uso INCORRETO de unknown",
+      "description": "Casos onde unknown NÃO deve ser usado",
+      "pattern": "**/*.ts",
+      "severity": "critical",
+      "forbidden_cases": [
+        {
+          "incorrect": "params: unknown // em AG Grid",
+          "correct": "params: ICellRendererParams",
+          "reason": "Tipo específico existe na lib"
+        },
+        {
+          "incorrect": "event: unknown // em React",
+          "correct": "event: React.MouseEvent",
+          "reason": "Tipo específico existe no React"
+        },
+        {
+          "incorrect": "value: unknown // quando sabe tipos possíveis",
+          "correct": "value: string | number",
+          "reason": "Union type é mais preciso"
+        },
+        {
+          "incorrect": "config: unknown",
+          "correct": "config: Record<string, string>",
+          "reason": "Record é mais preciso que unknown"
+        },
+        {
+          "incorrect": "callback: (x: unknown) => unknown",
+          "correct": "callback: <T>(x: T) => T",
+          "reason": "Generic preserva tipo"
+        }
+      ],
+      "message": "unknown só quando tipo é GENUINAMENTE desconhecido. Consulte TYPE-HIERARCHY"
     },
     {
       "id": "TYPE-002",

@@ -272,11 +272,74 @@ src/modules/{module}/
 
 ### TypeScript Strict
 
-- ❌ NUNCA usar `any` (usar `unknown` ou tipo explícito)
+- ❌ NUNCA usar `any` (usar tipo específico, generic, ou `unknown`)
 - ❌ NUNCA usar `@ts-ignore`
 - ❌ NUNCA usar `as any`
 - ✅ SEMPRE tipar retornos de função
 - ✅ SEMPRE tipar parâmetros
+
+### Hierarquia de Tipos (OBRIGATÓRIA)
+
+Usar na ordem de preferência (1 = melhor):
+
+| Prioridade | Tipo | Quando Usar | Exemplo |
+|------------|------|-------------|---------|
+| 1️⃣ | **Interface/Type específico** | Estrutura conhecida | `FiscalDocument`, `ICellRendererParams` |
+| 2️⃣ | **Union types** | Poucos tipos possíveis | `string \| number \| null` |
+| 3️⃣ | **Generics** | Tipo variável mas consistente | `Result<T, E>`, `Array<T>` |
+| 4️⃣ | **Record<K, V>** | Objetos de configuração | `Record<string, string>` |
+| 5️⃣ | **`unknown`** | Tipo genuinamente desconhecido | catch blocks, JSON.parse |
+| ❌ | **`any`** | **NUNCA** | - |
+
+### Uso Correto de `unknown` (TYPE-UNKNOWN-001 a TYPE-UNKNOWN-005)
+
+| Regra | Contexto | Exemplo Correto |
+|-------|----------|-----------------|
+| TYPE-UNKNOWN-001 | **Catch blocks** | `catch (error: unknown)` |
+| TYPE-UNKNOWN-002 | **JSON.parse não validado** | `const data: unknown = JSON.parse(str)` |
+| TYPE-UNKNOWN-003 | **APIs externas sem contrato** | `const response: unknown = await externalApi()` |
+| TYPE-UNKNOWN-004 | **Event handlers genéricos** | `onCustomEvent: (data: unknown) => void` |
+| TYPE-UNKNOWN-005 | **Dados de formulário dinâmico** | `formData: Record<string, unknown>` |
+
+### Uso INCORRETO de `unknown` (NUNCA UTILIZAR)
+
+| ❌ Incorreto | ✅ Correto | Motivo |
+|-------------|-----------|--------|
+| `params: unknown` (AG Grid) | `params: ICellRendererParams` | Tipo específico existe |
+| `event: unknown` (React) | `event: React.MouseEvent` | Tipo específico existe |
+| `value: unknown` (quando sabe tipos) | `value: string \| number` | Union type é mais preciso |
+| `config: unknown` | `config: Record<string, string>` | Record é mais preciso |
+| `callback: (x: unknown) => unknown` | `callback: <T>(x: T) => T` | Generic preserva tipo |
+
+### Type Guards Obrigatórios com `unknown`
+
+Sempre que usar `unknown`, implementar type guard:
+
+```typescript
+// ✅ CORRETO: Type guard para catch
+catch (error: unknown) {
+  const message = error instanceof Error 
+    ? error.message 
+    : String(error);
+}
+
+// ✅ CORRETO: Type guard para JSON
+const data: unknown = JSON.parse(jsonString);
+if (isFiscalDocument(data)) {
+  // TypeScript sabe que é FiscalDocument
+  console.log(data.documentNumber);
+}
+
+// ✅ CORRETO: Type guard function
+function isFiscalDocument(data: unknown): data is FiscalDocument {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'documentNumber' in data &&
+    'documentType' in data
+  );
+}
+```
 
 ### Validação de Input
 
