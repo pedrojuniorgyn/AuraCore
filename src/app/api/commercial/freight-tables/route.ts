@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
         // Criar preços para esta rota
         if (routeId && route.prices && route.prices.length > 0) {
           await tx.insert(freightTablePrices).values(
-            route.prices.map((price: any) => ({
+            route.prices.map((price: { minWeight?: number; maxWeight?: number; vehicleTypeId?: number; price: number; excessPrice?: number }) => ({
               freightTableRouteId: Number(routeId),
               minWeight: price.minWeight?.toString() || null,
               maxWeight: price.maxWeight?.toString() || null,
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       // Criar generalidades
       if (generalities.length > 0) {
         await tx.insert(freightGeneralities).values(
-          generalities.map((gen: any, index: number) => ({
+          generalities.map((gen: { name: string; code?: string; type: string; value: number; minValue?: number; maxValue?: number; incidence?: string; isActive?: boolean }, index: number) => ({
             freightTableId: Number(tableId),
             name: gen.name,
             code: gen.code || null,
