@@ -33,9 +33,11 @@ interface ExpenseItem {
 }
 
 interface DREConsolidatedData {
+  totalRevenue: number;
+  totalExpense: number;
+  netProfit: number;
+  margin: number;
   expenses: ExpenseItem[];
-  revenue?: number;
-  netIncome?: number;
 }
 
 interface DREByPlateItem {
@@ -198,7 +200,7 @@ export default function DREPage() {
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-green-500" />
                       <NumberCounter
-                        value={dreData.data.totalRevenue}
+                        value={(dreData.data as DREConsolidatedData).totalRevenue}
                         className="text-2xl font-bold text-green-600"
                         prefix="R$ "
                         decimals={2}
@@ -217,7 +219,7 @@ export default function DREPage() {
                     <div className="flex items-center gap-2">
                       <TrendingDown className="h-5 w-5 text-red-500" />
                       <NumberCounter
-                        value={dreData.data.totalExpense}
+                        value={(dreData.data as DREConsolidatedData).totalExpense}
                         className="text-2xl font-bold text-red-600"
                         prefix="R$ "
                         decimals={2}
@@ -236,15 +238,15 @@ export default function DREPage() {
                     <div className="flex items-center gap-2">
                       <DollarSign
                         className={`h-5 w-5 ${
-                          dreData.data.netProfit >= 0
+                          (dreData.data as DREConsolidatedData).netProfit >= 0
                             ? "text-green-500"
                             : "text-red-500"
                         }`}
                       />
                       <NumberCounter
-                        value={dreData.data.netProfit}
+                        value={(dreData.data as DREConsolidatedData).netProfit}
                         className={`text-2xl font-bold ${
-                          dreData.data.netProfit >= 0
+                          (dreData.data as DREConsolidatedData).netProfit >= 0
                             ? "text-green-600"
                             : "text-red-600"
                         }`}
@@ -265,7 +267,7 @@ export default function DREPage() {
                     <div className="flex items-center gap-2">
                       <Percent className="h-5 w-5 text-blue-500" />
                       <span className="text-2xl font-bold text-blue-600">
-                        {dreData.data.margin.toFixed(2)}%
+                        {(dreData.data as DREConsolidatedData).margin.toFixed(2)}%
                       </span>
                     </div>
                   </CardContent>
