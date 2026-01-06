@@ -3,6 +3,7 @@ import { pool, ensureConnection } from "@/lib/db";
 import sql from "mssql";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 import { log } from "@/lib/observability/logger";
+import { getErrorMessage } from "@/shared/types/type-guards";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         `
         );
 
-      const organizationId = Number((boletoOrg.recordset?.[0] as any)?.organizationId ?? 0);
+      const organizationId = Number((boletoOrg.recordset?.[0] as Record<string, unknown> | undefined)?.organizationId ?? 0);
       if (!Number.isFinite(organizationId) || organizationId <= 0) {
         // Não temos como aplicar idempotência/tenancy; evita falhar webhook
         log("warn", "btg.webhook.unknown_boleto", { boletoId });
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
             `
             );
 
-          const arId = Number((boletoResult.recordset?.[0] as any)?.arId ?? 0);
+          const arId = Number((boletoResult.recordset?.[0] as Record<string, unknown> | undefined)?.arId ?? 0);
           if (Number.isFinite(arId) && arId > 0) {
             const arUpdate = await new sql.Request(tx)
               .input("orgId", sql.Int, organizationId)
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
             scope,
             key: idemKey,
             status: "FAILED",
-            errorMessage: e?.message ?? String(e),
+            errorMessage: getErrorMessage(e),
           });
         } catch (e2: unknown) {
           log("warn", "btg.webhook.idempotency_finalize_failed", { organizationId, scope, error: e2 });
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
         `
         );
 
-      const organizationId = Number((pixOrg.recordset?.[0] as any)?.organizationId ?? 0);
+      const organizationId = Number((pixOrg.recordset?.[0] as Record<string, unknown> | undefined)?.organizationId ?? 0);
       if (!Number.isFinite(organizationId) || organizationId <= 0) {
         log("warn", "btg.webhook.unknown_pix", { txid });
         return NextResponse.json({ success: true, ignored: true, message: "Cobrança Pix não encontrada" });
@@ -245,7 +246,7 @@ export async function POST(request: NextRequest) {
             `
             );
 
-          const arId = Number((pixResult.recordset?.[0] as any)?.arId ?? 0);
+          const arId = Number((pixResult.recordset?.[0] as Record<string, unknown> | undefined)?.arId ?? 0);
           if (Number.isFinite(arId) && arId > 0) {
             const arUpdate = await new sql.Request(tx)
               .input("orgId", sql.Int, organizationId)
@@ -286,7 +287,7 @@ export async function POST(request: NextRequest) {
             scope,
             key: idemKey,
             status: "FAILED",
-            errorMessage: e?.message ?? String(e),
+            errorMessage: getErrorMessage(e),
           });
         } catch (e2: unknown) {
           log("warn", "btg.webhook.idempotency_finalize_failed", { organizationId, scope, error: e2 });
