@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, AllCommunityModule, type ColDef } from "ag-grid-community";
+import { ModuleRegistry, AllCommunityModule, type ColDef, type ICellRendererParams } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,7 +126,7 @@ export default function BranchesPage() {
         field: "environment",
         headerName: "Ambiente Sefaz",
         width: 150,
-        cellRenderer: (params: any) => {
+        cellRenderer: (params: ICellRendererParams<Branch>) => {
           if (params.value === "PRODUCTION") {
             return <span className="text-emerald-400 font-medium">Produção</span>;
           } else if (params.value === "HOMOLOGATION") {
@@ -146,7 +146,7 @@ export default function BranchesPage() {
         headerName: "Ações",
         width: 160,
         pinned: "right",
-        cellRenderer: (params: any) => (
+        cellRenderer: (params: ICellRendererParams<Branch>) => (
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -226,7 +226,7 @@ export default function BranchesPage() {
                   </div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Filiais Ativas</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                    <NumberCounter value={rowData.filter((f: any) => f.status === 'ACTIVE').length} />
+                    <NumberCounter value={rowData.filter((f: Branch) => f.status === 'ACTIVE').length} />
                   </div>
                 </div>
               </GlassmorphismCard>
@@ -246,7 +246,7 @@ export default function BranchesPage() {
                   </div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Filiais Inativas</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
-                    <NumberCounter value={rowData.filter((f: any) => f.status === 'INACTIVE').length} />
+                    <NumberCounter value={rowData.filter((f: Branch) => f.status === 'INACTIVE').length} />
                   </div>
                 </div>
               </GlassmorphismCard>
@@ -266,7 +266,7 @@ export default function BranchesPage() {
                   </div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Estados Atendidos</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    <NumberCounter value={new Set(rowData.map((f: any) => f.state)).size} />
+                    <NumberCounter value={new Set(rowData.map((f: Branch) => f.state)).size} />
                   </div>
                 </div>
               </GlassmorphismCard>
