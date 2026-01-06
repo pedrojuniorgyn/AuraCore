@@ -1455,7 +1455,115 @@ Ver: ADR-0012 (Full DDD Migration) e ADR-0013 (Eliminate Hybrid Architecture)
 
 Será implementado no épico E7.16 (Março 2026).
 
+### 13.4 IUuidGenerator Port (E7.14 - IMPLEMENTADO)
+
+**Data:** 06/01/2026  
+**ADR:** ADR-0016  
+**Status:** ✅ Implementado
+
+#### 13.4.1 Visão Geral
+
+Port para geração de UUIDs que mantém Domain/Application 100% puro e permite testes determinísticos.
+
+**Problema resolvido:**
+- Use Cases usavam `crypto.randomUUID()` diretamente (violava ARCH-004)
+- Testes não-determinísticos (UUIDs aleatórios)
+- 17 ocorrências em 12 Use Cases
+
+#### 13.4.2 Estrutura
+
+```
+src/shared/
+├── domain/ports/
+│   └── IUuidGenerator.ts          # Interface (Port)
+└── infrastructure/adapters/
+    ├── CryptoUuidGenerator.ts      # Produção (globalThis.crypto)
+    ├── DeterministicUuidGenerator.ts # Testes (00000001-..., 00000002-...)
+    └── __tests__/
+        └── UuidGenerator.test.ts   # 12 testes
+```
+
+#### 13.4.3 Uso em Use Cases
+
+```typescript
+@injectable()
+export class CreatePayableUseCase {
+  constructor(
+    @inject(TOKENS.PayableRepository) private payableRepository: IPayableRepository,
+    @inject(TOKENS.UuidGenerator) private uuidGenerator: IUuidGenerator
+  ) {}
+
+  async execute(input: Input, ctx: ExecutionContext): Promise<Result<Output, string>> {
+    const id = this.uuidGenerator.generate();
+    const payableResult = AccountPayable.create({ id, ...input });
+    // ...
+  }
+}
+```
+
+#### 13.4.4 Uso em Testes
+
+```typescript
+describe('CreatePayableUseCase', () => {
+  let mockUuidGenerator: IUuidGenerator;
+
+  beforeEach(() => {
+    mockUuidGenerator = {
+      generate: vi.fn().mockReturnValue('00000001-0000-4000-8000-000000000000'),
+    };
+
+    useCase = new CreatePayableUseCase(mockRepository, mockUuidGenerator);
+  });
+
+  it('deve criar payable com UUID determinístico', async () => {
+    const result = await useCase.execute(validInput, ctx);
+    expect(Result.isOk(result)).toBe(true);
+  });
+});
+```
+
+#### 13.4.5 Benefícios Alcançados
+
+| Benefício | Status |
+|-----------|--------|
+| Domain 100% puro | ✅ |
+| Testes determinísticos | ✅ |
+| ARCH-004 compliance | ✅ (17/17 ocorrências) |
+| Dependency Inversion | ✅ |
+| Flexibilidade (UUID v7, ULID) | ✅ |
+
+#### 13.4.6 Métricas
+
+- **Use Cases refatorados:** 12 (financial: 2, accounting: 2, fiscal: 2, wms: 6)
+- **Ocorrências substituídas:** 17
+- **Testes criados:** 12 (adapters)
+- **Testes atualizados:** 4 (Use Cases)
+- **Cobertura DDD/Hexagonal:** 100%
+
+#### 13.4.7 Contratos MCP Atualizados
+
+- **ENTITY-010:** Menciona `IUuidGenerator` implementado em E7.14
+- **ARCH-004:** Lista `globalThis.crypto` como exceção permitida
+
+#### 13.4.8 Verificação
+
+```bash
+# Verificar que não há mais crypto.randomUUID() em Use Cases
+grep -rn "crypto\.randomUUID" src/modules/*/application/use-cases/
+# Esperado: 0 resultados
+
+# Verificar testes
+npm test -- src/shared/infrastructure/adapters/__tests__/UuidGenerator.test.ts --run
+# Esperado: 12/12 testes passando
+```
+
+#### 13.4.9 Referências
+
+- **ADR-0016:** IUuidGenerator Port for UUID Abstraction
+- **Cockburn, A. (2005):** Hexagonal Architecture
+- **Vernon, V. (2013):** Implementing Domain-Driven Design, Cap. 4
+
 ---
 
-*Seção atualizada em: 2026-01-05 16:30:00 UTC*
-*Épico: E7.12 - Documentação 100%*
+*Seção atualizada em: 2026-01-06 08:45:00 UTC*
+*Épico: E7.14 - IUuidGenerator Port Implementation*
