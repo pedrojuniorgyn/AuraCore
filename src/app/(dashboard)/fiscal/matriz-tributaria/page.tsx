@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
+import type { ValueFormatterParams, CellClassParams } from "ag-grid-community";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -15,10 +16,31 @@ import { toast } from "sonner";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface TaxRule {
+  route: string;
+  cargo: string;
+  contributor: string;
+  cst: string;
+  icms: number;
+  fcp: number;
+  difal: string;
+  legal: string;
+}
+
+interface SimResult {
+  cst: string;
+  icms: number;
+  icmsValue: number;
+  fcp: number;
+  fcpValue: number;
+  totalTax: number;
+  legal: string;
+}
+
 export default function MatrizTributariaPage() {
-  const [rules, setRules] = useState<any[]>([]);
+  const [rules, setRules] = useState<TaxRule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [simResult, setSimResult] = useState<any>(null);
+  const [simResult, setSimResult] = useState<SimResult | null>(null);
   const gridRef = useRef<AgGridReact>(null);
 
   const kpis = useMemo(() => ({
@@ -99,19 +121,19 @@ export default function MatrizTributariaPage() {
       field: 'icms', 
       headerName: 'ICMS%', 
       width: 100,
-      valueFormatter: (params: any) => `${params.value?.toFixed(2)}%`
+      valueFormatter: (params: ValueFormatterParams<TaxRule>) => `${params.value?.toFixed(2)}%`
     },
     { 
       field: 'fcp', 
       headerName: 'FCP%', 
       width: 100,
-      valueFormatter: (params: any) => `${params.value?.toFixed(2)}%`
+      valueFormatter: (params: ValueFormatterParams<TaxRule>) => `${params.value?.toFixed(2)}%`
     },
     { 
       field: 'difal', 
       headerName: 'DIFAL', 
       width: 100,
-      cellStyle: (params: any) => ({
+      cellStyle: (params: CellClassParams<TaxRule>) => ({
         color: params.value === 'Sim' ? '#3b82f6' : '#6b7280'
       })
     },
