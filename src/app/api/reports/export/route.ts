@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { type, format = 'csv', filters = {} } = body;
 
-    let data: any[] = [];
+    let data: Record<string, unknown>[] = [];
     let filename = '';
 
     switch (type) {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function convertToCSV(data: any[]): string {
+function convertToCSV(data: Record<string, unknown>[]): string {
   if (!data || data.length === 0) return '';
 
   const headers = Object.keys(data[0]);
