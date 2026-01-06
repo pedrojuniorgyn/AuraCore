@@ -5,10 +5,28 @@ import { Upload, FileText, CheckCircle, XCircle, AlertCircle } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
+interface FileResult {
+  fileName: string;
+  type: string;
+  success: boolean;
+  imported?: number;
+  duplicates?: number;
+  error?: string;
+}
+
+interface UploadResult {
+  success: boolean;
+  imported: number;
+  duplicates: number;
+  errors: number;
+  fileResults: FileResult[];
+  errorMessages: string[];
+}
+
 export default function UploadXMLPage() {
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<UploadResult | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +102,7 @@ export default function UploadXMLPage() {
         </h3>
         <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
           <li>Selecione um ou mais arquivos XML (NFe ou CTe)</li>
-          <li>Clique em "Importar XMLs"</li>
+          <li>Clique em &quot;Importar XMLs&quot;</li>
           <li>O sistema detecta automaticamente se é NFe ou CTe</li>
           <li>NFes são classificadas automaticamente (CARGO, PURCHASE, etc)</li>
           <li>CTes externos são vinculados às NFes quando possível</li>
@@ -182,7 +200,7 @@ export default function UploadXMLPage() {
             <div>
               <h3 className="font-semibold mb-2">Detalhes por Arquivo</h3>
               <div className="space-y-2">
-                {result.fileResults.map((fileResult: any, index: number) => (
+                {result.fileResults.map((fileResult: FileResult, index: number) => (
                   <div
                     key={index}
                     className={`flex items-center justify-between p-3 rounded border ${

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Edit, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, CellStyle } from "ag-grid-community";
@@ -13,7 +12,7 @@ export default function FleetDocsPage() {
   const [vehicleDocs, setVehicleDocs] = useState([]);
   const [driverDocs, setDriverDocs] = useState([]);
 
-  const handleEdit = (data: any) => {
+  const handleEdit = (data: { id: number }) => {
     router.push(`/frota/documentacao/editar/${data.id}`);
   };
 
@@ -26,7 +25,7 @@ export default function FleetDocsPage() {
       // Recarregar dados
       fetch("/api/fleet/documents?type=vehicle").then(r => r.json()).then(d => setVehicleDocs(d.data || []));
       fetch("/api/fleet/documents?type=driver").then(r => r.json()).then(d => setDriverDocs(d.data || []));
-    } catch (error) { toast.error("Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
 
   useEffect(() => {
