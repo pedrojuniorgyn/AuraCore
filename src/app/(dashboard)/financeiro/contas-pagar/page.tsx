@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams, IDetailCellRendererParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, IDetailCellRendererParams, ValueFormatterParams, SetFilterValuesFuncParams } from "ag-grid-community";
 
 // AG Grid Enterprise Modules (v34+)
 import { AllEnterpriseModule } from "ag-grid-enterprise";
@@ -97,21 +97,21 @@ function DetailCellRenderer(props: IDetailCellRendererParams) {
       headerName: "Qtd",
       width: 100,
       type: "numericColumn",
-      valueFormatter: (params: any) => params.value?.toLocaleString("pt-BR"),
+      valueFormatter: (params: ValueFormatterParams<PayableItem>) => params.value?.toLocaleString("pt-BR"),
     },
     {
       field: "unitValue",
       headerName: "Valor Unit.",
       width: 130,
       type: "numericColumn",
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      valueFormatter: (params: ValueFormatterParams<PayableItem>) => `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
     },
     {
       field: "totalValue",
       headerName: "Valor Total",
       width: 140,
       type: "numericColumn",
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      valueFormatter: (params: ValueFormatterParams<PayableItem>) => `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
     },
     { field: "categoryName", headerName: "Categoria", width: 150, filter: true },
     { field: "accountCode", headerName: "Conta", width: 100, filter: true },
@@ -263,7 +263,7 @@ export default function ContasPagarPage() {
           width: 250,
           filter: "agSetColumnFilter",
           filterParams: {
-            values: (params: any) => {
+            values: (params: SetFilterValuesFuncParams) => {
               const uniquePartners = [...new Set(payables.map(p => p.partnerName))];
               params.success(uniquePartners);
             },
