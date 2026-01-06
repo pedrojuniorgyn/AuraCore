@@ -26,10 +26,39 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface ExpenseItem {
+  code: string;
+  name: string;
+  total: number;
+}
+
+interface DREConsolidatedData {
+  expenses: ExpenseItem[];
+  revenue?: number;
+  netIncome?: number;
+}
+
+interface DREByPlateItem {
+  costCenterName: string;
+  costCenterCode: string;
+  margin: number;
+  netProfit: number;
+  revenue?: number;
+  expenses?: number;
+}
+
+interface DREByDimensionItem {
+  dimension: string;
+  margin: number;
+  revenue?: number;
+  expenses?: number;
+  netIncome?: number;
+}
+
 interface DREData {
   type: string;
   period: { startDate: string; endDate: string };
-  data: any;
+  data: DREConsolidatedData | DREByPlateItem[] | DREByDimensionItem[];
 }
 
 export default function DREPage() {
@@ -249,7 +278,7 @@ export default function DREPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {dreData.data.expenses.map((exp: any, idx: number) => (
+                    {(dreData.data as DREConsolidatedData).expenses.map((exp: ExpenseItem, idx: number) => (
                       <div
                         key={idx}
                         className="flex justify-between items-center py-2 border-b"
@@ -278,7 +307,7 @@ export default function DREPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {dreData.data.map((item: any, idx: number) => (
+                    {(dreData.data as DREByPlateItem[]).map((item: DREByPlateItem, idx: number) => (
                       <Card key={idx} className="p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
@@ -356,7 +385,7 @@ export default function DREPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {dreData.data.map((item: any, idx: number) => (
+                    {(dreData.data as DREByDimensionItem[]).map((item: DREByDimensionItem, idx: number) => (
                       <Card key={idx} className="p-4">
                         <div className="flex justify-between items-start mb-4">
                           <div>
