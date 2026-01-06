@@ -17,7 +17,7 @@ import { FinancialTitleError } from "../../domain/errors";
 import { IUseCase } from "@/shared/application/IUseCase";
 
 export class GenerateReceivableTitleUseCase
-  implements IUseCase<GenerateReceivableInput, TitleGenerationOutput>
+  implements IUseCase<GenerateReceivableInput, TitleGenerationOutput, FinancialTitleError>
 {
   constructor(
     private readonly financialTitleGenerator: FinancialTitleGenerator,

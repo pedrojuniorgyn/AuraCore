@@ -16,7 +16,7 @@ import { FinancialTitleError } from "../../domain/errors";
 import { IUseCase } from "@/shared/application/IUseCase";
 
 export class ReverseTitlesUseCase
-  implements IUseCase<ReverseTitlesInput, void>
+  implements IUseCase<ReverseTitlesInput, void, FinancialTitleError>
 {
   constructor(
     private readonly financialTitleGenerator: FinancialTitleGenerator,

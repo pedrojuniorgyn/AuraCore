@@ -1,0 +1,49 @@
+{
+  "epic": "E7-PADRONIZACAO",
+  "corrections": [
+    {
+      "id": "LC-834484",
+      "date": "2026-01-06",
+      "epic": "E7-PADRONIZACAO",
+      "error": "Contratos MCP com forbidden_patterns muito amplos causando falsos positivos: .create( bloqueava VOs em mappers, this.props. bloqueava getters em VOs",
+      "correction": "Removidos patterns ambíguos, mantidos apenas patterns específicos (this.props = para mutação, reconstitute para entities), adicionados notes e examples para clareza",
+      "files_affected": [
+        "mcp-server/src/contracts/architecture-layers.json",
+        "mcp-server/src/contracts/mapper-pattern.json",
+        "mcp-server/src/contracts/value-object-pattern.json"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-214324",
+      "date": "2026-01-06",
+      "epic": "E7-PADRONIZACAO",
+      "error": "REPO-004 com match_any:true permitia mapper incompleto; ARCH-004 faltava 'crypto' sem prefixo permitindo import no domain",
+      "correction": "Removido match_any de REPO-004 (ambos métodos obrigatórios); Adicionado 'crypto' e outros módulos Node.js em ARCH-004",
+      "files_affected": [
+        "mcp-server/src/contracts/repository-pattern.json",
+        "mcp-server/src/contracts/architecture-layers.json"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-479512",
+      "date": "2026-01-06",
+      "epic": "E7-PADRONIZACAO",
+      "error": "ENTITY-010 exigia crypto.randomUUID() mas ARCH-004 proibia import crypto (contradição); SCHEMA-003 não validava índice COMPOSTO, apenas presença das palavras",
+      "correction": "Usar globalThis.crypto.randomUUID() resolve contradição (não requer import); SCHEMA-003 mudado para manual_review com examples detalhados",
+      "files_affected": [
+        "mcp-server/src/contracts/entity-pattern.json",
+        "mcp-server/src/contracts/architecture-layers.json",
+        "mcp-server/src/contracts/schema-pattern.json"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

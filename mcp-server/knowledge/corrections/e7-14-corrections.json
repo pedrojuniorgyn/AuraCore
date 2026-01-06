@@ -1,0 +1,18 @@
+{
+  "epic": "E7.14",
+  "corrections": [
+    {
+      "id": "LC-504627",
+      "date": "2026-01-05",
+      "epic": "E7.14",
+      "error": "db.execute() retorna { recordset: [...] }, não array direto. Cast direto como BillingEventRow[] faz Array.isArray() retornar false, resultando em lista sempre vazia. Todos os totais de faturamento ficam zero independente dos dados no banco. Violação de ENFORCE-031 (nunca assumir schema sem verificar estrutura real)",
+      "correction": "Extrair recordset com padrão usado em 19 outros locais do projeto: const eventsList = (events.recordset || events) as unknown as BillingEventRow[]. Isso faz fallback correto se recordset não existir e extrai os dados reais da query",
+      "files_affected": [
+        "src/services/wms-billing-engine.ts"
+      ],
+      "pattern_created": "Database Query Result Extraction Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
