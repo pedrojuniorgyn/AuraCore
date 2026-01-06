@@ -519,4 +519,266 @@ Modificações nesses arquivos exigem testes extras e revisão cuidadosa:
 
 ---
 
-**FIM DAS REGRAS v2.0 - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
+## 📝 TEMPLATES DE CÓDIGO
+
+### Template: Entity
+
+```typescript
+// src/modules/{module}/domain/entities/{Entity}.ts
+import { AggregateRoot, Result } from '@/shared/domain';
+
+interface {Entity}Props {
+  organizationId: number;
+  branchId: number;
+  // campos de negócio
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class {Entity} extends AggregateRoot<string> {
+  private constructor(id: string, private readonly props: {Entity}Props) {
+    super(id);
+  }
+
+  // Getters
+  get organizationId(): number { return this.props.organizationId; }
+  get branchId(): number { return this.props.branchId; }
+
+  // Factory: create() COM validações
+  static create(props: Create{Entity}Props): Result<{Entity}, string> {
+    if (!props.organizationId) return Result.fail('organizationId obrigatório');
+    if (!props.branchId) return Result.fail('branchId obrigatório');
+    
+    const id = globalThis.crypto.randomUUID();
+    const now = new Date();
+    
+    return Result.ok(new {Entity}(id, { ...props, createdAt: now, updatedAt: now }));
+  }
+
+  // Factory: reconstitute() SEM validações (para Mapper)
+  static reconstitute(props: {Entity}Props & { id: string }): Result<{Entity}, string> {
+    return Result.ok(new {Entity}(props.id, props));
+  }
+
+  // Métodos de negócio
+  approve(approvedBy: string): Result<void, string> {
+    // lógica de negócio
+    this.addDomainEvent(new {Entity}ApprovedEvent(this.id, approvedBy));
+    return Result.ok(undefined);
+  }
+}
+```
+
+### Template: Value Object
+
+```typescript
+// src/modules/{module}/domain/value-objects/{VO}.ts
+import { ValueObject, Result } from '@/shared/domain';
+
+interface {VO}Props extends Record<string, unknown> {
+  value: string;
+}
+
+export class {VO} extends ValueObject<{VO}Props> {
+  private constructor(props: {VO}Props) {
+    super(props); // Object.freeze aplicado
+  }
+
+  get value(): string { return this.props.value; }
+
+  static create(value: string): Result<{VO}, string> {
+    const trimmed = value.trim();
+    if (!trimmed) return Result.fail('{VO} não pode ser vazio');
+    return Result.ok(new {VO}({ value: trimmed }));
+  }
+}
+```
+
+### Template: Repository Interface
+
+```typescript
+// src/modules/{module}/domain/ports/output/I{Entity}Repository.ts
+import type { {Entity} } from '../../entities/{Entity}';
+
+export interface I{Entity}Repository {
+  findById(id: string, organizationId: number, branchId: number): Promise<{Entity} | null>;
+  findMany(filter: {Entity}Filter): Promise<{ items: {Entity}[]; total: number }>;
+  save(entity: {Entity}): Promise<void>;
+  delete(id: string, organizationId: number, branchId: number): Promise<void>;
+}
+
+export interface {Entity}Filter {
+  organizationId: number;
+  branchId: number; // NUNCA opcional
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}
+```
+
+### Template: Mapper
+
+```typescript
+// src/modules/{module}/infrastructure/persistence/mappers/{Entity}Mapper.ts
+import { Result } from '@/shared/domain';
+import { {Entity} } from '../../../domain/entities/{Entity}';
+import type { {Entity}Row, {Entity}Insert } from '../schemas/{entity}.schema';
+
+export class {Entity}Mapper {
+  // DB → Domain (usa reconstitute, NUNCA create)
+  static toDomain(row: {Entity}Row): Result<{Entity}, string> {
+    return {Entity}.reconstitute({
+      id: row.id,
+      organizationId: row.organizationId,
+      branchId: row.branchId,
+      // ... campos
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    });
+  }
+
+  // Domain → DB
+  static toPersistence(entity: {Entity}): {Entity}Insert {
+    return {
+      id: entity.id,
+      organizationId: entity.organizationId,
+      branchId: entity.branchId,
+      // ... campos
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    };
+  }
+}
+```
+
+### Template: Schema
+
+```typescript
+// src/modules/{module}/infrastructure/persistence/schemas/{entity}.schema.ts
+import { int, varchar, decimal, datetime2, index } from 'drizzle-orm/mssql-core';
+import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
+
+export const {entity}Table = mssqlTable(
+  '{entity_snake_case}',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    organizationId: int('organization_id').notNull(),
+    branchId: int('branch_id').notNull(),
+    
+    // Money = 2 colunas
+    amount: decimal('amount', { precision: 18, scale: 2 }).notNull(),
+    amountCurrency: varchar('amount_currency', { length: 3 }).notNull().default('BRL'),
+    
+    // Auditoria
+    createdAt: datetime2('created_at').notNull().defaultNow(),
+    updatedAt: datetime2('updated_at').notNull().defaultNow(),
+    deletedAt: datetime2('deleted_at'), // Soft delete
+  },
+  (table) => ({
+    // Índice COMPOSTO obrigatório
+    tenantIdx: index('idx_{entity}_tenant').on(table.organizationId, table.branchId),
+  })
+);
+
+export type {Entity}Row = typeof {entity}Table.$inferSelect;
+export type {Entity}Insert = typeof {entity}Table.$inferInsert;
+```
+
+---
+
+## 🇧🇷 CONTEXTO BRASIL - ERP LOGÍSTICO (EXPANDIDO)
+
+### Legislação Fiscal Detalhada
+- **ICMS:** Lei Complementar 87/96 (Lei Kandir) - Imposto estadual sobre circulação de mercadorias
+- **PIS/COFINS:** Leis 10.637/02 e 10.833/03 - Contribuições federais sobre faturamento
+- **SPED:** Sistema Público de Escrituração Digital
+  - SPED Fiscal (EFD-ICMS/IPI)
+  - SPED Contribuições (EFD-Contribuições PIS/COFINS)
+  - SPED ECD (Escrituração Contábil Digital)
+- **Documentos Eletrônicos:**
+  - NFe (Nota Fiscal Eletrônica) - Modelo 55
+  - CTe (Conhecimento de Transporte Eletrônico) - Modelo 57
+  - MDFe (Manifesto de Documentos Fiscais Eletrônicos)
+  - NFS-e (Nota Fiscal de Serviços Eletrônica)
+
+### Reforma Tributária 2026 (CRÍTICO)
+- **IBS:** Imposto sobre Bens e Serviços (estadual+municipal, substitui ICMS+ISS)
+- **CBS:** Contribuição sobre Bens e Serviços (federal, substitui PIS/COFINS)
+- **IS:** Imposto Seletivo (produtos específicos: cigarros, bebidas, etc)
+
+### Retenções na Fonte (Lei 10.833/03)
+| Tributo | Alíquota | Base Legal |
+|---------|----------|------------|
+| IRRF | 1.5% | Art. 64 Lei 9.430/96 |
+| PIS | 0.65% | Art. 30 Lei 10.833/03 |
+| COFINS | 3.0% | Art. 30 Lei 10.833/03 |
+| CSLL | 1.0% | Art. 30 Lei 10.833/03 |
+| ISS | 2-5% | LC 116/03 |
+
+### Arquivos Críticos (Multas SEFAZ/RFB)
+| Arquivo | Módulo | Risco | Multa Mínima | Base Legal |
+|---------|--------|-------|--------------|------------|
+| sped-fiscal-generator.ts | Fiscal | SPED Fiscal | R$ 5.000/mês | Art. 12 Lei 8.218/91 |
+| sped-ecd-generator.ts | Accounting | SPED ECD | R$ 5.000/mês | Art. 12 Lei 8.218/91 |
+| sped-contributions-generator.ts | Fiscal | EFD-Contribuições | R$ 5.000/mês | Art. 12 Lei 8.218/91 |
+| FiscalDocument.ts | Fiscal | NFe/CTe inválida | R$ 5.000/doc | Art. 57 Lei 8.383/91 |
+| TaxCalculator.ts | Fiscal | Cálculo incorreto | Crédito tributário | Variável |
+| accounting-engine.ts | Accounting | Contabilização | Auditoria | IN RFB 1.700/17 |
+| financial-title-generator.ts | Financial | Títulos duplicados | R$ 10.000+ | Art. 172 CTN |
+
+---
+
+## 📚 REFERÊNCIAS BIBLIOGRÁFICAS
+
+### Arquitetura de Software
+1. **Evans, E.** (2003). *Domain-Driven Design: Tackling Complexity in the Heart of Software*. Addison-Wesley Professional. ISBN: 978-0321125217.
+2. **Vernon, V.** (2013). *Implementing Domain-Driven Design*. Addison-Wesley Professional. ISBN: 978-0321834577.
+3. **Cockburn, A.** (2005). *Hexagonal Architecture (Ports and Adapters)*. Disponível em: alistair.cockburn.us/hexagonal-architecture/.
+4. **Martin, R. C.** (2017). *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall. ISBN: 978-0134494166.
+5. **Fowler, M.** (2002). *Patterns of Enterprise Application Architecture*. Addison-Wesley Professional. ISBN: 978-0321127426.
+
+### Legislação Brasileira
+6. **Brasil.** Lei Complementar nº 87, de 13 de setembro de 1996. Lei Kandir (ICMS).
+7. **Brasil.** Lei nº 10.637, de 30 de dezembro de 2002. PIS não-cumulativo.
+8. **Brasil.** Lei nº 10.833, de 29 de dezembro de 2003. COFINS não-cumulativo.
+9. **Brasil.** Instrução Normativa RFB nº 1.774, de 22 de dezembro de 2017. SPED.
+10. **Brasil.** Emenda Constitucional nº 132, de 20 de dezembro de 2023. Reforma Tributária.
+
+---
+
+## 📊 FORMATO DE RELATÓRIO FINAL (OBRIGATÓRIO)
+
+Após cada tarefa, o agente DEVE produzir:
+
+```markdown
+## TAREFA CONCLUÍDA
+
+### Verificações MCP
+- check_cursor_issues (pré-commit): ✅ 0 issues / ❌ X issues
+- check_cursor_issues (pós-commit): ✅ 0 issues / ❌ X issues
+
+### Verificações Código
+- npx tsc --noEmit: ✅ 0 erros
+- npm test -- --run: ✅ X/X passando
+- grep 'as any': ✅ 0 resultados
+
+### Padrões Aplicados
+- [ ] ARCH: Dependências inward (Cockburn, 2005)
+- [ ] ENTITY: create() + reconstitute() (Evans, 2003)
+- [ ] REPO: Mapper com toDomain/toPersistence (Vernon, 2013)
+- [ ] SCHEMA: Índice composto multi-tenancy
+
+### Commits
+- Hash: [hash]
+- Mensagem: [mensagem]
+
+### Correções Registradas
+- [LC-XXXXX]: [descrição] (se houver)
+
+### Push
+- Status: ⏳ Aguardando aprovação / ✅ Realizado
+```
+
+---
+
+**FIM DAS REGRAS v3.0 - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
