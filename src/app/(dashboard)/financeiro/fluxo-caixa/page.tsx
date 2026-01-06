@@ -66,7 +66,7 @@ export default function FluxoCaixaPage() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle>Horizon: próximos {monthsAhead} meses</CardTitle>
-            <Select value={String(monthsAhead)} onValueChange={(v) => setMonthsAhead(Number(v) as any)}>
+            <Select value={String(monthsAhead)} onValueChange={(v) => setMonthsAhead(Number(v) as 3 | 6 | 12)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Horizonte" />
               </SelectTrigger>
@@ -90,7 +90,7 @@ export default function FluxoCaixaPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
-                    formatter={(value: any) =>
+                    formatter={(value: number | string) =>
                       new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value ?? 0))
                     }
                   />
