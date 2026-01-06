@@ -7,6 +7,10 @@ import { PartnerForm } from "@/components/forms/partner-form";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { createBusinessPartnerSchema } from "@/lib/validators/business-partner";
+import { z } from "zod";
+
+type BusinessPartnerFormData = z.infer<typeof createBusinessPartnerSchema>;
 
 /**
  * 🆕 CRIAR PARCEIRO DE NEGÓCIO
@@ -22,7 +26,7 @@ export default function CreateBusinessPartnerPage() {
   const { mutate: create } = useCreate();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = (values: BusinessPartnerFormData) => {
     setIsLoading(true);
     // Remove máscaras antes de enviar
     const cleanedData = {
