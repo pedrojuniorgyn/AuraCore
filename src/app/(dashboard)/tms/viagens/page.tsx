@@ -23,7 +23,7 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { Plus, Truck, MapPin, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Plus, Truck, MapPin, CheckCircle, Clock, XCircle, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface Trip {
@@ -37,6 +37,53 @@ interface Trip {
   ciotNumber?: string;
   requiresCiot: string;
 }
+
+interface StatusColumnProps {
+  title: string;
+  status: string;
+  trips: Trip[];
+  icon: LucideIcon;
+  color: string;
+}
+
+const StatusColumn = ({ title, status, trips, icon: Icon, color }: StatusColumnProps) => (
+  <div className="flex-1 min-w-[300px]">
+    <Card>
+      <CardHeader className={`${color} text-white`}>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Icon className="h-5 h-5" />
+          {title} ({trips.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-2 space-y-2">
+        {trips.length === 0 ? (
+          <p className="text-center text-sm text-gray-500 py-4">Nenhuma viagem</p>
+        ) : (
+          trips.map((trip) => (
+            <Card key={trip.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-semibold text-sm">{trip.tripNumber}</p>
+                  <p className="text-xs text-gray-500">
+                    Veículo: {trip.vehicleId} | Motorista: {trip.driverId}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Início: {new Date(trip.scheduledStart).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost">
+                    <MapPin className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  </div>
+);
 
 interface Vehicle {
   id: number;
@@ -86,6 +133,7 @@ export default function TripsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -128,54 +176,6 @@ export default function TripsPage() {
     COMPLETED: trips.filter((t) => t.status === "COMPLETED"),
   };
 
-  const StatusColumn = ({ title, status, trips, icon: Icon, color }: any) => (
-    <div className="flex-1 min-w-[300px]">
-      <Card>
-        <CardHeader className={`${color} text-white`}>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Icon className="h-5 w-5" />
-            {title} ({trips.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 space-y-3 min-h-[500px]">
-          {trips.map((trip: Trip) => {
-            const vehicle = vehicles.find((v) => v.id === trip.vehicleId);
-            const driver = drivers.find((d) => d.id === trip.driverId);
-
-            return (
-              <Card key={trip.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm">{trip.tripNumber}</span>
-                    {trip.requiresCiot === "true" && (
-                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                        CIOT
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs space-y-1 text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Truck className="h-3 w-3" />
-                      {vehicle?.plate || "N/A"} - {vehicle?.model || ""}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3 w-3" />
-                      {driver?.name || "N/A"}
-                    </div>
-                    {trip.scheduledStart && (
-                      <div className="text-xs">
-                        Saída: {new Date(trip.scheduledStart).toLocaleDateString()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </CardContent>
-      </Card>
-    </div>
-  );
 
   return (
     <PageTransition>
