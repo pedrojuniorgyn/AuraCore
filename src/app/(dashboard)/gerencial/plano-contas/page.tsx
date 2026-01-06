@@ -24,9 +24,20 @@ import { Plus, FileText, BookOpen, Settings } from "lucide-react";
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface ChartAccount {
+  code: string;
+  name: string;
+  type: string;
+  legal_account_code?: string;
+  legal_account_id?: number;
+  allocation_rule?: string;
+  allocation_base?: string;
+  is_analytical: boolean;
+}
+
 export default function GestaoPCGPage() {
-  const gridRef = useRef<any>(null);
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
+  const [accounts, setAccounts] = useState<ChartAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
@@ -55,7 +66,7 @@ export default function GestaoPCGPage() {
     }
   };
 
-  const calculateStats = (data: any[]) => {
+  const calculateStats = (data: ChartAccount[]) => {
     setStats({
       total: data.length,
       analytical: data.filter(a => a.is_analytical).length,
@@ -117,8 +128,8 @@ export default function GestaoPCGPage() {
       headerName: 'Ações',
       cellRenderer: ActionCellRenderer,
       cellRendererParams: {
-        onEdit: (data: any) => console.log('Edit', data),
-        onDelete: (data: any) => console.log('Delete', data)
+        onEdit: (data: ChartAccount) => console.log('Edit', data),
+        onDelete: (data: ChartAccount) => console.log('Delete', data)
       },
       width: 120,
       pinned: 'right'
