@@ -1,4 +1,10 @@
-# AURA CORE - REGRAS OBRIGATÓRIAS v2.0
+---
+description: Regras MCP obrigatórias do AuraCore - Arquitetura 100% DDD/Hexagonal, TypeScript strict, padrões de código. Consultar contratos e verificar com grep ANTES de codificar. Zero bugs por falta de verificação.
+globs: "**/*.ts,**/*.tsx"
+alwaysApply: true
+---
+
+# AURA CORE - REGRAS MCP OBRIGATÓRIAS v2.0
 
 **Versão:** 2.0.0  
 **Data:** 06/01/2026  
@@ -6,20 +12,82 @@
 
 ---
 
-## 🚨 MCP OBRIGATÓRIO
+## 🚨 REGRA FUNDAMENTAL (INVIOLÁVEL)
 
-ANTES de implementar código:
+ANTES de implementar QUALQUER código, o agente DEVE:
 
-1. Consultar contratos MCP:
-   - get_contract("mcp-enforcement-rules")
-   - get_contract("architecture-layers")
-   - get_contract("schema-pattern")
+### 1. Consultar Contratos MCP
 
-2. Confirmar: "Contratos MCP consultados. Iniciando implementação."
+```
+Tool: get_contract
+Args: { "contract_id": "verify-before-code" }
+
+Tool: get_contract
+Args: { "contract_id": "code-consistency" }
+
+Tool: get_contract
+Args: { "contract_id": "type-safety" }
+
+Tool: get_contract
+Args: { "contract_id": "mcp-enforcement-rules" }
+
+Tool: get_contract
+Args: { "contract_id": "infrastructure-layer" }
+
+Tool: get_contract
+Args: { "contract_id": "known-bugs-registry" }
+
+Tool: get_contract
+Args: { "contract_id": "architecture-layers" }
+
+Tool: get_contract
+Args: { "contract_id": "schema-pattern" }
+```
+
+### 2. Buscar Padrões Relacionados
+
+```
+Tool: search_patterns
+Args: { "query": "[tema da tarefa]" }
+```
+
+### 3. Verificar com GREP Antes de Usar (OBRIGATÓRIO)
+
+```bash
+# Interface
+grep -rn "interface NomeInterface" src/
+
+# Enum
+grep -A10 "NomeEnum" src/lib/db/schema.ts
+
+# Método
+grep -n "nomeMetodo(" src/modules/
+
+# Propriedade de contexto
+grep -n "propriedade:" src/lib/auth/context.ts
+
+# SpedDocumentType (para SPED)
+grep -A10 "SpedDocumentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
+
+# Entity existente
+grep -rn "class NomeEntity" src/modules/
+
+# Value Object existente
+grep -rn "class NomeVO extends ValueObject" src/modules/
+
+# Repository interface
+grep -rn "interface I.*Repository" src/modules/
+```
+
+### 4. Confirmar Leitura
+
+Responder: **"Contratos MCP consultados. Verificações grep realizadas. Iniciando implementação."**
+
+**NUNCA pular esta etapa. Se não conseguir consultar, informar o usuário.**
 
 ---
 
-## 📐 ARQUITETURA
+## 📐 ARQUITETURA - REGRAS INVIOLÁVEIS (ARCH-001 a ARCH-015)
 
 ### Dependências entre Camadas
 
@@ -27,103 +95,428 @@ ANTES de implementar código:
 |-------|-----------|------------|
 | ARCH-001 | Domain NÃO importa de Application | CRÍTICA |
 | ARCH-002 | Domain NÃO importa de Infrastructure | CRÍTICA |
-| ARCH-003 | Domain NÃO importa libs externas | CRÍTICA |
-| ARCH-004 | Commands em application/commands/ | ALTA |
-| ARCH-005 | Queries em application/queries/ | ALTA |
-| ARCH-006 | Mappers usam reconstitute(), não create() | ALTA |
+| ARCH-003 | Domain NÃO importa bibliotecas externas (drizzle, axios) | CRÍTICA |
+| ARCH-004 | Domain NÃO importa módulos Node.js (fs, path, crypto) | CRÍTICA |
+| ARCH-005 | Application NÃO importa de Infrastructure (exceto via DI) | ALTA |
+| ARCH-006 | Dependências SEMPRE apontam para Domain (inward) | CRÍTICA |
+| ARCH-007 | Entities têm comportamento (não são anêmicas) | ALTA |
+| ARCH-008 | Value Objects são imutáveis (Object.freeze) | ALTA |
+| ARCH-009 | Domain Services são stateless (métodos estáticos) | ALTA |
+| ARCH-010 | Use Cases implementam interface de domain/ports/input/ | ALTA |
+| ARCH-011 | Repositories implementam interface de domain/ports/output/ | ALTA |
+| ARCH-012 | Commands em application/commands/ | MÉDIA |
+| ARCH-013 | Queries em application/queries/ | MÉDIA |
+| ARCH-014 | Mappers têm toDomain() e toPersistence() | ALTA |
+| ARCH-015 | toDomain() usa reconstitute(), não create() | ALTA |
 
-### Estrutura Obrigatória
+### Estrutura de Pastas Obrigatória
 
 ```
 src/modules/{module}/
 ├── domain/
 │   ├── entities/
 │   ├── value-objects/
-│   ├── services/           # OBRIGATÓRIO
+│   ├── services/           # ← OBRIGATÓRIO
 │   ├── events/
 │   ├── errors/
 │   └── ports/
-│       ├── input/          # OBRIGATÓRIO
-│       └── output/         # OBRIGATÓRIO
+│       ├── input/          # ← OBRIGATÓRIO
+│       └── output/         # ← OBRIGATÓRIO
 ├── application/
-│   ├── commands/           # OBRIGATÓRIO
-│   ├── queries/            # OBRIGATÓRIO
+│   ├── commands/           # ← OBRIGATÓRIO
+│   ├── queries/            # ← OBRIGATÓRIO
 │   └── dtos/
 └── infrastructure/
     ├── persistence/
     │   ├── repositories/
     │   ├── mappers/
-    │   └── schemas/        # 1 por tabela
+    │   └── schemas/        # 1 arquivo por tabela
     └── di/
 ```
 
 ---
 
-## 🗄️ BANCO DE DADOS
+## 🗄️ BANCO DE DADOS - SCHEMA PATTERN (SCHEMA-001 a SCHEMA-010)
+
+| Regra | Descrição | Prioridade |
+|-------|-----------|------------|
+| SCHEMA-001 | Um arquivo schema por tabela | ALTA |
+| SCHEMA-002 | Nome: {entity}.schema.ts (lowercase) | MÉDIA |
+| SCHEMA-003 | Índice composto: (organizationId, branchId) | CRÍTICA |
+| SCHEMA-004 | Índices para filtros frequentes | ALTA |
+| SCHEMA-005 | Campos: createdAt, updatedAt obrigatórios | ALTA |
+| SCHEMA-006 | Soft delete: deletedAt nullable | ALTA |
+| SCHEMA-007 | Money = 2 colunas (amount + currency) | ALTA |
+| SCHEMA-008 | Export const tableName = mssqlTable(...) | MÉDIA |
+| SCHEMA-009 | Tipos inferidos: $inferSelect, $inferInsert | ALTA |
+| SCHEMA-010 | Índice único para chaves naturais | MÉDIA |
+
+---
+
+## 🔷 ENTITY PATTERN (ENTITY-001 a ENTITY-012)
 
 | Regra | Descrição |
 |-------|-----------|
-| SCHEMA-001 | 1 arquivo por tabela |
-| SCHEMA-002 | Índice (organizationId, branchId) |
-| SCHEMA-003 | createdAt, updatedAt obrigatórios |
-| SCHEMA-004 | deletedAt para soft delete |
-| SCHEMA-005 | Money = 2 colunas (amount + currency) |
-| SCHEMA-006 | Tipos inferidos exportados |
+| ENTITY-001 | Extends AggregateRoot<string> ou Entity<string> |
+| ENTITY-002 | Factory method create() com validações |
+| ENTITY-003 | Método reconstitute() sem validações |
+| ENTITY-004 | create() retorna Result<Entity, string> |
+| ENTITY-005 | NUNCA setters públicos |
+| ENTITY-006 | Getters para propriedades |
+| ENTITY-007 | Métodos de negócio (approve, cancel, etc) |
+| ENTITY-008 | Validar invariantes em create() |
+| ENTITY-009 | Emitir Domain Events em mudanças de estado |
+| ENTITY-010 | ID gerado internamente (crypto.randomUUID) |
+| ENTITY-011 | Multi-tenancy: organizationId + branchId |
+| ENTITY-012 | Timestamps: createdAt, updatedAt |
 
 ---
 
-## 🔴 REGRAS CRÍTICAS
+## 🔶 VALUE OBJECT PATTERN (VO-001 a VO-010)
 
-### TypeScript
-- ❌ NUNCA `any`, `@ts-ignore`, `as any`
-- ✅ SEMPRE tipar retornos e parâmetros
+| Regra | Descrição |
+|-------|-----------|
+| VO-001 | Extends ValueObject<Props> |
+| VO-002 | Props extends Record<string, unknown> |
+| VO-003 | Constructor privado |
+| VO-004 | Factory method create() estático |
+| VO-005 | Object.freeze no constructor |
+| VO-006 | Imutável (sem métodos que alteram estado) |
+| VO-007 | Comparação por valor (equals) |
+| VO-008 | Validações em create() |
+| VO-009 | Retorna Result<VO, string> |
+| VO-010 | toString() para debug |
+
+---
+
+## 🔵 DOMAIN SERVICE PATTERN (DOMAIN-SVC-001 a DOMAIN-SVC-010)
+
+| Regra | Descrição |
+|-------|-----------|
+| DOMAIN-SVC-001 | 100% Stateless (métodos estáticos) |
+| DOMAIN-SVC-002 | Constructor privado (impede instanciação) |
+| DOMAIN-SVC-003 | Retorna Result<T, string> |
+| DOMAIN-SVC-004 | NUNCA faz throw |
+| DOMAIN-SVC-005 | ZERO dependências de infraestrutura |
+| DOMAIN-SVC-006 | ZERO acesso a banco de dados |
+| DOMAIN-SVC-007 | 100% testável sem mocks |
+| DOMAIN-SVC-008 | Lógica de negócio PURA |
+| DOMAIN-SVC-009 | Localização: domain/services/ |
+| DOMAIN-SVC-010 | Nome descritivo: {Ação}Calculator, {Ação}Validator |
+
+---
+
+## 🟣 USE CASE PATTERN (USE-CASE-001 a USE-CASE-015)
+
+| Regra | Descrição |
+|-------|-----------|
+| USE-CASE-001 | Commands em application/commands/ |
+| USE-CASE-002 | Queries em application/queries/ |
+| USE-CASE-003 | Implementa interface de domain/ports/input/ |
+| USE-CASE-004 | Método único: execute() |
+| USE-CASE-005 | Recebe ExecutionContext (userId, orgId, branchId) |
+| USE-CASE-006 | Retorna Promise<Result<Output, string>> |
+| USE-CASE-007 | Valida input (Zod ou manual) |
+| USE-CASE-008 | Verifica multi-tenancy |
+| USE-CASE-009 | Delega lógica para Domain |
+| USE-CASE-010 | Usa DI para dependencies |
+| USE-CASE-011 | @injectable() decorator |
+| USE-CASE-012 | Commands podem modificar estado |
+| USE-CASE-013 | Queries NUNCA modificam estado |
+| USE-CASE-014 | Publica Domain Events |
+| USE-CASE-015 | Gerencia transações |
+
+---
+
+## 🟢 REPOSITORY PATTERN (REPO-001 a REPO-012)
+
+| Regra | Descrição |
+|-------|-----------|
+| REPO-001 | Interface em domain/ports/output/ |
+| REPO-002 | Implementação em infrastructure/persistence/repositories/ |
+| REPO-003 | Implementa interface do domain |
+| REPO-004 | Usa Mapper para conversão |
+| REPO-005 | TODA query filtra organizationId + branchId |
+| REPO-006 | Soft delete: filtrar deletedAt IS NULL |
+| REPO-007 | UPSERT com onConflictDoUpdate |
+| REPO-008 | Transações para operações múltiplas |
+| REPO-009 | Paginação obrigatória em findMany |
+| REPO-010 | Retorna Domain Entity, não row do banco |
+| REPO-011 | @injectable() decorator |
+| REPO-012 | Nome: Drizzle{Entity}Repository |
+
+---
+
+## 🟡 MAPPER PATTERN (MAPPER-001 a MAPPER-008)
+
+| Regra | Descrição |
+|-------|-----------|
+| MAPPER-001 | Localização: infrastructure/persistence/mappers/ |
+| MAPPER-002 | Método toDomain(row): Result<Entity, string> |
+| MAPPER-003 | Método toPersistence(entity): Insert |
+| MAPPER-004 | toDomain usa reconstitute(), NUNCA create() |
+| MAPPER-005 | Money → 2 campos (amount, currency) |
+| MAPPER-006 | Validar conversão de Value Objects |
+| MAPPER-007 | Classe com métodos estáticos |
+| MAPPER-008 | Nome: {Entity}Mapper |
+
+---
+
+## 🔴 REGRAS CRÍTICAS DE CÓDIGO
+
+### TypeScript Strict
+
+- ❌ NUNCA usar `any` (usar `unknown` ou tipo explícito)
+- ❌ NUNCA usar `@ts-ignore`
+- ❌ NUNCA usar `as any`
+- ✅ SEMPRE tipar retornos de função
+- ✅ SEMPRE tipar parâmetros
+
+### Validação de Input
+
+- ✅ SEMPRE validar input com Zod em rotas API
+- ✅ SEMPRE usar .trim() antes de validar comprimento de strings
+- ✅ SEMPRE verificar Result.isFail() antes de acessar .value
 
 ### Result Pattern
-- ✅ Verificar Result.isFail() antes de .value
-- ❌ NUNCA throw para erros de negócio
+
+- ✅ SEMPRE verificar Result.isFail() antes de acessar .value
+- ✅ SEMPRE retornar Result em operações que podem falhar
+- ❌ NUNCA fazer throw para erros de negócio
+- ❌ NUNCA acessar .value sem verificar
 
 ### Multi-Tenancy
-- ✅ SEMPRE organizationId + branchId
-- ❌ branchId NUNCA opcional
+
+- ✅ SEMPRE filtrar por organizationId + branchId
+- ❌ branchId NUNCA pode ser opcional em filters
+- ✅ Índice composto obrigatório no schema
+
+### Transações SQL
+
+- ✅ SEMPRE usar transação em operações multi-step
+- ✅ Usar withMssqlTransaction helper
+
+### Mapeamento Domain-Persistence
+
+- ✅ Schema DEVE espelhar Domain COMPLETO
+- ✅ Money = 2 campos (amount + currency)
+- ✅ Campos opcionais = .nullable()
+- ✅ toDomain usa reconstitute(), NÃO create()
+- ✅ UPDATE com TODOS os campos mutáveis
+
+### Funções Utilitárias
+
+- ✅ Quando criar função utilitária: USAR em TODOS os lugares
+- ✅ REMOVER código duplicado que a função substitui
+- ❌ NUNCA deixar lógica hardcoded quando existe função centralizada
+
+### Máquina de Estados
+
+- ✅ Transições que diferem por tipo DEVEM ter máquinas separadas
+- ❌ NUNCA modificar máquina global para caso específico
+- ✅ SEMPRE usar canTransitionTo(from, to, documentType)
 
 ---
 
-## ✅ PRÉ-COMMIT
+## ✅ VALIDAÇÕES PRÉ-COMMIT OBRIGATÓRIAS
+
+ANTES de commit, executar TODOS:
 
 ```bash
-npx tsc --noEmit        # 0 erros
-npm test -- --run       # Todos passando
-check_cursor_issues     # 0 issues
+# 1. TypeScript - deve retornar 0 erros
+npx tsc --noEmit
+
+# 2. Testes - todos devem passar
+npm test -- --run
+
+# 3. Buscar any - deve retornar 0 resultados
+grep -r 'as any' src/
+
+# 4. Verificar status git
+git status
+```
+
+### 5. Verificar Issues do Cursor (OBRIGATÓRIO)
+
+```
+Tool: check_cursor_issues
+Args: {}
+```
+
+Se QUALQUER verificação falhar, corrigir antes de commit.
+
+---
+
+## 📋 FLUXO DE TRABALHO OBRIGATÓRIO
+
+### Implementação
+
+1. Consultar contratos MCP (Tool: get_contract)
+2. Buscar padrões (Tool: search_patterns)
+3. Verificar com grep
+4. Confirmar leitura
+5. Implementar seguindo regras
+6. Testar localmente
+
+### Pré-Commit
+
+```
+Tool: check_cursor_issues
+Args: {}
+```
+
+1. Se issues > 0: corrigir
+2. Se issues = 0: fazer commit
+
+### Pós-Commit
+
+```
+Tool: check_cursor_issues
+Args: {}
+```
+
+1. Se issues > 0: corrigir + registrar correção + git commit --amend
+2. Se issues = 0: reportar para aprovação
+
+### Registrar Correção (quando aplicável)
+
+```
+Tool: register_correction
+Args: {
+  "epic": "[épico atual]",
+  "error_description": "[descrição clara do erro]",
+  "correction_applied": "[como foi corrigido]",
+  "files_affected": ["arquivo1.ts", "arquivo2.ts"]
+}
+```
+
+### Push
+
+1. NUNCA fazer push sem aprovação explícita do usuário
+2. Aguardar mensagem "APROVADO - FAZER PUSH"
+3. Verificar git status antes do push
+
+---
+
+## 🛡️ PREVENÇÃO DE GAPS (PREVENT-001 a PREVENT-008)
+
+| Regra | Descrição |
+|-------|-----------|
+| PREVENT-001 | Todo novo módulo DEVE seguir template |
+| PREVENT-002 | Todo Use Case em commands/ ou queries/ |
+| PREVENT-003 | Todo service DEVE estar em um módulo |
+| PREVENT-004 | Código em src/services/ é PROIBIDO |
+| PREVENT-005 | Domain NUNCA importa de fora |
+| PREVENT-006 | branchId SEMPRE obrigatório |
+| PREVENT-007 | Repository SEMPRE usa Mapper |
+| PREVENT-008 | Entity SEMPRE tem create() e reconstitute() |
+
+---
+
+## ⛔ PROIBIÇÕES ABSOLUTAS
+
+- ❌ NUNCA usar `any` (nem em testes)
+- ❌ NUNCA fazer push sem aprovação
+- ❌ NUNCA criar função utilitária sem usá-la em todos os lugares
+- ❌ NUNCA modificar máquina de estados global para caso específico
+- ❌ NUNCA validar string sem .trim()
+- ❌ NUNCA acessar .value sem verificar Result.isFail()
+- ❌ NUNCA deixar testes skipped
+- ❌ NUNCA usar placeholders como 'TEMP' ou 'TODO' em código de produção
+- ❌ NUNCA fazer commits incrementais de correção (usar --amend)
+
+---
+
+## 📊 REGRA DE IMPACTO CRUZADO
+
+Antes de modificar método compartilhado (authorize, cancel, submit, etc):
+
+1. Listar TODOS os document types que usam esse método
+2. Verificar se a mudança afeta cada tipo diferentemente
+3. Adicionar condicional por tipo se necessário
+4. Usar funções centralizadas ao invés de hardcode
+
+---
+
+## 🇧🇷 CONTEXTO BRASIL (ERP Logístico)
+
+### Legislação Fiscal
+
+- ICMS (Lei Complementar 87/96 - Lei Kandir)
+- PIS/COFINS (Leis 10.637/02 e 10.833/03)
+- SPED Fiscal, SPED Contribuições, SPED ECD
+- CTe (Conhecimento de Transporte Eletrônico)
+- NFe (Nota Fiscal Eletrônica)
+- MDFe (Manifesto de Documentos Fiscais)
+- NFS-e (Nota Fiscal de Serviços Eletrônica)
+
+### Reforma Tributária 2026
+
+- IBS (Imposto sobre Bens e Serviços)
+- CBS (Contribuição sobre Bens e Serviços)
+- IS (Imposto Seletivo)
+
+### Retenções na Fonte
+
+- IRRF (1.5%)
+- PIS (0.65%)
+- COFINS (3%)
+- CSLL (1%)
+- ISS (2-5%)
+
+---
+
+## 🔧 STACK TÉCNICA
+
+- **Backend:** Next.js 15 (App Router), TypeScript, Drizzle ORM, SQL Server 2022
+- **Frontend:** React 19, Refine, AG Grid, Shadcn/UI
+- **Testes:** Vitest
+- **DI:** tsyringe
+- **Deploy:** Coolify
+
+---
+
+## 📊 FORMATO DE RELATÓRIO FINAL
+
+Ao concluir implementação, reportar:
+
+```markdown
+## TAREFA CONCLUÍDA
+
+### Verificações MCP
+- check_cursor_issues (pré-commit): ✅/❌
+- check_cursor_issues (pós-commit): ✅/❌
+
+### Verificações Código
+- npx tsc --noEmit: ✅ 0 erros
+- npm test -- --run: ✅ X/X passando
+- grep 'as any': ✅ 0 resultados
+
+### Commits
+- Hash: [hash]
+- Mensagem: [mensagem]
+
+### Push
+- Status: ✅ Realizado / ⏳ Pendente
+
+### Correções Registradas
+- [LC-XXXXX]: [descrição] (se houver)
 ```
 
 ---
 
-## 🛡️ PREVENÇÃO
+## 📁 ARQUIVOS CRÍTICOS (CUIDADO EXTRA)
 
-| Regra | Descrição |
-|-------|-----------|
-| PREVENT-001 | Novo módulo segue template |
-| PREVENT-002 | Use Case em commands/ ou queries/ |
-| PREVENT-003 | Código em src/services/ PROIBIDO |
-| PREVENT-004 | Domain não importa de fora |
-| PREVENT-005 | Repository usa Mapper |
+Modificações nesses arquivos exigem testes extras e revisão cuidadosa:
 
----
-
-## 🇧🇷 CONTEXTO BRASIL
-
-- Legislação: ICMS, PIS/COFINS, SPED, NFe/CTe
-- Reforma 2026: IBS, CBS, IS
-- Retenções: IRRF 1.5%, PIS 0.65%, COFINS 3%
+1. `accounting-engine.ts` - Contabilização
+2. `financial-title-generator.ts` - Títulos financeiros
+3. `sped-fiscal-generator.ts` - SPED (multa R$ 5.000+)
+4. `sped-ecd-generator.ts` - SPED Contábil
+5. `sped-contributions-generator.ts` - SPED PIS/COFINS
+6. `FiscalDocument.ts` - Documento fiscal base
+7. `DocumentType.ts` - Máquina de estados
 
 ---
 
-## 🔧 STACK
-
-- Next.js 15, TypeScript, Drizzle, SQL Server 2022
-- React 19, Refine, AG Grid, Shadcn/UI
-- Vitest, tsyringe
-
----
-
-**FIM v2.0 - CONSULTAR MCP ANTES DE COMEÇAR**
+**FIM DAS REGRAS v2.0 - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
