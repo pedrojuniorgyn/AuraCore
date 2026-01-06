@@ -16,6 +16,7 @@ import {
   Clock,
   DollarSign,
   AlertCircle,
+  type LucideIcon,
 } from "lucide-react";
 
 interface DDADebit {
@@ -127,7 +128,7 @@ export default function DDAPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { color: string; icon: any; text: string }> = {
+    const badges: Record<string, { color: string; icon: LucideIcon; text: string }> = {
       PENDING: { color: "bg-yellow-100 text-yellow-800", icon: Clock, text: "Pendente" },
       PAID: { color: "bg-green-100 text-green-800", icon: CheckCircle, text: "Pago" },
       REJECTED: { color: "bg-red-100 text-red-800", icon: XCircle, text: "Rejeitado" },
@@ -261,7 +262,7 @@ export default function DDAPage() {
               <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
               <p className="font-semibold">Nenhum débito encontrado</p>
               <p className="text-sm mt-1">
-                Clique em "Sincronizar BTG" para importar débitos
+                Clique em &quot;Sincronizar BTG&quot; para importar débitos
               </p>
             </div>
           ) : (
@@ -341,14 +342,14 @@ export default function DDAPage() {
         </h3>
         <ul className="space-y-2 text-sm text-blue-800">
           <li>
-            <strong>1. Sincronize:</strong> Clique em "Sincronizar BTG" para
+            <strong>1. Sincronize:</strong> Clique em &quot;Sincronizar BTG&quot; para
             buscar débitos autorizados
           </li>
           <li>
             <strong>2. Analise:</strong> Revise os débitos pendentes e vencimentos
           </li>
           <li>
-            <strong>3. Pague:</strong> Clique em "Pagar" para efetuar o pagamento
+            <strong>3. Pague:</strong> Clique em &quot;Pagar&quot; para efetuar o pagamento
             via BTG
           </li>
           <li>
