@@ -9,6 +9,36 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ArrowLeft, Save, FileText, Trash2 } from "lucide-react";
 
+interface FiscalDocument {
+  id: number;
+  documentNumber: string;
+  documentType: string;
+  partnerName: string;
+  fiscalClassification: string;
+  fiscalStatus: string;
+  accountingStatus: string;
+  financialStatus: string;
+  notes?: string;
+}
+
+interface DocumentItem {
+  id: number;
+  productCode: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  totalValue: number;
+  fiscalCategoryId?: number;
+  chartAccountId?: number;
+  costCenterId?: number;
+}
+
+interface SelectOption {
+  id: number;
+  name: string;
+  code?: string;
+}
+
 export default function EditarDocumentoPage() {
   const params = useParams();
   const router = useRouter();
@@ -16,12 +46,12 @@ export default function EditarDocumentoPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [document, setDocument] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [document, setDocument] = useState<FiscalDocument | null>(null);
+  const [items, setItems] = useState<DocumentItem[]>([]);
   
-  const [categories, setCategories] = useState<any[]>([]);
-  const [chartAccounts, setChartAccounts] = useState<any[]>([]);
-  const [costCenters, setCostCenters] = useState<any[]>([]);
+  const [categories, setCategories] = useState<SelectOption[]>([]);
+  const [chartAccounts, setChartAccounts] = useState<SelectOption[]>([]);
+  const [costCenters, setCostCenters] = useState<SelectOption[]>([]);
   
   const [formData, setFormData] = useState({
     fiscalClassification: "",
@@ -119,7 +149,7 @@ export default function EditarDocumentoPage() {
     }
   };
 
-  const handleItemUpdate = async (itemId: number, field: string, value: any) => {
+  const handleItemUpdate = async (itemId: number, field: string, value: unknown) => {
     try {
       await fetch(`/api/fiscal/documents/items/${itemId}`, {
         method: "PATCH",
@@ -325,7 +355,7 @@ export default function EditarDocumentoPage() {
                             onChange={(value: string) =>
                               handleItemUpdate(item.id, "categoryId", value ? parseInt(value) : null)
                             }
-                            options={categories.map((cat: any) => ({
+                            options={categories.map((cat: SelectOption) => ({
                               value: cat.id.toString(),
                               label: cat.name,
                             }))}
@@ -342,7 +372,7 @@ export default function EditarDocumentoPage() {
                             onChange={(value: string) =>
                               handleItemUpdate(item.id, "chartAccountId", value ? parseInt(value) : null)
                             }
-                            options={chartAccounts.map((acc: any) => ({
+                            options={chartAccounts.map((acc: SelectOption) => ({
                               value: acc.id.toString(),
                               label: `${acc.code} - ${acc.name}`,
                             }))}
@@ -360,8 +390,8 @@ export default function EditarDocumentoPage() {
                               handleItemUpdate(item.id, "costCenterId", value ? parseInt(value) : null)
                             }
                             options={costCenters
-                              .filter((cc: any) => cc.isAnalytical) // ✅ Apenas analíticos
-                              .map((cc: any) => ({
+                              .filter((cc: SelectOption & { isAnalytical?: boolean }) => cc.isAnalytical) // ✅ Apenas analíticos
+                              .map((cc: SelectOption) => ({
                                 value: cc.id.toString(),
                                 label: `${cc.code} - ${cc.name}`,
                               }))}

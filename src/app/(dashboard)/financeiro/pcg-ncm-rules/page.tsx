@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, GridReadyEvent } from "ag-grid-community";
+import type { ColDef, GridReadyEvent, ICellRendererParams } from "ag-grid-community";
 
 // AG Grid Enterprise Modules
 import { AllEnterpriseModule } from "ag-grid-enterprise";
@@ -50,6 +50,12 @@ interface PcgNcmRule {
   createdAt: string;
 }
 
+interface PcgOption {
+  id: number;
+  code: string;
+  name: string;
+}
+
 // Registrar módulos Enterprise
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -60,7 +66,7 @@ export default function PcgNcmRulesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingRule, setEditingRule] = useState<PcgNcmRule | null>(null);
   const [quickFilterText, setQuickFilterText] = useState("");
-  const [pcgOptions, setPcgOptions] = useState<any[]>([]);
+  const [pcgOptions, setPcgOptions] = useState<PcgOption[]>([]);
 
   const [formData, setFormData] = useState({
     ncmCode: "",
@@ -256,7 +262,7 @@ export default function PcgNcmRulesPage() {
       headerName: "Monofásico",
       field: "flagPisCofinsMono",
       width: 130,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         params.value ? (
           <Badge variant="default" className="bg-green-500">
             <CheckCircle className="w-3 h-3 mr-1" /> Sim
@@ -272,7 +278,7 @@ export default function PcgNcmRulesPage() {
       headerName: "ICMS-ST",
       field: "flagIcmsSt",
       width: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         params.value ? (
           <Badge variant="default" className="bg-blue-500">
             <CheckCircle className="w-3 h-3 mr-1" /> Sim
@@ -288,7 +294,7 @@ export default function PcgNcmRulesPage() {
       headerName: "Diferimento",
       field: "flagIcmsDif",
       width: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         params.value ? (
           <Badge variant="default" className="bg-purple-500">Sim</Badge>
         ) : (
@@ -300,7 +306,7 @@ export default function PcgNcmRulesPage() {
       headerName: "IPI Suspenso",
       field: "flagIpiSuspenso",
       width: 130,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         params.value ? (
           <Badge variant="default" className="bg-orange-500">Sim</Badge>
         ) : (
@@ -312,7 +318,7 @@ export default function PcgNcmRulesPage() {
       headerName: "Importação",
       field: "flagImportacao",
       width: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         params.value ? (
           <Badge variant="default" className="bg-red-500">Sim</Badge>
         ) : (
@@ -331,7 +337,7 @@ export default function PcgNcmRulesPage() {
       headerName: "Status",
       field: "isActive",
       width: 110,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         params.value ? (
           <Badge variant="default" className="bg-green-600">Ativo</Badge>
         ) : (
@@ -344,7 +350,7 @@ export default function PcgNcmRulesPage() {
       field: "id",
       width: 120,
       pinned: "right",
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-2 items-center h-full">
           <button
             onClick={() => handleEdit(params.data)}

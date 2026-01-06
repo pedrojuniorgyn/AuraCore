@@ -55,7 +55,7 @@ export default function QuotesPage() {
       headerName: "Cotação",
       width: 150,
       filter: "agTextColumnFilter",
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-semibold">{params.value}</span>
       ),
     },
@@ -73,7 +73,7 @@ export default function QuotesPage() {
       field: "weightKg",
       headerName: "Peso (kg)",
       width: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span>{parseFloat(params.value || "0").toFixed(2)}</span>
       ),
     },
@@ -81,7 +81,7 @@ export default function QuotesPage() {
       field: "calculatedPrice",
       headerName: "Preço Calculado",
       width: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-semibold text-blue-600">
           {params.value
             ? `R$ ${parseFloat(params.value).toFixed(2)}`
@@ -94,8 +94,8 @@ export default function QuotesPage() {
       headerName: "Status",
       width: 140,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: any) => {
-        const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
           NEW: { label: "Nova", color: "bg-gray-100 text-gray-700", icon: Clock },
           QUOTED: { label: "Cotada", color: "bg-blue-100 text-blue-700", icon: FileText },
           ACCEPTED: { label: "Aceita", color: "bg-green-100 text-green-700", icon: CheckCircle },
@@ -116,7 +116,7 @@ export default function QuotesPage() {
     {
       headerName: "Ações",
       width: 200,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-2 items-center h-full">
           {params.data.status === "NEW" && (
             <>

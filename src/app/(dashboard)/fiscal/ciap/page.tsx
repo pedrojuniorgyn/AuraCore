@@ -15,13 +15,25 @@ import { toast } from "sonner";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface CIAPAsset {
+  id: number;
+  documentNumber: string;
+  assetDescription: string;
+  acquisitionValue: number;
+  icmsValue: number;
+  creditablePercent: number;
+  monthlyCredit: number;
+  accumulated: number;
+  status: string;
+}
+
 export default function CIAPPage() {
   const router = useRouter();
-  const [assets, setAssets] = useState<any[]>([]);
+  const [assets, setAssets] = useState<CIAPAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
 
-  const handleEdit = (data: any) => {
+  const handleEdit = (data: { id: number }) => {
     router.push(`/fiscal/ciap/editar/${data.id}`);
   };
 
@@ -94,19 +106,19 @@ export default function CIAPPage() {
       field: 'value', 
       headerName: 'Valor', 
       width: 140,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR')}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR')}`
     },
     { 
       field: 'icms', 
       headerName: 'ICMS Tot', 
       width: 130,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR')}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR')}`
     },
     { 
       field: 'installments', 
       headerName: 'Parc', 
       width: 100,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const [current, total] = params.value.split('/');
         const percent = (parseInt(current) / parseInt(total)) * 100;
         return `<div class="flex items-center gap-2">
@@ -121,13 +133,13 @@ export default function CIAPPage() {
       field: 'appropriated', 
       headerName: 'Aprop', 
       width: 120,
-      valueFormatter: (params: any) => `R$ ${(params.value / 1000).toFixed(1)}k`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${(params.value / 1000).toFixed(1)}k`
     },
     { 
       field: 'balance', 
       headerName: 'Saldo', 
       width: 120,
-      valueFormatter: (params: any) => `R$ ${(params.value / 1000).toFixed(1)}k`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${(params.value / 1000).toFixed(1)}k`
     },
     { field: 'next', headerName: 'Próx', width: 80 }
   ];

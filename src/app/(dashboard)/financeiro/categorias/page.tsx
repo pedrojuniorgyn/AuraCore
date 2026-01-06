@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, GridReadyEvent } from "ag-grid-community";
+import type { ColDef, GridReadyEvent, ICellRendererParams } from "ag-grid-community";
 
 // AG Grid Enterprise Modules (v34+)
 import { AllEnterpriseModule } from "ag-grid-enterprise";
@@ -101,9 +101,9 @@ export default function CategoriasPage() {
       // Calcular KPIs
       setStats({
         total: catArray.length,
-        income: catArray.filter((c: any) => c.type === "INCOME" || c.type === "REVENUE").length,
-        expense: catArray.filter((c: any) => c.type === "EXPENSE").length,
-        active: catArray.filter((c: any) => c.status === "ACTIVE").length,
+        income: catArray.filter((c: FinancialCategory) => c.type === "INCOME" || c.type === "REVENUE").length,
+        expense: catArray.filter((c: FinancialCategory) => c.type === "EXPENSE").length,
+        active: catArray.filter((c: FinancialCategory) => c.status === "ACTIVE").length,
       });
     } catch (error) {
       console.error("Erro ao buscar categorias:", error);
@@ -189,7 +189,7 @@ export default function CategoriasPage() {
   };
 
   // ✅ CELL RENDERERS - MESMO PADRÃO DO MONITOR FISCAL
-  const ActionCellRenderer = (props: any) => {
+  const ActionCellRenderer = (props: ICellRendererParams) => {
     return (
       <div className="flex gap-2 h-full items-center justify-center">
         <button
@@ -210,7 +210,7 @@ export default function CategoriasPage() {
     );
   };
 
-  const TypeCellRenderer = (props: any) => {
+  const TypeCellRenderer = (props: ICellRendererParams) => {
     const type = props.value;
     if (type === "INCOME" || type === "REVENUE") {
       return (
@@ -226,7 +226,7 @@ export default function CategoriasPage() {
     );
   };
 
-  const StatusCellRenderer = (props: any) => {
+  const StatusCellRenderer = (props: ICellRendererParams) => {
     return props.value === "ACTIVE" ? (
       <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
         ✓ Ativo

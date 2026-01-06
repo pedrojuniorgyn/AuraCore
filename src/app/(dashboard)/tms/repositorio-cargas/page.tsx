@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useTenant } from "@/contexts/tenant-context";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ICellRendererParams } from "ag-grid-community";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
@@ -68,7 +68,7 @@ const COLUMN_LABELS: Record<string, string> = {
 export default function CargoRepositoryPage() {
   const router = useRouter();
   const { currentBranch } = useTenant();
-  const gridRef = useRef<any>(null);
+  const gridRef = useRef<AgGridReact>(null);
 
   const [cargos, setCargos] = useState<ICargo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -192,7 +192,7 @@ export default function CargoRepositoryPage() {
       width: 180,
       valueGetter: (params) => 
         `${params.data?.originCity || ""}/${params.data?.originUf || ""}`,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="flex items-center gap-1">
           <MapPin className="h-3 w-3 text-blue-400" />
           {params.value}
@@ -205,7 +205,7 @@ export default function CargoRepositoryPage() {
       width: 180,
       valueGetter: (params) => 
         `${params.data?.destinationCity || ""}/${params.data?.destinationUf || ""}`,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="flex items-center gap-1">
           <MapPin className="h-3 w-3 text-green-400" />
           {params.value}
@@ -219,7 +219,7 @@ export default function CargoRepositoryPage() {
       width: 140,
       sortable: true,
       type: "numericColumn",
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const value = parseFloat(params.value || "0");
         return new Intl.NumberFormat("pt-BR", {
           style: "currency",
@@ -234,7 +234,7 @@ export default function CargoRepositoryPage() {
       width: 120,
       sortable: true,
       type: "numericColumn",
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const value = parseFloat(params.value || "0");
         return value.toFixed(2) + " kg";
       },
@@ -245,7 +245,7 @@ export default function CargoRepositoryPage() {
       field: "deliveryDeadline",
       width: 140,
       sortable: true,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         if (!params.value) return "-";
         
         const deadline = new Date(params.value);
@@ -278,7 +278,7 @@ export default function CargoRepositoryPage() {
       headerName: "Status",
       field: "status",
       width: 150,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const badges: Record<string, { label: string; color: string }> = {
           PENDING: { label: "Pendente", color: "bg-yellow-100 text-yellow-700" },
           ASSIGNED_TO_TRIP: { label: "Em Viagem", color: "bg-blue-100 text-blue-700" },
@@ -300,7 +300,7 @@ export default function CargoRepositoryPage() {
       headerName: "CTe Externo",
       field: "hasExternalCte",
       width: 130,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         if (params.value === "S") {
           return (
             <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-300">

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -111,7 +111,7 @@ export default function VehiclesPage() {
       field: "plate",
       headerName: "Placa",
       width: 150,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         return <LicensePlate plate={params.value} size="sm" />;
       },
     },
@@ -119,8 +119,8 @@ export default function VehiclesPage() {
       field: "type",
       headerName: "Tipo",
       width: 140,
-      cellRenderer: (params: any) => {
-        const typeMap: Record<string, { icon: any; label: string; color: string }> = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const typeMap: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; color: string }> = {
           TRUCK: { icon: Truck, label: "Caminhão", color: "text-blue-500" },
           TRAILER: { icon: Truck, label: "Carreta", color: "text-purple-500" },
           VAN: { icon: Truck, label: "Van", color: "text-green-500" },
@@ -165,9 +165,9 @@ export default function VehiclesPage() {
       field: "status",
       headerName: "Status",
       width: 140,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const statusConfig = getStatusConfig(params.value);
-        const iconMap: Record<string, any> = {
+        const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
           AVAILABLE: CheckCircle2,
           IN_TRANSIT: Truck,
           MAINTENANCE: Wrench,
@@ -186,7 +186,7 @@ export default function VehiclesPage() {
       field: "maintenanceStatus",
       headerName: "Manutenção",
       width: 120,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const statusConfig = getStatusConfig(params.value);
         return <Badge variant={statusConfig.variant} className={statusConfig.className}>{statusConfig.label}</Badge>;
       },
@@ -197,7 +197,7 @@ export default function VehiclesPage() {
       pinned: "right",
       sortable: false,
       filter: false,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-2">
           <Button
             variant="ghost"

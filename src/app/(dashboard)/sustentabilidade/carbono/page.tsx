@@ -15,8 +15,19 @@ import { toast } from "sonner";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface CarbonEmission {
+  id: number;
+  tripId: number;
+  date: string;
+  route: string;
+  distance: number;
+  fuelLiters: number;
+  co2Kg: number;
+  vehiclePlate: string;
+}
+
 export default function ESGCarbonoPage() {
-  const [emissions, setEmissions] = useState<any[]>([]);
+  const [emissions, setEmissions] = useState<CarbonEmission[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
 
@@ -96,31 +107,31 @@ export default function ESGCarbonoPage() {
       field: 'trips', 
       headerName: 'Viagens', 
       width: 120,
-      valueFormatter: (params: any) => params.value?.toLocaleString('pt-BR')
+      valueFormatter: (params: ValueFormatterParams) => params.value?.toLocaleString('pt-BR')
     },
     { 
       field: 'diesel', 
       headerName: 'Diesel (L)', 
       width: 140,
-      valueFormatter: (params: any) => params.value?.toLocaleString('pt-BR')
+      valueFormatter: (params: ValueFormatterParams) => params.value?.toLocaleString('pt-BR')
     },
     { 
       field: 'distance', 
       headerName: 'Distância (km)', 
       width: 150,
-      valueFormatter: (params: any) => params.value?.toLocaleString('pt-BR')
+      valueFormatter: (params: ValueFormatterParams) => params.value?.toLocaleString('pt-BR')
     },
     { 
       field: 'co2_kg', 
       headerName: 'CO2 (kg)', 
       width: 140,
-      valueFormatter: (params: any) => params.value?.toLocaleString('pt-BR')
+      valueFormatter: (params: ValueFormatterParams) => params.value?.toLocaleString('pt-BR')
     },
     { 
       field: 'co2_ton', 
       headerName: 'CO2 (t)', 
       width: 120,
-      valueFormatter: (params: any) => params.value?.toFixed(1),
+      valueFormatter: (params: ValueFormatterParams) => params.value?.toFixed(1),
       cellStyle: { color: '#10b981', fontWeight: 'bold' }
     }
   ];

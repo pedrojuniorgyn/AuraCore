@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -107,7 +107,7 @@ export default function DriversPage() {
       field: "name",
       headerName: "Nome",
       flex: 1,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">{params.value}</span>
@@ -123,7 +123,7 @@ export default function DriversPage() {
       field: "phone",
       headerName: "Telefone",
       width: 140,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         if (!params.value) return "-";
         return (
           <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export default function DriversPage() {
       field: "cnhCategory",
       headerName: "Categoria",
       width: 110,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <Badge variant="outline" className="font-mono">
           {params.value}
         </Badge>
@@ -152,7 +152,7 @@ export default function DriversPage() {
       field: "cnhExpiry",
       headerName: "Validade CNH",
       width: 160,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const expiryDate = new Date(params.value);
         const isExpired = isPast(expiryDate);
         
@@ -170,7 +170,7 @@ export default function DriversPage() {
       field: "status",
       headerName: "Status",
       width: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <DriverStatusBadge status={params.value} cnhExpiry={params.data.cnhExpiry} />
       ),
     },
@@ -180,7 +180,7 @@ export default function DriversPage() {
       pinned: "right",
       sortable: false,
       filter: false,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-2">
           <Button
             variant="ghost"
