@@ -1,0 +1,91 @@
+{
+  "id": "aggregate-pattern",
+  "version": "2.0.0",
+  "title": "Aggregate Pattern Contract",
+  "description": "Padrão para implementação de Aggregates",
+  "category": "domain",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "AGG-001",
+      "title": "Extends AggregateRoot",
+      "description": "Aggregate deve estender AggregateRoot",
+      "pattern": "domain/aggregates/*.ts",
+      "required_patterns": ["extends AggregateRoot<"],
+      "severity": "critical",
+      "message": "Aggregate deve estender AggregateRoot<string>"
+    },
+    {
+      "id": "AGG-002",
+      "title": "Único ponto de entrada",
+      "description": "Modificações apenas pelo Aggregate Root",
+      "severity": "high",
+      "message": "Entidades filhas só podem ser modificadas via Aggregate Root"
+    },
+    {
+      "id": "AGG-003",
+      "title": "Consistência transacional",
+      "description": "Aggregate garante consistência dentro de seus limites",
+      "severity": "high",
+      "message": "Aggregate deve garantir consistência transacional"
+    },
+    {
+      "id": "AGG-004",
+      "title": "Domain Events",
+      "description": "Aggregate deve emitir eventos em mudanças importantes",
+      "pattern": "domain/aggregates/*.ts",
+      "required_patterns": ["addDomainEvent("],
+      "severity": "medium",
+      "message": "Aggregate deve emitir Domain Events"
+    },
+    {
+      "id": "AGG-005",
+      "title": "clearDomainEvents()",
+      "description": "Aggregate deve permitir limpar eventos após publicação",
+      "pattern": "domain/aggregates/*.ts",
+      "required_patterns": ["clearDomainEvents("],
+      "severity": "medium",
+      "message": "Aggregate deve ter método clearDomainEvents()"
+    },
+    {
+      "id": "AGG-006",
+      "title": "Invariantes protegidas",
+      "description": "Aggregate protege invariantes de negócio",
+      "severity": "critical",
+      "message": "Aggregate deve proteger invariantes de negócio"
+    },
+    {
+      "id": "AGG-007",
+      "title": "Referência por ID",
+      "description": "Aggregates referenciam outros Aggregates apenas por ID",
+      "severity": "high",
+      "message": "Aggregates devem referenciar outros Aggregates por ID, não por referência"
+    },
+    {
+      "id": "AGG-008",
+      "title": "Tamanho controlado",
+      "description": "Aggregate não deve ser muito grande",
+      "severity": "medium",
+      "message": "Aggregate deve ter tamanho controlado para performance"
+    },
+    {
+      "id": "AGG-009",
+      "title": "Factory method",
+      "description": "Aggregate deve ter factory method create()",
+      "pattern": "domain/aggregates/*.ts",
+      "required_patterns": ["static create("],
+      "severity": "high",
+      "message": "Aggregate deve ter factory method static create()"
+    },
+    {
+      "id": "AGG-010",
+      "title": "Reconstitute method",
+      "description": "Aggregate deve ter método reconstitute()",
+      "pattern": "domain/aggregates/*.ts",
+      "required_patterns": ["static reconstitute("],
+      "severity": "high",
+      "message": "Aggregate deve ter método static reconstitute()"
+    }
+  ]
+}
+

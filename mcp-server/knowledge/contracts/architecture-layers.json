@@ -1,0 +1,194 @@
+{
+  "id": "architecture-layers",
+  "version": "2.0.0",
+  "title": "Architecture Layers Contract",
+  "description": "Regras de dependência entre camadas DDD/Hexagonal",
+  "category": "architecture",
+  "severity": "critical",
+  "rules": [
+    {
+      "id": "ARCH-001",
+      "title": "Domain não importa Application",
+      "description": "Arquivos em domain/ não podem importar de application/",
+      "pattern": "domain/**/*.ts",
+      "forbidden_imports": ["@/modules/*/application", "../application", "./application"],
+      "severity": "critical",
+      "message": "Domain layer não pode depender de Application layer"
+    },
+    {
+      "id": "ARCH-002",
+      "title": "Domain não importa Infrastructure",
+      "description": "Arquivos em domain/ não podem importar de infrastructure/",
+      "pattern": "domain/**/*.ts",
+      "forbidden_imports": ["@/modules/*/infrastructure", "../infrastructure", "./infrastructure", "drizzle-orm"],
+      "severity": "critical",
+      "message": "Domain layer não pode depender de Infrastructure layer"
+    },
+    {
+      "id": "ARCH-003",
+      "title": "Domain não importa bibliotecas externas",
+      "description": "Domain deve ser puro, sem dependências externas",
+      "pattern": "domain/**/*.ts",
+      "forbidden_imports": ["drizzle-orm", "axios", "node-fetch", "express", "next"],
+      "severity": "critical",
+      "message": "Domain layer não pode usar bibliotecas externas"
+    },
+    {
+      "id": "ARCH-004",
+      "title": "Domain não importa módulos Node.js",
+      "description": "Domain não pode usar APIs do Node.js via import. Abstrair via ports ou usar APIs globais (globalThis).",
+      "pattern": "domain/**/*.ts",
+      "forbidden_imports": [
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "node:os",
+        "node:child_process",
+        "node:http",
+        "node:https",
+        "node:net",
+        "node:stream",
+        "node:buffer",
+        "fs",
+        "path",
+        "crypto",
+        "os",
+        "child_process",
+        "http",
+        "https",
+        "net",
+        "stream",
+        "buffer"
+      ],
+      "severity": "critical",
+      "message": "Domain layer não pode importar módulos Node.js. Use globalThis para APIs globais ou crie port em domain/ports/output/",
+      "rationale": "Domain deve ser puro e independente de plataforma. Dependências de Node.js impedem testes isolados e acoplam à infraestrutura.",
+      "notes": [
+        "✅ PERMITIDO: globalThis.crypto.randomUUID() - API global, não requer import",
+        "✅ PERMITIDO: criar IFileService em ports/output/ e implementar em infrastructure",
+        "❌ PROIBIDO: import crypto from 'crypto'",
+        "❌ PROIBIDO: import { readFile } from 'fs'",
+        "❌ PROIBIDO: import path from 'node:path'"
+      ],
+      "exceptions": [
+        "globalThis.crypto - disponível globalmente em Node 19+ e browsers",
+        "globalThis.fetch - disponível globalmente em Node 18+ e browsers",
+        "globalThis.URL - disponível globalmente"
+      ]
+    },
+    {
+      "id": "ARCH-005",
+      "title": "Application não importa Infrastructure diretamente",
+      "description": "Application deve usar DI para acessar Infrastructure",
+      "pattern": "application/**/*.ts",
+      "forbidden_imports": ["../infrastructure/persistence", "./infrastructure/persistence"],
+      "allowed_imports": ["@/shared/infrastructure/di"],
+      "severity": "high",
+      "message": "Application layer deve usar DI para acessar Infrastructure"
+    },
+    {
+      "id": "ARCH-006",
+      "title": "Dependências apontam para dentro",
+      "description": "Outer layers dependem de inner layers, nunca o contrário",
+      "severity": "critical",
+      "message": "Violação da regra de dependência - dependências devem apontar para Domain"
+    },
+    {
+      "id": "ARCH-007",
+      "title": "Entities com comportamento",
+      "description": "Entities devem ter métodos de negócio, não apenas getters",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["static create(", "static reconstitute("],
+      "severity": "high",
+      "message": "Entity deve ter factory methods create() e reconstitute()"
+    },
+    {
+      "id": "ARCH-008",
+      "title": "Value Objects imutáveis",
+      "description": "Value Objects devem usar Object.freeze",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["extends ValueObject", "Object.freeze"],
+      "severity": "high",
+      "message": "Value Object deve ser imutável (usar Object.freeze)"
+    },
+    {
+      "id": "ARCH-009",
+      "title": "Domain Services stateless",
+      "description": "Domain Services devem ter apenas métodos estáticos",
+      "pattern": "domain/services/*.ts",
+      "required_patterns": ["static "],
+      "forbidden_patterns": ["this."],
+      "severity": "high",
+      "message": "Domain Service deve ser stateless (métodos estáticos)"
+    },
+    {
+      "id": "ARCH-010",
+      "title": "Use Cases implementam Input Ports",
+      "description": "Use Cases devem implementar interface de domain/ports/input/",
+      "pattern": "application/commands/**/*.ts",
+      "required_patterns": ["implements I"],
+      "severity": "high",
+      "message": "Use Case deve implementar interface de ports/input"
+    },
+    {
+      "id": "ARCH-011",
+      "title": "Repositories implementam Output Ports",
+      "description": "Repositories devem implementar interface de domain/ports/output/",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["implements I"],
+      "severity": "high",
+      "message": "Repository deve implementar interface de ports/output"
+    },
+    {
+      "id": "ARCH-012",
+      "title": "Commands em pasta commands/",
+      "description": "Write operations devem estar em application/commands/",
+      "pattern": "application/commands/**/*.ts",
+      "severity": "medium",
+      "message": "Commands devem estar em application/commands/"
+    },
+    {
+      "id": "ARCH-013",
+      "title": "Queries em pasta queries/",
+      "description": "Read operations devem estar em application/queries/",
+      "pattern": "application/queries/**/*.ts",
+      "severity": "medium",
+      "message": "Queries devem estar em application/queries/"
+    },
+    {
+      "id": "ARCH-014",
+      "title": "Mappers têm métodos obrigatórios",
+      "description": "Mappers devem ter toDomain() e toPersistence()",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": ["toDomain(", "toPersistence("],
+      "severity": "high",
+      "message": "Mapper deve ter métodos toDomain() e toPersistence()"
+    },
+    {
+      "id": "ARCH-015",
+      "title": "toDomain usa reconstitute",
+      "description": "Mapper.toDomain() deve usar Entity.reconstitute() para reconstituir entidades do banco, não create() que aplica validações desnecessárias",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": [".reconstitute("],
+      "severity": "high",
+      "message": "Mapper.toDomain() deve usar reconstitute() para reconstituir do banco. Nota: .create() é permitido para Value Objects, mas Entities devem usar reconstitute()",
+      "notes": [
+        "reconstitute() pula validações (dados do banco já são válidos)",
+        "create() aplica validações (para dados novos)",
+        "Value Objects podem usar create() mesmo em toDomain()",
+        "Apenas Entities/Aggregates devem usar reconstitute()"
+      ]
+    }
+  ],
+  "examples": {
+    "valid": [
+      "// domain/entities/Order.ts - importa apenas de @/shared/domain",
+      "import { AggregateRoot, Result } from '@/shared/domain';"
+    ],
+    "invalid": [
+      "// domain/entities/Order.ts - ERRADO: importa de infrastructure",
+      "import { db } from '@/infrastructure/database';"
+    ]
+  }
+}
+

@@ -1,0 +1,75 @@
+{
+  "id": "dto-pattern",
+  "version": "2.0.0",
+  "title": "DTO Pattern Contract",
+  "description": "Padrão para implementação de DTOs",
+  "category": "application",
+  "severity": "medium",
+  "rules": [
+    {
+      "id": "DTO-001",
+      "title": "DTOs em application/dtos/ ou junto com Use Case",
+      "description": "DTOs devem estar em application/dtos/ ou na pasta do Use Case",
+      "pattern": "application/**/Dto.ts",
+      "severity": "medium",
+      "message": "DTOs devem estar em application/dtos/ ou junto com Use Case"
+    },
+    {
+      "id": "DTO-002",
+      "title": "Input e Output DTOs separados",
+      "description": "Use Case deve ter InputDto e OutputDto separados",
+      "pattern": "application/**/*Dto.ts",
+      "severity": "medium",
+      "message": "Input e Output DTOs devem ser separados"
+    },
+    {
+      "id": "DTO-003",
+      "title": "DTOs são interfaces ou types",
+      "description": "DTOs devem ser interfaces ou types, não classes",
+      "pattern": "application/**/*Dto.ts",
+      "required_patterns": ["interface ", "type "],
+      "match_any": true,
+      "severity": "medium",
+      "message": "DTOs devem ser interfaces ou types"
+    },
+    {
+      "id": "DTO-004",
+      "title": "Não contém lógica",
+      "description": "DTOs não devem conter métodos ou lógica",
+      "pattern": "application/**/*Dto.ts",
+      "forbidden_patterns": ["() {", "=> {"],
+      "severity": "high",
+      "message": "DTOs não devem conter métodos ou lógica"
+    },
+    {
+      "id": "DTO-005",
+      "title": "Campos primitivos ou DTOs aninhados",
+      "description": "DTOs usam tipos primitivos ou outros DTOs, não Domain objects",
+      "severity": "high",
+      "message": "DTOs devem usar tipos primitivos, não Domain objects"
+    },
+    {
+      "id": "DTO-006",
+      "title": "Nomenclatura clara",
+      "description": "DTOs devem ter nomenclatura clara: {UseCase}InputDto, {UseCase}OutputDto",
+      "severity": "low",
+      "message": "DTOs devem ter nomenclatura clara"
+    },
+    {
+      "id": "DTO-007",
+      "title": "ExecutionContext padronizado",
+      "description": "ExecutionContext deve estar em application/dtos/ExecutionContext.ts",
+      "pattern": "application/dtos/ExecutionContext.ts",
+      "severity": "high",
+      "message": "ExecutionContext deve estar em application/dtos/"
+    },
+    {
+      "id": "DTO-008",
+      "title": "Documentação de campos",
+      "description": "Campos importantes devem ter JSDoc",
+      "severity": "low",
+      "message": "Campos importantes devem ter documentação JSDoc"
+    }
+  ]
+}
+

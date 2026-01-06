@@ -1,0 +1,125 @@
+{
+  "id": "value-object-pattern",
+  "version": "2.0.0",
+  "title": "Value Object Pattern Contract",
+  "description": "Padrão para implementação de Value Objects",
+  "category": "domain",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "VO-001",
+      "title": "Extends ValueObject",
+      "description": "Value Object deve estender ValueObject<Props>",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["extends ValueObject<"],
+      "severity": "high",
+      "message": "Value Object deve estender ValueObject<Props>"
+    },
+    {
+      "id": "VO-002",
+      "title": "Props extends Record",
+      "description": "Props deve estender Record<string, unknown>",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["extends Record<string, unknown>"],
+      "severity": "medium",
+      "message": "Props deve estender Record<string, unknown>"
+    },
+    {
+      "id": "VO-003",
+      "title": "Constructor privado",
+      "description": "Constructor deve ser privado",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["private constructor("],
+      "severity": "high",
+      "message": "Value Object deve ter constructor privado"
+    },
+    {
+      "id": "VO-004",
+      "title": "Factory method create()",
+      "description": "Value Object deve ter factory method estático create()",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["static create("],
+      "severity": "high",
+      "message": "Value Object deve ter factory method static create()"
+    },
+    {
+      "id": "VO-005",
+      "title": "Imutável",
+      "description": "Props devem ser congelados com Object.freeze",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["Object.freeze"],
+      "severity": "high",
+      "message": "Value Object deve ser imutável (Object.freeze nas props)"
+    },
+    {
+      "id": "VO-006",
+      "title": "Sem métodos mutáveis",
+      "description": "Value Object não deve ter métodos que alteram estado interno. Props são readonly após construção.",
+      "pattern": "domain/value-objects/*.ts",
+      "forbidden_patterns": ["this.props ="],
+      "severity": "high",
+      "message": "Value Object não pode reatribuir this.props. Use Object.freeze() no constructor e retorne novo VO para alterações.",
+      "rationale": "Value Objects são imutáveis por definição. Qualquer 'mudança' deve criar uma nova instância.",
+      "notes": [
+        "this.props.fieldName em getters é PERMITIDO e CORRETO",
+        "this.props = { ... } é PROIBIDO (reatribuição)",
+        "Métodos que 'alteram' devem retornar novo Value Object"
+      ],
+      "examples": {
+        "correct": [
+          "// Getter acessando props - CORRETO",
+          "get amount(): number { return this.props.amount; }",
+          "",
+          "// Método que retorna novo VO - CORRETO", 
+          "add(other: Money): Result<Money, string> {",
+          "  return Money.create(this.props.amount + other.amount, this.props.currency);",
+          "}"
+        ],
+        "incorrect": [
+          "// Reatribuição de props - PROIBIDO",
+          "this.props = { amount: newAmount }; // ERRADO",
+          "",
+          "// Mutação direta - PROIBIDO (se não usar Object.freeze)",
+          "this.props.amount = newAmount; // ERRADO"
+        ]
+      }
+    },
+    {
+      "id": "VO-007",
+      "title": "Método equals()",
+      "description": "Value Object deve ter comparação por valor",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["equals("],
+      "severity": "medium",
+      "message": "Value Object deve ter método equals() para comparação"
+    },
+    {
+      "id": "VO-008",
+      "title": "Validações em create()",
+      "description": "create() deve validar input",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["Result.fail("],
+      "severity": "high",
+      "message": "create() deve validar input e retornar Result.fail() se inválido"
+    },
+    {
+      "id": "VO-009",
+      "title": "Retorna Result",
+      "description": "create() deve retornar Result<VO, string>",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["Result<"],
+      "severity": "high",
+      "message": "create() deve retornar Result<ValueObject, string>"
+    },
+    {
+      "id": "VO-010",
+      "title": "Método toString()",
+      "description": "Value Object deve ter toString() para debug",
+      "pattern": "domain/value-objects/*.ts",
+      "required_patterns": ["toString()"],
+      "severity": "low",
+      "message": "Value Object deve ter método toString() para debug"
+    }
+  ]
+}
+

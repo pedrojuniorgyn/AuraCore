@@ -1,161 +1,208 @@
 {
   "id": "infrastructure-layer",
-  "title": "Infrastructure Layer Contract",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "name": "Infrastructure Layer Contract",
+  "description": "Regras específicas da camada Infrastructure",
   "category": "architecture",
-  "description": "Regras obrigatórias para implementação de Mapper, Repository, Schema e Bootstrap. Criado após análise de 11 bugs críticos em E7.4 Semana 3.",
-  "severity": "CRITICAL",
+  "severity": "high",
   "rules": [
     {
       "id": "INFRA-001",
-      "name": "Schema deve refletir Domain Model completo",
-      "description": "CADA campo do Domain Model (Aggregate Root + Entities) DEVE ter correspondente no Schema Drizzle",
-      "validation": "Listar campos do domain e verificar 1-a-1 com schema",
-      "violation_example": "Domain tem issuerId, issuerCnpj, issuerName mas schema não tem",
-      "correct_example": "Schema tem TODOS os campos: issuerId, issuerCnpj, issuerName, recipientId, etc.",
-      "related_bugs": ["E7.4-S3-BUG-001", "E7.4-S3-BUG-005"]
+      "name": "Implementa interfaces do Domain",
+      "description": "Infrastructure implementa ports definidos no Domain",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "critical",
+      "message": "Infrastructure DEVE implementar interfaces de domain/ports/output/",
+      "examples": {
+        "repository": "class DrizzlePayableRepository implements IPayableRepository",
+        "adapter": "class AxiosSefazAdapter implements ISefazGateway"
+      }
     },
     {
       "id": "INFRA-002",
-      "name": "Money requer 2 campos: amount + currency",
-      "description": "Value Object Money DEVE ser persistido como decimal (amount) + varchar(3) (currency)",
-      "validation": "Verificar que Money.create(amount, currency) usa ambos os parâmetros",
-      "violation_example": "Money.create(parseFloat(persistence.totalValue)) - currency perdida",
-      "correct_example": "Money.create(parseFloat(persistence.totalValue), persistence.currency)",
-      "related_bugs": ["E7.4-S3-BUG-007"]
+      "name": "Zero lógica de negócio",
+      "description": "Infrastructure NÃO contém lógica de negócio",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "critical",
+      "message": "Infrastructure é apenas adaptação técnica, não lógica de negócio",
+      "forbidden": [
+        "Validações de regras de negócio",
+        "Cálculos complexos",
+        "Decisões baseadas em regras de domínio"
+      ],
+      "allowed": [
+        "Validação técnica (formato, tamanho)",
+        "Conversão de tipos",
+        "Tratamento de erros de infra"
+      ]
     },
     {
       "id": "INFRA-003",
-      "name": "Campos opcionais devem ser .nullable()",
-      "description": "Campos opcionais no Domain DEVEM ser .nullable() no Schema",
-      "validation": "Comparar domain optionals com schema nullables",
-      "violation_example": "recipientCnpjCpf: varchar(14).notNull() quando recipient é opcional",
-      "correct_example": "recipientCnpjCpf: varchar(14) // sem .notNull()",
-      "related_bugs": ["E7.4-S3-BUG-002"]
+      "name": "Usa Mapper para conversão",
+      "description": "Repository SEMPRE usa Mapper para conversão Domain ↔ Persistence",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["Mapper.toDomain(", "Mapper.toPersistence("],
+      "severity": "critical",
+      "message": "Repository DEVE usar Mapper para conversão",
+      "rationale": "Mapper centraliza lógica de conversão e evita corrupção de Domain."
     },
     {
       "id": "INFRA-004",
-      "name": "Multi-tenancy obrigatório: organizationId + branchId",
-      "description": "TODOS os métodos de Repository DEVEM filtrar por organizationId E branchId. branchId NUNCA é opcional.",
-      "validation": "Verificar que findById, findByKey, findMany, exists filtram por ambos",
-      "violation_example": "findById(id, organizationId) - falta branchId",
-      "correct_example": "findById(id, organizationId, branchId)",
-      "related_bugs": ["E7.4-S3-BUG-008", "E7.4-S3-BUG-009"]
+      "name": "@injectable decorator",
+      "description": "Classes de Infrastructure devem ter @injectable()",
+      "pattern": "infrastructure/**/*.ts",
+      "required_patterns": ["@injectable()"],
+      "severity": "high",
+      "message": "Infrastructure classes DEVEM ter @injectable() para DI",
+      "exceptions": [
+        "Mappers (métodos estáticos)",
+        "Schemas (Drizzle definitions)",
+        "Types e interfaces"
+      ]
     },
     {
       "id": "INFRA-005",
-      "name": "UPDATE deve atualizar TODOS os campos mutáveis",
-      "description": "Método save() UPDATE DEVE atualizar todos os campos que podem mudar, não apenas alguns",
-      "validation": "Listar campos mutáveis e verificar que todos estão no .set()",
-      "violation_example": "UPDATE com 5 campos quando existem 15 campos mutáveis",
-      "correct_example": "UPDATE com todos os 15 campos mutáveis listados",
-      "related_bugs": ["E7.4-S3-BUG-004", "E7.4-S3-BUG-010"]
+      "name": "Transações para operações múltiplas",
+      "description": "Operações multi-step DEVEM usar transação SQL",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "critical",
+      "message": "Use withMssqlTransaction para operações multi-step",
+      "when_required": [
+        "Múltiplas escritas no banco",
+        "Operações relacionadas que devem ser atômicas",
+        "Rollback necessário em caso de falha parcial"
+      ],
+      "example": "return withMssqlTransaction(async (tx) => { ... });"
     },
     {
       "id": "INFRA-006",
-      "name": "Reconstitution usa .reconstitute(), não .create()",
-      "description": "Ao carregar do banco, usar .reconstitute() para preservar timestamps e IDs originais",
-      "validation": "Verificar que toDomain usa reconstitute, não create",
-      "violation_example": "FiscalDocumentItem.create(props) - gera novo timestamp",
-      "correct_example": "FiscalDocumentItem.reconstitute(props, persistence.createdAt)",
-      "related_bugs": ["E7.4-S3-BUG-006"]
+      "name": "Multi-tenancy em TODA query",
+      "description": "TODA query DEVE filtrar por organizationId + branchId",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "critical",
+      "message": "Filtre SEMPRE por organizationId E branchId",
+      "examples": {
+        "correct": "eq(table.organizationId, orgId), eq(table.branchId, branchId)",
+        "incorrect": "eq(table.organizationId, orgId) // FALTA branchId"
+      },
+      "rationale": "Isolamento de dados entre organizações e filiais. Segurança crítica."
     },
     {
       "id": "INFRA-007",
-      "name": "Bootstrap deve ser chamado em instrumentation.ts",
-      "description": "Função initializeModule() DEVE ser chamada no instrumentation.ts para registrar DI",
-      "validation": "Verificar que instrumentation.ts importa e chama initializeModule",
-      "violation_example": "initializeFiscalModule() definida mas nunca chamada",
-      "correct_example": "instrumentation.ts: initializeFiscalModule(); // chamado no startup",
-      "related_bugs": ["E7.4-S3-BUG-003", "E7.4-S3-BUG-011"]
+      "name": "Soft delete obrigatório",
+      "description": "Queries DEVEM filtrar deletedAt IS NULL",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "high",
+      "message": "Filtre isNull(table.deletedAt) em queries de leitura",
+      "examples": {
+        "findById": "isNull(table.deletedAt)",
+        "findMany": "isNull(table.deletedAt)",
+        "delete": "UPDATE SET deletedAt = NOW()"
+      },
+      "exceptions": [
+        "Queries específicas para auditoria/histórico"
+      ]
     },
     {
       "id": "INFRA-008",
-      "name": "Interface Persistence deve espelhar Schema",
-      "description": "Interface TypeScript de Persistence DEVE ter TODOS os campos do Schema",
-      "validation": "Comparar campos da interface com colunas do schema",
-      "violation_example": "Schema tem recipientId mas interface não tem",
-      "correct_example": "Interface tem TODOS os campos: recipientId, currency, etc.",
-      "related_bugs": ["E7.4-S3-BUG-005"]
+      "name": "Paginação obrigatória em findMany",
+      "description": "findMany DEVE suportar paginação",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "high",
+      "message": "findMany DEVE retornar { items, total, page, pageSize }",
+      "required_params": {
+        "page": "number (default: 1)",
+        "pageSize": "number (default: 50, max: 1000)"
+      },
+      "implementation": [
+        "const offset = (page - 1) * pageSize;",
+        ".limit(pageSize).offset(offset)",
+        "COUNT(*) para total"
+      ]
     },
     {
       "id": "INFRA-009",
-      "name": "Mapper toPersistence deve mapear TODOS os campos",
-      "description": "Método toPersistence() DEVE mapear cada campo do domain para persistence",
-      "validation": "Verificar que nenhum campo usa placeholder como 'TEMP'",
-      "violation_example": "issuerId: 'TEMP' // placeholder que será perdido",
-      "correct_example": "issuerId: document.issuerId // valor real do domain",
-      "related_bugs": ["E7.4-S3-BUG-001"]
+      "name": "Retorna Domain Entity",
+      "description": "Repository NUNCA retorna row do banco diretamente",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "critical",
+      "message": "Repository DEVE retornar Domain Entity, não DB row",
+      "examples": {
+        "correct": "const result = Mapper.toDomain(row); return result.value;",
+        "incorrect": "return row; // ERRADO - é objeto do banco"
+      }
     },
     {
       "id": "INFRA-010",
-      "name": "Comparar com módulos existentes",
-      "description": "Antes de implementar, SEMPRE comparar com Financial/Accounting para seguir mesmo padrão",
-      "validation": "Verificar estrutura similar em módulos já implementados",
-      "violation_example": "Implementar mapper sem olhar FinancialMapper",
-      "correct_example": "Copiar estrutura de FinancialMapper e adaptar para Fiscal",
-      "related_bugs": ["Prevenção geral"]
+      "name": "ACL para integrações externas",
+      "description": "Use Anti-Corruption Layer para APIs externas",
+      "pattern": "infrastructure/adapters/*.ts",
+      "severity": "high",
+      "message": "Adapters DEVEM traduzir modelo externo para Domain",
+      "rationale": "Protege Domain de mudanças em APIs externas (SEFAZ, BTG, etc).",
+      "layers": {
+        "external_api": "Modelo da API externa",
+        "adapter_dto": "DTO específico do adapter",
+        "domain_model": "Entidade/VO do Domain"
+      }
+    },
+    {
+      "id": "INFRA-011",
+      "name": "Erro técnico vs erro de negócio",
+      "description": "Infrastructure diferencia erro técnico de erro de negócio",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "high",
+      "message": "Erro técnico: throw. Erro de negócio: Result.fail()",
+      "examples": {
+        "technical_error": [
+          "throw new DatabaseConnectionError('...')",
+          "throw new HttpTimeoutError('...')"
+        ],
+        "business_error": [
+          "return Result.fail('Entity not found')",
+          "const result = Entity.reconstitute(...); if (result.isFail()) return result;"
+        ]
+      }
+    },
+    {
+      "id": "INFRA-012",
+      "name": "Configuração via Environment",
+      "description": "Infrastructure usa variáveis de ambiente para configuração",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "high",
+      "message": "Use process.env ou config service para configuração",
+      "forbidden": [
+        "Hardcoded URLs",
+        "Hardcoded credentials",
+        "Hardcoded connection strings"
+      ],
+      "allowed": [
+        "process.env.DATABASE_URL",
+        "config.get('sefaz.url')",
+        "Constants não-sensíveis"
+      ]
     }
   ],
-  "checklists": {
-    "pre_implementation": [
-      "Listar TODOS os campos do Domain Model (Aggregate + Entities)",
-      "Identificar campos opcionais vs obrigatórios",
-      "Identificar Value Objects que precisam serialização especial (Money → 2 campos)",
-      "Consultar módulos existentes (Financial, Accounting) para padrões"
-    ],
-    "schema": [
-      "CADA campo do domain tem correspondente no schema",
-      "Campos opcionais marcados como .nullable()",
-      "Money → decimal + currency (VARCHAR 3)",
-      "Date → datetime",
-      "UUID → varchar(36)",
-      "Índices para organizationId, branchId, deletedAt"
-    ],
-    "mapper": [
-      "Interface Persistence tem TODOS os campos do schema",
-      "toPersistence() mapeia CADA campo (sem placeholders)",
-      "toDomain() usa CADA campo do persistence",
-      "Money.create(amount, currency) - NÃO esquecer currency",
-      "Usar .reconstitute() para preservar timestamps",
-      "Roundtrip test: domain → persistence → domain deve ser igual"
-    ],
-    "repository": [
-      "TODOS os métodos filtram por organizationId + branchId",
-      "branchId é OBRIGATÓRIO na interface (não opcional)",
-      "deletedAt IS NULL em todos os filtros",
-      "INSERT persiste TODOS os campos",
-      "UPDATE atualiza TODOS os campos mutáveis",
-      "Paginação implementada corretamente"
-    ],
-    "bootstrap": [
-      "registerModule() registra TODOS os tokens",
-      "initializeModule() é idempotente",
-      "instrumentation.ts chama initializeModule()",
-      "Logs de inicialização para debug"
-    ],
-    "tests": [
-      "Mapper: roundtrip completo (domain → persistence → domain)",
-      "Mapper: preservação de currency em Money",
-      "Mapper: campos opcionais (null handling)",
-      "Repository: multi-tenancy (não retorna docs de outra branch)",
-      "Repository: UPDATE persiste todos os campos",
-      "Repository: branchId obrigatório em findMany"
-    ]
-  },
-  "enforcement": {
-    "when_to_apply": "Sempre que implementar Schema, Mapper, Repository ou Bootstrap",
-    "verification_tool": "check_cursor_issues + testes unitários",
-    "minimum_tests": {
-      "mapper": 5,
-      "repository": 5,
-      "total_infrastructure": 10
+  "structure": {
+    "persistence": {
+      "repositories": "Implementam IRepository do domain",
+      "mappers": "Convertem Domain ↔ Persistence",
+      "schemas": "Definições Drizzle (1 arquivo por tabela)"
+    },
+    "adapters": {
+      "description": "Implementam Gateways para serviços externos",
+      "examples": ["SefazAdapter", "BtgAdapter", "EmailAdapter"]
+    },
+    "di": {
+      "description": "Registro de dependências no container",
+      "pattern": "{Module}Module.ts"
     }
   },
-  "created_from": {
-    "epic": "E7.4",
-    "week": "Semana 3",
-    "bugs_analyzed": 11,
-    "date": "2024-12-29"
-  }
+  "rationale": "Infrastructure é camada de adaptação pura. Não contamina Domain com detalhes técnicos (Cockburn, 2005).",
+  "references": [
+    "Hexagonal Architecture - Alistair Cockburn",
+    "Clean Architecture - Robert C. Martin",
+    "Implementing DDD - Vaughn Vernon"
+  ]
 }
+

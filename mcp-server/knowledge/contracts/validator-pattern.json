@@ -1,0 +1,90 @@
+{
+  "id": "validator-pattern",
+  "version": "2.0.0",
+  "title": "Validator Pattern Contract",
+  "description": "Padrão para implementação de Validators",
+  "category": "infrastructure",
+  "severity": "medium",
+  "rules": [
+    {
+      "id": "VALIDATOR-001",
+      "title": "Validators técnicos em infrastructure/",
+      "description": "Validators técnicos (XML, schema) devem estar em infrastructure/validators/",
+      "pattern": "infrastructure/validators/*Validator.ts",
+      "severity": "medium",
+      "message": "Validators técnicos devem estar em infrastructure/validators/"
+    },
+    {
+      "id": "VALIDATOR-002",
+      "title": "Validators de negócio em domain/services/",
+      "description": "Validators de regras de negócio devem ser Domain Services",
+      "pattern": "domain/services/*Validator.ts",
+      "severity": "high",
+      "message": "Validators de negócio devem ser Domain Services"
+    },
+    {
+      "id": "VALIDATOR-003",
+      "title": "Retorna Result",
+      "description": "Validator deve retornar Result<boolean, string[]>",
+      "pattern": "**/*Validator.ts",
+      "required_patterns": ["Result<"],
+      "severity": "high",
+      "message": "Validator deve retornar Result"
+    },
+    {
+      "id": "VALIDATOR-004",
+      "title": "Nunca faz throw",
+      "description": "Validator não deve fazer throw de exceções",
+      "pattern": "**/*Validator.ts",
+      "forbidden_patterns": ["throw new"],
+      "severity": "high",
+      "message": "Validator não deve fazer throw"
+    },
+    {
+      "id": "VALIDATOR-005",
+      "title": "Métodos estáticos",
+      "description": "Validator deve ter métodos estáticos quando possível",
+      "pattern": "**/*Validator.ts",
+      "required_patterns": ["static "],
+      "severity": "medium",
+      "message": "Validator deve ter métodos estáticos quando possível"
+    },
+    {
+      "id": "VALIDATOR-006",
+      "title": "Mensagens de erro claras",
+      "description": "Erros de validação devem ter mensagens claras",
+      "severity": "medium",
+      "message": "Validator deve retornar mensagens de erro claras"
+    },
+    {
+      "id": "VALIDATOR-007",
+      "title": "Validação composável",
+      "description": "Validações devem ser composáveis",
+      "severity": "low",
+      "message": "Validações devem ser composáveis"
+    },
+    {
+      "id": "VALIDATOR-008",
+      "title": "Zod para input validation",
+      "description": "Input validation de API deve usar Zod",
+      "pattern": "**/*Validator.ts",
+      "severity": "medium",
+      "message": "Input validation de API deve usar Zod"
+    },
+    {
+      "id": "VALIDATOR-009",
+      "title": "Validação de CNPJ/CPF",
+      "description": "Usar Value Objects para validar CNPJ/CPF",
+      "severity": "high",
+      "message": "Usar Value Objects CNPJ/CPF para validação"
+    },
+    {
+      "id": "VALIDATOR-010",
+      "title": "Validação de email",
+      "description": "Usar Value Object Email para validação",
+      "severity": "high",
+      "message": "Usar Value Object Email para validação"
+    }
+  ]
+}
+
