@@ -126,7 +126,7 @@ export async function PUT(
       // Criar novas
       if (ranges.length > 0) {
         await db.insert(freightWeightRanges).values(
-          ranges.map((range: any, index: number) => ({
+          ranges.map((range: { minWeight: string; maxWeight?: string; fixedPrice: string; pricePerKgExceeded?: string }, index: number) => ({
             freightTableId: tableId,
             minWeight: range.minWeight,
             maxWeight: range.maxWeight || null,
@@ -151,7 +151,7 @@ export async function PUT(
       // Criar novas
       if (components.length > 0) {
         await db.insert(freightExtraComponents).values(
-          components.map((comp: any, index: number) => ({
+          components.map((comp: { name: string; code?: string; type: string; value: string; minValue?: string; maxValue?: string; isActive?: string }, index: number) => ({
             freightTableId: tableId,
             name: comp.name,
             code: comp.code || null,
