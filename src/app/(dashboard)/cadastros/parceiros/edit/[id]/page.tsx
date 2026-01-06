@@ -8,6 +8,14 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createBusinessPartnerSchema } from "@/lib/validators/business-partner";
+import { z } from "zod";
+
+type BusinessPartnerFormData = z.infer<typeof createBusinessPartnerSchema>;
+
+interface PartnerData extends BusinessPartnerFormData {
+  version?: number;
+}
 
 /**
  * ✏️ EDITAR PARCEIRO DE NEGÓCIO
@@ -21,7 +29,7 @@ export default function EditBusinessPartnerPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [partner, setPartner] = useState<any>(null);
+  const [partner, setPartner] = useState<PartnerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -58,9 +66,10 @@ export default function EditBusinessPartnerPage() {
   // Carrega ao montar
   useEffect(() => {
     fetchPartner();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: BusinessPartnerFormData) => {
     try {
       setIsUpdating(true);
       const branchId = localStorage.getItem("auracore:current-branch") || "1";
@@ -137,7 +146,7 @@ export default function EditBusinessPartnerPage() {
         <CardHeader>
           <CardTitle>Editar Cadastro</CardTitle>
           <CardDescription>
-            Altere os dados do parceiro e clique em "Salvar Alterações"
+            Altere os dados do parceiro e clique em &quot;Salvar Alterações&quot;
           </CardDescription>
         </CardHeader>
         <CardContent>
