@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
 
-    const results: any = {
+    const results: Record<string, unknown> = {
       timestamp: new Date().toISOString(),
       checks: {},
     };

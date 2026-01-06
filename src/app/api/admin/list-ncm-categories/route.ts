@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       total: ncms.length,
-      ncms: ncms.map((n: any) => ({
+      ncms: ncms.map((n: { id: number; ncmCode: string; financialCategoryName?: string; chartAccountName?: string }) => ({
         id: n.id,
         ncmCode: n.ncmCode,
         category: n.financialCategoryName || "N/A",

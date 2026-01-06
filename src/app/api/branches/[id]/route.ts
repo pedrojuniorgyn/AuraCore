@@ -5,7 +5,7 @@ import { createBranchSchema } from "@/lib/validators/branch";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ne } from "drizzle-orm";
 
-async function fetchBranchRaw(pool: any, id: number, organizationId: number) {
+async function fetchBranchRaw(pool: { request: () => { query: (sql: string) => Promise<{ recordset: Array<Record<string, unknown>> }> } }, id: number, organizationId: number) {
   // Compatibilidade com schema divergente: algumas implantações podem não ter colunas novas.
   // Importante: o frontend espera camelCase (mesmo formato do Drizzle).
   const colCheck = await pool.request().query(`
@@ -13,8 +13,8 @@ async function fetchBranchRaw(pool: any, id: number, organizationId: number) {
       COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as legacy_col,
       COL_LENGTH('dbo.branches', 'c_class_trib') as cclasstrib_col;
   `);
-  const legacyColExists = (colCheck.recordset?.[0] as any)?.legacy_col != null;
-  const cClassTribColExists = (colCheck.recordset?.[0] as any)?.cclasstrib_col != null;
+  const legacyColExists = (colCheck.recordset?.[0] as Record<string, unknown> | undefined)?.legacy_col != null;
+  const cClassTribColExists = (colCheck.recordset?.[0] as Record<string, unknown> | undefined)?.cclasstrib_col != null;
 
   const legacySelect = legacyColExists
     ? "b.legacy_company_branch_code"
@@ -68,7 +68,7 @@ async function fetchBranchRaw(pool: any, id: number, organizationId: number) {
         AND b.organization_id = @org
         AND b.deleted_at IS NULL;
     `);
-  return (r.recordset?.[0] as any) ?? null;
+  return (r.recordset?.[0] as Record<string, unknown> | undefined) ?? null;
 }
 
 /**
@@ -217,7 +217,7 @@ export async function PUT(
     const legacyColCheck = await pool.request().query(`
       SELECT COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as col;
     `);
-    const legacyColExists = (legacyColCheck.recordset?.[0] as any)?.col != null;
+    const legacyColExists = (legacyColCheck.recordset?.[0] as Record<string, unknown> | undefined)?.col != null;
 
     // Se o documento for atualizado, verifica duplicidade (excluindo o próprio ID)
     if (document && document !== currentBranch.document) {

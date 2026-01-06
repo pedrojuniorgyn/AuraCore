@@ -20,7 +20,7 @@ export async function GET() {
     // 1️⃣ ATUALIZAR NFes
     console.log("1️⃣ Processando NFes...");
     
-    const result: any = await db.execute(rawSql`
+    const result: { recordset: Array<{ id: number; document_type: string; xml_content: string; partner_name: string }> } = await db.execute(rawSql`
       SELECT TOP 50 id, document_type, xml_content, partner_name
       FROM fiscal_documents
       WHERE document_type = 'NFE' 

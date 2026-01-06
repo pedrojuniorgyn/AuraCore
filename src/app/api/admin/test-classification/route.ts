@@ -21,7 +21,7 @@ export async function POST() {
     const allInvoices = Array.isArray(result) ? result : [];
     
     // Mapear para formato esperado
-    const mappedInvoices = allInvoices.map((inv: any) => ({
+    const mappedInvoices = allInvoices.map((inv: Record<string, unknown>) => ({
       id: inv.id,
       invoiceNumber: inv.invoice_number || inv.invoiceNumber,
       totalValue: inv.value || inv.totalValue || inv.total_value || 0,
