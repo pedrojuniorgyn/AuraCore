@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, ColDef } from "ag-grid-community";
+import { ModuleRegistry, ColDef, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 // AG Grid CSS (v34+ Theming API)
@@ -31,9 +31,14 @@ import {
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface DREItem {
+  accountCode: string;
+  currentMonth: number;
+}
+
 export default function DREGerencialPage() {
-  const gridRef = useRef<any>(null);
-  const [dreData, setDreData] = useState<any[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
+  const [dreData, setDreData] = useState<DREItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState({
     receitaLiquida: 0,
@@ -63,7 +68,7 @@ export default function DREGerencialPage() {
     }
   };
 
-  const calculateKPIs = (data: any[]) => {
+  const calculateKPIs = (data: DREItem[]) => {
     const revenue = data.filter(d => d.accountCode.startsWith('3.1')).reduce((sum, d) => sum + d.currentMonth, 0);
     const costs = data.filter(d => d.accountCode.startsWith('4.1')).reduce((sum, d) => sum + Math.abs(d.currentMonth), 0);
     const margin = revenue - costs;
@@ -89,7 +94,7 @@ export default function DREGerencialPage() {
       headerName: 'Código',
       width: 150,
       pinned: 'left',
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <Badge className="aurora-badge bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-purple-300 border-purple-500/30">
           {params.value}
         </Badge>
