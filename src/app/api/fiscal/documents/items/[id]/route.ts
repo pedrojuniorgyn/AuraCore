@@ -26,7 +26,7 @@ export async function PATCH(
     const body = await request.json();
 
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (body.categoryId !== undefined) {
       updates.push(`category_id = ${body.categoryId || "NULL"}`);

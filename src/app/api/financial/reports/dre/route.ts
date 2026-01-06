@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       const netProfit = totalRevenue - totalExpense;
 
       // Agrupar despesas por conta
-      const expensesByAccount: Record<string, any> = {};
+      const expensesByAccount: Record<string, { code: string; name: string; category: string; total: number }> = {};
       expenses.forEach((exp) => {
         const key = exp.chartAccountCode || "SEM_CONTA";
         if (!expensesByAccount[key]) {
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
 
     // TIPO 2: DRE por Placa
     if (type === "by_plate") {
-      const byPlate: Record<string, any> = {};
+      const byPlate: Record<string, { vehicleId: number; costCenterCode: string; plate: string; revenue: number; expense: number }> = {};
 
       // Receitas por placa
       revenues.forEach((rev) => {
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
       });
 
       // Calcular lucro/margem
-      const results = Object.values(byPlate).map((item: any) => ({
+      const results = Object.values(byPlate).map((item: { plate: string; revenue: number; expense: number }) => ({
         ...item,
         netProfit: item.revenue - item.expense,
         margin: item.revenue > 0 ? ((item.revenue - item.expense) / item.revenue) * 100 : 0,

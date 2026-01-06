@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       status: "DRAFT",
       issueDate: new Date(),
       createdBy,
-    } as any);
+    } as Record<string, unknown>);
 
     // Evita bugs do $returningId() no MSSQL e garante mdfeId sempre definido.
     const [newMdfe] = await db
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
     // Vincular CTes
     const cteIdsSafe = Array.isArray(cteIds)
       ? cteIds
-          .map((x: any) => Number(x))
+          .map((x: unknown) => Number(x))
           .filter((n: number) => Number.isFinite(n))
       : [];
 

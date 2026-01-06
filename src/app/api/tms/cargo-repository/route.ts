@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const isUrgent = searchParams.get("urgent") === "true";
 
     // Construir filtros dinâmicos
-    const filters: any[] = [
+    const filters: Array<ReturnType<typeof eq>> = [
       eq(cargoDocuments.organizationId, ctx.organizationId),
       // Removido filtro de branchId - repositório é centralizado
       isNull(cargoDocuments.deletedAt),
