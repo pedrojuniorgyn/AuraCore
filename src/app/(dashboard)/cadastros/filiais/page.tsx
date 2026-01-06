@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
@@ -34,7 +34,7 @@ export default function BranchesPage() {
 
   useEffect(() => {
     fetchBranches();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const fetchBranches = async () => {
@@ -61,7 +61,7 @@ export default function BranchesPage() {
       headerName: "Nome",
       field: "name",
       flex: 2,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-2 h-full">
           <Building2 className="h-4 w-4 text-blue-400" />
           <span className="font-semibold">{params.value}</span>
@@ -82,7 +82,7 @@ export default function BranchesPage() {
       headerName: "Cidade/UF",
       field: "cityName",
       flex: 1.5,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-2 h-full">
           <MapPin className="h-4 w-4 text-emerald-400" />
           <span>{params.data.cityName} - {params.data.state}</span>
@@ -93,7 +93,7 @@ export default function BranchesPage() {
       headerName: "Telefone",
       field: "phone",
       flex: 1,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-2 h-full">
           <Phone className="h-4 w-4 text-purple-400" />
           <span>{params.value}</span>
@@ -104,7 +104,7 @@ export default function BranchesPage() {
       headerName: "E-mail",
       field: "email",
       flex: 1.5,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-2 h-full">
           <Mail className="h-4 w-4 text-amber-400" />
           <span className="text-zinc-400">{params.value}</span>
@@ -115,7 +115,7 @@ export default function BranchesPage() {
       headerName: "Status",
       field: "status",
       flex: 0.8,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${
             params.value === "ACTIVE"
