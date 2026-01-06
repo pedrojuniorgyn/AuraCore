@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { ColDef, ModuleRegistry, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Registrar módulos Enterprise
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -27,12 +26,11 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
-import { GradientText, NumberCounter } from "@/components/ui/magic-components";
+import { NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { Plus, Edit, Trash2, BookOpen, TrendingUp, TrendingDown, Landmark, DollarSign } from "lucide-react";
-import { auraTheme } from "@/lib/ag-grid/theme";
+import { Plus, Edit, Trash2, BookOpen, TrendingUp, TrendingDown, Landmark } from "lucide-react";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
 import { toast } from "sonner";
 
@@ -67,7 +65,7 @@ export default function ChartOfAccountsPage() {
   });
 
   // ✅ CELL RENDERERS - MESMO PADRÃO DE CATEGORIAS
-  const ActionCellRenderer = (props: any) => {
+  const ActionCellRenderer = (props: ICellRendererParams<ChartAccount>) => {
     return (
       <div className="flex gap-2 h-full items-center justify-center">
         <button
@@ -88,7 +86,7 @@ export default function ChartOfAccountsPage() {
     );
   };
 
-  const TypeCellRenderer = (props: any) => {
+  const TypeCellRenderer = (props: ICellRendererParams<ChartAccount>) => {
     const colors: Record<string, string> = {
       REVENUE: "bg-green-500/20 text-green-400 border-green-500/30",
       EXPENSE: "bg-red-500/20 text-red-400 border-red-500/30",
@@ -103,7 +101,7 @@ export default function ChartOfAccountsPage() {
     );
   };
 
-  const RequiresCCCellRenderer = (props: any) => {
+  const RequiresCCCellRenderer = (props: ICellRendererParams<ChartAccount>) => {
     return props.value ? (
       <span className="text-red-400 font-semibold">Sim</span>
     ) : (
@@ -117,7 +115,7 @@ export default function ChartOfAccountsPage() {
       headerName: "Código",
       width: 150,
       filter: "agTextColumnFilter",
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams<ChartAccount>) => {
         const indent = "  ".repeat(params.data.level || 0);
         return `${indent}${params.value}`;
       },
@@ -177,7 +175,7 @@ export default function ChartOfAccountsPage() {
     },
   ];
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const response = await fetch("/api/financial/chart-accounts");
       const result = await response.json();
@@ -188,11 +186,12 @@ export default function ChartOfAccountsPage() {
       console.error("Erro ao buscar plano de contas:", error);
       toast.error("Erro ao carregar plano de contas");
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAccounts();
-  }, []);
+  }, [fetchAccounts]);
 
   const handleCreate = () => {
     setIsEditing(false);
