@@ -1,353 +1,129 @@
----
-description: Regras MCP obrigatórias do AuraCore - Consultar contratos e verificar com grep ANTES de codificar. Zero bugs por falta de verificação.
-globs: "**/*.ts,**/*.tsx"
-alwaysApply: true
----
+# AURA CORE - REGRAS OBRIGATÓRIAS v2.0
 
-# AURA CORE - REGRAS MCP OBRIGATÓRIAS
-
-## 🚨 REGRA FUNDAMENTAL (INVIOLÁVEL)
-
-ANTES de implementar QUALQUER código, o agente DEVE:
-
-### 1. Consultar Contratos MCP
-```
-Tool: get_contract
-Args: { "contract_id": "verify-before-code" }
-
-Tool: get_contract
-Args: { "contract_id": "code-consistency" }
-
-Tool: get_contract
-Args: { "contract_id": "type-safety" }
-
-Tool: get_contract
-Args: { "contract_id": "mcp-enforcement-rules" }
-
-Tool: get_contract
-Args: { "contract_id": "infrastructure-layer" }
-
-Tool: get_contract
-Args: { "contract_id": "known-bugs-registry" }
-```
-
-### 2. Buscar Padrões Relacionados
-```
-Tool: search_patterns
-Args: { "query": "[tema da tarefa]" }
-```
-
-### 3. Verificar com GREP Antes de Usar (OBRIGATÓRIO)
-```bash
-# Interface
-grep -rn "interface NomeInterface" src/
-
-# Enum
-grep -A10 "NomeEnum" src/lib/db/schema.ts
-
-# Método
-grep -n "nomeMetodo(" src/modules/
-
-# Propriedade de contexto
-grep -n "propriedade:" src/lib/auth/context.ts
-
-# SpedDocumentType (para SPED)
-grep -A10 "SpedDocumentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
-```
-
-### 4. Confirmar Leitura
-Responder: **"Contratos MCP consultados. Verificações grep realizadas. Iniciando implementação."**
-
-**NUNCA pular esta etapa. Se não conseguir consultar, informar o usuário.**
+**Versão:** 2.0.0  
+**Data:** 06/01/2026  
+**Arquitetura:** 100% DDD/Hexagonal (ADR-0015)
 
 ---
 
-## 📋 REGRAS ENFORCE CRÍTICAS (MEMORIZAR)
+## 🚨 MCP OBRIGATÓRIO
 
-### Verificação Obrigatória (ENFORCE-030 a 039)
-- **ENFORCE-030:** Validar existência de propriedade ANTES de acessar
-- **ENFORCE-031:** NUNCA assumir schema - sempre verificar estrutura real
-- **ENFORCE-032:** Validar tipo ANTES de fazer cast/assertion
-- **ENFORCE-033:** Verificar JSON/dados reais ANTES de criar interface
-- **ENFORCE-034:** NUNCA usar `as Type` sem validação prévia
-- **ENFORCE-035:** Verificar interface TenantContext antes de usar propriedades
-- **ENFORCE-036:** Verificar métodos existentes na classe antes de chamar
-- **ENFORCE-037:** Verificar valores válidos de enum no schema.ts
-- **ENFORCE-038:** Verificar assinatura de método (parâmetros) antes de chamar
-- **ENFORCE-039:** NUNCA implementar encoding/conversão manualmente se método existe
+ANTES de implementar código:
 
-### Consistência de Código (ENFORCE-040 a 045)
-- **ENFORCE-040:** NUNCA any - SEMPRE unknown ou tipo explícito
-- **ENFORCE-041:** Array.isArray() ANTES de usar métodos de array
-- **ENFORCE-042:** Manter consistência entre declaração e retorno de MIME types
-- **ENFORCE-043:** Usar Promise.allSettled() para graceful degradation
-- **ENFORCE-044:** Validar TIPO dos elementos APÓS confirmar que é array
-- **ENFORCE-045:** Validar que string não é vazia ALÉM de verificar tipo
+1. Consultar contratos MCP:
+   - get_contract("mcp-enforcement-rules")
+   - get_contract("architecture-layers")
+   - get_contract("schema-pattern")
 
-### Error Handling (ENFORCE-050 a 051)
-- **ENFORCE-050:** Try-catch OBRIGATÓRIO em todos handlers e operações I/O
-- **ENFORCE-051:** SEMPRE re-throw erros desconhecidos - nunca silenciar
-
-### Segurança (ENFORCE-055 a 056)
-- **ENFORCE-055:** SEMPRE sanitizar IDs/inputs antes de usar em paths
-- **ENFORCE-056:** Regex deve ser específico - verificar contexto primeiro
-
-### SPED Específico (ENFORCE-060 a 067)
-- **ENFORCE-060:** Encoding DEVE ser ISO-8859-1 via toBuffer(), NUNCA conversão manual
-- **ENFORCE-061:** Formato DEVE ser pipe-delimited: |REG|CAMPO1|CAMPO2|
-- **ENFORCE-062:** Quebra de linha DEVE ser CRLF (\r\n)
-- **ENFORCE-063:** Datas DEVEM estar no formato DDMMAAAA
-- **ENFORCE-064:** Valores numéricos SEM separador de milhar, COM vírgula decimal
-- **ENFORCE-065:** Bloco 9 DEVE totalizar corretamente todos os registros
-- **ENFORCE-066:** SpedDocument.create() DEVE receber { documentType, blocks }
-- **ENFORCE-067:** SEMPRE usar ctx.defaultBranchId (não ctx.branchId)
+2. Confirmar: "Contratos MCP consultados. Iniciando implementação."
 
 ---
 
-## ❌ PROIBIÇÕES ABSOLUTAS (VIOLAÇÃO = REJEIÇÃO)
+## 📐 ARQUITETURA
 
-### TypeScript Strict
-- NUNCA usar `any` (usar `unknown` ou tipo explícito)
-- NUNCA usar `@ts-ignore`
-- NUNCA usar `as any`
+### Dependências entre Camadas
 
-### Verificação
-- NUNCA inventar valores de enum sem verificar com grep
-- NUNCA assumir nome de propriedade sem verificar interface
-- NUNCA chamar método sem verificar se existe
-- NUNCA acessar `result.error.message` sem type guard
-- NUNCA acessar `.value` sem verificar `Result.isFail()`
+| Regra | Descrição | Prioridade |
+|-------|-----------|------------|
+| ARCH-001 | Domain NÃO importa de Application | CRÍTICA |
+| ARCH-002 | Domain NÃO importa de Infrastructure | CRÍTICA |
+| ARCH-003 | Domain NÃO importa libs externas | CRÍTICA |
+| ARCH-004 | Commands em application/commands/ | ALTA |
+| ARCH-005 | Queries em application/queries/ | ALTA |
+| ARCH-006 | Mappers usam reconstitute(), não create() | ALTA |
 
-### Implementação
-- NUNCA converter BigInt para Number
-- NUNCA implementar encoding manualmente
-- NUNCA modificar interface sem atualizar TODOS os consumidores
-- NUNCA criar função utilitária sem usá-la em todos os lugares
-- NUNCA modificar máquina de estados global para caso específico
-- NUNCA validar string sem .trim()
-- NUNCA deixar testes skipped
-- NUNCA usar placeholders como 'TEMP' ou 'TODO' em código de produção
+### Estrutura Obrigatória
 
-### Git
-- NUNCA fazer push sem aprovação explícita
-- NUNCA fazer commits incrementais de correção (usar --amend)
-
----
-
-## ✅ SEMPRE FAZER (OBRIGATÓRIO)
-
-1. **SEMPRE** consultar MCP antes de codificar
-2. **SEMPRE** usar grep para verificar definições
-3. **SEMPRE** validar propriedades nullable antes de usar
-4. **SEMPRE** usar Result pattern para operações falíveis
-5. **SEMPRE** incluir organizationId + branchId (multi-tenancy)
-6. **SEMPRE** registrar correções com register_correction
-7. **SEMPRE** aguardar autorização para push
-8. **SEMPRE** validar input com Zod em rotas API
-9. **SEMPRE** usar .trim() antes de validar comprimento de strings
-10. **SEMPRE** usar transações em operações multi-step (withMssqlTransaction)
-
----
-
-## 📋 FLUXO DE COMMIT OBRIGATÓRIO
-
-### Pré-Codificação
 ```
-1. get_contract("verify-before-code")
-2. get_contract("code-consistency")
-3. search_patterns("[tema]")
-4. grep para verificar interfaces/enums/métodos
-5. Confirmar: "Contratos consultados. Iniciando."
-```
-
-### Pré-Commit
-```
-1. npx tsc --noEmit (deve retornar 0 erros)
-2. npm test -- --run (todos devem passar, 0 skipped)
-3. grep -r "as any" src/ (deve retornar 0 resultados)
-4. check_cursor_issues (deve retornar 0 issues)
-5. Se QUALQUER verificação falhar: corrigir antes de commit
-6. Se tudo passar: fazer UM commit limpo
-```
-
-### Pós-Commit
-```
-1. check_cursor_issues novamente
-2. Se issues > 0: corrigir + register_correction + git commit --amend
-3. Se issues = 0: reportar para aprovação
-```
-
-### Push
-```
-1. NUNCA fazer push sem aprovação explícita
-2. Aguardar mensagem "APROVADO - FAZER PUSH"
-3. Verificar git status antes do push (sem arquivos pendentes)
+src/modules/{module}/
+├── domain/
+│   ├── entities/
+│   ├── value-objects/
+│   ├── services/           # OBRIGATÓRIO
+│   ├── events/
+│   ├── errors/
+│   └── ports/
+│       ├── input/          # OBRIGATÓRIO
+│       └── output/         # OBRIGATÓRIO
+├── application/
+│   ├── commands/           # OBRIGATÓRIO
+│   ├── queries/            # OBRIGATÓRIO
+│   └── dtos/
+└── infrastructure/
+    ├── persistence/
+    │   ├── repositories/
+    │   ├── mappers/
+    │   └── schemas/        # 1 por tabela
+    └── di/
 ```
 
 ---
 
-## 📊 TEMPLATE DE VERIFICAÇÃO PRÉ-CÓDIGO
+## 🗄️ BANCO DE DADOS
 
-Antes de escrever código, executar:
+| Regra | Descrição |
+|-------|-----------|
+| SCHEMA-001 | 1 arquivo por tabela |
+| SCHEMA-002 | Índice (organizationId, branchId) |
+| SCHEMA-003 | createdAt, updatedAt obrigatórios |
+| SCHEMA-004 | deletedAt para soft delete |
+| SCHEMA-005 | Money = 2 colunas (amount + currency) |
+| SCHEMA-006 | Tipos inferidos exportados |
+
+---
+
+## 🔴 REGRAS CRÍTICAS
+
+### TypeScript
+- ❌ NUNCA `any`, `@ts-ignore`, `as any`
+- ✅ SEMPRE tipar retornos e parâmetros
+
+### Result Pattern
+- ✅ Verificar Result.isFail() antes de .value
+- ❌ NUNCA throw para erros de negócio
+
+### Multi-Tenancy
+- ✅ SEMPRE organizationId + branchId
+- ❌ branchId NUNCA opcional
+
+---
+
+## ✅ PRÉ-COMMIT
 
 ```bash
-# 1. Se vai usar interface
-grep -rn "interface NomeDaInterface" src/
-
-# 2. Se vai usar enum
-grep -A10 "NomeDoEnum" src/lib/db/schema.ts
-
-# 3. Se vai chamar método
-grep -n "nomeDoMetodo(" src/modules/
-
-# 4. Se vai usar propriedade de contexto
-grep -n "defaultBranchId" src/lib/auth/context.ts
-
-# 5. Se vai criar arquivo SPED
-grep -A10 "SpedDocumentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
-
-# 6. Se vai usar tipo de documento
-grep -A20 "documentType" src/modules/fiscal/domain/value-objects/SpedDocument.ts
+npx tsc --noEmit        # 0 erros
+npm test -- --run       # Todos passando
+check_cursor_issues     # 0 issues
 ```
 
 ---
 
-## 🔄 REGRA DE IMPACTO CRUZADO
+## 🛡️ PREVENÇÃO
 
-Antes de modificar método compartilhado (authorize, cancel, submit, etc):
-
-1. Listar TODOS os document types que usam esse método
-2. Verificar se a mudança afeta cada tipo diferentemente
-3. Adicionar condicional por tipo se necessário
-4. Usar funções centralizadas ao invés de hardcode
-5. Atualizar TODOS os consumidores da interface modificada
-
----
-
-## 📐 MAPEAMENTO DOMAIN-PERSISTENCE
-
-- Schema DEVE espelhar Domain COMPLETO
-- Money = 2 campos (amount + currency)
-- Campos opcionais = .nullable()
-- toDomain usa reconstitute(), NÃO create()
-- UPDATE com TODOS os campos mutáveis
+| Regra | Descrição |
+|-------|-----------|
+| PREVENT-001 | Novo módulo segue template |
+| PREVENT-002 | Use Case em commands/ ou queries/ |
+| PREVENT-003 | Código em src/services/ PROIBIDO |
+| PREVENT-004 | Domain não importa de fora |
+| PREVENT-005 | Repository usa Mapper |
 
 ---
 
-## 🔧 FUNÇÕES UTILITÁRIAS
+## 🇧🇷 CONTEXTO BRASIL
 
-Quando criar função utilitária (ex: canTransitionTo):
-- USAR a função em TODOS os lugares relevantes
-- REMOVER código duplicado que a função substitui
-- NUNCA deixar lógica hardcoded quando existe função centralizada
-
----
-
-## ⚙️ MÁQUINA DE ESTADOS
-
-- Transições que diferem por tipo de documento DEVEM ter máquinas separadas
-- NUNCA modificar máquina global para caso específico de um tipo
-- SEMPRE usar canTransitionTo(from, to, documentType)
+- Legislação: ICMS, PIS/COFINS, SPED, NFe/CTe
+- Reforma 2026: IBS, CBS, IS
+- Retenções: IRRF 1.5%, PIS 0.65%, COFINS 3%
 
 ---
 
-## 🇧🇷 CONTEXTO BRASIL (ERP Logístico)
+## 🔧 STACK
 
-### Legislação Fiscal
-- ICMS (Lei Complementar 87/96 - Lei Kandir)
-- PIS/COFINS (Leis 10.637/02 e 10.833/03)
-- SPED Fiscal, SPED Contribuições, SPED ECD
-- CTe (Conhecimento de Transporte Eletrônico)
-- NFe (Nota Fiscal Eletrônica)
-- MDFe (Manifesto de Documentos Fiscais)
-- NFS-e (Nota Fiscal de Serviços Eletrônica)
-
-### Reforma Tributária 2026
-- IBS (Imposto sobre Bens e Serviços)
-- CBS (Contribuição sobre Bens e Serviços)
-- IS (Imposto Seletivo)
-
-### Retenções na Fonte
-- IRRF (1.5%)
-- PIS (0.65%)
-- COFINS (3%)
-- CSLL (1%)
-- ISS (2-5%)
+- Next.js 15, TypeScript, Drizzle, SQL Server 2022
+- React 19, Refine, AG Grid, Shadcn/UI
+- Vitest, tsyringe
 
 ---
 
-## 🛠️ STACK TÉCNICA
-
-- Backend: Next.js 15 (App Router), TypeScript, Drizzle (mssql), SQL Server 2022
-- Frontend: React 19, Refine, AG Grid, Shadcn/UI
-- Deploy: Coolify
-- Testes: Vitest
-
----
-
-## ⚠️ ARQUIVOS CRÍTICOS (CUIDADO EXTRA)
-
-| Arquivo | Motivo | Risco |
-|---------|--------|-------|
-| accounting-engine.ts | Contabilização | Multa R$ 5.000+ |
-| financial-title-generator.ts | Títulos financeiros | Multa R$ 5.000+ |
-| sped-fiscal-generator.ts | SPED Fiscal | Multa R$ 5.000+ |
-| sped-ecd-generator.ts | SPED Contábil | Multa R$ 5.000+ |
-| sped-contributions-generator.ts | SPED PIS/COFINS | Multa R$ 5.000+ |
-| FiscalDocument.ts | Documento fiscal base | Alto |
-| DocumentType.ts | Máquina de estados | Alto |
-
-Modificações nesses arquivos exigem:
-- Verificação tripla
-- Testes extras
-- Revisão cuidadosa
-
----
-
-## 📝 FORMATO DE RELATÓRIO FINAL
-
-```markdown
-## TAREFA CONCLUÍDA
-
-### Verificações MCP
-- Contratos consultados: ✅
-- grep executado: ✅
-- check_cursor_issues (pré-commit): ✅ 0 issues
-- check_cursor_issues (pós-commit): ✅ 0 issues
-
-### Validações Pré-Commit
-- npx tsc --noEmit: 0 erros
-- npm test -- --run: X/X passando
-- grep "as any": 0 resultados
-
-### Commits
-- Hash: [hash]
-- Mensagem: [mensagem]
-
-### Push
-- Status: ⏳ AGUARDANDO AUTORIZAÇÃO
-
-### Correções Registradas
-- [LC-XXXXX]: [descrição] (se houver)
-
-NÃO FOI FEITO PUSH. Aguardando aprovação.
-```
-
----
-
-## 🎯 OBJETIVO FINAL
-
-**Zero bugs por falta de verificação.**
-
-Cada linha de código deve ser baseada em:
-- ✅ Contratos MCP consultados
-- ✅ Interfaces verificadas com grep
-- ✅ Enums confirmados no schema
-- ✅ Métodos existentes na classe
-- ✅ Propriedades nullable tratadas
-
-**Se não verificou, NÃO ESCREVA O CÓDIGO.**
-
----
-
-FIM DAS REGRAS - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR
+**FIM v2.0 - CONSULTAR MCP ANTES DE COMEÇAR**
