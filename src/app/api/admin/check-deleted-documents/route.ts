@@ -3,6 +3,18 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+interface FiscalDocumentRow {
+  id: number;
+  documentType: string;
+  documentNumber: string;
+  accessKey: string;
+  partnerName: string;
+  netAmount: string;
+  fiscalClassification: string;
+  deletedAt: Date | null;
+  createdAt: Date;
+}
+
 /**
  * 🔍 GET /api/admin/check-deleted-documents
  * 
@@ -38,14 +50,14 @@ export async function GET(request: NextRequest) {
       ORDER BY id DESC
     `);
 
-    const documents = allDocuments.recordset;
+    const documents = allDocuments.recordset as FiscalDocumentRow[];
 
     // Separar ativos e deletados
-    const active = documents.filter((d: any) => !d.deletedAt);
-    const deleted = documents.filter((d: any) => d.deletedAt);
+    const active = documents.filter((d) => !d.deletedAt);
+    const deleted = documents.filter((d) => d.deletedAt);
 
     // Verificar duplicatas (incluindo deletados)
-    const accessKeys = documents.map((d: any) => d.accessKey);
+    const accessKeys = documents.map((d) => d.accessKey);
     const duplicates = accessKeys.filter((key: string, index: number) => 
       accessKeys.indexOf(key) !== index
     );
@@ -58,7 +70,7 @@ export async function GET(request: NextRequest) {
         duplicateKeys: [...new Set(duplicates)],
       },
       documents: {
-        active: active.map((d: any) => ({
+        active: active.map((d) => ({
           id: d.id,
           type: d.documentType,
           number: d.documentNumber,
@@ -67,7 +79,7 @@ export async function GET(request: NextRequest) {
           classification: d.fiscalClassification,
           createdAt: d.createdAt,
         })),
-        deleted: deleted.map((d: any) => ({
+        deleted: deleted.map((d) => ({
           id: d.id,
           type: d.documentType,
           number: d.documentNumber,
