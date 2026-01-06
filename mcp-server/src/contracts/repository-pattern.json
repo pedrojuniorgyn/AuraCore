@@ -1,0 +1,113 @@
+{
+  "id": "repository-pattern",
+  "version": "2.0.0",
+  "name": "Repository Pattern Contract",
+  "description": "Padrão para implementação de Repositories",
+  "category": "infrastructure",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "REPO-001",
+      "name": "Interface em domain/ports/output/",
+      "description": "Interface do Repository deve estar em domain/ports/output/",
+      "pattern": "domain/ports/output/I*Repository.ts",
+      "severity": "high",
+      "message": "Interface do Repository deve estar em domain/ports/output/"
+    },
+    {
+      "id": "REPO-002",
+      "name": "Implementação em infrastructure/",
+      "description": "Implementação deve estar em infrastructure/persistence/repositories/",
+      "pattern": "infrastructure/persistence/repositories/Drizzle*Repository.ts",
+      "severity": "high",
+      "message": "Implementação deve estar em infrastructure/persistence/repositories/"
+    },
+    {
+      "id": "REPO-003",
+      "name": "Implementa interface do domain",
+      "description": "Repository deve implementar interface de domain/ports/output/",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["implements I"],
+      "severity": "critical",
+      "message": "Repository deve implementar interface do domain"
+    },
+    {
+      "id": "REPO-004",
+      "name": "Usa Mapper para conversão",
+      "description": "Repository deve usar Mapper para converter Domain <-> Persistence",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["Mapper.toDomain(", "Mapper.toPersistence("],
+      "match_any": true,
+      "severity": "high",
+      "message": "Repository deve usar Mapper para conversões"
+    },
+    {
+      "id": "REPO-005",
+      "name": "Filtra por multi-tenancy",
+      "description": "Toda query deve filtrar por organizationId e branchId",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["organizationId", "branchId"],
+      "severity": "critical",
+      "message": "Repository DEVE filtrar por organizationId e branchId"
+    },
+    {
+      "id": "REPO-006",
+      "name": "Soft delete",
+      "description": "Repository deve filtrar deletedAt IS NULL por padrão",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["deletedAt"],
+      "severity": "high",
+      "message": "Repository deve considerar soft delete (deletedAt)"
+    },
+    {
+      "id": "REPO-007",
+      "name": "UPSERT pattern",
+      "description": "save() deve usar upsert (onConflictDoUpdate)",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["onConflictDoUpdate"],
+      "severity": "medium",
+      "message": "save() deve usar UPSERT para idempotência"
+    },
+    {
+      "id": "REPO-008",
+      "name": "Transações",
+      "description": "Operações múltiplas devem usar transação",
+      "severity": "high",
+      "message": "Operações múltiplas devem usar transação"
+    },
+    {
+      "id": "REPO-009",
+      "name": "Paginação em findMany",
+      "description": "findMany() deve suportar paginação",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["limit", "offset"],
+      "severity": "high",
+      "message": "findMany() deve suportar paginação (limit/offset)"
+    },
+    {
+      "id": "REPO-010",
+      "name": "Retorna Domain Entity",
+      "description": "Repository retorna Domain Entity, não row do banco",
+      "severity": "critical",
+      "message": "Repository deve retornar Domain Entity, não row do banco"
+    },
+    {
+      "id": "REPO-011",
+      "name": "@injectable() decorator",
+      "description": "Repository deve ter @injectable() decorator",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["@injectable()"],
+      "severity": "high",
+      "message": "Repository deve ter @injectable() decorator"
+    },
+    {
+      "id": "REPO-012",
+      "name": "Nomenclatura Drizzle*Repository",
+      "description": "Repository deve seguir padrão Drizzle{Entity}Repository",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "medium",
+      "message": "Repository deve seguir padrão Drizzle{Entity}Repository"
+    }
+  ]
+}
+

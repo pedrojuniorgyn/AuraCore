@@ -1,0 +1,96 @@
+{
+  "id": "schema-pattern",
+  "version": "2.0.0",
+  "name": "Schema Pattern Contract",
+  "description": "Padrão para implementação de Schemas de banco de dados",
+  "category": "infrastructure",
+  "severity": "critical",
+  "rules": [
+    {
+      "id": "SCHEMA-001",
+      "name": "Um arquivo por tabela",
+      "description": "Cada tabela deve ter seu próprio arquivo schema",
+      "pattern": "infrastructure/persistence/schemas/*.schema.ts",
+      "severity": "high",
+      "message": "Cada tabela deve ter seu próprio arquivo schema"
+    },
+    {
+      "id": "SCHEMA-002",
+      "name": "Nomenclatura lowercase",
+      "description": "Nome do arquivo: {entity}.schema.ts (lowercase, singular)",
+      "pattern": "infrastructure/persistence/schemas/*.schema.ts",
+      "severity": "medium",
+      "message": "Schema deve ter nome lowercase: {entity}.schema.ts"
+    },
+    {
+      "id": "SCHEMA-003",
+      "name": "Índice multi-tenancy obrigatório",
+      "description": "Deve ter índice composto (organizationId, branchId)",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["organizationId", "branchId", "index("],
+      "severity": "critical",
+      "message": "Schema DEVE ter índice composto (organizationId, branchId)"
+    },
+    {
+      "id": "SCHEMA-004",
+      "name": "Índices para filtros frequentes",
+      "description": "Campos de filtro frequente devem ter índice",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "high",
+      "message": "Campos de filtro frequente devem ter índice"
+    },
+    {
+      "id": "SCHEMA-005",
+      "name": "Campos de auditoria obrigatórios",
+      "description": "Deve ter createdAt e updatedAt",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["createdAt", "updatedAt"],
+      "severity": "high",
+      "message": "Schema DEVE ter campos createdAt e updatedAt"
+    },
+    {
+      "id": "SCHEMA-006",
+      "name": "Soft delete",
+      "description": "Deve ter deletedAt nullable para soft delete",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["deletedAt"],
+      "severity": "high",
+      "message": "Schema DEVE ter deletedAt para soft delete"
+    },
+    {
+      "id": "SCHEMA-007",
+      "name": "Money em 2 colunas",
+      "description": "Money deve ser 2 colunas: amount (decimal) + currency (varchar)",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "high",
+      "message": "Money deve ser mapeado para 2 colunas (amount + currency)"
+    },
+    {
+      "id": "SCHEMA-008",
+      "name": "Export const",
+      "description": "Exportar como const: export const {tableName} = mssqlTable(...)",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["export const "],
+      "severity": "medium",
+      "message": "Schema deve ser exportado como const"
+    },
+    {
+      "id": "SCHEMA-009",
+      "name": "Tipos inferidos exportados",
+      "description": "Exportar tipos: type {Entity}Row = typeof table.$inferSelect",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["$inferSelect", "$inferInsert"],
+      "severity": "high",
+      "message": "Schema deve exportar tipos inferidos"
+    },
+    {
+      "id": "SCHEMA-010",
+      "name": "Índice único para chaves naturais",
+      "description": "Chaves naturais (invoiceNumber, fiscalKey) devem ter índice único",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "medium",
+      "message": "Chaves naturais devem ter índice único"
+    }
+  ]
+}
+

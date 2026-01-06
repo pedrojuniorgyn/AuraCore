@@ -1,0 +1,94 @@
+{
+  "id": "domain-service-pattern",
+  "version": "2.0.0",
+  "name": "Domain Service Pattern Contract",
+  "description": "Padrão para implementação de Domain Services",
+  "category": "domain",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "DOMAIN-SVC-001",
+      "name": "100% Stateless",
+      "description": "Domain Service deve ter apenas métodos estáticos",
+      "pattern": "domain/services/*.ts",
+      "required_patterns": ["static "],
+      "severity": "critical",
+      "message": "Domain Service deve ser 100% stateless (métodos estáticos)"
+    },
+    {
+      "id": "DOMAIN-SVC-002",
+      "name": "Constructor privado",
+      "description": "Constructor deve ser privado para impedir instanciação",
+      "pattern": "domain/services/*.ts",
+      "required_patterns": ["private constructor()"],
+      "severity": "high",
+      "message": "Domain Service deve ter constructor privado"
+    },
+    {
+      "id": "DOMAIN-SVC-003",
+      "name": "Retorna Result",
+      "description": "Métodos devem retornar Result<T, string>",
+      "pattern": "domain/services/*.ts",
+      "required_patterns": ["Result<"],
+      "severity": "high",
+      "message": "Domain Service deve retornar Result<T, string>"
+    },
+    {
+      "id": "DOMAIN-SVC-004",
+      "name": "Nunca faz throw",
+      "description": "Domain Service não deve fazer throw de exceções",
+      "pattern": "domain/services/*.ts",
+      "forbidden_patterns": ["throw new"],
+      "severity": "high",
+      "message": "Domain Service não deve fazer throw, use Result.fail()"
+    },
+    {
+      "id": "DOMAIN-SVC-005",
+      "name": "Zero dependências de infra",
+      "description": "Domain Service não pode depender de infrastructure",
+      "pattern": "domain/services/*.ts",
+      "forbidden_imports": ["infrastructure", "drizzle", "axios"],
+      "severity": "critical",
+      "message": "Domain Service não pode depender de infrastructure"
+    },
+    {
+      "id": "DOMAIN-SVC-006",
+      "name": "Zero acesso a banco",
+      "description": "Domain Service não acessa banco de dados",
+      "pattern": "domain/services/*.ts",
+      "forbidden_patterns": ["db.", "await db", "database"],
+      "severity": "critical",
+      "message": "Domain Service não pode acessar banco de dados"
+    },
+    {
+      "id": "DOMAIN-SVC-007",
+      "name": "100% testável sem mocks",
+      "description": "Domain Service deve ser testável sem mocks de infra",
+      "severity": "high",
+      "message": "Domain Service deve ser testável sem mocks"
+    },
+    {
+      "id": "DOMAIN-SVC-008",
+      "name": "Lógica de negócio pura",
+      "description": "Domain Service contém apenas lógica de negócio",
+      "severity": "high",
+      "message": "Domain Service deve conter apenas lógica de negócio pura"
+    },
+    {
+      "id": "DOMAIN-SVC-009",
+      "name": "Localização correta",
+      "description": "Domain Service deve estar em domain/services/",
+      "pattern": "domain/services/*.ts",
+      "severity": "medium",
+      "message": "Domain Service deve estar em domain/services/"
+    },
+    {
+      "id": "DOMAIN-SVC-010",
+      "name": "Nome descritivo",
+      "description": "Nome deve indicar a ação: Calculator, Validator, etc",
+      "severity": "low",
+      "message": "Domain Service deve ter nome descritivo (Calculator, Validator, etc)"
+    }
+  ]
+}
+

@@ -1,0 +1,120 @@
+{
+  "id": "entity-pattern",
+  "version": "2.0.0",
+  "name": "Entity Pattern Contract",
+  "description": "Padrão para implementação de Entities DDD",
+  "category": "domain",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "ENTITY-001",
+      "name": "Extends base class",
+      "description": "Entity deve estender AggregateRoot ou Entity",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["extends AggregateRoot<string>", "extends Entity<string>"],
+      "match_any": true,
+      "severity": "high",
+      "message": "Entity deve estender AggregateRoot<string> ou Entity<string>"
+    },
+    {
+      "id": "ENTITY-002",
+      "name": "Factory method create()",
+      "description": "Entity deve ter factory method estático create()",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["static create("],
+      "severity": "high",
+      "message": "Entity deve ter factory method static create()"
+    },
+    {
+      "id": "ENTITY-003",
+      "name": "Método reconstitute()",
+      "description": "Entity deve ter método reconstitute() para reconstituição do banco",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["static reconstitute("],
+      "severity": "high",
+      "message": "Entity deve ter método static reconstitute()"
+    },
+    {
+      "id": "ENTITY-004",
+      "name": "Retorna Result em create()",
+      "description": "Factory method create() deve retornar Result<Entity, string>",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["Result<"],
+      "severity": "high",
+      "message": "create() deve retornar Result<Entity, string>"
+    },
+    {
+      "id": "ENTITY-005",
+      "name": "Sem setters públicos",
+      "description": "Entity não deve ter setters públicos",
+      "pattern": "domain/entities/*.ts",
+      "forbidden_patterns": ["public set ", "set value("],
+      "severity": "high",
+      "message": "Entity não deve ter setters públicos"
+    },
+    {
+      "id": "ENTITY-006",
+      "name": "Getters para propriedades",
+      "description": "Entity deve expor propriedades via getters",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["get "],
+      "severity": "medium",
+      "message": "Entity deve ter getters para propriedades"
+    },
+    {
+      "id": "ENTITY-007",
+      "name": "Métodos de negócio",
+      "description": "Entity deve ter métodos que expressam comportamento de negócio",
+      "severity": "medium",
+      "message": "Entity deve ter métodos de negócio (approve, cancel, complete, etc)"
+    },
+    {
+      "id": "ENTITY-008",
+      "name": "Validar invariantes",
+      "description": "create() deve validar todas as invariantes do domínio",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["Result.fail("],
+      "severity": "high",
+      "message": "create() deve validar invariantes e retornar Result.fail() se inválido"
+    },
+    {
+      "id": "ENTITY-009",
+      "name": "Emitir Domain Events",
+      "description": "Mudanças de estado devem emitir Domain Events",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["addDomainEvent("],
+      "severity": "medium",
+      "message": "Entity deve emitir Domain Events em mudanças de estado"
+    },
+    {
+      "id": "ENTITY-010",
+      "name": "ID gerado internamente",
+      "description": "ID deve ser gerado dentro do create()",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["crypto.randomUUID()", "randomUUID()"],
+      "match_any": true,
+      "severity": "medium",
+      "message": "ID deve ser gerado internamente com crypto.randomUUID()"
+    },
+    {
+      "id": "ENTITY-011",
+      "name": "Multi-tenancy",
+      "description": "Entity deve ter organizationId e branchId",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["organizationId", "branchId"],
+      "severity": "critical",
+      "message": "Entity deve ter organizationId e branchId para multi-tenancy"
+    },
+    {
+      "id": "ENTITY-012",
+      "name": "Timestamps",
+      "description": "Entity deve ter createdAt e updatedAt",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["createdAt", "updatedAt"],
+      "severity": "high",
+      "message": "Entity deve ter createdAt e updatedAt"
+    }
+  ],
+  "template": "// Template disponível em docs/architecture/templates/entity.template.ts"
+}
+

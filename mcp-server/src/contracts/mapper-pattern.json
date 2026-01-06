@@ -1,0 +1,83 @@
+{
+  "id": "mapper-pattern",
+  "version": "2.0.0",
+  "name": "Mapper Pattern Contract",
+  "description": "Padrão para implementação de Mappers",
+  "category": "infrastructure",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "MAPPER-001",
+      "name": "Localização correta",
+      "description": "Mapper deve estar em infrastructure/persistence/mappers/",
+      "pattern": "infrastructure/persistence/mappers/*Mapper.ts",
+      "severity": "high",
+      "message": "Mapper deve estar em infrastructure/persistence/mappers/"
+    },
+    {
+      "id": "MAPPER-002",
+      "name": "Método toDomain()",
+      "description": "Mapper deve ter método toDomain(row): Result<Entity, string>",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": ["toDomain("],
+      "severity": "critical",
+      "message": "Mapper deve ter método toDomain()"
+    },
+    {
+      "id": "MAPPER-003",
+      "name": "Método toPersistence()",
+      "description": "Mapper deve ter método toPersistence(entity): Insert",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": ["toPersistence("],
+      "severity": "critical",
+      "message": "Mapper deve ter método toPersistence()"
+    },
+    {
+      "id": "MAPPER-004",
+      "name": "toDomain usa reconstitute()",
+      "description": "toDomain() deve usar Entity.reconstitute(), não create()",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": [".reconstitute("],
+      "forbidden_patterns": [".create("],
+      "severity": "critical",
+      "message": "toDomain() DEVE usar reconstitute(), NUNCA create()"
+    },
+    {
+      "id": "MAPPER-005",
+      "name": "Money em 2 campos",
+      "description": "Money deve ser mapeado para 2 campos (amount, currency)",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": ["amount", "currency"],
+      "severity": "high",
+      "message": "Money deve ser mapeado para 2 campos (amount + currency)"
+    },
+    {
+      "id": "MAPPER-006",
+      "name": "Validar conversão de Value Objects",
+      "description": "Mapper deve validar Result de Value Objects",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": ["Result.isFail(", "Result.isOk("],
+      "match_any": true,
+      "severity": "high",
+      "message": "Mapper deve validar Result de Value Objects"
+    },
+    {
+      "id": "MAPPER-007",
+      "name": "Métodos estáticos",
+      "description": "Mapper deve ter métodos estáticos",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "required_patterns": ["static toDomain(", "static toPersistence("],
+      "severity": "high",
+      "message": "Mapper deve ter métodos estáticos"
+    },
+    {
+      "id": "MAPPER-008",
+      "name": "Nomenclatura {Entity}Mapper",
+      "description": "Mapper deve seguir padrão {Entity}Mapper",
+      "pattern": "infrastructure/persistence/mappers/*.ts",
+      "severity": "medium",
+      "message": "Mapper deve seguir padrão {Entity}Mapper"
+    }
+  ]
+}
+

@@ -1,0 +1,135 @@
+{
+  "id": "use-case-pattern",
+  "version": "2.0.0",
+  "name": "Use Case Pattern Contract",
+  "description": "Padrão para implementação de Use Cases (Commands/Queries)",
+  "category": "application",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "USE-CASE-001",
+      "name": "Commands em commands/",
+      "description": "Write operations devem estar em application/commands/",
+      "pattern": "application/commands/**/*.ts",
+      "severity": "high",
+      "message": "Commands devem estar em application/commands/"
+    },
+    {
+      "id": "USE-CASE-002",
+      "name": "Queries em queries/",
+      "description": "Read operations devem estar em application/queries/",
+      "pattern": "application/queries/**/*.ts",
+      "severity": "high",
+      "message": "Queries devem estar em application/queries/"
+    },
+    {
+      "id": "USE-CASE-003",
+      "name": "Implementa Input Port",
+      "description": "Use Case deve implementar interface de domain/ports/input/",
+      "pattern": "application/**/*.ts",
+      "required_patterns": ["implements I"],
+      "severity": "high",
+      "message": "Use Case deve implementar interface de ports/input"
+    },
+    {
+      "id": "USE-CASE-004",
+      "name": "Método único execute()",
+      "description": "Use Case deve ter apenas método execute()",
+      "pattern": "application/**/*Command.ts",
+      "required_patterns": ["execute("],
+      "severity": "high",
+      "message": "Use Case deve ter método execute()"
+    },
+    {
+      "id": "USE-CASE-005",
+      "name": "Recebe ExecutionContext",
+      "description": "execute() deve receber ExecutionContext",
+      "pattern": "application/**/*.ts",
+      "required_patterns": ["ExecutionContext", "ctx:"],
+      "match_any": true,
+      "severity": "high",
+      "message": "execute() deve receber ExecutionContext"
+    },
+    {
+      "id": "USE-CASE-006",
+      "name": "Retorna Promise<Result>",
+      "description": "execute() deve retornar Promise<Result<Output, string>>",
+      "pattern": "application/**/*.ts",
+      "required_patterns": ["Promise<Result<"],
+      "severity": "high",
+      "message": "execute() deve retornar Promise<Result<Output, string>>"
+    },
+    {
+      "id": "USE-CASE-007",
+      "name": "Valida input",
+      "description": "Use Case deve validar input",
+      "severity": "high",
+      "message": "Use Case deve validar input antes de processar"
+    },
+    {
+      "id": "USE-CASE-008",
+      "name": "Verifica multi-tenancy",
+      "description": "Use Case deve verificar organizationId e branchId",
+      "pattern": "application/**/*.ts",
+      "required_patterns": ["organizationId", "branchId"],
+      "severity": "critical",
+      "message": "Use Case deve verificar multi-tenancy"
+    },
+    {
+      "id": "USE-CASE-009",
+      "name": "Delega para Domain",
+      "description": "Use Case orquestra, não tem lógica de negócio",
+      "severity": "high",
+      "message": "Use Case deve delegar lógica de negócio para Domain"
+    },
+    {
+      "id": "USE-CASE-010",
+      "name": "Usa DI para dependencies",
+      "description": "Use Case recebe dependencies via constructor injection",
+      "pattern": "application/**/*.ts",
+      "required_patterns": ["@inject("],
+      "severity": "high",
+      "message": "Use Case deve usar DI (@inject) para dependencies"
+    },
+    {
+      "id": "USE-CASE-011",
+      "name": "@injectable() decorator",
+      "description": "Use Case deve ter @injectable() decorator",
+      "pattern": "application/**/*.ts",
+      "required_patterns": ["@injectable()"],
+      "severity": "high",
+      "message": "Use Case deve ter @injectable() decorator"
+    },
+    {
+      "id": "USE-CASE-012",
+      "name": "Commands modificam estado",
+      "description": "Commands podem modificar estado do sistema",
+      "severity": "medium",
+      "message": "Commands são write operations - podem modificar estado"
+    },
+    {
+      "id": "USE-CASE-013",
+      "name": "Queries não modificam estado",
+      "description": "Queries nunca devem modificar estado",
+      "pattern": "application/queries/**/*.ts",
+      "forbidden_patterns": [".save(", ".delete(", ".update(", ".insert("],
+      "severity": "critical",
+      "message": "Queries NUNCA devem modificar estado"
+    },
+    {
+      "id": "USE-CASE-014",
+      "name": "Publica Domain Events",
+      "description": "Use Case deve publicar Domain Events quando apropriado",
+      "severity": "medium",
+      "message": "Use Case deve publicar Domain Events após mudanças"
+    },
+    {
+      "id": "USE-CASE-015",
+      "name": "Gerencia transações",
+      "description": "Use Case gerencia transações para operações múltiplas",
+      "severity": "high",
+      "message": "Use Case deve gerenciar transações em operações multi-step"
+    }
+  ]
+}
+
