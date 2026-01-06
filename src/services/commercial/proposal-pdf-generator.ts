@@ -4,9 +4,9 @@ interface ProposalData {
   proposalNumber: string;
   companyName: string;
   contactName: string;
-  routes: any[];
-  prices: any[];
-  conditions: any;
+  routes: Array<{ origin: string; destination: string; price: string }>;
+  prices: Array<Record<string, unknown>>;
+  conditions: Record<string, unknown>;
   validityDays: number;
 }
 
@@ -47,7 +47,7 @@ export class ProposalPdfGenerator {
       doc.moveDown(0.5);
 
       if (proposal.routes && proposal.routes.length > 0) {
-        proposal.routes.forEach((route: any, index: number) => {
+        proposal.routes.forEach((route, index: number) => {
           doc.fontSize(11).font("Helvetica");
           doc.text(
             `${index + 1}. ${route.origin} → ${route.destination}: R$ ${parseFloat(

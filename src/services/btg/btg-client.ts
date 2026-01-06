@@ -10,7 +10,7 @@ const BTG_API_BASE_URL = process.env.BTG_API_BASE_URL || "https://api.sandbox.em
 
 export interface BTGRequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  body?: any;
+  body?: Record<string, unknown>;
   headers?: Record<string, string>;
   skipAuth?: boolean; // Para endpoints públicos
 }
@@ -18,7 +18,7 @@ export interface BTGRequestOptions {
 /**
  * Cliente HTTP genérico para API BTG
  */
-export async function btgRequest<T = any>(
+export async function btgRequest<T = unknown>(
   endpoint: string,
   options: BTGRequestOptions = {}
 ): Promise<T> {
@@ -80,16 +80,16 @@ export async function btgRequest<T = any>(
 /**
  * GET request
  */
-export async function btgGet<T = any>(endpoint: string, headers?: Record<string, string>): Promise<T> {
+export async function btgGet<T = unknown>(endpoint: string, headers?: Record<string, string>): Promise<T> {
   return btgRequest<T>(endpoint, { method: "GET", headers });
 }
 
 /**
  * POST request
  */
-export async function btgPost<T = any>(
+export async function btgPost<T = unknown>(
   endpoint: string,
-  body: any,
+  body: Record<string, unknown>,
   headers?: Record<string, string>
 ): Promise<T> {
   return btgRequest<T>(endpoint, { method: "POST", body, headers });
@@ -98,9 +98,9 @@ export async function btgPost<T = any>(
 /**
  * PUT request
  */
-export async function btgPut<T = any>(
+export async function btgPut<T = unknown>(
   endpoint: string,
-  body: any,
+  body: Record<string, unknown>,
   headers?: Record<string, string>
 ): Promise<T> {
   return btgRequest<T>(endpoint, { method: "PUT", body, headers });
@@ -109,7 +109,7 @@ export async function btgPut<T = any>(
 /**
  * DELETE request
  */
-export async function btgDelete<T = any>(
+export async function btgDelete<T = unknown>(
   endpoint: string,
   headers?: Record<string, string>
 ): Promise<T> {
@@ -119,9 +119,9 @@ export async function btgDelete<T = any>(
 /**
  * PATCH request
  */
-export async function btgPatch<T = any>(
+export async function btgPatch<T = unknown>(
   endpoint: string,
-  body: any,
+  body: Record<string, unknown>,
   headers?: Record<string, string>
 ): Promise<T> {
   return btgRequest<T>(endpoint, { method: "PATCH", body, headers });
