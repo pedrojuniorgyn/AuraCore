@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ValueFormatterParams, CellClassParams } from "ag-grid-community";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -122,19 +122,19 @@ export default function BackofficePage() {
       field: 'balance_month', 
       headerName: 'Saldo Mês', 
       width: 150,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams<BackofficeAccount>) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'balance_year', 
       headerName: 'Saldo Ano', 
       width: 150,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams<BackofficeAccount>) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'status', 
       headerName: 'Status', 
       width: 120,
-      cellStyle: (params: any) => ({
+      cellStyle: (params: CellClassParams<BackofficeAccount>) => ({
         color: params.value === 'ACTIVE' ? '#10b981' : '#ef4444'
       })
     }
@@ -149,13 +149,13 @@ export default function BackofficePage() {
       field: 'approval_limit', 
       headerName: 'Limite Alçada', 
       width: 150,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams<CostCenter>) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'status', 
       headerName: 'Status', 
       width: 120,
-      cellStyle: (params: any) => ({
+      cellStyle: (params: CellClassParams<CostCenter>) => ({
         color: params.value === 'ACTIVE' ? '#10b981' : '#ef4444'
       })
     }
