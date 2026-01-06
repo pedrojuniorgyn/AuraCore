@@ -1,0 +1,248 @@
+{
+  "id": "known-bugs-registry",
+  "version": "2.0.0",
+  "name": "Known Bugs Registry Contract",
+  "description": "Registro de bugs conhecidos e suas correções para prevenir reincidência",
+  "category": "quality",
+  "severity": "high",
+  "purpose": "Documentar bugs históricos e suas soluções para prevenir que ocorram novamente",
+  "rules": [
+    {
+      "id": "BUG-REG-001",
+      "name": "Registrar correção após fix",
+      "description": "SEMPRE registrar correção após corrigir bug",
+      "severity": "high",
+      "message": "Use Tool: register_correction após corrigir bug",
+      "when": [
+        "Bug encontrado pelo Agent Review",
+        "Bug encontrado em testes",
+        "Bug encontrado em code review",
+        "Bug encontrado em produção"
+      ],
+      "required_info": {
+        "epic": "Épico ou contexto atual",
+        "error_description": "O que estava errado",
+        "correction_applied": "Como foi corrigido",
+        "files_affected": "Arquivos modificados",
+        "pattern_name": "Padrão criado (se aplicável)"
+      }
+    },
+    {
+      "id": "BUG-REG-002",
+      "name": "Consultar registro antes de implementar",
+      "description": "Verificar known-bugs antes de implementar funcionalidade similar",
+      "severity": "medium",
+      "message": "Consulte known-bugs-registry antes de implementar",
+      "workflow": [
+        "1. Tool: get_contract('known-bugs-registry')",
+        "2. Verificar se contexto similar já teve bugs",
+        "3. Aplicar correções conhecidas preventivamente"
+      ]
+    }
+  ],
+  "known_bugs": [
+    {
+      "id": "KB-001",
+      "category": "multi-tenancy",
+      "description": "branchId opcional em filtros",
+      "symptoms": [
+        "Query retorna dados de todas as filiais",
+        "Usuário vê dados de outras filiais"
+      ],
+      "root_cause": "branchId marcado como opcional (?) em FilterType",
+      "solution": "branchId SEMPRE obrigatório em filters. NUNCA opcional.",
+      "prevention": [
+        "Interface de filter: branchId: number (sem ?)",
+        "Validação em Use Case: verificar branchId presente",
+        "REPO-005: Toda query filtra organizationId + branchId"
+      ],
+      "files_to_check": [
+        "*/domain/ports/output/I*Repository.ts",
+        "*/infrastructure/persistence/repositories/*.ts"
+      ]
+    },
+    {
+      "id": "KB-002",
+      "category": "schema",
+      "description": "Índices separados para organizationId e branchId",
+      "symptoms": [
+        "Query lenta mesmo com índices",
+        "EXPLAIN mostra index scan ineficiente"
+      ],
+      "root_cause": "Índices separados não otimizam queries que filtram ambos campos",
+      "solution": "Índice COMPOSTO: index('idx_tenant').on(table.organizationId, table.branchId)",
+      "prevention": [
+        "SCHEMA-003: Validação automatizada",
+        "npm run test:arch: bloqueia PR com índices separados"
+      ],
+      "test": "tests/architecture/schema-composite-index.test.ts"
+    },
+    {
+      "id": "KB-003",
+      "category": "mapper",
+      "description": "Mapper.toDomain() usa create() ao invés de reconstitute()",
+      "symptoms": [
+        "Validações falham ao buscar do banco",
+        "Dados válidos são rejeitados na leitura"
+      ],
+      "root_cause": "create() valida invariantes. reconstitute() não valida (assume dados válidos do banco).",
+      "solution": "Mapper.toDomain() SEMPRE usa reconstitute()",
+      "prevention": [
+        "MAPPER-004: toDomain usa reconstitute(), NUNCA create()",
+        "ARCH-015: Pattern validation"
+      ],
+      "rationale": "Dados do banco já foram validados na inserção. reconstitute() reconstrói Entity sem re-validar."
+    },
+    {
+      "id": "KB-004",
+      "category": "result-pattern",
+      "description": "Acessar .value sem verificar Result.isFail()",
+      "symptoms": [
+        "Runtime error: Cannot read property 'x' of undefined",
+        "Crash inesperado em fluxo de erro"
+      ],
+      "root_cause": "Result.value é undefined quando isFail() === true",
+      "solution": "SEMPRE verificar Result.isFail() antes de acessar .value",
+      "prevention": [
+        "TYPE-005: Validação de Result obrigatória",
+        "if (result.isFail()) return result; // Early return",
+        "const entity = result.value; // Safe"
+      ],
+      "example_correct": [
+        "const result = Entity.create(props);",
+        "if (result.isFail()) return Result.fail(result.error);",
+        "const entity = result.value;"
+      ]
+    },
+    {
+      "id": "KB-005",
+      "category": "validation",
+      "description": "Validar string sem .trim()",
+      "symptoms": [
+        "Validação falha para strings com espaços",
+        "Strings vazias ' ' passam por validação de comprimento"
+      ],
+      "root_cause": "Input não é trimado antes de validar",
+      "solution": "SEMPRE usar .trim() antes de validar strings",
+      "prevention": [
+        "const trimmed = value.trim();",
+        "if (!trimmed || trimmed.length < min) return Result.fail('...');"
+      ],
+      "locations": [
+        "Value Object.create()",
+        "Zod schemas em rotas API",
+        "Validações manuais"
+      ]
+    },
+    {
+      "id": "KB-006",
+      "category": "money",
+      "description": "Money como único campo no schema",
+      "symptoms": [
+        "Perda de precisão em conversões de moeda",
+        "Impossível multi-currency"
+      ],
+      "root_cause": "Money armazenado como decimal único, sem campo de currency",
+      "solution": "Money = 2 colunas: amount (decimal) + amountCurrency (varchar)",
+      "prevention": [
+        "SCHEMA-007: Money obrigatoriamente 2 campos",
+        "amount: decimal('amount', { precision: 18, scale: 2 }),",
+        "amountCurrency: varchar('amount_currency', { length: 3 }).default('BRL')"
+      ],
+      "rationale": "Suporte multi-currency desde o início. Migração posterior é custosa."
+    },
+    {
+      "id": "KB-007",
+      "category": "domain",
+      "description": "Domain importa de Infrastructure",
+      "symptoms": [
+        "Testes unitários requerem banco de dados",
+        "Domain não é mais portável"
+      ],
+      "root_cause": "Domain importa diretamente de infrastructure (drizzle, axios, etc)",
+      "solution": "Domain ZERO imports externos. Use Ports (interfaces).",
+      "prevention": [
+        "ARCH-002: Domain não importa Infrastructure",
+        "ARCH-003: Domain não importa bibliotecas externas",
+        "ARCH-004: Domain não importa módulos Node.js"
+      ],
+      "allowed_imports": [
+        "@/shared/domain (Result, Entity, ValueObject)",
+        "Tipos TypeScript nativos",
+        "NADA MAIS"
+      ]
+    },
+    {
+      "id": "KB-008",
+      "category": "function-utility",
+      "description": "Função utilitária criada mas não usada em todos os lugares",
+      "symptoms": [
+        "Lógica duplicada coexiste com função centralizada",
+        "Comportamento inconsistente entre módulos"
+      ],
+      "root_cause": "Função utilitária criada, mas código hardcoded não foi substituído",
+      "solution": "Quando criar função utilitária: USAR em TODOS os lugares. REMOVER hardcode.",
+      "prevention": [
+        "CONSISTENCY-007: Função utilitária DEVE substituir TODAS ocorrências",
+        "grep para encontrar hardcode após criar função",
+        "Refatorar TUDO na mesma PR"
+      ],
+      "example": "Se criou calculateTax(), grep 'tax *' e refatorar TODOS os cálculos hardcoded"
+    },
+    {
+      "id": "KB-009",
+      "category": "state-machine",
+      "description": "Modificar máquina de estados global para caso específico",
+      "symptoms": [
+        "Transições permitidas para tipo X quebram tipo Y",
+        "Validações incorretas para documentos específicos"
+      ],
+      "root_cause": "Máquina de estados única tenta atender todos os tipos de documento",
+      "solution": "Transições que diferem por tipo DEVEM ter máquinas separadas",
+      "prevention": [
+        "Máquina de estados por tipo de documento (NFe, CTe, etc)",
+        "canTransitionTo(from, to, documentType)",
+        "NUNCA modificar máquina global para caso específico"
+      ],
+      "rationale": "Diferentes document types têm fluxos de estado diferentes. Máquina única cria acoplamento."
+    },
+    {
+      "id": "KB-010",
+      "category": "test",
+      "description": "Testes skipped em produção",
+      "symptoms": [
+        "it.skip() em código commitado",
+        "describe.skip() com TODOs antigos"
+      ],
+      "root_cause": "Teste quebrado mas commit feito mesmo assim",
+      "solution": "NUNCA commitar teste skipped. Corrigir ou remover.",
+      "prevention": [
+        "Pre-commit hook: grep -r 'it\\.skip\\|describe\\.skip' tests/",
+        "CI/CD falha se detectar .skip()",
+        "Code review bloqueia PR com testes skipped"
+      ],
+      "exceptions": [
+        "Testes de integração em desenvolvimento (marcar com // TODO: enable)"
+      ]
+    }
+  ],
+  "workflow": {
+    "ao_encontrar_bug": [
+      "1. Corrigir o bug",
+      "2. Tool: register_correction",
+      "3. Criar/atualizar teste que previne reincidência",
+      "4. git commit --amend (não fazer commit separado)"
+    ],
+    "antes_de_implementar": [
+      "1. Tool: get_contract('known-bugs-registry')",
+      "2. Verificar known_bugs similar ao contexto",
+      "3. Aplicar preventions desde o início"
+    ]
+  },
+  "rationale": "Bugs históricos são fonte de aprendizado. Documentar e prevenir é mais barato que corrigir múltiplas vezes.",
+  "references": [
+    "The Pragmatic Programmer - Hunt & Thomas",
+    "Release It! - Michael Nygard"
+  ]
+}
+

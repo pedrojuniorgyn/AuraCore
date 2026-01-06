@@ -1,0 +1,208 @@
+{
+  "id": "infrastructure-layer",
+  "version": "2.0.0",
+  "name": "Infrastructure Layer Contract",
+  "description": "Regras específicas da camada Infrastructure",
+  "category": "architecture",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "INFRA-001",
+      "name": "Implementa interfaces do Domain",
+      "description": "Infrastructure implementa ports definidos no Domain",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "critical",
+      "message": "Infrastructure DEVE implementar interfaces de domain/ports/output/",
+      "examples": {
+        "repository": "class DrizzlePayableRepository implements IPayableRepository",
+        "adapter": "class AxiosSefazAdapter implements ISefazGateway"
+      }
+    },
+    {
+      "id": "INFRA-002",
+      "name": "Zero lógica de negócio",
+      "description": "Infrastructure NÃO contém lógica de negócio",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "critical",
+      "message": "Infrastructure é apenas adaptação técnica, não lógica de negócio",
+      "forbidden": [
+        "Validações de regras de negócio",
+        "Cálculos complexos",
+        "Decisões baseadas em regras de domínio"
+      ],
+      "allowed": [
+        "Validação técnica (formato, tamanho)",
+        "Conversão de tipos",
+        "Tratamento de erros de infra"
+      ]
+    },
+    {
+      "id": "INFRA-003",
+      "name": "Usa Mapper para conversão",
+      "description": "Repository SEMPRE usa Mapper para conversão Domain ↔ Persistence",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "required_patterns": ["Mapper.toDomain(", "Mapper.toPersistence("],
+      "severity": "critical",
+      "message": "Repository DEVE usar Mapper para conversão",
+      "rationale": "Mapper centraliza lógica de conversão e evita corrupção de Domain."
+    },
+    {
+      "id": "INFRA-004",
+      "name": "@injectable decorator",
+      "description": "Classes de Infrastructure devem ter @injectable()",
+      "pattern": "infrastructure/**/*.ts",
+      "required_patterns": ["@injectable()"],
+      "severity": "high",
+      "message": "Infrastructure classes DEVEM ter @injectable() para DI",
+      "exceptions": [
+        "Mappers (métodos estáticos)",
+        "Schemas (Drizzle definitions)",
+        "Types e interfaces"
+      ]
+    },
+    {
+      "id": "INFRA-005",
+      "name": "Transações para operações múltiplas",
+      "description": "Operações multi-step DEVEM usar transação SQL",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "critical",
+      "message": "Use withMssqlTransaction para operações multi-step",
+      "when_required": [
+        "Múltiplas escritas no banco",
+        "Operações relacionadas que devem ser atômicas",
+        "Rollback necessário em caso de falha parcial"
+      ],
+      "example": "return withMssqlTransaction(async (tx) => { ... });"
+    },
+    {
+      "id": "INFRA-006",
+      "name": "Multi-tenancy em TODA query",
+      "description": "TODA query DEVE filtrar por organizationId + branchId",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "critical",
+      "message": "Filtre SEMPRE por organizationId E branchId",
+      "examples": {
+        "correct": "eq(table.organizationId, orgId), eq(table.branchId, branchId)",
+        "incorrect": "eq(table.organizationId, orgId) // FALTA branchId"
+      },
+      "rationale": "Isolamento de dados entre organizações e filiais. Segurança crítica."
+    },
+    {
+      "id": "INFRA-007",
+      "name": "Soft delete obrigatório",
+      "description": "Queries DEVEM filtrar deletedAt IS NULL",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "high",
+      "message": "Filtre isNull(table.deletedAt) em queries de leitura",
+      "examples": {
+        "findById": "isNull(table.deletedAt)",
+        "findMany": "isNull(table.deletedAt)",
+        "delete": "UPDATE SET deletedAt = NOW()"
+      },
+      "exceptions": [
+        "Queries específicas para auditoria/histórico"
+      ]
+    },
+    {
+      "id": "INFRA-008",
+      "name": "Paginação obrigatória em findMany",
+      "description": "findMany DEVE suportar paginação",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "high",
+      "message": "findMany DEVE retornar { items, total, page, pageSize }",
+      "required_params": {
+        "page": "number (default: 1)",
+        "pageSize": "number (default: 50, max: 1000)"
+      },
+      "implementation": [
+        "const offset = (page - 1) * pageSize;",
+        ".limit(pageSize).offset(offset)",
+        "COUNT(*) para total"
+      ]
+    },
+    {
+      "id": "INFRA-009",
+      "name": "Retorna Domain Entity",
+      "description": "Repository NUNCA retorna row do banco diretamente",
+      "pattern": "infrastructure/persistence/repositories/*.ts",
+      "severity": "critical",
+      "message": "Repository DEVE retornar Domain Entity, não DB row",
+      "examples": {
+        "correct": "const result = Mapper.toDomain(row); return result.value;",
+        "incorrect": "return row; // ERRADO - é objeto do banco"
+      }
+    },
+    {
+      "id": "INFRA-010",
+      "name": "ACL para integrações externas",
+      "description": "Use Anti-Corruption Layer para APIs externas",
+      "pattern": "infrastructure/adapters/*.ts",
+      "severity": "high",
+      "message": "Adapters DEVEM traduzir modelo externo para Domain",
+      "rationale": "Protege Domain de mudanças em APIs externas (SEFAZ, BTG, etc).",
+      "layers": {
+        "external_api": "Modelo da API externa",
+        "adapter_dto": "DTO específico do adapter",
+        "domain_model": "Entidade/VO do Domain"
+      }
+    },
+    {
+      "id": "INFRA-011",
+      "name": "Erro técnico vs erro de negócio",
+      "description": "Infrastructure diferencia erro técnico de erro de negócio",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "high",
+      "message": "Erro técnico: throw. Erro de negócio: Result.fail()",
+      "examples": {
+        "technical_error": [
+          "throw new DatabaseConnectionError('...')",
+          "throw new HttpTimeoutError('...')"
+        ],
+        "business_error": [
+          "return Result.fail('Entity not found')",
+          "const result = Entity.reconstitute(...); if (result.isFail()) return result;"
+        ]
+      }
+    },
+    {
+      "id": "INFRA-012",
+      "name": "Configuração via Environment",
+      "description": "Infrastructure usa variáveis de ambiente para configuração",
+      "pattern": "infrastructure/**/*.ts",
+      "severity": "high",
+      "message": "Use process.env ou config service para configuração",
+      "forbidden": [
+        "Hardcoded URLs",
+        "Hardcoded credentials",
+        "Hardcoded connection strings"
+      ],
+      "allowed": [
+        "process.env.DATABASE_URL",
+        "config.get('sefaz.url')",
+        "Constants não-sensíveis"
+      ]
+    }
+  ],
+  "structure": {
+    "persistence": {
+      "repositories": "Implementam IRepository do domain",
+      "mappers": "Convertem Domain ↔ Persistence",
+      "schemas": "Definições Drizzle (1 arquivo por tabela)"
+    },
+    "adapters": {
+      "description": "Implementam Gateways para serviços externos",
+      "examples": ["SefazAdapter", "BtgAdapter", "EmailAdapter"]
+    },
+    "di": {
+      "description": "Registro de dependências no container",
+      "pattern": "{Module}Module.ts"
+    }
+  },
+  "rationale": "Infrastructure é camada de adaptação pura. Não contamina Domain com detalhes técnicos (Cockburn, 2005).",
+  "references": [
+    "Hexagonal Architecture - Alistair Cockburn",
+    "Clean Architecture - Robert C. Martin",
+    "Implementing DDD - Vaughn Vernon"
+  ]
+}
+

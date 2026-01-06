@@ -1,0 +1,170 @@
+{
+  "id": "type-safety",
+  "version": "2.0.0",
+  "name": "Type Safety Contract",
+  "description": "Regras de type safety TypeScript strict",
+  "category": "quality",
+  "severity": "critical",
+  "rules": [
+    {
+      "id": "TYPE-001",
+      "name": "Zero uso de any",
+      "description": "NUNCA usar any, nem em testes",
+      "pattern": "**/*.ts",
+      "forbidden_patterns": [": any", "as any", "<any>", "any[]"],
+      "severity": "critical",
+      "message": "Proibido usar 'any'. Use tipo explícito ou 'unknown'",
+      "alternatives": [
+        "unknown - quando tipo é realmente desconhecido",
+        "T extends Record<string, unknown> - para objetos genéricos",
+        "void - para funções sem retorno",
+        "never - para código inalcançável"
+      ]
+    },
+    {
+      "id": "TYPE-002",
+      "name": "Zero @ts-ignore",
+      "description": "NUNCA usar @ts-ignore",
+      "pattern": "**/*.ts",
+      "forbidden_patterns": ["@ts-ignore", "// @ts-ignore"],
+      "severity": "critical",
+      "message": "Proibido @ts-ignore. Corrija o erro de tipo",
+      "rationale": "@ts-ignore esconde problemas reais. Se erro de tipo é legítimo, use @ts-expect-error com comentário explicativo."
+    },
+    {
+      "id": "TYPE-003",
+      "name": "Tipar retornos de função",
+      "description": "SEMPRE tipar retorno de função explicitamente",
+      "pattern": "**/*.ts",
+      "severity": "high",
+      "message": "Função deve ter tipo de retorno explícito",
+      "examples": {
+        "correct": "function calculate(a: number, b: number): number { ... }",
+        "incorrect": "function calculate(a: number, b: number) { ... }"
+      },
+      "exceptions": [
+        "Arrow functions inline em callbacks (map, filter)",
+        "Functions com infer de tipo óbvio (getters de 1 linha)"
+      ]
+    },
+    {
+      "id": "TYPE-004",
+      "name": "Tipar parâmetros",
+      "description": "SEMPRE tipar parâmetros de função",
+      "pattern": "**/*.ts",
+      "severity": "high",
+      "message": "Parâmetros devem ter tipo explícito",
+      "examples": {
+        "correct": "function process(data: ProcessData): void { ... }",
+        "incorrect": "function process(data) { ... }"
+      }
+    },
+    {
+      "id": "TYPE-005",
+      "name": "Validar Result antes de acessar value",
+      "description": "SEMPRE verificar Result.isFail() antes de acessar .value",
+      "pattern": "**/*.ts",
+      "severity": "critical",
+      "message": "Verifique Result.isFail() antes de acessar .value",
+      "examples": {
+        "correct": [
+          "if (result.isFail()) return result;",
+          "const entity = result.value;"
+        ],
+        "incorrect": [
+          "const entity = result.value; // sem verificar isFail()"
+        ]
+      }
+    },
+    {
+      "id": "TYPE-006",
+      "name": "Null/undefined explícitos",
+      "description": "Campos nullable devem usar | null, não ?:",
+      "pattern": "**/*.ts",
+      "severity": "medium",
+      "message": "Use | null para campos opcionais com valor null explícito",
+      "rationale": "?: significa undefined, | null significa pode ser null. São semânticas diferentes.",
+      "examples": {
+        "optional_field": "name?: string // pode estar ausente",
+        "nullable_field": "deletedAt: Date | null // está presente mas pode ser null"
+      }
+    },
+    {
+      "id": "TYPE-007",
+      "name": "Evitar type assertions",
+      "description": "Evitar 'as Type' exceto em casos justificados",
+      "pattern": "**/*.ts",
+      "severity": "high",
+      "message": "Evite 'as Type'. Prefira type guards ou validação",
+      "allowed_cases": [
+        "Casting de unknown após validação",
+        "DOM APIs que retornam tipos genéricos",
+        "Type narrowing após guard"
+      ],
+      "forbidden_cases": [
+        "as any",
+        "as unknown as Type (double cast suspeito)",
+        "Contornar erros de tipo legítimos"
+      ]
+    },
+    {
+      "id": "TYPE-008",
+      "name": "Enums ou Union Types",
+      "description": "Use const enum ou union types para valores fixos",
+      "pattern": "**/*.ts",
+      "severity": "medium",
+      "message": "Use enum ou union type ao invés de magic strings",
+      "examples": {
+        "union_type": "type Status = 'pending' | 'approved' | 'rejected';",
+        "const_enum": "const enum Status { Pending = 'pending', Approved = 'approved' }"
+      }
+    },
+    {
+      "id": "TYPE-009",
+      "name": "Readonly para imutabilidade",
+      "description": "Use readonly para propriedades imutáveis",
+      "pattern": "domain/value-objects/*.ts",
+      "severity": "high",
+      "message": "Value Objects devem ter propriedades readonly",
+      "examples": {
+        "correct": "private readonly props: MoneyProps;",
+        "incorrect": "private props: MoneyProps;"
+      }
+    },
+    {
+      "id": "TYPE-010",
+      "name": "Strict null checks",
+      "description": "Compilar com strictNullChecks: true",
+      "severity": "critical",
+      "message": "tsconfig.json deve ter strictNullChecks: true",
+      "config": {
+        "compilerOptions": {
+          "strict": true,
+          "strictNullChecks": true,
+          "noImplicitAny": true,
+          "strictFunctionTypes": true
+        }
+      }
+    }
+  ],
+  "tsconfig_required": {
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "validation": {
+    "pre_commit": "npx tsc --noEmit",
+    "expected": "0 errors"
+  },
+  "rationale": "Type safety previne 60%+ dos bugs em runtime. TypeScript strict mode é fundação de qualidade.",
+  "references": [
+    "TypeScript Handbook - Strict Mode",
+    "Effective TypeScript - Dan Vanderkam"
+  ]
+}
+

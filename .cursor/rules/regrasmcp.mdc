@@ -115,6 +115,7 @@ Responder: **"Contratos MCP consultados. Verificações grep realizadas. Inician
 src/modules/{module}/
 ├── domain/
 │   ├── entities/
+│   ├── aggregates/         # ← Aggregates Root (opcional)
 │   ├── value-objects/
 │   ├── services/           # ← OBRIGATÓRIO
 │   ├── events/
@@ -133,6 +134,11 @@ src/modules/{module}/
     │   └── schemas/        # 1 arquivo por tabela
     └── di/
 ```
+
+**Nota sobre Aggregates:**
+- Aggregates simples podem ficar em `entities/` 
+- Aggregates complexos com entidades filhas devem ficar em `aggregates/`
+- Aggregate Root SEMPRE estende `AggregateRoot<string>`
 
 ---
 

@@ -1,0 +1,93 @@
+{
+  "id": "code-consistency",
+  "version": "2.0.0",
+  "name": "Code Consistency Contract",
+  "description": "Regras de consistência de código entre módulos",
+  "category": "quality",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "CONSISTENCY-001",
+      "name": "Padrão único entre módulos",
+      "description": "Todos os módulos devem seguir mesma estrutura DDD/Hexagonal",
+      "severity": "critical",
+      "message": "Use estrutura domain/application/infrastructure em TODOS os módulos",
+      "checklist": [
+        "domain/ com entities, value-objects, services, ports",
+        "application/ com commands, queries, dtos",
+        "infrastructure/ com persistence, adapters, di"
+      ]
+    },
+    {
+      "id": "CONSISTENCY-002",
+      "name": "Nomenclatura consistente",
+      "description": "Nomenclatura deve seguir padrões estabelecidos",
+      "severity": "high",
+      "message": "Use nomenclatura padronizada",
+      "patterns": {
+        "entities": "PascalCase sem sufixo (Order, Invoice)",
+        "value_objects": "PascalCase (OrderStatus, Money)",
+        "repositories": "Drizzle{Entity}Repository",
+        "use_cases": "{Verb}{Entity}UseCase ou {Entity}{Action}Query",
+        "ports_input": "I{UseCase}",
+        "ports_output": "I{Entity}Repository"
+      }
+    },
+    {
+      "id": "CONSISTENCY-003",
+      "name": "Imports padronizados",
+      "description": "Imports devem usar aliases consistentes",
+      "severity": "medium",
+      "message": "Use alias @/ para imports",
+      "examples": {
+        "correct": "import { Result } from '@/shared/domain';",
+        "incorrect": "import { Result } from '../../../shared/domain';"
+      }
+    },
+    {
+      "id": "CONSISTENCY-004",
+      "name": "Handlers de erro consistentes",
+      "description": "Erros de negócio usam Result.fail(), erros técnicos fazem throw",
+      "severity": "high",
+      "message": "Use Result.fail() para erros de negócio, throw para erros técnicos",
+      "examples": {
+        "business_error": "return Result.fail('Pedido já foi cancelado');",
+        "technical_error": "throw new DatabaseConnectionError('...');"
+      }
+    },
+    {
+      "id": "CONSISTENCY-005",
+      "name": "Testes seguem estrutura do código",
+      "description": "Estrutura de testes espelha estrutura do código",
+      "severity": "medium",
+      "message": "tests/unit/{module}/ deve espelhar src/modules/{module}/",
+      "structure": "tests/unit/financial/domain/entities/Payable.test.ts"
+    },
+    {
+      "id": "CONSISTENCY-006",
+      "name": "DTOs seguem convenção",
+      "description": "DTOs devem ser interfaces/types, não classes",
+      "severity": "high",
+      "message": "DTOs devem ser interface ou type, NUNCA class",
+      "examples": {
+        "correct": "export interface CreatePayableInputDto { ... }",
+        "incorrect": "export class CreatePayableInputDto { ... }"
+      }
+    },
+    {
+      "id": "CONSISTENCY-007",
+      "name": "Funções utilitárias centralizadas",
+      "description": "Quando criar função utilitária, usar em TODOS os lugares",
+      "severity": "critical",
+      "message": "Função utilitária criada DEVE substituir TODAS as ocorrências hardcoded",
+      "rationale": "Evita código duplicado e inconsistências. Se existe função centralizada, NUNCA deixar lógica hardcoded."
+    }
+  ],
+  "rationale": "Consistência facilita manutenção, onboarding e previne bugs. Código previsível reduz carga cognitiva.",
+  "references": [
+    "ADR-0015: 100% DDD/Hexagonal",
+    "Clean Code - Robert C. Martin",
+    "The Pragmatic Programmer - Hunt & Thomas"
+  ]
+}
+

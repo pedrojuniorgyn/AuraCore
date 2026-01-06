@@ -1,0 +1,216 @@
+{
+  "id": "mcp-enforcement-rules",
+  "version": "2.0.0",
+  "name": "MCP Enforcement Rules Contract",
+  "description": "Regras de enforcement dos contratos MCP",
+  "category": "process",
+  "severity": "critical",
+  "rules": [
+    {
+      "id": "ENFORCE-001",
+      "name": "check_cursor_issues obrigatório pré-commit",
+      "description": "SEMPRE executar check_cursor_issues ANTES de commit",
+      "severity": "critical",
+      "message": "Execute Tool: check_cursor_issues antes de commit",
+      "workflow": [
+        "1. Implementar código",
+        "2. Tool: check_cursor_issues",
+        "3. Se issues > 0: corrigir",
+        "4. Se issues = 0: commit"
+      ]
+    },
+    {
+      "id": "ENFORCE-002",
+      "name": "check_cursor_issues obrigatório pós-commit",
+      "description": "SEMPRE executar check_cursor_issues APÓS commit",
+      "severity": "critical",
+      "message": "Execute Tool: check_cursor_issues após commit",
+      "workflow": [
+        "1. git commit",
+        "2. Aguardar 2-3 minutos (Agent Review processar)",
+        "3. Tool: check_cursor_issues",
+        "4. Se issues > 0: corrigir + git commit --amend",
+        "5. Se issues = 0: aguardar aprovação"
+      ]
+    },
+    {
+      "id": "ENFORCE-003",
+      "name": "register_correction após fix",
+      "description": "SEMPRE registrar correção após corrigir issue",
+      "severity": "high",
+      "message": "Use Tool: register_correction após corrigir issue",
+      "required_fields": {
+        "epic": "Épico atual (E0, E1, E2, etc)",
+        "error_description": "Descrição clara do erro encontrado",
+        "correction_applied": "Como o erro foi corrigido",
+        "files_affected": "Lista de arquivos corrigidos"
+      },
+      "rationale": "Registrar correções previne reincidência e cria base de conhecimento."
+    },
+    {
+      "id": "ENFORCE-004",
+      "name": "NUNCA fazer push sem aprovação",
+      "description": "NUNCA fazer git push sem aprovação explícita do usuário",
+      "severity": "critical",
+      "message": "Aguarde mensagem 'APROVADO - FAZER PUSH' antes de push",
+      "forbidden": [
+        "git push sem aprovação",
+        "git push --force",
+        "git push origin main sem confirmação"
+      ],
+      "workflow": [
+        "1. Reportar: 'Commit realizado. Hash: [hash]'",
+        "2. Reportar: 'Aguardando aprovação para push'",
+        "3. Aguardar usuário dizer 'APROVADO' ou similar",
+        "4. ENTÃO: git push origin main"
+      ]
+    },
+    {
+      "id": "ENFORCE-005",
+      "name": "Commits incrementais proibidos",
+      "description": "NUNCA fazer commits incrementais de correção. Use --amend",
+      "severity": "high",
+      "message": "Use git commit --amend ao invés de commit incremental",
+      "examples": {
+        "forbidden": [
+          "git commit -m 'fix'",
+          "git commit -m 'fix typo'",
+          "git commit -m 'oops'"
+        ],
+        "correct": [
+          "git commit --amend --no-edit (mesma mensagem)",
+          "git commit --amend -m 'mensagem atualizada'"
+        ]
+      },
+      "rationale": "Histórico limpo. Uma feature = um commit bem escrito."
+    },
+    {
+      "id": "ENFORCE-006",
+      "name": "Validações técnicas pré-commit",
+      "description": "SEMPRE executar validações técnicas antes de commit",
+      "severity": "critical",
+      "message": "Execute npx tsc --noEmit e npm test antes de commit",
+      "checklist": [
+        "npx tsc --noEmit → 0 errors",
+        "npm test -- --run → all passing",
+        "grep -r 'as any' src/ → 0 results",
+        "Tool: check_cursor_issues → 0 issues"
+      ],
+      "abort_commit_if": [
+        "TypeScript errors > 0",
+        "Testes falhando",
+        "Uso de 'any' detectado",
+        "Cursor issues > 0"
+      ]
+    },
+    {
+      "id": "ENFORCE-007",
+      "name": "Aguardar Agent Review",
+      "description": "SEMPRE aguardar 2-3 minutos após commit para Agent Review processar",
+      "severity": "high",
+      "message": "Aguarde Agent Review processar antes de push",
+      "timing": {
+        "after_commit": "Aguardar 2-3 minutos",
+        "check_panel": "Verificar painel 'Agent Review' no Cursor",
+        "if_issues": "Corrigir + git commit --amend",
+        "if_clean": "Prosseguir para push"
+      }
+    },
+    {
+      "id": "ENFORCE-008",
+      "name": "Mensagem de commit estruturada",
+      "description": "Commits devem seguir Conventional Commits",
+      "severity": "medium",
+      "message": "Use formato: type(scope): description",
+      "format": {
+        "type": "feat|fix|refactor|docs|test|chore",
+        "scope": "módulo ou área afetada",
+        "description": "Descrição clara e concisa",
+        "body": "Detalhes da mudança (opcional)",
+        "footer": "Refs, Breaking Changes (opcional)"
+      },
+      "examples": {
+        "good": [
+          "feat(financial): add Payable entity with DDD patterns",
+          "fix(fiscal): resolve SPED generation for NFe type 55",
+          "refactor(shared): extract IUuidGenerator port"
+        ],
+        "bad": [
+          "update",
+          "fix bug",
+          "wip"
+        ]
+      }
+    },
+    {
+      "id": "ENFORCE-009",
+      "name": "Relatório final obrigatório",
+      "description": "SEMPRE produzir relatório final após tarefa",
+      "severity": "high",
+      "message": "Produza relatório final formatado após completar tarefa",
+      "sections": [
+        "Verificações MCP (pré e pós commit)",
+        "Verificações Código (tsc, tests, grep)",
+        "Padrões Aplicados",
+        "Commits (hash + mensagem)",
+        "Correções Registradas (se houver)",
+        "Push (status)"
+      ],
+      "format": "Markdown estruturado conforme template em regrasmcp.mdc"
+    },
+    {
+      "id": "ENFORCE-010",
+      "name": "Documentar decisões técnicas",
+      "description": "Decisões arquiteturais devem ser documentadas em ADRs",
+      "severity": "medium",
+      "message": "Crie ADR para decisões arquiteturais significativas",
+      "when_to_create_adr": [
+        "Mudança de padrão arquitetural",
+        "Adição de dependência externa significativa",
+        "Mudança de stack tecnológica",
+        "Trade-offs com impacto de longo prazo"
+      ],
+      "location": "docs/architecture/adr/ADR-XXXX-titulo.md"
+    }
+  ],
+  "workflow_completo": {
+    "pre_implementation": [
+      "1. Tool: get_contract (contratos relevantes)",
+      "2. Tool: search_patterns",
+      "3. grep para verificar existência",
+      "4. Confirmar leitura"
+    ],
+    "implementation": [
+      "5. Implementar seguindo regras",
+      "6. Testar localmente"
+    ],
+    "pre_commit": [
+      "7. npx tsc --noEmit",
+      "8. npm test -- --run",
+      "9. grep -r 'as any' src/",
+      "10. Tool: check_cursor_issues"
+    ],
+    "commit": [
+      "11. git add .",
+      "12. git commit -m '...' (Conventional Commits)"
+    ],
+    "post_commit": [
+      "13. Aguardar 2-3 min (Agent Review)",
+      "14. Tool: check_cursor_issues",
+      "15. Se issues > 0: corrigir + --amend + register_correction",
+      "16. Se issues = 0: reportar para aprovação"
+    ],
+    "push": [
+      "17. Aguardar 'APROVADO'",
+      "18. git push origin main",
+      "19. Produzir relatório final"
+    ]
+  },
+  "rationale": "Enforcement sistemático previne 90%+ dos bugs antes de produção. Processo rigoroso garante qualidade e consistência.",
+  "references": [
+    "ADR-0015: 100% DDD/Hexagonal",
+    "Conventional Commits Specification",
+    "Architecture Decision Records - Michael Nygard"
+  ]
+}
+

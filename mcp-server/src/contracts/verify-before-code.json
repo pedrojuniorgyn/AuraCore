@@ -1,0 +1,92 @@
+{
+  "id": "verify-before-code",
+  "version": "2.0.0",
+  "name": "Verify Before Code Contract",
+  "description": "Checklist de verificações obrigatórias ANTES de escrever código",
+  "category": "process",
+  "severity": "critical",
+  "rules": [
+    {
+      "id": "VBC-001",
+      "name": "Consultar contratos MCP",
+      "description": "Deve consultar contratos MCP relevantes antes de implementar",
+      "severity": "critical",
+      "message": "Consulte contratos MCP com Tool: get_contract antes de codificar",
+      "checklist": [
+        "Tool: get_contract para contratos relevantes",
+        "Tool: search_patterns para padrões relacionados",
+        "Confirmar leitura: 'Contratos MCP consultados'"
+      ]
+    },
+    {
+      "id": "VBC-002",
+      "name": "Verificar interface/enum existente com grep",
+      "description": "Sempre verificar se interface/enum/classe já existe antes de criar",
+      "severity": "critical",
+      "message": "Use grep para verificar existência antes de criar",
+      "checklist": [
+        "grep -rn 'interface NomeDaInterface' src/",
+        "grep -A10 'NomeEnum' src/lib/db/schema.ts",
+        "grep -rn 'class NomeEntity' src/modules/"
+      ]
+    },
+    {
+      "id": "VBC-003",
+      "name": "Entender contexto do módulo",
+      "description": "Ler arquivos relacionados para entender contexto",
+      "severity": "high",
+      "message": "Leia arquivos relacionados antes de modificar",
+      "checklist": [
+        "Ler Entity relacionada",
+        "Ler Repository interface",
+        "Ler Use Case existente similar"
+      ]
+    },
+    {
+      "id": "VBC-004",
+      "name": "Confirmar multi-tenancy",
+      "description": "Verificar se entidade requer organizationId + branchId",
+      "severity": "critical",
+      "message": "Toda entidade de negócio DEVE ter organizationId + branchId",
+      "checklist": [
+        "Schema tem organizationId + branchId",
+        "Índice composto (organizationId, branchId)",
+        "Filters obrigatórios em queries"
+      ]
+    },
+    {
+      "id": "VBC-005",
+      "name": "Planejar transações",
+      "description": "Identificar operações que requerem transação SQL",
+      "severity": "high",
+      "message": "Operações multi-step DEVEM usar transação",
+      "checklist": [
+        "Múltiplas escritas no banco",
+        "Uso de withMssqlTransaction",
+        "Rollback em caso de falha"
+      ]
+    }
+  ],
+  "workflow": [
+    "1. Consultar contratos MCP relevantes",
+    "2. Buscar padrões com search_patterns",
+    "3. Verificar existência com grep",
+    "4. Ler arquivos relacionados",
+    "5. Confirmar leitura",
+    "6. ENTÃO começar implementação"
+  ],
+  "rationale": "Previne bugs por falta de contexto, código duplicado, e violações arquiteturais. Verificação prévia economiza tempo de correção posterior.",
+  "examples": {
+    "good": [
+      "Tool: get_contract + search_patterns ANTES de codificar",
+      "grep -rn 'interface IPayableRepository' ANTES de criar",
+      "Confirmação: 'Contratos consultados. Grep realizado. Iniciando.'"
+    ],
+    "bad": [
+      "Começar codificando sem consultar contratos",
+      "Criar interface sem verificar se existe",
+      "Modificar código sem entender contexto"
+    ]
+  }
+}
+
