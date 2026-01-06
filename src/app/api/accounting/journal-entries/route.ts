@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Lançamento sem linhas" }, { status: 400 });
     }
     
-    const totalDebit = lines.reduce((sum: number, l: any) => sum + (l.debitAmount || 0), 0);
-    const totalCredit = lines.reduce((sum: number, l: any) => sum + (l.creditAmount || 0), 0);
+    const totalDebit = lines.reduce((sum: number, l: { debitAmount?: number; creditAmount?: number }) => sum + (l.debitAmount || 0), 0);
+    const totalCredit = lines.reduce((sum: number, l: { debitAmount?: number; creditAmount?: number }) => sum + (l.creditAmount || 0), 0);
     
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       return NextResponse.json(
