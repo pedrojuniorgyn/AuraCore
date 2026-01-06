@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       .orderBy(costCenters.code);
 
     // Construir árvore hierárquica
-    const buildTree = (parentId: number | null = null): any[] => {
+    const buildTree = (parentId: number | null = null): Array<Record<string, unknown>> => {
       return allCostCenters
         .filter((cc) => cc.parentId === parentId)
         .map((cc) => ({

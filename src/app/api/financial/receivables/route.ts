@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const conditions: any[] = [
+    const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof isNull>> = [
       eq(accountsReceivable.organizationId, ctx.organizationId),
       isNull(accountsReceivable.deletedAt),
     ];

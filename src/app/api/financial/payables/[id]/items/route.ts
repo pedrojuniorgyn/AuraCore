@@ -56,7 +56,7 @@ export async function GET(
       ORDER BY fdi.item_number ASC
     `);
 
-    const items = itemsResult.recordset.map((item: any) => ({
+    const items = itemsResult.recordset.map((item: Record<string, unknown>) => ({
       id: item.id,
       ncmCode: item.ncmCode || "N/A",
       productDescription: item.productDescription,

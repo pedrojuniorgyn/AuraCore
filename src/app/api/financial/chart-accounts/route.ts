@@ -28,7 +28,7 @@ export async function GET(req: Request) {
       .orderBy(chartOfAccounts.code);
 
     // Construir árvore hierárquica
-    const buildTree = (parentId: number | null = null): any[] => {
+    const buildTree = (parentId: number | null = null): Array<Record<string, unknown>> => {
       return allAccounts
         .filter((acc) => acc.parentId === parentId)
         .map((acc) => ({

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       version: financialCategories.version,
     };
 
-    const conditions: any[] = [
+    const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof isNull>> = [
       eq(financialCategories.organizationId, ctx.organizationId),
       isNull(financialCategories.deletedAt),
     ];
