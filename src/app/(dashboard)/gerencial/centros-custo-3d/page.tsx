@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, ColDef } from "ag-grid-community";
+import { ModuleRegistry, ColDef, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 // AG Grid CSS (v34+ Theming API)
@@ -19,9 +19,19 @@ import { Plus, Layers, Target, Truck, Building2 } from "lucide-react";
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface CostCenter3D {
+  code: string;
+  name: string;
+  service_type: 'FTL' | 'LTL' | 'ARMAZ' | 'DISTR';
+  linked_object_type?: string;
+  linked_object_id?: string;
+  is_analytical: boolean;
+  branch_name: string;
+}
+
 export default function GestaoCC3DPage() {
-  const gridRef = useRef<any>(null);
-  const [costCenters, setCostCenters] = useState<any[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
+  const [costCenters, setCostCenters] = useState<CostCenter3D[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,8 +58,8 @@ export default function GestaoCC3DPage() {
     { 
       field: 'service_type', 
       headerName: 'Tipo Serviço (D2)',
-      cellRenderer: (params: any) => {
-        const types: any = {
+      cellRenderer: (params: ICellRendererParams<CostCenter3D>) => {
+        const types: Record<string, { label: string; color: string }> = {
           FTL: { label: 'Lotação', color: 'bg-purple-500/20 text-purple-400' },
           LTL: { label: 'Fracionado', color: 'bg-blue-500/20 text-blue-400' },
           ARMAZ: { label: 'Armazenagem', color: 'bg-green-500/20 text-green-400' },
@@ -64,14 +74,14 @@ export default function GestaoCC3DPage() {
     { 
       field: 'linked_object_type', 
       headerName: 'Objeto (D3)',
-      cellRenderer: (params: any) => params.value ? <Badge className="aurora-badge">{params.value}</Badge> : '-',
+      cellRenderer: (params: ICellRendererParams<CostCenter3D>) => params.value ? <Badge className="aurora-badge">{params.value}</Badge> : '-',
       filter: 'agSetColumnFilter',
       width: 120
     },
     { field: 'linked_object_id', headerName: 'ID Objeto', width: 120 },
     { field: 'is_analytical', headerName: 'Analítico', cellRenderer: BooleanCellRenderer, filter: 'agSetColumnFilter', width: 120 },
     { field: 'branch_name', headerName: 'Filial (D1)', filter: 'agTextColumnFilter', width: 150 },
-    { field: 'actions', headerName: 'Ações', cellRenderer: ActionCellRenderer, cellRendererParams: { onEdit: (data: any) => console.log('Edit', data), onDelete: (data: any) => console.log('Delete', data) }, width: 120, pinned: 'right' }
+    { field: 'actions', headerName: 'Ações', cellRenderer: ActionCellRenderer, cellRendererParams: { onEdit: (data: CostCenter3D) => console.log('Edit', data), onDelete: (data: CostCenter3D) => console.log('Delete', data) }, width: 120, pinned: 'right' }
   ];
 
   return (
