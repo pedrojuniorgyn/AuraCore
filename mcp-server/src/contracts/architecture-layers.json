@@ -36,11 +36,38 @@
     {
       "id": "ARCH-004",
       "name": "Domain não importa módulos Node.js",
-      "description": "Domain não pode usar APIs do Node.js diretamente",
+      "description": "Domain não pode usar APIs do Node.js diretamente. Abstrair via ports se necessário.",
       "pattern": "domain/**/*.ts",
-      "forbidden_imports": ["node:fs", "node:path", "node:crypto", "fs", "path"],
+      "forbidden_imports": [
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "node:os",
+        "node:child_process",
+        "node:http",
+        "node:https",
+        "node:net",
+        "node:stream",
+        "node:buffer",
+        "fs",
+        "path",
+        "crypto",
+        "os",
+        "child_process",
+        "http",
+        "https",
+        "net",
+        "stream",
+        "buffer"
+      ],
       "severity": "critical",
-      "message": "Domain layer não pode usar módulos Node.js"
+      "message": "Domain layer não pode usar módulos Node.js. Se precisar de funcionalidade de crypto/fs/etc, criar port em domain/ports/output/ e implementar em infrastructure/",
+      "rationale": "Domain deve ser puro e independente de plataforma. Dependências de Node.js impedem testes isolados e acoplam à infraestrutura.",
+      "notes": [
+        "Para crypto: criar ICryptoService em ports/output/",
+        "Para fs: criar IFileService em ports/output/",
+        "Implementar os services em infrastructure/adapters/"
+      ]
     },
     {
       "id": "ARCH-005",

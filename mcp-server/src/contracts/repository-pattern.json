@@ -33,13 +33,18 @@
     },
     {
       "id": "REPO-004",
-      "name": "Usa Mapper para conversão",
-      "description": "Repository deve usar Mapper para converter Domain <-> Persistence",
+      "name": "Usa Mapper para conversão bidirecional",
+      "description": "Repository DEVE usar Mapper para converter Domain <-> Persistence em AMBAS direções",
       "pattern": "infrastructure/persistence/repositories/*.ts",
       "required_patterns": ["Mapper.toDomain(", "Mapper.toPersistence("],
-      "match_any": true,
       "severity": "high",
-      "message": "Repository deve usar Mapper para conversões"
+      "message": "Repository DEVE usar Mapper.toDomain() E Mapper.toPersistence(). Ambos são obrigatórios para conversão bidirecional.",
+      "rationale": "Sem conversão bidirecional completa, o repository não consegue ler E escrever entidades corretamente.",
+      "notes": [
+        "toDomain() - converte row do banco para Entity",
+        "toPersistence() - converte Entity para row de INSERT/UPDATE",
+        "AMBOS são obrigatórios em todo Repository"
+      ]
     },
     {
       "id": "REPO-005",
