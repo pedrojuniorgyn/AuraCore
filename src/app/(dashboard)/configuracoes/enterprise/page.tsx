@@ -171,7 +171,7 @@ export default function ConfiguracoesEnterprisePage() {
             </div>
             
             <p className="text-xs text-gray-500 mt-4">
-              ⚠️ Execute "Corrigir Estrutura" PRIMEIRO, depois "Executar Seed"
+              ⚠️ Execute &quot;Corrigir Estrutura&quot; PRIMEIRO, depois &quot;Executar Seed&quot;
             </p>
           </div>
         </FadeIn>
@@ -180,7 +180,7 @@ export default function ConfiguracoesEnterprisePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {modules.map((module, index) => {
               const Icon = module.icon;
-              const colorClasses: any = {
+              const colorClasses: Record<string, string> = {
                 orange: 'from-orange-500/20 to-red-500/20 border-orange-500/30',
                 blue: 'from-blue-500/20 to-cyan-500/20 border-blue-500/30',
                 indigo: 'from-indigo-500/20 to-purple-500/20 border-indigo-500/30',
@@ -188,7 +188,7 @@ export default function ConfiguracoesEnterprisePage() {
                 emerald: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30'
               };
 
-              const iconColorClasses: any = {
+              const iconColorClasses: Record<string, string> = {
                 orange: 'text-orange-400',
                 blue: 'text-blue-400',
                 indigo: 'text-indigo-400',
