@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
+import type { ValueFormatterParams, ICellRendererParams } from "ag-grid-community";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -14,8 +15,17 @@ import { toast } from "sonner";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface Journey {
+  driver: string;
+  date: string;
+  driving_hours: number;
+  waiting_hours: number;
+  alert: 'EXCESSO' | 'OK';
+  status: string;
+}
+
 export default function JornadasPage() {
-  const [journeys, setJourneys] = useState<any[]>([]);
+  const [journeys, setJourneys] = useState<Journey[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
 
@@ -101,19 +111,19 @@ export default function JornadasPage() {
       field: 'driving_hours', 
       headerName: 'Dirigiu', 
       width: 110,
-      valueFormatter: (params: any) => `${params.value}h`
+      valueFormatter: (params: ValueFormatterParams<Journey>) => `${params.value}h`
     },
     { 
       field: 'waiting_hours', 
       headerName: 'Esperou', 
       width: 110,
-      valueFormatter: (params: any) => `${params.value}h`
+      valueFormatter: (params: ValueFormatterParams<Journey>) => `${params.value}h`
     },
     { 
       field: 'alert', 
       headerName: 'Alerta', 
       width: 180,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams<Journey>) => {
         if (params.value === 'EXCESSO') {
           return '<span class="text-red-400">⚠️ EXCESSO JORNADA</span>';
         }
