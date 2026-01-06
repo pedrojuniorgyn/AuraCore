@@ -1,0 +1,132 @@
+{
+  "id": "schema-pattern",
+  "version": "2.0.0",
+  "title": "Schema Pattern Contract",
+  "description": "Padrão para implementação de Schemas de banco de dados",
+  "category": "infrastructure",
+  "severity": "critical",
+  "rules": [
+    {
+      "id": "SCHEMA-001",
+      "title": "Um arquivo por tabela",
+      "description": "Cada tabela deve ter seu próprio arquivo schema",
+      "pattern": "infrastructure/persistence/schemas/*.schema.ts",
+      "severity": "high",
+      "message": "Cada tabela deve ter seu próprio arquivo schema"
+    },
+    {
+      "id": "SCHEMA-002",
+      "title": "Nomenclatura lowercase",
+      "description": "Nome do arquivo: {entity}.schema.ts (lowercase, singular)",
+      "pattern": "infrastructure/persistence/schemas/*.schema.ts",
+      "severity": "medium",
+      "message": "Schema deve ter nome lowercase: {entity}.schema.ts"
+    },
+    {
+      "id": "SCHEMA-003",
+      "title": "Índice composto multi-tenancy obrigatório",
+      "description": "Deve ter índice COMPOSTO (organizationId, branchId) para performance de queries multi-tenant. Índices separados NÃO atendem esta regra.",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "critical",
+      "message": "Schema DEVE ter índice COMPOSTO (organizationId, branchId). Verificar manualmente: index('idx_tenant').on(table.organizationId, table.branchId)",
+      "rationale": "Índices separados não otimizam queries que filtram por ambos campos. O índice composto é essencial para performance em sistemas multi-tenant.",
+      "validation_type": "automated_test",
+      "validation_file": "tests/architecture/schema-composite-index.test.ts", "validation_command": "npm run test:arch",
+      "notes": [
+        "✅ CORRETO (índice composto):",
+        "   index('idx_tenant').on(table.organizationId, table.branchId)",
+        "",
+        "❌ ERRADO (índices separados - NÃO ATENDE):",
+        "   index('idx_org').on(table.organizationId)",
+        "   index('idx_branch').on(table.branchId)",
+        "",
+        "Por que índices separados não servem:",
+        "- Query WHERE organizationId=X AND branchId=Y usa só 1 índice",
+        "- Índice composto permite busca eficiente por ambos campos",
+        "- Performance pode ser 10x pior com índices separados"
+      ],
+      "examples": {
+        "correct": [
+          "export const orders = mssqlTable('orders', {",
+          "  id: varchar('id', { length: 36 }).primaryKey(),",
+          "  organizationId: int('organization_id').notNull(),",
+          "  branchId: int('branch_id').notNull(),",
+          "  // ... outros campos",
+          "}, (table) => ({",
+          "  // ✅ Índice COMPOSTO - correto",
+          "  tenantIdx: index('idx_orders_tenant').on(table.organizationId, table.branchId),",
+          "}));"
+        ],
+        "incorrect": [
+          "// ❌ ERRADO: Índices separados",
+          "orgIdx: index('idx_orders_org').on(table.organizationId),",
+          "branchIdx: index('idx_orders_branch').on(table.branchId),",
+          "",
+          "// Isso NÃO é equivalente ao índice composto!"
+        ]
+      },
+      "test_query": "SELECT * FROM {table} WHERE organization_id = @orgId AND branch_id = @branchId -- deve usar idx_tenant"
+    },
+    {
+      "id": "SCHEMA-004",
+      "title": "Índices para filtros frequentes",
+      "description": "Campos de filtro frequente devem ter índice",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "high",
+      "message": "Campos de filtro frequente devem ter índice"
+    },
+    {
+      "id": "SCHEMA-005",
+      "title": "Campos de auditoria obrigatórios",
+      "description": "Deve ter createdAt e updatedAt",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["createdAt", "updatedAt"],
+      "severity": "high",
+      "message": "Schema DEVE ter campos createdAt e updatedAt"
+    },
+    {
+      "id": "SCHEMA-006",
+      "title": "Soft delete",
+      "description": "Deve ter deletedAt nullable para soft delete",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["deletedAt"],
+      "severity": "high",
+      "message": "Schema DEVE ter deletedAt para soft delete"
+    },
+    {
+      "id": "SCHEMA-007",
+      "title": "Money em 2 colunas",
+      "description": "Money deve ser 2 colunas: amount (decimal) + currency (varchar)",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "high",
+      "message": "Money deve ser mapeado para 2 colunas (amount + currency)"
+    },
+    {
+      "id": "SCHEMA-008",
+      "title": "Export const",
+      "description": "Exportar como const: export const {tableName} = mssqlTable(...)",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["export const "],
+      "severity": "medium",
+      "message": "Schema deve ser exportado como const"
+    },
+    {
+      "id": "SCHEMA-009",
+      "title": "Tipos inferidos exportados",
+      "description": "Exportar tipos: type {Entity}Row = typeof table.$inferSelect",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "required_patterns": ["$inferSelect", "$inferInsert"],
+      "severity": "high",
+      "message": "Schema deve exportar tipos inferidos"
+    },
+    {
+      "id": "SCHEMA-010",
+      "title": "Índice único para chaves naturais",
+      "description": "Chaves naturais (invoiceNumber, fiscalKey) devem ter índice único",
+      "pattern": "infrastructure/persistence/schemas/*.ts",
+      "severity": "medium",
+      "message": "Chaves naturais devem ter índice único"
+    }
+  ]
+}
+

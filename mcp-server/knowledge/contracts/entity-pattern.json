@@ -1,0 +1,144 @@
+{
+  "id": "entity-pattern",
+  "version": "2.0.0",
+  "title": "Entity Pattern Contract",
+  "description": "Padrão para implementação de Entities DDD",
+  "category": "domain",
+  "severity": "high",
+  "rules": [
+    {
+      "id": "ENTITY-001",
+      "title": "Extends base class",
+      "description": "Entity deve estender AggregateRoot ou Entity",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["extends AggregateRoot<string>", "extends Entity<string>"],
+      "match_any": true,
+      "severity": "high",
+      "message": "Entity deve estender AggregateRoot<string> ou Entity<string>"
+    },
+    {
+      "id": "ENTITY-002",
+      "title": "Factory method create()",
+      "description": "Entity deve ter factory method estático create()",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["static create("],
+      "severity": "high",
+      "message": "Entity deve ter factory method static create()"
+    },
+    {
+      "id": "ENTITY-003",
+      "title": "Método reconstitute()",
+      "description": "Entity deve ter método reconstitute() para reconstituição do banco",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["static reconstitute("],
+      "severity": "high",
+      "message": "Entity deve ter método static reconstitute()"
+    },
+    {
+      "id": "ENTITY-004",
+      "title": "Retorna Result em create()",
+      "description": "Factory method create() deve retornar Result<Entity, string>",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["Result<"],
+      "severity": "high",
+      "message": "create() deve retornar Result<Entity, string>"
+    },
+    {
+      "id": "ENTITY-005",
+      "title": "Sem setters públicos",
+      "description": "Entity não deve ter setters públicos",
+      "pattern": "domain/entities/*.ts",
+      "forbidden_patterns": ["public set ", "set value("],
+      "severity": "high",
+      "message": "Entity não deve ter setters públicos"
+    },
+    {
+      "id": "ENTITY-006",
+      "title": "Getters para propriedades",
+      "description": "Entity deve expor propriedades via getters",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["get "],
+      "severity": "medium",
+      "message": "Entity deve ter getters para propriedades"
+    },
+    {
+      "id": "ENTITY-007",
+      "title": "Métodos de negócio",
+      "description": "Entity deve ter métodos que expressam comportamento de negócio",
+      "severity": "medium",
+      "message": "Entity deve ter métodos de negócio (approve, cancel, complete, etc)"
+    },
+    {
+      "id": "ENTITY-008",
+      "title": "Validar invariantes",
+      "description": "create() deve validar todas as invariantes do domínio",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["Result.fail("],
+      "severity": "high",
+      "message": "create() deve validar invariantes e retornar Result.fail() se inválido"
+    },
+    {
+      "id": "ENTITY-009",
+      "title": "Emitir Domain Events",
+      "description": "Mudanças de estado devem emitir Domain Events",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["addDomainEvent("],
+      "severity": "medium",
+      "message": "Entity deve emitir Domain Events em mudanças de estado"
+    },
+    {
+      "id": "ENTITY-010",
+      "title": "ID gerado internamente com globalThis.crypto",
+      "description": "ID deve ser gerado dentro do create() usando globalThis.crypto.randomUUID() que não requer import",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["randomUUID()"],
+      "severity": "medium",
+      "message": "Entity deve gerar ID internamente. Usar globalThis.crypto.randomUUID() (não requer import) ou injetar IUuidGenerator via port.",
+      "rationale": "globalThis.crypto está disponível globalmente em Node 19+ e browsers modernos, não viola ARCH-004 pois não requer import.",
+      "notes": [
+        "✅ CORRETO: const id = globalThis.crypto.randomUUID()",
+        "✅ CORRETO: const id = crypto.randomUUID() // se crypto é global",
+        "❌ ERRADO: import crypto from 'crypto' // viola ARCH-004",
+        "❌ ERRADO: import { randomUUID } from 'crypto' // viola ARCH-004",
+        "ALTERNATIVA: IUuidGenerator implementado em E7.14 - src/shared/domain/ports/IUuidGenerator.ts"
+      ],
+      "examples": {
+        "correct": [
+          "static create(props: CreateProps): Result<Order, string> {",
+          "  const id = globalThis.crypto.randomUUID();",
+          "  // ... validações",
+          "  return Result.ok(new Order({ id, ...props }));",
+          "}"
+        ],
+        "incorrect": [
+          "import crypto from 'crypto'; // ❌ Viola ARCH-004",
+          "",
+          "static create(props: CreateProps): Result<Order, string> {",
+          "  const id = crypto.randomUUID();",
+          "  // ...",
+          "}"
+        ]
+      }
+    },
+    {
+      "id": "ENTITY-011",
+      "title": "Multi-tenancy",
+      "description": "Entity deve ter organizationId e branchId",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["organizationId", "branchId"],
+      "severity": "critical",
+      "message": "Entity deve ter organizationId e branchId para multi-tenancy"
+    },
+    {
+      "id": "ENTITY-012",
+      "title": "Timestamps",
+      "description": "Entity deve ter createdAt e updatedAt",
+      "pattern": "domain/entities/*.ts",
+      "required_patterns": ["createdAt", "updatedAt"],
+      "severity": "high",
+      "message": "Entity deve ter createdAt e updatedAt"
+    }
+  ],
+  "template": "// Template disponível em docs/architecture/templates/entity.template.ts"
+}
+
