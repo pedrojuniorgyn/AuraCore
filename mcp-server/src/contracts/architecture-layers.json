@@ -133,12 +133,17 @@
     {
       "id": "ARCH-015",
       "name": "toDomain usa reconstitute",
-      "description": "Mapper.toDomain() deve usar reconstitute(), não create()",
+      "description": "Mapper.toDomain() deve usar Entity.reconstitute() para reconstituir entidades do banco, não create() que aplica validações desnecessárias",
       "pattern": "infrastructure/persistence/mappers/*.ts",
       "required_patterns": [".reconstitute("],
-      "forbidden_patterns": [".create("],
       "severity": "high",
-      "message": "Mapper.toDomain() deve usar reconstitute(), não create()"
+      "message": "Mapper.toDomain() deve usar reconstitute() para reconstituir do banco. Nota: .create() é permitido para Value Objects, mas Entities devem usar reconstitute()",
+      "notes": [
+        "reconstitute() pula validações (dados do banco já são válidos)",
+        "create() aplica validações (para dados novos)",
+        "Value Objects podem usar create() mesmo em toDomain()",
+        "Apenas Entities/Aggregates devem usar reconstitute()"
+      ]
     }
   ],
   "examples": {

@@ -34,13 +34,27 @@
     },
     {
       "id": "MAPPER-004",
-      "name": "toDomain usa reconstitute()",
-      "description": "toDomain() deve usar Entity.reconstitute(), não create()",
+      "name": "toDomain usa reconstitute para Entities",
+      "description": "toDomain() deve usar Entity.reconstitute() para reconstituir Entities/Aggregates. Value Objects podem usar create().",
       "pattern": "infrastructure/persistence/mappers/*.ts",
       "required_patterns": [".reconstitute("],
-      "forbidden_patterns": [".create("],
       "severity": "critical",
-      "message": "toDomain() DEVE usar reconstitute(), NUNCA create()"
+      "message": "toDomain() DEVE usar reconstitute() para Entities. Value Objects podem usar create() pois são imutáveis e validação é aceitável.",
+      "rationale": "Dados vindos do banco já passaram por validação no create() original. Revalidar é desperdício e pode falhar se regras de negócio mudaram.",
+      "examples": {
+        "correct": [
+          "// Entity - usar reconstitute()",
+          "return AccountPayable.reconstitute({ id: row.id, ... });",
+          "",
+          "// Value Object dentro de toDomain() - create() é OK",
+          "const moneyResult = Money.create(row.amount, row.currency);",
+          "if (Result.isFail(moneyResult)) return Result.fail(moneyResult.error);"
+        ],
+        "incorrect": [
+          "// Entity - NÃO usar create()",
+          "return AccountPayable.create({ ... }); // ERRADO: revalida desnecessariamente"
+        ]
+      }
     },
     {
       "id": "MAPPER-005",

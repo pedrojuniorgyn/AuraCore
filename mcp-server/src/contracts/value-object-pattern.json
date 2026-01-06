@@ -54,11 +54,35 @@
     {
       "id": "VO-006",
       "name": "Sem métodos mutáveis",
-      "description": "Value Object não deve ter métodos que alteram estado",
+      "description": "Value Object não deve ter métodos que alteram estado interno. Props são readonly após construção.",
       "pattern": "domain/value-objects/*.ts",
-      "forbidden_patterns": ["this.props =", "this.props."],
+      "forbidden_patterns": ["this.props ="],
       "severity": "high",
-      "message": "Value Object não pode ter métodos que alteram estado"
+      "message": "Value Object não pode reatribuir this.props. Use Object.freeze() no constructor e retorne novo VO para alterações.",
+      "rationale": "Value Objects são imutáveis por definição. Qualquer 'mudança' deve criar uma nova instância.",
+      "notes": [
+        "this.props.fieldName em getters é PERMITIDO e CORRETO",
+        "this.props = { ... } é PROIBIDO (reatribuição)",
+        "Métodos que 'alteram' devem retornar novo Value Object"
+      ],
+      "examples": {
+        "correct": [
+          "// Getter acessando props - CORRETO",
+          "get amount(): number { return this.props.amount; }",
+          "",
+          "// Método que retorna novo VO - CORRETO", 
+          "add(other: Money): Result<Money, string> {",
+          "  return Money.create(this.props.amount + other.amount, this.props.currency);",
+          "}"
+        ],
+        "incorrect": [
+          "// Reatribuição de props - PROIBIDO",
+          "this.props = { amount: newAmount }; // ERRADO",
+          "",
+          "// Mutação direta - PROIBIDO (se não usar Object.freeze)",
+          "this.props.amount = newAmount; // ERRADO"
+        ]
+      }
     },
     {
       "id": "VO-007",
