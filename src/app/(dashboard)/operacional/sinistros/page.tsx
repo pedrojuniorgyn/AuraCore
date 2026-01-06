@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
+import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
@@ -15,13 +16,28 @@ import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, Fi
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface Claim {
+  id: number;
+  claimNumber: string;
+  claimType: string;
+  vehicleId: number;
+  vehiclePlate: string;
+  estimatedDamage: number;
+  finalCost: number;
+  deductible: number;
+  netCost: number;
+  status: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
 export default function SinistrosPage() {
-  const [claims, setClaims] = useState<any[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showDecideModal, setShowDecideModal] = useState(false);
-  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [formData, setFormData] = useState({
     claimType: 'ACCIDENT',
     vehicleId: 1,
@@ -136,13 +152,13 @@ export default function SinistrosPage() {
       field: 'type', 
       headerName: 'Tipo', 
       width: 130,
-      cellRenderer: (params: any) => {
-        const icons: any = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const icons: Record<string, string> = {
           ACCIDENT: '🚗',
           THEFT: '🚨',
           DAMAGE: '⚠️'
         };
-        const labels: any = {
+        const labels: Record<string, string> = {
           ACCIDENT: 'Acidente',
           THEFT: 'Roubo',
           DAMAGE: 'Avaria'
@@ -155,33 +171,33 @@ export default function SinistrosPage() {
       field: 'estimated_damage', 
       headerName: 'Dano Est.', 
       width: 130,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'coverage', 
       headerName: 'Cobertura', 
       width: 130,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'franchise', 
       headerName: 'Franquia', 
       width: 120,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'status', 
       headerName: 'Status', 
       width: 150,
-      cellRenderer: (params: any) => {
-        const colors: any = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const colors: Record<string, string> = {
           OPENED: 'text-yellow-400',
           UNDER_REVIEW: 'text-blue-400',
           APPROVED: 'text-green-400',
           PAID: 'text-purple-400',
           CLOSED: 'text-gray-400'
         };
-        const labels: any = {
+        const labels: Record<string, string> = {
           OPENED: 'ABERTO',
           UNDER_REVIEW: 'AVALIANDO',
           APPROVED: 'APROVADO',

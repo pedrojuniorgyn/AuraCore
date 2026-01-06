@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
+import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
@@ -15,14 +16,37 @@ import { toast } from "sonner";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface BillingEvent {
+  id: number;
+  date: string;
+  customer: string;
+  event_type: string;
+  quantity: number;
+  unit_price: number;
+  value: number;
+  status: string;
+}
+
+interface PreInvoice {
+  id: number;
+  invoice_number: string;
+  customer: string;
+  period: string;
+  subtotal: number;
+  iss_tax: number;
+  total: number;
+  status: string;
+  created_at: string;
+}
+
 export default function WMSFaturamentoPage() {
   const router = useRouter();
-  const [events, setEvents] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [events, setEvents] = useState<BillingEvent[]>([]);
+  const [invoices, setInvoices] = useState<PreInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
 
-  const handleEdit = (data: any) => {
+  const handleEdit = (data: { id: number }) => {
     router.push(`/wms/faturamento/editar/${data.id}`);
   };
 
@@ -144,8 +168,8 @@ export default function WMSFaturamentoPage() {
       field: 'event_type', 
       headerName: 'Tipo Evento', 
       width: 150,
-      cellRenderer: (params: any) => {
-        const icons: any = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const icons: Record<string, string> = {
           STORAGE: '📦',
           INBOUND: '📥',
           OUTBOUND: '📤',
@@ -160,13 +184,13 @@ export default function WMSFaturamentoPage() {
       field: 'subtotal', 
       headerName: 'Valor', 
       width: 130,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'status', 
       headerName: 'Status', 
       width: 120,
-      cellStyle: (params: any) => ({
+      cellStyle: (params: ICellRendererParams) => ({
         color: params.value === 'PENDING' ? '#f59e0b' : '#10b981'
       })
     }
@@ -179,26 +203,26 @@ export default function WMSFaturamentoPage() {
       field: 'subtotal', 
       headerName: 'Subtotal', 
       width: 130,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'iss', 
       headerName: 'ISS', 
       width: 110,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'total', 
       headerName: 'Total', 
       width: 130,
-      valueFormatter: (params: any) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      valueFormatter: (params: ValueFormatterParams) => `R$ ${params.value?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
     },
     { 
       field: 'status', 
       headerName: 'Status', 
       width: 120,
-      cellRenderer: (params: any) => {
-        const colors: any = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const colors: Record<string, string> = {
           DRAFT: 'text-gray-400',
           SENT: 'text-blue-400',
           APPROVED: 'text-green-400',
@@ -211,7 +235,7 @@ export default function WMSFaturamentoPage() {
     {
       headerName: 'Ações',
       width: 220,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const status = params.data.status;
         if (status === 'DRAFT') {
           return `<button class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm" data-action="send" data-id="${params.data.id}">📤 Enviar</button>`;
@@ -361,7 +385,7 @@ export default function WMSFaturamentoPage() {
             <div 
               className="ag-theme-quartz-dark" 
               style={{ height: 300, width: '100%' }}
-              onClick={(e: any) => {
+              onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                 const target = e.target as HTMLElement;
                 if (target.tagName === 'BUTTON') {
                   const action = target.getAttribute('data-action');

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { ColDef, ModuleRegistry, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -61,7 +61,7 @@ export default function CtePage() {
       headerName: "Número",
       width: 100,
       filter: "agNumberColumnFilter",
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-semibold">{params.value}</span>
       ),
     },
@@ -75,7 +75,7 @@ export default function CtePage() {
       headerName: "Chave de Acesso",
       width: 200,
       filter: "agTextColumnFilter",
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-mono text-xs">{params.value || "-"}</span>
       ),
     },
@@ -83,14 +83,14 @@ export default function CtePage() {
       field: "issueDate",
       headerName: "Emissão",
       width: 120,
-      cellRenderer: (params: any) =>
+      cellRenderer: (params: ICellRendererParams) =>
         params.value ? new Date(params.value).toLocaleDateString() : "-",
     },
     {
       field: "serviceValue",
       headerName: "Valor Serviço",
       width: 130,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-semibold">
           R$ {parseFloat(params.value || "0").toFixed(2)}
         </span>
@@ -100,7 +100,7 @@ export default function CtePage() {
       field: "icmsValue",
       headerName: "ICMS",
       width: 110,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="text-red-600">
           R$ {parseFloat(params.value || "0").toFixed(2)}
         </span>
@@ -110,7 +110,7 @@ export default function CtePage() {
       field: "totalValue",
       headerName: "Total",
       width: 130,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-bold text-blue-600">
           R$ {parseFloat(params.value || "0").toFixed(2)}
         </span>
@@ -120,7 +120,7 @@ export default function CtePage() {
       field: "cteOrigin",
       headerName: "Origem",
       width: 140,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const origin = params.value || "INTERNAL";
         
         if (origin === "EXTERNAL") {
@@ -143,8 +143,8 @@ export default function CtePage() {
       headerName: "Status SEFAZ",
       width: 150,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: any) => {
-        const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
           DRAFT: { label: "Rascunho", color: "bg-gray-100 text-gray-700", icon: Clock },
           SIGNED: { label: "Assinado", color: "bg-blue-100 text-blue-700", icon: FileText },
           SENT: { label: "Enviado", color: "bg-yellow-100 text-yellow-700", icon: AlertTriangle },
@@ -168,14 +168,14 @@ export default function CtePage() {
       field: "protocolNumber",
       headerName: "Protocolo",
       width: 140,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-mono text-xs">{params.value || "-"}</span>
       ),
     },
     {
       headerName: "Ações",
       width: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-2 items-center h-full">
           {params.data.status === "AUTHORIZED" && (
             <>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
+import { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { NumberCounter } from "@/components/ui/magic-components";
@@ -13,8 +13,19 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
 
+interface Occurrence {
+  id: number;
+  tripId: number;
+  occurrenceType: string;
+  severity: string;
+  title: string;
+  estimatedLoss: number;
+  status: string;
+  createdAt: string;
+}
+
 export default function OccurrencesPage() {
-  const [occurrences, setOccurrences] = useState([]);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
 
   useEffect(() => {
     fetch("/api/tms/occurrences").then(r => r.json()).then(d => setOccurrences(d.data || []));
@@ -27,8 +38,8 @@ export default function OccurrencesPage() {
       field: "severity", 
       headerName: "Gravidade", 
       width: 120,
-      cellRenderer: (p: any) => {
-        const colors: any = {
+      cellRenderer: (p: ICellRendererParams) => {
+        const colors: Record<string, string> = {
           LOW: "bg-blue-500",
           MEDIUM: "bg-yellow-500",
           HIGH: "bg-orange-500",
@@ -46,14 +57,14 @@ export default function OccurrencesPage() {
       field: "estimatedLoss", 
       headerName: "Prejuízo Estimado", 
       width: 150,
-      valueFormatter: (p: any) => p.value ? `R$ ${parseFloat(p.value).toFixed(2)}` : "-"
+      valueFormatter: (p: ValueFormatterParams) => p.value ? `R$ ${parseFloat(p.value).toFixed(2)}` : "-"
     },
     { 
       field: "status", 
       headerName: "Status", 
       width: 120,
-      cellRenderer: (p: any) => {
-        const colors: any = {
+      cellRenderer: (p: ICellRendererParams) => {
+        const colors: Record<string, string> = {
           OPEN: "bg-red-500",
           IN_PROGRESS: "bg-yellow-500",
           RESOLVED: "bg-green-500",
@@ -70,17 +81,17 @@ export default function OccurrencesPage() {
       field: "createdAt", 
       headerName: "Data", 
       width: 150,
-      valueFormatter: (p: any) => new Date(p.value).toLocaleString("pt-BR")
+      valueFormatter: (p: ValueFormatterParams) => new Date(p.value).toLocaleString("pt-BR")
     },
   ];
 
   const stats = useMemo(() => {
-    const data = occurrences as any[];
+    const data = occurrences;
     return {
       total: data.length,
-      abertas: data.filter((o: any) => o.status === 'OPEN').length,
-      criticas: data.filter((o: any) => o.severity === 'CRITICAL').length,
-      resolvidas: data.filter((o: any) => o.status === 'RESOLVED').length,
+      abertas: data.filter((o: Occurrence) => o.status === 'OPEN').length,
+      criticas: data.filter((o: Occurrence) => o.severity === 'CRITICAL').length,
+      resolvidas: data.filter((o: Occurrence) => o.status === 'RESOLVED').length,
     };
   }, [occurrences]);
 

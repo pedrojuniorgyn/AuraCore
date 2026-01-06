@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, GridReadyEvent, IDetailCellRendererParams } from "ag-grid-community";
+import type { ColDef, GridReadyEvent, IDetailCellRendererParams, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
 
 // AG Grid Enterprise Modules (v34+)
 import { AllEnterpriseModule } from "ag-grid-enterprise";
@@ -100,7 +100,7 @@ export default function FiscalDocumentsPage() {
       const response = await fetch("/api/fiscal/documents?limit=1000", {
         headers: branchId ? { "x-branch-id": branchId } : {},
       });
-      const data = await response.json().catch(() => ({} as any));
+      const data = await response.json().catch(() => ({ data: [] }));
 
       if (!response.ok) {
         const msg = data?.error ?? "Falha ao carregar documentos (verifique a filial ativa)";
@@ -116,7 +116,7 @@ export default function FiscalDocumentsPage() {
         pending: docs.filter((d: FiscalDocument) => d.fiscalStatus === "PENDING_CLASSIFICATION").length,
         classified: docs.filter((d: FiscalDocument) => d.fiscalStatus === "CLASSIFIED").length,
         posted: docs.filter((d: FiscalDocument) => d.accountingStatus === "POSTED").length,
-        totalValue: docs.reduce((sum: number, d: FiscalDocument) => sum + parseFloat(d.netAmount as any), 0),
+        totalValue: docs.reduce((sum: number, d: FiscalDocument) => sum + (typeof d.netAmount === 'number' ? d.netAmount : parseFloat(String(d.netAmount))), 0),
       });
     } catch (error) {
       console.error("Erro ao buscar documentos:", error);
@@ -234,7 +234,7 @@ export default function FiscalDocumentsPage() {
       field: "documentType",
       width: 90,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         const icons = {
           NFE: <FileText className="h-4 w-4 text-blue-400" />,
           CTE: <TrendingUp className="h-4 w-4 text-green-400" />,
@@ -255,7 +255,7 @@ export default function FiscalDocumentsPage() {
       field: "documentNumber",
       width: 120,
       filter: "agTextColumnFilter",
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className="font-mono text-purple-400">{params.value}</span>
       ),
     },
@@ -270,7 +270,7 @@ export default function FiscalDocumentsPage() {
       field: "issueDate",
       width: 110,
       filter: "agDateColumnFilter",
-      valueFormatter: (params: any) => 
+      valueFormatter: (params: ValueFormatterParams) => 
         params.value ? new Date(params.value).toLocaleDateString('pt-BR') : '',
     },
     {
@@ -278,7 +278,7 @@ export default function FiscalDocumentsPage() {
       field: "grossAmount",
       width: 130,
       filter: "agNumberColumnFilter",
-      valueFormatter: (params: any) =>
+      valueFormatter: (params: ValueFormatterParams) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(params.value),
       cellStyle: { textAlign: 'right' },
     },
@@ -287,7 +287,7 @@ export default function FiscalDocumentsPage() {
       field: "taxAmount",
       width: 120,
       filter: "agNumberColumnFilter",
-      valueFormatter: (params: any) =>
+      valueFormatter: (params: ValueFormatterParams) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(params.value),
       cellStyle: { textAlign: 'right', color: '#F59E0B' },
     },
@@ -296,7 +296,7 @@ export default function FiscalDocumentsPage() {
       field: "netAmount",
       width: 140,
       filter: "agNumberColumnFilter",
-      valueFormatter: (params: any) =>
+      valueFormatter: (params: ValueFormatterParams) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(params.value),
       cellStyle: { textAlign: 'right', fontWeight: 'bold', color: '#10B981' },
     },
@@ -305,28 +305,28 @@ export default function FiscalDocumentsPage() {
       field: "fiscalStatus",
       width: 130,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: any) => statusCellRenderer(params.value, 'fiscal'),
+      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value, 'fiscal'),
     },
     {
       headerName: "Status Contábil",
       field: "accountingStatus",
       width: 150,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: any) => statusCellRenderer(params.value, 'accounting'),
+      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value, 'accounting'),
     },
     {
       headerName: "Status Financeiro",
       field: "financialStatus",
       width: 150,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: any) => statusCellRenderer(params.value, 'financial'),
+      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value, 'financial'),
     },
     {
       headerName: "Ações",
       field: "id",
       width: 160,
       pinned: "right",
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-1">
           <button
             onClick={() => {
