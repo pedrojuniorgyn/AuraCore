@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef } from "ag-grid-community";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,12 +21,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
-import { GradientText, NumberCounter } from "@/components/ui/magic-components";
+import { NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Edit, Trash2, FolderTree, Target, TrendingUp } from "lucide-react";
-import { auraTheme } from "@/lib/ag-grid/theme";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
 import { toast } from "sonner";
 
@@ -62,7 +60,7 @@ export default function CostCentersPage() {
       headerName: "Código",
       width: 150,
       filter: "agTextColumnFilter",
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams<CostCenter>) => {
         const indent = "  ".repeat(params.data.level || 0);
         return `${indent}${params.value}`;
       },
@@ -77,7 +75,7 @@ export default function CostCentersPage() {
       field: "type",
       headerName: "Tipo",
       width: 130,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams<CostCenter>) => (
         <span
           className={`px-2 py-1 rounded text-xs font-medium ${
             params.value === "ANALYTIC"
@@ -93,7 +91,7 @@ export default function CostCentersPage() {
       field: "linkedVehicleId",
       headerName: "Veículo",
       width: 100,
-      cellRenderer: (params: any) =>
+      cellRenderer: (params: ICellRendererParams<CostCenter>) =>
         params.value ? `#${params.value}` : "-",
     },
     {
@@ -105,7 +103,7 @@ export default function CostCentersPage() {
     {
       headerName: "Ações",
       width: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams<CostCenter>) => (
         <div className="flex gap-2 items-center h-full">
           <Button
             variant="ghost"
@@ -126,7 +124,7 @@ export default function CostCentersPage() {
     },
   ];
 
-  const fetchCostCenters = async () => {
+  const fetchCostCenters = useCallback(async () => {
     try {
       const response = await fetch("/api/financial/cost-centers");
       const result = await response.json();
@@ -137,11 +135,12 @@ export default function CostCentersPage() {
       console.error("Erro ao buscar centros de custo:", error);
       toast.error("Erro ao carregar centros de custo");
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCostCenters();
-  }, []);
+  }, [fetchCostCenters]);
 
   const handleCreate = () => {
     setIsEditing(false);
