@@ -7,6 +7,10 @@ import { ProductForm } from "@/components/forms/product-form";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { createProductSchema } from "@/lib/validators/product";
+import { z } from "zod";
+
+type ProductFormData = z.infer<typeof createProductSchema>;
 
 /**
  * ➕ CRIAR NOVO PRODUTO
@@ -16,7 +20,7 @@ export default function CreateProductPage() {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: ProductFormData) => {
     try {
       setIsCreating(true);
       const branchId = localStorage.getItem("auracore:current-branch") || "1";
@@ -80,7 +84,7 @@ export default function CreateProductPage() {
         <CardHeader>
           <CardTitle>Cadastrar Produto</CardTitle>
           <CardDescription>
-            Preencha as informações do produto e clique em "Criar Produto"
+            Preencha as informações do produto e clique em &quot;Criar Produto&quot;
           </CardDescription>
         </CardHeader>
         <CardContent>
