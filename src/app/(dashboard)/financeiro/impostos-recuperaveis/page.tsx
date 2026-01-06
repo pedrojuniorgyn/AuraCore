@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
 
 interface KPIs {
   totalRecoverable: string;
@@ -42,8 +42,8 @@ export default function TaxCreditsPage() {
       field: "taxType", 
       headerName: "Imposto", 
       width: 100,
-      cellRenderer: (p: any) => {
-        const colors: any = {
+      cellRenderer: (p: ICellRendererParams) => {
+        const colors: Record<string, string> = {
           ICMS: "bg-blue-500",
           PIS: "bg-green-500",
           COFINS: "bg-purple-500",
@@ -60,20 +60,20 @@ export default function TaxCreditsPage() {
       field: "taxValue", 
       headerName: "Valor", 
       width: 130,
-      valueFormatter: (p: any) => `R$ ${parseFloat(p.value || 0).toFixed(2)}`
+      valueFormatter: (p: ValueFormatterParams) => `R$ ${parseFloat(p.value || 0).toFixed(2)}`
     },
     { 
       field: "isRecoverable", 
       headerName: "Recuperável", 
       width: 120,
-      cellRenderer: (p: any) => p.value === "S" ? "✅ Sim" : "❌ Não"
+      cellRenderer: (p: ICellRendererParams) => p.value === "S" ? "Sim" : "Não"
     },
     { field: "recoveredInPeriod", headerName: "Período", width: 100 },
     { 
       field: "createdAt", 
       headerName: "Data", 
       width: 150,
-      valueFormatter: (p: any) => new Date(p.value).toLocaleDateString("pt-BR")
+      valueFormatter: (p: ValueFormatterParams) => new Date(p.value).toLocaleDateString("pt-BR")
     },
   ];
 

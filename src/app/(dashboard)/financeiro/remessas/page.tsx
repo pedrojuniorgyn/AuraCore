@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -234,7 +234,7 @@ export default function RemittancesPage() {
       field: "fileName",
       headerName: "Arquivo",
       width: 220,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <span className="font-mono text-xs">{params.value}</span>
@@ -264,8 +264,8 @@ export default function RemittancesPage() {
       field: "status",
       headerName: "Status",
       width: 140,
-      cellRenderer: (params: any) => {
-        const statusMap: Record<string, { variant: any; icon: any }> = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const statusMap: Record<string, { variant: "default" | "outline" | "destructive"; icon: React.ComponentType<{ className?: string }> }> = {
           GENERATED: { variant: "default", icon: Clock },
           SENT: { variant: "outline", icon: Send },
           PROCESSED_BY_BANK: { variant: "default", icon: CheckCircle2 },
@@ -290,7 +290,7 @@ export default function RemittancesPage() {
     {
       headerName: "Ações",
       width: 120,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <Button
           variant="outline"
           size="sm"

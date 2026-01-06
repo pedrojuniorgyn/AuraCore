@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -224,8 +224,8 @@ export default function RadarDdaPage() {
       field: "status",
       headerName: "Status",
       width: 140,
-      cellRenderer: (params: any) => {
-        const statusMap: Record<string, { variant: any; icon: any; label: string }> = {
+      cellRenderer: (params: ICellRendererParams) => {
+        const statusMap: Record<string, { variant: "outline" | "default" | "secondary"; icon: React.ComponentType<{ className?: string }>; label: string }> = {
           PENDING: { variant: "outline", icon: Clock, label: "Pendente" },
           LINKED: { variant: "default", icon: CheckCircle2, label: "Vinculado" },
           DISMISSED: { variant: "secondary", icon: AlertCircle, label: "Dispensado" },
@@ -244,7 +244,7 @@ export default function RadarDdaPage() {
       field: "matchScore",
       headerName: "Match",
       width: 100,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         if (!params.value) return "-";
         const score = params.value;
         const color =
@@ -292,7 +292,7 @@ export default function RadarDdaPage() {
       headerName: "Vinculado a",
       width: 250,
       valueGetter: (params) => params.data?.matchedPayable?.description || "-",
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: ICellRendererParams) => {
         if (!params.data?.matchedPayable) return <span className="text-muted-foreground">-</span>;
         return (
           <div className="flex items-center gap-2">
@@ -305,8 +305,8 @@ export default function RadarDdaPage() {
     {
       headerName: "Ações",
       width: 200,
-      cellRenderer: (params: any) => {
-        const item: IDdaItem = params.data;
+      cellRenderer: (params: ICellRendererParams<IDdaItem>) => {
+        const item: IDdaItem = params.data!;
         if (item.status === "LINKED") {
           return (
             <Badge variant="outline" className="text-green-600">
