@@ -36,7 +36,7 @@
     {
       "id": "ARCH-004",
       "name": "Domain não importa módulos Node.js",
-      "description": "Domain não pode usar APIs do Node.js diretamente. Abstrair via ports se necessário.",
+      "description": "Domain não pode usar APIs do Node.js via import. Abstrair via ports ou usar APIs globais (globalThis).",
       "pattern": "domain/**/*.ts",
       "forbidden_imports": [
         "node:fs",
@@ -61,12 +61,19 @@
         "buffer"
       ],
       "severity": "critical",
-      "message": "Domain layer não pode usar módulos Node.js. Se precisar de funcionalidade de crypto/fs/etc, criar port em domain/ports/output/ e implementar em infrastructure/",
+      "message": "Domain layer não pode importar módulos Node.js. Use globalThis para APIs globais ou crie port em domain/ports/output/",
       "rationale": "Domain deve ser puro e independente de plataforma. Dependências de Node.js impedem testes isolados e acoplam à infraestrutura.",
       "notes": [
-        "Para crypto: criar ICryptoService em ports/output/",
-        "Para fs: criar IFileService em ports/output/",
-        "Implementar os services em infrastructure/adapters/"
+        "✅ PERMITIDO: globalThis.crypto.randomUUID() - API global, não requer import",
+        "✅ PERMITIDO: criar IFileService em ports/output/ e implementar em infrastructure",
+        "❌ PROIBIDO: import crypto from 'crypto'",
+        "❌ PROIBIDO: import { readFile } from 'fs'",
+        "❌ PROIBIDO: import path from 'node:path'"
+      ],
+      "exceptions": [
+        "globalThis.crypto - disponível globalmente em Node 19+ e browsers",
+        "globalThis.fetch - disponível globalmente em Node 18+ e browsers",
+        "globalThis.URL - disponível globalmente"
       ]
     },
     {

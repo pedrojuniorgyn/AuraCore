@@ -88,13 +88,37 @@
     },
     {
       "id": "ENTITY-010",
-      "name": "ID gerado internamente",
-      "description": "ID deve ser gerado dentro do create()",
+      "name": "ID gerado internamente com globalThis.crypto",
+      "description": "ID deve ser gerado dentro do create() usando globalThis.crypto.randomUUID() que não requer import",
       "pattern": "domain/entities/*.ts",
-      "required_patterns": ["crypto.randomUUID()", "randomUUID()"],
-      "match_any": true,
+      "required_patterns": ["randomUUID()"],
       "severity": "medium",
-      "message": "ID deve ser gerado internamente com crypto.randomUUID()"
+      "message": "Entity deve gerar ID internamente. Usar globalThis.crypto.randomUUID() (não requer import) ou injetar IUuidGenerator via port.",
+      "rationale": "globalThis.crypto está disponível globalmente em Node 19+ e browsers modernos, não viola ARCH-004 pois não requer import.",
+      "notes": [
+        "✅ CORRETO: const id = globalThis.crypto.randomUUID()",
+        "✅ CORRETO: const id = crypto.randomUUID() // se crypto é global",
+        "❌ ERRADO: import crypto from 'crypto' // viola ARCH-004",
+        "❌ ERRADO: import { randomUUID } from 'crypto' // viola ARCH-004",
+        "ALTERNATIVA: Criar IUuidGenerator em ports/output/ para DI"
+      ],
+      "examples": {
+        "correct": [
+          "static create(props: CreateProps): Result<Order, string> {",
+          "  const id = globalThis.crypto.randomUUID();",
+          "  // ... validações",
+          "  return Result.ok(new Order({ id, ...props }));",
+          "}"
+        ],
+        "incorrect": [
+          "import crypto from 'crypto'; // ❌ Viola ARCH-004",
+          "",
+          "static create(props: CreateProps): Result<Order, string> {",
+          "  const id = crypto.randomUUID();",
+          "  // ...",
+          "}"
+        ]
+      }
     },
     {
       "id": "ENTITY-011",

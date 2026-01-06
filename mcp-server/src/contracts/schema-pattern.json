@@ -24,12 +24,48 @@
     },
     {
       "id": "SCHEMA-003",
-      "name": "Índice multi-tenancy obrigatório",
-      "description": "Deve ter índice composto (organizationId, branchId)",
+      "name": "Índice composto multi-tenancy obrigatório",
+      "description": "Deve ter índice COMPOSTO (organizationId, branchId) para performance de queries multi-tenant. Índices separados NÃO atendem esta regra.",
       "pattern": "infrastructure/persistence/schemas/*.ts",
-      "required_patterns": ["organizationId", "branchId", "index("],
       "severity": "critical",
-      "message": "Schema DEVE ter índice composto (organizationId, branchId)"
+      "message": "Schema DEVE ter índice COMPOSTO (organizationId, branchId). Verificar manualmente: index('idx_tenant').on(table.organizationId, table.branchId)",
+      "rationale": "Índices separados não otimizam queries que filtram por ambos campos. O índice composto é essencial para performance em sistemas multi-tenant.",
+      "validation_type": "manual_review",
+      "validation_note": "Pattern matching não consegue validar se é composto. Requer revisão manual ou teste de integração.",
+      "notes": [
+        "✅ CORRETO (índice composto):",
+        "   index('idx_tenant').on(table.organizationId, table.branchId)",
+        "",
+        "❌ ERRADO (índices separados - NÃO ATENDE):",
+        "   index('idx_org').on(table.organizationId)",
+        "   index('idx_branch').on(table.branchId)",
+        "",
+        "Por que índices separados não servem:",
+        "- Query WHERE organizationId=X AND branchId=Y usa só 1 índice",
+        "- Índice composto permite busca eficiente por ambos campos",
+        "- Performance pode ser 10x pior com índices separados"
+      ],
+      "examples": {
+        "correct": [
+          "export const orders = mssqlTable('orders', {",
+          "  id: varchar('id', { length: 36 }).primaryKey(),",
+          "  organizationId: int('organization_id').notNull(),",
+          "  branchId: int('branch_id').notNull(),",
+          "  // ... outros campos",
+          "}, (table) => ({",
+          "  // ✅ Índice COMPOSTO - correto",
+          "  tenantIdx: index('idx_orders_tenant').on(table.organizationId, table.branchId),",
+          "}));"
+        ],
+        "incorrect": [
+          "// ❌ ERRADO: Índices separados",
+          "orgIdx: index('idx_orders_org').on(table.organizationId),",
+          "branchIdx: index('idx_orders_branch').on(table.branchId),",
+          "",
+          "// Isso NÃO é equivalente ao índice composto!"
+        ]
+      },
+      "test_query": "SELECT * FROM {table} WHERE organization_id = @orgId AND branch_id = @branchId -- deve usar idx_tenant"
     },
     {
       "id": "SCHEMA-004",
