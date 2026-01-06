@@ -2,11 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CreatePayableUseCase } from '@/modules/financial/application/use-cases/CreatePayableUseCase';
 import { IPayableRepository } from '@/modules/financial/domain/ports/output/IPayableRepository';
 import { Result } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { ExecutionContext } from '@/modules/financial/application/use-cases/BaseUseCase';
 
 describe('CreatePayableUseCase', () => {
   let useCase: CreatePayableUseCase;
   let mockRepository: IPayableRepository;
+  let mockUuidGenerator: IUuidGenerator;
   let ctx: ExecutionContext;
 
   beforeEach(() => {
@@ -21,7 +23,12 @@ describe('CreatePayableUseCase', () => {
       nextDocumentNumber: vi.fn(),
     };
 
-    useCase = new CreatePayableUseCase(mockRepository);
+    // Mock UUID generator
+    mockUuidGenerator = {
+      generate: vi.fn().mockReturnValue('00000001-0000-4000-8000-000000000000'),
+    };
+
+    useCase = new CreatePayableUseCase(mockRepository, mockUuidGenerator);
 
     ctx = {
       userId: 'user-001',

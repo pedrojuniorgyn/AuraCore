@@ -4,6 +4,7 @@ import type { IInventoryCountRepository } from '../../domain/ports/IInventoryCou
 import { InventoryCount } from '../../domain/entities/InventoryCount';
 import { InventoryStatus, InventoryStatusEnum } from '../../domain/value-objects/InventoryStatus';
 import { Result } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { StartInventoryCountInput, StartInventoryCountOutput } from '../dtos/InventoryCountDTO';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
@@ -17,7 +18,8 @@ import type { ExecutionContext } from '../dtos/ExecutionContext';
 export class StartInventoryCount {
   constructor(
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,
-    @inject(TOKENS.InventoryCountRepository) private readonly inventoryCountRepository: IInventoryCountRepository
+    @inject(TOKENS.InventoryCountRepository) private readonly inventoryCountRepository: IInventoryCountRepository,
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
   ) {}
 
   async execute(
@@ -56,7 +58,7 @@ export class StartInventoryCount {
 
     // Criar InventoryCount
     const inventoryCountResult = InventoryCount.create({
-      id: crypto.randomUUID(),
+      id: this.uuidGenerator.generate(),
       organizationId: context.organizationId,
       branchId: context.branchId,
       locationId: input.locationId,

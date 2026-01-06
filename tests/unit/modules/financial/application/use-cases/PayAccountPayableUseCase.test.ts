@@ -4,11 +4,13 @@ import { IPayableRepository } from '@/modules/financial/domain/ports/output/IPay
 import { AccountPayable } from '@/modules/financial/domain/entities/AccountPayable';
 import { PaymentTerms } from '@/modules/financial/domain/value-objects/PaymentTerms';
 import { Money, Result } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { ExecutionContext } from '@/modules/financial/application/use-cases/BaseUseCase';
 
 describe('PayAccountPayableUseCase', () => {
   let useCase: PayAccountPayableUseCase;
   let mockRepository: IPayableRepository;
+  let mockUuidGenerator: IUuidGenerator;
   let ctx: ExecutionContext;
   let existingPayable: AccountPayable;
 
@@ -46,7 +48,12 @@ describe('PayAccountPayableUseCase', () => {
       nextDocumentNumber: vi.fn(),
     };
 
-    useCase = new PayAccountPayableUseCase(mockRepository);
+    // Mock UUID generator
+    mockUuidGenerator = {
+      generate: vi.fn().mockReturnValue('00000001-0000-4000-8000-000000000000'),
+    };
+
+    useCase = new PayAccountPayableUseCase(mockRepository, mockUuidGenerator);
 
     ctx = {
       userId: 'user-001',

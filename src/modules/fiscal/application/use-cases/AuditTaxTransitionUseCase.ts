@@ -1,5 +1,7 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { 
   AuditTaxTransitionInput,
   AuditTaxTransitionInputSchema,
@@ -23,7 +25,9 @@ import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
  */
 @injectable()
 export class AuditTaxTransitionUseCase implements IUseCaseWithContext<AuditTaxTransitionInput, AuditTaxTransitionOutput> {
-  constructor() {
+  constructor(
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
+  ) {
     // Em produção, injetar IAuditRepository
   }
 
@@ -51,7 +55,7 @@ export class AuditTaxTransitionUseCase implements IUseCaseWithContext<AuditTaxTr
     }
 
     // 4. Gerar ID de auditoria
-    const auditId = crypto.randomUUID();
+    const auditId = this.uuidGenerator.generate();
     const createdAt = new Date();
 
     // 5. Persistir auditoria (mockado - em produção, salvar no banco)

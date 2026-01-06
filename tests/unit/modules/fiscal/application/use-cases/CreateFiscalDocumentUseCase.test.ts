@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { CreateFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase';
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import { FiscalDocumentItem } from '@/modules/fiscal/domain/entities/FiscalDocumentItem';
@@ -10,6 +11,7 @@ import type { ExecutionContext } from '@/modules/fiscal/application/use-cases/Ba
 describe('CreateFiscalDocumentUseCase', () => {
   let useCase: CreateFiscalDocumentUseCase;
   let mockRepository: IFiscalDocumentRepository;
+  let mockUuidGenerator: IUuidGenerator;
   let context: ExecutionContext;
 
   beforeEach(() => {
@@ -24,7 +26,16 @@ describe('CreateFiscalDocumentUseCase', () => {
       saveMany: async () => {},
     };
 
-    useCase = new CreateFiscalDocumentUseCase(mockRepository);
+    // Mock UUID generator
+    let counter = 0;
+    mockUuidGenerator = {
+      generate: () => {
+        counter++;
+        return `0000000${counter}-0000-4000-8000-000000000000`;
+      },
+    };
+
+    useCase = new CreateFiscalDocumentUseCase(mockRepository, mockUuidGenerator);
 
     context = {
       userId: 'user-123',

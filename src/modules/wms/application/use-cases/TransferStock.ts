@@ -7,6 +7,7 @@ import { StockItem } from '../../domain/entities/StockItem';
 import { MovementType, MovementTypeEnum } from '../../domain/value-objects/MovementType';
 import { StockQuantity, UnitOfMeasure } from '../../domain/value-objects/StockQuantity'
 import { Result, Money } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { TransferStockInput, TransferStockOutput } from '../dtos/TransferStockDTO';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
@@ -21,7 +22,8 @@ export class TransferStock {
   constructor(
     @inject(TOKENS.LocationRepository) private readonly locationRepository: ILocationRepository,
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,
-    @inject(TOKENS.MovementRepository) private readonly movementRepository: IMovementRepository
+    @inject(TOKENS.MovementRepository) private readonly movementRepository: IMovementRepository,
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
   ) {}
 
   async execute(
@@ -78,7 +80,7 @@ export class TransferStock {
     // ========================================
     
     // Buscar estoque no destino (pode não existir)
-    let toStockItem = await this.stockRepository.findByProductAndLocation(
+    const toStockItem = await this.stockRepository.findByProductAndLocation(
       input.productId,
       input.toLocationId,
       context.organizationId,
@@ -150,7 +152,7 @@ export class TransferStock {
       // Bug 14 Fix: Usar reconstitute() ao invés de create() para transferências
       // Bug 18 Fix: SEMPRE usar destinationUnitCost (variável calculada), não fromStockItem.unitCost
       const stockItemResult = StockItem.reconstitute({
-        id: crypto.randomUUID(),
+        id: this.uuidGenerator.generate(),
         organizationId: context.organizationId,
         branchId: context.branchId,
         productId: input.productId,
@@ -178,7 +180,7 @@ export class TransferStock {
     }
 
     const movementResult = StockMovement.create({
-      id: crypto.randomUUID(),
+      id: this.uuidGenerator.generate(),
       organizationId: context.organizationId,
       branchId: context.branchId,
       productId: input.productId,

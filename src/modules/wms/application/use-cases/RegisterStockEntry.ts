@@ -7,6 +7,7 @@ import { StockItem } from '../../domain/entities/StockItem';
 import { MovementType, MovementTypeEnum } from '../../domain/value-objects/MovementType';
 import { StockQuantity, UnitOfMeasure } from '../../domain/value-objects/StockQuantity'
 import { Result, Money } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { RegisterStockEntryInput, RegisterStockEntryOutput } from '../dtos/RegisterStockEntryDTO';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
@@ -21,7 +22,8 @@ export class RegisterStockEntry {
   constructor(
     @inject(TOKENS.LocationRepository) private readonly locationRepository: ILocationRepository,
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,
-    @inject(TOKENS.MovementRepository) private readonly movementRepository: IMovementRepository
+    @inject(TOKENS.MovementRepository) private readonly movementRepository: IMovementRepository,
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
   ) {}
 
   async execute(
@@ -63,7 +65,7 @@ export class RegisterStockEntry {
 
     // Criar StockMovement
     const movementResult = StockMovement.create({
-      id: crypto.randomUUID(),
+      id: this.uuidGenerator.generate(),
       organizationId: context.organizationId,
       branchId: context.branchId,
       productId: input.productId,
@@ -127,7 +129,7 @@ export class RegisterStockEntry {
       }
 
       const stockItemResult = StockItem.create({
-        id: crypto.randomUUID(),
+        id: this.uuidGenerator.generate(),
         organizationId: context.organizationId,
         branchId: context.branchId,
         productId: input.productId,

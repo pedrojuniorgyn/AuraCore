@@ -16,6 +16,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run tests/unit --coverage",
     "test:watch": "vitest --watch",
+    "test:arch": "vitest run tests/architecture/",
     "validate": "npm run typecheck && npm run test:unit",
     "prepare": "husky",
     "docker:test:up": "docker-compose -f docker-compose.test.yml up -d sqlserver-test",

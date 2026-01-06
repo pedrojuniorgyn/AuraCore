@@ -1,5 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Result, Money } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { JournalEntry } from '../../domain/entities/JournalEntry';
 import { JournalEntryLine } from '../../domain/entities/JournalEntryLine';
@@ -23,7 +24,8 @@ export class CreateJournalEntryUseCase
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)
-    private readonly repository: IJournalEntryRepository
+    private readonly repository: IJournalEntryRepository,
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
   ) {
     this.repository = repository;
   }
@@ -51,7 +53,7 @@ export class CreateJournalEntryUseCase
     );
 
     // 3. Gerar ID
-    const id = crypto.randomUUID();
+    const id = this.uuidGenerator.generate();
 
     // 4. Criar JournalEntry
     const entryResult = JournalEntry.create({
@@ -80,7 +82,7 @@ export class CreateJournalEntryUseCase
       }
 
       const lineResult = JournalEntryLine.create({
-        id: crypto.randomUUID(),
+        id: this.uuidGenerator.generate(),
         journalEntryId: id,
         accountId: lineInput.accountId,
         accountCode: lineInput.accountCode,

@@ -21,3 +21,6 @@ export {
   ValidationError 
 } from './errors/DomainError';
 
+// Ports
+export type { IUuidGenerator } from './ports/IUuidGenerator';
+

@@ -1,5 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Result, Money } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { AccountPayable } from '../../domain/entities/AccountPayable';
 import { PaymentTerms } from '../../domain/value-objects/PaymentTerms';
@@ -25,7 +26,10 @@ import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 export class CreatePayableUseCase implements IUseCaseWithContext<CreatePayableInput, CreatePayableOutput> {
   private readonly payableRepository: IPayableRepository;
 
-  constructor(@inject(TOKENS.PayableRepository) payableRepository: IPayableRepository) {
+  constructor(
+    @inject(TOKENS.PayableRepository) payableRepository: IPayableRepository,
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
+  ) {
     this.payableRepository = payableRepository;
   }
 
@@ -74,7 +78,7 @@ export class CreatePayableUseCase implements IUseCaseWithContext<CreatePayableIn
     }
 
     // 5. Gerar ID único
-    const id = crypto.randomUUID();
+    const id = this.uuidGenerator.generate();
 
     // 6. Criar AccountPayable (Aggregate)
     const payableResult = AccountPayable.create({

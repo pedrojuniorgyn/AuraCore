@@ -7,6 +7,7 @@
 export const TOKENS = {
   // Shared Infrastructure
   EventDispatcher: Symbol('EventDispatcher'),
+  UuidGenerator: Symbol('UuidGenerator'),
 
   // Financial Module
   PayableRepository: Symbol('PayableRepository'),

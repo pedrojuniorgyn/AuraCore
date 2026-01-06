@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
 import { FiscalDocument } from '../../domain/entities/FiscalDocument';
@@ -18,7 +19,8 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 @injectable()
 export class CreateFiscalDocumentUseCase implements IUseCaseWithContext<CreateFiscalDocumentInput, CreateFiscalDocumentOutput> {
   constructor(
-    @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository
+    @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository,
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
   ) {}
 
   async execute(
@@ -35,7 +37,7 @@ export class CreateFiscalDocumentUseCase implements IUseCaseWithContext<CreateFi
       );
 
       // Gerar ID do documento primeiro
-      const documentId = crypto.randomUUID();
+      const documentId = this.uuidGenerator.generate();
 
       // Converter items para FiscalDocumentItem entities
       const items: FiscalDocumentItem[] = [];
@@ -51,7 +53,7 @@ export class CreateFiscalDocumentUseCase implements IUseCaseWithContext<CreateFi
         }
 
         const itemResult = FiscalDocumentItem.create({
-          id: crypto.randomUUID(),
+          id: this.uuidGenerator.generate(),
           documentId, // Usar o ID gerado acima
           itemNumber: items.length + 1,
           productCode: 'TEMP', // TODO: Get from product

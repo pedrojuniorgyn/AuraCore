@@ -2,11 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CreateJournalEntryUseCase } from '@/modules/accounting/application/use-cases/CreateJournalEntryUseCase';
 import type { IJournalEntryRepository } from '@/modules/accounting/domain/ports/output/IJournalEntryRepository';
 import { Result } from '@/shared/domain';
+import type { IUuidGenerator } from '@/shared/domain';
 import type { ExecutionContext } from '@/modules/accounting/application/use-cases/BaseUseCase';
 
 describe('CreateJournalEntryUseCase', () => {
   let useCase: CreateJournalEntryUseCase;
   let mockRepository: IJournalEntryRepository;
+  let mockUuidGenerator: IUuidGenerator;
   let ctx: ExecutionContext;
 
   beforeEach(() => {
@@ -21,7 +23,16 @@ describe('CreateJournalEntryUseCase', () => {
       nextEntryNumber: vi.fn().mockResolvedValue('LC-2025-000001'),
     };
 
-    useCase = new CreateJournalEntryUseCase(mockRepository);
+    // Mock UUID generator
+    let counter = 0;
+    mockUuidGenerator = {
+      generate: vi.fn(() => {
+        counter++;
+        return `0000000${counter}-0000-4000-8000-000000000000`;
+      }),
+    };
+
+    useCase = new CreateJournalEntryUseCase(mockRepository, mockUuidGenerator);
 
     ctx = {
       userId: 'user-001',
