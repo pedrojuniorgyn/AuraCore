@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       message: `Reajuste aplicado a ${tableIds.length} tabelas`,
       affectedTables: tableIds.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

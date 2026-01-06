@@ -222,7 +222,7 @@ export async function createReceivablesFromCTe(
       receivableIds,
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar contas a receber:", error);
     return {
       success: false,

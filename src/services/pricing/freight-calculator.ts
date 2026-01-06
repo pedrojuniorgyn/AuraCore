@@ -331,7 +331,7 @@ export async function calculateFreight(
         type: selectedTable.type,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao calcular frete:", error);
     return {
       success: false,

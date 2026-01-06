@@ -94,7 +94,7 @@ export class CTeInutilizationService {
       console.log(resultado.success ? "✅ Inutilização confirmada!" : "❌ Inutilização rejeitada");
 
       return resultado;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao inutilizar:", error);
       return {
         success: false,

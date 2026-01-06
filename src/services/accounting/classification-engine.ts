@@ -141,7 +141,7 @@ export async function classifyNFeItem(
     console.log(`⚠️  Nenhuma regra encontrada para NCM ${cleanNcm}`);
     return null;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao classificar item:", error);
     return null;
   }
@@ -241,7 +241,7 @@ export async function getDefaultClassification(
     }
 
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar classificação padrão:", error);
     return null;
   }

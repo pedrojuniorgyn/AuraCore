@@ -60,7 +60,7 @@ export default function CTeInutilizacaoPage() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro",
         description: error.message,

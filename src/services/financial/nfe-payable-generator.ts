@@ -172,7 +172,7 @@ export async function createPayablesFromNFe(
       payableIds,
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar contas a pagar:", error);
     return {
       success: false,

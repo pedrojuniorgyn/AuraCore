@@ -41,7 +41,7 @@ export default function DocumentosPipelinePage() {
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.error ?? "Falha ao carregar jobs");
       setJobs((json.jobs as Job[]) ?? []);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message ?? "Falha ao carregar Document Pipeline");
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ export default function DocumentosPipelinePage() {
       if (!res.ok || !json?.success) throw new Error(json?.error ?? "Falha ao rodar jobs");
       toast.success(`Jobs processados: ${json.result?.processed ?? 0}`);
       await load();
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error(e?.message ?? "Falha ao rodar jobs");
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ export default function DocumentosPipelinePage() {
         if (!res.ok || !json?.success) throw new Error(json?.error ?? "Falha ao reenfileirar job");
         toast.success(`Job #${jobId} reenfileirado`);
         await load();
-      } catch (e: any) {
+      } catch (e: unknown) {
         toast.error(e?.message ?? "Falha ao reenfileirar job");
       } finally {
         setLoading(false);

@@ -88,7 +88,7 @@ export async function suggestNcmsByPcg(
       priority: rule.priority,
       matchType: rule.ncmCode.includes("*") ? "WILDCARD" : "EXACT",
     }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao sugerir NCMs por PCG:", error);
     return [];
   }
@@ -209,7 +209,7 @@ export async function getFiscalFlagsByNcm(
     // 3. Não encontrou nenhuma regra
     console.log(`⚠️  NCM ${cleanNcm} não encontrado nas regras PCG`);
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar flags fiscais por NCM:", error);
     return null;
   }
@@ -296,7 +296,7 @@ export async function listActivePcgs(
       name: p.name,
       category: p.category,
     }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao listar PCGs:", error);
     return [];
   }

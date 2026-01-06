@@ -62,7 +62,7 @@ export async function getNCMCategorization(
       chartAccountName: row.chartAccountName,
       description: row.description,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`❌ Erro ao buscar categorização NCM ${ncmCode}:`, error);
     return null;
   }
@@ -119,7 +119,7 @@ export async function batchGetNCMCategorization(
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar categorizações em batch:", error);
     return result;
   }
@@ -167,7 +167,7 @@ export async function getNCMCategorizationWithFallback(
         description: `NCM ${ncmCode} (sem categorização específica)`,
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao buscar categoria fallback:", error);
   }
 

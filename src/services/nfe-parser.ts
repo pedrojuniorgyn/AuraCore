@@ -278,7 +278,7 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       xmlContent: xmlString,
       nfeData: infNFe, // Dados brutos para classificação
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao fazer parse do XML:", error);
     throw new Error(`Falha ao processar XML da NFe: ${error.message}`);
   }
@@ -380,7 +380,7 @@ function extractPaymentInfo(infNFe: any): ParsedNFe['payment'] | undefined {
       indicator: paymentIndicator,
       installments,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("⚠️  Erro ao extrair informações de pagamento:", error.message);
     return undefined;
   }

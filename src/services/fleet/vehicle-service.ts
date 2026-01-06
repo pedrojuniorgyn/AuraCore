@@ -168,7 +168,7 @@ export async function createVehicleWithCostCenter(
       vehicleId: createdVehicle.id,
       costCenterId: createdCC?.id,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar veículo:", error);
     return {
       success: false,

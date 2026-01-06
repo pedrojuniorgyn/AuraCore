@@ -5,6 +5,7 @@
  */
 
 import React from "react";
+import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
 import { Badge } from "@/components/ui/badge";
 import {  
   TrendingUp,
@@ -21,7 +22,7 @@ import {
  * Variance Cell Renderer (Variação %)
  * Mostra seta e cor de acordo com variação
  */
-export const VarianceCellRenderer = (params: any) => {
+export const VarianceCellRenderer = (params: ICellRendererParams) => {
   if (!params.value && params.value !== 0) return null;
   
   const value = parseFloat(params.value);
@@ -52,7 +53,7 @@ export const VarianceCellRenderer = (params: any) => {
  * Account Code Cell Renderer
  * Mostra código da conta com badge Aurora
  */
-export const AccountCodeCellRenderer = (params: any) => {
+export const AccountCodeCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return null;
   
   return (
@@ -66,7 +67,7 @@ export const AccountCodeCellRenderer = (params: any) => {
  * Status Cell Renderer
  * Badges coloridos com ícones
  */
-export const StatusCellRenderer = (params: any) => {
+export const StatusCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return null;
   
   const statusConfig: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
@@ -122,7 +123,7 @@ export const StatusCellRenderer = (params: any) => {
 /**
  * Type Cell Renderer (Tipo de Conta)
  */
-export const TypeCellRenderer = (params: any) => {
+export const TypeCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return null;
   
   const typeConfig: Record<string, { color: string; label: string }> = {
@@ -147,7 +148,7 @@ export const TypeCellRenderer = (params: any) => {
 /**
  * Boolean Cell Renderer (Sim/Não)
  */
-export const BooleanCellRenderer = (params: any) => {
+export const BooleanCellRenderer = (params: ICellRendererParams) => {
   const value = params.value === true || params.value === 1 || params.value === '1' || params.value === 'true';
   
   return (
@@ -160,7 +161,7 @@ export const BooleanCellRenderer = (params: any) => {
 /**
  * Allocation Rule Cell Renderer
  */
-export const AllocationRuleCellRenderer = (params: any) => {
+export const AllocationRuleCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return <span className="text-gray-500">-</span>;
   
   const ruleConfig: Record<string, { color: string; label: string }> = {
@@ -182,7 +183,7 @@ export const AllocationRuleCellRenderer = (params: any) => {
 /**
  * Allocation Base Cell Renderer
  */
-export const AllocationBaseCellRenderer = (params: any) => {
+export const AllocationBaseCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return <span className="text-gray-500">-</span>;
   
   const baseConfig: Record<string, string> = {
@@ -201,7 +202,7 @@ export const AllocationBaseCellRenderer = (params: any) => {
 /**
  * Action Cell Renderer (Botões de Ação)
  */
-export const ActionCellRenderer = (params: any) => {
+export const ActionCellRenderer = (params: ICellRendererParams) => {
   const handleView = () => {
     if (params.onView) params.onView(params.data);
   };
@@ -250,7 +251,7 @@ export const ActionCellRenderer = (params: any) => {
 /**
  * Currency Formatter
  */
-export const currencyFormatter = (params: any) => {
+export const currencyFormatter = (params: ValueFormatterParams) => {
   if (!params.value && params.value !== 0) return 'R$ 0,00';
   
   return new Intl.NumberFormat('pt-BR', {
@@ -262,7 +263,7 @@ export const currencyFormatter = (params: any) => {
 /**
  * Date Formatter
  */
-export const dateFormatter = (params: any) => {
+export const dateFormatter = (params: ValueFormatterParams) => {
   if (!params.value) return '-';
   
   return new Date(params.value).toLocaleDateString('pt-BR');
@@ -271,7 +272,7 @@ export const dateFormatter = (params: any) => {
 /**
  * DateTime Formatter
  */
-export const dateTimeFormatter = (params: any) => {
+export const dateTimeFormatter = (params: ValueFormatterParams) => {
   if (!params.value) return '-';
   
   return new Date(params.value).toLocaleString('pt-BR');
@@ -280,7 +281,7 @@ export const dateTimeFormatter = (params: any) => {
 /**
  * Number Formatter
  */
-export const numberFormatter = (params: any) => {
+export const numberFormatter = (params: ValueFormatterParams) => {
   if (!params.value && params.value !== 0) return '0';
   
   return new Intl.NumberFormat('pt-BR').format(params.value);
@@ -289,7 +290,7 @@ export const numberFormatter = (params: any) => {
 /**
  * File Size Formatter
  */
-export const fileSizeFormatter = (params: any) => {
+export const fileSizeFormatter = (params: ValueFormatterParams) => {
   if (!params.value) return '-';
   
   const bytes = params.value;

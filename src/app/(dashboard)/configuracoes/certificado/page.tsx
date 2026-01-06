@@ -172,7 +172,7 @@ export default function CertificadoDigitalPage() {
         });
         toast.error("Falha na conexão com Sefaz");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setTestResult({
         success: false,
         message: "Erro ao testar conexão",

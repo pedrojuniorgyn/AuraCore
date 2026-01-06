@@ -65,7 +65,7 @@ export class BoletoGenerator {
       );
 
       return response.data.access_token;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao obter token:", error.response?.data || error.message);
       throw new Error("Falha na autenticação com Banco Inter");
     }
@@ -137,7 +137,7 @@ export class BoletoGenerator {
         pixKey: response.data.pixCopiaECola,
         pdfUrl: response.data.linkBoleto,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao gerar boleto:", error.response?.data || error.message);
 
       // Retornar erro detalhado
@@ -165,7 +165,7 @@ export class BoletoGenerator {
       );
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao consultar boleto:", error);
       throw error;
     }
@@ -190,7 +190,7 @@ export class BoletoGenerator {
 
       console.log("✅ Boleto baixado com sucesso!");
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao baixar boleto:", error);
       return false;
     }
@@ -235,7 +235,7 @@ async function getAccessToken(): Promise<string> {
     );
 
     return response.data.access_token;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao obter token:", error.response?.data || error.message);
     throw new Error("Falha na autenticação com Banco Inter");
   }

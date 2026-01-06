@@ -172,7 +172,7 @@ export async function withPermission<T>(
       });
     }
     return withTelemetryHeaders(res, requestId, durationMs);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const durationMs = Date.now() - startedAt;
     pushRequestLog({
       ts: new Date().toISOString(),
@@ -282,7 +282,7 @@ export async function withAuth<T>(
       });
     }
     return withTelemetryHeaders(res, requestId, durationMs);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const durationMs = Date.now() - startedAt;
     pushRequestLog({
       ts: new Date().toISOString(),

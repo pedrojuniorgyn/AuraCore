@@ -155,10 +155,10 @@ export async function POST(request: NextRequest) {
         // Idempotência: best-effort (não derruba o webhook se finalizar falhar)
         try {
           await finalizeIdempotency({ organizationId, scope, key: idemKey, status: "SUCCEEDED", resultRef: "ok" });
-        } catch (e: any) {
+        } catch (e: unknown) {
           log("warn", "btg.webhook.idempotency_finalize_failed", { organizationId, scope, error: e });
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         try {
           await finalizeIdempotency({
             organizationId,
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
             status: "FAILED",
             errorMessage: e?.message ?? String(e),
           });
-        } catch (e2: any) {
+        } catch (e2: unknown) {
           log("warn", "btg.webhook.idempotency_finalize_failed", { organizationId, scope, error: e2 });
         }
         throw e;
@@ -276,10 +276,10 @@ export async function POST(request: NextRequest) {
         // Idempotência: best-effort (não derruba o webhook se finalizar falhar)
         try {
           await finalizeIdempotency({ organizationId, scope, key: idemKey, status: "SUCCEEDED", resultRef: "ok" });
-        } catch (e: any) {
+        } catch (e: unknown) {
           log("warn", "btg.webhook.idempotency_finalize_failed", { organizationId, scope, error: e });
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         try {
           await finalizeIdempotency({
             organizationId,
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
             status: "FAILED",
             errorMessage: e?.message ?? String(e),
           });
-        } catch (e2: any) {
+        } catch (e2: unknown) {
           log("warn", "btg.webhook.idempotency_finalize_failed", { organizationId, scope, error: e2 });
         }
         throw e;

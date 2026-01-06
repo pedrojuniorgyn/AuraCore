@@ -305,7 +305,7 @@ export class SefazService {
         totalDocuments,
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao consultar Sefaz:", error.message);
 
       if (error.response) {
@@ -397,14 +397,14 @@ export async function downloadNFesFromSefaz(
           duplicates: processResult.duplicates,
           totalValue: 0 // TODO: Calcular totalValue dos documentos importados
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("❌ Erro ao processar documentos:", error.message);
         return { success: false, imported: 0, totalDocuments: downloadResult.totalDocuments, error: `Erro no processamento: ${error.message}` };
       }
     }
 
     return { success: true, imported, totalDocuments: downloadResult.totalDocuments };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao baixar NFes da SEFAZ:", error.message);
     return { success: false, imported: 0, totalDocuments: 0, error: error.message };
   }

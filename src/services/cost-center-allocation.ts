@@ -111,7 +111,7 @@ export async function createCostCenterAllocations(
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar rateio de CC:", error);
     return {
       success: false,

@@ -140,7 +140,7 @@ export async function POST(req: Request) {
 
         calculatedPrice = calculation.total.toString();
         priceBreakdown = JSON.stringify(calculation);
-      } catch (calcError: any) {
+      } catch (calcError: unknown) {
         console.warn("⚠️ Erro ao calcular frete:", calcError.message);
         // Continua mesmo sem cálculo
       }

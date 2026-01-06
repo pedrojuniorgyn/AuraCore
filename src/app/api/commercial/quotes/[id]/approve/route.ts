@@ -83,7 +83,7 @@ export async function POST(
           pickupOrderNumber: pickupOrder.orderNumber,
         },
       });
-    } catch (workflowError: any) {
+    } catch (workflowError: unknown) {
       console.error("❌ Erro ao criar ordem de coleta:", workflowError);
       
       // Reverter aprovação

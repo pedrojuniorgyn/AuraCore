@@ -147,7 +147,7 @@ export async function finalizeIdempotency(args: FinalizeArgs): Promise<void> {
           AND scope = @scope
           AND idem_key = @key;
       `);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const msg = error?.message ? String(error.message) : String(error);
     if (msg.includes("Invalid object name") && msg.includes("idempotency_keys")) {
       log("warn", "idempotency.missing_table_finalize", { organizationId: args.organizationId, scope: args.scope });

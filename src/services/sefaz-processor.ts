@@ -177,7 +177,7 @@ export async function processSefazResponse(
               result.duplicates++;
               console.log("⚠️  CTe duplicado (já existe no sistema)");
             }
-          } catch (cteError: any) {
+          } catch (cteError: unknown) {
             console.error(`❌ Erro ao importar CTe:`, cteError.message);
             result.errors++;
             result.errorMessages.push(`CTe: ${cteError.message}`);
@@ -186,7 +186,7 @@ export async function processSefazResponse(
           console.log(`⚠️  Tipo de documento não suportado: ${schema}`);
         }
 
-      } catch (docError: any) {
+      } catch (docError: unknown) {
         console.error(`❌ Erro ao processar documento:`, docError.message);
         result.errors++;
         result.errorMessages.push(docError.message);
@@ -212,7 +212,7 @@ export async function processSefazResponse(
 
     return result;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao processar resposta Sefaz:", error);
     throw error;
   }
@@ -481,7 +481,7 @@ async function importNFeAutomatically(
     
     return "SUCCESS";  // ✅ Retorna sucesso após importação completa
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Se chegou aqui, é erro real (não duplicata)
     throw new Error(`Falha ao importar NFe: ${error.message}`);
   }
@@ -654,7 +654,7 @@ async function importExternalCTe(
 
     return "SUCCESS";  // ✅ Retorna sucesso após importação completa
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Se chegou aqui, é erro real (não duplicata)
     throw new Error(`Falha ao importar CTe externo: ${error.message}`);
   }

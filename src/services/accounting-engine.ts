@@ -221,7 +221,7 @@ export async function generateJournalEntry(
       totalCredit: parseFloat(document.netAmount),
       lines: lineNumber,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar lançamento:", error);
     return {
       success: false,
@@ -281,7 +281,7 @@ export async function reverseJournalEntry(
       success: true,
       journalEntryId,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao reverter lançamento:", error);
     return {
       success: false,

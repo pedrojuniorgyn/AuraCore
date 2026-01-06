@@ -104,7 +104,7 @@ export function classifyNFe(nfeXml: any, branchCnpj: string): NFeType {
     console.log("⚠️  Classificado como OTHER (caso não identificado)");
     return "OTHER";
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao classificar NFe:", error.message);
     return "OTHER";
   }
@@ -197,7 +197,7 @@ export function extractCargoInfo(nfeXml: any): CargoMetadata | null {
     
     return metadata;
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao extrair metadados da carga:", error.message);
     return null;
   }

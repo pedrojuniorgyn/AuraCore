@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
           status: "SUCCEEDED",
           resultRef: `imported:${imported}`,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
       }
 
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         imported,
         message: `${imported} boleto(s) importado(s) com sucesso`,
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Idempotência: best-effort (não mascarar erro original se a finalização falhar).
       try {
         await finalizeIdempotency({
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
           status: "FAILED",
           errorMessage: e?.message ?? String(e),
         });
-      } catch (e2: any) {
+      } catch (e2: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
       }
       throw e;

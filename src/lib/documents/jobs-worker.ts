@@ -131,7 +131,7 @@ export async function runDocumentJobsTick(args?: { maxJobs?: number }): Promise<
       await runJob(job);
       succeeded++;
       log("info", "documents.job.succeeded", { jobId: job.id, jobType: job.jobType, organizationId: job.organizationId });
-    } catch (e: any) {
+    } catch (e: unknown) {
       failed++;
       const err = e?.message ?? String(e);
       log("error", "documents.job.failed", { jobId: job.id, jobType: job.jobType, organizationId: job.organizationId, error: e });

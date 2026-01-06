@@ -52,7 +52,7 @@ export default function UploadXMLPage() {
       } else {
         throw new Error(data.error || "Falha ao processar upload");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao fazer upload:", error);
       toast({
         title: "Erro",

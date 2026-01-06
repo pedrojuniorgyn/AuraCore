@@ -28,7 +28,7 @@ export function startAutoImportCron() {
     
     try {
       await runAutoImport();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ [Auto-Import] Erro:", error.message);
     }
   });
@@ -126,7 +126,7 @@ async function runAutoImport() {
         // Aguardar 2 segundos entre filiais para não sobrecarregar
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`❌ [Auto-Import] Erro na filial ${setting.branchId}:`, error.message);
         
         // 🔔 NOTIFICAR: Erro na importação
@@ -140,7 +140,7 @@ async function runAutoImport() {
 
     console.log("✅ [Auto-Import] Importação automática concluída");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ [Auto-Import] Erro geral:", error.message);
   }
 }

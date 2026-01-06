@@ -60,7 +60,7 @@ export default function BranchConfigPage() {
         // Carrega configurações Sefaz
         setEnvironment(data.data.environment || "HOMOLOGATION");
         setLastNsu(data.data.lastNsu || "0");
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast.error("Erro ao carregar filial", {
           description: error.message,
         });
@@ -111,7 +111,7 @@ export default function BranchConfigPage() {
 
       // Recarrega dados
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Erro ao instalar certificado", {
         description: error.message,
       });
@@ -145,7 +145,7 @@ export default function BranchConfigPage() {
       });
 
       console.log("📊 Resultado da consulta:", result.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Falha ao conectar com Sefaz", {
         description: error.message,
         duration: 5000,
@@ -186,7 +186,7 @@ export default function BranchConfigPage() {
       
       // Recarrega dados
       window.location.reload();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Erro ao salvar configuração", {
         description: error.message,
       });
@@ -228,7 +228,7 @@ export default function BranchConfigPage() {
       // Atualiza dados locais
       setBranch(result.data || result);
       setLastNsu("0");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Erro ao resetar NSU", {
         description: error.message,
       });

@@ -29,7 +29,7 @@ export default function EditBranchPage() {
 
         const result = await response.json();
         setBranchData(result.data || result);
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast.error("Erro ao carregar filial", {
           description: error.message,
         });

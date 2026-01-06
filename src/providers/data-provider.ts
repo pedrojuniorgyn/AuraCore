@@ -239,7 +239,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
       return {
         data: response.data,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ getOne error:", {
         message: error.message,
         response: error.response?.data,

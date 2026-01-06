@@ -108,7 +108,7 @@ export async function sendCteToSefaz(
       rejectionCode: "999",
       rejectionMessage: "Integração SEFAZ real deve ser implementada em produção",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao enviar CTe para SEFAZ:", error);
     return {
       success: false,
@@ -168,7 +168,7 @@ export async function sendMdfeToSefaz(
       rejectionCode: "999",
       rejectionMessage: "Integração SEFAZ MDFe real deve ser implementada em produção",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao enviar MDFe para SEFAZ:", error);
     return {
       success: false,
@@ -205,7 +205,7 @@ export async function checkSefazStatus(
       online: true,
       message: "Status deve ser consultado em produção",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       online: false,
       message: error.message,

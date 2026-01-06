@@ -136,7 +136,7 @@ export default function CreateReceivablePage() {
       });
 
       router.push("/financeiro/contas-receber");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao criar:", error);
       toast({
         title: "Erro",

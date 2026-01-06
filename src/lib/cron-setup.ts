@@ -53,7 +53,7 @@ export function initializeCronJobs() {
         if (r.processed > 0) {
           console.log(`🗂️ [CRON] Document jobs: processed=${r.processed} ok=${r.succeeded} fail=${r.failed}`);
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("❌ [CRON] Falha ao processar document jobs:", e?.message ?? String(e));
       }
     });

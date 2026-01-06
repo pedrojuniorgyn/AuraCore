@@ -375,7 +375,7 @@ export async function linkCargosToCte(
     
     return cargos.length;
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`❌ Erro ao vincular cargas ao CTe:`, error.message);
     throw error;
   }

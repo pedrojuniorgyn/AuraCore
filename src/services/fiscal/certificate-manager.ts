@@ -34,7 +34,7 @@ export async function loadCertificate(config: CertificateConfig): Promise<{
       pfx: pfxBuffer,
       password: config.password,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao carregar certificado:", error);
     throw new Error(`Falha ao carregar certificado: ${error.message}`);
   }
@@ -71,7 +71,7 @@ export async function signXml(
     // Por enquanto, retornar XML sem assinatura
     // Em produção, adicionar tag <Signature>
     return xml;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao assinar XML:", error);
     throw new Error(`Falha na assinatura: ${error.message}`);
   }
@@ -102,7 +102,7 @@ export async function validateCertificate(
       subject: certificateConfig.organization,
       message: "Certificado válido (modo desenvolvimento)",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       valid: false,
       message: error.message,

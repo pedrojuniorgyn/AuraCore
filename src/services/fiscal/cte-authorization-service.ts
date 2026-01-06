@@ -107,7 +107,7 @@ export class CTeAuthorizationService {
         ...resultado,
         cteId,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao autorizar CTe:", error);
 
       // Atualizar status como erro
@@ -142,7 +142,7 @@ export class CTeAuthorizationService {
       const resultado = await client.consultarCTe(chaveAcesso);
 
       return resultado;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao consultar CTe:", error);
       return {
         success: false,
@@ -214,7 +214,7 @@ export class CTeAuthorizationService {
       }
 
       return resultado;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao cancelar CTe:", error);
       return {
         success: false,

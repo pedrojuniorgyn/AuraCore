@@ -226,7 +226,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       toast.success(branchId ? "Filial atualizada com sucesso!" : "Filial criada com sucesso!");
       router.push("/configuracoes/filiais");
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Erro ao salvar filial", {
         description: error.message,
       });

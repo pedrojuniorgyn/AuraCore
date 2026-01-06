@@ -92,7 +92,7 @@ export class XmlSigner {
       // 8. Retornar XML assinado
       const signedXml = sig.getSignedXml();
       return signedXml;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao assinar XML:", error);
       throw new Error(`Falha na assinatura digital: ${error.message}`);
     }
@@ -128,7 +128,7 @@ export class XmlSigner {
         expiresAt: notAfter,
         cn,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Erro ao verificar certificado:", error);
       return { valid: false };
     }

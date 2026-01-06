@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
           status: "FAILED",
           errorMessage,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e);
       }
     };
@@ -320,10 +320,10 @@ export async function POST(request: NextRequest) {
           status: "SUCCEEDED",
           resultRef: `bank_remittances:${remittance.id}`,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       try {
         await finalizeIdempotency({
           organizationId: ctx.organizationId,
@@ -332,7 +332,7 @@ export async function POST(request: NextRequest) {
           status: "FAILED",
           errorMessage: e?.message ?? String(e),
         });
-      } catch (e2: any) {
+      } catch (e2: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
       }
       throw e;

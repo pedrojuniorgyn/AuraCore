@@ -27,7 +27,7 @@ async function checkDbConnectivity(): Promise<CheckResult> {
     await ensureConnection();
     const r = await pool.request().query("SELECT 1 as ok");
     return { name: "db.connectivity", ok: r.recordset?.[0]?.ok === 1, durationMs: now() - t0 };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { name: "db.connectivity", ok: false, durationMs: now() - t0, error: e?.message ?? String(e) };
   }
 }
@@ -40,7 +40,7 @@ async function checkIdempotencyTable(): Promise<CheckResult> {
       SELECT CASE WHEN OBJECT_ID('dbo.idempotency_keys','U') IS NULL THEN 0 ELSE 1 END as ok
     `);
     return { name: "idempotency.table", ok: r.recordset?.[0]?.ok === 1, durationMs: now() - t0 };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { name: "idempotency.table", ok: false, durationMs: now() - t0, error: e?.message ?? String(e) };
   }
 }
@@ -84,7 +84,7 @@ async function checkIdempotencyBehavior(runId: string): Promise<CheckResult> {
       details: { organizationId: orgId, first: a1, second: a2 },
       ...(ok ? {} : { error: `Esperado 'hit' na segunda aquisição, veio '${a2.outcome}'` }),
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { name: "idempotency.behavior", ok: false, durationMs: now() - t0, error: e?.message ?? String(e) };
   }
 }

@@ -220,7 +220,7 @@ export async function importExternalCTe(
     
     return cteId;
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`❌ Erro ao importar CTe externo:`, error.message);
     throw error;
   }

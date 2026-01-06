@@ -224,7 +224,7 @@ export async function parseCTeXML(xmlContent: string): Promise<ParsedCTe> {
       xmlContent,
       xmlHash,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw new Error(`Erro ao parsear CTe: ${error.message}`);
   }
 }

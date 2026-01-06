@@ -151,7 +151,7 @@ export async function generatePayableFromNFe(
         },
       ],
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar Conta a Pagar:", error);
     return {
       success: false,
@@ -284,7 +284,7 @@ export async function generateReceivableFromCTe(
         },
       ],
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao gerar Conta a Receber:", error);
     return {
       success: false,
@@ -365,7 +365,7 @@ export async function reverseTitles(
     console.log(`✅ Títulos do documento #${fiscalDocumentId} revertidos`);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao reverter títulos:", error);
     return { success: false, error: error.message };
   }

@@ -136,7 +136,7 @@ export default function CreatePayablePage() {
       });
 
       router.push("/financeiro/contas-pagar");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao criar:", error);
       toast({
         title: "Erro",

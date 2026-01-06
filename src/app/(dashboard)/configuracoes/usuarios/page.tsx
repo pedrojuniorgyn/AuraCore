@@ -136,7 +136,7 @@ export default function UsersManagementPage() {
       setPasswordUser(null);
       setNewPassword("");
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao definir senha", { description: err?.message });
     } finally {
       setSavingPassword(false);
@@ -199,7 +199,7 @@ export default function UsersManagementPage() {
 
       setEditRoleIds(data.data.roleIds || []);
       setEditBranchIds(data.data.branchIds || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao carregar acessos", { description: err?.message });
     }
   };
@@ -229,7 +229,7 @@ export default function UsersManagementPage() {
       setEditOpen(false);
       setEditingUser(null);
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao atualizar acessos", { description: err?.message });
     } finally {
       setSavingAccess(false);
@@ -271,7 +271,7 @@ export default function UsersManagementPage() {
       setInviteRoleId("");
       setInviteBranchIds([]);
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao convidar usuário", { description: err?.message });
     } finally {
       setInviting(false);
@@ -305,7 +305,7 @@ export default function UsersManagementPage() {
       }
       toast.success("Usuário excluído");
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Erro ao excluir usuário", { description: err?.message });
     } finally {
       setDeletingUserId(null);

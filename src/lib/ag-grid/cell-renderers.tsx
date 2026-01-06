@@ -92,7 +92,7 @@ export const StatusCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return null;
 
   // Mapa de ícones por status
-  const iconMap: Record<string, any> = {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     // Pagamentos
     OPEN: Clock,
     PAID: CheckCircle2,
@@ -141,7 +141,7 @@ export const StatusCellRenderer = (params: ICellRendererParams) => {
 export const TypeBadgeCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return null;
 
-  const typeConfig: Record<string, { variant: any; label: string }> = {
+  const typeConfig: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; label: string }> = {
     CLIENT: { variant: "default", label: "Cliente" },
     PROVIDER: { variant: "secondary", label: "Fornecedor" },
     BOTH: { variant: "outline", label: "Ambos" },
@@ -188,11 +188,11 @@ export const DocumentCellRenderer = (params: ICellRendererParams) => {
  * 🎬 Renderizador de Ações (Botões)
  */
 interface ActionsCellRendererProps extends ICellRendererParams {
-  onView?: (data: any) => void;
-  onEdit?: (data: any) => void;
-  onDelete?: (data: any) => void;
-  onPay?: (data: any) => void;
-  onDownload?: (data: any) => void;
+  onView?: (data: unknown) => void;
+  onEdit?: (data: unknown) => void;
+  onDelete?: (data: unknown) => void;
+  onPay?: (data: unknown) => void;
+  onDownload?: (data: unknown) => void;
 }
 
 export const ActionsCellRenderer = (props: ActionsCellRendererProps) => {
@@ -279,7 +279,7 @@ export const PercentageCellRenderer = (params: ICellRendererParams) => {
  * 🔗 Renderizador de Link
  */
 interface LinkCellRendererProps extends ICellRendererParams {
-  onClick?: (data: any) => void;
+  onClick?: (data: unknown) => void;
 }
 
 export const LinkCellRenderer = (props: LinkCellRendererProps) => {
@@ -315,7 +315,7 @@ export const BooleanCellRenderer = (params: ICellRendererParams) => {
 export const OriginCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return null;
 
-  const originConfig: Record<string, { label: string; variant: any }> = {
+  const originConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
     FISCAL_NFE: { label: "NFe Importada", variant: "default" },
     MANUAL: { label: "Lançamento Manual", variant: "outline" },
     SYSTEM: { label: "Sistema", variant: "secondary" },
