@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry } from "ag-grid-community";
+import { ModuleRegistry, ValueFormatterParams, CellClassParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 // AG Grid CSS (v34+ Theming API)
@@ -19,9 +19,15 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+interface CteMargin {
+  cteNumber: string;
+  issueDate: string;
+  marginPercent: number;
+}
+
 export default function MargemCtePage() {
-  const gridRef = useRef<any>(null);
-  const [ctes, setCtes] = useState<any[]>([]);
+  const gridRef = useRef<AgGridReact>(null);
+  const [ctes, setCtes] = useState<CteMargin[]>([]);
   const [loading, setLoading] = useState(false);
 
   const columnDefs = [
@@ -47,8 +53,8 @@ export default function MargemCtePage() {
     { 
       field: 'marginPercent', 
       headerName: 'Margem %',
-      valueFormatter: (p: any) => `${p.value?.toFixed(2)}%`,
-      cellStyle: (params: any) => ({
+      valueFormatter: (p: ValueFormatterParams) => `${p.value?.toFixed(2)}%`,
+      cellStyle: (params: CellClassParams) => ({
         color: params.value > 30 ? '#10b981' : params.value > 20 ? '#f59e0b' : '#ef4444',
         fontWeight: 'bold'
       }),
