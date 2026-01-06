@@ -51,7 +51,7 @@ const StatusColumn = ({ title, status, trips, icon: Icon, color }: StatusColumnP
     <Card>
       <CardHeader className={`${color} text-white`}>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Icon className="h-5 h-5" />
+          <Icon className="h-5 w-5" />
           {title} ({trips.length})
         </CardTitle>
       </CardHeader>

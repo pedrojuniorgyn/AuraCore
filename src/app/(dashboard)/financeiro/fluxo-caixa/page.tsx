@@ -66,7 +66,7 @@ export default function FluxoCaixaPage() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle>Horizon: próximos {monthsAhead} meses</CardTitle>
-            <Select value={String(monthsAhead)} onValueChange={(v) => setMonthsAhead(Number(v) as 3 | 6 | 12)}>
+            <Select value={String(monthsAhead)} onValueChange={(v) => setMonthsAhead(Number(v) as 3 | 6 | 12 | 24 | 36 | 60)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Horizonte" />
               </SelectTrigger>
