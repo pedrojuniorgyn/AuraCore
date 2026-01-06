@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, ModuleRegistry } from "ag-grid-community";
+import { ColDef, ModuleRegistry, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -26,13 +26,10 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
-import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Edit, Trash2, Table2, Route as RouteIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { auraTheme } from "@/lib/ag-grid/theme";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
 
 const UFS = [
@@ -76,7 +73,7 @@ export default function FreightTablesPage() {
   const [tables, setTables] = useState<FreightTable[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentId, setCurrentId] = useState<number | null>(null);
+  const [, setCurrentId] = useState<number | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -112,7 +109,7 @@ export default function FreightTablesPage() {
       field: "type",
       headerName: "Tipo",
       width: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className={`px-2 py-1 rounded text-xs ${
           params.value === "GENERAL" 
             ? "bg-blue-100 text-blue-700" 
@@ -126,7 +123,7 @@ export default function FreightTablesPage() {
       field: "transportType",
       headerName: "Transporte",
       width: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <span className={`px-2 py-1 rounded text-xs ${
           params.value === "FTL_LOTACAO" 
             ? "bg-green-100 text-green-700" 
@@ -145,7 +142,7 @@ export default function FreightTablesPage() {
     {
       headerName: "Ações",
       width: 150,
-      cellRenderer: (params: any) => (
+      cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-2 items-center h-full">
           <Button
             variant="ghost"
@@ -180,6 +177,7 @@ export default function FreightTablesPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTables();
   }, []);
 
@@ -204,7 +202,7 @@ export default function FreightTablesPage() {
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (data: any) => {
+  const handleEdit = (data: FreightTable) => {
     setIsEditing(true);
     setCurrentId(data.id);
     // TODO: Carregar dados completos
