@@ -8,6 +8,14 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createProductSchema } from "@/lib/validators/product";
+import { z } from "zod";
+
+type ProductFormData = z.infer<typeof createProductSchema>;
+
+interface ProductData extends ProductFormData {
+  version?: number;
+}
 
 /**
  * ✏️ EDITAR PRODUTO
@@ -18,7 +26,7 @@ export default function EditProductPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<ProductData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -55,9 +63,10 @@ export default function EditProductPage() {
   // Carrega ao montar
   useEffect(() => {
     fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: ProductFormData) => {
     try {
       setIsUpdating(true);
       const branchId = localStorage.getItem("auracore:current-branch") || "1";
@@ -132,7 +141,7 @@ export default function EditProductPage() {
         <CardHeader>
           <CardTitle>Editar Cadastro</CardTitle>
           <CardDescription>
-            Altere os dados do produto e clique em "Salvar Alterações"
+            Altere os dados do produto e clique em &quot;Salvar Alterações&quot;
           </CardDescription>
         </CardHeader>
         <CardContent>
