@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, AllCommunityModule, type ColDef } from "ag-grid-community";
+import { ModuleRegistry, AllCommunityModule, type ColDef, type ICellRendererParams } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,7 +113,7 @@ export default function ProductsPage() {
         headerName: "NCM",
         width: 120,
         filter: "agTextColumnFilter",
-        cellRenderer: (params: any) => {
+        cellRenderer: (params: ICellRendererParams) => {
           if (!params.value) return "-";
           const ncm = params.value.replace(/\D/g, "");
           if (ncm.length === 8) {
@@ -157,7 +157,7 @@ export default function ProductsPage() {
         headerName: "Ações",
         width: 140,
         pinned: "right",
-        cellRenderer: (params: any) =>
+        cellRenderer: (params: ICellRendererParams) =>
           ActionsCellRenderer({
             ...params,
             onView: handleView,
