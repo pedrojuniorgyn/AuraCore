@@ -448,7 +448,8 @@ export class SpedEcdGenerator {
     registers.push(reg9900_9999.value);
 
     // Calcular total de registros em TODOS os blocos
-    const totalRegistros = blocks.reduce((sum, block) => sum + block.registerCount, 0) + registers.length + 1;
+    // +2 para incluir os próprios registros 9990 e 9999 que serão adicionados
+    const totalRegistros = blocks.reduce((sum, block) => sum + block.registerCount, 0) + registers.length + 2;
 
     // 9990: Encerramento do Bloco 9
     const reg9990 = SpedRegister.create({
