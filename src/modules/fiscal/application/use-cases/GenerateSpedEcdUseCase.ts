@@ -154,7 +154,14 @@ export class GenerateSpedEcdUseCase {
       };
 
       // Gerar documento SPED
-      return this.generator.generate(generatorInput, ecdData);
+      const result = this.generator.generate(generatorInput, ecdData);
+      
+      // Converter Result<SpedDocument, string> para Result<SpedDocument, SpedError>
+      if (Result.isFail(result)) {
+        return Result.fail(new SpedError(result.error));
+      }
+      
+      return Result.ok(result.value);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return Result.fail(new SpedError(`Erro ao gerar SPED ECD: ${errorMessage}`));
