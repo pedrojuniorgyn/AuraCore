@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
-import { StockQuantity } from '@/modules/wms/domain/value-objects/StockQuantity';
+import { StockQuantity, UnitOfMeasure } from '@/modules/wms/domain/value-objects/StockQuantity';
 import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
 
@@ -63,7 +63,7 @@ export class UpdateLocation {
       if (!unit) {
         return Result.fail('Capacity unit is required when setting capacity');
       }
-      const capacityResult = StockQuantity.create(input.capacity, unit as any);
+      const capacityResult = StockQuantity.create(input.capacity, unit as UnitOfMeasure);
       if (!Result.isOk(capacityResult)) {
         return Result.fail(capacityResult.error);
       }
@@ -75,7 +75,7 @@ export class UpdateLocation {
       if (!location.capacity) {
         return Result.fail('Cannot update capacity unit without capacity value');
       }
-      const capacityResult = StockQuantity.create(location.capacity.value, input.capacityUnit as any);
+      const capacityResult = StockQuantity.create(location.capacity.value, input.capacityUnit as UnitOfMeasure);
       if (!Result.isOk(capacityResult)) {
         return Result.fail(capacityResult.error);
       }
