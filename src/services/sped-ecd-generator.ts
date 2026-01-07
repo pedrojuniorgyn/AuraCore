@@ -60,12 +60,20 @@ async function generateBloco0ECD(config: SpedECDConfig): Promise<string[]> {
   lines.push(`|0001|0|`);
   
   // 0007: Dados da Empresa
+  interface OrganizationRow {
+    document: string;
+    name: string;
+  }
+  
   const orgResult = await db.execute(sql`
     SELECT document, name FROM organizations WHERE id = ${config.organizationId}
   `);
   
-  const orgData = (orgResult.recordset || orgResult) as Array<{ document?: string; name?: string }>;
+  const orgData = (orgResult.recordset || orgResult) as Array<OrganizationRow>;
   const org = orgData[0];
+  if (!org) {
+    throw new Error('Organização não encontrada');
+  }
   lines.push(`|0007|${org.document}|${org.name}||||||||`);
   
   // 0020: Dados do Contabilista

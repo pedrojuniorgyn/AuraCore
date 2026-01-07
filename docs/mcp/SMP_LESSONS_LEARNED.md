@@ -30,7 +30,7 @@ LL-YYYY-MM-DD-NNN
 | SMP-INFRA | 1 | LL-2026-01-07-001 |
 | SMP-MAP | 1 | LL-2026-01-07-002 |
 | SMP-CAT | 0 | - |
-| SMP-EXEC | 4 | LL-2026-01-07-006 |
+| SMP-EXEC | 7 | LL-2026-01-07-009 |
 | SMP-VERIFY | 0 | - |
 
 ---
@@ -244,25 +244,161 @@ const row = (result.recordset || result)[0];
 
 ---
 
+### LL-2026-01-07-007: Migração Incompleta de Helper
+
+**Contexto:** Épico E7.15 - Migração para helper getDbRows  
+**Bug/Issue:** Alguns usos de `.recordset` não foram migrados, permanecendo acesso direto  
+**Causa Raiz:** Busca grep incompleta durante mapeamento, não identificou todos os `.recordset.` e `.recordset[`  
+**Categoria:** SMP-EXEC  
+**Impacto:** MÉDIO
+
+**Antes (Migração Incompleta):**
+```typescript
+// Helper criado mas não usado em todos os lugares
+import { getFirstRow } from '@/lib/db/helpers';
+
+// Linha migrada
+const entry = getFirstRow<EntryRow>(entryResult);
+
+// Linhas NÃO migradas no mesmo arquivo
+if (items.recordset.length > 0) {
+  for (const item of items.recordset) { ... }
+}
+```
+
+**Depois (Migração Completa):**
+```typescript
+import { getFirstRow, getDbRows } from '@/lib/db/helpers';
+
+const entry = getFirstRow<EntryRow>(entryResult);
+
+const itemsData = getDbRows<ItemRow>(items);
+if (itemsData.length > 0) {
+  for (const item of itemsData) { ... }
+}
+```
+
+**Regra Criada:**
+- **SMP-EXEC-002:** Após migração, grep final DEVE retornar 0 para padrão antigo
+- **SMP-VERIFY-002:** Verificar TODOS os padrões (.recordset., .recordset[, etc)
+
+**Prevenção:**
+- Durante SMP-EXEC, após cada arquivo, executar grep para confirmar
+- Durante SMP-VERIFY, buscar múltiplas variações do padrão antigo
+
+---
+
+### LL-2026-01-07-008: Generic Muito Amplo (Record<string, unknown>)
+
+**Contexto:** Épico E7.15 - Uso de helper getFirstRow  
+**Bug/Issue:** Propriedades tipadas como `unknown` ao invés de tipos específicos  
+**Causa Raiz:** Usar `Record<string, unknown>` genérico ao invés de criar interface com propriedades conhecidas  
+**Categoria:** SMP-EXEC  
+**Impacto:** MÉDIO
+
+**Antes (Generic Amplo):**
+```typescript
+// Tipo muito genérico
+const account = getFirstRow<Record<string, unknown>>(result);
+
+// Todas as propriedades são unknown
+if (account.is_analytical) { ... }  // Tipo: unknown ❌
+const id = account.id;               // Tipo: unknown ❌
+```
+
+**Depois (Interface Específica):**
+```typescript
+// Interface com tipos específicos
+interface AccountRow {
+  id: number;
+  code: string;
+  name: string;
+  is_analytical: boolean;
+  account_type?: string;
+}
+
+const account = getFirstRow<AccountRow>(result);
+if (account?.is_analytical) { ... }  // Tipo: boolean ✅
+const id = account?.id;              // Tipo: number ✅
+```
+
+**Regra Criada:**
+- **P-TYPE-007:** Criar interface específica ao invés de Record<string, unknown> quando propriedades são conhecidas
+- **VAT-011:** Identificar propriedades acessadas e tipar corretamente
+
+**Prevenção:**
+- Antes de usar generic, listar propriedades que serão acessadas
+- Criar interface local ou compartilhada para tipos de row do banco
+
+---
+
+### LL-2026-01-07-009: Falta Verificação Null após getFirstRow
+
+**Contexto:** Épico E7.15 - Uso de helper getFirstRow  
+**Bug/Issue:** Acesso a propriedades sem verificar se row existe (crash em runtime)  
+**Causa Raiz:** Não usar `getFirstRowOrThrow` nem verificar null manualmente  
+**Categoria:** SMP-EXEC  
+**Impacto:** CRÍTICO
+
+**Antes (Sem Verificação):**
+```typescript
+// getFirstRow retorna T | undefined
+const orgData = getDbRows<OrgRow>(orgResult);
+const org = orgData[0];  // Pode ser undefined!
+
+// Acesso direto SEM verificar
+console.log(org.document);  // CRASH se org é undefined ❌
+console.log(org.name);      // CRASH se org é undefined ❌
+```
+
+**Depois Opção A (getFirstRowOrThrow):**
+```typescript
+import { getFirstRowOrThrow } from '@/lib/db/helpers';
+
+// Lança erro com mensagem clara se não existir
+const org = getFirstRowOrThrow<OrgRow>(orgResult, 'Organização não encontrada');
+console.log(org.document);  // Seguro - org é garantido existir ✅
+```
+
+**Depois Opção B (Verificação Manual):**
+```typescript
+const org = getFirstRow<OrgRow>(orgResult);
+if (!org) {
+  throw new Error('Organização não encontrada');
+}
+console.log(org.document);  // Seguro após verificação ✅
+```
+
+**Regra Criada:**
+- **P-DB-006:** getFirstRow DEVE ter verificação null ou usar getFirstRowOrThrow
+- **P-DB-007:** NUNCA acessar propriedades de row sem verificar existência
+
+**Prevenção:**
+- Usar getFirstRowOrThrow quando row é obrigatório
+- Usar getFirstRow + verificação quando row pode não existir
+- TypeScript strict mode ajuda a detectar (usar optional chaining)
+
+---
+
 ## 📊 ESTATÍSTICAS
 
 ### Bugs por Categoria SMP
 
 | Categoria | Total | % |
 |-----------|-------|---|
-| SMP-INFRA | 1 | 16.7% |
-| SMP-MAP | 1 | 16.7% |
+| SMP-INFRA | 1 | 11.1% |
+| SMP-MAP | 1 | 11.1% |
 | SMP-CAT | 0 | 0% |
-| SMP-EXEC | 4 | 66.6% |
+| SMP-EXEC | 7 | 77.8% |
 | SMP-VERIFY | 0 | 0% |
 
 ### Bugs por Impacto
 
 | Impacto | Total | % |
 |---------|-------|---|
-| CRÍTICO | 3 | 50% |
-| ALTO | 2 | 33.3% |
-| MÉDIO | 1 | 16.7% |
+| CRÍTICO | 4 | 44.4% |
+| ALTO | 2 | 22.2% |
+| MÉDIO | 3 | 33.3% |
 | BAIXO | 0 | 0% |
 
 ### Regras Criadas
@@ -279,6 +415,12 @@ const row = (result.recordset || result)[0];
 | VAT-002 | LL-2026-01-07-005 |
 | SP-001 | LL-2026-01-07-006 |
 | VAT-007 | LL-2026-01-07-006 |
+| SMP-EXEC-002 | LL-2026-01-07-007 |
+| SMP-VERIFY-002 | LL-2026-01-07-007 |
+| P-TYPE-007 | LL-2026-01-07-008 |
+| VAT-011 | LL-2026-01-07-008 |
+| P-DB-006 | LL-2026-01-07-009 |
+| P-DB-007 | LL-2026-01-07-009 |
 
 ---
 

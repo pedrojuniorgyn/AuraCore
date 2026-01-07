@@ -1,4 +1,4 @@
-import { db, getFirstRow } from "@/lib/db";
+import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -20,6 +20,36 @@ export interface JournalEntryResult {
   totalCredit?: number;
   lines?: number;
   error?: string;
+}
+
+// Database row interfaces
+interface AccountRow {
+  id: number;
+  code: string;
+  name: string;
+  is_analytical: boolean;
+  account_type?: string;
+  parent_id?: number;
+}
+
+interface JournalEntryRow {
+  id: number;
+  status: string;
+  entry_date: Date;
+  entry_type?: string;
+  description?: string;
+  total_debit?: number;
+  total_credit?: number;
+}
+
+interface FiscalDocumentItemRow {
+  id: number;
+  fiscal_document_id: number;
+  chart_account_id: number | null;
+  chart_account_code: string | null;
+  chart_account_name: string | null;
+  total_value: number;
+  [key: string]: unknown;
 }
 
 /**
@@ -59,7 +89,8 @@ export async function generateJournalEntry(
         AND fdi.deleted_at IS NULL
     `);
 
-    if (items.recordset.length === 0) {
+    const itemsData = getDbRows<FiscalDocumentItemRow>(items);
+    if (itemsData.length === 0) {
       throw new Error("Documento sem itens para contabilizar");
     }
 
@@ -100,7 +131,7 @@ export async function generateJournalEntry(
     let lineNumber = 1;
 
     // DÉBITOS: Uma linha por item (agrupado por plano de contas)
-    for (const item of items.recordset) {
+    for (const item of itemsData) {
       if (item.chart_account_id) {
         // ✅ VALIDAÇÃO: Verificar se conta é analítica
         const accountResult = await db.execute(sql`
@@ -110,11 +141,12 @@ export async function generateJournalEntry(
             AND deleted_at IS NULL
         `);
 
-        if (accountResult.recordset.length === 0) {
+        const accountData = getDbRows<AccountRow>(accountResult);
+        if (accountData.length === 0) {
           throw new Error(`Conta contábil ${item.chart_account_id} não encontrada`);
         }
 
-        const account = getFirstRow<Record<string, unknown>>(accountResult);
+        const account = accountData[0];
 
         // ✅ VALIDAÇÃO CRÍTICA: Bloquear lançamento em conta sintética
         if (!account.is_analytical) {
@@ -128,7 +160,8 @@ export async function generateJournalEntry(
             ORDER BY code ASC
           `);
 
-          const analyticalList = analyticalAccountsResult.recordset
+          const analyticalAccounts = getDbRows<{ code: string; name: string }>(analyticalAccountsResult);
+          const analyticalList = analyticalAccounts
             .map(a => `• ${a.code} - ${a.name}`)
             .join('\n');
 
@@ -177,8 +210,9 @@ export async function generateJournalEntry(
       ORDER BY code ASC
     `);
 
-    if (creditAccountResult.recordset.length > 0) {
-      const creditAccount = getFirstRow<Record<string, unknown>>(creditAccountResult);
+    const creditAccountData = getDbRows<AccountRow>(creditAccountResult);
+    if (creditAccountData.length > 0) {
+      const creditAccount = creditAccountData[0];
 
       await db.execute(sql`
         INSERT INTO journal_entry_lines (
@@ -244,11 +278,12 @@ export async function reverseJournalEntry(
       SELECT * FROM journal_entries WHERE id = ${journalEntryId}
     `);
 
-    if (entryResult.recordset.length === 0) {
+    const entryData = getDbRows<JournalEntryRow>(entryResult);
+    if (entryData.length === 0) {
       throw new Error("Lançamento não encontrado");
     }
 
-    const entry = getFirstRow<Record<string, unknown>>(entryResult);
+    const entry = entryData[0];
 
     // 2. Validar se pode reverter
     if (entry.status === "REVERSED") {
