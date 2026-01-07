@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,16 +82,6 @@ export default function UsersManagementPage() {
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (!inviteOpen) return;
-    loadInviteData();
-     
-  }, [inviteOpen]);
-
   const fetchUsers = async () => {
     try {
       const response = await fetch("/api/admin/users");
@@ -105,6 +95,36 @@ export default function UsersManagementPage() {
       setLoading(false);
     }
   };
+
+  const loadInviteData = useCallback(async () => {
+    try {
+      const [rolesRes, branchesRes] = await Promise.all([
+        fetch("/api/admin/roles", { credentials: "include" }),
+        fetch("/api/branches", { credentials: "include" }),
+      ]);
+
+      if (rolesRes.ok) {
+        const data = await rolesRes.json();
+        setRoles(data.data || []);
+      }
+
+      if (branchesRes.ok) {
+        const data = await branchesRes.json();
+        setBranches(data.data || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados do convite:", error);
+    }
+  }, []); // Empty deps: setRoles e setBranches são estáveis
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    if (!inviteOpen) return;
+    loadInviteData();
+  }, [inviteOpen, loadInviteData]);
 
   const openPassword = (u: User) => {
     setPasswordUser(u);
@@ -140,27 +160,6 @@ export default function UsersManagementPage() {
       toast.error("Erro ao definir senha", { description: err?.message });
     } finally {
       setSavingPassword(false);
-    }
-  };
-
-  const loadInviteData = async () => {
-    try {
-      const [rolesRes, branchesRes] = await Promise.all([
-        fetch("/api/admin/roles", { credentials: "include" }),
-        fetch("/api/branches", { credentials: "include" }),
-      ]);
-
-      if (rolesRes.ok) {
-        const data = await rolesRes.json();
-        setRoles(data.data || []);
-      }
-
-      if (branchesRes.ok) {
-        const data = await branchesRes.json();
-        setBranches(data.data || []);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar dados do convite:", error);
     }
   };
 
