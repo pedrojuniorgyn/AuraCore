@@ -80,6 +80,7 @@ export async function generateJournalEntry(
     const items = await db.execute(sql`
       SELECT 
         fdi.id,
+        fdi.fiscal_document_id,
         fdi.chart_account_id,
         fdi.net_amount,
         coa.code AS chart_account_code,
