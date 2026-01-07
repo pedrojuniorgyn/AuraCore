@@ -9,6 +9,82 @@ import sql from "mssql";
 
 dotenv.config();
 
+// Interfaces para tipagem das rows do banco
+interface CountRow {
+  total: number;
+  quantidade?: number;
+  t?: number;
+  table_exists?: number;
+}
+
+interface TypeGroupRow {
+  type?: string;
+  quantidade: number;
+}
+
+interface CategoryGroupRow {
+  category?: string;
+  quantidade: number;
+}
+
+interface PccSampleRow {
+  code?: string;
+  name?: string;
+  type?: string;
+  category?: string;
+  status?: string;
+}
+
+interface PcgSampleRow {
+  code?: string;
+  name?: string;
+  type?: string;
+  category?: string;
+  allocation_rule?: string;
+}
+
+interface ClassGroupRow {
+  class?: string;
+  quantidade: number;
+}
+
+interface CcSampleRow {
+  code?: string;
+  name?: string;
+  class?: string;
+  service_type?: string;
+  status?: string;
+}
+
+interface PcgNcmSampleRow {
+  ncm_code?: string;
+  ncm_description?: string;
+  flag_pis_cofins_monofasico?: number;
+  flag_icms_st?: number;
+}
+
+interface MovementTypeGroupRow {
+  tipo_movimento?: string;
+  quantidade: number;
+}
+
+interface DfcGroupRow {
+  grupo_dfc?: string;
+  quantidade: number;
+}
+
+interface CfSampleRow {
+  code?: string;
+  name?: string;
+  tipo_movimento?: string;
+  grupo_dfc?: string;
+}
+
+interface DuplicateRow {
+  code?: string;
+  quantidade: number;
+}
+
 const config: sql.config = {
   user: process.env.DB_USER as string,
   password: process.env.DB_PASSWORD as string,
@@ -70,17 +146,17 @@ async function run() {
 
     console.log(`✅ Total de Contas PCC: ${pccTotal.recordset[0].total}`);
     console.log("\nPor Tipo:");
-    pccByType.recordset.forEach((row: any) => {
+    pccByType.recordset.forEach((row: TypeGroupRow) => {
       console.log(`   ${row.type?.padEnd(25)} → ${row.quantidade} contas`);
     });
 
     console.log("\nPor Categoria:");
-    pccByCategory.recordset.forEach((row: any) => {
+    pccByCategory.recordset.forEach((row: CategoryGroupRow) => {
       console.log(`   ${(row.category || 'NULL').padEnd(25)} → ${row.quantidade} contas`);
     });
 
     console.log("\nAmostra (10 primeiras):");
-    pccSample.recordset.forEach((row: any) => {
+    pccSample.recordset.forEach((row: PccSampleRow) => {
       console.log(`   ${row.code?.padEnd(20)} ${row.name?.substring(0, 40).padEnd(42)} [${row.type}]`);
     });
 
@@ -127,12 +203,12 @@ async function run() {
       
       if (pcgTotal.recordset[0].total > 0) {
         console.log("\nPor Tipo:");
-        pcgByType.recordset.forEach((row: any) => {
+        pcgByType.recordset.forEach((row: TypeGroupRow) => {
           console.log(`   ${row.type?.padEnd(25)} → ${row.quantidade} contas`);
         });
 
         console.log("\nAmostra (até 20):");
-        pcgSample.recordset.forEach((row: any) => {
+        pcgSample.recordset.forEach((row: PcgSampleRow) => {
           console.log(`   ${row.code?.padEnd(15)} ${row.name?.substring(0, 35).padEnd(37)} [${row.type}]`);
         });
       } else {
@@ -173,12 +249,12 @@ async function run() {
     
     if (ccTotal.recordset[0].total > 0) {
       console.log("\nPor Classe:");
-      ccByClass.recordset.forEach((row: any) => {
+      ccByClass.recordset.forEach((row: ClassGroupRow) => {
         console.log(`   ${(row.class || 'NULL').padEnd(25)} → ${row.quantidade} centros`);
       });
 
       console.log("\nAmostra (até 20):");
-      ccSample.recordset.forEach((row: any) => {
+      ccSample.recordset.forEach((row: CcSampleRow) => {
         console.log(`   ${row.code?.padEnd(12)} ${row.name?.substring(0, 40).padEnd(42)} [${row.class || 'NULL'}]`);
       });
     } else {
@@ -224,7 +300,7 @@ async function run() {
 
       if (pcgNcmTotal.recordset[0].total > 0) {
         console.log("\nAmostra (10 primeiras):");
-        pcgNcmSample.recordset.forEach((row: any) => {
+        pcgNcmSample.recordset.forEach((row: PcgNcmSampleRow) => {
           const mono = row.flag_pis_cofins_monofasico ? '✅ MONO' : '❌';
           const st = row.flag_icms_st ? '✅ ST' : '❌';
           console.log(`   ${row.ncm_code?.padEnd(12)} ${row.ncm_description?.substring(0, 30).padEnd(32)} ${mono} ${st}`);
@@ -277,17 +353,17 @@ async function run() {
     
     if (cfTotal.recordset[0].total > 0) {
       console.log("\nPor Tipo de Movimento:");
-      cfByTipo.recordset.forEach((row: any) => {
+      cfByTipo.recordset.forEach((row: MovementTypeGroupRow) => {
         console.log(`   ${(row.tipo_movimento || 'NULL').padEnd(25)} → ${row.quantidade} categorias`);
       });
 
       console.log("\nPor Grupo DFC:");
-      cfByGrupo.recordset.forEach((row: any) => {
+      cfByGrupo.recordset.forEach((row: DfcGroupRow) => {
         console.log(`   ${(row.grupo_dfc || 'NULL').padEnd(25)} → ${row.quantidade} categorias`);
       });
 
       console.log("\nAmostra (10 primeiras):");
-      cfSample.recordset.forEach((row: any) => {
+      cfSample.recordset.forEach((row: CfSampleRow) => {
         console.log(`   ${row.code?.padEnd(10)} ${row.name?.substring(0, 35).padEnd(37)} [${row.tipo_movimento}/${row.grupo_dfc}]`);
       });
     }
@@ -325,7 +401,7 @@ async function run() {
 
     if (pccDuplicates.recordset.length > 0) {
       console.log("⚠️  CÓDIGOS PCC DUPLICADOS:");
-      pccDuplicates.recordset.forEach((row: any) => {
+      pccDuplicates.recordset.forEach((row: DuplicateRow) => {
         console.log(`   ${row.code} → ${row.quantidade}x`);
       });
     } else {
@@ -343,7 +419,7 @@ async function run() {
 
     if (ccDuplicates.recordset.length > 0) {
       console.log("⚠️  CÓDIGOS CC DUPLICADOS:");
-      ccDuplicates.recordset.forEach((row: any) => {
+      ccDuplicates.recordset.forEach((row: DuplicateRow) => {
         console.log(`   ${row.code} → ${row.quantidade}x`);
       });
     } else {
@@ -371,10 +447,11 @@ async function run() {
 
     console.log("\n");
 
-  } catch (error: any) {
-    console.error("\n❌ ERRO:", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
-  } finally {
+  } finally{
     await pool.close();
   }
 }

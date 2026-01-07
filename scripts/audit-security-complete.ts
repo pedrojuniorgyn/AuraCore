@@ -15,6 +15,63 @@ import sql from "mssql";
 
 dotenv.config();
 
+// Interfaces para tipagem das rows do banco
+interface OrganizationRow {
+  id: number;
+  name: string;
+  document: string;
+  plan: string;
+  status: string;
+  created_at: Date;
+}
+
+interface UserRow {
+  id: number;
+  name?: string;
+  email: string;
+  role: string;
+  organization_id: number;
+  default_branch_id?: number;
+}
+
+interface BranchRow {
+  id: number;
+  name: string;
+  document: string;
+  organization_id: number;
+  environment: string;
+  created_at: Date;
+}
+
+interface RoleRow {
+  id: number;
+  name: string;
+  description: string;
+}
+
+interface PermissionRow {
+  id: number;
+  slug: string;
+  description: string;
+}
+
+interface RolePermissionCountRow {
+  role_name: string;
+  permission_count: number;
+}
+
+interface UserRoleRow {
+  email: string;
+  role_name: string;
+  organization_id: number;
+}
+
+interface UserBranchRow {
+  email: string;
+  branch_name: string;
+  created_at: Date;
+}
+
 const config: sql.config = {
   user: process.env.DB_USER as string,
   password: process.env.DB_PASSWORD as string,
@@ -44,7 +101,7 @@ async function run() {
     `);
 
     console.log(`   Organizações Ativas: ${orgs.recordset.length}\n`);
-    orgs.recordset.forEach((o: any) => {
+    orgs.recordset.forEach((o: OrganizationRow) => {
       console.log(`   ${o.id.toString().padStart(3)} - ${o.name.padEnd(35)} [${o.plan}] ${o.status}`);
     });
 
@@ -55,7 +112,7 @@ async function run() {
     `);
 
     console.log(`\n   Usuários Ativos: ${users.recordset.length}\n`);
-    users.recordset.forEach((u: any) => {
+    users.recordset.forEach((u: UserRow) => {
       console.log(`   ${u.name?.padEnd(30) || "SEM NOME".padEnd(30)} ${u.email.padEnd(35)} ${u.role}`);
       console.log(`      ├─ Org: ${u.organization_id} | Filial Padrão: ${u.default_branch_id || "N/A"}`);
     });
@@ -72,7 +129,7 @@ async function run() {
     `);
 
     console.log(`   Filiais Ativas: ${branches.recordset.length}\n`);
-    branches.recordset.forEach((b: any) => {
+    branches.recordset.forEach((b: BranchRow) => {
       console.log(`   ${b.id.toString().padStart(3)} - ${b.name.padEnd(45)} CNPJ: ${b.document}`);
       console.log(`      ├─ Org: ${b.organization_id} | Ambiente: ${b.environment}`);
     });
@@ -84,13 +141,13 @@ async function run() {
 
     const roles = await pool.request().query(`SELECT * FROM roles`);
     console.log(`   Roles: ${roles.recordset.length}\n`);
-    roles.recordset.forEach((r: any) => {
+    roles.recordset.forEach((r: RoleRow) => {
       console.log(`   ${r.id.toString().padStart(2)} - ${r.name.padEnd(15)} ${r.description}`);
     });
 
     const perms = await pool.request().query(`SELECT * FROM permissions ORDER BY id`);
     console.log(`\n   Permissions: ${perms.recordset.length}\n`);
-    perms.recordset.forEach((p: any) => {
+    perms.recordset.forEach((p: PermissionRow) => {
       console.log(`   ${p.id.toString().padStart(2)} - ${p.slug.padEnd(30)} ${p.description}`);
     });
 
@@ -105,7 +162,7 @@ async function run() {
     `);
 
     console.log(`\n   Permissões por Role:\n`);
-    rolePerms.recordset.forEach((rp: any) => {
+    rolePerms.recordset.forEach((rp: RolePermissionCountRow) => {
       console.log(`   ${rp.role_name.padEnd(15)} → ${rp.permission_count.toString().padStart(2)} permissões`);
     });
 
@@ -120,7 +177,7 @@ async function run() {
     `);
 
     console.log(`\n   Usuários com Roles: ${userRoles.recordset.length}\n`);
-    userRoles.recordset.forEach((ur: any) => {
+    userRoles.recordset.forEach((ur: UserRoleRow) => {
       console.log(`   ${ur.email.padEnd(40)} → ${ur.role_name.padEnd(15)} (Org: ${ur.organization_id})`);
     });
 
@@ -143,7 +200,7 @@ async function run() {
     console.log(`   Acessos configurados: ${userBranches.recordset.length}\n`);
     
     if (userBranches.recordset.length > 0) {
-      userBranches.recordset.forEach((ub: any) => {
+      userBranches.recordset.forEach((ub: UserBranchRow) => {
         console.log(`   ${ub.email.padEnd(40)} → ${ub.branch_name}`);
       });
     } else {
@@ -180,8 +237,9 @@ async function run() {
           console.log(`   ❌ ${table.name.padEnd(40)} NÃO EXISTE`);
           console.log(`      └─ ${table.description}`);
         }
-      } catch (e: any) {
-        console.log(`   ⚠️  ${table.name.padEnd(40)} ERRO: ${e.message}`);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`   ⚠️  ${table.name.padEnd(40)} ERRO: ${message}`);
       }
     }
 
@@ -319,8 +377,9 @@ async function run() {
     console.log("✅ AUDITORIA CONCLUÍDA");
     console.log("═".repeat(70) + "\n");
 
-  } catch (error: any) {
-    console.error("\n❌ ERRO:", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();

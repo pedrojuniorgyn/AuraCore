@@ -113,8 +113,9 @@ for (const file of files) {
       console.log(`  ⏭️  ${file} (já está correto ou não precisa mudança)`);
     }
     
-  } catch (error: any) {
-    console.error(`  ❌ ${file}: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`  ❌ ${file}: ${message}`);
     errorCount++;
   }
 }
