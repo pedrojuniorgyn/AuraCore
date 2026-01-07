@@ -365,9 +365,9 @@ export class DrizzleStockRepository implements IStockRepository {
 
     // Map to domain
     return records
-      .map((record: any) => StockItemMapper.toDomain(record))
-      .filter((result: any) => Result.isOk(result))
-      .map((r: any) => r.value);
+      .map((record) => StockItemMapper.toDomain(record))
+      .filter((result): result is Result<StockItem, string> & { value: StockItem } => Result.isOk(result))
+      .map((r) => r.value);
   }
 
   /**

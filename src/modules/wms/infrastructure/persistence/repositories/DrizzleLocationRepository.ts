@@ -221,9 +221,9 @@ export class DrizzleLocationRepository implements ILocationRepository {
 
     // Map to domain
     return records
-      .map((record: any) => LocationMapper.toDomain(record))
-      .filter((result: any) => Result.isOk(result))
-      .map((r: any) => r.value);
+      .map((record) => LocationMapper.toDomain(record))
+      .filter((result): result is Result<Location, string> & { value: Location } => Result.isOk(result))
+      .map((r) => r.value);
   }
 
   /**

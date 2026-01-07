@@ -1,4 +1,4 @@
-import { eq, and, isNull, gte, lte, or, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, gte, lte, or, desc, sql, type SQL } from 'drizzle-orm';
 import type { IMovementRepository } from '../../../domain/ports/IMovementRepository';
 import { StockMovement } from '../../../domain/entities/StockMovement';
 import type { MovementType } from '../../../domain/value-objects/MovementType';
@@ -269,7 +269,7 @@ export class DrizzleMovementRepository implements IMovementRepository {
     }
 
     // Location filter handled separately due to OR condition
-    let locationCondition: any = null;
+    let locationCondition: SQL | null = null;
     if (filters.locationId) {
       locationCondition = or(
         eq(wmsStockMovements.fromLocationId, filters.locationId),
@@ -296,9 +296,9 @@ export class DrizzleMovementRepository implements IMovementRepository {
 
     // Map to domain
     return records
-      .map((record: any) => StockMovementMapper.toDomain(record))
-      .filter((result: any) => Result.isOk(result))
-      .map((r: any) => r.value);
+      .map((record) => StockMovementMapper.toDomain(record))
+      .filter((result): result is Result<StockMovement, string> & { value: StockMovement } => Result.isOk(result))
+      .map((r) => r.value);
   }
 
   /**
@@ -337,7 +337,7 @@ export class DrizzleMovementRepository implements IMovementRepository {
     }
 
     // Location filter handled separately due to OR condition
-    let locationCondition: any = null;
+    let locationCondition: SQL | null = null;
     if (filters.locationId) {
       locationCondition = or(
         eq(wmsStockMovements.fromLocationId, filters.locationId),
