@@ -208,8 +208,20 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       detArray = [detArray]; // Converte para array se for item único
     }
     
+    interface ProdInfo {
+      cProd?: unknown;
+      xProd?: string;
+      cEAN?: unknown;
+      NCM?: unknown;
+      CFOP?: unknown;
+      uCom?: string;
+      qCom?: unknown;
+      vUnCom?: unknown;
+      vProd?: unknown;
+    }
+    
     const items = detArray.map((det: Record<string, unknown>, index: number) => {
-      const prod = det.prod;
+      const prod = det.prod as ProdInfo;
       const imposto = det.imposto;
       
       // Extrai CST (pode estar em ICMS, ICMSSN, etc)
@@ -280,7 +292,8 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao fazer parse do XML:", error);
-    throw new Error(`Falha ao processar XML da NFe: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Falha ao processar XML da NFe: ${errorMessage}`);
   }
 }
 
@@ -321,10 +334,25 @@ export function isValidNFeXML(xmlString: string): boolean {
 /**
  * Extrai informações de pagamento da NFe
  */
+interface InfNFePartial {
+  pag?: {
+    detPag?: unknown;
+  };
+  cobr?: {
+    dup?: unknown;
+  };
+  ide?: {
+    dhEmi?: string;
+    dEmi?: string;
+  };
+}
+
 function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment'] | undefined {
   try {
+    const typedInfNFe = infNFe as InfNFePartial;
+    
     // Tag <pag> - Formas de Pagamento
-    const pag = infNFe.pag;
+    const pag = typedInfNFe.pag;
     if (!pag) {
       return undefined;
     }
@@ -345,7 +373,7 @@ function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment
     const paymentIndicator = firstPag.indPag?.toString() || "0";
     
     // Tag <cobr><dup> - Duplicatas/Parcelas
-    const cobr = infNFe.cobr;
+    const cobr = typedInfNFe.cobr;
     const installments: Array<{ number: string; dueDate: Date; amount: number }> = [];
     
     if (cobr && cobr.dup) {
@@ -366,8 +394,8 @@ function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment
     }
     
     // Se não há duplicatas mas há pagamento, cria 1 parcela (à vista)
-    if (installments.length === 0 && firstPag.vPag) {
-      const issueDate = new Date(infNFe.ide.dhEmi || infNFe.ide.dEmi);
+    if (installments.length === 0 && firstPag.vPag && typedInfNFe.ide) {
+      const issueDate = new Date(typedInfNFe.ide.dhEmi || typedInfNFe.ide.dEmi || "");
       installments.push({
         number: "001",
         dueDate: issueDate, // Vence no mesmo dia (à vista)
@@ -381,7 +409,8 @@ function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment
       installments,
     };
   } catch (error: unknown) {
-    console.error("⚠️  Erro ao extrair informações de pagamento:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("⚠️  Erro ao extrair informações de pagamento:", errorMessage);
     return undefined;
   }
 }
