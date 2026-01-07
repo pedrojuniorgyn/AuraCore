@@ -20,7 +20,7 @@ export class StockItemMapper {
       persistence.quantityUnit as UnitOfMeasure
     );
     if (!Result.isOk(quantityResult)) {
-      return Result.fail<any>(quantityResult.error);
+      return Result.fail(quantityResult.error);
     }
 
     // Reconstituir reservedQuantity
@@ -29,7 +29,7 @@ export class StockItemMapper {
       persistence.reservedQuantityUnit as UnitOfMeasure
     );
     if (!Result.isOk(reservedResult)) {
-      return Result.fail<any>(reservedResult.error);
+      return Result.fail(reservedResult.error);
     }
 
     // Reconstituir unitCost (INFRA-002: Money com currency)
@@ -38,7 +38,7 @@ export class StockItemMapper {
       persistence.unitCostCurrency
     );
     if (!Result.isOk(unitCostResult)) {
-      return Result.fail<any>(unitCostResult.error);
+      return Result.fail(unitCostResult.error);
     }
 
     // Usar reconstitute para preservar timestamps
@@ -58,7 +58,7 @@ export class StockItemMapper {
     });
 
     if (!Result.isOk(stockItemResult)) {
-      return Result.fail<any>(stockItemResult.error);
+      return Result.fail(stockItemResult.error);
     }
 
     return Result.ok(stockItemResult.value);

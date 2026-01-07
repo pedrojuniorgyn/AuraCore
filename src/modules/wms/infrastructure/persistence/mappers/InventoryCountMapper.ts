@@ -19,7 +19,7 @@ export class InventoryCountMapper {
       persistence.systemQuantityUnit as UnitOfMeasure
     );
     if (!Result.isOk(systemQtyResult)) {
-      return Result.fail<any>(systemQtyResult.error);
+      return Result.fail(systemQtyResult.error);
     }
 
     // Reconstituir countedQuantity se existir
@@ -30,7 +30,7 @@ export class InventoryCountMapper {
         persistence.countedQuantityUnit as UnitOfMeasure
       );
       if (!Result.isOk(countedResult)) {
-        return Result.fail<any>(countedResult.error);
+        return Result.fail(countedResult.error);
       }
       countedQuantity = countedResult.value;
     }
@@ -38,7 +38,7 @@ export class InventoryCountMapper {
     // Reconstituir status
     const statusResult = InventoryStatus.reconstitute(persistence.status as InventoryStatusEnum);
     if (!Result.isOk(statusResult)) {
-      return Result.fail<any>(statusResult.error);
+      return Result.fail(statusResult.error);
     }
 
     // Usar reconstitute para preservar timestamps
@@ -59,7 +59,7 @@ export class InventoryCountMapper {
     });
 
     if (!Result.isOk(inventoryCountResult)) {
-      return Result.fail<any>(inventoryCountResult.error);
+      return Result.fail(inventoryCountResult.error);
     }
 
     return Result.ok(inventoryCountResult.value);

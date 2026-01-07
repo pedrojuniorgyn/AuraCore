@@ -18,7 +18,7 @@ export class StockMovementMapper {
     // Reconstituir MovementType
     const typeResult = MovementType.reconstitute(persistence.type as MovementTypeEnum);
     if (!Result.isOk(typeResult)) {
-      return Result.fail<any>(typeResult.error);
+      return Result.fail(typeResult.error);
     }
 
     // Reconstituir quantity
@@ -27,7 +27,7 @@ export class StockMovementMapper {
       persistence.quantityUnit as UnitOfMeasure
     );
     if (!Result.isOk(quantityResult)) {
-      return Result.fail<any>(quantityResult.error);
+      return Result.fail(quantityResult.error);
     }
 
     // Reconstituir unitCost (INFRA-002: Money com currency)
@@ -36,7 +36,7 @@ export class StockMovementMapper {
       persistence.unitCostCurrency
     );
     if (!Result.isOk(unitCostResult)) {
-      return Result.fail<any>(unitCostResult.error);
+      return Result.fail(unitCostResult.error);
     }
 
     // Reconstituir totalCost (INFRA-002: Money com currency)
@@ -45,7 +45,7 @@ export class StockMovementMapper {
       persistence.totalCostCurrency
     );
     if (!Result.isOk(totalCostResult)) {
-      return Result.fail<any>(totalCostResult.error);
+      return Result.fail(totalCostResult.error);
     }
 
     // Usar reconstitute para preservar timestamps
@@ -68,7 +68,7 @@ export class StockMovementMapper {
     });
 
     if (!Result.isOk(movementResult)) {
-      return Result.fail<any>(movementResult.error);
+      return Result.fail(movementResult.error);
     }
 
     return Result.ok(movementResult.value);

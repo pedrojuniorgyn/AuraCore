@@ -16,7 +16,7 @@ export class LocationMapper {
     // Reconstituir LocationCode
     const codeResult = LocationCode.reconstitute(persistence.code);
     if (!Result.isOk(codeResult)) {
-      return Result.fail<any>(codeResult.error);
+      return Result.fail(codeResult.error);
     }
 
     // Reconstituir capacity se existir
@@ -27,7 +27,7 @@ export class LocationMapper {
         persistence.capacityUnit as UnitOfMeasure
       );
       if (!Result.isOk(capacityResult)) {
-        return Result.fail<any>(capacityResult.error);
+        return Result.fail(capacityResult.error);
       }
       capacity = capacityResult.value;
     }
@@ -49,7 +49,7 @@ export class LocationMapper {
     });
 
     if (!Result.isOk(locationResult)) {
-      return Result.fail<any>(locationResult.error);
+      return Result.fail(locationResult.error);
     }
 
     return Result.ok(locationResult.value);
