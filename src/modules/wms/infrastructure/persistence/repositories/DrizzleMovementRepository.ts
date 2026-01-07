@@ -269,7 +269,7 @@ export class DrizzleMovementRepository implements IMovementRepository {
     }
 
     // Location filter handled separately due to OR condition
-    let locationCondition: SQL | null = null;
+    let locationCondition: SQL | undefined;
     if (filters.locationId) {
       locationCondition = or(
         eq(wmsStockMovements.fromLocationId, filters.locationId),
@@ -297,8 +297,8 @@ export class DrizzleMovementRepository implements IMovementRepository {
     // Map to domain
     return records
       .map((record) => StockMovementMapper.toDomain(record))
-      .filter((result): result is Result<StockMovement, string> & { value: StockMovement } => Result.isOk(result))
-      .map((r) => r.value);
+      .filter(Result.isOk)
+      .map((r) => r.value as StockMovement);
   }
 
   /**
@@ -337,7 +337,7 @@ export class DrizzleMovementRepository implements IMovementRepository {
     }
 
     // Location filter handled separately due to OR condition
-    let locationCondition: SQL | null = null;
+    let locationCondition: SQL | undefined;
     if (filters.locationId) {
       locationCondition = or(
         eq(wmsStockMovements.fromLocationId, filters.locationId),
