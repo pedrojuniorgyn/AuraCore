@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -38,11 +38,13 @@ export async function POST(
         AND deleted_at IS NULL
     `);
 
-    if (result.recordset.length === 0) {
+    const documents = getDbRows<{ id?: number; documentType?: string; partnerDocument?: string; xmlContent?: string }>(result);
+    
+    if (documents.length === 0) {
       return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
     }
 
-    const document = result.recordset[0];
+    const document = documents[0];
 
     if (!document.xmlContent) {
       return NextResponse.json({ error: "Documento sem XML para reclassificar" }, { status: 400 });
@@ -57,11 +59,13 @@ export async function POST(
       SELECT document FROM branches WHERE id = 1
     `);
 
-    if (branchResult.recordset.length === 0) {
+    const branch = getFirstRow<{ document?: string }>(branchResult);
+    
+    if (!branch) {
       return NextResponse.json({ error: "Filial não encontrada" }, { status: 404 });
     }
 
-    const branchCNPJ = branchResult.recordset[0].document;
+    const branchCNPJ = branch.document;
 
     // Parse NFe
     const parsedNFe = await parseNFeXML(document.xmlContent);

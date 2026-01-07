@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db, getFirstRow } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
 /**
@@ -52,7 +52,7 @@ export async function getNCMCategorization(
       return null;
     }
 
-    const row = result.recordset[0];
+    const row = getFirstRow<Record<string, unknown>>(result);
 
     return {
       categoryId: row.categoryId,
@@ -157,7 +157,7 @@ export async function getNCMCategorizationWithFallback(
     `);
 
     if (fallbackResult.recordset.length > 0) {
-      const row = fallbackResult.recordset[0];
+      const row = getFirstRow<Record<string, unknown>>(fallbackResult);
       return {
         categoryId: row.categoryId,
         categoryName: row.categoryName,

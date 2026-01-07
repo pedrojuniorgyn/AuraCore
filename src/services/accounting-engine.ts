@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db, getFirstRow } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -93,7 +93,8 @@ export async function generateJournalEntry(
       SELECT SCOPE_IDENTITY() AS id;
     `);
 
-    const journalEntryId = entryResult.recordset[0].id;
+    const entry = getFirstRow<{ id?: number }>(entryResult);
+    const journalEntryId = entry?.id;
 
     // 5. Criar linhas (partidas)
     let lineNumber = 1;
@@ -113,7 +114,7 @@ export async function generateJournalEntry(
           throw new Error(`Conta contábil ${item.chart_account_id} não encontrada`);
         }
 
-        const account = accountResult.recordset[0];
+        const account = getFirstRow<Record<string, unknown>>(accountResult);
 
         // ✅ VALIDAÇÃO CRÍTICA: Bloquear lançamento em conta sintética
         if (!account.is_analytical) {
@@ -177,7 +178,7 @@ export async function generateJournalEntry(
     `);
 
     if (creditAccountResult.recordset.length > 0) {
-      const creditAccount = creditAccountResult.recordset[0];
+      const creditAccount = getFirstRow<Record<string, unknown>>(creditAccountResult);
 
       await db.execute(sql`
         INSERT INTO journal_entry_lines (
@@ -247,7 +248,7 @@ export async function reverseJournalEntry(
       throw new Error("Lançamento não encontrado");
     }
 
-    const entry = entryResult.recordset[0];
+    const entry = getFirstRow<Record<string, unknown>>(entryResult);
 
     // 2. Validar se pode reverter
     if (entry.status === "REVERSED") {

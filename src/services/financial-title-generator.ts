@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db, getFirstRow } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -125,8 +125,9 @@ export async function generatePayableFromNFe(
       ORDER BY id DESC
     `);
 
-    const payableId = createdPayable.recordset[0].id;
-    const amount = parseFloat(createdPayable.recordset[0].amount);
+    const payableRow = getFirstRow<{ id?: number; amount?: string }>(createdPayable);
+    const payableId = payableRow?.id;
+    const amount = parseFloat(payableRow?.amount || "0");
 
     // 7. Atualizar status do documento fiscal
     await db
@@ -258,8 +259,9 @@ export async function generateReceivableFromCTe(
       ORDER BY id DESC
     `);
 
-    const receivableId = createdReceivable.recordset[0].id;
-    const amount = parseFloat(createdReceivable.recordset[0].amount);
+    const receivableRow = getFirstRow<{ id?: number; amount?: string }>(createdReceivable);
+    const receivableId = receivableRow?.id;
+    const amount = parseFloat(receivableRow?.amount || "0");
 
     // 6. Atualizar status do documento fiscal
     await db
