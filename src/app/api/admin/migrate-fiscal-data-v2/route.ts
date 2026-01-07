@@ -12,8 +12,6 @@ export async function GET() {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
-    const totalMigrated = 0;
-
     // 1️⃣ MIGRAR NFe
     console.log("1️⃣ Migrando NFes...");
     
