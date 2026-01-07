@@ -49,7 +49,7 @@ interface FiscalDocumentItemRow {
   chart_account_id: number | null;
   chart_account_code: string | null;
   chart_account_name: string | null;
-  total_value: number;
+  net_amount: number;
   [key: string]: unknown;
 }
 
@@ -81,7 +81,7 @@ export async function generateJournalEntry(
       SELECT 
         fdi.id,
         fdi.chart_account_id,
-        fdi.total_value,
+        fdi.net_amount,
         coa.code AS chart_account_code,
         coa.name AS chart_account_name
       FROM fiscal_document_items fdi
@@ -189,7 +189,7 @@ export async function generateJournalEntry(
             'DEBIT',
             ${item.chart_account_id},
             ${item.chart_account_name || 'Sem descrição'},
-            ${item.total_value},
+            ${item.net_amount},
             0.00,
             GETDATE()
           )
