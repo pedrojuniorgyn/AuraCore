@@ -1,4 +1,4 @@
-import { db, getFirstRow, getDbRows } from "@/lib/db";
+import { db, getFirstRowOrThrow, getDbRows } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -124,8 +124,12 @@ export async function generateJournalEntry(
       SELECT SCOPE_IDENTITY() AS id;
     `);
 
-    const entry = getFirstRow<{ id?: number }>(entryResult);
-    const journalEntryId = entry?.id;
+    interface JournalEntryRow {
+      id: number;
+    }
+
+    const entry = getFirstRowOrThrow<JournalEntryRow>(entryResult, 'Failed to create journal entry (SCOPE_IDENTITY not returned)');
+    const journalEntryId = entry.id;
 
     // 5. Criar linhas (partidas)
     let lineNumber = 1;
