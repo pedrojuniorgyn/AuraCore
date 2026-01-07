@@ -412,11 +412,12 @@ Padrões específicos do codebase AuraCore:
 
 | Regra | Padrão | Exemplo Correto |
 |-------|--------|-----------------|
-| PC-001 | db.execute() retorna `{ recordset: T[] }` | `result.recordset[0]` |
-| PC-002 | Fallback usa type guard para array | `Array.isArray(x) ? x[0] : undefined` |
+| PC-001 | db.execute() retorna `{ recordset: T[] }` OU `T[]` | `result.recordset[0]` |
+| PC-002 | Fallback db.execute usa `\|\|` pattern | `(result.recordset \|\| result)` |
 | PC-003 | XML parseado usa `Record<string, unknown>` | `nfeXml: Record<string, unknown>` |
 | PC-004 | Select union inclui TODOS os valores | `as 3 \| 6 \| 12 \| 24 \| 36 \| 60` |
 | PC-005 | Icon className usa `h-N w-N` (altura E largura) | `className="h-5 w-5"` |
+| PC-006 | NUNCA usar `Array.isArray()` em resultado db | Use `(result.recordset \|\| result)` |
 
 ### SEMANTIC-PRESERVATION (SP-001 a SP-003)
 
@@ -426,16 +427,21 @@ Padrões específicos do codebase AuraCore:
 | SP-002 | Fallback NÃO é quebrado | `a \|\| b` - ambos devem funcionar |
 | SP-003 | Tipo infere do USO, não da declaração | Ver como a variável é USADA, não só declarada |
 
-### Exemplo de Bug Prevenido por VAT-007
+### Exemplo de Bug Prevenido por VAT-007 e PC-006
 
 ```typescript
 // ❌ ERRADO - [0] em objeto retorna undefined
 const rule = result.recordset?.[0] || (result as { recordset: T[] })[0];
 // Problema: [0] acessa propriedade "0" do OBJETO, não elemento do array!
 
-// ✅ CORRETO - Type guard preserva semântica
+// ❌ ERRADO - Array.isArray é código morto (result é SEMPRE objeto)
 const rule = result.recordset?.[0] || 
   (Array.isArray(result) ? result[0] : undefined);
+// Problema: Array.isArray({ recordset: [...] }) = FALSE sempre
+
+// ✅ CORRETO - Padrão do codebase AuraCore (PC-006)
+const resultData = (result.recordset || result) as Array<Record<string, unknown>>;
+const rule = resultData[0];
 ```
 
 ---
