@@ -17,7 +17,7 @@ export interface CTEValidationInput {
 
 export interface ValidationResult {
   valid: boolean;
-  rule?: any;
+  rule?: Record<string, unknown>;
   calculations?: {
     icmsValue: number;
     fcpValue: number;
@@ -56,7 +56,7 @@ export class FiscalValidationEngine {
         AND is_active = 1
     `);
     
-    const rule = ruleResult.recordset?.[0] || (ruleResult as any)[0];
+    const rule = ruleResult.recordset?.[0] || (ruleResult as { recordset: Array<Record<string, unknown>> })[0];
     
     // 2. Validar se encontrou regra
     if (!rule) {
@@ -153,14 +153,14 @@ export class FiscalValidationEngine {
   static async batchValidate(
     organizationId: number, 
     cteIds: number[]
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     
     const results = {
       total: cteIds.length,
       valid: 0,
       warnings: 0,
       errors: 0,
-      details: [] as any[]
+      details: [] as Array<Record<string, unknown>>
     };
     
     for (const cteId of cteIds) {
@@ -174,7 +174,7 @@ export class FiscalValidationEngine {
         WHERE cte.id = ${cteId}
       `);
       
-      const cte = cteResult.recordset?.[0] || (cteResult as any)[0];
+      const cte = cteResult.recordset?.[0] || (cteResult as { recordset: Array<Record<string, unknown>> })[0];
       if (!cte) continue;
       
       const validation = await this.validateCTE(organizationId, {
@@ -209,7 +209,7 @@ export class FiscalValidationEngine {
     organizationId: number, 
     startDate: Date, 
     endDate: Date
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     
     const report = await db.execute(sql`
       SELECT 

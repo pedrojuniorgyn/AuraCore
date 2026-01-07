@@ -28,7 +28,7 @@ export interface NFeItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
