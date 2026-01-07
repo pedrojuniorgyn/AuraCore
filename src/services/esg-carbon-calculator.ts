@@ -80,7 +80,7 @@ export class ESGCarbonCalculator {
     organizationId: number, 
     startDate: Date, 
     endDate: Date
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     
     // Buscar CT-es sem cálculo de emissão
     const ctes = await db.execute(sql`
@@ -132,7 +132,7 @@ export class ESGCarbonCalculator {
     customerId: number, 
     startDate: Date, 
     endDate: Date
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     
     const summary = await db.execute(sql`
       SELECT 
@@ -150,7 +150,8 @@ export class ESGCarbonCalculator {
       GROUP BY customer_name
     `);
     
-    return summary.recordset?.[0] || (summary as any)[0] || {};
+    return summary.recordset?.[0] || 
+      (Array.isArray(summary) ? summary[0] : undefined) || {};
   }
   
   /**
@@ -178,7 +179,7 @@ export class ESGCarbonCalculator {
   /**
    * Gerar dashboard ESG consolidado
    */
-  static async getDashboard(organizationId: number, year: number): Promise<any> {
+  static async getDashboard(organizationId: number, year: number): Promise<Record<string, unknown>> {
     
     const dashboard = await db.execute(sql`
       SELECT 
@@ -192,7 +193,8 @@ export class ESGCarbonCalculator {
         AND YEAR(emission_date) = ${year}
     `);
     
-    const data = dashboard.recordset?.[0] || (dashboard as any)[0] || {};
+    const data = dashboard.recordset?.[0] || 
+      (Array.isArray(dashboard) ? dashboard[0] : undefined) || {};
     
     const compensationRate = data.total_co2_tons > 0 
       ? (data.compensated_tons / data.total_co2_tons) * 100 

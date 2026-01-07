@@ -181,7 +181,7 @@ export class ClaimsWorkflowEngine {
   /**
    * Relatório de sinistralidade
    */
-  static async getSinistralityReport(organizationId: number, year: number): Promise<any> {
+  static async getSinistralityReport(organizationId: number, year: number): Promise<Record<string, unknown>> {
     
     const report = await db.execute(sql`
       SELECT 
@@ -195,7 +195,8 @@ export class ClaimsWorkflowEngine {
         AND YEAR(claim_date) = ${year}
     `);
     
-    return report.recordset?.[0] || (report as any)[0] || {};
+    return report.recordset?.[0] || 
+      (Array.isArray(report) ? report[0] : undefined) || {};
   }
 }
 

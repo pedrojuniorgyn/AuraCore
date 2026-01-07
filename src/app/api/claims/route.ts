@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
     const countResult = await db.execute(sql`
       SELECT COUNT(*) as total FROM claims_management WHERE organization_id = ${ctx.organizationId}
     `);
-    const total = (countResult.recordset?.[0]?.total || (countResult as any)[0]?.total || 0) as number;
+    const total = (countResult.recordset?.[0]?.total || 
+      (Array.isArray(countResult) ? countResult[0]?.total : undefined) || 0) as number;
 
     return NextResponse.json({
       success: true,
