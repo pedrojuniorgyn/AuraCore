@@ -28,7 +28,7 @@ LL-YYYY-MM-DD-NNN
 | Categoria | Quantidade | Última Entrada |
 |-----------|------------|----------------|
 | SMP-INFRA | 1 | LL-2026-01-07-001 |
-| SMP-MAP | 2 | LL-2026-01-07-010 |
+| SMP-MAP | 4 | LL-2026-01-07-013 |
 | SMP-CAT | 0 | - |
 | SMP-EXEC | 8 | LL-2026-01-07-011 |
 | SMP-VERIFY | 0 | - |
@@ -481,25 +481,134 @@ const allInvoices = getDbRows<InvoiceRow>(result);
 
 ---
 
+### LL-2026-01-07-012: Interface Não Corresponde ao Schema (total_value vs net_amount)
+
+**Contexto:** Épico E7.15 - Correção de accounting-engine.ts  
+**Bug/Issue:** Interface `FiscalDocumentItemRow` declarava `total_value` mas schema do banco define `net_amount`, causando falha na query SQL  
+**Causa Raiz:** Não verificar schema real da tabela antes de criar interface. Assumir nome de coluna sem confirmação  
+**Categoria:** SMP-MAP  
+**Impacto:** CRÍTICO
+
+**Antes (Interface Errada):**
+```typescript
+// Interface declarava total_value (errado)
+interface FiscalDocumentItemRow {
+  id: number;
+  fiscal_document_id: number;
+  total_value: number;  // ❌ ERRADO
+}
+
+// Query SQL tentava selecionar coluna inexistente
+const items = await db.execute(sql`
+  SELECT fdi.id, fdi.total_value  -- ❌ COLUNA NÃO EXISTE
+  FROM fiscal_document_items fdi
+`);
+```
+
+**Depois (Interface Alinhada com Schema):**
+```typescript
+// Verificar schema real ANTES
+// src/lib/db/schema/accounting.ts define: netAmount / net_amount
+
+interface FiscalDocumentItemRow {
+  id: number;
+  fiscal_document_id: number;
+  net_amount: number;  // ✅ CORRETO
+}
+
+const items = await db.execute(sql`
+  SELECT fdi.id, fdi.net_amount  -- ✅ COLUNA EXISTE
+  FROM fiscal_document_items fdi
+`);
+```
+
+**Regra Criada:**
+- **VAT-001:** Interface DEVE corresponder aos dados reais (já existia, reforçada)
+
+**Prevenção:**
+- Sempre verificar schema antes de criar interface para row de banco
+- Executar grep no schema para confirmar nome de colunas
+- NUNCA assumir nome de coluna sem verificar
+
+---
+
+### LL-2026-01-07-013: Schemas Conflitantes por Migração de Arquitetura
+
+**Contexto:** Épico E7.15 - Correção de accounting-engine.ts  
+**Bug/Issue:** Correções ping-pong entre `total_value` e `net_amount` causadas por schemas conflitantes (ativo vs obsoleto)  
+**Causa Raiz:** Dois schemas coexistentes devido à migração DDD+Hexagonal:
+  - Schema ativo: `src/lib/db/schema/accounting.ts` (net_amount)
+  - Schema obsoleto: `src/modules/fiscal/.../FiscalDocumentSchema.ts` (total_value)  
+**Categoria:** SMP-MAP  
+**Impacto:** CRÍTICO
+
+**Antes (Processo Errado - Loop Infinito):**
+```
+Iteração 1: Issue reporta total_value incorreto
+           → Corrigir para net_amount
+Iteração 2: Issue reporta net_amount incorreto (baseado em schema obsoleto)
+           → Corrigir para total_value
+Iteração 3: Issue reporta total_value incorreto (baseado em schema ativo)
+           → Corrigir para net_amount
+... (loop infinito de correções)
+```
+
+**Depois (Processo Correto - Investigação Completa):**
+```
+1. Issue reporta inconsistência
+2. INVESTIGAR: Buscar TODOS os schemas para a tabela
+   grep -rn "fiscal_document_items" src/lib/db/schema/ --include="*.ts"
+   grep -rn "fiscal_document_items" src/modules/ --include="*.ts"
+3. IDENTIFICAR: Qual é o schema ATIVO (exportado em src/lib/db/schema.ts)
+4. VERIFICAR: Padrão de uso no código (20+ arquivos usando net_amount)
+5. CORRIGIR: Alinhar com schema ativo (net_amount)
+6. DOCUMENTAR: Registrar schema obsoleto como débito técnico (DT-001)
+```
+
+**Arquivos Investigados:**
+- `src/lib/db/schema.ts` - Exporta schemas ativos
+- `src/lib/db/schema/accounting.ts` - Schema ATIVO (netAmount)
+- `src/modules/fiscal/.../FiscalDocumentSchema.ts` - Schema OBSOLETO (totalValue)
+- 20+ arquivos de código usando net_amount
+
+**Regras Criadas:**
+- **VAT-012:** Quando houver schemas conflitantes, verificar qual é exportado em `src/lib/db/schema.ts`
+- **VAT-013:** Schema em `src/lib/db/schema/` tem precedência sobre schemas em módulos isolados
+
+**Prevenção:**
+- Sempre verificar `src/lib/db/schema.ts` para saber qual schema é ativo
+- Schemas em módulos DDD podem estar obsoletos após migração
+- Documentar schemas obsoletos como débito técnico para limpeza futura
+- NUNCA corrigir baseado no primeiro schema encontrado - investigar TODOS
+
+**Débito Técnico Registrado:** 
+- DT-001-SCHEMA-OBSOLETO-FISCAL.md
+
+**Impacto Evitado:**
+- Sem investigação: 3+ iterações de correções ping-pong
+- Com investigação: 1 correção definitiva baseada em evidências
+
+---
+
 ## 📊 ESTATÍSTICAS
 
 ### Bugs por Categoria SMP
 
 | Categoria | Total | % |
 |-----------|-------|---|
-| SMP-INFRA | 1 | 9.1% |
-| SMP-MAP | 2 | 18.2% |
+| SMP-INFRA | 1 | 7.7% |
+| SMP-MAP | 4 | 30.8% |
 | SMP-CAT | 0 | 0% |
-| SMP-EXEC | 8 | 72.7% |
+| SMP-EXEC | 8 | 61.5% |
 | SMP-VERIFY | 0 | 0% |
 
 ### Bugs por Impacto
 
 | Impacto | Total | % |
 |---------|-------|---|
-| CRÍTICO | 5 | 45.5% |
-| ALTO | 3 | 27.3% |
-| MÉDIO | 3 | 27.3% |
+| CRÍTICO | 7 | 53.8% |
+| ALTO | 3 | 23.1% |
+| MÉDIO | 3 | 23.1% |
 | BAIXO | 0 | 0% |
 
 ### Regras Criadas
@@ -516,11 +625,13 @@ const allInvoices = getDbRows<InvoiceRow>(result);
 | SMP-VERIFY-002 | LL-2026-01-07-007 |
 | PC-002 | LL-2026-01-07-003 |
 | AP-001 | LL-2026-01-07-003 |
-| VAT-001 | LL-2026-01-07-004 |
+| VAT-001 | LL-2026-01-07-004, LL-2026-01-07-012 |
 | VAT-002 | LL-2026-01-07-005 |
 | VAT-005 | LL-2026-01-07-004 |
 | VAT-007 | LL-2026-01-07-006 |
 | VAT-011 | LL-2026-01-07-008 |
+| VAT-012 | LL-2026-01-07-013 |
+| VAT-013 | LL-2026-01-07-013 |
 | SP-001 | LL-2026-01-07-006 |
 | P-TYPE-007 | LL-2026-01-07-008 |
 | P-DB-006 | LL-2026-01-07-009 |
