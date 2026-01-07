@@ -63,7 +63,12 @@ export default function TorreControlePage() {
   };
 
   const getSLABadge = (slaStatus: string) => {
-    const config: Record<string, unknown> = {
+    interface SLAConfig {
+      label: string;
+      variant: "default" | "secondary" | "destructive";
+      color: string;
+    }
+    const config: Record<string, SLAConfig> = {
       ON_TIME: { label: "No Prazo", variant: "default", color: "text-green-600" },
       AT_RISK: { label: "Em Risco", variant: "secondary", color: "text-orange-600" },
       DELAYED: { label: "Atrasado", variant: "destructive", color: "text-red-600" },

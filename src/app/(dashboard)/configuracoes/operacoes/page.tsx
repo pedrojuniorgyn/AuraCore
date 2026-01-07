@@ -160,7 +160,7 @@ export default function OperacoesPage() {
 
                     {latestSummary?.checks ? (
                       <div className="grid gap-2">
-                        {(latestSummary.checks as unknown[]).map((c, idx) => (
+                        {(latestSummary.checks as Array<{name: string; ok: boolean; durationMs: number}>).map((c, idx) => (
                           <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">{c.name}</span>
                             <div className="flex items-center gap-2">

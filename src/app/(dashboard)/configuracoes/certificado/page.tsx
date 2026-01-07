@@ -173,10 +173,11 @@ export default function CertificadoDigitalPage() {
         toast.error("Falha na conexão com Sefaz");
       }
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erro de rede ou servidor indisponível";
       setTestResult({
         success: false,
         message: "Erro ao testar conexão",
-        details: error.message || "Erro de rede ou servidor indisponível",
+        details: errorMessage,
       });
       toast.error("Erro ao testar conexão");
       console.error(error);

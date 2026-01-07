@@ -61,8 +61,9 @@ export default function BranchConfigPage() {
         setEnvironment(data.data.environment || "HOMOLOGATION");
         setLastNsu(data.data.lastNsu || "0");
       } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         toast.error("Erro ao carregar filial", {
-          description: error.message,
+          description: errorMessage,
         });
       } finally {
         setIsLoading(false);
@@ -112,8 +113,9 @@ export default function BranchConfigPage() {
       // Recarrega dados
       window.location.reload();
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Erro ao instalar certificado", {
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsUploading(false);
@@ -146,8 +148,9 @@ export default function BranchConfigPage() {
 
       console.log("📊 Resultado da consulta:", result.data);
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Falha ao conectar com Sefaz", {
-        description: error.message,
+        description: errorMessage,
         duration: 5000,
       });
     } finally {
@@ -187,8 +190,9 @@ export default function BranchConfigPage() {
       // Recarrega dados
       window.location.reload();
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Erro ao salvar configuração", {
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsSavingConfig(false);
@@ -229,8 +233,9 @@ export default function BranchConfigPage() {
       setBranch(result.data || result);
       setLastNsu("0");
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Erro ao resetar NSU", {
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsResettingNsu(false);

@@ -138,9 +138,10 @@ export default function CreateReceivablePage() {
       router.push("/financeiro/contas-receber");
     } catch (error: unknown) {
       console.error("Erro ao criar:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta a receber";
       toast({
         title: "Erro",
-        description: error.message || "Erro ao criar conta a receber",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

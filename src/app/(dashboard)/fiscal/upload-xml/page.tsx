@@ -72,9 +72,10 @@ export default function UploadXMLPage() {
       }
     } catch (error: unknown) {
       console.error("Erro ao fazer upload:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

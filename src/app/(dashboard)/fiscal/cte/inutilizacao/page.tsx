@@ -61,9 +61,10 @@ export default function CTeInutilizacaoPage() {
         });
       }
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

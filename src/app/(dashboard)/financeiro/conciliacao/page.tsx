@@ -246,7 +246,7 @@ export default function BankReconciliationPage() {
         </h3>
         <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
           <li>Faça o download do extrato OFX do seu banco</li>
-          <li>Clique em "Importar OFX" e selecione o arquivo</li>
+          <li>Clique em &quot;Importar OFX&quot; e selecione o arquivo</li>
           <li>
             As transações serão importadas e você poderá conciliá-las
             manualmente

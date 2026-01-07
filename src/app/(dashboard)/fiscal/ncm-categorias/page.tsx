@@ -31,10 +31,20 @@ interface NCMCategory {
 
 export default function NCMCategoriasPage() {
   const router = useRouter();
+  interface Category {
+    name: string;
+    [key: string]: unknown;
+  }
+  
+  interface ChartAccount {
+    code: string;
+    [key: string]: unknown;
+  }
+  
   const [rowData, setRowData] = useState<NCMCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<unknown[]>([]);
-  const [chartAccounts, setChartAccounts] = useState<unknown[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [chartAccounts, setChartAccounts] = useState<ChartAccount[]>([]);
   const gridRef = useRef<AgGridReact>(null);
 
   const handleEdit = (data: NCMCategory) => {

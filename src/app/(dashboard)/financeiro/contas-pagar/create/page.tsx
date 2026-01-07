@@ -138,9 +138,10 @@ export default function CreatePayablePage() {
       router.push("/financeiro/contas-pagar");
     } catch (error: unknown) {
       console.error("Erro ao criar:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta a pagar";
       toast({
         title: "Erro",
-        description: error.message || "Erro ao criar conta a pagar",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

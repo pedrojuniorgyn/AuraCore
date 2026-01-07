@@ -262,15 +262,15 @@ export default function BTGTestesPage() {
         </h3>
         <ul className="space-y-2 text-sm text-blue-800">
           <li>
-            <strong>1. Boleto:</strong> Clique em "Gerar Boleto de Teste" para
+            <strong>1. Boleto:</strong> Clique em &quot;Gerar Boleto de Teste&quot; para
             criar um boleto via BTG
           </li>
           <li>
-            <strong>2. PDF:</strong> Após gerar, clique em "Abrir PDF do Boleto"
+            <strong>2. PDF:</strong> Após gerar, clique em &quot;Abrir PDF do Boleto&quot;
             para visualizar
           </li>
           <li>
-            <strong>3. Pix:</strong> Clique em "Gerar Pix de Teste" para criar
+            <strong>3. Pix:</strong> Clique em &quot;Gerar Pix de Teste&quot; para criar
             uma cobrança Pix com QR Code
           </li>
           <li>

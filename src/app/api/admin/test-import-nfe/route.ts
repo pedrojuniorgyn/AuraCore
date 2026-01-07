@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFirstRow, getDbRows } from "@/lib/db/helpers";
 
+interface ChecksResult {
+  tables_found?: string[];
+  has_inbound_invoices?: boolean;
+  has_cargo_documents?: boolean;
+  has_fsist?: boolean;
+  nfes_imported?: number;
+  cargo_documents_count?: number;
+  fiscal_settings?: unknown;
+  fiscal_settings_message?: string;
+  fsist_documents_count?: number;
+  fsist_sample?: unknown[];
+}
+
+interface DiagnosisResult {
+  can_import: boolean;
+  reasons: string[];
+  recommendations: string[];
+}
+
+interface TestResults {
+  timestamp: string;
+  checks: ChecksResult;
+  diagnosis?: DiagnosisResult;
+  recent_imports?: unknown[];
+}
+
 /**
  * 🧪 ENDPOINT DE TESTE - IMPORTAÇÃO DE NFE
  * 
@@ -11,7 +37,7 @@ export async function GET(request: NextRequest) {
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
 
-    const results: Record<string, unknown> = {
+    const results: TestResults = {
       timestamp: new Date().toISOString(),
       checks: {},
     };

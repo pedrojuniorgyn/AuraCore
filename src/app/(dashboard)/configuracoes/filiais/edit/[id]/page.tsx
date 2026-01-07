@@ -30,8 +30,9 @@ export default function EditBranchPage() {
         const result = await response.json();
         setBranchData(result.data || result);
       } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         toast.error("Erro ao carregar filial", {
-          description: error.message,
+          description: errorMessage,
         });
         router.push("/configuracoes/filiais");
       } finally {
