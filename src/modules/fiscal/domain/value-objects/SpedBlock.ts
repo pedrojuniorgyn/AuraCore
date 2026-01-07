@@ -39,9 +39,12 @@ export class SpedBlock {
       );
     }
 
-    if (lastRegisterCode !== `${props.blockId}990`) {
+    // Validar registro de fechamento
+    // EXCEÇÃO: Bloco 9 termina com 9999 (encerramento do arquivo SPED)
+    const expectedLastCode = props.blockId === '9' ? '9999' : `${props.blockId}990`;
+    if (lastRegisterCode !== expectedLastCode) {
       return Result.fail(
-        `Bloco ${props.blockId} deve terminar com registro ${props.blockId}990, encontrado ${lastRegisterCode}`
+        `Bloco ${props.blockId} deve terminar com registro ${expectedLastCode}, encontrado ${lastRegisterCode}`
       );
     }
 
