@@ -28,7 +28,7 @@ LL-YYYY-MM-DD-NNN
 | Categoria | Quantidade | Última Entrada |
 |-----------|------------|----------------|
 | SMP-INFRA | 1 | LL-2026-01-07-001 |
-| SMP-MAP | 1 | LL-2026-01-07-002 |
+| SMP-MAP | 2 | LL-2026-01-07-010 |
 | SMP-CAT | 0 | - |
 | SMP-EXEC | 7 | LL-2026-01-07-009 |
 | SMP-VERIFY | 0 | - |
@@ -380,25 +380,67 @@ console.log(org.document);  // Seguro após verificação ✅
 
 ---
 
+### LL-2026-01-07-010: Correção de Escopo Limitado
+
+**Contexto:** Épico E7.15 - Migração helper db.execute()  
+**Bug/Issue:** Correção focou apenas em arquivos mencionados no prompt, ignorando outros com mesmo padrão  
+**Causa Raiz:** Não executou grep em TODO o codebase antes de corrigir, apenas nos arquivos citados  
+**Categoria:** SMP-MAP  
+**Impacto:** ALTO
+
+**Antes (Processo Errado):**
+```
+1. Receber lista de 4 arquivos com bugs no prompt
+2. Corrigir apenas esses 4 arquivos
+3. Descobrir que existem 82 arquivos adicionais com mesmo padrão
+4. Trabalho incompleto, bugs remanescentes
+```
+
+**Depois (Processo Correto):**
+```
+1. Receber indicação de padrão problemático (.recordset)
+2. grep -rn ".recordset" src/ --include="*.ts" (TODO o codebase)
+3. Mapear 100%: 25 .recordset., 21 .recordset[, 82+ arquivos total
+4. Categorizar por tipo de correção
+5. Corrigir TODOS os arquivos encontrados (ou por fases aprovadas)
+6. Verificar grep = 0 no final
+```
+
+**Regra Criada:**
+- **SMP-MAP-003:** Ao corrigir padrão, grep TODO o codebase, não apenas arquivos mencionados no prompt
+- **SMP-MAP-004:** Mapeamento DEVE ser primeiro passo antes de qualquer correção
+
+**Prevenção:**
+- Fase SMP-MAP é OBRIGATÓRIA: sempre executar grep antes de iniciar
+- Ignorar lista de arquivos do prompt, usar grep como fonte única
+- Apresentar mapeamento completo para aprovação antes de corrigir
+- Aguardar decisão: corrigir tudo de uma vez ou por fases
+
+**Impacto Evitado:**
+- Sem mapeamento: 4 arquivos corrigidos, 82 com bug remanescente (4.8% completo)
+- Com mapeamento: visibilidade total, decisão informada sobre escopo
+
+---
+
 ## 📊 ESTATÍSTICAS
 
 ### Bugs por Categoria SMP
 
 | Categoria | Total | % |
 |-----------|-------|---|
-| SMP-INFRA | 1 | 11.1% |
-| SMP-MAP | 1 | 11.1% |
+| SMP-INFRA | 1 | 10% |
+| SMP-MAP | 2 | 20% |
 | SMP-CAT | 0 | 0% |
-| SMP-EXEC | 7 | 77.8% |
+| SMP-EXEC | 7 | 70% |
 | SMP-VERIFY | 0 | 0% |
 
 ### Bugs por Impacto
 
 | Impacto | Total | % |
 |---------|-------|---|
-| CRÍTICO | 4 | 44.4% |
-| ALTO | 2 | 22.2% |
-| MÉDIO | 3 | 33.3% |
+| CRÍTICO | 4 | 40% |
+| ALTO | 3 | 30% |
+| MÉDIO | 3 | 30% |
 | BAIXO | 0 | 0% |
 
 ### Regras Criadas
@@ -408,6 +450,8 @@ console.log(org.document);  // Seguro após verificação ✅
 | SMP-INFRA-001 | LL-2026-01-07-001 |
 | SMP-MAP-001 | LL-2026-01-07-002 |
 | SMP-MAP-002 | LL-2026-01-07-002 |
+| SMP-MAP-003 | LL-2026-01-07-010 |
+| SMP-MAP-004 | LL-2026-01-07-010 |
 | PC-002 | LL-2026-01-07-003 |
 | AP-001 | LL-2026-01-07-003 |
 | VAT-001 | LL-2026-01-07-004 |
