@@ -52,7 +52,7 @@ async function getAnyOrganizationId(): Promise<number | null> {
     FROM dbo.organizations
     ORDER BY id ASC
   `);
-  const id = Number((r.recordset?.[0] as any)?.id);
+  const id = Number((r.recordset?.[0] as unknown)?.id);
   return Number.isFinite(id) && id > 0 ? id : null;
 }
 

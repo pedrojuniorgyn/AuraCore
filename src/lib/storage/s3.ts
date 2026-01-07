@@ -104,7 +104,7 @@ export async function downloadObjectToBuffer(args: { key: string }): Promise<Buf
   const out = await client.send(new GetObjectCommand({ Bucket: env.bucket, Key: args.key }));
 
   // SDK v3: Body é stream no Node.js
-  const body = out.Body as any;
+  const body = out.Body as unknown;
   if (!body) return Buffer.from([]);
 
   if (Buffer.isBuffer(body)) return body;

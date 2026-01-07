@@ -1,5 +1,5 @@
 /**
- * Script para corrigir catch (error: any) → catch (error: unknown)
+ * Script para corrigir catch (error: unknown) → catch (error: unknown)
  * 
  * Refs: E2, LC-002 (error-handling-unknown)
  */
@@ -22,11 +22,11 @@ const stats: Stats = {
 };
 
 /**
- * Corrige um bloco catch (error: any)
+ * Corrige um bloco catch (error: unknown)
  */
 function fixCatchBlock(content: string): string {
-  // Pattern: catch (error: any) { ... }
-  // Substitui apenas "error: any" por "error: unknown"
+  // Pattern: catch (error: unknown) { ... }
+  // Substitui apenas "error: unknown" por "error: unknown"
   const pattern = /catch\s*\(\s*error\s*:\s*any\s*\)/g;
   
   return content.replace(pattern, 'catch (error: unknown)');
@@ -60,8 +60,8 @@ function processFile(filePath: string): void {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     
-    // Verifica se tem catch (error: any)
-    if (!content.includes('catch (error: any)')) {
+    // Verifica se tem catch (error: unknown)
+    if (!content.includes('catch (error: unknown)')) {
       return;
     }
     
@@ -89,7 +89,7 @@ function processFile(filePath: string): void {
  * Processa todos os arquivos em src/app/api
  */
 function main() {
-  console.log('🔧 Iniciando correção de catch (error: any)...\n');
+  console.log('🔧 Iniciando correção de catch (error: unknown)...\n');
   
   const apiDir = path.join(process.cwd(), 'src', 'app', 'api');
   const files = findTsFiles(apiDir);

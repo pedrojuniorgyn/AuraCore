@@ -93,7 +93,7 @@ describe('RomaneioItem', () => {
 
     it('should validate especieEmbalagem', () => {
       const props = createValidItemProps();
-      props.especieEmbalagem = 'INVALID' as any;
+      props.especieEmbalagem = 'INVALID' as unknown as EspecieEmbalagem;
 
       const result = RomaneioItem.create(props);
 
@@ -226,7 +226,7 @@ describe('RomaneioItem', () => {
       const props = createValidItemProps();
       const propsWithCubagem = {
         ...props,
-        especieEmbalagem: 'INVALID_ESPECIE' as any,
+        especieEmbalagem: 'INVALID_ESPECIE' as unknown as EspecieEmbalagem,
         cubagem: 0.12,
       };
 

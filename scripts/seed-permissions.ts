@@ -193,7 +193,7 @@ async function run() {
       console.log("🎉 Sistema de permissões populado com sucesso!\n");
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     throw error;
   } finally {

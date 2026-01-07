@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type"); // REVENUE, EXPENSE, ASSET, LIABILITY, EQUITY
     const analytical = searchParams.get("analytical"); // true/false
 
-    let conditions = [eq(chartOfAccounts.organizationId, ctx.organizationId)];
+    const conditions = [eq(chartOfAccounts.organizationId, ctx.organizationId)];
 
     if (type) {
       conditions.push(eq(chartOfAccounts.type, type));
@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+
 
 
 

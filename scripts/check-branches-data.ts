@@ -45,7 +45,7 @@ async function checkData() {
 
     if (result.recordset.length > 0) {
       console.table(
-        result.recordset.map((b: any) => ({
+        result.recordset.map((b: unknown) => ({
           ID: b.id,
           Org: b.organization_id,
           Nome: b.name,
@@ -61,7 +61,7 @@ async function checkData() {
       console.log("   npx tsx scripts/seed.ts");
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ Erro:", error.message);
     process.exit(1);
   } finally {
@@ -71,6 +71,7 @@ async function checkData() {
 }
 
 checkData();
+
 
 
 

@@ -15,7 +15,7 @@ async function main() {
   try {
     await db.execute(sql.raw(`DROP INDEX [branches_document_org_idx] ON [branches]`));
     console.log("✅ Índice antigo removido!");
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn("⚠️ Índice antigo não encontrado ou já foi removido:", error.message);
   }
 
@@ -27,7 +27,7 @@ async function main() {
       WHERE deleted_at IS NULL
     `));
     console.log("✅ Novo índice criado com sucesso!");
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro ao criar índice:", error.message);
   }
 
@@ -43,6 +43,7 @@ main().catch((err) => {
   pool.close();
   process.exit(1);
 });
+
 
 
 

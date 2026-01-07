@@ -43,7 +43,7 @@ async function resetPassword() {
     console.log("📧 Email: admin@auracore.com");
     console.log("🔒 Senha: admin123");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ Erro:", error.message);
     process.exit(1);
   } finally {
@@ -53,6 +53,7 @@ async function resetPassword() {
 }
 
 resetPassword();
+
 
 
 

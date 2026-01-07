@@ -7,7 +7,7 @@
 
 interface MockResponse {
   status: number;
-  body: Record<string, any>;
+  body: Record<string, unknown>;
 }
 
 export interface TestContext {
@@ -225,10 +225,10 @@ class TestApiClient {
     return { status: 200, body: { id: lastSegment } };
   }
 
-  async post(path: string, body: any): Promise<MockResponse> {
+  async post(path: string, body: Record<string, unknown>): Promise<MockResponse> {
     // Locations
     if (path.includes('/locations') && !path.includes('/stock') && !path.includes('/inventory')) {
-      const { type, parentId, code } = body;
+      const { type, parentId, code } = body as { type?: string; parentId?: string; code?: string };
 
       // Bug 3 fix: Validar AISLE sem parentId
       if (type && type !== 'WAREHOUSE' && !parentId) {
@@ -266,7 +266,7 @@ class TestApiClient {
 
     // Stock entry
     if (path.includes('/stock/entry')) {
-      const { quantity } = body;
+      const { quantity } = body as { quantity: number };
       
       // Bug 3 fix: Validar quantidade negativa
       if (quantity < 0) {
@@ -292,7 +292,7 @@ class TestApiClient {
 
     // Stock exit
     if (path.includes('/stock/exit')) {
-      const { stockItemId, quantity } = body;
+      const { stockItemId, quantity } = body as { stockItemId: string; quantity: number };
       const currentQuantity = this.stockQuantities.get(stockItemId) || 100;
 
       // Bug 3 fix: Estoque insuficiente
@@ -320,7 +320,7 @@ class TestApiClient {
 
     // Stock transfer - Bug 5 fix
     if (path.includes('/stock/transfer')) {
-      const { sourceStockItemId, destinationLocationId, quantity } = body;
+      const { sourceStockItemId, destinationLocationId, quantity } = body as { sourceStockItemId: string; destinationLocationId: string; quantity: number };
       const currentQuantity = this.stockQuantities.get(sourceStockItemId) || 100;
       const remaining = currentQuantity - (quantity || 20);
       
@@ -342,7 +342,7 @@ class TestApiClient {
 
     // Inventory start
     if (path.includes('/inventory') && !path.includes('/complete')) {
-      const { productId, locationId } = body;
+      const { productId, locationId } = body as { productId: string; locationId: string };
       const key = `${productId}-${locationId}`;
 
       // Bug 3 fix: Contagem duplicada
@@ -373,7 +373,7 @@ class TestApiClient {
 
     // Inventory complete
     if (path.includes('/inventory/complete')) {
-      const { inventoryCountId, countedQuantity } = body;
+      const { inventoryCountId, countedQuantity } = body as { inventoryCountId: string; countedQuantity: number };
       const systemQuantity = 100;
       const difference = countedQuantity - systemQuantity;
 
@@ -404,9 +404,9 @@ class TestApiClient {
     };
   }
 
-  async put(path: string, body: any): Promise<MockResponse> {
+  async put(path: string, body: Record<string, unknown>): Promise<MockResponse> {
     const id = path.split('/').filter(Boolean).pop();
-    const { name } = body;
+    const { name } = body as { name?: string };
     
     // Bug 7 fix: Validar nome vazio
     if (name !== undefined && name.trim() === '') {

@@ -62,7 +62,7 @@ export async function createPayablesFromNFe(
 
     // Agrupa itens por categoria (Opção C - NCM Agrupado)
     const groups = await groupItemsByCategory(
-      nfe.items as any,
+      nfe.items as unknown,
       organizationId,
       partnerId,
       "PURCHASE"
@@ -183,6 +183,7 @@ export async function createPayablesFromNFe(
     };
   }
 }
+
 
 
 

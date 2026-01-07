@@ -61,7 +61,7 @@ async function runAllMigrations() {
             try {
               await pool.request().query(statement);
               executed++;
-            } catch (error: any) {
+            } catch (error: unknown) {
               // Ignora erros de "já existe"
               if (
                 error.message.includes("already exists") ||
@@ -77,7 +77,7 @@ async function runAllMigrations() {
 
         console.log(`   ✅ Executados: ${executed} | Ignorados: ${skipped}`);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`   ❌ Erro ao ler migração:`, error.message);
       }
     }
@@ -96,7 +96,7 @@ async function runAllMigrations() {
     console.log("\n✅ Tabelas no banco:");
     console.table(tablesResult.recordset);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ Erro durante migrações:", error.message);
     process.exit(1);
   } finally {
@@ -106,6 +106,7 @@ async function runAllMigrations() {
 }
 
 runAllMigrations();
+
 
 
 

@@ -128,7 +128,7 @@ describe('Advance', () => {
       const props = {
         valorSolicitado: money,
         dataSolicitacao: new Date(),
-        statusAprovacao: 'INVALID_STATUS' as any,
+        statusAprovacao: 'INVALID_STATUS' as unknown,
       };
 
       const result = Advance.reconstitute(props);

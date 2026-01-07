@@ -31,7 +31,7 @@ export async function PUT(
           ? (isActive ? "ACTIVE" : "INACTIVE")
           : undefined;
 
-    const setPayload: Record<string, any> = {
+    const setPayload: Record<string, unknown> = {
       updatedBy: ctx.userId,
       updatedAt: new Date(),
       version: sql<number>`${financialCategories.version} + 1`,
@@ -54,7 +54,7 @@ export async function PUT(
         )
       );
 
-    const rows = (result as any)?.rowsAffected?.[0] ?? 0;
+    const rows = (result as unknown)?.rowsAffected?.[0] ?? 0;
     if (rows === 0) {
       return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
     }

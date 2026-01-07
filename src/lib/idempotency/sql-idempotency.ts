@@ -90,7 +90,7 @@ export async function acquireIdempotency(args: AcquireArgs): Promise<Idempotency
     await tx.commit();
 
     const status = result.recordset?.[0]?.status;
-    const resultRef = (result.recordset?.[0] as any)?.resultRef ?? null;
+    const resultRef = (result.recordset?.[0] as unknown)?.resultRef ?? null;
     if (status === "EXECUTE") {
       log("info", "idempotency.miss", { organizationId: args.organizationId, scope: args.scope });
       return { outcome: "execute" };
@@ -107,7 +107,7 @@ export async function acquireIdempotency(args: AcquireArgs): Promise<Idempotency
     } catch {
       // ignore
     }
-    const msg = (error as any)?.message ? String((error as any).message) : String(error);
+    const msg = (error as unknown)?.message ? String((error as unknown).message) : String(error);
     // Safety: se a migration ainda não foi aplicada, não derruba a operação.
     if (msg.includes("Invalid object name") && msg.includes("idempotency_keys")) {
       log("warn", "idempotency.missing_table", { organizationId: args.organizationId, scope: args.scope });

@@ -7,7 +7,7 @@ export interface Notification {
   event: string;
   title: string;
   message: string | null;
-  data: Record<string, any> | null;
+  data: Record<string, unknown> | null;
   actionUrl: string | null;
   isRead: number;
   readAt: Date | null;
@@ -126,6 +126,7 @@ export function useNotifications() {
     refresh: fetchNotifications,
   };
 }
+
 
 
 

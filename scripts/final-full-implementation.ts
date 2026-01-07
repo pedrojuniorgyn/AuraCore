@@ -7,7 +7,7 @@
 import dotenv from "dotenv";
 import sql from "mssql";
 import { readFileSync } from "fs";
-import { join } from "path";
+// import { join } from "path";
 
 dotenv.config();
 
@@ -52,7 +52,7 @@ async function run() {
         ALTER TABLE journal_entry_lines CHECK CONSTRAINT ALL;
       `);
       
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.log(`   ⚠️  ${e.message.substring(0, 150)}\n`);
     }
 
@@ -109,7 +109,7 @@ async function run() {
       try {
         await pool.request().query(pcgTables[i]);
         console.log(`   ✅ Tabela ${i + 1}/4 criada`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!e.message.includes('already')) {
           console.log(`   ⚠️  Tabela ${i + 1}: ${e.message.substring(0, 100)}`);
         } else {
@@ -212,7 +212,7 @@ async function run() {
           `);
         pccInserted++;
         process.stdout.write(`\r   ✅ PCC: ${pccInserted}/${pccAccounts.length}`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         process.stdout.write(`\r   ⚠️  ${acc.code}: ${e.message.substring(0, 50)}`);
       }
     }
@@ -253,7 +253,7 @@ async function run() {
           `);
         pcgInserted++;
         console.log(`   ✅ PCG: ${acc.code} - ${acc.name}`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.log(`   ❌ ${acc.code}: ${e.message.substring(0, 100)}`);
       }
     }
@@ -274,7 +274,7 @@ async function run() {
           IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'cost_centers' AND COLUMN_NAME = '${col}')
           ALTER TABLE cost_centers ADD ${col} NVARCHAR(50) NULL
         `);
-      } catch (e) { /* Ignora */ }
+      } catch (_e) { /* Ignora */ }
     }
 
     const costCenters = [
@@ -307,7 +307,7 @@ async function run() {
           `);
         ccInserted++;
         console.log(`   ✅ CC: ${cc.code} - ${cc.name}`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.log(`   ❌ ${cc.code}: ${e.message.substring(0, 100)}`);
       }
     }
@@ -330,7 +330,7 @@ async function run() {
     console.log(`📊 PCG: ${fg.recordset[0].t} contas`);
     console.log(`📊 CC: ${fc.recordset[0].t} centros\n`);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     throw error;
   } finally {
@@ -339,6 +339,7 @@ async function run() {
 }
 
 run();
+
 
 
 

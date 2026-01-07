@@ -459,13 +459,13 @@ export const auditLogs = mssqlTable("audit_logs", {
 /*
 import { defineRelations } from "drizzle-orm";
 
-export const organizationsRelations = defineRelations(organizations as any, ({ many }) => ({
+export const organizationsRelations = defineRelations(organizations as unknown, ({ many }) => ({
   users: many(users),
   branches: many(branches),
   businessPartners: many(businessPartners),
 }));
 
-export const usersRelations = defineRelations(users as any, ({ one, many }) => ({
+export const usersRelations = defineRelations(users as unknown, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [users.organizationId],
     references: [organizations.id],
@@ -479,7 +479,7 @@ export const usersRelations = defineRelations(users as any, ({ one, many }) => (
   sessions: many(sessions),
 }));
 
-export const branchesRelations = defineRelations(branches as any, ({ one, many }) => ({
+export const branchesRelations = defineRelations(branches as unknown, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [branches.organizationId],
     references: [organizations.id],
@@ -495,7 +495,7 @@ export const branchesRelations = defineRelations(branches as any, ({ one, many }
   userBranches: many(userBranches),
 }));
 
-export const businessPartnersRelations = defineRelations(businessPartners as any, ({ one }) => ({
+export const businessPartnersRelations = defineRelations(businessPartners as unknown, ({ one }) => ({
   organization: one(organizations, {
     fields: [businessPartners.organizationId],
     references: [organizations.id],
@@ -510,7 +510,7 @@ export const businessPartnersRelations = defineRelations(businessPartners as any
   }),
 }));
 
-export const userBranchesRelations = defineRelations(userBranches as any, ({ one }) => ({
+export const userBranchesRelations = defineRelations(userBranches as unknown, ({ one }) => ({
   user: one(users, {
     fields: [userBranches.userId],
     references: [users.id],

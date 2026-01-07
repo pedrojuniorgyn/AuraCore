@@ -55,7 +55,7 @@ async function claimNextJob(): Promise<ClaimResult> {
       CONVERT(NVARCHAR(30), INSERTED.updated_at, 127) as updatedAt;
   `);
 
-  return (result.recordset?.[0] as any) ?? null;
+  return (result.recordset?.[0] as unknown) ?? null;
 }
 
 function safeJson<T>(s: string | null): T | null {
@@ -71,7 +71,7 @@ async function runJob(job: JobRow): Promise<void> {
   const orgId = job.organizationId;
 
   if (job.jobType === DOCUMENT_JOB_TYPES.FINANCIAL_OFX_IMPORT) {
-    const payload = safeJson<{ bankAccountId: number; userId: string }>(job.payloadJson) ?? ({} as any);
+    const payload = safeJson<{ bankAccountId: number; userId: string }>(job.payloadJson) ?? ({} as unknown);
     const bankAccountId = Number(payload.bankAccountId);
     const userId = String(payload.userId ?? "");
     if (!Number.isFinite(bankAccountId) || bankAccountId <= 0 || !userId) {

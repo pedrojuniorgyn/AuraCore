@@ -7,7 +7,7 @@ export function getOrCreateRequestId(headers: Headers): string {
 
   // Node runtime: crypto.randomUUID está disponível
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+     
     if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
       return crypto.randomUUID();
     }

@@ -79,19 +79,19 @@ export async function generateBTGBoleto(data: BoletoRequest): Promise<BoletoResp
     };
 
     // Chamada à API BTG
-    const response = await btgPost<any>("/v1/pix-cash-in/billings/slips", payload);
+    const response = await btgPost<Record<string, unknown>>("/v1/pix-cash-in/billings/slips", payload);
 
     console.log("✅ Boleto BTG gerado:", response.id);
 
     return {
-      id: response.id,
-      nosso_numero: response.our_number,
-      linha_digitavel: response.digitable_line,
-      codigo_barras: response.barcode,
-      pdf_url: response.pdf_url,
+      id: response.id as string,
+      nosso_numero: response.our_number as string,
+      linha_digitavel: response.digitable_line as string,
+      codigo_barras: response.barcode as string,
+      pdf_url: response.pdf_url as string,
       valor: data.valor,
       vencimento: data.dataVencimento,
-      status: response.status,
+      status: response.status as string,
     };
   } catch (error) {
     console.error("❌ Erro ao gerar boleto BTG:", error);
@@ -102,20 +102,20 @@ export async function generateBTGBoleto(data: BoletoRequest): Promise<BoletoResp
 /**
  * Consultar status de boleto
  */
-export async function getBTGBoletoStatus(boletoId: string): Promise<any> {
+export async function getBTGBoletoStatus(boletoId: string): Promise<Record<string, unknown>> {
   try {
     console.log("🔍 Consultando boleto BTG:", boletoId);
 
-    const response = await btgGet<any>(`/v1/pix-cash-in/billings/slips/${boletoId}`);
+    const response = await btgGet<Record<string, unknown>>(`/v1/pix-cash-in/billings/slips/${boletoId}`);
 
     console.log("✅ Boleto consultado:", response.status);
 
     return {
-      id: response.id,
-      status: response.status,
-      valor_pago: response.paid_amount ? response.paid_amount / 100 : 0,
-      data_pagamento: response.paid_at,
-      linha_digitavel: response.digitable_line,
+      id: response.id as string,
+      status: response.status as string,
+      valor_pago: response.paid_amount ? (response.paid_amount as number) / 100 : 0,
+      data_pagamento: response.paid_at as string | undefined,
+      linha_digitavel: response.digitable_line as string,
     };
   } catch (error) {
     console.error("❌ Erro ao consultar boleto BTG:", error);
@@ -163,6 +163,7 @@ export async function downloadBTGBoletoPDF(pdfUrl: string): Promise<Buffer> {
     throw error;
   }
 }
+
 
 
 

@@ -176,9 +176,9 @@ export async function POST(req: Request) {
         priceBreakdown,
         status: "NEW",
         createdBy,
-      } as any) as any).$returningId();
+      } as unknown) as unknown).$returningId();
 
-    const quoteId = (createdId as any)?.id;
+    const quoteId = (createdId as unknown)?.id;
     if (!quoteId) {
       return NextResponse.json(
         { error: "Falha ao criar cotação (id não retornado)" },

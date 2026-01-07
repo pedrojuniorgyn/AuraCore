@@ -110,7 +110,7 @@ export function hasAccessToBranch(ctx: TenantContext, branchId: number): boolean
  * @param branchIdColumn - Coluna de branch_id da tabela
  * @returns {any[]} Array de condições SQL (vazio se Admin)
  */
-export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: any): any[] {
+export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: unknown): unknown[] {
   const { inArray } = require("drizzle-orm");
   
   // Admin vê todas as filiais da organização
@@ -126,6 +126,7 @@ export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: any): a
   // Filtra apenas filiais permitidas
   return [inArray(branchIdColumn, ctx.allowedBranches)];
 }
+
 
 
 

@@ -1,0 +1,31 @@
+{
+  "epic": "E7.15",
+  "corrections": [
+    {
+      "id": "LC-781212",
+      "date": "2026-01-07",
+      "epic": "E7.15",
+      "error": "Interface FiscalDocumentItemRow.net_amount não correspondia à coluna real total_value do banco, causando falha na query SQL do accounting engine",
+      "correction": "Revertida correção errada anterior. Alinhado interface (total_value), query SQL (fdi.total_value) e código (item.total_value) com schema real verificado em FiscalDocumentSchema.ts",
+      "files_affected": [
+        "src/services/accounting-engine.ts"
+      ],
+      "pattern_created": "VAT-001: Verificar schema real antes de corrigir tipos",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-579143",
+      "date": "2026-01-07",
+      "epic": "E7.15",
+      "error": "Correções ping-pong entre total_value e net_amount devido a schemas conflitantes (ativo vs obsoleto) após migração DDD+Hexagonal. Schema ativo (src/lib/db/schema/accounting.ts) define net_amount, mas schema obsoleto (src/modules/fiscal/.../FiscalDocumentSchema.ts) define total_value",
+      "correction": "Investigação completa identificou schema ativo através de src/lib/db/schema.ts. Verificados 20+ arquivos usando net_amount. Aplicada correção definitiva alinhando interface, query SQL e código com net_amount conforme schema ativo",
+      "files_affected": [
+        "src/services/accounting-engine.ts"
+      ],
+      "pattern_created": "VAT-012: Schema ativo tem precedência - verificar src/lib/db/schema.ts",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

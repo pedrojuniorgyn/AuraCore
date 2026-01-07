@@ -46,7 +46,7 @@ export async function createBTGPixCharge(data: PixChargeRequest): Promise<PixCha
       description: data.descricao,
     };
 
-    const response = await btgPost<any>(`/v1/pix-cash-in/charges`, payload);
+    const response = await btgPost<Record<string, unknown>>(`/v1/pix-cash-in/charges`, payload);
 
     console.log("✅ Cobrança Pix BTG criada:", response.id);
 
@@ -68,11 +68,11 @@ export async function createBTGPixCharge(data: PixChargeRequest): Promise<PixCha
 /**
  * Consultar cobrança Pix
  */
-export async function getBTGPixCharge(chargeId: string): Promise<any> {
+export async function getBTGPixCharge(chargeId: string): Promise<Record<string, unknown>> {
   try {
     console.log("🔍 Consultando cobrança Pix BTG:", chargeId);
 
-    const response = await btgGet<any>(`/v1/pix-cash-in/charges/${chargeId}`);
+    const response = await btgGet<Record<string, unknown>>(`/v1/pix-cash-in/charges/${chargeId}`);
 
     console.log("✅ Cobrança Pix consultada:", response.status);
 

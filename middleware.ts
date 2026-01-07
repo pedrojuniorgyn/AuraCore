@@ -24,7 +24,7 @@ export default auth((req) => {
     const hasBranchHeader = !!req.headers.get("x-branch-id");
     if (!hasBranchHeader) {
       const cookieBranch = req.cookies.get(BRANCH_COOKIE_NAME)?.value;
-      const tokenDefaultBranch = (req.auth?.user as any)?.defaultBranchId;
+      const tokenDefaultBranch = (req.auth?.user as { defaultBranchId?: number })?.defaultBranchId;
       const candidate = cookieBranch || (tokenDefaultBranch ? String(tokenDefaultBranch) : "");
       const branchIdNum = Number(candidate);
       if (Number.isFinite(branchIdNum) && branchIdNum > 0) {

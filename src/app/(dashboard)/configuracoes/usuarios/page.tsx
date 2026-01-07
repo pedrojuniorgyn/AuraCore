@@ -89,7 +89,7 @@ export default function UsersManagementPage() {
   useEffect(() => {
     if (!inviteOpen) return;
     loadInviteData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [inviteOpen]);
 
   const fetchUsers = async () => {

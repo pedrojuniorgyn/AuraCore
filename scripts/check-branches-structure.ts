@@ -43,7 +43,7 @@ async function checkStructure() {
 
     // Verifica se já tem os campos de certificado
     const hasCertFields = result.recordset.some(
-      (col: any) => col.COLUMN_NAME === "certificate_pfx"
+      (col: unknown) => col.COLUMN_NAME === "certificate_pfx"
     );
 
     console.log(
@@ -52,7 +52,7 @@ async function checkStructure() {
         : "\n❌ Campos de certificado NÃO EXISTEM"
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ Erro:", error.message);
     process.exit(1);
   } finally {
@@ -62,6 +62,7 @@ async function checkStructure() {
 }
 
 checkStructure();
+
 
 
 

@@ -52,7 +52,7 @@ export async function createBTGPixPayment(data: PixPaymentRequest): Promise<Paym
       description: data.description || "Pagamento via AuraCore",
     };
 
-    const response = await btgPost<any>("/v1/payments/pix", payload);
+    const response = await btgPost<Record<string, unknown>>("/v1/payments/pix", payload);
 
     console.log("✅ Pagamento Pix BTG realizado:", response.id);
 
@@ -90,7 +90,7 @@ export async function createBTGTEDPayment(data: TEDPaymentRequest): Promise<Paym
       description: data.description || "TED via AuraCore",
     };
 
-    const response = await btgPost<any>("/v1/payments/ted", payload);
+    const response = await btgPost<Record<string, unknown>>("/v1/payments/ted", payload);
 
     console.log("✅ TED BTG realizado:", response.id);
 
@@ -109,11 +109,11 @@ export async function createBTGTEDPayment(data: TEDPaymentRequest): Promise<Paym
 /**
  * Consultar status de pagamento
  */
-export async function getBTGPaymentStatus(paymentId: string): Promise<any> {
+export async function getBTGPaymentStatus(paymentId: string): Promise<Record<string, unknown>> {
   try {
     console.log("🔍 Consultando pagamento BTG:", paymentId);
 
-    const response = await btgGet<any>(`/v1/payments/${paymentId}`);
+    const response = await btgGet<Record<string, unknown>>(`/v1/payments/${paymentId}`);
 
     console.log("✅ Pagamento consultado:", response.status);
 
@@ -130,6 +130,7 @@ export async function getBTGPaymentStatus(paymentId: string): Promise<any> {
     throw error;
   }
 }
+
 
 
 

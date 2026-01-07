@@ -111,12 +111,13 @@ for (const file of files) {
       console.log(`  ⏭️  ${file}`);
     }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`  ❌ ${file}: ${error.message}`);
   }
 }
 
 console.log('\n✅ Concluído!\n');
+
 
 
 

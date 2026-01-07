@@ -168,7 +168,7 @@ describe('ReceiptParty', () => {
     const result = ReceiptParty.reconstitute({
       nome: 'João da Silva',
       documento: '12345678901',
-      tipoDocumento: 'INVALID_TYPE' as any, // Intentionally invalid
+      tipoDocumento: 'INVALID_TYPE' as unknown, // Intentionally invalid
     });
 
     expect(Result.isFail(result)).toBe(true);

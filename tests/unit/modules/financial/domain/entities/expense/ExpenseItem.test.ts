@@ -49,7 +49,7 @@ describe('ExpenseItem', () => {
 
     it('should fail with invalid categoria', () => {
       const props = createValidProps();
-      (props as any).categoria = 'INVALID';
+      (props as unknown).categoria = 'INVALID';
 
       const result = ExpenseItem.create(props);
 
@@ -115,7 +115,7 @@ describe('ExpenseItem', () => {
     it('should fail with invalid categoria on reconstitute', () => {
       const props = {
         ...createValidProps(),
-        categoria: 'INVALID' as any,
+        categoria: 'INVALID' as unknown,
         dentroPolitica: true,
       };
 

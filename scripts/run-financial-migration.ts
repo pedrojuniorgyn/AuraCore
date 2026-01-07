@@ -30,7 +30,7 @@ async function runFinancialMigration() {
     await pool.request().query(migrationSQL);
 
     console.log("\n✅ Migration do módulo financeiro executada com sucesso!");
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO na migration:", error.message);
     throw error;
   } finally {

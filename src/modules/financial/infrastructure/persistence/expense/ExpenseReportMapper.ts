@@ -201,7 +201,7 @@ export class ExpenseReportMapper {
         const advanceProps: AdvanceProps = {
           valorSolicitado: valorSolicitadoResult.value,
           dataSolicitacao: persistence.advanceDataSolicitacao,
-          statusAprovacao: persistence.advanceStatusAprovacao as any,
+          statusAprovacao: persistence.advanceStatusAprovacao as unknown,
           valorAprovado,
           dataLiberacao: persistence.advanceDataLiberacao || undefined,
           aprovadorId: persistence.advanceAprovadorId || undefined,

@@ -50,7 +50,7 @@ export default function OperacoesPage() {
       ]);
 
       if (!latestRes.ok) {
-        const latestErr = await latestRes.json().catch(() => null as any);
+        const latestErr = await latestRes.json().catch(() => null);
         throw new Error(
           latestErr?.message ??
             latestErr?.error ??
@@ -58,7 +58,7 @@ export default function OperacoesPage() {
         );
       }
       if (!histRes.ok) {
-        const histErr = await histRes.json().catch(() => null as any);
+        const histErr = await histRes.json().catch(() => null);
         throw new Error(
           histErr?.message ?? histErr?.error ?? `Falha ao carregar histórico (${histRes.status})`
         );
@@ -160,7 +160,7 @@ export default function OperacoesPage() {
 
                     {latestSummary?.checks ? (
                       <div className="grid gap-2">
-                        {(latestSummary.checks as any[]).map((c, idx) => (
+                        {(latestSummary.checks as unknown[]).map((c, idx) => (
                           <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">{c.name}</span>
                             <div className="flex items-center gap-2">

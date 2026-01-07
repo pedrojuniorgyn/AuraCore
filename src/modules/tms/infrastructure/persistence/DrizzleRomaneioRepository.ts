@@ -210,7 +210,7 @@ export class DrizzleRomaneioRepository implements IRomaneioRepository {
       let romaneioRows;
       if (filters.limit !== undefined) {
         // Usar TOP no SQL Server via query nativa limitada
-        const limitedQuery = queryWithOffset as any;
+        const limitedQuery = queryWithOffset as unknown;
         romaneioRows = await limitedQuery.limit(filters.limit);
       } else {
         romaneioRows = await queryWithOffset;

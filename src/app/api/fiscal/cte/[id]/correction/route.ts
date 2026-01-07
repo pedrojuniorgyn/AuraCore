@@ -80,7 +80,7 @@ export async function POST(
         corrections: JSON.stringify(corrections),
         status: "PENDING", // TODO: Enviar para Sefaz
         createdBy: ctx.userId,
-      } as any);
+      } as unknown);
 
       const [created] = await db
         .select({ id: cteCorrectionLetters.id })

@@ -160,7 +160,7 @@ export class HRJourneyProcessor {
     organizationId: number, 
     startDate: Date, 
     endDate: Date
-  ): Promise<any> {
+  ): Promise<unknown> {
     
     const violations = await db.execute(sql`
       SELECT 

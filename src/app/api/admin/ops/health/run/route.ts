@@ -20,7 +20,7 @@ function isInternalTokenOk(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const handler = async () => {
     const body = await req.json().catch(() => ({}));
-    const reason = typeof (body as any)?.reason === "string" ? (body as any).reason : "manual";
+    const reason = typeof (body as unknown)?.reason === "string" ? (body as unknown).reason : "manual";
     const result = await runOpsHealthOnce(reason);
     return NextResponse.json({ success: true, result });
   };

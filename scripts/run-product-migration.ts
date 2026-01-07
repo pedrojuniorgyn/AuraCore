@@ -52,7 +52,7 @@ async function runMigration() {
           if (result.recordset && result.recordset.length > 0) {
             console.log(result.recordset[0]);
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error(`❌ Erro ao executar statement:`, error.message);
         }
       }
@@ -77,7 +77,7 @@ async function runMigration() {
       console.log("\n⚠️  Nenhuma coluna nova encontrada.");
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro durante migração:", error.message);
     process.exit(1);
   } finally {
@@ -87,6 +87,7 @@ async function runMigration() {
 }
 
 runMigration();
+
 
 
 

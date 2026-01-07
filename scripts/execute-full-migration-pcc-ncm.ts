@@ -81,7 +81,7 @@ async function run() {
       if (block && !block.startsWith("--") && !block.startsWith("PRINT")) {
         try {
           await pool.request().query(block);
-        } catch (e: any) {
+        } catch (e: unknown) {
           // Ignora erros de INSERT duplicado (caso já exista)
           if (!e.message.includes("duplicate") && !e.message.includes("Violation of UNIQUE KEY")) {
             console.log(`⚠️  Bloco ${i + 1}: ${e.message.substring(0, 80)}`);
@@ -116,7 +116,7 @@ async function run() {
     `);
 
     console.log("\n📋 Amostra (10 primeiras contas):");
-    sample.recordset.forEach((r: any) => {
+    sample.recordset.forEach((r: unknown) => {
       console.log(`   ${r.code?.padEnd(20)} ${r.name?.substring(0, 40)}`);
     });
 
@@ -202,7 +202,7 @@ async function run() {
         const st = item.st ? '✅ ST' : '❌';
         console.log(`✅ ${item.ncm.padEnd(15)} ${item.desc.padEnd(35)} ${mono} ${st}`);
         inserted++;
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.log(`❌ ${item.ncm} - Erro: ${e.message.substring(0, 60)}`);
       }
     }
@@ -252,7 +252,7 @@ async function run() {
 
     console.log("");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     console.error("\nStack:", error.stack);
     throw error;

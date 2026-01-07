@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    const branchIdCandidate = (body as any)?.branchId ?? ctx.defaultBranchId;
+    const branchIdCandidate = (body as unknown)?.branchId ?? ctx.defaultBranchId;
     if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
         { error: "branchId é obrigatório", code: "BRANCH_REQUIRED" },

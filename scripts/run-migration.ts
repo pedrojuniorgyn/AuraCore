@@ -41,7 +41,7 @@ async function main() {
         console.log(`[${i + 1}/${statements.length}] Executando: ${preview}...`);
         await pool.request().query(statement);
         console.log(`✅ Sucesso\n`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`\n❌ ERRO no statement ${i + 1}:`);
         console.error(`Statement: ${preview}...`);
         console.error(`Erro: ${error.message}\n`);
@@ -63,6 +63,7 @@ async function main() {
 }
 
 main();
+
 
 
 

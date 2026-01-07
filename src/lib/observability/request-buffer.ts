@@ -14,7 +14,7 @@ export type RequestLogItem = {
 const GLOBAL_KEY = "__aura_request_buffer__";
 
 function getGlobal(): { items: RequestLogItem[] } {
-  const g = globalThis as any;
+  const g = globalThis as unknown;
   if (!g[GLOBAL_KEY]) g[GLOBAL_KEY] = { items: [] as RequestLogItem[] };
   return g[GLOBAL_KEY];
 }

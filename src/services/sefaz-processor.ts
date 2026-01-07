@@ -115,7 +115,7 @@ export async function processSefazResponse(
     }
 
     // Normaliza docZip para array
-    let docZipArray = Array.isArray(loteDistDFeInt.docZip)
+    const docZipArray = Array.isArray(loteDistDFeInt.docZip)
       ? loteDistDFeInt.docZip
       : [loteDistDFeInt.docZip];
 

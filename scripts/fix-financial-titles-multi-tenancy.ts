@@ -159,7 +159,7 @@ async function run() {
     console.log("   2. Testar isolamento multi-tenant");
     console.log("   3. Verificar outras tabelas sem organization_id\n");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     console.error("\n⚠️  Se a tabela não existe ainda, isto é normal.");
     console.error("   A correção será aplicada quando a tabela for criada.\n");

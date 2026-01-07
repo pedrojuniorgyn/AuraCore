@@ -262,7 +262,7 @@ export async function calculateFreight(
     for (const component of extraComponents) {
       let calculatedValue = 0;
       let calculationBase = 0;
-      let rate = Number(component.value);
+      const rate = Number(component.value);
 
       switch (component.type) {
         case "PERCENTAGE":
@@ -367,6 +367,7 @@ export async function simulateFreightScenarios(
 
   return results;
 }
+
 
 
 

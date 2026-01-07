@@ -73,12 +73,13 @@ for (const file of files) {
       console.log(`  ⏭️  ${file} (não encontrou padrão)`);
     }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`  ❌ ${file}: ${error.message}`);
   }
 }
 
 console.log(`\n✅ ${count} arquivos corrigidos!\n`);
+
 
 
 

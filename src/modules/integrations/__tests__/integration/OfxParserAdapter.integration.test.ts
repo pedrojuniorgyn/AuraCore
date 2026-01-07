@@ -116,7 +116,7 @@ describe('OfxParserAdapter Integration', () => {
     it('should handle invalid OFX format', async () => {
       // GIVEN - Mock retornando formato inválido
       const { parse } = await import('ofx-parser');
-      vi.mocked(parse).mockReturnValueOnce(null as any);
+      vi.mocked(parse).mockReturnValueOnce(null);
 
       const ofxContent = 'invalid-ofx';
 
@@ -159,7 +159,7 @@ describe('OfxParserAdapter Integration', () => {
             ],
           },
         },
-      } as any);
+      } as unknown);
 
       const ofxContent = 'ofx-without-transactions';
 

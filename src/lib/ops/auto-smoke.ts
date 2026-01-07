@@ -8,8 +8,8 @@ function getGlobal(): {
   lastRunId?: string;
   lastRunAt?: number;
 } {
-  const g = globalThis as any;
-  if (!g[GLOBAL_KEY]) g[GLOBAL_KEY] = { running: false } as any;
+  const g = globalThis as unknown;
+  if (!g[GLOBAL_KEY]) g[GLOBAL_KEY] = { running: false } as unknown;
   return g[GLOBAL_KEY];
 }
 

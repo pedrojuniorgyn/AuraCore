@@ -40,7 +40,7 @@ export class StockCalculator {
 
     let totalValue = 0;
     let totalQuantity = 0;
-    let currency = entries[0].unitCost.currency;
+    const currency = entries[0].unitCost.currency;
 
     for (const movement of entries) {
       // Verificar moeda consistente

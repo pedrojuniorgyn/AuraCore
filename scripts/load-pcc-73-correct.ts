@@ -208,7 +208,7 @@ async function run() {
         
         inserted++;
         process.stdout.write(`\r   ✅ Inseridas: ${inserted}/${accounts.length} contas`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.log(`\n   ❌ ${acc.code}: ${e.message.substring(0, 60)}`);
       }
     }
@@ -236,12 +236,12 @@ async function run() {
     `);
 
     console.log("📋 Amostra (10 primeiras):");
-    sample.recordset.forEach((r: any) => {
+    sample.recordset.forEach((r: unknown) => {
       console.log(`   ${r.code?.padEnd(20)} ${r.name?.substring(0, 45)}`);
     });
     console.log("");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     throw error;
   } finally {

@@ -40,7 +40,7 @@ function getSlowThresholdMs() {
 export async function withPermission<T>(
   req: NextRequest,
   permissionCode: string,
-  handler: (user: any, ctx: any) => Promise<Response>
+  handler: (user: unknown, ctx: unknown) => Promise<Response>
 ): Promise<Response> {
   const startedAt = Date.now();
   const requestId = getOrCreateRequestId(req.headers);
@@ -88,8 +88,8 @@ export async function withPermission<T>(
         status: 403,
         durationMs,
         userId: session.user.id,
-        organizationId: (session.user as any).organizationId,
-        branchId: ((session.user as any).branchId ?? (session.user as any).defaultBranchId ?? null) as any,
+        organizationId: (session.user as unknown).organizationId,
+        branchId: ((session.user as unknown).branchId ?? (session.user as unknown).defaultBranchId ?? null) as unknown,
         permission: permissionCode,
       });
       log("warn", "api.forbidden", {
@@ -98,7 +98,7 @@ export async function withPermission<T>(
         path,
         status: 403,
         userId: session.user.id,
-        organizationId: (session.user as any).organizationId,
+        organizationId: (session.user as unknown).organizationId,
         permission: permissionCode,
       });
       return res;
@@ -108,12 +108,12 @@ export async function withPermission<T>(
     // Padronização: expor `userId` diretamente (evita usos incorretos acessando o id via `ctx.user`).
     // Importante: várias rotas (ex.: Auditoria) dependem de `isAdmin` e `allowedBranches`
     // para aplicar Data Scoping. Esses campos já estão presentes na sessão (callbacks do NextAuth).
-    const role = (session.user as any)?.role ?? "USER";
-    const allowedBranches = Array.isArray((session.user as any)?.allowedBranches)
-      ? ((session.user as any).allowedBranches as number[])
+    const role = (session.user as unknown)?.role ?? "USER";
+    const allowedBranches = Array.isArray((session.user as unknown)?.allowedBranches)
+      ? ((session.user as unknown).allowedBranches as number[])
       : [];
     const defaultBranchId =
-      (session.user as any)?.defaultBranchId !== undefined ? (session.user as any).defaultBranchId : null;
+      (session.user as unknown)?.defaultBranchId !== undefined ? (session.user as unknown).defaultBranchId : null;
     const isAdmin = role === "ADMIN";
 
     const ctx = {
@@ -125,10 +125,10 @@ export async function withPermission<T>(
       allowedBranches,
       // Compatibilidade: alguns handlers antigos usam branchId; preferir defaultBranchId quando existir.
       branchId:
-        (session.user as any).branchId ??
+        (session.user as unknown).branchId ??
         defaultBranchId ??
         null,
-      organizationId: (session.user as any).organizationId,
+      organizationId: (session.user as unknown).organizationId,
     };
 
     const res = await handler(session.user, ctx);
@@ -139,10 +139,10 @@ export async function withPermission<T>(
       requestId,
       method,
       path,
-      status: (res as any)?.status ?? 200,
+      status: (res as unknown)?.status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as any).organizationId,
+      organizationId: (session.user as unknown).organizationId,
       branchId: ctx.branchId,
       permission: permissionCode,
     });
@@ -150,10 +150,10 @@ export async function withPermission<T>(
       requestId,
       method,
       path,
-      status: (res as any)?.status ?? 200,
+      status: (res as unknown)?.status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as any).organizationId,
+      organizationId: (session.user as unknown).organizationId,
       branchId: ctx.branchId,
       permission: permissionCode,
     });
@@ -162,11 +162,11 @@ export async function withPermission<T>(
         requestId,
         method,
         path,
-        status: (res as any)?.status ?? 200,
+        status: (res as unknown)?.status ?? 200,
         durationMs,
         slowMs,
         userId: session.user.id,
-        organizationId: (session.user as any).organizationId,
+        organizationId: (session.user as unknown).organizationId,
         branchId: ctx.branchId,
         permission: permissionCode,
       });
@@ -196,7 +196,7 @@ export async function withPermission<T>(
  */
 export async function withAuth<T>(
   req: NextRequest,
-  handler: (user: any, ctx: any) => Promise<Response>
+  handler: (user: unknown, ctx: unknown) => Promise<Response>
 ): Promise<Response> {
   const startedAt = Date.now();
   const requestId = getOrCreateRequestId(req.headers);
@@ -222,12 +222,12 @@ export async function withAuth<T>(
       return res;
     }
 
-    const role = (session.user as any)?.role ?? "USER";
-    const allowedBranches = Array.isArray((session.user as any)?.allowedBranches)
-      ? ((session.user as any).allowedBranches as number[])
+    const role = (session.user as unknown)?.role ?? "USER";
+    const allowedBranches = Array.isArray((session.user as unknown)?.allowedBranches)
+      ? ((session.user as unknown).allowedBranches as number[])
       : [];
     const defaultBranchId =
-      (session.user as any)?.defaultBranchId !== undefined ? (session.user as any).defaultBranchId : null;
+      (session.user as unknown)?.defaultBranchId !== undefined ? (session.user as unknown).defaultBranchId : null;
     const isAdmin = role === "ADMIN";
 
     const ctx = {
@@ -238,10 +238,10 @@ export async function withAuth<T>(
       defaultBranchId,
       allowedBranches,
       branchId:
-        (session.user as any).branchId ??
+        (session.user as unknown).branchId ??
         defaultBranchId ??
         null,
-      organizationId: (session.user as any).organizationId,
+      organizationId: (session.user as unknown).organizationId,
     };
 
     const res = await handler(session.user, ctx);
@@ -252,20 +252,20 @@ export async function withAuth<T>(
       requestId,
       method,
       path,
-      status: (res as any)?.status ?? 200,
+      status: (res as unknown)?.status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as any).organizationId,
+      organizationId: (session.user as unknown).organizationId,
       branchId: ctx.branchId,
     });
     log("info", "api.request", {
       requestId,
       method,
       path,
-      status: (res as any)?.status ?? 200,
+      status: (res as unknown)?.status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as any).organizationId,
+      organizationId: (session.user as unknown).organizationId,
       branchId: ctx.branchId,
     });
     if (durationMs >= slowMs) {
@@ -273,11 +273,11 @@ export async function withAuth<T>(
         requestId,
         method,
         path,
-        status: (res as any)?.status ?? 200,
+        status: (res as unknown)?.status ?? 200,
         durationMs,
         slowMs,
         userId: session.user.id,
-        organizationId: (session.user as any).organizationId,
+        organizationId: (session.user as unknown).organizationId,
         branchId: ctx.branchId,
       });
     }

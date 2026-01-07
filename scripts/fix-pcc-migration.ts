@@ -60,7 +60,7 @@ async function run() {
           
           totalInserted++;
           process.stdout.write(`\r   Inserido: ${totalInserted} contas`);
-        } catch (e: any) {
+        } catch (e: unknown) {
           if (e.message.includes("duplicate") || e.message.includes("Violation of UNIQUE KEY")) {
             // Já existe, pula
             totalInserted++;
@@ -101,12 +101,12 @@ async function run() {
     `);
 
     console.log("📋 Amostra (15 primeiras):");
-    sample.recordset.forEach((r: any) => {
+    sample.recordset.forEach((r: unknown) => {
       console.log(`   ${r.code?.padEnd(20)} ${r.name?.substring(0, 45)}`);
     });
     console.log("");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     throw error;
   } finally {

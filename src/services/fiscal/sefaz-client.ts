@@ -218,10 +218,11 @@ export async function checkSefazStatus(
  */
 export function getDefaultSefazConfig(): SefazConfig {
   return {
-    environment: (process.env.SEFAZ_ENVIRONMENT as any) || "homologation",
+    environment: (process.env.SEFAZ_ENVIRONMENT as unknown) || "homologation",
     uf: process.env.SEFAZ_UF || "SP",
   };
 }
+
 
 
 

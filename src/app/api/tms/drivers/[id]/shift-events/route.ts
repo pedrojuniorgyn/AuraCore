@@ -39,7 +39,7 @@ export async function POST(
     // Buscar ou criar jornada do dia
     const today = new Date().toISOString().split("T")[0];
     
-    let shiftResult = await pool.request().query(`
+    const shiftResult = await pool.request().query(`
       SELECT * FROM driver_work_shifts
       WHERE driver_id = ${driverId}
       AND CAST(shift_date AS DATE) = '${today}'

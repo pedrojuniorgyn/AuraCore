@@ -122,7 +122,7 @@ export async function GET() {
       SELECT @@ROWCOUNT as affected_rows;
     `);
 
-    nfeMigrated = (result as any).rows?.[0]?.affected_rows || 0;
+    nfeMigrated = (result as unknown).rows?.[0]?.affected_rows || 0;
     console.log(`✅ ${nfeMigrated} NFes migradas`);
 
     // 2️⃣ MIGRAR NFe ITEMS
@@ -188,7 +188,7 @@ export async function GET() {
       SELECT @@ROWCOUNT as affected_rows;
     `);
 
-    nfeItemsMigrated = (itemsResult as any).rows?.[0]?.affected_rows || 0;
+    nfeItemsMigrated = (itemsResult as unknown).rows?.[0]?.affected_rows || 0;
     console.log(`✅ ${nfeItemsMigrated} itens de NFe migrados`);
 
     // 3️⃣ MIGRAR CTe (external_ctes → fiscal_documents)
@@ -267,7 +267,7 @@ export async function GET() {
       SELECT @@ROWCOUNT as affected_rows;
     `);
 
-    cteMigrated = (cteResult as any).rows?.[0]?.affected_rows || 0;
+    cteMigrated = (cteResult as unknown).rows?.[0]?.affected_rows || 0;
     console.log(`✅ ${cteMigrated} CTes migrados`);
 
     // 4️⃣ ATUALIZAR FKs em accounts_payable/receivable

@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
-    const body = await req.json().catch(() => ({} as any));
-    const branchId = Number((body as any)?.branchId);
+    const body = await req.json().catch(() => ({} as unknown));
+    const branchId = Number((body as unknown)?.branchId);
 
     if (!Number.isFinite(branchId) || branchId <= 0) {
       return NextResponse.json({ error: "branchId inválido" }, { status: 400 });

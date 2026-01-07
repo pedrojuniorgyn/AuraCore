@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     } = (body ?? {}) as Record<string, unknown>;
 
     // branchId é NOT NULL no schema: usar body.branchId (se vier) ou defaultBranchId da sessão
-    const branchIdCandidate = (body as any)?.branchId ?? ctx.defaultBranchId;
+    const branchIdCandidate = (body as unknown)?.branchId ?? ctx.defaultBranchId;
     if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
         { error: "branchId é obrigatório (ou defina defaultBranchId no usuário)" },

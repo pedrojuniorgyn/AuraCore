@@ -151,7 +151,7 @@ export class BoletoGenerator {
   /**
    * Consultar boleto
    */
-  public async consultarBoleto(nossoNumero: string): Promise<any> {
+  public async consultarBoleto(nossoNumero: string): Promise<unknown> {
     try {
       const token = await this.getAccessToken();
 
@@ -240,6 +240,7 @@ async function getAccessToken(): Promise<string> {
     throw new Error("Falha na autenticação com Banco Inter");
   }
 }
+
 
 
 

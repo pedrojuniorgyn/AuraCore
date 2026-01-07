@@ -58,7 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return true;
         }
 
-        const email = (user?.email || (profile as any)?.email || "").toString().trim().toLowerCase();
+        const email = (user?.email || (profile as unknown)?.email || "").toString().trim().toLowerCase();
         if (!email || !email.includes("@")) {
           return false;
         }
@@ -81,7 +81,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // 2) Validar email verificado (se vier do Google)
-        const emailVerified = (profile as any)?.email_verified;
+        const emailVerified = (profile as unknown)?.email_verified;
         if (emailVerified === false) {
           return false;
         }

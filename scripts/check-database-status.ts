@@ -72,7 +72,7 @@ async function checkDatabaseStatus() {
     console.log("📋 TODAS AS TABELAS NO BANCO:");
     console.log("=".repeat(60));
     
-    tables.recordset.forEach((t: any) => {
+    tables.recordset.forEach((t: unknown) => {
       console.log(`   ${t.name}`);
     });
 
@@ -81,25 +81,25 @@ async function checkDatabaseStatus() {
     console.log("🔍 INVESTIGAÇÃO DETALHADA:");
     console.log("=".repeat(60));
     
-    const costCentersTables = tables.recordset.filter((t: any) => 
+    const costCentersTables = tables.recordset.filter((t: unknown) => 
       t.name.toLowerCase().includes('cost') || t.name.toLowerCase().includes('centro')
     );
     
     console.log(`\n📌 Tabelas relacionadas a Centro de Custo:`);
-    costCentersTables.forEach((t: any) => {
+    costCentersTables.forEach((t: unknown) => {
       console.log(`   - ${t.name}`);
     });
 
-    const chartTables = tables.recordset.filter((t: any) => 
+    const chartTables = tables.recordset.filter((t: unknown) => 
       t.name.toLowerCase().includes('chart') || t.name.toLowerCase().includes('account')
     );
     
     console.log(`\n📌 Tabelas relacionadas a Plano de Contas:`);
-    chartTables.forEach((t: any) => {
+    chartTables.forEach((t: unknown) => {
       console.log(`   - ${t.name}`);
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Erro:", error.message);
   } finally {
     await pool.close();
@@ -107,6 +107,7 @@ async function checkDatabaseStatus() {
 }
 
 checkDatabaseStatus();
+
 
 
 

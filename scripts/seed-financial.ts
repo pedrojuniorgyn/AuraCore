@@ -135,7 +135,7 @@ async function seedFinancialData() {
     }
 
     console.log(`\n🎉 Seed concluído! ${totalCreated} registros criados.`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ Erro no seed:", error.message);
     throw error;
   }

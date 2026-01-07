@@ -62,12 +62,12 @@ export async function POST(request: Request) {
       .values({
         ...safeBody,
         organizationId: ctx.organizationId,
-        transactionDate: (safeBody as any)?.transactionDate
-          ? new Date((safeBody as any).transactionDate as any)
+        transactionDate: (safeBody as unknown)?.transactionDate
+          ? new Date((safeBody as unknown).transactionDate as unknown)
           : new Date(),
-      } as any) as any).$returningId();
+      } as unknown) as unknown).$returningId();
 
-    const insertedAny = inserted as any;
+    const insertedAny = inserted as unknown;
     const insertedIdRaw = Array.isArray(insertedAny)
       ? insertedAny?.[0]?.id ?? insertedAny?.[0]?.ID ?? insertedAny?.[0]
       : insertedAny?.id ?? insertedAny?.ID ?? insertedAny;

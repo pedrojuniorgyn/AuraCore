@@ -408,7 +408,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Falha ao criar seed.",
-        ...(canDebug ? { debug: { message, name: (error as any)?.name, stack: (error as any)?.stack } } : {}),
+        ...(canDebug ? { debug: { message, name: (error as unknown)?.name, stack: (error as unknown)?.stack } } : {}),
       },
       { status: 500 }
     );

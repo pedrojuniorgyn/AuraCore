@@ -47,7 +47,7 @@ export interface CreateNotificationParams {
   event: NotificationEvent;
   title: string;
   message?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   actionUrl?: string;
 }
 

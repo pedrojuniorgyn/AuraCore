@@ -44,7 +44,7 @@ export async function PUT(
       .set({
         ...safeBody,
         ...(hasWonDate
-          ? { wonDate: wonDateRaw ? new Date(wonDateRaw as any) : null }
+          ? { wonDate: wonDateRaw ? new Date(wonDateRaw as unknown) : null }
           : {}),
       })
       .where(
@@ -55,7 +55,7 @@ export async function PUT(
       )
       ;
 
-    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffectedRaw = (updateResult as unknown)?.rowsAffected;
     const rowsAffected = Array.isArray(rowsAffectedRaw)
       ? Number(rowsAffectedRaw[0] ?? 0)
       : Number(rowsAffectedRaw ?? 0);

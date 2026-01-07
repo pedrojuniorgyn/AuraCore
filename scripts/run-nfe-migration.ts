@@ -52,7 +52,7 @@ async function runMigration() {
           console.log(`[${i + 1}/${statements.length}] Executando...`);
           await pool.request().query(statement);
           console.log(`✅ Statement ${i + 1} executado com sucesso\n`);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error(`❌ Erro no statement ${i + 1}:`, error.message);
           console.error(`SQL:\n${statement}\n`);
           
@@ -83,7 +83,7 @@ async function runMigration() {
       console.log("\n⚠️  Nenhuma tabela nova encontrada.");
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ Erro durante migração:", error.message);
     process.exit(1);
   } finally {
@@ -93,6 +93,7 @@ async function runMigration() {
 }
 
 runMigration();
+
 
 
 

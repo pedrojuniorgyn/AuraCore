@@ -35,7 +35,7 @@ export async function listBTGDDAs(companyId: string): Promise<DDAAuthorized[]> {
   try {
     console.log("📋 Listando DDAs BTG...", { companyId });
 
-    const response = await btgGet<any>(
+    const response = await btgGet<Record<string, unknown>>(
       `/v1/companies/${companyId}/authorized-direct-debits`
     );
 
@@ -74,7 +74,7 @@ export async function listBTGDDADebits(
       queryString ? `?${queryString}` : ""
     }`;
 
-    const response = await btgGet<any>(url);
+    const response = await btgGet<Record<string, unknown>>(url);
 
     console.log(`✅ ${response.data?.length || 0} débitos encontrados`);
 
@@ -111,11 +111,11 @@ export async function updateBTGDDA(
 /**
  * Obter resumo de débitos
  */
-export async function getBTGDDADebitsummary(companyId: string): Promise<any> {
+export async function getBTGDDADebitsummary(companyId: string): Promise<Record<string, unknown>> {
   try {
     console.log("📊 Obtendo resumo de débitos DDA BTG...", { companyId });
 
-    const response = await btgGet<any>(
+    const response = await btgGet<Record<string, unknown>>(
       `/v1/companies/${companyId}/authorized-direct-debits/debits/summary`
     );
 
@@ -127,6 +127,7 @@ export async function getBTGDDADebitsummary(companyId: string): Promise<any> {
     throw error;
   }
 }
+
 
 
 

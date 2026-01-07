@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
-        } as any);
+        } as unknown);
       }
 
       // 4) Garantir vínculo user_roles (idempotente)

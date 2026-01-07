@@ -114,7 +114,7 @@ async function run() {
           `);
         pccInserted++;
         process.stdout.write(`\r   ✅ PCC: ${pccInserted}/${pccAccounts.length}`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.log(`\n   ❌ ${acc.code}: ${e.message.substring(0, 80)}`);
       }
     }
@@ -163,7 +163,7 @@ async function run() {
           `);
         ccInserted++;
         console.log(`   ✅ CC: ${cc.code} - ${cc.name}`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.log(`   ❌ ${cc.code}: ${e.message.substring(0, 100)}`);
       }
     }
@@ -187,7 +187,7 @@ async function run() {
     console.log(`✅ CC (cost_centers): ${fc.recordset[0].t} centros`);
     console.log();
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     throw error;
   } finally {
@@ -196,6 +196,7 @@ async function run() {
 }
 
 run();
+
 
 
 

@@ -185,7 +185,7 @@ async function run() {
     `);
 
     console.log(`✅ SUCESSO! ${check.recordset.length}/3 tabelas criadas:\n`);
-    check.recordset.forEach((t: any) => {
+    check.recordset.forEach((t: unknown) => {
       console.log(`   ✅ ${t.TABLE_NAME}`);
     });
 
@@ -198,7 +198,7 @@ async function run() {
     console.log("   2. Criar tela de auditoria no frontend");
     console.log("   3. Configurar alertas de mudanças críticas\n");
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("\n❌ ERRO:", error.message);
     throw error;
   } finally {

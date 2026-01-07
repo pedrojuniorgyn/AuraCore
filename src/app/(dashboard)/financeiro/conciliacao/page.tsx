@@ -77,7 +77,7 @@ export default function BankReconciliationPage() {
         while (Date.now() - startedAt < 60_000) {
           await new Promise((r) => setTimeout(r, 2000));
           const jobRes = await fetch(`/api/documents/jobs/${jobId}`, { cache: "no-store" });
-          const jobJson = await jobRes.json().catch(() => null as any);
+          const jobJson = await jobRes.json().catch(() => null);
           const status = jobJson?.job?.status as string | undefined;
           if (status === "SUCCEEDED") {
             const result = jobJson?.job?.resultJson ? JSON.parse(jobJson.job.resultJson) : null;

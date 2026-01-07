@@ -68,12 +68,12 @@ export async function POST(request: Request) {
       .values({
         ...safeBody,
         organizationId: ctx.organizationId,
-        stage: (safeBody as any)?.stage || "PROSPECTING",
+        stage: (safeBody as unknown)?.stage || "PROSPECTING",
         ownerId: ctx.userId,
         createdBy: ctx.userId,
-      } as any) as any).$returningId();
+      } as unknown) as unknown).$returningId();
 
-    const leadId = (createdId as any)?.id;
+    const leadId = (createdId as unknown)?.id;
     if (!leadId) {
       return NextResponse.json(
         { error: "Falha ao criar lead (id não retornado)" },

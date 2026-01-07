@@ -150,7 +150,7 @@ export class CurrentTaxEngine implements ITaxEngine {
     }
 
     // Calcular total
-    let total = Money.create(0);
+    const total = Money.create(0);
     if (Result.isFail(total)) {
       return Result.fail('Failed to create zero Money for total');
     }
