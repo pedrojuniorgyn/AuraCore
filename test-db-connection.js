@@ -3,6 +3,7 @@
  * Execução: node test-db-connection.js
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const sql = require('mssql');
 require('dotenv').config();
 

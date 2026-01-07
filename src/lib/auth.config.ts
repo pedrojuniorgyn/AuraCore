@@ -37,7 +37,7 @@ export const authConfig = {
       }
       
       if (token.role && session.user) {
-        // @ts-expect-error
+        // @ts-expect-error - NextAuth types don't include custom role property
         session.user.role = token.role;
       }
       
@@ -46,7 +46,7 @@ export const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        // @ts-expect-error
+        // @ts-expect-error - Extending JWT token with custom role property
         token.role = user.role;
       }
       return token;

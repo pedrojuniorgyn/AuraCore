@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { inArray } from "drizzle-orm";
 
 /**
  * 🔐 TENANT CONTEXT (Multi-Tenant SaaS Security)
@@ -111,8 +112,6 @@ export function hasAccessToBranch(ctx: TenantContext, branchId: number): boolean
  * @returns {any[]} Array de condições SQL (vazio se Admin)
  */
 export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: unknown): unknown[] {
-  const { inArray } = require("drizzle-orm");
-  
   // Admin vê todas as filiais da organização
   if (ctx.isAdmin) {
     return [];

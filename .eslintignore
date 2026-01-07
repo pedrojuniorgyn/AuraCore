@@ -1,0 +1,10 @@
+# ESLint ignore patterns
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# Test files with CommonJS
+test-db-connection.js
+
