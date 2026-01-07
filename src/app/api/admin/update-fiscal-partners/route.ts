@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, getDbRows } from "@/lib/db";
 import { parseNFeXML } from "@/services/nfe-parser";
 
 /**
@@ -20,14 +20,21 @@ export async function GET() {
     // 1️⃣ ATUALIZAR NFes
     console.log("1️⃣ Processando NFes...");
     
-    const result: { recordset: Array<{ id: number; document_type: string; xml_content: string; partner_name: string }> } = await db.execute(rawSql`
+    interface NfeRow {
+      id: number;
+      document_type: string;
+      xml_content: string;
+      partner_name: string;
+    }
+    
+    const result = await db.execute(rawSql`
       SELECT TOP 50 id, document_type, xml_content, partner_name
       FROM fiscal_documents
       WHERE document_type = 'NFE' 
         AND xml_content IS NOT NULL
     `);
     
-    const nfes = Array.isArray(result) ? result : (result.recordset || []);
+    const nfes = getDbRows<NfeRow>(result);
     
     for (const doc of nfes) {
       try {

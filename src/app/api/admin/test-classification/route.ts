@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, getDbRows } from "@/lib/db";
 import { inboundInvoices, accountsPayable, payableItems } from "@/lib/db/schema";
 import { eq, isNull, sql } from "drizzle-orm";
 
@@ -18,10 +18,22 @@ export async function POST() {
       ORDER BY created_at DESC
     `);
     
-    const allInvoices = Array.isArray(result) ? result : [];
+    interface InvoiceRow {
+      id: number;
+      invoice_number?: string;
+      invoiceNumber?: string;
+      value?: number;
+      totalValue?: number;
+      total_value?: number;
+      classification?: string;
+      created_at?: Date;
+      createdAt?: Date;
+    }
+    
+    const allInvoices = getDbRows<InvoiceRow>(result);
     
     // Mapear para formato esperado
-    const mappedInvoices = allInvoices.map((inv: Record<string, unknown>) => ({
+    const mappedInvoices = allInvoices.map((inv) => ({
       id: inv.id,
       invoiceNumber: inv.invoice_number || inv.invoiceNumber,
       totalValue: inv.value || inv.totalValue || inv.total_value || 0,
@@ -61,7 +73,16 @@ export async function POST() {
       ORDER BY created_at DESC
     `);
     
-    const payables = Array.isArray(payablesResult) ? payablesResult : [];
+    interface PayableRow {
+      id: number;
+      document_number?: string;
+      amount?: number;
+      due_date?: Date;
+      status?: string;
+      createdAt?: Date;
+    }
+    
+    const payables = getDbRows<PayableRow>(payablesResult);
 
     console.log(`💰 [TEST] Contas a pagar de NFe: ${payables.length}`);
 
@@ -71,7 +92,11 @@ export async function POST() {
       FROM payable_items
     `);
     
-    const items = Array.isArray(itemsResult) ? itemsResult : [];
+    interface ItemCountRow {
+      count?: number;
+    }
+    
+    const items = getDbRows<ItemCountRow>(itemsResult);
     const itemsCount = items[0]?.count || 0;
     console.log(`📦 [TEST] Total de itens vinculados: ${itemsCount}`);
 

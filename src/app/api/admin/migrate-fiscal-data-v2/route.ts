@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, getDbRows } from "@/lib/db";
 
 /**
  * 🔄 MIGRAÇÃO DE DADOS FISCAIS V2 (SQL Simples)
@@ -12,7 +12,7 @@ export async function GET() {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
-    let totalMigrated = 0;
+    const totalMigrated = 0;
 
     // 1️⃣ MIGRAR NFe
     console.log("1️⃣ Migrando NFes...");
@@ -112,16 +112,20 @@ export async function GET() {
     console.log("✅ FKs atualizadas");
 
     // Contar total
+    interface CountRow {
+      total: number;
+    }
+    
     const result = await db.execute(rawSql`SELECT COUNT(*) as total FROM fiscal_documents`);
-    const rows = Array.isArray(result) ? result : [result];
-    const total = (rows[0] as any)?.total || 0;
+    const rows = getDbRows<CountRow>(result);
+    const total = rows[0]?.total || 0;
     
     console.log(`\n✅ Migração concluída! Total: ${total} documentos\n`);
 
     return NextResponse.json({
       success: true,
       message: "Migração executada com sucesso",
-      total: (total as any)?.total || 0,
+      total,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
