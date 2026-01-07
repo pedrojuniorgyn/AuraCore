@@ -75,7 +75,7 @@ export function PaymentModal({ payableId, amount, description, open, onOpenChang
       queryClient.invalidateQueries({ queryKey: ["financial-summary"] });
       onOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Erro ao registrar pagamento", {
         description: error.message,
       });
@@ -134,7 +134,7 @@ export function PaymentModal({ payableId, amount, description, open, onOpenChang
                 <SelectValue placeholder="Selecione a conta" />
               </SelectTrigger>
               <SelectContent>
-                {bankAccounts?.data?.map((account: any) => (
+                {bankAccounts?.data?.map((account: unknown) => (
                   <SelectItem key={account.id} value={account.id.toString()}>
                     {account.name} - Saldo: R$ {parseFloat(account.currentBalance).toFixed(2)}
                   </SelectItem>

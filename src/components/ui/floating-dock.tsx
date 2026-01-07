@@ -66,7 +66,7 @@ const dockItems: DockItem[] = [
   },
 ];
 
-function DockIcon({ item, mouseX }: { item: DockItem; mouseX: any }) {
+function DockIcon({ item, mouseX }: { item: DockItem; mouseX: unknown }) {
   const pathname = usePathname();
   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 

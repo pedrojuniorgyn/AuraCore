@@ -60,13 +60,13 @@ import { useTenant } from "@/contexts/tenant-context";
 interface SidebarItem {
   title: string;
   href: string;
-  icon: any;
+  icon: unknown;
   color: string;
 }
 
 interface SidebarGroup {
   title: string;
-  icon: any;
+  icon: unknown;
   color: string;
   items: SidebarItem[];
 }

@@ -123,7 +123,7 @@ export async function createCostCenterAllocations(
 /**
  * Busca rateios de uma linha
  */
-export async function getAllocations(journalEntryLineId: number): Promise<any[]> {
+export async function getAllocations(journalEntryLineId: number): Promise<unknown[]> {
   try {
     const result = await db.execute(sql`
       SELECT 
@@ -164,7 +164,7 @@ export async function getCostCenterTotals(
   organizationId: number,
   startDate?: Date,
   endDate?: Date
-): Promise<any[]> {
+): Promise<unknown[]> {
   try {
     const result = await db.execute(sql`
       SELECT 

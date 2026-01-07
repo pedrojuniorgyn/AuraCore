@@ -208,7 +208,7 @@ export default function BillingPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, any> = {
+    const variants: Record<string, unknown> = {
       DRAFT: { label: "Rascunho", variant: "secondary" },
       SENT: { label: "Enviada", variant: "default" },
       FINALIZED: { label: "Finalizada", variant: "default" },

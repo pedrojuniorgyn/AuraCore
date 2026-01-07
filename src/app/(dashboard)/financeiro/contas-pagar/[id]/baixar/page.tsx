@@ -14,7 +14,7 @@ export default function BaixarContaPagarPage() {
   const router = useRouter();
   const payableId = params.id as string;
   
-  const [payable, setPayable] = useState<any>(null);
+  const [payable, setPayable] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   
   // Formulário

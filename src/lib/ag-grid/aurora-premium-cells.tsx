@@ -29,7 +29,7 @@ export function PremiumStatusCell(props: ICellRendererParams) {
     label: string;
     gradient: string;
     textColor: string;
-    icon: any;
+    icon: unknown;
     glow: string;
     pulse?: boolean;
   }> = {
@@ -413,7 +413,7 @@ export function PremiumOriginCell(props: ICellRendererParams) {
   const originConfig: Record<string, {
     label: string;
     gradient: string;
-    icon: any;
+    icon: unknown;
   }> = {
     NFE: {
       label: "NFe",

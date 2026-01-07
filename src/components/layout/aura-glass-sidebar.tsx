@@ -49,13 +49,13 @@ import { GridPattern } from "@/components/ui/animated-background";
 interface MenuItem {
   title: string;
   href: string;
-  icon: any;
+  icon: unknown;
   badge?: number;
 }
 
 interface MenuGroup {
   title: string;
-  icon: any;
+  icon: unknown;
   color: string;
   gradientFrom: string;
   gradientTo: string;

@@ -126,7 +126,7 @@ export const FinancialCharts: React.FC = () => {
     });
 
     // Cria novo gráfico
-    const chartRangeParams: any = {
+    const chartRangeParams: unknown = {
       cellRange: {
         columns: type === "pie" 
           ? ["category", "total"] 

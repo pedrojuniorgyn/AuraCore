@@ -33,8 +33,8 @@ export default function NCMCategoriasPage() {
   const router = useRouter();
   const [rowData, setRowData] = useState<NCMCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [chartAccounts, setChartAccounts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<unknown[]>([]);
+  const [chartAccounts, setChartAccounts] = useState<unknown[]>([]);
   const gridRef = useRef<AgGridReact>(null);
 
   const handleEdit = (data: NCMCategory) => {

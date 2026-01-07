@@ -20,7 +20,7 @@ export default function CertificadoDigitalPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isTesting, setIsTesting] = useState(false);
-  const [certificateInfo, setCertificateInfo] = useState<any>(null);
+  const [certificateInfo, setCertificateInfo] = useState<unknown>(null);
   const [testResult, setTestResult] = useState<{
     success: boolean;
     message: string;

@@ -73,7 +73,7 @@ async function checkAdmin() {
 
     if (branchesResult.recordset.length > 0) {
       console.log("\n📋 Filiais permitidas:");
-      console.table(branchesResult.recordset.map((b: any) => ({
+      console.table(branchesResult.recordset.map((b: Record<string, unknown>) => ({
         "Branch ID": b.branch_id,
         "Nome": b.name || "N/A",
       })));
@@ -81,8 +81,9 @@ async function checkAdmin() {
       console.log("\n⚠️  Nenhuma filial vinculada ao usuário!");
     }
 
-  } catch (error: any) {
-    console.error("\n❌ Erro:", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ Erro:", message);
     process.exit(1);
   } finally {
     await pool.close();

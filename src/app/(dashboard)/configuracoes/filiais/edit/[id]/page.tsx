@@ -13,7 +13,7 @@ export default function EditBranchPage() {
   const params = useParams();
   const branchId = parseInt(params.id as string);
 
-  const [branchData, setBranchData] = useState<any>(null);
+  const [branchData, setBranchData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

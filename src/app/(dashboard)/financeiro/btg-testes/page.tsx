@@ -7,7 +7,7 @@ import { FileText, QrCode, Loader2 } from "lucide-react";
 
 export default function BTGTestesPage() {
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<unknown>(null);
   const { toast } = useToast();
 
   const gerarBoletoTeste = async () => {

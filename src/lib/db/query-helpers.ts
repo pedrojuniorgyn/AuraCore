@@ -28,7 +28,7 @@ interface QueryWithOffset<T> {
  * Interface para inserts com método .returning()
  */
 interface InsertWithReturning<T> {
-  returning<TReturn>(fields: TReturn): Promise<any[]>;
+  returning<TReturn>(fields: TReturn): Promise<unknown[]>;
 }
 
 /**
@@ -93,7 +93,7 @@ export async function queryPaginated<T>(
 export async function insertReturning<TReturn>(
   insertQuery: unknown,
   fields: TReturn
-): Promise<any[]> {
+): Promise<unknown[]> {
   return (insertQuery as unknown as InsertWithReturning<TReturn>).returning(fields);
 }
 

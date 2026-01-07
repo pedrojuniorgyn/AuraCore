@@ -25,7 +25,7 @@ export default function BTGDashboardPage() {
     pixPagos: 0,
     valorTotal: 0,
   });
-  const [health, setHealth] = useState<any>(null);
+  const [health, setHealth] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 

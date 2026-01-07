@@ -99,7 +99,7 @@ export default function OperacoesPage() {
     }
   }, [load]);
 
-  const latestSummary = useMemo(() => safeJsonParse<any>(latest?.summaryJson ?? null), [latest]);
+  const latestSummary = useMemo(() => safeJsonParse<unknown>(latest?.summaryJson ?? null), [latest]);
 
   return (
     <PageTransition>

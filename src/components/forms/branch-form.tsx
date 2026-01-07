@@ -128,8 +128,8 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
           if (mounted) {
             setLegacyBranchOptions(
               items
-                .map((it: any) => ({ code: Number(it.code), label: String(it.label ?? it.code) }))
-                .filter((it: any) => Number.isFinite(it.code))
+                .map((it: unknown) => ({ code: Number(it.code), label: String(it.label ?? it.code) }))
+                .filter((it: unknown) => Number.isFinite(it.code))
             );
           }
         }
@@ -140,8 +140,8 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
           if (mounted) {
             setTaxClassOptions(
               items
-                .map((it: any) => ({ value: String(it.value ?? ""), label: String(it.label ?? it.value ?? "") }))
-                .filter((it: any) => it.value)
+                .map((it: unknown) => ({ value: String(it.value ?? ""), label: String(it.label ?? it.value ?? "") }))
+                .filter((it: unknown) => it.value)
             );
           }
         }

@@ -70,7 +70,7 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
       field: "ncm",
       headerName: "NCM",
       width: 110,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: unknown) => {
         if (!params.value) return "-";
         const ncm = params.value.replace(/\D/g, "");
         if (ncm.length === 8) {
@@ -89,7 +89,7 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
       headerName: "Qtde",
       width: 100,
       type: "numericColumn",
-      valueFormatter: (params: any) => {
+      valueFormatter: (params: unknown) => {
         if (!params.value) return "-";
         return new Intl.NumberFormat("pt-BR", {
           minimumFractionDigits: 2,
@@ -116,7 +116,7 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
       field: "productName",
       headerName: "Produto Vinculado",
       width: 200,
-      cellRenderer: (params: any) => {
+      cellRenderer: (params: unknown) => {
         if (params.data.productId && params.value) {
           return (
             <Badge variant="default" className="font-normal">
