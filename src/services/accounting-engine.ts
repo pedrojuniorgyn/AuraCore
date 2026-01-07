@@ -34,6 +34,7 @@ interface AccountRow {
 
 interface JournalEntryRow {
   id: number;
+  fiscal_document_id?: number;
   status: string;
   entry_date: Date;
   entry_type?: string;
@@ -80,7 +81,7 @@ export async function generateJournalEntry(
       SELECT 
         fdi.id,
         fdi.chart_account_id,
-        fdi.net_amount,
+        fdi.total_value,
         coa.code AS chart_account_code,
         coa.name AS chart_account_name
       FROM fiscal_document_items fdi
@@ -188,7 +189,7 @@ export async function generateJournalEntry(
             'DEBIT',
             ${item.chart_account_id},
             ${item.chart_account_name || 'Sem descrição'},
-            ${item.net_amount},
+            ${item.total_value},
             0.00,
             GETDATE()
           )
@@ -258,9 +259,10 @@ export async function generateJournalEntry(
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar lançamento:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
     };
   }
 }
@@ -319,9 +321,10 @@ export async function reverseJournalEntry(
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao reverter lançamento:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
     };
   }
 }
