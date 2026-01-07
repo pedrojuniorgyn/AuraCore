@@ -11,6 +11,8 @@ import codeConsistency from './code-consistency.json';
 import typeSafety from './type-safety.json';
 import mcpEnforcementRules from './mcp-enforcement-rules.json';
 import knownBugsRegistry from './known-bugs-registry.json';
+import smpMethodology from './smp-methodology.json';
+import lessonLearned from './lesson-learned.json';
 
 // Architecture Contracts
 import architectureLayers from './architecture-layers.json';
@@ -39,6 +41,8 @@ export const contracts = {
   'type-safety': typeSafety,
   'mcp-enforcement-rules': mcpEnforcementRules,
   'known-bugs-registry': knownBugsRegistry,
+  'smp-methodology': smpMethodology,
+  'lesson-learned': lessonLearned,
   
   // Architecture
   'architecture-layers': architectureLayers,

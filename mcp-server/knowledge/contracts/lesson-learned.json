@@ -1,0 +1,237 @@
+{
+  "id": "lesson-learned",
+  "version": "1.0.0",
+  "title": "Lesson Learned Registration",
+  "description": "Contrato para registro de lições aprendidas durante refatorações no AuraCore",
+  "category": "process",
+  "created_at": "2026-01-07",
+  "updated_at": "2026-01-07",
+  
+  "schema": {
+    "id": {
+      "type": "string",
+      "format": "LL-YYYY-MM-DD-NNN",
+      "description": "Identificador único da lição",
+      "example": "LL-2026-01-07-001"
+    },
+    "title": {
+      "type": "string",
+      "description": "Título descritivo da lição",
+      "example": "Array.isArray em Resultado de db.execute"
+    },
+    "epic": {
+      "type": "string",
+      "description": "Épico ou projeto onde o bug foi encontrado",
+      "example": "E7.15"
+    },
+    "context": {
+      "type": "string",
+      "description": "Contexto detalhado da situação",
+      "example": "Correção de type-safety em fallback de db.execute"
+    },
+    "bug_description": {
+      "type": "string",
+      "description": "Descrição clara do bug/issue",
+      "example": "Uso de Array.isArray(result) que nunca executa"
+    },
+    "root_cause": {
+      "type": "string",
+      "description": "Análise da causa raiz",
+      "example": "Não entender que db.execute() retorna objeto, não array"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["SMP-INFRA", "SMP-MAP", "SMP-CAT", "SMP-EXEC", "SMP-VERIFY"],
+      "description": "Categoria SMP onde o bug ocorreu"
+    },
+    "impact": {
+      "type": "string",
+      "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+      "description": "Severidade do impacto"
+    },
+    "before_code": {
+      "type": "string",
+      "description": "Código problemático (antes)",
+      "example": "const row = Array.isArray(result) ? result[0] : undefined;"
+    },
+    "after_code": {
+      "type": "string",
+      "description": "Código correto (depois)",
+      "example": "const row = (result.recordset || result)[0];"
+    },
+    "rule_created": {
+      "type": "string",
+      "nullable": true,
+      "description": "ID e descrição da nova regra criada",
+      "example": "PC-002: db.execute fallback usa (result.recordset || result)"
+    },
+    "rule_updated": {
+      "type": "string",
+      "nullable": true,
+      "description": "ID e descrição da regra atualizada"
+    },
+    "anti_pattern_id": {
+      "type": "string",
+      "nullable": true,
+      "description": "ID do anti-pattern documentado",
+      "example": "AP-001"
+    },
+    "prevention": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de ações para prevenir recorrência",
+      "example": ["Consultar PC-002 antes de modificar db.execute", "Verificar anti-patterns"]
+    },
+    "date": {
+      "type": "string",
+      "format": "ISO8601",
+      "description": "Data do registro"
+    },
+    "files_affected": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de arquivos afetados pelo bug"
+    },
+    "commit_fix": {
+      "type": "string",
+      "nullable": true,
+      "description": "Hash do commit que corrigiu o bug"
+    }
+  },
+  
+  "impact_definitions": {
+    "CRITICAL": {
+      "description": "Causa falha em runtime, perda de dados, ou vazamento de segurança",
+      "examples": [
+        "Código morto que deveria executar",
+        "Vazamento de dados entre tenants",
+        "Erro que quebra fluxo crítico"
+      ]
+    },
+    "HIGH": {
+      "description": "Causa comportamento incorreto significativo",
+      "examples": [
+        "Dados incorretos salvos",
+        "Cálculos errados",
+        "União de tipos incompleta"
+      ]
+    },
+    "MEDIUM": {
+      "description": "Causa problemas menores ou viola boas práticas",
+      "examples": [
+        "any onde deveria ter tipo",
+        "Código duplicado",
+        "Falta de type guard"
+      ]
+    },
+    "LOW": {
+      "description": "Problemas cosméticos ou de estilo",
+      "examples": [
+        "Classe CSS duplicada",
+        "Formatação inconsistente",
+        "Comentário incorreto"
+      ]
+    }
+  },
+  
+  "category_descriptions": {
+    "SMP-INFRA": {
+      "description": "Bugs relacionados à falta ou problema em helpers/utilities",
+      "common_causes": [
+        "Helper não criado",
+        "Helper com bug",
+        "Helper não exportado"
+      ]
+    },
+    "SMP-MAP": {
+      "description": "Bugs relacionados a mapeamento incompleto ou incorreto",
+      "common_causes": [
+        "grep não executado",
+        "Escopo subestimado",
+        "Arquivos esquecidos"
+      ]
+    },
+    "SMP-CAT": {
+      "description": "Bugs relacionados a categorização incorreta",
+      "common_causes": [
+        "Padrões misturados",
+        "Template errado aplicado",
+        "Priorização incorreta"
+      ]
+    },
+    "SMP-EXEC": {
+      "description": "Bugs introduzidos durante a execução da correção",
+      "common_causes": [
+        "Cast incorreto",
+        "Interface errada",
+        "Semântica alterada"
+      ]
+    },
+    "SMP-VERIFY": {
+      "description": "Bugs que escaparam da verificação final",
+      "common_causes": [
+        "grep incompleto",
+        "Teste não executado",
+        "Arquivo novo não verificado"
+      ]
+    }
+  },
+  
+  "registration_workflow": {
+    "steps": [
+      {
+        "step": 1,
+        "action": "PARAR correção atual ao detectar bug",
+        "output": null
+      },
+      {
+        "step": 2,
+        "action": "Preencher campos obrigatórios do schema",
+        "output": "lesson_learned_draft"
+      },
+      {
+        "step": 3,
+        "action": "Analisar se requer nova regra ou anti-pattern",
+        "output": "classification"
+      },
+      {
+        "step": 4,
+        "action": "Criar/atualizar regra em regrasmcp.mdc se necessário",
+        "output": "rule_id"
+      },
+      {
+        "step": 5,
+        "action": "Documentar anti-pattern se aplicável",
+        "output": "anti_pattern_id"
+      },
+      {
+        "step": 6,
+        "action": "Adicionar entrada em SMP_LESSONS_LEARNED.md",
+        "output": "lesson_id"
+      },
+      {
+        "step": 7,
+        "action": "Continuar correção aplicando nova regra",
+        "output": null
+      }
+    ]
+  },
+  
+  "storage": {
+    "primary": "docs/mcp/SMP_LESSONS_LEARNED.md",
+    "index_by_category": true,
+    "index_by_impact": true,
+    "index_by_rule": true
+  },
+  
+  "metrics": {
+    "track": [
+      "bugs_by_category",
+      "bugs_by_impact",
+      "rules_created",
+      "anti_patterns_documented",
+      "recurrence_rate"
+    ],
+    "dashboard": "docs/mcp/SMP_METRICS.md"
+  }
+}

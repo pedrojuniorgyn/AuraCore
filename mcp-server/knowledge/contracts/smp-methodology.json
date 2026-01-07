@@ -1,0 +1,205 @@
+{
+  "id": "smp-methodology",
+  "version": "1.0.0",
+  "title": "Systematic Migration Protocol",
+  "description": "Metodologia padrão do AuraCore para refatorações, migrações e padronizações de código em larga escala",
+  "category": "process",
+  "created_at": "2026-01-07",
+  "updated_at": "2026-01-07",
+  
+  "phases": {
+    "SMP-INFRA": {
+      "order": 1,
+      "name": "Infraestrutura",
+      "description": "Criar helpers/utilities centralizados ANTES de refatorar",
+      "checklist": [
+        "Identificar padrão repetitivo (3+ arquivos)",
+        "Criar helper em local apropriado",
+        "Documentar com JSDoc",
+        "Criar testes unitários",
+        "Exportar no index do módulo",
+        "Commit isolado"
+      ],
+      "exit_criteria": [
+        "Helper criado e testado",
+        "Commit realizado"
+      ]
+    },
+    "SMP-MAP": {
+      "order": 2,
+      "name": "Mapeamento",
+      "description": "Mapear TODO o escopo ANTES de corrigir qualquer arquivo",
+      "checklist": [
+        "Executar grep para contar total",
+        "Listar todos arquivos afetados",
+        "Calcular distribuição por diretório",
+        "Documentar em relatório"
+      ],
+      "commands": [
+        "grep -rn 'padrão' src/ --include='*.ts' | wc -l",
+        "grep -rn 'padrão' src/ --include='*.ts' | cut -d: -f1 | sort -u",
+        "grep -rn 'padrão' src/ --include='*.ts' | cut -d: -f1 | sort | uniq -c | sort -rn"
+      ],
+      "exit_criteria": [
+        "100% das ocorrências identificadas",
+        "Relatório apresentado"
+      ]
+    },
+    "SMP-CAT": {
+      "order": 3,
+      "name": "Categorização",
+      "description": "Agrupar ocorrências por TIPO DE CORREÇÃO, não por arquivo",
+      "checklist": [
+        "Definir categorias (A, B, C...)",
+        "Criar template de correção por categoria",
+        "Priorizar por criticidade",
+        "Estimar esforço por categoria",
+        "Criar plano de fases"
+      ],
+      "priority_levels": ["CRÍTICA", "ALTA", "MÉDIA", "BAIXA"],
+      "exit_criteria": [
+        "Todas ocorrências categorizadas",
+        "Plano de fases criado"
+      ]
+    },
+    "SMP-APPROVE": {
+      "order": 4,
+      "name": "Aprovação",
+      "description": "NUNCA executar correção em massa sem aprovação explícita",
+      "checklist": [
+        "Apresentar relatório de mapeamento",
+        "Apresentar plano de fases",
+        "Identificar riscos",
+        "Aguardar 'APROVADO' explícito",
+        "Documentar aprovação com timestamp"
+      ],
+      "exit_criteria": [
+        "Mensagem 'APROVADO' recebida",
+        "Escopo aprovado documentado"
+      ]
+    },
+    "SMP-EXEC": {
+      "order": 5,
+      "name": "Execução",
+      "description": "Executar correções por CATEGORIA, não por arquivo",
+      "checklist": [
+        "Executar uma categoria por vez",
+        "Aplicar template de correção consistentemente",
+        "Verificar compilação após cada categoria",
+        "Commit por categoria",
+        "Checkpoint com relatório"
+      ],
+      "exit_criteria": [
+        "Todas categorias processadas",
+        "Zero erros de compilação"
+      ]
+    },
+    "SMP-VERIFY": {
+      "order": 6,
+      "name": "Verificação",
+      "description": "Verificar que TODAS as ocorrências foram corrigidas",
+      "checklist": [
+        "grep final = 0 ocorrências",
+        "npx tsc --noEmit = 0 erros",
+        "Testes passando",
+        "Relatório final com métricas"
+      ],
+      "commands": [
+        "grep -rn 'padrão' src/ --include='*.ts' | wc -l",
+        "npx tsc --noEmit"
+      ],
+      "exit_criteria": [
+        "Problema 100% eliminado",
+        "CI/CD passando"
+      ]
+    }
+  },
+  
+  "learning_loop": {
+    "description": "Ciclo de retroalimentação contínua",
+    "steps": [
+      {
+        "step": 1,
+        "name": "DETECTAR",
+        "action": "Identificar bug/issue durante refatoração"
+      },
+      {
+        "step": 2,
+        "name": "DOCUMENTAR",
+        "action": "Registrar o que falhou, onde, código atual"
+      },
+      {
+        "step": 3,
+        "name": "ANALISAR",
+        "action": "Identificar causa raiz, categoria SMP, impacto"
+      },
+      {
+        "step": 4,
+        "name": "CLASSIFICAR",
+        "action": "Determinar se é nova regra, atualização ou anti-pattern"
+      },
+      {
+        "step": 5,
+        "name": "ATUALIZAR",
+        "action": "Modificar regrasmcp.mdc e/ou contratos MCP"
+      },
+      {
+        "step": 6,
+        "name": "REGISTRAR",
+        "action": "Adicionar em SMP_LESSONS_LEARNED.md"
+      }
+    ]
+  },
+  
+  "rules": {
+    "SMP-INFRA-001": {
+      "description": "Criar helper centralizado quando padrão se repete em 3+ arquivos",
+      "severity": "ALTA"
+    },
+    "SMP-MAP-001": {
+      "description": "Executar grep completo e documentar ANTES de qualquer correção",
+      "severity": "ALTA"
+    },
+    "SMP-MAP-002": {
+      "description": "Se total > 10 ocorrências, criar relatório de mapeamento formal",
+      "severity": "MÉDIA"
+    }
+  },
+  
+  "documents": {
+    "methodology": "docs/mcp/SMP_METHODOLOGY.md",
+    "lessons_learned": "docs/mcp/SMP_LESSONS_LEARNED.md",
+    "patterns_catalog": "docs/mcp/SMP_PATTERNS_CATALOG.md",
+    "anti_patterns": "docs/mcp/SMP_ANTI_PATTERNS.md"
+  },
+  
+  "templates": {
+    "mapping_report": {
+      "sections": [
+        "Sumário Executivo",
+        "Distribuição por Diretório",
+        "Comandos de Verificação",
+        "Lista de Arquivos"
+      ]
+    },
+    "phase_plan": {
+      "sections": [
+        "Fase X.N: Nome",
+        "Padrão",
+        "Quantidade",
+        "Prioridade",
+        "Template de Correção",
+        "Riscos"
+      ]
+    },
+    "checkpoint": {
+      "sections": [
+        "Progresso",
+        "Categorias Processadas",
+        "Verificações",
+        "Commits",
+        "Status"
+      ]
+    }
+  }
+}
