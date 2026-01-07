@@ -42,13 +42,11 @@ const globalForDb = globalThis as unknown as {
   conn: sql.ConnectionPool | undefined;
 };
 
-let conn: sql.ConnectionPool;
-
 if (!globalForDb.conn) {
   // Cria o pool apenas uma vez
   globalForDb.conn = new sql.ConnectionPool(connectionConfig);
 }
-conn = globalForDb.conn;
+const conn = globalForDb.conn;
 
 // 4. Exports de Compatibilidade (Para não quebrar seus Cron Jobs antigos)
 export const pool = conn;
@@ -65,3 +63,6 @@ export const getDb = async () => {
 
 // 5. Instância do Drizzle
 export const db = drizzle({ client: conn, schema });
+
+// 6. Helper functions para db.execute()
+export * from './helpers';

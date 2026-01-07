@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, getFirstRow } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
 /**
@@ -112,7 +112,8 @@ export async function POST(request: NextRequest) {
           AND deleted_at IS NULL
         `);
 
-        const categoryId = categoryResult.recordset[0]?.id || null;
+        const categoryRow = getFirstRow<{ id?: number }>(categoryResult);
+        const categoryId = categoryRow?.id || null;
 
         // Buscar plano de contas pelo código
         const chartAccountResult = await db.execute(sql`
@@ -122,7 +123,8 @@ export async function POST(request: NextRequest) {
           AND deleted_at IS NULL
         `);
 
-        const chartAccountId = chartAccountResult.recordset[0]?.id || null;
+        const chartAccountRow = getFirstRow<{ id?: number }>(chartAccountResult);
+        const chartAccountId = chartAccountRow?.id || null;
 
         // Inserir
         await db.execute(sql`

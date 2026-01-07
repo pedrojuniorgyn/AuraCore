@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
 /**
@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
       WHERE deleted_at IS NULL
     `);
 
-    const total = result.recordset[0]?.total || 0;
+    const firstRow = getFirstRow<{ total?: number }>(result);
+    const total = firstRow?.total || 0;
 
     if (total === 0) {
       return NextResponse.json({
@@ -41,10 +42,12 @@ export async function GET(request: NextRequest) {
       ORDER BY code ASC
     `);
 
+    const accounts = getDbRows<Record<string, unknown>>(accountsResult);
+    
     return NextResponse.json({
       exists: true,
       total,
-      sample: accountsResult.recordset,
+      sample: accounts,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
