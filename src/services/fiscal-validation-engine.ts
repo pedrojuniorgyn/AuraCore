@@ -56,7 +56,8 @@ export class FiscalValidationEngine {
         AND is_active = 1
     `);
     
-    const rule = ruleResult.recordset?.[0] || (ruleResult as { recordset: Array<Record<string, unknown>> })[0];
+    const rule = ruleResult.recordset?.[0] || 
+      (Array.isArray(ruleResult) ? ruleResult[0] : undefined);
     
     // 2. Validar se encontrou regra
     if (!rule) {
@@ -174,7 +175,8 @@ export class FiscalValidationEngine {
         WHERE cte.id = ${cteId}
       `);
       
-      const cte = cteResult.recordset?.[0] || (cteResult as { recordset: Array<Record<string, unknown>> })[0];
+      const cte = cteResult.recordset?.[0] || 
+        (Array.isArray(cteResult) ? cteResult[0] : undefined);
       if (!cte) continue;
       
       const validation = await this.validateCTE(organizationId, {

@@ -387,6 +387,59 @@ function isFiscalDocument(data: unknown): data is FiscalDocument {
 
 ---
 
+## 🛡️ VERIFY-AFTER-TYPE (VAT-001 a VAT-010)
+
+### Regras OBRIGATÓRIAS Após Adicionar Qualquer Tipo
+
+Estas regras previnem bugs introduzidos durante eliminação de `any`:
+
+| Regra | Descrição | Verificação Obrigatória |
+|-------|-----------|-------------------------|
+| VAT-001 | Interface DEVE corresponder aos dados reais | `grep -A10 "variavel ="` para ver o que é setado |
+| VAT-002 | Union type DEVE incluir TODOS os valores possíveis | Verificar Select/options/enum completo |
+| VAT-003 | Type assertion DEVE preservar semântica original | Se era array, continua array |
+| VAT-004 | Cast de db result DEVE usar padrão .recordset | `grep -rn "recordset" src/` para verificar padrão |
+| VAT-005 | Propriedades declaradas DEVEM ser setadas | Verificar TODOS os locais de atribuição |
+| VAT-006 | Fallback patterns DEVEM ser preservados | `\|\|` e `??` indicam fallback - não quebrar |
+| VAT-007 | Index access DEVE corresponder ao tipo | `[0]` em objeto ≠ `[0]` em array |
+| VAT-008 | Generic default DEVE ser `unknown`, não `any` | `<T = unknown>` não `<T = any>` |
+| VAT-009 | Record<string, unknown> para dados dinâmicos | Não inventar interfaces para XML/JSON |
+| VAT-010 | Verificar grep ANTES e DEPOIS da mudança | Confirmar que padrão está consistente |
+
+### PATTERN-CONSISTENCY (PC-001 a PC-005)
+
+Padrões específicos do codebase AuraCore:
+
+| Regra | Padrão | Exemplo Correto |
+|-------|--------|-----------------|
+| PC-001 | db.execute() retorna `{ recordset: T[] }` | `result.recordset[0]` |
+| PC-002 | Fallback usa type guard para array | `Array.isArray(x) ? x[0] : undefined` |
+| PC-003 | XML parseado usa `Record<string, unknown>` | `nfeXml: Record<string, unknown>` |
+| PC-004 | Select union inclui TODOS os valores | `as 3 \| 6 \| 12 \| 24 \| 36 \| 60` |
+| PC-005 | Icon className usa `h-N w-N` (altura E largura) | `className="h-5 w-5"` |
+
+### SEMANTIC-PRESERVATION (SP-001 a SP-003)
+
+| Regra | Descrição | Exemplo |
+|-------|-----------|---------|
+| SP-001 | Cast NÃO muda comportamento | Se `[0]` funcionava antes, deve funcionar depois |
+| SP-002 | Fallback NÃO é quebrado | `a \|\| b` - ambos devem funcionar |
+| SP-003 | Tipo infere do USO, não da declaração | Ver como a variável é USADA, não só declarada |
+
+### Exemplo de Bug Prevenido por VAT-007
+
+```typescript
+// ❌ ERRADO - [0] em objeto retorna undefined
+const rule = result.recordset?.[0] || (result as { recordset: T[] })[0];
+// Problema: [0] acessa propriedade "0" do OBJETO, não elemento do array!
+
+// ✅ CORRETO - Type guard preserva semântica
+const rule = result.recordset?.[0] || 
+  (Array.isArray(result) ? result[0] : undefined);
+```
+
+---
+
 ## ✅ VALIDAÇÕES PRÉ-COMMIT OBRIGATÓRIAS
 
 ANTES de commit, executar TODOS:
