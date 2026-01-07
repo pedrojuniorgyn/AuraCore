@@ -12,6 +12,108 @@ alwaysApply: true
 
 ---
 
+## 🔒 PROTOCOLO DE EXECUÇÃO OBRIGATÓRIO (SEMPRE ATIVO)
+
+> **ATENÇÃO:** Este protocolo é AUTOMATICAMENTE ATIVO em TODA tarefa.
+> O Agent NÃO precisa ser lembrado. O Agent DEVE seguir SEMPRE.
+> Violação deste protocolo invalida TODA a execução.
+
+### RITUAL DE INÍCIO DE TAREFA
+
+Ao receber QUALQUER tarefa que envolve código, ANTES de começar:
+
+```bash
+# 1. Consultar contratos MCP relevantes
+Tool: get_contract
+Args: { "contract_id": "verify-before-code" }
+
+# 2. Se tarefa envolve db.execute ou banco de dados:
+Tool: get_contract
+Args: { "contract_id": "known-bugs-registry" }
+
+# 3. Ler anti-patterns relevantes
+cat docs/mcp/SMP_ANTI_PATTERNS.md | head -100
+```
+
+### PROTOCOLO POR ARQUIVO (OBRIGATÓRIO)
+
+Para CADA arquivo que for modificar, executar TODOS os passos:
+
+#### PASSO 1: PRÉ-EDIÇÃO (Verbalizar)
+
+```
+"📝 EDITANDO: [nome do arquivo]
+   REGRA: [ID da regra] - [descrição curta]
+   ANTI-PATTERN: [AP-ID] - [o que NÃO fazer]
+   PADRÃO: [código correto resumido]"
+```
+
+#### PASSO 2: CONSULTAR (Se necessário)
+
+```bash
+# Se não lembrar do padrão correto:
+grep -A10 "[padrão]" docs/mcp/SMP_PATTERNS_CATALOG.md
+
+# Se não lembrar do anti-pattern:
+grep -A10 "[AP-ID]" docs/mcp/SMP_ANTI_PATTERNS.md
+```
+
+#### PASSO 3: EDITAR
+
+Aplicar a correção usando APENAS padrões catalogados.
+
+#### PASSO 4: VERIFICAR (Obrigatório)
+
+```bash
+# Verificar que padrão antigo foi eliminado
+grep -n "[padrão antigo]" [arquivo]
+# DEVE retornar 0 resultados
+
+# Se retornar > 0: PARAR e corrigir antes de prosseguir
+```
+
+#### PASSO 5: REPORTAR
+
+```
+"✅ [arquivo] corrigido
+   Padrão aplicado: [ID]
+   Verificação: grep = 0"
+```
+
+### CHECKPOINT A CADA 3 ARQUIVOS
+
+Após editar cada 3 arquivos, executar:
+
+```bash
+# Verificação em lote
+grep -rn "[padrão antigo]" src/ --include="*.ts" | wc -l
+
+# Compilação
+npx tsc --noEmit 2>&1 | head -20
+```
+
+Se qualquer verificação falhar: PARAR e corrigir antes de continuar.
+
+### REGRAS DE OURO (NUNCA VIOLAR)
+
+| # | Regra | Consequência da Violação |
+|---|-------|--------------------------|
+| 1 | NUNCA usar padrão não catalogado | Correção inválida |
+| 2 | NUNCA pular verificação pós-edição | Correção inválida |
+| 3 | NUNCA editar próximo arquivo se verificação falhou | Correção inválida |
+| 4 | NUNCA assumir que "já sabe" o padrão | Deve consultar |
+| 5 | SEMPRE verbalizar antes de editar | Obrigatório |
+
+### PENALIDADES POR VIOLAÇÃO
+
+Se Agent violar este protocolo:
+1. TODA a execução é considerada SUSPEITA
+2. Usuário irá reportar como BUG
+3. Agent deve REFAZER do início seguindo protocolo
+4. Nova lição aprendida será documentada
+
+---
+
 ## 🚨 REGRA FUNDAMENTAL (INVIOLÁVEL)
 
 ANTES de implementar QUALQUER código, o agente DEVE:

@@ -13,6 +13,7 @@ import mcpEnforcementRules from './mcp-enforcement-rules.json';
 import knownBugsRegistry from './known-bugs-registry.json';
 import smpMethodology from './smp-methodology.json';
 import lessonLearned from './lesson-learned.json';
+import enforcementProtocol from './enforcement-protocol.json';
 
 // Architecture Contracts
 import architectureLayers from './architecture-layers.json';
@@ -43,6 +44,7 @@ export const contracts = {
   'known-bugs-registry': knownBugsRegistry,
   'smp-methodology': smpMethodology,
   'lesson-learned': lessonLearned,
+  'enforcement-protocol': enforcementProtocol,
   
   // Architecture
   'architecture-layers': architectureLayers,

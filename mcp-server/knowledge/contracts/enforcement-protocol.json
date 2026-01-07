@@ -1,0 +1,96 @@
+{
+  "id": "enforcement-protocol",
+  "version": "1.0.0",
+  "title": "Protocolo de Enforcement Automático",
+  "description": "Protocolo obrigatório para execução de tarefas de código",
+  "category": "process",
+  "created_at": "2026-01-07",
+  "updated_at": "2026-01-07",
+  
+  "activation": {
+    "trigger": "ANY code modification task",
+    "automatic": true,
+    "user_reminder_required": false
+  },
+  
+  "pre_task_ritual": {
+    "steps": [
+      "Consultar contratos MCP relevantes",
+      "Ler anti-patterns relevantes",
+      "Identificar padrões a aplicar"
+    ]
+  },
+  
+  "per_file_protocol": {
+    "step_1_verbalize": {
+      "required": true,
+      "template": "📝 EDITANDO: {filename}\n   REGRA: {rule_id} - {rule_desc}\n   ANTI-PATTERN: {ap_id} - {ap_desc}\n   PADRÃO: {correct_pattern}"
+    },
+    "step_2_consult": {
+      "required": "if_uncertain",
+      "commands": [
+        "grep -A10 '{pattern}' docs/mcp/SMP_PATTERNS_CATALOG.md",
+        "grep -A10 '{ap_id}' docs/mcp/SMP_ANTI_PATTERNS.md"
+      ]
+    },
+    "step_3_edit": {
+      "required": true,
+      "constraint": "ONLY use cataloged patterns"
+    },
+    "step_4_verify": {
+      "required": true,
+      "command": "grep -n '{old_pattern}' {filename}",
+      "expected_result": "0 matches",
+      "on_failure": "STOP and fix before proceeding"
+    },
+    "step_5_report": {
+      "required": true,
+      "template": "✅ {filename} corrigido\n   Padrão aplicado: {rule_id}\n   Verificação: grep = 0"
+    }
+  },
+  
+  "checkpoint_interval": {
+    "frequency": "every 3 files",
+    "commands": [
+      "grep -rn '{old_pattern}' src/ --include='*.ts' | wc -l",
+      "npx tsc --noEmit 2>&1 | head -20"
+    ],
+    "on_failure": "STOP and fix before continuing"
+  },
+  
+  "golden_rules": [
+    {
+      "id": "GR-001",
+      "rule": "NUNCA usar padrão não catalogado",
+      "violation_consequence": "Correção inválida"
+    },
+    {
+      "id": "GR-002", 
+      "rule": "NUNCA pular verificação pós-edição",
+      "violation_consequence": "Correção inválida"
+    },
+    {
+      "id": "GR-003",
+      "rule": "NUNCA editar próximo arquivo se verificação falhou",
+      "violation_consequence": "Correção inválida"
+    },
+    {
+      "id": "GR-004",
+      "rule": "NUNCA assumir que 'já sabe' o padrão",
+      "violation_consequence": "Deve consultar"
+    },
+    {
+      "id": "GR-005",
+      "rule": "SEMPRE verbalizar antes de editar",
+      "violation_consequence": "Obrigatório"
+    }
+  ],
+  
+  "violation_handling": {
+    "consequence": "Execution considered SUSPECT",
+    "user_action": "Will report as BUG",
+    "agent_action": "Must REDO from start following protocol",
+    "documentation": "New lesson learned will be recorded"
+  }
+}
+

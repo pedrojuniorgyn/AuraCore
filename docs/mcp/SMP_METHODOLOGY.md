@@ -284,6 +284,29 @@ mcp-server/src/contracts/
 
 ---
 
+## 🔒 PROTOCOLO DE ENFORCEMENT AUTOMÁTICO
+
+O SMP inclui um protocolo de enforcement que é **AUTOMATICAMENTE ATIVO** em toda tarefa de código.
+
+**Contrato MCP:** `enforcement-protocol`
+
+**Consultar:**
+
+```
+Tool: get_contract
+Args: { "contract_id": "enforcement-protocol" }
+```
+
+Este protocolo garante que:
+1. Regras são consultadas ANTES de cada edição
+2. Verificações são executadas DEPOIS de cada edição
+3. Checkpoints são aplicados a cada 3 arquivos
+4. Violações são tratadas como bugs
+
+**Detalhes completos:** Ver seção "🔒 PROTOCOLO DE EXECUÇÃO OBRIGATÓRIO" em `.cursor/rules/regrasmcp.mdc`
+
+---
+
 ## 🔗 REFERÊNCIAS
 
 - **Regras MCP:** `.cursor/rules/regrasmcp.mdc`
@@ -292,6 +315,7 @@ mcp-server/src/contracts/
 - **Anti-Patterns:** `docs/mcp/SMP_ANTI_PATTERNS.md`
 - **Contrato Metodologia:** `mcp-server/src/contracts/smp-methodology.json`
 - **Contrato Lições:** `mcp-server/src/contracts/lesson-learned.json`
+- **Contrato Enforcement:** `mcp-server/src/contracts/enforcement-protocol.json`
 
 ---
 
