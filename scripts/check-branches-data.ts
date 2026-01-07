@@ -43,9 +43,19 @@ async function checkData() {
 
     console.log(`📋 Filiais cadastradas: ${result.recordset.length}\n`);
 
+    interface BranchRow {
+      id: number;
+      organization_id: number;
+      name: string;
+      document: string;
+      certificate_pfx?: Buffer | null;
+      last_nsu?: string | null;
+      environment?: string | null;
+    }
+    
     if (result.recordset.length > 0) {
       console.table(
-        result.recordset.map((b: unknown) => ({
+        (result.recordset as BranchRow[]).map((b) => ({
           ID: b.id,
           Org: b.organization_id,
           Nome: b.name,
@@ -62,7 +72,8 @@ async function checkData() {
     }
 
   } catch (error: unknown) {
-    console.error("\n❌ Erro:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ Erro:", errorMessage);
     process.exit(1);
   } finally {
     await pool.close();
