@@ -14,103 +14,183 @@ alwaysApply: true
 
 ## 🔒 PROTOCOLO DE EXECUÇÃO OBRIGATÓRIO (SEMPRE ATIVO)
 
-> **ATENÇÃO:** Este protocolo é AUTOMATICAMENTE ATIVO em TODA tarefa.
-> O Agent NÃO precisa ser lembrado. O Agent DEVE seguir SEMPRE.
-> Violação deste protocolo invalida TODA a execução.
+> **⚠️ ATENÇÃO CRÍTICA:** Este protocolo é AUTOMATICAMENTE ATIVO em TODA tarefa.
+> O Agent DEVE EXECUTAR E MOSTRAR cada etapa. Executar internamente sem mostrar é VIOLAÇÃO.
+> Pular qualquer etapa invalida TODA a execução.
 
-### RITUAL DE INÍCIO DE TAREFA
+---
 
-Ao receber QUALQUER tarefa que envolve código, ANTES de começar:
+### 🚀 RITUAL DE INÍCIO (OBRIGATÓRIO - NÃO PULAR)
 
-```bash
-# 1. Consultar contratos MCP relevantes
+**ANTES de qualquer análise ou edição, o Agent DEVE mostrar:**
+
+```
+🔒 EXECUTANDO RITUAL DE INÍCIO...
+```
+
+**Então executar E mostrar os resultados:**
+
+```
 Tool: get_contract
 Args: { "contract_id": "verify-before-code" }
+[mostrar resultado ou resumo]
 
-# 2. Se tarefa envolve db.execute ou banco de dados:
 Tool: get_contract
 Args: { "contract_id": "known-bugs-registry" }
-
-# 3. Ler anti-patterns relevantes
-cat docs/mcp/SMP_ANTI_PATTERNS.md | head -100
+[mostrar resultado ou resumo]
 ```
 
-### PROTOCOLO POR ARQUIVO (OBRIGATÓRIO)
-
-Para CADA arquivo que for modificar, executar TODOS os passos:
-
-#### PASSO 1: PRÉ-EDIÇÃO (Verbalizar)
-
-```
-"📝 EDITANDO: [nome do arquivo]
-   REGRA: [ID da regra] - [descrição curta]
-   ANTI-PATTERN: [AP-ID] - [o que NÃO fazer]
-   PADRÃO: [código correto resumido]"
-```
-
-#### PASSO 2: CONSULTAR (Se necessário)
+**Então ler anti-patterns:**
 
 ```bash
-# Se não lembrar do padrão correto:
-grep -A10 "[padrão]" docs/mcp/SMP_PATTERNS_CATALOG.md
+cat docs/mcp/SMP_ANTI_PATTERNS.md | head -50
+```
 
-# Se não lembrar do anti-pattern:
+**Finalizar com:**
+
+```
+✅ RITUAL DE INÍCIO CONCLUÍDO
+```
+
+> ⛔ Se o Agent NÃO mostrar "🔒 EXECUTANDO RITUAL DE INÍCIO..." no início,
+> a execução é considerada INVÁLIDA.
+
+---
+
+### 📝 PROTOCOLO POR ARQUIVO (5 PASSOS OBRIGATÓRIOS)
+
+Para CADA arquivo que for modificar:
+
+#### PASSO 1: VERBALIZAR (FORMATO EXATO OBRIGATÓRIO)
+
+```
+📝 EDITANDO: [caminho/completo/arquivo.ts]
+   REGRA: [ID] - [descrição da regra]
+   ANTI-PATTERN: [AP-ID] - [o que NÃO fazer]
+   PADRÃO: [código correto resumido]
+```
+
+> ⛔ Usar EXATAMENTE este formato. Variações são consideradas VIOLAÇÃO.
+
+#### PASSO 2: CONSULTAR (OBRIGATÓRIO - NÃO ASSUMIR)
+
+**MESMO que o Agent "já saiba" o padrão, DEVE mostrar a consulta:**
+
+```bash
+# Consultar padrão correto:
+grep -A10 "[ID-da-regra]" docs/mcp/SMP_PATTERNS_CATALOG.md
+
+# Consultar anti-pattern:
 grep -A10 "[AP-ID]" docs/mcp/SMP_ANTI_PATTERNS.md
 ```
+
+> ⛔ Regra GR-004: NUNCA assumir que "já sabe" o padrão. SEMPRE consultar e mostrar.
 
 #### PASSO 3: EDITAR
 
 Aplicar a correção usando APENAS padrões catalogados.
 
-#### PASSO 4: VERIFICAR (Obrigatório)
+#### PASSO 4: VERIFICAR (OBRIGATÓRIO)
 
 ```bash
-# Verificar que padrão antigo foi eliminado
+# Verificar que padrão antigo foi eliminado:
 grep -n "[padrão antigo]" [arquivo]
-# DEVE retornar 0 resultados
-
-# Se retornar > 0: PARAR e corrigir antes de prosseguir
+# DEVE mostrar: 0 resultados
 ```
 
-#### PASSO 5: REPORTAR
+> ⛔ Se resultado > 0: PARAR e corrigir antes de prosseguir.
+
+#### PASSO 5: REPORTAR (FORMATO EXATO)
 
 ```
-"✅ [arquivo] corrigido
+✅ [caminho/arquivo.ts] corrigido
    Padrão aplicado: [ID]
-   Verificação: grep = 0"
+   Verificação: grep = 0
 ```
 
-### CHECKPOINT A CADA 3 ARQUIVOS
+---
 
-Após editar cada 3 arquivos, executar:
+### 🔄 CHECKPOINT A CADA 3 ARQUIVOS
+
+Após editar cada 3 arquivos:
 
 ```bash
-# Verificação em lote
+# Verificação em lote:
 grep -rn "[padrão antigo]" src/ --include="*.ts" | wc -l
 
-# Compilação
+# Compilação:
 npx tsc --noEmit 2>&1 | head -20
 ```
 
-Se qualquer verificação falhar: PARAR e corrigir antes de continuar.
+**Mostrar:**
+```
+🔄 CHECKPOINT (3 arquivos)
+   Padrão antigo restante: [N]
+   Compilação: [OK/ERRO]
+```
 
-### REGRAS DE OURO (NUNCA VIOLAR)
+---
 
-| # | Regra | Consequência da Violação |
-|---|-------|--------------------------|
-| 1 | NUNCA usar padrão não catalogado | Correção inválida |
-| 2 | NUNCA pular verificação pós-edição | Correção inválida |
-| 3 | NUNCA editar próximo arquivo se verificação falhou | Correção inválida |
-| 4 | NUNCA assumir que "já sabe" o padrão | Deve consultar |
-| 5 | SEMPRE verbalizar antes de editar | Obrigatório |
+### 🏆 REGRAS DE OURO (NUNCA VIOLAR)
 
-### PENALIDADES POR VIOLAÇÃO
+| # | Regra | Verificação |
+|---|-------|-------------|
+| GR-001 | NUNCA usar padrão não catalogado | Consultar catálogo antes |
+| GR-002 | NUNCA pular verificação pós-edição | grep obrigatório |
+| GR-003 | NUNCA editar próximo se verificação falhou | Parar e corrigir |
+| GR-004 | NUNCA assumir que "já sabe" o padrão | SEMPRE consultar e mostrar |
+| GR-005 | SEMPRE verbalizar ANTES de editar | Formato exato obrigatório |
+| GR-006 | SEMPRE mostrar ritual de início | "🔒 EXECUTANDO..." obrigatório |
 
-Se Agent violar este protocolo:
-1. TODA a execução é considerada SUSPEITA
-2. Usuário irá reportar como BUG
-3. Agent deve REFAZER do início seguindo protocolo
-4. Nova lição aprendida será documentada
+---
+
+### ⚠️ PENALIDADES POR VIOLAÇÃO
+
+Se Agent violar QUALQUER regra:
+1. ❌ Execução considerada INVÁLIDA
+2. 📝 Usuário reportará como BUG
+3. 🔄 Agent DEVE refazer do início
+4. 📚 Nova lição aprendida será documentada
+
+---
+
+### 📋 EXEMPLO COMPLETO DE EXECUÇÃO CORRETA
+
+```
+🔒 EXECUTANDO RITUAL DE INÍCIO...
+
+Tool: get_contract
+Args: { "contract_id": "verify-before-code" }
+[Resultado: contrato com regras de verificação]
+
+Tool: get_contract
+Args: { "contract_id": "known-bugs-registry" }
+[Resultado: bugs conhecidos]
+
+cat docs/mcp/SMP_ANTI_PATTERNS.md | head -50
+[Mostra anti-patterns relevantes]
+
+✅ RITUAL DE INÍCIO CONCLUÍDO
+
+---
+
+📝 EDITANDO: src/services/accounting-engine.ts
+   REGRA: P-DB-006 - getFirstRow DEVE ter verificação null
+   ANTI-PATTERN: AP-003 - acesso a propriedade de undefined
+   PADRÃO: getFirstRowOrThrow() ou verificação manual
+
+grep -A10 "P-DB-006" docs/mcp/SMP_PATTERNS_CATALOG.md
+[Mostra padrão correto]
+
+[Aplica edição]
+
+grep -n "getFirstRow[^O]" src/services/accounting-engine.ts
+[Resultado: 0]
+
+✅ src/services/accounting-engine.ts corrigido
+   Padrão aplicado: P-DB-006
+   Verificação: grep = 0
+```
 
 ---
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getFirstRow, getDbRows } from "@/lib/db/helpers";
 
 /**
  * 🧪 ENDPOINT DE TESTE - IMPORTAÇÃO DE NFE
@@ -27,22 +28,35 @@ export async function GET(request: NextRequest) {
       ORDER BY TABLE_NAME
     `);
 
-    results.checks.tables_found = checkTables.recordset.map(r => r.TABLE_NAME);
-    results.checks.has_inbound_invoices = checkTables.recordset.some(r => r.TABLE_NAME === 'inbound_invoices');
-    results.checks.has_cargo_documents = checkTables.recordset.some(r => r.TABLE_NAME === 'cargo_documents');
-    results.checks.has_fsist = checkTables.recordset.some(r => r.TABLE_NAME.includes('fsist'));
+    interface TableRow {
+      TABLE_NAME: string;
+    }
+    
+    const tables = getDbRows<TableRow>(checkTables);
+    results.checks.tables_found = tables.map(r => r.TABLE_NAME);
+    results.checks.has_inbound_invoices = tables.some(r => r.TABLE_NAME === 'inbound_invoices');
+    results.checks.has_cargo_documents = tables.some(r => r.TABLE_NAME === 'cargo_documents');
+    results.checks.has_fsist = tables.some(r => r.TABLE_NAME.includes('fsist'));
 
     // 2. Contar NFes já importadas
     const countInvoices = await pool.request().query(`
       SELECT COUNT(*) as total FROM inbound_invoices
     `);
-    results.checks.nfes_imported = countInvoices.recordset[0].total;
+    
+    interface CountRow {
+      total: number;
+    }
+    
+    const invoicesCount = getFirstRow<CountRow>(countInvoices);
+    results.checks.nfes_imported = invoicesCount?.total || 0;
 
     // 3. Contar documentos no cargo repository
     const countCargo = await pool.request().query(`
       SELECT COUNT(*) as total FROM cargo_documents
     `);
-    results.checks.cargo_documents_count = countCargo.recordset[0].total;
+    
+    const cargoCount = getFirstRow<CountRow>(countCargo);
+    results.checks.cargo_documents_count = cargoCount?.total || 0;
 
     // 4. Verificar configurações fiscais
     const checkSettings = await pool.request().query(`
@@ -54,8 +68,16 @@ export async function GET(request: NextRequest) {
       FROM fiscal_settings
     `);
     
-    if (checkSettings.recordset.length > 0) {
-      results.checks.fiscal_settings = checkSettings.recordset[0];
+    interface SettingsRow {
+      auto_import_enabled: string;
+      auto_import_interval: number;
+      nfe_environment: string;
+      last_auto_import: Date | null;
+    }
+    
+    const settings = getFirstRow<SettingsRow>(checkSettings);
+    if (settings) {
+      results.checks.fiscal_settings = settings;
     } else {
       results.checks.fiscal_settings = null;
       results.checks.fiscal_settings_message = "Nenhuma configuração fiscal encontrada";
@@ -66,7 +88,9 @@ export async function GET(request: NextRequest) {
       const countFsist = await pool.request().query(`
         SELECT COUNT(*) as total FROM fsist_documentos
       `);
-      results.checks.fsist_documents_count = countFsist.recordset[0].total;
+      
+      const fsistCount = getFirstRow<CountRow>(countFsist);
+      results.checks.fsist_documents_count = fsistCount?.total || 0;
       
       // Buscar amostra
       const sampleFsist = await pool.request().query(`
@@ -76,7 +100,16 @@ export async function GET(request: NextRequest) {
         WHERE tipo_documento = 'NFe'
         ORDER BY data_emissao DESC
       `);
-      results.checks.fsist_sample = sampleFsist.recordset;
+      
+      interface FsistRow {
+        numero: string;
+        serie: string;
+        chave: string;
+        data_emissao: Date;
+        valor_total: number;
+      }
+      
+      results.checks.fsist_sample = getDbRows<FsistRow>(sampleFsist);
     }
 
     // 6. Últimas NFes importadas
@@ -92,7 +125,18 @@ export async function GET(request: NextRequest) {
       FROM inbound_invoices
       ORDER BY created_at DESC
     `);
-    results.recent_imports = recentNFes.recordset;
+    
+    interface NFeRow {
+      number: string;
+      series: string;
+      access_key: string;
+      issue_date: Date;
+      total_nfe: number;
+      status: string;
+      created_at: Date;
+    }
+    
+    results.recent_imports = getDbRows<NFeRow>(recentNFes);
 
     // 7. Análise e diagnóstico
     results.diagnosis = {
