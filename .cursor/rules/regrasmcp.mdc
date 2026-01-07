@@ -958,10 +958,39 @@ Args: { "contract_id": "lesson-learned" }
 | SMP-INFRA-001 | Criar helper se padrão repete em 3+ arquivos | ALTA |
 | SMP-MAP-001 | Executar grep ANTES de qualquer correção | ALTA |
 | SMP-MAP-002 | Relatório formal se > 10 ocorrências | MÉDIA |
+| SMP-MAP-003 | Ao corrigir padrão, grep TODO o codebase | ALTA |
+| SMP-MAP-004 | Mapeamento é primeiro passo obrigatório | CRÍTICA |
 | SMP-CAT-001 | Agrupar por tipo de correção, não por arquivo | ALTA |
 | SMP-APPROVE-001 | NUNCA corrigir sem aprovação explícita | CRÍTICA |
 | SMP-EXEC-001 | Commit por categoria, não por arquivo | MÉDIA |
+| SMP-EXEC-002 | Migração incompleta = registrar e corrigir | ALTA |
+| SMP-EXEC-003 | Consultar SMP_ANTI_PATTERNS.md ANTES de corrigir | CRÍTICA |
 | SMP-VERIFY-001 | grep final DEVE retornar 0 | ALTA |
+| SMP-VERIFY-002 | Criar interfaces específicas, não Record | ALTA |
+
+### Consulta Obrigatória Pré-Correção (SMP-EXEC-003)
+
+**ANTES de corrigir QUALQUER padrão, o Agent DEVE:**
+
+1. **Consultar Anti-Patterns:**
+   ```bash
+   cat docs/mcp/SMP_ANTI_PATTERNS.md | grep -A20 "[padrão]"
+   ```
+
+2. **Consultar Padrões Corretos:**
+   ```bash
+   cat docs/mcp/SMP_PATTERNS_CATALOG.md | grep -A20 "[padrão]"
+   ```
+
+3. **Usar APENAS padrões catalogados** - NUNCA inventar novo padrão
+
+4. **Se padrão não existe no catálogo:**
+   - PARAR
+   - Documentar novo padrão
+   - Solicitar aprovação
+   - Só então aplicar
+
+**Violação desta regra é considerada falha crítica.**
 
 ### Fluxo de Retroalimentação (Learning Loop)
 

@@ -30,7 +30,7 @@ LL-YYYY-MM-DD-NNN
 | SMP-INFRA | 1 | LL-2026-01-07-001 |
 | SMP-MAP | 2 | LL-2026-01-07-010 |
 | SMP-CAT | 0 | - |
-| SMP-EXEC | 7 | LL-2026-01-07-009 |
+| SMP-EXEC | 8 | LL-2026-01-07-011 |
 | SMP-VERIFY | 0 | - |
 
 ---
@@ -422,25 +422,84 @@ console.log(org.document);  // Seguro após verificação ✅
 
 ---
 
+### LL-2026-01-07-011: Aplicação Inconsistente de Padrões
+
+**Contexto:** Épico E7.15 - Correção de db.execute()  
+**Bug/Issue:** Agent aplicou padrão AP-001 (Array.isArray) que já estava documentado como anti-pattern  
+**Causa Raiz:** Não consultou SMP_ANTI_PATTERNS.md antes de aplicar correção  
+**Categoria:** SMP-EXEC  
+**Impacto:** CRÍTICO
+
+**Antes (Errado - AP-001 aplicado):**
+```typescript
+// test-classification/route.ts linha 21
+const result = await db.execute(sql`SELECT * FROM ...`);
+const allInvoices = Array.isArray(result) ? result : [];
+// Problema: Array.isArray({ recordset: [...] }) = false
+// Resultado: allInvoices = [] (TODOS os dados descartados!)
+
+// migrate-fiscal-data-v2/route.ts linha 116
+const result = await db.execute(sql`SELECT COUNT(*) ...`);
+const rows = Array.isArray(result) ? result : [result];
+// Problema: Sempre retorna [result] (objeto), não array
+
+// update-fiscal-partners/route.ts linha 30
+const result: { recordset: Array<...> } = await db.execute(...);
+const nfes = Array.isArray(result) ? result : (result.recordset || []);
+// Problema: Tipo declara { recordset }, mas código verifica Array.isArray
+```
+
+**Depois (Correto - PC-002 aplicado):**
+```typescript
+// Pattern Correto: getDbRows
+import { getDbRows } from '@/lib/db/helpers';
+
+interface InvoiceRow { /* ... */ }
+const result = await db.execute(sql`SELECT * FROM ...`);
+const allInvoices = getDbRows<InvoiceRow>(result);
+// Sempre funciona: extrai recordset OU trata como array direto
+```
+
+**Arquivos Corrigidos:**
+1. `test-classification/route.ts` - 3 ocorrências (linhas 21, 76, 86)
+2. `migrate-fiscal-data-v2/route.ts` - 1 ocorrência (linha 116)
+3. `update-fiscal-partners/route.ts` - 1 ocorrência (linha 30)
+
+**Regra Criada:**
+- **SMP-EXEC-003:** OBRIGATÓRIO consultar `SMP_ANTI_PATTERNS.md` ANTES de aplicar correção
+
+**Prevenção:**
+- Sempre verificar anti-patterns antes de corrigir
+- Usar APENAS padrões do `SMP_PATTERNS_CATALOG.md`
+- NUNCA inventar novo padrão de correção
+- Se padrão não existe: PARAR, documentar, solicitar aprovação
+
+**Impacto Evitado:**
+- 4 bugs de runtime (dados descartados ou mal interpretados)
+- Inconsistência entre tipo declarado e código real
+- Perda de dados em operações de migração
+
+---
+
 ## 📊 ESTATÍSTICAS
 
 ### Bugs por Categoria SMP
 
 | Categoria | Total | % |
 |-----------|-------|---|
-| SMP-INFRA | 1 | 10% |
-| SMP-MAP | 2 | 20% |
+| SMP-INFRA | 1 | 9.1% |
+| SMP-MAP | 2 | 18.2% |
 | SMP-CAT | 0 | 0% |
-| SMP-EXEC | 7 | 70% |
+| SMP-EXEC | 8 | 72.7% |
 | SMP-VERIFY | 0 | 0% |
 
 ### Bugs por Impacto
 
 | Impacto | Total | % |
 |---------|-------|---|
-| CRÍTICO | 4 | 40% |
-| ALTO | 3 | 30% |
-| MÉDIO | 3 | 30% |
+| CRÍTICO | 5 | 45.5% |
+| ALTO | 3 | 27.3% |
+| MÉDIO | 3 | 27.3% |
 | BAIXO | 0 | 0% |
 
 ### Regras Criadas
@@ -452,17 +511,18 @@ console.log(org.document);  // Seguro após verificação ✅
 | SMP-MAP-002 | LL-2026-01-07-002 |
 | SMP-MAP-003 | LL-2026-01-07-010 |
 | SMP-MAP-004 | LL-2026-01-07-010 |
+| SMP-EXEC-002 | LL-2026-01-07-007 |
+| SMP-EXEC-003 | LL-2026-01-07-011 |
+| SMP-VERIFY-002 | LL-2026-01-07-007 |
 | PC-002 | LL-2026-01-07-003 |
 | AP-001 | LL-2026-01-07-003 |
 | VAT-001 | LL-2026-01-07-004 |
-| VAT-005 | LL-2026-01-07-004 |
 | VAT-002 | LL-2026-01-07-005 |
-| SP-001 | LL-2026-01-07-006 |
+| VAT-005 | LL-2026-01-07-004 |
 | VAT-007 | LL-2026-01-07-006 |
-| SMP-EXEC-002 | LL-2026-01-07-007 |
-| SMP-VERIFY-002 | LL-2026-01-07-007 |
-| P-TYPE-007 | LL-2026-01-07-008 |
 | VAT-011 | LL-2026-01-07-008 |
+| SP-001 | LL-2026-01-07-006 |
+| P-TYPE-007 | LL-2026-01-07-008 |
 | P-DB-006 | LL-2026-01-07-009 |
 | P-DB-007 | LL-2026-01-07-009 |
 

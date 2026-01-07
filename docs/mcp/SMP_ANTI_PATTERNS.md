@@ -40,6 +40,21 @@ Este documento registra **O QUE NÃO FAZER** no AuraCore. Cada anti-pattern docu
 **Categoria:** Database  
 **Origem:** E7.15, LL-2026-01-07-003
 
+#### ⚠️ REINCIDÊNCIA DETECTADA (07/01/2026)
+
+**Este anti-pattern foi aplicado novamente mesmo após documentação.**
+
+**Ocorrências:**
+- `test-classification/route.ts` (3 ocorrências - linhas 21, 76, 86)
+- `migrate-fiscal-data-v2/route.ts` (1 ocorrência - linha 116)
+- `update-fiscal-partners/route.ts` (1 ocorrência - linha 30)
+
+**Causa:** Agent não consultou `SMP_ANTI_PATTERNS.md` antes de aplicar correção.
+
+**Regra reforçada:** **SMP-EXEC-003** - Consultar anti-patterns ANTES de corrigir é OBRIGATÓRIO.
+
+**Correção aplicada:** Commit `5a0d3dc2` - Todas ocorrências substituídas por `getDbRows<T>(result)`
+
 #### ❌ Código Errado
 
 ```typescript
