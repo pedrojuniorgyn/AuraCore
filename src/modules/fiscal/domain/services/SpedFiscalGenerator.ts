@@ -42,13 +42,13 @@ export class SpedFiscalGenerator {
    */
   async generate(
     input: GenerateSpedFiscalInput
-  ): Promise<Result<SpedDocument, SpedError>> {
+  ): Promise<Result<SpedDocument, string>> {
     const { period } = input;
 
     // Validar período
     if (period.referenceMonth < 1 || period.referenceMonth > 12) {
       return Result.fail(
-        SpedError.invalidPeriod(period.referenceMonth, period.referenceYear)
+        `Período inválido: mês ${period.referenceMonth}/${period.referenceYear}`
       );
     }
 
@@ -87,15 +87,13 @@ export class SpedFiscalGenerator {
       });
 
       if (documentResult.isFailure) {
-        return Result.fail(new SpedError(documentResult.error));
+        return Result.fail(documentResult.error);
       }
 
       return Result.ok(documentResult.value);
     } catch (error) {
       return Result.fail(
-        new SpedError(
-          `Erro ao gerar SPED Fiscal: ${error instanceof Error ? error.message : 'Unknown'}`
-        )
+        `Erro ao gerar SPED Fiscal: ${error instanceof Error ? error.message : 'Unknown'}`
       );
     }
   }
@@ -105,7 +103,7 @@ export class SpedFiscalGenerator {
    */
   private async generateBlock0(
     period: SpedFiscalPeriod
-  ): Promise<Result<SpedBlock, SpedError>> {
+  ): Promise<Result<SpedBlock, string>> {
     const registers: SpedRegister[] = [];
 
     // 0001: Abertura do Bloco 0
@@ -148,7 +146,7 @@ export class SpedFiscalGenerator {
     const orgResult = await this.repository.getOrganization(period.organizationId);
     if (orgResult.isFailure) {
       return Result.fail(
-        SpedError.organizationNotFound(period.organizationId)
+        `Organização não encontrada: ID ${period.organizationId}`
       );
     }
 
@@ -231,7 +229,7 @@ export class SpedFiscalGenerator {
    */
   private async generateBlockC(
     period: SpedFiscalPeriod
-  ): Promise<Result<SpedBlock, SpedError>> {
+  ): Promise<Result<SpedBlock, string>> {
     const registers: SpedRegister[] = [];
 
     // C001: Abertura do Bloco C
@@ -309,7 +307,7 @@ export class SpedFiscalGenerator {
    */
   private async generateBlockD(
     period: SpedFiscalPeriod
-  ): Promise<Result<SpedBlock, SpedError>> {
+  ): Promise<Result<SpedBlock, string>> {
     const registers: SpedRegister[] = [];
 
     // D001: Abertura do Bloco D
@@ -386,7 +384,7 @@ export class SpedFiscalGenerator {
    */
   private async generateBlockE(
     period: SpedFiscalPeriod
-  ): Promise<Result<SpedBlock, SpedError>> {
+  ): Promise<Result<SpedBlock, string>> {
     const registers: SpedRegister[] = [];
 
     // E001: Abertura do Bloco E
@@ -455,7 +453,7 @@ export class SpedFiscalGenerator {
    */
   private async generateBlockH(
     period: SpedFiscalPeriod
-  ): Promise<Result<SpedBlock, SpedError>> {
+  ): Promise<Result<SpedBlock, string>> {
     const registers: SpedRegister[] = [];
 
     // H001: Abertura do Bloco H
