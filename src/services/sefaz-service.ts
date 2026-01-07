@@ -306,14 +306,24 @@ export class SefazService {
       };
 
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      let errorMessage = 'Erro desconhecido';
+      
+      // Type guard para Error padrão
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       console.error("❌ Erro ao consultar Sefaz:", errorMessage);
 
-      if (error.response) {
-        console.error("📄 Resposta Sefaz:", error.response.data);
+      // Type guard para Axios error (resposta da Sefaz)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: unknown } };
+        if (axiosError.response?.data) {
+          console.error("📄 Resposta Sefaz:", axiosError.response.data);
+        }
       }
 
-      throw new Error(`Falha ao comunicar com Sefaz: ${error.message}`);
+      throw new Error(`Falha ao comunicar com Sefaz: ${errorMessage}`);
     }
   }
 

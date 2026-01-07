@@ -140,14 +140,27 @@ export class BoletoGenerator {
         pdfUrl: response.data.linkBoleto,
       };
     } catch (error: unknown) {
-      const errorData = error && typeof error === 'object' && 'response' in error ? (error as {response?: {data?: unknown}}).response?.data : undefined;
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao gerar boleto:", errorData || errorMessage);
+      let errorMessage = 'Erro ao gerar boleto';
+      
+      // Type guard para Error padrão
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Type guard para Axios error
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
+      }
+      
+      console.error("❌ Erro ao gerar boleto:", errorMessage);
 
       // Retornar erro detalhado
       return {
         success: false,
-        error: error.response?.data?.message || error.message,
+        error: errorMessage,
       };
     }
   }

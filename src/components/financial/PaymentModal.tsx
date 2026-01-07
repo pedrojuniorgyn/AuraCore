@@ -76,8 +76,9 @@ export function PaymentModal({ payableId, amount, description, open, onOpenChang
       onOpenChange(false);
     },
     onError: (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Erro ao registrar pagamento", {
-        description: error.message,
+        description: errorMessage,
       });
     },
   });
