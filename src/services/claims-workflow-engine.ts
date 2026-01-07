@@ -195,8 +195,8 @@ export class ClaimsWorkflowEngine {
         AND YEAR(claim_date) = ${year}
     `);
     
-    return report.recordset?.[0] || 
-      (Array.isArray(report) ? report[0] : undefined) || {};
+    const reportData = (report.recordset || report) as Array<Record<string, unknown>>;
+    return reportData[0] || {};
   }
 }
 
