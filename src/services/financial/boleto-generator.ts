@@ -66,7 +66,9 @@ export class BoletoGenerator {
 
       return response.data.access_token;
     } catch (error: unknown) {
-      console.error("❌ Erro ao obter token:", error.response?.data || error.message);
+      const errorData = error && typeof error === 'object' && 'response' in error ? (error as {response?: {data?: unknown}}).response?.data : undefined;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Erro ao obter token:", errorData || errorMessage);
       throw new Error("Falha na autenticação com Banco Inter");
     }
   }
@@ -138,7 +140,9 @@ export class BoletoGenerator {
         pdfUrl: response.data.linkBoleto,
       };
     } catch (error: unknown) {
-      console.error("❌ Erro ao gerar boleto:", error.response?.data || error.message);
+      const errorData = error && typeof error === 'object' && 'response' in error ? (error as {response?: {data?: unknown}}).response?.data : undefined;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Erro ao gerar boleto:", errorData || errorMessage);
 
       // Retornar erro detalhado
       return {
@@ -236,7 +240,9 @@ async function getAccessToken(): Promise<string> {
 
     return response.data.access_token;
   } catch (error: unknown) {
-    console.error("❌ Erro ao obter token:", error.response?.data || error.message);
+    const errorData = error && typeof error === 'object' && 'response' in error ? (error as {response?: {data?: unknown}}).response?.data : undefined;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro ao obter token:", errorData || errorMessage);
     throw new Error("Falha na autenticação com Banco Inter");
   }
 }

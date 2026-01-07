@@ -191,7 +191,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
           description: "Preencha o Código IBGE manualmente para concluir o cadastro.",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("Erro ao buscar CEP", {
         description: "Não foi possível consultar o ViaCEP. Preencha o endereço manualmente.",
       });
@@ -227,8 +227,9 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       router.push("/configuracoes/filiais");
       router.refresh();
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Erro ao salvar filial", {
-        description: error.message,
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -429,7 +430,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
                         <FormControl>
                           <Input {...field} placeholder="123456789 ou ISENTO" />
                         </FormControl>
-                        <FormDescription>Digite "ISENTO" se não tiver IE</FormDescription>
+                        <FormDescription>Digite &quot;ISENTO&quot; se não tiver IE</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

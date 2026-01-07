@@ -306,7 +306,8 @@ export class SefazService {
       };
 
     } catch (error: unknown) {
-      console.error("❌ Erro ao consultar Sefaz:", error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Erro ao consultar Sefaz:", errorMessage);
 
       if (error.response) {
         console.error("📄 Resposta Sefaz:", error.response.data);
@@ -326,7 +327,7 @@ export class SefazService {
    * 
    * TODO: Implementar no próximo passo
    */
-  public async processDistributedDocuments(responseXml: string): Promise<{
+  public async processDistributedDocuments(_responseXml: string): Promise<{
     processed: number;
     imported: number;
     errors: number;
@@ -398,15 +399,17 @@ export async function downloadNFesFromSefaz(
           totalValue: 0 // TODO: Calcular totalValue dos documentos importados
         };
       } catch (error: unknown) {
-        console.error("❌ Erro ao processar documentos:", error.message);
-        return { success: false, imported: 0, totalDocuments: downloadResult.totalDocuments, error: `Erro no processamento: ${error.message}` };
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error("❌ Erro ao processar documentos:", errorMessage);
+        return { success: false, imported: 0, totalDocuments: downloadResult.totalDocuments, error: `Erro no processamento: ${errorMessage}` };
       }
     }
 
     return { success: true, imported, totalDocuments: downloadResult.totalDocuments };
   } catch (error: unknown) {
-    console.error("❌ Erro ao baixar NFes da SEFAZ:", error.message);
-    return { success: false, imported: 0, totalDocuments: 0, error: error.message };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro ao baixar NFes da SEFAZ:", errorMessage);
+    return { success: false, imported: 0, totalDocuments: 0, error: errorMessage };
   }
 }
 
