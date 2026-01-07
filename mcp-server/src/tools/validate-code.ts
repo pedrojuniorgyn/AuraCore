@@ -1,5 +1,7 @@
 import { getContractTool } from './get-contract-tool.js';
 
+// fs e path não são necessários neste arquivo
+
 interface ValidationResult {
   valid: boolean;
   violations: Violation[];

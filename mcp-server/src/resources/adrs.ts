@@ -66,8 +66,8 @@ export async function listADRs(): Promise<ADRResource[]> {
     }
 
     return resources;
-  } catch (error) {
-    console.error('Failed to list ADRs:', error);
+  } catch {
+    // Retornar lista vazia em caso de erro
     return [];
   }
 }

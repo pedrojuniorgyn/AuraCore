@@ -79,7 +79,7 @@ export async function getContract(contractId: string): Promise<string> {
   try {
     const content = await fs.readFile(filePath, 'utf-8');
     return content;
-  } catch (error) {
+  } catch {
     throw new Error(`Contrato não encontrado: ${contractId}`);
   }
 }
