@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
 /**
@@ -19,17 +19,22 @@ export async function GET(
     const payableId = parseInt(resolvedParams.id);
 
     // Buscar conta a pagar
+    interface PayableRow {
+      fiscal_document_id?: number;
+    }
+    
     const payableResult = await db.execute(sql`
       SELECT fiscal_document_id
       FROM accounts_payable
       WHERE id = ${payableId}
     `);
 
-    if (payableResult.recordset.length === 0) {
+    const payableRows = getDbRows<PayableRow>(payableResult);
+    if (payableRows.length === 0) {
       return NextResponse.json({ error: "Conta a pagar não encontrada" }, { status: 404 });
     }
 
-    const fiscalDocumentId = payableResult.recordset[0].fiscal_document_id;
+    const fiscalDocumentId = payableRows[0].fiscal_document_id;
 
     if (!fiscalDocumentId) {
       // Conta a pagar manual (sem NFe vinculada)
@@ -56,7 +61,20 @@ export async function GET(
       ORDER BY fdi.item_number ASC
     `);
 
-    const items = itemsResult.recordset.map((item: Record<string, unknown>) => ({
+    interface ItemRow {
+      id: number;
+      ncmCode?: string;
+      productDescription: string;
+      quantity: number | string;
+      unitValue: number | string;
+      totalValue: number | string;
+      categoryName?: string;
+      accountCode?: string;
+      accountName?: string;
+    }
+
+    const itemRows = getDbRows<ItemRow>(itemsResult);
+    const items = itemRows.map((item) => ({
       id: item.id,
       ncmCode: item.ncmCode || "N/A",
       productDescription: item.productDescription,

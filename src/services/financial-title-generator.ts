@@ -1,4 +1,4 @@
-import { db, getFirstRow } from "@/lib/db";
+import { db, getFirstRowOrThrow, getDbRows } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -125,9 +125,14 @@ export async function generatePayableFromNFe(
       ORDER BY id DESC
     `);
 
-    const payableRow = getFirstRow<{ id?: number; amount?: string }>(createdPayable);
-    const payableId = payableRow?.id;
-    const amount = parseFloat(payableRow?.amount || "0");
+    interface PayableRow {
+      id: number;
+      amount: string;
+    }
+
+    const payableRow = getFirstRowOrThrow<PayableRow>(createdPayable, 'Failed to retrieve created payable');
+    const payableId = payableRow.id;
+    const amount = parseFloat(payableRow.amount);
 
     // 7. Atualizar status do documento fiscal
     await db
@@ -259,9 +264,14 @@ export async function generateReceivableFromCTe(
       ORDER BY id DESC
     `);
 
-    const receivableRow = getFirstRow<{ id?: number; amount?: string }>(createdReceivable);
-    const receivableId = receivableRow?.id;
-    const amount = parseFloat(receivableRow?.amount || "0");
+    interface ReceivableRow {
+      id: number;
+      amount: string;
+    }
+
+    const receivableRow = getFirstRowOrThrow<ReceivableRow>(createdReceivable, 'Failed to retrieve created receivable');
+    const receivableId = receivableRow.id;
+    const amount = parseFloat(receivableRow.amount);
 
     // 6. Atualizar status do documento fiscal
     await db
@@ -336,7 +346,10 @@ export async function reverseTitles(
       AND status IN ('RECEIVED', 'PARTIAL')
     `);
 
-    if (paidPayable.recordset.length > 0 || paidReceivable.recordset.length > 0) {
+    const paidPayableRows = getDbRows<Record<string, unknown>>(paidPayable);
+    const paidReceivableRows = getDbRows<Record<string, unknown>>(paidReceivable);
+    
+    if (paidPayableRows.length > 0 || paidReceivableRows.length > 0) {
       throw new Error("Não é possível reverter títulos já pagos ou recebidos");
     }
 

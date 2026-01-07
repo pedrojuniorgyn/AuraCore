@@ -1,4 +1,4 @@
-import { db, getFirstRow } from "@/lib/db";
+import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
 /**
@@ -14,6 +14,20 @@ export interface NCMCategorization {
   chartAccountCode: string | null;
   chartAccountName: string | null;
   description: string | null;
+}
+
+interface NcmRow {
+  categoryId: number;
+  categoryName: string;
+  chartAccountId: number | null;
+  chartAccountCode: string | null;
+  chartAccountName: string | null;
+  description: string | null;
+}
+
+interface FallbackCategoryRow {
+  categoryId: number;
+  categoryName: string;
 }
 
 /**
@@ -47,12 +61,13 @@ export async function getNCMCategorization(
         AND ncm.deleted_at IS NULL
     `);
 
-    if (result.recordset.length === 0) {
+    const rows = getDbRows<NcmRow>(result);
+    if (rows.length === 0) {
       // Não encontrou categorização para este NCM
       return null;
     }
 
-    const row = getFirstRow<Record<string, unknown>>(result);
+    const row = rows[0];
 
     return {
       categoryId: row.categoryId,
@@ -107,7 +122,8 @@ export async function batchGetNCMCategorization(
         AND ncm.deleted_at IS NULL
     `);
 
-    for (const row of queryResult.recordset) {
+    const rows = getDbRows<NcmRow & { ncmCode: string }>(queryResult);
+    for (const row of rows) {
       result.set(row.ncmCode, {
         categoryId: row.categoryId,
         categoryName: row.categoryName,
@@ -156,8 +172,9 @@ export async function getNCMCategorizationWithFallback(
       ORDER BY fc.id ASC
     `);
 
-    if (fallbackResult.recordset.length > 0) {
-      const row = getFirstRow<Record<string, unknown>>(fallbackResult);
+    const fallbackRows = getDbRows<FallbackCategoryRow>(fallbackResult);
+    if (fallbackRows.length > 0) {
+      const row = fallbackRows[0];
       return {
         categoryId: row.categoryId,
         categoryName: row.categoryName,
