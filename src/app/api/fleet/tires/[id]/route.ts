@@ -142,7 +142,7 @@ export async function PUT(
       })
       .where(and(eq(tires.id, tireId), eq(tires.organizationId, ctx.organizationId)));
 
-    const rowsAffectedRaw = (updateResult as any)?.rowsAffected;
+    const rowsAffectedRaw = (updateResult as { rowsAffected?: number | number[] })?.rowsAffected;
     const rowsAffected = Array.isArray(rowsAffectedRaw)
       ? Number(rowsAffectedRaw[0] ?? 0)
       : Number(rowsAffectedRaw ?? 0);
@@ -212,7 +212,8 @@ export async function DELETE(
     }
 
     // Validar se pneu está instalado em veículo
-    if ((existing as any)[0].status === "INSTALLED" && (existing as any)[0].currentVehicleId) {
+    const existingData = (existing.recordset || existing) as Array<{ status?: string; currentVehicleId?: number }>;
+    if (existingData[0]?.status === "INSTALLED" && existingData[0]?.currentVehicleId) {
       return NextResponse.json(
         { error: "Pneu está instalado em um veículo. Remova-o antes de excluir." },
         { status: 400 }

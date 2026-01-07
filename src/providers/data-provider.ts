@@ -189,7 +189,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
     }
     const { current = 1, pageSize = 10, mode = "server" } = (pagination ?? {}) as PaginationWithCurrent;
 
-    const query: Record<string, any> = {};
+    const query: Record<string, unknown> = {};
 
     // Paginação
     if (mode === "server") {
@@ -309,7 +309,8 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
 
     if (query) {
       Object.keys(query).forEach((key) => {
-        requestUrl += `${key}=${(query as any)[key]}&`;
+        const queryObj = query as Record<string, unknown>;
+        requestUrl += `${key}=${queryObj[key]}&`;
       });
     }
 

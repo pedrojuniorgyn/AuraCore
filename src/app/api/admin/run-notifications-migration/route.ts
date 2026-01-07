@@ -13,7 +13,8 @@ export async function POST() {
       WHERE TABLE_NAME = 'notifications'
     `);
 
-    const tableExists = (tableCheck as any)[0]?.count > 0;
+    const tableData = (tableCheck.recordset || tableCheck) as Array<{ count?: number }>;
+    const tableExists = (tableData[0]?.count || 0) > 0;
 
     if (tableExists) {
       console.log("⚠️  Tabela notifications já existe, pulando...");

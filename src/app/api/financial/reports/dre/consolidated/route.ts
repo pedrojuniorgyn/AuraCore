@@ -50,8 +50,11 @@ export async function GET(request: NextRequest) {
         AND due_date <= ${end.toISOString().split('T')[0]}
     `);
 
-    const totalRevenue = Number((revenues as any)[0]?.total || 0);
-    const totalExpense = Number((expenses as any)[0]?.total || 0);
+    const revenueData = (revenues.recordset || revenues) as Array<{ total?: number }>;
+    const totalRevenue = Number(revenueData[0]?.total || 0);
+    
+    const expenseData = (expenses.recordset || expenses) as Array<{ total?: number }>;
+    const totalExpense = Number(expenseData[0]?.total || 0);
     const netProfit = totalRevenue - totalExpense;
     const profitMargin = totalRevenue > 0 ? Number(((netProfit / totalRevenue) * 100).toFixed(2)) : 0;
 
