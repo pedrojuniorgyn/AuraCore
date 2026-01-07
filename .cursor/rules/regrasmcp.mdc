@@ -42,6 +42,12 @@ Args: { "contract_id": "architecture-layers" }
 
 Tool: get_contract
 Args: { "contract_id": "schema-pattern" }
+
+Tool: get_contract
+Args: { "contract_id": "smp-methodology" }
+
+Tool: get_contract
+Args: { "contract_id": "lesson-learned" }
 ```
 
 ### 2. Buscar Padrões Relacionados
@@ -905,6 +911,83 @@ Após cada tarefa, o agente DEVE produzir:
 
 ### Push
 - Status: ⏳ Aguardando aprovação / ✅ Realizado
+```
+
+---
+
+## 🔄 SMP - SYSTEMATIC MIGRATION PROTOCOL
+
+### Visão Geral
+
+O SMP é a metodologia padrão do AuraCore para refatorações em larga escala. DEVE ser seguido em TODA refatoração que afeta mais de 10 arquivos.
+
+### Documentação Completa
+
+| Documento | Localização | Propósito |
+|-----------|-------------|-----------|
+| Metodologia | `docs/mcp/SMP_METHODOLOGY.md` | Fases e processos |
+| Lições Aprendidas | `docs/mcp/SMP_LESSONS_LEARNED.md` | Registro de bugs |
+| Catálogo de Padrões | `docs/mcp/SMP_PATTERNS_CATALOG.md` | Código correto |
+| Anti-Patterns | `docs/mcp/SMP_ANTI_PATTERNS.md` | O que NÃO fazer |
+
+### Contratos MCP
+
+```
+Tool: get_contract
+Args: { "contract_id": "smp-methodology" }
+
+Tool: get_contract
+Args: { "contract_id": "lesson-learned" }
+```
+
+### Fases Obrigatórias
+
+| Fase | Nome | Descrição | Obrigatório |
+|------|------|-----------|-------------|
+| 1 | SMP-INFRA | Criar helpers centralizados | Se padrão repete 3+ vezes |
+| 2 | SMP-MAP | Mapear 100% do escopo | SEMPRE |
+| 3 | SMP-CAT | Categorizar por tipo de correção | SEMPRE |
+| 4 | SMP-APPROVE | Aguardar aprovação do plano | SEMPRE |
+| 5 | SMP-EXEC | Executar por categoria | SEMPRE |
+| 6 | SMP-VERIFY | Verificar 0 ocorrências restantes | SEMPRE |
+
+### Regras SMP
+
+| Regra | Descrição | Severidade |
+|-------|-----------|------------|
+| SMP-INFRA-001 | Criar helper se padrão repete em 3+ arquivos | ALTA |
+| SMP-MAP-001 | Executar grep ANTES de qualquer correção | ALTA |
+| SMP-MAP-002 | Relatório formal se > 10 ocorrências | MÉDIA |
+| SMP-CAT-001 | Agrupar por tipo de correção, não por arquivo | ALTA |
+| SMP-APPROVE-001 | NUNCA corrigir sem aprovação explícita | CRÍTICA |
+| SMP-EXEC-001 | Commit por categoria, não por arquivo | MÉDIA |
+| SMP-VERIFY-001 | grep final DEVE retornar 0 | ALTA |
+
+### Fluxo de Retroalimentação (Learning Loop)
+
+Quando encontrar bug durante refatoração:
+
+```
+1. PARAR correção atual
+2. DOCUMENTAR: O que falhou, onde, código atual
+3. ANALISAR: Causa raiz, categoria SMP, impacto
+4. CLASSIFICAR: Nova regra? Atualização? Anti-pattern?
+5. ATUALIZAR: regrasmcp.mdc e/ou contratos MCP
+6. REGISTRAR: SMP_LESSONS_LEARNED.md
+7. CONTINUAR: Aplicando nova regra
+```
+
+### Comandos de Mapeamento Padrão
+
+```bash
+# Total de ocorrências
+grep -rn "padrão" src/ --include="*.ts" | wc -l
+
+# Arquivos afetados
+grep -rn "padrão" src/ --include="*.ts" | cut -d: -f1 | sort -u
+
+# Distribuição por diretório
+grep -rn "padrão" src/ --include="*.ts" | cut -d: -f1 | sort | uniq -c | sort -rn
 ```
 
 ---
