@@ -61,7 +61,7 @@ export interface CargoMetadata {
 /**
  * Classifica uma NFe baseado em quem é o destinatário e quem é o transportador
  */
-export function classifyNFe(nfeXml: any, branchCnpj: string): NFeType {
+export function classifyNFe(nfeXml: Record<string, unknown>, branchCnpj: string): NFeType {
   try {
     // Normalizar CNPJ da filial (remover formatação)
     const cleanBranchCnpj = branchCnpj.replace(/[^\d]/g, "");
@@ -113,7 +113,7 @@ export function classifyNFe(nfeXml: any, branchCnpj: string): NFeType {
 /**
  * Extrai metadados da carga (para NFes do tipo CARGO)
  */
-export function extractCargoInfo(nfeXml: any): CargoMetadata | null {
+export function extractCargoInfo(nfeXml: Record<string, unknown>): CargoMetadata | null {
   try {
     // Emitente (cliente que enviou a mercadoria)
     const emitente = nfeXml.emit || {};
@@ -137,7 +137,7 @@ export function extractCargoInfo(nfeXml: any): CargoMetadata | null {
     // Volume (m³) - se informado
     const volumes = Array.isArray(vol) ? vol : [vol];
     let volumeTotal = 0;
-    volumes.forEach((v: any) => {
+    volumes.forEach((v: Record<string, unknown>) => {
       const qVol = parseInt(v.qVol || "0");
       // Assumir volume padrão se não informado (estimativa)
       volumeTotal += qVol * 0.5; // 0.5m³ por volume (estimativa)

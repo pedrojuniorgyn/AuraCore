@@ -11,8 +11,8 @@ export interface AuditLogEntry {
   entityType: "CHART_ACCOUNT" | "FINANCIAL_CATEGORY" | "COST_CENTER";
   entityId: number;
   operation: "INSERT" | "UPDATE" | "DELETE";
-  oldData?: any;
-  newData?: any;
+  oldData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
   changedBy: string;
   reason?: string;
   ipAddress?: string;
@@ -149,7 +149,7 @@ export async function getAuditHistory(
   entityType: AuditLogEntry["entityType"],
   entityId: number,
   limit: number = 50
-): Promise<any[]> {
+): Promise<Array<Record<string, unknown>>> {
   try {
     let tableName = "";
     let idColumn = "";

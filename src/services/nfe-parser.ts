@@ -133,7 +133,7 @@ export interface ParsedNFe {
   xmlHash: string; // SHA-256 do XML
   xmlContent: string; // XML original
   // Dados XML brutos (para classificação)
-  nfeData: any; // Objeto XML parseado
+  nfeData: Record<string, unknown>; // Objeto XML parseado
 }
 
 /**
@@ -208,7 +208,7 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       detArray = [detArray]; // Converte para array se for item único
     }
     
-    const items = detArray.map((det: any, index: number) => {
+    const items = detArray.map((det: Record<string, unknown>, index: number) => {
       const prod = det.prod;
       const imposto = det.imposto;
       
@@ -321,7 +321,7 @@ export function isValidNFeXML(xmlString: string): boolean {
 /**
  * Extrai informações de pagamento da NFe
  */
-function extractPaymentInfo(infNFe: any): ParsedNFe['payment'] | undefined {
+function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment'] | undefined {
   try {
     // Tag <pag> - Formas de Pagamento
     const pag = infNFe.pag;
