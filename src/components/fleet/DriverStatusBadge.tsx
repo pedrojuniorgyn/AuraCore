@@ -20,7 +20,7 @@ export function DriverStatusBadge({ status, cnhExpiry }: DriverStatusBadgeProps)
   // Se CNH vencida, sempre mostrar como BLOQUEADO
   const effectiveStatus = isCnhExpired ? "BLOCKED" : status;
 
-  const iconMap: Record<string, unknown> = {
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     ACTIVE: CheckCircle2,
     VACATION: Plane,
     BLOCKED: Ban,

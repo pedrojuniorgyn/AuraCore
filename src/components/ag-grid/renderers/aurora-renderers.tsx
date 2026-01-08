@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 
 /**
+ * Interface customizada para ActionCellRenderer com callbacks
+ */
+interface ActionCellRendererParams extends ICellRendererParams {
+  onView?: (data: unknown) => void;
+  onEdit?: (data: unknown) => void;
+  onDelete?: (data: unknown) => void;
+}
+
+/**
  * Variance Cell Renderer (Variação %)
  * Mostra seta e cor de acordo com variação
  */
@@ -202,7 +211,7 @@ export const AllocationBaseCellRenderer = (params: ICellRendererParams) => {
 /**
  * Action Cell Renderer (Botões de Ação)
  */
-export const ActionCellRenderer = (params: ICellRendererParams) => {
+export const ActionCellRenderer = (params: ActionCellRendererParams) => {
   const handleView = () => {
     if (params.onView) params.onView(params.data);
   };

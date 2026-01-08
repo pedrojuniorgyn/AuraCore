@@ -60,13 +60,13 @@ import { useTenant } from "@/contexts/tenant-context";
 interface SidebarItem {
   title: string;
   href: string;
-  icon: unknown;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
 interface SidebarGroup {
   title: string;
-  icon: unknown;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   items: SidebarItem[];
 }
@@ -266,7 +266,7 @@ export function GroupedSidebar() {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [pathname, expandedGroups]);
+  }, [pathname]); // ✅ Removido expandedGroups do deps para evitar loop infinito
 
   // Adicionar página aos recentes (debounced)
   useEffect(() => {

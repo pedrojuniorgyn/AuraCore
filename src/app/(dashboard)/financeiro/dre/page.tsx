@@ -342,7 +342,7 @@ export default function DREPage() {
                               Receita
                             </div>
                             <div className="text-lg font-semibold text-green-600">
-                              {formatCurrency(item.revenue)}
+                              {formatCurrency(item.revenue ?? 0)}
                             </div>
                           </div>
                           <div>
@@ -359,12 +359,12 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-semibold ${
-                                item.netIncome ?? 0 >= 0
+                                item.netProfit >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {formatCurrency(item.netIncome ?? 0)}
+                              {formatCurrency(item.netProfit)}
                             </div>
                           </div>
                         </div>
@@ -417,7 +417,7 @@ export default function DREPage() {
                               Receita
                             </div>
                             <div className="text-lg font-semibold text-green-600">
-                              {formatCurrency(item.revenue)}
+                              {formatCurrency(item.revenue ?? 0)}
                             </div>
                           </div>
                           <div>
