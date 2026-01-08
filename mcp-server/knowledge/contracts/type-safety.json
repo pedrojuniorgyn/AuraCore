@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -198,6 +198,32 @@
         "src/services/accounting-engine.ts"
       ],
       "pattern_created": "VAT-012: Schema ativo tem precedência - verificar src/lib/db/schema.ts",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-053509",
+      "date": "2026-01-08",
+      "epic": "E7.15",
+      "error": "Stale closure em useEffect - expandedGroups sempre [] dentro do effect porque não estava nas deps. Causava setState desnecessário a cada mudança de pathname.",
+      "correction": "Usar functional update setExpandedGroups(prev => ...) para acessar valor atual sem depender de closure. Adicionar setTimeout para evitar cascading renders (ESLint rule react-hooks/set-state-in-effect).",
+      "files_affected": [
+        "src/components/layout/grouped-sidebar.tsx"
+      ],
+      "pattern_created": "React Hooks - Functional Update Pattern",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-053796",
+      "date": "2026-01-08",
+      "epic": "E7.15",
+      "error": "new Date('') cria Invalid Date quando dhEmi/dEmi são undefined no XML da NFe. Causava datas inválidas em parcelas de pagamento.",
+      "correction": "Validar issueDateStr antes de chamar parseNFeDate. Se undefined, usar new Date() como fallback. Garantir que parseNFeDate sempre recebe string válida.",
+      "files_affected": [
+        "src/services/nfe-parser.ts"
+      ],
+      "pattern_created": "Date Validation Pattern",
       "status": "APPROVED",
       "must_not_repeat": true
     }

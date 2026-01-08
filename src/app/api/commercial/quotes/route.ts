@@ -8,7 +8,7 @@ import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib
 /**
  * GET /api/commercial/quotes
  */
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -22,7 +22,8 @@ export async function GET(req: Request) {
         and(
           eq(freightQuotes.organizationId, organizationId),
           isNull(freightQuotes.deletedAt),
-          ...getBranchScopeFilter(ctx, freightQuotes.branchId)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(getBranchScopeFilter(ctx, freightQuotes.branchId) as any[])
         )
       )
       .orderBy(desc(freightQuotes.createdAt));
@@ -141,14 +142,17 @@ export async function POST(req: Request) {
         calculatedPrice = calculation.total.toString();
         priceBreakdown = JSON.stringify(calculation);
       } catch (calcError: unknown) {
-        console.warn("⚠️ Erro ao calcular frete:", calcError.message);
+        const msg = calcError instanceof Error ? calcError.message : String(calcError);
+        console.warn("⚠️ Erro ao calcular frete:", msg);
         // Continua mesmo sem cálculo
       }
     }
 
     // Criar cotação
-    const [createdId] = await (db
+     
+    const result = await (db
       .insert(freightQuotes)
+       
       .values({
         organizationId,
         branchId,
@@ -176,9 +180,11 @@ export async function POST(req: Request) {
         priceBreakdown,
         status: "NEW",
         createdBy,
-      } as unknown) as unknown).$returningId();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any) as any).$returningId();
 
-    const quoteId = (createdId as unknown)?.id;
+    const createdId = result[0] as Record<string, unknown> | undefined;
+    const quoteId = createdId?.id;
     if (!quoteId) {
       return NextResponse.json(
         { error: "Falha ao criar cotação (id não retornado)" },

@@ -72,9 +72,9 @@ export async function GET(req: Request) {
     const totalVariableCosts = parseFloat((costsData[0]?.total_variable_costs as string) || "0");
 
     // 3. Calcular Margem de Contribuição
-    const grossRevenue = parseFloat(cte.gross_amount || "0");
-    const taxes = parseFloat(cte.tax_amount || "0");
-    const netRevenue = parseFloat(cte.net_amount || "0");
+    const grossRevenue = parseFloat(String(cte.gross_amount || "0"));
+    const taxes = parseFloat(String(cte.tax_amount || "0"));
+    const netRevenue = parseFloat(String(cte.net_amount || "0"));
     const variableCosts = totalVariableCosts;
     const contributionMargin = netRevenue - variableCosts;
     const marginPercent = netRevenue > 0 ? (contributionMargin / netRevenue) * 100 : 0;
@@ -99,7 +99,7 @@ export async function GET(req: Request) {
     const costBreakdown = (costDetailResult.recordset || []).map((row: Record<string, unknown>) => ({
       accountCode: row.code,
       accountName: row.account_name,
-      amount: parseFloat(row.amount || "0"),
+      amount: parseFloat(String(row.amount || "0")),
     }));
 
     return NextResponse.json({

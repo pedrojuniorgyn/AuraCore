@@ -34,6 +34,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Evitar override de campos sensíveis via spread
+     
     const {
       id: _id,
       organizationId: _orgId,
@@ -57,20 +58,23 @@ export async function POST(request: Request) {
     } = (body ?? {}) as Record<string, unknown>;
 
     // Drizzle MSSQL: $returningId pode não estar tipado; use cast e requery robusto.
+    const transactionDateRaw = safeBody.transactionDate;
+    const transactionDate = transactionDateRaw ? new Date(String(transactionDateRaw)) : new Date();
+    
+     
     const inserted = await (db
       .insert(fuelTransactions)
+       
       .values({
         ...safeBody,
         organizationId: ctx.organizationId,
-        transactionDate: (safeBody as unknown)?.transactionDate
-          ? new Date((safeBody as unknown).transactionDate as unknown)
-          : new Date(),
-      } as unknown) as unknown).$returningId();
+        transactionDate,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any) as any).$returningId();
 
-    const insertedAny = inserted as unknown;
-    const insertedIdRaw = Array.isArray(insertedAny)
-      ? insertedAny?.[0]?.id ?? insertedAny?.[0]?.ID ?? insertedAny?.[0]
-      : insertedAny?.id ?? insertedAny?.ID ?? insertedAny;
+    const insertedAny = inserted as Record<string, unknown> | Record<string, unknown>[];
+    const firstItem = Array.isArray(insertedAny) ? insertedAny[0] : insertedAny;
+    const insertedIdRaw = firstItem?.id ?? firstItem?.ID ?? firstItem;
     const insertedId = Number(insertedIdRaw);
     if (!Number.isFinite(insertedId) || insertedId <= 0) {
       return NextResponse.json({ error: "Falha ao criar abastecimento (id não retornado)." }, { status: 500 });

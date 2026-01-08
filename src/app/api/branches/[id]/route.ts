@@ -4,8 +4,19 @@ import { branches } from "@/lib/db/schema";
 import { createBranchSchema } from "@/lib/validators/branch";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ne } from "drizzle-orm";
+import sql from "mssql";
 
-async function fetchBranchRaw(pool: { request: () => { query: (sql: string) => Promise<{ recordset: Array<Record<string, unknown>> }> } }, id: number, organizationId: number) {
+interface BranchRow extends Record<string, unknown> {
+  id: number;
+  version: number;
+  organizationId: number;
+}
+
+async function fetchBranchRaw(
+  pool: sql.ConnectionPool, 
+  id: number, 
+  organizationId: number
+): Promise<BranchRow | null> {
   // Compatibilidade com schema divergente: algumas implantações podem não ter colunas novas.
   // Importante: o frontend espera camelCase (mesmo formato do Drizzle).
   const colCheck = await pool.request().query(`
@@ -68,7 +79,7 @@ async function fetchBranchRaw(pool: { request: () => { query: (sql: string) => P
         AND b.organization_id = @org
         AND b.deleted_at IS NULL;
     `);
-  return (r.recordset?.[0] as Record<string, unknown> | undefined) ?? null;
+  return (r.recordset?.[0] as BranchRow | undefined) ?? null;
 }
 
 /**
