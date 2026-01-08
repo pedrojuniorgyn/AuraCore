@@ -220,9 +220,13 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       vProd?: unknown;
     }
     
+    interface ImpostoInfo {
+      ICMS?: Record<string, unknown>;
+    }
+    
     const items = detArray.map((det: Record<string, unknown>, index: number) => {
       const prod = det.prod as ProdInfo;
-      const imposto = det.imposto;
+      const imposto = det.imposto as ImpostoInfo | undefined;
       
       // Extrai CST (pode estar em ICMS, ICMSSN, etc)
       let cst = "";
@@ -233,7 +237,7 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
       }
       
       return {
-        itemNumber: parseInt(det["@_nItem"]) || index + 1,
+        itemNumber: parseInt(String(det["@_nItem"] || "0")) || index + 1,
         productCode: String(prod.cProd || ""),
         productName: prod.xProd || "",
         ean: prod.cEAN && String(prod.cEAN) !== "SEM GTIN" ? String(prod.cEAN) : undefined,
@@ -241,9 +245,9 @@ export async function parseNFeXML(xmlString: string): Promise<ParsedNFe> {
         cfop: String(prod.CFOP || ""),
         cst: String(cst || ""),
         unit: prod.uCom || "UN",
-        quantity: parseFloat(prod.qCom) || 0,
-        unitPrice: parseFloat(prod.vUnCom) || 0,
-        totalPrice: parseFloat(prod.vProd) || 0,
+        quantity: parseFloat(String(prod.qCom || "0")),
+        unitPrice: parseFloat(String(prod.vUnCom || "0")),
+        totalPrice: parseFloat(String(prod.vProd || "0")),
       };
     });
     
@@ -334,12 +338,18 @@ export function isValidNFeXML(xmlString: string): boolean {
 /**
  * Extrai informações de pagamento da NFe
  */
+interface DupInfo {
+  nDup?: unknown;
+  dVenc?: unknown;
+  vDup?: unknown;
+}
+
 interface InfNFePartial {
   pag?: {
     detPag?: unknown;
   };
   cobr?: {
-    dup?: unknown;
+    dup?: DupInfo | DupInfo[];
   };
   ide?: {
     dhEmi?: string;
@@ -385,9 +395,9 @@ function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment
       for (const dup of dupArray) {
         if (dup.nDup && dup.dVenc && dup.vDup) {
           installments.push({
-            number: dup.nDup.toString(),
-            dueDate: new Date(dup.dVenc),
-            amount: parseFloat(dup.vDup),
+            number: String(dup.nDup),
+            dueDate: new Date(String(dup.dVenc)),
+            amount: parseFloat(String(dup.vDup)),
           });
         }
       }

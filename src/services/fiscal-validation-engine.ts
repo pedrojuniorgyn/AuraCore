@@ -15,9 +15,22 @@ export interface CTEValidationInput {
   customerId?: number;
 }
 
+export interface FiscalTaxRule {
+  id: number;
+  cst_code: string;
+  cst_description: string;
+  icms_rate: number;
+  fcp_rate: number;
+  difal_applicable: number;
+  difal_origin_percentage: number;
+  difal_destination_percentage: number;
+  legal_basis: string | null;
+  validation_rules: string | null;
+}
+
 export interface ValidationResult {
   valid: boolean;
-  rule?: Record<string, unknown>;
+  rule?: FiscalTaxRule;
   calculations?: {
     icmsValue: number;
     fcpValue: number;
@@ -56,8 +69,8 @@ export class FiscalValidationEngine {
         AND is_active = 1
     `);
     
-    const ruleData = (ruleResult.recordset || ruleResult) as Array<Record<string, unknown>>;
-    const rule = ruleData[0];
+    const ruleData = (ruleResult.recordset || ruleResult) as unknown as Array<FiscalTaxRule>;
+    const rule = ruleData[0] as FiscalTaxRule | undefined;
     
     // 2. Validar se encontrou regra
     if (!rule) {
@@ -109,11 +122,7 @@ export class FiscalValidationEngine {
     
     return {
       valid: errors.length === 0,
-      rule: {
-        cst: rule.cst_code,
-        description: rule.cst_description,
-        legal: rule.legal_basis
-      },
+      rule,
       calculations: {
         icmsValue,
         fcpValue,
@@ -175,7 +184,15 @@ export class FiscalValidationEngine {
         WHERE cte.id = ${cteId}
       `);
       
-      const cteData = (cteResult.recordset || cteResult) as Array<Record<string, unknown>>;
+      interface CteQueryResult {
+        uf_origin: string;
+        uf_destination: string;
+        cargo_type: string | null;
+        is_icms_contributor: number | null;
+        base_value: number;
+      }
+      
+      const cteData = (cteResult.recordset || cteResult) as unknown as Array<CteQueryResult>;
       const cte = cteData[0];
       if (!cte) continue;
       
@@ -211,9 +228,9 @@ export class FiscalValidationEngine {
     organizationId: number, 
     startDate: Date, 
     endDate: Date
-  ): Promise<Record<string, unknown>> {
+  ): Promise<Array<Record<string, unknown>>> {
     
-    const report = await db.execute(sql`
+    const result = await db.execute(sql`
       SELECT 
         validation_status,
         COUNT(*) as count,
@@ -225,7 +242,7 @@ export class FiscalValidationEngine {
       GROUP BY validation_status
     `);
     
-    return report.recordset || report;
+    return (result.recordset || result) as Array<Record<string, unknown>>;
   }
 }
 
