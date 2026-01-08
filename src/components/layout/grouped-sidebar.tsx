@@ -392,25 +392,28 @@ export function GroupedSidebar() {
                   Favoritos
                 </h3>
               </div>
-              {favoriteItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "text-sm group flex items-center gap-2 p-2 px-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                    pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                      ? "text-white bg-white/10"
-                      : "text-zinc-400"
-                  )}
-                >
-                  <item.icon className={cn("h-4 w-4", item.color)} />
-                  <span className="flex-1 truncate">{item.title}</span>
-                  <Star
-                    className="h-3 w-3 text-yellow-400 fill-yellow-400 opacity-0 group-hover:opacity-100 transition"
-                    onClick={(e) => toggleFavorite(item.href, e)}
-                  />
-                </Link>
-              ))}
+              {favoriteItems.map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "text-sm group flex items-center gap-2 p-2 px-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
+                      pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+                        ? "text-white bg-white/10"
+                        : "text-zinc-400"
+                    )}
+                  >
+                    <ItemIcon className={cn("h-4 w-4", item.color)} />
+                    <span className="flex-1 truncate">{item.title}</span>
+                    <Star
+                      className="h-3 w-3 text-yellow-400 fill-yellow-400 opacity-0 group-hover:opacity-100 transition"
+                      onClick={(e) => toggleFavorite(item.href, e)}
+                    />
+                  </Link>
+                );
+              })}
             </div>
           )}
 
@@ -423,21 +426,24 @@ export function GroupedSidebar() {
                   Recentes
                 </h3>
               </div>
-              {recentItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "text-sm group flex items-center gap-2 p-2 px-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                    pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                      ? "text-white bg-white/10"
-                      : "text-zinc-400"
-                  )}
-                >
-                  <item.icon className={cn("h-4 w-4", item.color)} />
-                  <span className="flex-1 truncate">{item.title}</span>
-                </Link>
-              ))}
+              {recentItems.map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "text-sm group flex items-center gap-2 p-2 px-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
+                      pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+                        ? "text-white bg-white/10"
+                        : "text-zinc-400"
+                    )}
+                  >
+                    <ItemIcon className={cn("h-4 w-4", item.color)} />
+                    <span className="flex-1 truncate">{item.title}</span>
+                  </Link>
+                );
+              })}
             </div>
           )}
 
@@ -447,6 +453,7 @@ export function GroupedSidebar() {
             const isActive = group.items.some(item => 
               pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
             );
+            const GroupIcon = group.icon;
 
             return (
               <div key={group.title} className="space-y-1">
@@ -457,7 +464,7 @@ export function GroupedSidebar() {
                     isActive ? "text-white" : "text-zinc-400"
                   )}
                 >
-                  <group.icon className={cn("h-4 w-4", group.color)} />
+                  <GroupIcon className={cn("h-4 w-4", group.color)} />
                   <span className="flex-1 text-left">{group.title}</span>
                   {isExpanded ? (
                     <ChevronDown className="h-4 w-4" />
@@ -468,30 +475,33 @@ export function GroupedSidebar() {
 
                 {isExpanded && (
                   <div className="space-y-1 pl-3">
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "text-sm group flex items-center gap-2 p-2 px-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                          pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                            ? "text-white bg-white/10"
-                            : "text-zinc-400"
-                        )}
-                      >
-                        <item.icon className={cn("h-4 w-4", item.color)} />
-                        <span className="flex-1 truncate">{item.title}</span>
-                        <Star
+                    {group.items.map((item) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
                           className={cn(
-                            "h-3 w-3 transition",
-                            favorites.includes(item.href)
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-zinc-600 opacity-0 group-hover:opacity-100"
+                            "text-sm group flex items-center gap-2 p-2 px-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
+                            pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+                              ? "text-white bg-white/10"
+                              : "text-zinc-400"
                           )}
-                          onClick={(e) => toggleFavorite(item.href, e)}
-                        />
-                      </Link>
-                    ))}
+                        >
+                          <ItemIcon className={cn("h-4 w-4", item.color)} />
+                          <span className="flex-1 truncate">{item.title}</span>
+                          <Star
+                            className={cn(
+                              "h-3 w-3 transition",
+                              favorites.includes(item.href)
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-zinc-600 opacity-0 group-hover:opacity-100"
+                            )}
+                            onClick={(e) => toggleFavorite(item.href, e)}
+                          />
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>

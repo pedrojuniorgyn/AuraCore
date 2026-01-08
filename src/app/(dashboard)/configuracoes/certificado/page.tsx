@@ -13,6 +13,16 @@ import { Upload, Shield, CheckCircle, XCircle, AlertCircle, FileKey } from "luci
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
 
+interface CertificateInfo {
+  valid: boolean;
+  subject: string;
+  validFrom: string;
+  validTo: string;
+  issuer: string;
+  serialNumber: string;
+  branchName?: string;
+}
+
 export default function CertificadoDigitalPage() {
   const { currentBranch } = useTenant();
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
@@ -20,7 +30,7 @@ export default function CertificadoDigitalPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isTesting, setIsTesting] = useState(false);
-  const [certificateInfo, setCertificateInfo] = useState<unknown>(null);
+  const [certificateInfo, setCertificateInfo] = useState<CertificateInfo | null>(null);
   const [testResult, setTestResult] = useState<{
     success: boolean;
     message: string;

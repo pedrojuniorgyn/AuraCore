@@ -70,7 +70,8 @@ export default function OperacoesPage() {
       setLatest((latestJson?.run as OpsRun) ?? null);
       setHistory((histJson?.runs as OpsRun[]) ?? []);
     } catch (e: unknown) {
-      toast.error(e?.message ?? "Falha ao carregar Operações");
+      const errorMessage = e instanceof Error ? e.message : "Falha ao carregar Operações";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,8 @@ export default function OperacoesPage() {
       toast.success("Smoke test iniciado/registrado");
       await load();
     } catch (e: unknown) {
-      toast.error(e?.message ?? "Falha ao executar smoke test");
+      const errorMessage = e instanceof Error ? e.message : "Falha ao executar smoke test";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

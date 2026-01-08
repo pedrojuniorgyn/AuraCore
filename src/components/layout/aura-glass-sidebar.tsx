@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -49,13 +50,13 @@ import { GridPattern } from "@/components/ui/animated-background";
 interface MenuItem {
   title: string;
   href: string;
-  icon: unknown;
+  icon: React.ComponentType<{ className?: string }>;
   badge?: number;
 }
 
 interface MenuGroup {
   title: string;
-  icon: unknown;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   gradientFrom: string;
   gradientTo: string;
@@ -359,6 +360,7 @@ export function AuraGlassSidebar() {
               const hasActiveItem = group.items.some((item) =>
                 pathname.startsWith(item.href)
               );
+              const GroupIcon = group.icon;
 
               return (
                 <motion.div
@@ -387,7 +389,7 @@ export function AuraGlassSidebar() {
                         whileHover={{ scale: 1.1, rotate: 5 }}
                         transition={{ type: "spring", stiffness: 400, damping: 17 }}
                       >
-                        <group.icon className={cn("h-4 w-4", group.color)} />
+                        <GroupIcon className={cn("h-4 w-4", group.color)} />
                       </motion.div>
                       <span className={cn(
                         "text-xs font-bold uppercase tracking-wider",
@@ -420,6 +422,7 @@ export function AuraGlassSidebar() {
                         <div className="ml-4 mt-1 space-y-0.5 border-l border-gradient-to-b from-transparent via-zinc-700/30 to-transparent pl-3">
                           {group.items.map((item, itemIndex) => {
                             const isActive = pathname.startsWith(item.href);
+                            const ItemIcon = item.icon;
 
                             return (
                               <motion.div
@@ -454,7 +457,7 @@ export function AuraGlassSidebar() {
                                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                     className="relative z-10"
                                   >
-                                    <item.icon className={cn(
+                                    <ItemIcon className={cn(
                                       "h-4 w-4 transition-colors",
                                       isActive 
                                         ? group.color 

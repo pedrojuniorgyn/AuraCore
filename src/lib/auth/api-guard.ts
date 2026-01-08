@@ -5,6 +5,20 @@ import { log } from "@/lib/observability/logger";
 import { getOrCreateRequestId } from "@/lib/observability/request-id";
 import { pushRequestLog } from "@/lib/observability/request-buffer";
 
+/**
+ * Contexto de execução da API com informações do usuário autenticado
+ */
+export interface ApiContext {
+  user: unknown;
+  userId: string;
+  role: string;
+  isAdmin: boolean;
+  defaultBranchId: number | null;
+  allowedBranches: number[];
+  branchId: number | null;
+  organizationId: number;
+}
+
 function buildTelemetryHeaders(requestId: string, durationMs: number) {
   const headers = new Headers();
   headers.set("x-request-id", requestId);
@@ -40,7 +54,7 @@ function getSlowThresholdMs() {
 export async function withPermission<T>(
   req: NextRequest,
   permissionCode: string,
-  handler: (user: unknown, ctx: unknown) => Promise<Response>
+  handler: (user: unknown, ctx: ApiContext) => Promise<Response>
 ): Promise<Response> {
   const startedAt = Date.now();
   const requestId = getOrCreateRequestId(req.headers);
@@ -196,7 +210,7 @@ export async function withPermission<T>(
  */
 export async function withAuth<T>(
   req: NextRequest,
-  handler: (user: unknown, ctx: unknown) => Promise<Response>
+  handler: (user: unknown, ctx: ApiContext) => Promise<Response>
 ): Promise<Response> {
   const startedAt = Date.now();
   const requestId = getOrCreateRequestId(req.headers);

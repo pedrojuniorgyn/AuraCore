@@ -8,12 +8,18 @@ import { BranchForm } from "@/components/forms/branch-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
+interface BranchData {
+  name: string;
+  version: number;
+  [key: string]: unknown;
+}
+
 export default function EditBranchPage() {
   const router = useRouter();
   const params = useParams();
   const branchId = parseInt(params.id as string);
 
-  const [branchData, setBranchData] = useState<unknown>(null);
+  const [branchData, setBranchData] = useState<BranchData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
