@@ -44,7 +44,8 @@ async function resetPassword() {
     console.log("🔒 Senha: admin123");
 
   } catch (error: unknown) {
-    console.error("\n❌ Erro:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ Erro:", message);
     process.exit(1);
   } finally {
     await pool.close();

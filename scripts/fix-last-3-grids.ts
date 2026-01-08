@@ -112,7 +112,8 @@ for (const file of files) {
     }
     
   } catch (error: unknown) {
-    console.error(`  ❌ ${file}: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`  ❌ ${file}: ${message}`);
   }
 }
 

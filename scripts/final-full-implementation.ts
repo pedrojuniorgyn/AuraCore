@@ -53,7 +53,8 @@ async function run() {
       `);
       
     } catch (e: unknown) {
-      console.log(`   ⚠️  ${e.message.substring(0, 150)}\n`);
+      const message = e instanceof Error ? e.message : String(e);
+      console.log(`   ⚠️  ${message.substring(0, 150)}\n`);
     }
 
     // ==========================================
@@ -110,8 +111,9 @@ async function run() {
         await pool.request().query(pcgTables[i]);
         console.log(`   ✅ Tabela ${i + 1}/4 criada`);
       } catch (e: unknown) {
-        if (!e.message.includes('already')) {
-          console.log(`   ⚠️  Tabela ${i + 1}: ${e.message.substring(0, 100)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        if (!message.includes('already')) {
+          console.log(`   ⚠️  Tabela ${i + 1}: ${message.substring(0, 100)}`);
         } else {
           console.log(`   ⏭️  Tabela ${i + 1} já existe`);
         }
@@ -213,7 +215,8 @@ async function run() {
         pccInserted++;
         process.stdout.write(`\r   ✅ PCC: ${pccInserted}/${pccAccounts.length}`);
       } catch (e: unknown) {
-        process.stdout.write(`\r   ⚠️  ${acc.code}: ${e.message.substring(0, 50)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        process.stdout.write(`\r   ⚠️  ${acc.code}: ${message.substring(0, 50)}`);
       }
     }
     
@@ -254,7 +257,8 @@ async function run() {
         pcgInserted++;
         console.log(`   ✅ PCG: ${acc.code} - ${acc.name}`);
       } catch (e: unknown) {
-        console.log(`   ❌ ${acc.code}: ${e.message.substring(0, 100)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`   ❌ ${acc.code}: ${message.substring(0, 100)}`);
       }
     }
     
@@ -308,7 +312,8 @@ async function run() {
         ccInserted++;
         console.log(`   ✅ CC: ${cc.code} - ${cc.name}`);
       } catch (e: unknown) {
-        console.log(`   ❌ ${cc.code}: ${e.message.substring(0, 100)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`   ❌ ${cc.code}: ${message.substring(0, 100)}`);
       }
     }
     
@@ -331,7 +336,8 @@ async function run() {
     console.log(`📊 CC: ${fc.recordset[0].t} centros\n`);
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();

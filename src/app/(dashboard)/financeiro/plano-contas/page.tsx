@@ -76,8 +76,9 @@ export default function ChartOfAccountsPage() {
           <Edit className="h-4 w-4" />
         </button>
         <button
-          onClick={() => handleDelete(props.data.id)}
-          className="text-red-400 hover:text-red-300 transition-colors"
+          onClick={() => props.data && handleDelete(props.data.id)}
+          disabled={!props.data}
+          className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
           title="Excluir"
         >
           <Trash2 className="h-4 w-4" />
@@ -116,7 +117,7 @@ export default function ChartOfAccountsPage() {
       width: 150,
       filter: "agTextColumnFilter",
       cellRenderer: (params: ICellRendererParams<ChartAccount>) => {
-        const indent = "  ".repeat(params.data.level || 0);
+        const indent = "  ".repeat(params.data?.level || 0);
         return `${indent}${params.value}`;
       },
     },

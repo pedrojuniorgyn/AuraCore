@@ -31,7 +31,8 @@ async function runFinancialMigration() {
 
     console.log("\n✅ Migration do módulo financeiro executada com sucesso!");
   } catch (error: unknown) {
-    console.error("\n❌ ERRO na migration:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO na migration:", message);
     throw error;
   } finally {
     await pool.close();

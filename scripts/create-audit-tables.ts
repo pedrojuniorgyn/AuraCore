@@ -186,7 +186,9 @@ async function run() {
 
     console.log(`✅ SUCESSO! ${check.recordset.length}/3 tabelas criadas:\n`);
     check.recordset.forEach((t: unknown) => {
-      console.log(`   ✅ ${t.TABLE_NAME}`);
+      if (typeof t === 'object' && t !== null && 'TABLE_NAME' in t) {
+        console.log(`   ✅ ${t.TABLE_NAME}`);
+      }
     });
 
     console.log("\n═══════════════════════════════════════════════════════");
@@ -199,7 +201,8 @@ async function run() {
     console.log("   3. Configurar alertas de mudanças críticas\n");
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();

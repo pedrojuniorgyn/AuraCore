@@ -214,7 +214,7 @@ export function FreightSimulator() {
           {!result ? (
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
               <Package className="h-12 w-12 mb-4 opacity-50" />
-              <p>Preencha os dados e clique em "Calcular Frete"</p>
+              <p>Preencha os dados e clique em &quot;Calcular Frete&quot;</p>
             </div>
           ) : (
             <div className="space-y-6">

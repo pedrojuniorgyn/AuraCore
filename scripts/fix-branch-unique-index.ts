@@ -16,7 +16,8 @@ async function main() {
     await db.execute(sql.raw(`DROP INDEX [branches_document_org_idx] ON [branches]`));
     console.log("✅ Índice antigo removido!");
   } catch (error: unknown) {
-    console.warn("⚠️ Índice antigo não encontrado ou já foi removido:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("⚠️ Índice antigo não encontrado ou já foi removido:", message);
   }
 
   console.log("\n🔧 Criando novo índice com filtro de soft delete...");
@@ -28,7 +29,8 @@ async function main() {
     `));
     console.log("✅ Novo índice criado com sucesso!");
   } catch (error: unknown) {
-    console.error("❌ Erro ao criar índice:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro ao criar índice:", message);
   }
 
   console.log("\n✅ Migração concluída!");

@@ -7,7 +7,7 @@
 "use client";
 
 import React from "react";
-import { IDetailCellRendererParams, ColDef } from "ag-grid-community";
+import { IDetailCellRendererParams, ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,9 +70,9 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
       field: "ncm",
       headerName: "NCM",
       width: 110,
-      cellRenderer: (params: unknown) => {
+      cellRenderer: (params: ICellRendererParams<NFeItem>) => {
         if (!params.value) return "-";
-        const ncm = params.value.replace(/\D/g, "");
+        const ncm = String(params.value).replace(/\D/g, "");
         if (ncm.length === 8) {
           return `${ncm.substr(0, 4)}.${ncm.substr(4, 2)}.${ncm.substr(6, 2)}`;
         }
@@ -89,12 +89,12 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
       headerName: "Qtde",
       width: 100,
       type: "numericColumn",
-      valueFormatter: (params: unknown) => {
+      valueFormatter: (params: ValueFormatterParams<NFeItem>) => {
         if (!params.value) return "-";
         return new Intl.NumberFormat("pt-BR", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 4,
-        }).format(parseFloat(params.value));
+        }).format(parseFloat(String(params.value)));
       },
     },
     {
@@ -116,8 +116,8 @@ export const NFeDetailPanel: React.FC<IDetailCellRendererParams> = (props) => {
       field: "productName",
       headerName: "Produto Vinculado",
       width: 200,
-      cellRenderer: (params: unknown) => {
-        if (params.data.productId && params.value) {
+      cellRenderer: (params: ICellRendererParams<NFeItem>) => {
+        if (params.data?.productId && params.value) {
           return (
             <Badge variant="default" className="font-normal">
               ✓ {params.value}

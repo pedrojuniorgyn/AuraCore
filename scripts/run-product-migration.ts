@@ -53,7 +53,8 @@ async function runMigration() {
             console.log(result.recordset[0]);
           }
         } catch (error: unknown) {
-          console.error(`❌ Erro ao executar statement:`, error.message);
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(`❌ Erro ao executar statement:`, message);
         }
       }
     }
@@ -78,7 +79,8 @@ async function runMigration() {
     }
 
   } catch (error: unknown) {
-    console.error("❌ Erro durante migração:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro durante migração:", message);
     process.exit(1);
   } finally {
     await pool.close();

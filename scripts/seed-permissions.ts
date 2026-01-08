@@ -194,7 +194,8 @@ async function run() {
     }
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();

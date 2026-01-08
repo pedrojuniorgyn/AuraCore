@@ -62,14 +62,15 @@ async function runAllMigrations() {
               await pool.request().query(statement);
               executed++;
             } catch (error: unknown) {
+              const message = error instanceof Error ? error.message : String(error);
               // Ignora erros de "já existe"
               if (
-                error.message.includes("already exists") ||
-                error.message.includes("There is already an object")
+                message.includes("already exists") ||
+                message.includes("There is already an object")
               ) {
                 skipped++;
               } else {
-                console.error(`   ❌ Erro:`, error.message);
+                console.error(`   ❌ Erro:`, message);
               }
             }
           }
@@ -78,7 +79,8 @@ async function runAllMigrations() {
         console.log(`   ✅ Executados: ${executed} | Ignorados: ${skipped}`);
 
       } catch (error: unknown) {
-        console.error(`   ❌ Erro ao ler migração:`, error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`   ❌ Erro ao ler migração:`, message);
       }
     }
 
@@ -97,7 +99,8 @@ async function runAllMigrations() {
     console.table(tablesResult.recordset);
 
   } catch (error: unknown) {
-    console.error("\n❌ Erro durante migrações:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ Erro durante migrações:", message);
     process.exit(1);
   } finally {
     await pool.close();

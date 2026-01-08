@@ -105,7 +105,8 @@ export function classifyNFe(nfeXml: Record<string, unknown>, branchCnpj: string)
     return "OTHER";
     
   } catch (error: unknown) {
-    console.error("❌ Erro ao classificar NFe:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro ao classificar NFe:", message);
     return "OTHER";
   }
 }
@@ -198,7 +199,8 @@ export function extractCargoInfo(nfeXml: Record<string, unknown>): CargoMetadata
     return metadata;
     
   } catch (error: unknown) {
-    console.error("❌ Erro ao extrair metadados da carga:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro ao extrair metadados da carga:", message);
     return null;
   }
 }

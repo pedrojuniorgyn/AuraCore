@@ -61,7 +61,7 @@ export default function CostCentersPage() {
       width: 150,
       filter: "agTextColumnFilter",
       cellRenderer: (params: ICellRendererParams<CostCenter>) => {
-        const indent = "  ".repeat(params.data.level || 0);
+        const indent = "  ".repeat(params.data?.level || 0);
         return `${indent}${params.value}`;
       },
     },
@@ -108,14 +108,16 @@ export default function CostCentersPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEdit(params.data)}
+            onClick={() => params.data && handleEdit(params.data)}
+            disabled={!params.data}
           >
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDelete(params.data.id)}
+            onClick={() => params.data && handleDelete(params.data.id)}
+            disabled={!params.data}
           >
             <Trash2 className="h-4 w-4 text-red-500" />
           </Button>

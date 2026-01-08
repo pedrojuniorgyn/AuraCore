@@ -220,8 +220,8 @@ export default function UploadXMLPage() {
                         <p className="font-medium text-sm">{fileResult.fileName}</p>
                         <p className="text-xs text-gray-600">
                           Tipo: {fileResult.type}
-                          {fileResult.imported > 0 && ` | Importado: ${fileResult.imported}`}
-                          {fileResult.duplicates > 0 && ` | Duplicata: ${fileResult.duplicates}`}
+                          {(fileResult.imported ?? 0) > 0 && ` | Importado: ${fileResult.imported}`}
+                          {(fileResult.duplicates ?? 0) > 0 && ` | Duplicata: ${fileResult.duplicates}`}
                           {fileResult.error && ` | Erro: ${fileResult.error}`}
                         </p>
                       </div>

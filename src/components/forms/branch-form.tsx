@@ -128,8 +128,14 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
           if (mounted) {
             setLegacyBranchOptions(
               items
-                .map((it: unknown) => ({ code: Number(it.code), label: String(it.label ?? it.code) }))
-                .filter((it: unknown) => Number.isFinite(it.code))
+                .map((it: unknown) => {
+                  const item = it as { code?: unknown; label?: unknown };
+                  return { code: Number(item.code), label: String(item.label ?? item.code) };
+                })
+                .filter((it: unknown) => {
+                  const item = it as { code?: unknown };
+                  return Number.isFinite(Number(item.code));
+                })
             );
           }
         }
@@ -140,8 +146,14 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
           if (mounted) {
             setTaxClassOptions(
               items
-                .map((it: unknown) => ({ value: String(it.value ?? ""), label: String(it.label ?? it.value ?? "") }))
-                .filter((it: unknown) => it.value)
+                .map((it: unknown) => {
+                  const item = it as { value?: unknown; label?: unknown };
+                  return { value: String(item.value ?? ""), label: String(item.label ?? item.value ?? "") };
+                })
+                .filter((it: unknown) => {
+                  const item = it as { value?: unknown };
+                  return Boolean(item.value);
+                })
             );
           }
         }

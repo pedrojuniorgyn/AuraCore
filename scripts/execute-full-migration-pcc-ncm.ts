@@ -83,8 +83,9 @@ async function run() {
           await pool.request().query(block);
         } catch (e: unknown) {
           // Ignora erros de INSERT duplicado (caso já exista)
-          if (!e.message.includes("duplicate") && !e.message.includes("Violation of UNIQUE KEY")) {
-            console.log(`⚠️  Bloco ${i + 1}: ${e.message.substring(0, 80)}`);
+          const message = e instanceof Error ? e.message : String(e);
+          if (!message.includes("duplicate") && !message.includes("Violation of UNIQUE KEY")) {
+            console.log(`⚠️  Bloco ${i + 1}: ${message.substring(0, 80)}`);
           }
         }
       }
@@ -117,7 +118,11 @@ async function run() {
 
     console.log("\n📋 Amostra (10 primeiras contas):");
     sample.recordset.forEach((r: unknown) => {
-      console.log(`   ${r.code?.padEnd(20)} ${r.name?.substring(0, 40)}`);
+      if (typeof r === 'object' && r !== null && 'code' in r && 'name' in r) {
+        const code = typeof r.code === 'string' ? r.code : String(r.code);
+        const name = typeof r.name === 'string' ? r.name : String(r.name);
+        console.log(`   ${code.padEnd(20)} ${name.substring(0, 40)}`);
+      }
     });
 
     // ========================================
@@ -203,7 +208,8 @@ async function run() {
         console.log(`✅ ${item.ncm.padEnd(15)} ${item.desc.padEnd(35)} ${mono} ${st}`);
         inserted++;
       } catch (e: unknown) {
-        console.log(`❌ ${item.ncm} - Erro: ${e.message.substring(0, 60)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`❌ ${item.ncm} - Erro: ${message.substring(0, 60)}`);
       }
     }
 
@@ -253,8 +259,12 @@ async function run() {
     console.log("");
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
-    console.error("\nStack:", error.stack);
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("\n❌ ERRO:", message);
+    if (stack) {
+      console.error("\nStack:", stack);
+    }
     throw error;
   } finally {
     await pool.close();

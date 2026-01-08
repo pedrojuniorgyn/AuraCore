@@ -17,10 +17,6 @@ interface Proposal {
 export default function PropostasPage() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
 
-  useEffect(() => {
-    loadProposals();
-  }, []);
-
   const loadProposals = async () => {
     try {
       const response = await fetch("/api/comercial/proposals");
@@ -30,6 +26,14 @@ export default function PropostasPage() {
       console.error("Erro:", error);
     }
   };
+
+  useEffect(() => {
+    // Usar setTimeout para evitar setState síncrono em effect
+    const timeoutId = setTimeout(() => {
+      loadProposals();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const downloadPDF = (id: number) => {
     window.open(`/api/comercial/proposals/${id}/pdf`, "_blank");

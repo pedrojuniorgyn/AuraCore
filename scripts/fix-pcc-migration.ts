@@ -61,13 +61,14 @@ async function run() {
           totalInserted++;
           process.stdout.write(`\r   Inserido: ${totalInserted} contas`);
         } catch (e: unknown) {
-          if (e.message.includes("duplicate") || e.message.includes("Violation of UNIQUE KEY")) {
+          const message = e instanceof Error ? e.message : String(e);
+          if (message.includes("duplicate") || message.includes("Violation of UNIQUE KEY")) {
             // Já existe, pula
             totalInserted++;
             process.stdout.write(`\r   Inserido: ${totalInserted} contas`);
           } else {
             totalErrors++;
-            console.log(`\n   ❌ Erro: ${e.message.substring(0, 80)}`);
+            console.log(`\n   ❌ Erro: ${message.substring(0, 80)}`);
           }
         }
       }
@@ -102,12 +103,17 @@ async function run() {
 
     console.log("📋 Amostra (15 primeiras):");
     sample.recordset.forEach((r: unknown) => {
-      console.log(`   ${r.code?.padEnd(20)} ${r.name?.substring(0, 45)}`);
+      if (typeof r === 'object' && r !== null && 'code' in r && 'name' in r) {
+        const code = typeof r.code === 'string' ? r.code : String(r.code);
+        const name = typeof r.name === 'string' ? r.name : String(r.name);
+        console.log(`   ${code.padEnd(20)} ${name.substring(0, 45)}`);
+      }
     });
     console.log("");
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();

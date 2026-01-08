@@ -209,7 +209,8 @@ async function run() {
         inserted++;
         process.stdout.write(`\r   ✅ Inseridas: ${inserted}/${accounts.length} contas`);
       } catch (e: unknown) {
-        console.log(`\n   ❌ ${acc.code}: ${e.message.substring(0, 60)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`\n   ❌ ${acc.code}: ${message.substring(0, 60)}`);
       }
     }
 
@@ -237,12 +238,17 @@ async function run() {
 
     console.log("📋 Amostra (10 primeiras):");
     sample.recordset.forEach((r: unknown) => {
-      console.log(`   ${r.code?.padEnd(20)} ${r.name?.substring(0, 45)}`);
+      if (typeof r === 'object' && r !== null && 'code' in r && 'name' in r) {
+        const code = typeof r.code === 'string' ? r.code : String(r.code);
+        const name = typeof r.name === 'string' ? r.name : String(r.name);
+        console.log(`   ${code.padEnd(20)} ${name.substring(0, 45)}`);
+      }
     });
     console.log("");
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();

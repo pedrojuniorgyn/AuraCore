@@ -22,10 +22,6 @@ interface Location {
 export default function WmsEnderecosPage() {
   const [locations, setLocations] = useState<Location[]>([]);
 
-  useEffect(() => {
-    loadLocations();
-  }, []);
-
   const loadLocations = async () => {
     try {
       const response = await fetch("/api/wms/locations");
@@ -35,6 +31,14 @@ export default function WmsEnderecosPage() {
       console.error("Erro:", error);
     }
   };
+
+  useEffect(() => {
+    // Usar setTimeout para evitar setState síncrono em effect
+    const timeoutId = setTimeout(() => {
+      loadLocations();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div className="p-6 space-y-6">

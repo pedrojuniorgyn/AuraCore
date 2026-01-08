@@ -6,7 +6,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -313,25 +313,34 @@ export function Marquee({
  * Meteoros caindo (background effect)
  */
 export function Meteors({ number = 20 }: { number?: number }) {
+  // Gerar valores aleatórios UMA VEZ no mount usando useState lazy initialization
+  const [meteors] = useState(() => {
+    return Array.from({ length: number }).map(() => ({
+      left: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
+      duration: Math.random() * 2 + 2,
+      delay: Math.random() * 5,
+    }));
+  });
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {Array.from({ length: number }).map((_, index) => (
+      {meteors.map((meteor, index) => (
         <motion.span
           key={index}
           className="absolute h-0.5 w-0.5 rotate-[215deg] bg-slate-500"
           initial={{
             top: -10,
-            left: Math.random() * window.innerWidth,
+            left: meteor.left,
             opacity: 0,
           }}
           animate={{
-            top: window.innerHeight + 10,
+            top: typeof window !== "undefined" ? window.innerHeight + 10 : 1000,
             opacity: [0, 1, 0],
           }}
           transition={{
-            duration: Math.random() * 2 + 2,
+            duration: meteor.duration,
             repeat: Infinity,
-            delay: Math.random() * 5,
+            delay: meteor.delay,
             ease: "linear",
           }}
           style={{

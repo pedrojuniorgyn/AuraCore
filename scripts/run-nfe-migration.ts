@@ -53,11 +53,12 @@ async function runMigration() {
           await pool.request().query(statement);
           console.log(`✅ Statement ${i + 1} executado com sucesso\n`);
         } catch (error: unknown) {
-          console.error(`❌ Erro no statement ${i + 1}:`, error.message);
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(`❌ Erro no statement ${i + 1}:`, message);
           console.error(`SQL:\n${statement}\n`);
           
           // Continua mesmo com erro (pode ser constraint já existente)
-          if (!error.message.includes("already exists")) {
+          if (!message.includes("already exists")) {
             throw error;
           }
         }
@@ -84,7 +85,8 @@ async function runMigration() {
     }
 
   } catch (error: unknown) {
-    console.error("\n❌ Erro durante migração:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ Erro durante migração:", message);
     process.exit(1);
   } finally {
     await pool.close();

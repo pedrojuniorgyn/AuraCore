@@ -49,16 +49,21 @@ export const CurrencyCellRenderer = (params: ICellRendererParams) => {
 export const DateCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return <span className="text-muted-foreground">-</span>;
 
+  // Validar data ANTES de renderizar JSX
+  const date = new Date(params.value);
+  if (isNaN(date.getTime())) {
+    return <span className="text-muted-foreground">Data inválida</span>;
+  }
+
+  // Formatar fora do try/catch
+  let formattedDate: string;
   try {
-    const date = new Date(params.value);
-    return (
-      <span className="text-sm">
-        {format(date, "dd/MM/yyyy", { locale: ptBR })}
-      </span>
-    );
+    formattedDate = format(date, "dd/MM/yyyy", { locale: ptBR });
   } catch {
     return <span className="text-muted-foreground">Data inválida</span>;
   }
+
+  return <span className="text-sm">{formattedDate}</span>;
 };
 
 /**
@@ -67,21 +72,28 @@ export const DateCellRenderer = (params: ICellRendererParams) => {
 export const DateTimeCellRenderer = (params: ICellRendererParams) => {
   if (!params.value) return <span className="text-muted-foreground">-</span>;
 
+  // Validar data ANTES de renderizar JSX
+  const date = new Date(params.value);
+  if (isNaN(date.getTime())) {
+    return <span className="text-muted-foreground">Data inválida</span>;
+  }
+
+  // Formatar fora do try/catch
+  let formattedDate: string;
+  let formattedTime: string;
   try {
-    const date = new Date(params.value);
-    return (
-      <div className="flex flex-col">
-        <span className="text-sm font-medium">
-          {format(date, "dd/MM/yyyy", { locale: ptBR })}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {format(date, "HH:mm", { locale: ptBR })}
-        </span>
-      </div>
-    );
+    formattedDate = format(date, "dd/MM/yyyy", { locale: ptBR });
+    formattedTime = format(date, "HH:mm", { locale: ptBR });
   } catch {
     return <span className="text-muted-foreground">Data inválida</span>;
   }
+
+  return (
+    <div className="flex flex-col">
+      <span className="text-sm font-medium">{formattedDate}</span>
+      <span className="text-xs text-muted-foreground">{formattedTime}</span>
+    </div>
+  );
 };
 
 /**

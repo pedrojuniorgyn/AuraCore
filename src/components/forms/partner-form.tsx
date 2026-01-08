@@ -327,7 +327,7 @@ export function PartnerForm({ initialData, onSubmit, isLoading, isEdit }: Partne
                         />
                       </FormControl>
                       <FormDescription>
-                        Digite "ISENTO" se não possuir IE
+                        Digite &quot;ISENTO&quot; se não possuir IE
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

@@ -350,7 +350,7 @@ export default function DREPage() {
                               Despesa
                             </div>
                             <div className="text-lg font-semibold text-red-600">
-                              {formatCurrency(item.expense)}
+                              {formatCurrency(item.expenses ?? 0)}
                             </div>
                           </div>
                           <div>
@@ -359,12 +359,12 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-semibold ${
-                                item.netProfit >= 0
+                                item.netIncome ?? 0 >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {formatCurrency(item.netProfit)}
+                              {formatCurrency(item.netIncome ?? 0)}
                             </div>
                           </div>
                         </div>
@@ -425,7 +425,7 @@ export default function DREPage() {
                               Despesa
                             </div>
                             <div className="text-lg font-semibold text-red-600">
-                              {formatCurrency(item.expense)}
+                              {formatCurrency(item.expenses ?? 0)}
                             </div>
                           </div>
                           <div>
@@ -434,12 +434,12 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-semibold ${
-                                item.netProfit >= 0
+                                item.netIncome ?? 0 >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {formatCurrency(item.netProfit)}
+                              {formatCurrency(item.netIncome ?? 0)}
                             </div>
                           </div>
                         </div>

@@ -25,6 +25,24 @@ export default function PneusPage() {
   const router = useRouter();
   const [tires, setTires] = useState<Tire[]>([]);
 
+  const loadTires = async () => {
+    try {
+      const response = await fetch("/api/fleet/tires");
+      const data = await response.json();
+      setTires(data.data || []);
+    } catch (error) {
+      console.error("Erro:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Usar setTimeout para evitar setState síncrono em effect
+    const timeoutId = setTimeout(() => {
+      loadTires();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   const handleEdit = (data: Tire) => {
     router.push(`/frota/pneus/editar/${data.id}`);
   };
@@ -37,20 +55,6 @@ export default function PneusPage() {
       toast.success("Excluído com sucesso!");
       loadTires();
     } catch (error) { toast.error("Erro ao excluir"); }
-  };
-
-  useEffect(() => {
-    loadTires();
-  }, []);
-
-  const loadTires = async () => {
-    try {
-      const response = await fetch("/api/fleet/tires");
-      const data = await response.json();
-      setTires(data.data || []);
-    } catch (error) {
-      console.error("Erro:", error);
-    }
   };
 
   const calculateCPK = (tire: Tire) => {

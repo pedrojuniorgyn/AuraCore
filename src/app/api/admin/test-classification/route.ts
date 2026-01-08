@@ -112,7 +112,7 @@ export async function POST() {
     const payableStats = payables.reduce(
       (acc, p) => {
         acc.total++;
-        acc.totalAmount += p.amount;
+        acc.totalAmount += (p.amount ?? 0);
         if (p.status === "PENDING") acc.pending++;
         if (p.status === "PAID") acc.paid++;
         return acc;

@@ -236,41 +236,51 @@ export function GroupedSidebar() {
   const pathname = usePathname();
   const { user } = useTenant();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [recentPages, setRecentPages] = useState<string[]>([]);
+  
+  // Lazy initialization: carregar do localStorage apenas uma vez
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("aura-favorites");
+    return stored ? JSON.parse(stored) : [];
+  });
+  
+  const [recentPages, setRecentPages] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("aura-recent-pages");
+    return stored ? JSON.parse(stored) : [];
+  });
+  
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Carregar favoritos e recentes do localStorage
+  // Expandir grupo atual automaticamente
   useEffect(() => {
-    const storedFavorites = localStorage.getItem("aura-favorites");
-    const storedRecents = localStorage.getItem("aura-recent-pages");
-    
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
-    }
-    
-    if (storedRecents) {
-      setRecentPages(JSON.parse(storedRecents));
-    }
-
-    // Expandir grupo atual automaticamente
     const currentGroup = sidebarGroups.find(group =>
       group.items.some(item => pathname.startsWith(item.href) && item.href !== "/")
     );
     
     if (currentGroup && !expandedGroups.includes(currentGroup.title)) {
-      setExpandedGroups(prev => [...prev, currentGroup.title]);
+      // Usar setTimeout para evitar setState síncrono
+      const timeoutId = setTimeout(() => {
+        setExpandedGroups(prev => [...prev, currentGroup.title]);
+      }, 0);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [pathname]);
+  }, [pathname, expandedGroups]);
 
-  // Adicionar página aos recentes
+  // Adicionar página aos recentes (debounced)
   useEffect(() => {
-    if (pathname !== "/" && !recentPages.includes(pathname)) {
+    if (pathname === "/" || recentPages.includes(pathname)) return;
+    
+    // Usar setTimeout para evitar setState síncrono
+    const timeoutId = setTimeout(() => {
       const updated = [pathname, ...recentPages.slice(0, 9)];
       setRecentPages(updated);
       localStorage.setItem("aura-recent-pages", JSON.stringify(updated));
-    }
-  }, [pathname]);
+    }, 0);
+    
+    return () => clearTimeout(timeoutId);
+  }, [pathname, recentPages]);
 
   const toggleGroup = (groupTitle: string) => {
     setExpandedGroups(prev =>

@@ -42,9 +42,10 @@ async function main() {
         await pool.request().query(statement);
         console.log(`✅ Sucesso\n`);
       } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
         console.error(`\n❌ ERRO no statement ${i + 1}:`);
         console.error(`Statement: ${preview}...`);
-        console.error(`Erro: ${error.message}\n`);
+        console.error(`Erro: ${message}\n`);
         console.error(`SQL completo:\n${statement}\n`);
         process.exit(1);
       }

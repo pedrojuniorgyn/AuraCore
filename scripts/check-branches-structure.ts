@@ -43,7 +43,12 @@ async function checkStructure() {
 
     // Verifica se já tem os campos de certificado
     const hasCertFields = result.recordset.some(
-      (col: unknown) => col.COLUMN_NAME === "certificate_pfx"
+      (col: unknown) => {
+        if (typeof col === 'object' && col !== null && 'COLUMN_NAME' in col) {
+          return col.COLUMN_NAME === "certificate_pfx";
+        }
+        return false;
+      }
     );
 
     console.log(
@@ -53,7 +58,8 @@ async function checkStructure() {
     );
 
   } catch (error: unknown) {
-    console.error("\n❌ Erro:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ Erro:", message);
     process.exit(1);
   } finally {
     await pool.close();

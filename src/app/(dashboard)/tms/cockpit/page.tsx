@@ -21,10 +21,6 @@ export default function CockpitPage() {
     avgDeliveryTime: 0,
   });
 
-  useEffect(() => {
-    loadKPIs();
-  }, []);
-
   const loadKPIs = async () => {
     try {
       const response = await fetch("/api/tms/cockpit/kpis");
@@ -34,6 +30,14 @@ export default function CockpitPage() {
       console.error("Erro ao carregar KPIs:", error);
     }
   };
+
+  useEffect(() => {
+    // Usar setTimeout para evitar setState síncrono em effect
+    const timeoutId = setTimeout(() => {
+      loadKPIs();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div className="p-6 space-y-6">

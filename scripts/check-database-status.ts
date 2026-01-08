@@ -73,7 +73,9 @@ async function checkDatabaseStatus() {
     console.log("=".repeat(60));
     
     tables.recordset.forEach((t: unknown) => {
-      console.log(`   ${t.name}`);
+      if (typeof t === 'object' && t !== null && 'name' in t) {
+        console.log(`   ${t.name}`);
+      }
     });
 
     // Verifica se há cost_centers vs financial_cost_centers
@@ -81,26 +83,37 @@ async function checkDatabaseStatus() {
     console.log("🔍 INVESTIGAÇÃO DETALHADA:");
     console.log("=".repeat(60));
     
-    const costCentersTables = tables.recordset.filter((t: unknown) => 
-      t.name.toLowerCase().includes('cost') || t.name.toLowerCase().includes('centro')
-    );
+    const costCentersTables = tables.recordset.filter((t: unknown) => {
+      if (typeof t === 'object' && t !== null && 'name' in t && typeof t.name === 'string') {
+        return t.name.toLowerCase().includes('cost') || t.name.toLowerCase().includes('centro');
+      }
+      return false;
+    });
     
     console.log(`\n📌 Tabelas relacionadas a Centro de Custo:`);
     costCentersTables.forEach((t: unknown) => {
-      console.log(`   - ${t.name}`);
+      if (typeof t === 'object' && t !== null && 'name' in t) {
+        console.log(`   - ${t.name}`);
+      }
     });
 
-    const chartTables = tables.recordset.filter((t: unknown) => 
-      t.name.toLowerCase().includes('chart') || t.name.toLowerCase().includes('account')
-    );
+    const chartTables = tables.recordset.filter((t: unknown) => {
+      if (typeof t === 'object' && t !== null && 'name' in t && typeof t.name === 'string') {
+        return t.name.toLowerCase().includes('chart') || t.name.toLowerCase().includes('account');
+      }
+      return false;
+    });
     
     console.log(`\n📌 Tabelas relacionadas a Plano de Contas:`);
     chartTables.forEach((t: unknown) => {
-      console.log(`   - ${t.name}`);
+      if (typeof t === 'object' && t !== null && 'name' in t) {
+        console.log(`   - ${t.name}`);
+      }
     });
 
   } catch (error: unknown) {
-    console.error("❌ Erro:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro:", message);
   } finally {
     await pool.close();
   }

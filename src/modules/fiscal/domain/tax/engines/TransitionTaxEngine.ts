@@ -291,14 +291,6 @@ export class TransitionTaxEngine implements ITaxEngine {
     }
 
     // Calcular novos impostos
-    let newTaxes:
-      | {
-          ibs?: IBSCalculationResult;
-          cbs?: CBSCalculationResult;
-          totalNew: Money;
-        }
-      | undefined;
-
     let newTotal = zeroMoneyResult.value;
     const newTax: {
       ibs?: IBSCalculationResult;
@@ -329,7 +321,7 @@ export class TransitionTaxEngine implements ITaxEngine {
       }
     }
 
-    newTaxes = {
+    const newTaxes = {
       ...newTax,
       totalNew: newTotal,
     };

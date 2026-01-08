@@ -115,7 +115,8 @@ async function run() {
         pccInserted++;
         process.stdout.write(`\r   ✅ PCC: ${pccInserted}/${pccAccounts.length}`);
       } catch (e: unknown) {
-        console.log(`\n   ❌ ${acc.code}: ${e.message.substring(0, 80)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`\n   ❌ ${acc.code}: ${message.substring(0, 80)}`);
       }
     }
     
@@ -164,7 +165,8 @@ async function run() {
         ccInserted++;
         console.log(`   ✅ CC: ${cc.code} - ${cc.name}`);
       } catch (e: unknown) {
-        console.log(`   ❌ ${cc.code}: ${e.message.substring(0, 100)}`);
+        const message = e instanceof Error ? e.message : String(e);
+        console.log(`   ❌ ${cc.code}: ${message.substring(0, 100)}`);
       }
     }
     
@@ -188,7 +190,8 @@ async function run() {
     console.log();
 
   } catch (error: unknown) {
-    console.error("\n❌ ERRO:", error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("\n❌ ERRO:", message);
     throw error;
   } finally {
     await pool.close();
