@@ -11,6 +11,12 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
+interface BankAccount {
+  id: number;
+  name: string;
+  currentBalance: string | number;
+}
+
 interface PaymentModalProps {
   payableId: number;
   amount: number;
@@ -135,9 +141,9 @@ export function PaymentModal({ payableId, amount, description, open, onOpenChang
                 <SelectValue placeholder="Selecione a conta" />
               </SelectTrigger>
               <SelectContent>
-                {bankAccounts?.data?.map((account: unknown) => (
+                {bankAccounts?.data?.map((account: BankAccount) => (
                   <SelectItem key={account.id} value={account.id.toString()}>
-                    {account.name} - Saldo: R$ {parseFloat(account.currentBalance).toFixed(2)}
+                    {account.name} - Saldo: R$ {parseFloat(String(account.currentBalance)).toFixed(2)}
                   </SelectItem>
                 ))}
               </SelectContent>

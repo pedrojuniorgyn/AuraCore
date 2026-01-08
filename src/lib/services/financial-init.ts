@@ -111,7 +111,8 @@ export async function ensureFinancialData(organizationId: number, userId: string
       console.log(`✅ ${DEFAULT_BANK_ACCOUNTS.length} contas bancárias criadas`);
     }
   } catch (error: unknown) {
-    console.error("⚠️  Erro ao inicializar dados financeiros:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("⚠️  Erro ao inicializar dados financeiros:", errorMessage);
     // Não lança erro para não quebrar a API
   }
 }

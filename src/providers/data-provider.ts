@@ -240,10 +240,12 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
         data: response.data,
       };
     } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorResponse = (error as { response?: { data?: unknown; status?: number } }).response;
       console.error("❌ getOne error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
+        message: errorMessage,
+        response: errorResponse?.data,
+        status: errorResponse?.status,
       });
       throw error;
     }

@@ -8,9 +8,9 @@ function getGlobal(): {
   lastRunId?: string;
   lastRunAt?: number;
 } {
-  const g = globalThis as unknown;
-  if (!g[GLOBAL_KEY]) g[GLOBAL_KEY] = { running: false } as unknown;
-  return g[GLOBAL_KEY];
+  const g = globalThis as Record<string, unknown>;
+  if (!g[GLOBAL_KEY]) g[GLOBAL_KEY] = { running: false };
+  return g[GLOBAL_KEY] as { running: boolean; lastRunId?: string; lastRunAt?: number };
 }
 
 export function scheduleAutoSmokeRun(reason: string) {
