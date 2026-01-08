@@ -123,7 +123,8 @@ export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: unknown
   }
 
   // Filtra apenas filiais permitidas
-  return [inArray(branchIdColumn, ctx.allowedBranches)];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return [inArray(branchIdColumn as any, ctx.allowedBranches)];
 }
 
 

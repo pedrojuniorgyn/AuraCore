@@ -104,7 +104,7 @@ export async function downloadObjectToBuffer(args: { key: string }): Promise<Buf
   const out = await client.send(new GetObjectCommand({ Bucket: env.bucket, Key: args.key }));
 
   // SDK v3: Body é stream no Node.js
-  const body = out.Body as unknown;
+  const body = out.Body as AsyncIterable<Uint8Array> & { destroy?: (error?: unknown) => void } | Buffer | undefined;
   if (!body) return Buffer.from([]);
 
   if (Buffer.isBuffer(body)) return body;
@@ -118,7 +118,7 @@ export async function downloadObjectToBuffer(args: { key: string }): Promise<Buf
   } catch (e) {
     // best-effort: encerra o stream em caso de erro mid-flight
     try {
-      if (typeof body?.destroy === "function") body.destroy(e);
+      if (typeof body.destroy === "function") body.destroy(e);
     } catch {
       // ignore
     }

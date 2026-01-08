@@ -55,7 +55,8 @@ async function claimNextJob(): Promise<ClaimResult> {
       CONVERT(NVARCHAR(30), INSERTED.updated_at, 127) as updatedAt;
   `);
 
-  return (result.recordset?.[0] as unknown) ?? null;
+  const row = result.recordset?.[0];
+  return row ? (row as JobRow) : null;
 }
 
 function safeJson<T>(s: string | null): T | null {
@@ -71,7 +72,10 @@ async function runJob(job: JobRow): Promise<void> {
   const orgId = job.organizationId;
 
   if (job.jobType === DOCUMENT_JOB_TYPES.FINANCIAL_OFX_IMPORT) {
-    const payload = safeJson<{ bankAccountId: number; userId: string }>(job.payloadJson) ?? ({} as unknown);
+    const payload = safeJson<{ bankAccountId: number; userId: string }>(job.payloadJson);
+    if (!payload) {
+      throw new Error("Payload inválido para FINANCIAL_OFX_IMPORT");
+    }
     const bankAccountId = Number(payload.bankAccountId);
     const userId = String(payload.userId ?? "");
     if (!Number.isFinite(bankAccountId) || bankAccountId <= 0 || !userId) {
@@ -133,7 +137,7 @@ export async function runDocumentJobsTick(args?: { maxJobs?: number }): Promise<
       log("info", "documents.job.succeeded", { jobId: job.id, jobType: job.jobType, organizationId: job.organizationId });
     } catch (e: unknown) {
       failed++;
-      const err = e?.message ?? String(e);
+      const err = e instanceof Error ? e.message : String(e);
       log("error", "documents.job.failed", { jobId: job.id, jobType: job.jobType, organizationId: job.organizationId, error: e });
 
       // best-effort: marcar job/doc como FAILED

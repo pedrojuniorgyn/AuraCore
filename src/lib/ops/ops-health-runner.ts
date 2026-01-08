@@ -28,7 +28,8 @@ async function checkDbConnectivity(): Promise<CheckResult> {
     const r = await pool.request().query("SELECT 1 as ok");
     return { name: "db.connectivity", ok: r.recordset?.[0]?.ok === 1, durationMs: now() - t0 };
   } catch (e: unknown) {
-    return { name: "db.connectivity", ok: false, durationMs: now() - t0, error: e?.message ?? String(e) };
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    return { name: "db.connectivity", ok: false, durationMs: now() - t0, error: errorMsg };
   }
 }
 
@@ -41,7 +42,8 @@ async function checkIdempotencyTable(): Promise<CheckResult> {
     `);
     return { name: "idempotency.table", ok: r.recordset?.[0]?.ok === 1, durationMs: now() - t0 };
   } catch (e: unknown) {
-    return { name: "idempotency.table", ok: false, durationMs: now() - t0, error: e?.message ?? String(e) };
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    return { name: "idempotency.table", ok: false, durationMs: now() - t0, error: errorMsg };
   }
 }
 
@@ -52,7 +54,8 @@ async function getAnyOrganizationId(): Promise<number | null> {
     FROM dbo.organizations
     ORDER BY id ASC
   `);
-  const id = Number((r.recordset?.[0] as unknown)?.id);
+  const row = r.recordset?.[0] as Record<string, unknown> | undefined;
+  const id = row?.id ? Number(row.id) : NaN;
   return Number.isFinite(id) && id > 0 ? id : null;
 }
 
@@ -85,7 +88,8 @@ async function checkIdempotencyBehavior(runId: string): Promise<CheckResult> {
       ...(ok ? {} : { error: `Esperado 'hit' na segunda aquisição, veio '${a2.outcome}'` }),
     };
   } catch (e: unknown) {
-    return { name: "idempotency.behavior", ok: false, durationMs: now() - t0, error: e?.message ?? String(e) };
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    return { name: "idempotency.behavior", ok: false, durationMs: now() - t0, error: errorMsg };
   }
 }
 

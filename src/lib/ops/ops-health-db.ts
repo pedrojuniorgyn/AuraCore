@@ -115,7 +115,8 @@ export async function getLatestOpsHealthRun(): Promise<OpsHealthRunRow | null> {
     FROM dbo.ops_health_runs
     ORDER BY started_at DESC, id DESC;
   `);
-  return (result.recordset?.[0] as unknown) ?? null;
+  const row = result.recordset?.[0];
+  return row ? (row as OpsHealthRunRow) : null;
 }
 
 export async function listOpsHealthRuns(limit = 50): Promise<OpsHealthRunRow[]> {
@@ -138,6 +139,6 @@ export async function listOpsHealthRuns(limit = 50): Promise<OpsHealthRunRow[]> 
       FROM dbo.ops_health_runs
       ORDER BY started_at DESC, id DESC;
     `);
-  return (result.recordset as unknown) ?? [];
+  return (result.recordset as OpsHealthRunRow[]) ?? [];
 }
 

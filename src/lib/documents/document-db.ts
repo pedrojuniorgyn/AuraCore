@@ -277,7 +277,8 @@ export async function getDocument(args: { organizationId: number; documentId: nu
         AND id = @docId
         AND deleted_at IS NULL;
     `);
-  return (result.recordset?.[0] as unknown) ?? null;
+  const row = result.recordset?.[0];
+  return row ? (row as DocumentRow) : null;
 }
 
 export async function updateJobAsRunning(args: { organizationId: number; jobId: number }): Promise<void> {
@@ -350,7 +351,8 @@ export async function getJob(args: { organizationId: number; jobId: number }): P
       WHERE organization_id = @orgId
         AND id = @jobId;
     `);
-  return (result.recordset?.[0] as unknown) ?? null;
+  const row = result.recordset?.[0];
+  return row ? (row as JobRow) : null;
 }
 
 export async function listJobs(args: { organizationId: number; limit?: number }): Promise<JobRow[]> {
@@ -381,7 +383,7 @@ export async function listJobs(args: { organizationId: number; limit?: number })
       WHERE organization_id = @orgId
       ORDER BY created_at DESC, id DESC;
     `);
-  return (result.recordset as unknown) ?? [];
+  return (result.recordset as JobRow[]) ?? [];
 }
 
 export async function requeueFailedJob(args: {
@@ -410,7 +412,8 @@ export async function requeueFailedJob(args: {
         AND attempts < max_attempts;
     `);
 
-  const docId = Number((result.recordset?.[0] as unknown)?.documentId);
+  const row = result.recordset?.[0] as Record<string, unknown> | undefined;
+  const docId = row?.documentId ? Number(row.documentId) : NaN;
   if (!Number.isFinite(docId) || docId <= 0) {
     return { ok: false, documentId: null };
   }

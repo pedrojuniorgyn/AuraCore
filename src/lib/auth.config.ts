@@ -46,7 +46,6 @@ export const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        // @ts-expect-error - Extending JWT token with custom role property
         token.role = user.role;
       }
       return token;

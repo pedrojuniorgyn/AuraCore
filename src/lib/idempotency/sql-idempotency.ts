@@ -90,7 +90,8 @@ export async function acquireIdempotency(args: AcquireArgs): Promise<Idempotency
     await tx.commit();
 
     const status = result.recordset?.[0]?.status;
-    const resultRef = (result.recordset?.[0] as unknown)?.resultRef ?? null;
+    const row = result.recordset?.[0] as Record<string, unknown> | undefined;
+    const resultRef = row?.resultRef ? String(row.resultRef) : null;
     if (status === "EXECUTE") {
       log("info", "idempotency.miss", { organizationId: args.organizationId, scope: args.scope });
       return { outcome: "execute" };
@@ -101,13 +102,13 @@ export async function acquireIdempotency(args: AcquireArgs): Promise<Idempotency
     }
     log("info", "idempotency.in_progress", { organizationId: args.organizationId, scope: args.scope });
     return { outcome: "in_progress", status: "IN_PROGRESS" };
-  } catch (error) {
+  } catch (error: unknown) {
     try {
       await tx.rollback();
     } catch {
       // ignore
     }
-    const msg = (error as unknown)?.message ? String((error as unknown).message) : String(error);
+    const msg = error instanceof Error ? error.message : String(error);
     // Safety: se a migration ainda não foi aplicada, não derruba a operação.
     if (msg.includes("Invalid object name") && msg.includes("idempotency_keys")) {
       log("warn", "idempotency.missing_table", { organizationId: args.organizationId, scope: args.scope });
@@ -148,7 +149,7 @@ export async function finalizeIdempotency(args: FinalizeArgs): Promise<void> {
           AND idem_key = @key;
       `);
   } catch (error: unknown) {
-    const msg = error?.message ? String(error.message) : String(error);
+    const msg = error instanceof Error ? error.message : String(error);
     if (msg.includes("Invalid object name") && msg.includes("idempotency_keys")) {
       log("warn", "idempotency.missing_table_finalize", { organizationId: args.organizationId, scope: args.scope });
       return;
