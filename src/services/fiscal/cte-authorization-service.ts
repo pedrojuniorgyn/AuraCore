@@ -115,14 +115,14 @@ export class CTeAuthorizationService {
         .update(cteHeader)
         .set({
           status: "REJECTED",
-          rejectionMessage: error.message,
+          rejectionMessage: (error instanceof Error ? error.message : String(error)),
           updatedAt: new Date(),
         })
         .where(eq(cteHeader.id, cteId));
 
       return {
         success: false,
-        motivo: `Erro interno: ${error.message}`,
+        motivo: `Erro interno: ${(error instanceof Error ? error.message : String(error))}`,
         cteId,
       };
     }
@@ -146,7 +146,7 @@ export class CTeAuthorizationService {
       console.error("❌ Erro ao consultar CTe:", error);
       return {
         success: false,
-        motivo: `Erro interno: ${error.message}`,
+        motivo: `Erro interno: ${(error instanceof Error ? error.message : String(error))}`,
       };
     }
   }
@@ -218,7 +218,7 @@ export class CTeAuthorizationService {
       console.error("❌ Erro ao cancelar CTe:", error);
       return {
         success: false,
-        motivo: `Erro interno: ${error.message}`,
+        motivo: `Erro interno: ${(error instanceof Error ? error.message : String(error))}`,
       };
     }
   }

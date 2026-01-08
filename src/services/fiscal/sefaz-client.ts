@@ -113,7 +113,7 @@ export async function sendCteToSefaz(
     return {
       success: false,
       rejectionCode: "999",
-      rejectionMessage: error.message,
+      rejectionMessage: (error instanceof Error ? error.message : String(error)),
     };
   }
 }
@@ -173,7 +173,7 @@ export async function sendMdfeToSefaz(
     return {
       success: false,
       rejectionCode: "999",
-      rejectionMessage: error.message,
+      rejectionMessage: (error instanceof Error ? error.message : String(error)),
     };
   }
 }
@@ -208,7 +208,7 @@ export async function checkSefazStatus(
   } catch (error: unknown) {
     return {
       online: false,
-      message: error.message,
+      message: (error instanceof Error ? error.message : String(error)),
     };
   }
 }
@@ -217,8 +217,12 @@ export async function checkSefazStatus(
  * Configura ambiente padrão (via .env)
  */
 export function getDefaultSefazConfig(): SefazConfig {
+  const env = process.env.SEFAZ_ENVIRONMENT;
+  const environment: "production" | "homologation" = 
+    env === "production" ? "production" : "homologation";
+  
   return {
-    environment: (process.env.SEFAZ_ENVIRONMENT as unknown) || "homologation",
+    environment,
     uf: process.env.SEFAZ_UF || "SP",
   };
 }

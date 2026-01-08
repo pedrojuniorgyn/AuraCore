@@ -36,7 +36,7 @@ export async function loadCertificate(config: CertificateConfig): Promise<{
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao carregar certificado:", error);
-    throw new Error(`Falha ao carregar certificado: ${error.message}`);
+    throw new Error(`Falha ao carregar certificado: ${(error instanceof Error ? error.message : String(error))}`);
   }
 }
 
@@ -73,7 +73,7 @@ export async function signXml(
     return xml;
   } catch (error: unknown) {
     console.error("❌ Erro ao assinar XML:", error);
-    throw new Error(`Falha na assinatura: ${error.message}`);
+    throw new Error(`Falha na assinatura: ${(error instanceof Error ? error.message : String(error))}`);
   }
 }
 
@@ -105,7 +105,7 @@ export async function validateCertificate(
   } catch (error: unknown) {
     return {
       valid: false,
-      message: error.message,
+      message: (error instanceof Error ? error.message : String(error)),
     };
   }
 }

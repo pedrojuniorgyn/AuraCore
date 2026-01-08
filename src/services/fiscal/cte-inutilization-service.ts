@@ -98,7 +98,7 @@ export class CTeInutilizationService {
       console.error("❌ Erro ao inutilizar:", error);
       return {
         success: false,
-        message: `Erro: ${error.message}`,
+        message: `Erro: ${(error instanceof Error ? error.message : String(error))}`,
       };
     }
   }

@@ -94,7 +94,7 @@ export class XmlSigner {
       return signedXml;
     } catch (error: unknown) {
       console.error("❌ Erro ao assinar XML:", error);
-      throw new Error(`Falha na assinatura digital: ${error.message}`);
+      throw new Error(`Falha na assinatura digital: ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
 

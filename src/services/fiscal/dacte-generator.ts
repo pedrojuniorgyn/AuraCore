@@ -60,8 +60,9 @@ export async function generateDACTE(cteId: number): Promise<Buffer> {
   // Documentos
   if (docs.length > 0) {
     doc.fontSize(12).text("DOCUMENTOS DE CARGA:", { underline: true });
-    docs.forEach((d: { documentKey: string }) => {
-      doc.fontSize(9).text(`• NFe: ${d.documentKey}`);
+    docs.forEach((d) => {
+      const docKey = (d as { documentKey?: string }).documentKey || "";
+      doc.fontSize(9).text(`• NFe: ${docKey}`);
     });
   }
 

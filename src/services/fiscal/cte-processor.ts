@@ -150,7 +150,7 @@ export async function importExternalCTe(
       { id: cteHeader.id }
     );
 
-    const cteId = Number(createdId?.id);
+    const cteId = Number((createdId as { id?: number } | undefined)?.id);
     if (!Number.isFinite(cteId) || cteId <= 0) {
       throw new Error(
         "Falha ao importar CTe externo: ID não retornado pelo banco"
@@ -221,7 +221,7 @@ export async function importExternalCTe(
     return cteId;
     
   } catch (error: unknown) {
-    console.error(`❌ Erro ao importar CTe externo:`, error.message);
+    console.error(`❌ Erro ao importar CTe externo:`, (error instanceof Error ? error.message : String(error)));
     throw error;
   }
 }
