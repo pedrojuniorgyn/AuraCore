@@ -117,9 +117,11 @@ export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: unknown
     return [];
   }
 
-  // Se não tem filiais, retorna filtro impossível
+  // Se não tem filiais permitidas, retorna array vazio
+  // IMPORTANTE: Query deve filtrar por organizationId separadamente
+  // Este filtro é ADICIONAL para restringir branches
   if (!ctx.allowedBranches || ctx.allowedBranches.length === 0) {
-    return []; // Query vai retornar vazio naturalmente
+    return [];
   }
 
   // Filtra apenas filiais permitidas

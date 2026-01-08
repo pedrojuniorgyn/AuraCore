@@ -395,7 +395,10 @@ function extractPaymentInfo(infNFe: Record<string, unknown>): ParsedNFe['payment
     
     // Se não há duplicatas mas há pagamento, cria 1 parcela (à vista)
     if (installments.length === 0 && firstPag.vPag && typedInfNFe.ide) {
-      const issueDate = new Date(typedInfNFe.ide.dhEmi || typedInfNFe.ide.dEmi || "");
+      // Usa parseNFeDate para garantir data válida
+      const issueDateStr = typedInfNFe.ide.dhEmi || typedInfNFe.ide.dEmi;
+      const issueDate = issueDateStr ? parseNFeDate(issueDateStr) : new Date();
+      
       installments.push({
         number: "001",
         dueDate: issueDate, // Vence no mesmo dia (à vista)

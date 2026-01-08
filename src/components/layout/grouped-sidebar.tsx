@@ -258,15 +258,22 @@ export function GroupedSidebar() {
       group.items.some(item => pathname.startsWith(item.href) && item.href !== "/")
     );
     
-    if (currentGroup && !expandedGroups.includes(currentGroup.title)) {
-      // Usar setTimeout para evitar setState síncrono
-      const timeoutId = setTimeout(() => {
-        setExpandedGroups(prev => [...prev, currentGroup.title]);
-      }, 0);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [pathname]); // ✅ Removido expandedGroups do deps para evitar loop infinito
+    if (!currentGroup) return;
+    
+    // Usar setTimeout para evitar setState síncrono em effect (cascading renders)
+    const timeoutId = setTimeout(() => {
+      setExpandedGroups(prev => {
+        // Se já está expandido, não faz nada
+        if (prev.includes(currentGroup.title)) {
+          return prev;
+        }
+        // Adiciona o grupo atual
+        return [...prev, currentGroup.title];
+      });
+    }, 0);
+    
+    return () => clearTimeout(timeoutId);
+  }, [pathname]); // pathname é suficiente
 
   // Adicionar página aos recentes (debounced)
   useEffect(() => {
