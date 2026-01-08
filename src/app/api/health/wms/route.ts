@@ -109,7 +109,7 @@ export async function GET() {
         WHERE deleted_at IS NULL
       `);
       metrics.totalLocations = Number(
-        (locationsResult.recordset?.[0] as unknown)?.count ?? 0
+        (locationsResult.recordset?.[0] as Record<string, unknown>)?.count ?? 0
       );
 
       // Contar stock items
@@ -119,7 +119,7 @@ export async function GET() {
         WHERE deleted_at IS NULL
       `);
       metrics.totalStockItems = Number(
-        (stockResult.recordset?.[0] as unknown)?.count ?? 0
+        (stockResult.recordset?.[0] as Record<string, unknown>)?.count ?? 0
       );
 
       // Contar movements (últimas 24h)
@@ -129,7 +129,7 @@ export async function GET() {
         WHERE created_at >= DATEADD(hour, -24, GETDATE())
       `);
       metrics.totalMovements = Number(
-        (movementsResult.recordset?.[0] as unknown)?.count ?? 0
+        (movementsResult.recordset?.[0] as Record<string, unknown>)?.count ?? 0
       );
 
       // Contar inventory counts pendentes
@@ -139,7 +139,7 @@ export async function GET() {
         WHERE status = 'PENDING'
       `);
       metrics.pendingInventoryCounts = Number(
-        (inventoryResult.recordset?.[0] as unknown)?.count ?? 0
+        (inventoryResult.recordset?.[0] as Record<string, unknown>)?.count ?? 0
       );
     } catch (e) {
       console.error('WMS health check: metrics error', e);

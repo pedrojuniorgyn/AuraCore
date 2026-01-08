@@ -73,14 +73,14 @@ export async function GET(
       accountName?: string;
     }
 
-    const itemRows = getDbRows<ItemRow>(itemsResult);
+    const itemRows = getDbRows<ItemRow>(itemsResult as unknown as { recordset?: ItemRow[] });
     const items = itemRows.map((item) => ({
       id: item.id,
       ncmCode: item.ncmCode || "N/A",
       productDescription: item.productDescription,
-      quantity: parseFloat(item.quantity) || 0,
-      unitValue: parseFloat(item.unitValue) || 0,
-      totalValue: parseFloat(item.totalValue) || 0,
+      quantity: parseFloat(String(item.quantity)) || 0,
+      unitValue: parseFloat(String(item.unitValue)) || 0,
+      totalValue: parseFloat(String(item.totalValue)) || 0,
       categoryName: item.categoryName || "Não categorizado",
       accountCode: item.accountCode || "N/A",
       accountName: item.accountName || "Não definido",

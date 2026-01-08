@@ -63,17 +63,21 @@ export async function POST(request: Request) {
 
     // Drizzle MSSQL: $returningId existe em runtime, mas pode não estar tipado.
     // Além disso, nunca devolvemos success=true com data undefined.
-    const [createdId] = await (db
+     
+    const result = await (db
       .insert(crmLeads)
+       
       .values({
         ...safeBody,
         organizationId: ctx.organizationId,
-        stage: (safeBody as unknown)?.stage || "PROSPECTING",
+        stage: String(safeBody.stage || "PROSPECTING"),
         ownerId: ctx.userId,
         createdBy: ctx.userId,
-      } as unknown) as unknown).$returningId();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any) as any).$returningId();
 
-    const leadId = (createdId as unknown)?.id;
+    const createdId = result[0] as Record<string, unknown> | undefined;
+    const leadId = createdId?.id;
     if (!leadId) {
       return NextResponse.json(
         { error: "Falha ao criar lead (id não retornado)" },
