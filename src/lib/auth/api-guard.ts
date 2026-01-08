@@ -6,6 +6,18 @@ import { getOrCreateRequestId } from "@/lib/observability/request-id";
 import { pushRequestLog } from "@/lib/observability/request-buffer";
 
 /**
+ * Interface para o usuário da sessão com propriedades customizadas
+ */
+interface SessionUser {
+  id: string;
+  role?: string;
+  organizationId?: number;
+  branchId?: number | null;
+  defaultBranchId?: number | null;
+  allowedBranches?: number[];
+}
+
+/**
  * Contexto de execução da API com informações do usuário autenticado
  */
 export interface ApiContext {
@@ -102,8 +114,8 @@ export async function withPermission<T>(
         status: 403,
         durationMs,
         userId: session.user.id,
-        organizationId: (session.user as { organizationId?: number }).organizationId,
-        branchId: ((session.user as { branchId?: number | null; defaultBranchId?: number | null }).branchId ?? (session.user as { defaultBranchId?: number | null }).defaultBranchId ?? null) as number | null | undefined,
+        organizationId: (session.user as SessionUser).organizationId,
+        branchId: ((session.user as SessionUser).branchId ?? (session.user as SessionUser).defaultBranchId ?? null),
         permission: permissionCode,
       });
       log("warn", "api.forbidden", {
@@ -112,7 +124,7 @@ export async function withPermission<T>(
         path,
         status: 403,
         userId: session.user.id,
-        organizationId: (session.user as unknown).organizationId,
+        organizationId: (session.user as SessionUser).organizationId,
         permission: permissionCode,
       });
       return res;
@@ -122,12 +134,12 @@ export async function withPermission<T>(
     // Padronização: expor `userId` diretamente (evita usos incorretos acessando o id via `ctx.user`).
     // Importante: várias rotas (ex.: Auditoria) dependem de `isAdmin` e `allowedBranches`
     // para aplicar Data Scoping. Esses campos já estão presentes na sessão (callbacks do NextAuth).
-    const role = (session.user as unknown)?.role ?? "USER";
-    const allowedBranches = Array.isArray((session.user as unknown)?.allowedBranches)
-      ? ((session.user as unknown).allowedBranches as number[])
+    const role = (session.user as SessionUser)?.role ?? "USER";
+    const allowedBranches = Array.isArray((session.user as SessionUser)?.allowedBranches)
+      ? ((session.user as SessionUser).allowedBranches as number[])
       : [];
     const defaultBranchId =
-      (session.user as unknown)?.defaultBranchId !== undefined ? (session.user as unknown).defaultBranchId : null;
+      (session.user as SessionUser)?.defaultBranchId !== undefined ? (session.user as SessionUser).defaultBranchId : null;
     const isAdmin = role === "ADMIN";
 
     const ctx = {
@@ -139,10 +151,10 @@ export async function withPermission<T>(
       allowedBranches,
       // Compatibilidade: alguns handlers antigos usam branchId; preferir defaultBranchId quando existir.
       branchId:
-        (session.user as unknown).branchId ??
+        (session.user as SessionUser).branchId ??
         defaultBranchId ??
         null,
-      organizationId: (session.user as unknown).organizationId,
+      organizationId: (session.user as SessionUser).organizationId,
     };
 
     const res = await handler(session.user, ctx);
@@ -153,7 +165,7 @@ export async function withPermission<T>(
       requestId,
       method,
       path,
-      status: (res as unknown)?.status ?? 200,
+      status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
       organizationId: (session.user as unknown).organizationId,
@@ -164,7 +176,7 @@ export async function withPermission<T>(
       requestId,
       method,
       path,
-      status: (res as unknown)?.status ?? 200,
+      status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
       organizationId: (session.user as unknown).organizationId,
@@ -176,11 +188,11 @@ export async function withPermission<T>(
         requestId,
         method,
         path,
-        status: (res as unknown)?.status ?? 200,
+        status: (res as { status?: number }).status ?? 200,
         durationMs,
         slowMs,
         userId: session.user.id,
-        organizationId: (session.user as unknown).organizationId,
+        organizationId: (session.user as SessionUser).organizationId,
         branchId: ctx.branchId,
         permission: permissionCode,
       });
@@ -199,7 +211,7 @@ export async function withPermission<T>(
     });
     log("error", "api.error", { requestId, method, path, status: 500, durationMs, permission: permissionCode, error });
     return NextResponse.json(
-      { error: "Internal Server Error", message: error?.message ?? "Erro interno" },
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : "Erro interno" },
       { status: 500, headers: buildTelemetryHeaders(requestId, durationMs) }
     );
   }
@@ -236,12 +248,12 @@ export async function withAuth<T>(
       return res;
     }
 
-    const role = (session.user as unknown)?.role ?? "USER";
-    const allowedBranches = Array.isArray((session.user as unknown)?.allowedBranches)
-      ? ((session.user as unknown).allowedBranches as number[])
+    const role = (session.user as SessionUser)?.role ?? "USER";
+    const allowedBranches = Array.isArray((session.user as SessionUser)?.allowedBranches)
+      ? ((session.user as SessionUser).allowedBranches as number[])
       : [];
     const defaultBranchId =
-      (session.user as unknown)?.defaultBranchId !== undefined ? (session.user as unknown).defaultBranchId : null;
+      (session.user as SessionUser)?.defaultBranchId !== undefined ? (session.user as SessionUser).defaultBranchId : null;
     const isAdmin = role === "ADMIN";
 
     const ctx = {
@@ -252,10 +264,10 @@ export async function withAuth<T>(
       defaultBranchId,
       allowedBranches,
       branchId:
-        (session.user as unknown).branchId ??
+        (session.user as SessionUser).branchId ??
         defaultBranchId ??
         null,
-      organizationId: (session.user as unknown).organizationId,
+      organizationId: (session.user as SessionUser).organizationId,
     };
 
     const res = await handler(session.user, ctx);
@@ -266,7 +278,7 @@ export async function withAuth<T>(
       requestId,
       method,
       path,
-      status: (res as unknown)?.status ?? 200,
+      status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
       organizationId: (session.user as unknown).organizationId,
@@ -276,7 +288,7 @@ export async function withAuth<T>(
       requestId,
       method,
       path,
-      status: (res as unknown)?.status ?? 200,
+      status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
       organizationId: (session.user as unknown).organizationId,
@@ -287,11 +299,11 @@ export async function withAuth<T>(
         requestId,
         method,
         path,
-        status: (res as unknown)?.status ?? 200,
+        status: (res as { status?: number }).status ?? 200,
         durationMs,
         slowMs,
         userId: session.user.id,
-        organizationId: (session.user as unknown).organizationId,
+        organizationId: (session.user as SessionUser).organizationId,
         branchId: ctx.branchId,
       });
     }
@@ -308,7 +320,7 @@ export async function withAuth<T>(
     });
     log("error", "api.error", { requestId, method, path, status: 500, durationMs, error });
     return NextResponse.json(
-      { error: "Internal Server Error", message: error?.message ?? "Erro interno" },
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : "Erro interno" },
       { status: 500, headers: buildTelemetryHeaders(requestId, durationMs) }
     );
   }
