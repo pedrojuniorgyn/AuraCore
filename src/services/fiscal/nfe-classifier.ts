@@ -59,6 +59,29 @@ export interface CargoMetadata {
 }
 
 /**
+ * Interfaces para estruturas do XML NFe
+ */
+interface NFeParticipant {
+  CNPJ?: unknown;
+  CPF?: unknown;
+  xNome?: unknown;
+}
+
+interface NFeXmlStructure {
+  dest?: NFeParticipant;
+  emit?: NFeParticipant;
+  transp?: {
+    transporta?: NFeParticipant;
+    vol?: unknown;
+  };
+  enderEmit?: Record<string, unknown>;
+  enderDest?: Record<string, unknown>;
+  total?: {
+    ICMSTot?: Record<string, unknown>;
+  };
+}
+
+/**
  * Classifica uma NFe baseado em quem é o destinatário e quem é o transportador
  */
 export function classifyNFe(nfeXml: Record<string, unknown>, branchCnpj: string): NFeType {
@@ -66,10 +89,13 @@ export function classifyNFe(nfeXml: Record<string, unknown>, branchCnpj: string)
     // Normalizar CNPJ da filial (remover formatação)
     const cleanBranchCnpj = branchCnpj.replace(/[^\d]/g, "");
     
+    // Type cast para estrutura tipada
+    const typedNfe = nfeXml as NFeXmlStructure;
+    
     // Extrair CNPJs do XML
-    const destCnpj = nfeXml.dest?.CNPJ || nfeXml.dest?.CPF || "";
-    const emitCnpj = nfeXml.emit?.CNPJ || nfeXml.emit?.CPF || "";
-    const transpCnpj = nfeXml.transp?.transporta?.CNPJ || "";
+    const destCnpj = typedNfe.dest?.CNPJ || typedNfe.dest?.CPF || "";
+    const emitCnpj = typedNfe.emit?.CNPJ || typedNfe.emit?.CPF || "";
+    const transpCnpj = typedNfe.transp?.transporta?.CNPJ || "";
     
     // Normalizar CNPJs (remover formatação)
     const cleanDestCnpj = destCnpj.toString().replace(/[^\d]/g, "");
@@ -116,74 +142,77 @@ export function classifyNFe(nfeXml: Record<string, unknown>, branchCnpj: string)
  */
 export function extractCargoInfo(nfeXml: Record<string, unknown>): CargoMetadata | null {
   try {
+    // Type cast para estrutura tipada
+    const typedNfe = nfeXml as NFeXmlStructure;
+    
     // Emitente (cliente que enviou a mercadoria)
-    const emitente = nfeXml.emit || {};
-    const enderEmit = emitente.enderEmit || {};
+    const emitente = typedNfe.emit || {};
+    const enderEmit = (typedNfe.enderEmit || {}) as Record<string, unknown>;
     
     // Destinatário (quem vai receber a mercadoria)
-    const destinatario = nfeXml.dest || {};
-    const enderDest = destinatario.enderDest || {};
+    const destinatario = typedNfe.dest || {};
+    const enderDest = (typedNfe.enderDest || {}) as Record<string, unknown>;
     
     // Transportador (nós)
-    const transportador = nfeXml.transp?.transporta || {};
+    const transportador = typedNfe.transp?.transporta || {};
     
     // Totais
-    const total = nfeXml.total?.ICMSTot || {};
+    const total = (typedNfe.total?.ICMSTot || {}) as Record<string, unknown>;
     
     // Volumes
-    const vol = nfeXml.transp?.vol || {};
-    const pesoLiquido = parseFloat(vol.pesoL || "0");
-    const pesoBruto = parseFloat(vol.pesoB || "0");
+    const vol = (typedNfe.transp?.vol || {}) as Record<string, unknown>;
+    const pesoLiquido = parseFloat(String(vol.pesoL || "0"));
+    const pesoBruto = parseFloat(String(vol.pesoB || "0"));
     
     // Volume (m³) - se informado
     const volumes = Array.isArray(vol) ? vol : [vol];
     let volumeTotal = 0;
     volumes.forEach((v: Record<string, unknown>) => {
-      const qVol = parseInt(v.qVol || "0");
+      const qVol = parseInt(String(v.qVol || "0"));
       // Assumir volume padrão se não informado (estimativa)
       volumeTotal += qVol * 0.5; // 0.5m³ por volume (estimativa)
     });
     
     const metadata: CargoMetadata = {
       issuer: {
-        cnpj: (emitente.CNPJ || emitente.CPF || "").toString(),
-        name: emitente.xNome || "",
+        cnpj: String(emitente.CNPJ || emitente.CPF || ""),
+        name: String(emitente.xNome || ""),
         address: {
-          street: enderEmit.xLgr || "",
-          number: enderEmit.nro || "",
-          city: enderEmit.xMun || "",
-          uf: enderEmit.UF || "",
+          street: String(enderEmit.xLgr || ""),
+          number: String(enderEmit.nro || ""),
+          city: String(enderEmit.xMun || ""),
+          uf: String(enderEmit.UF || ""),
         },
       },
       
       recipient: {
-        cnpj: (destinatario.CNPJ || destinatario.CPF || "").toString(),
-        name: destinatario.xNome || "",
+        cnpj: String(destinatario.CNPJ || destinatario.CPF || ""),
+        name: String(destinatario.xNome || ""),
         address: {
-          street: enderDest.xLgr || "",
-          number: enderDest.nro || "",
-          city: enderDest.xMun || "",
-          uf: enderDest.UF || "",
+          street: String(enderDest.xLgr || ""),
+          number: String(enderDest.nro || ""),
+          city: String(enderDest.xMun || ""),
+          uf: String(enderDest.UF || ""),
         },
       },
       
       carrier: {
-        cnpj: (transportador.CNPJ || "").toString(),
-        name: transportador.xNome || "",
+        cnpj: String(transportador.CNPJ || ""),
+        name: String(transportador.xNome || ""),
       },
       
-      value: parseFloat(total.vNF || "0"),
+      value: parseFloat(String(total.vNF || "0")),
       weight: pesoBruto || pesoLiquido || 0,
       volume: volumeTotal,
       
       origin: {
-        city: enderEmit.xMun || "",
-        uf: enderEmit.UF || "",
+        city: String(enderEmit.xMun || ""),
+        uf: String(enderEmit.UF || ""),
       },
       
       destination: {
-        city: enderDest.xMun || "",
-        uf: enderDest.UF || "",
+        city: String(enderDest.xMun || ""),
+        uf: String(enderDest.UF || ""),
       },
     };
     
