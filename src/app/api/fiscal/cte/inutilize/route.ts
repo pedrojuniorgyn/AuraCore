@@ -36,10 +36,18 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Validação de multi-tenancy
+      if (!ctx.branchId) {
+        return NextResponse.json(
+          { error: "branchId é obrigatório para inutilização de CTe" },
+          { status: 400 }
+        );
+      }
+
       // Inutilizar
       const resultado = await cteInutilizationService.inutilizar({
         organizationId: ctx.organizationId,
-        branchId: ctx.branchId ?? 0,
+        branchId: ctx.branchId,
         serie,
         numberFrom,
         numberTo,

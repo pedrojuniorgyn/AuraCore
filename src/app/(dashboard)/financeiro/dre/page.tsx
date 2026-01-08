@@ -434,7 +434,7 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-semibold ${
-                                item.netIncome ?? 0 >= 0
+                                (item.netIncome ?? 0) >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
