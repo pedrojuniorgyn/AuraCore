@@ -102,8 +102,8 @@ export async function withPermission<T>(
         status: 403,
         durationMs,
         userId: session.user.id,
-        organizationId: (session.user as unknown).organizationId,
-        branchId: ((session.user as unknown).branchId ?? (session.user as unknown).defaultBranchId ?? null) as unknown,
+        organizationId: (session.user as { organizationId?: number }).organizationId,
+        branchId: ((session.user as { branchId?: number | null; defaultBranchId?: number | null }).branchId ?? (session.user as { defaultBranchId?: number | null }).defaultBranchId ?? null) as number | null | undefined,
         permission: permissionCode,
       });
       log("warn", "api.forbidden", {

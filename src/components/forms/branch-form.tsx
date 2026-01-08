@@ -93,7 +93,7 @@ export function BranchForm({ initialData, branchId, version }: BranchFormProps) 
       document: initialData?.document || "",
       email: initialData?.email || "",
       phone: initialData?.phone || "",
-      legacyCompanyBranchCode: (initialData as unknown)?.legacyCompanyBranchCode ?? undefined,
+      legacyCompanyBranchCode: initialData?.legacyCompanyBranchCode ?? undefined,
       ie: initialData?.ie || "",
       im: initialData?.im || "",
       crt: initialData?.crt || "1",

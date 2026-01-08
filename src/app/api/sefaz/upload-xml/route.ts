@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
 
         results.fileResults.push({
           fileName,
-          type: isNFe ? "NFe" : "CTe",
+          type: isNFe ? "NFE" : "CTE",
           success: processResult.imported > 0 || processResult.duplicates > 0,
           imported: processResult.imported,
           duplicates: processResult.duplicates,

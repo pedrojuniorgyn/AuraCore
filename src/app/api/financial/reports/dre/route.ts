@@ -102,9 +102,9 @@ export async function GET(request: NextRequest) {
         const key = exp.chartAccountCode || "SEM_CONTA";
         if (!expensesByAccount[key]) {
           expensesByAccount[key] = {
-            code: exp.chartAccountCode,
+            code: exp.chartAccountCode || "SEM_CONTA",
             name: exp.chartAccountName || "Sem Conta",
-            category: exp.chartAccountCategory,
+            category: exp.chartAccountCategory || "OUTRAS",
             total: 0,
           };
         }
@@ -136,8 +136,8 @@ export async function GET(request: NextRequest) {
           if (!byPlate[key]) {
             byPlate[key] = {
               vehicleId: rev.linkedVehicleId,
-              costCenterCode: rev.costCenterCode,
-              costCenterName: rev.costCenterName,
+              costCenterCode: rev.costCenterCode || "",
+              costCenterName: rev.costCenterName || "",
               revenue: 0,
               expense: 0,
             };
@@ -153,8 +153,8 @@ export async function GET(request: NextRequest) {
           if (!byPlate[key]) {
             byPlate[key] = {
               vehicleId: exp.linkedVehicleId,
-              costCenterCode: exp.costCenterCode,
-              costCenterName: exp.costCenterName,
+              costCenterCode: exp.costCenterCode || "",
+              costCenterName: exp.costCenterName || "",
               revenue: 0,
               expense: 0,
             };

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       // Inutilizar
       const resultado = await cteInutilizationService.inutilizar({
         organizationId: ctx.organizationId,
-        branchId: ctx.branchId,
+        branchId: ctx.branchId ?? 0,
         serie,
         numberFrom,
         numberTo,

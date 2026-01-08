@@ -8,7 +8,7 @@
 
 import React, { useState, useRef, useMemo, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry, AllCommunityModule, ColDef } from "ag-grid-community";
+import { ModuleRegistry, AllCommunityModule, ColDef, CreateRangeChartParams } from "ag-grid-community";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart3, PieChart, TrendingUp } from "lucide-react";
@@ -126,7 +126,7 @@ export const FinancialCharts: React.FC = () => {
     });
 
     // Cria novo gráfico
-    const chartRangeParams: unknown = {
+    const chartRangeParams: CreateRangeChartParams = {
       cellRange: {
         columns: type === "pie" 
           ? ["category", "total"] 
