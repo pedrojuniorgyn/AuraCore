@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    const branchIdCandidate = (body as unknown)?.branchId ?? ctx.defaultBranchId;
+    const bodyData = body as Record<string, unknown>;
+    const branchIdCandidate = bodyData.branchId ?? ctx.defaultBranchId;
     if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
         { error: "branchId é obrigatório", code: "BRANCH_REQUIRED" },
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
         .insert(vehicleDocuments)
         .values(vehicleDocData);
 
-      const createdId = await insertReturning(insertQuery, { id: vehicleDocuments.id });
+      const createdId = await insertReturning(insertQuery, { id: vehicleDocuments.id }) as Array<Record<string, unknown>>;
       const docId = createdId[0]?.id;
 
       const doc = docId
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
         .insert(driverDocuments)
         .values(driverDocData);
 
-      const createdId = await insertReturning(insertQuery, { id: driverDocuments.id });
+      const createdId = await insertReturning(insertQuery, { id: driverDocuments.id }) as Array<Record<string, unknown>>;
       const docId = createdId[0]?.id;
 
       const doc = docId

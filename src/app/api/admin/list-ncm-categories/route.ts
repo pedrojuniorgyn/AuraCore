@@ -30,11 +30,18 @@ export async function GET(request: NextRequest) {
       ORDER BY ncm.ncm_code ASC
     `);
 
-    const ncms = result.recordset;
+    interface NcmRow {
+      id: number;
+      ncmCode: string;
+      financialCategoryName?: string;
+      chartAccountName?: string;
+      chartAccountCode?: string;
+    }
+    const ncms = result.recordset as NcmRow[];
 
     return NextResponse.json({
       total: ncms.length,
-      ncms: ncms.map((n: { id: number; ncmCode: string; financialCategoryName?: string; chartAccountName?: string }) => ({
+      ncms: ncms.map((n) => ({
         id: n.id,
         ncmCode: n.ncmCode,
         category: n.financialCategoryName || "N/A",

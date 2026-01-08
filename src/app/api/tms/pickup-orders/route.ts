@@ -22,7 +22,8 @@ export async function GET(req: Request) {
         and(
           eq(pickupOrders.organizationId, organizationId),
           isNull(pickupOrders.deletedAt),
-          ...getBranchScopeFilter(ctx, pickupOrders.branchId)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(getBranchScopeFilter(ctx, pickupOrders.branchId) as any[])
         )
       )
       .orderBy(desc(pickupOrders.createdAt));
@@ -66,7 +67,8 @@ export async function POST(req: Request) {
     } = (body ?? {}) as Record<string, unknown>;
 
     // branchId é NOT NULL no schema: usar body.branchId (se vier) ou defaultBranchId da sessão
-    const branchIdCandidate = (body as unknown)?.branchId ?? ctx.defaultBranchId;
+    const bodyData = body as Record<string, unknown>;
+    const branchIdCandidate = bodyData.branchId ?? ctx.defaultBranchId;
     if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
         { error: "branchId é obrigatório (ou defina defaultBranchId no usuário)" },
@@ -104,7 +106,7 @@ export async function POST(req: Request) {
       .insert(pickupOrders)
       .values(orderData);
 
-    const createdId = await insertReturning(insertQuery, { id: pickupOrders.id });
+    const createdId = await insertReturning(insertQuery, { id: pickupOrders.id }) as Array<Record<string, unknown>>;
     const orderId = createdId[0]?.id;
 
     const newOrder = orderId

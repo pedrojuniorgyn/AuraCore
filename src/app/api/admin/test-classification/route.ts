@@ -30,7 +30,7 @@ export async function POST() {
       createdAt?: Date;
     }
     
-    const allInvoices = getDbRows<InvoiceRow>(result);
+    const allInvoices = getDbRows<InvoiceRow>(result as unknown as { recordset?: InvoiceRow[] });
     
     // Mapear para formato esperado
     const mappedInvoices = allInvoices.map((inv) => ({
@@ -82,7 +82,7 @@ export async function POST() {
       createdAt?: Date;
     }
     
-    const payables = getDbRows<PayableRow>(payablesResult);
+    const payables = getDbRows<PayableRow>(payablesResult as unknown as { recordset?: PayableRow[] });
 
     console.log(`💰 [TEST] Contas a pagar de NFe: ${payables.length}`);
 
@@ -105,7 +105,7 @@ export async function POST() {
       numero: inv.invoiceNumber,
       valor: `R$ ${inv.totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
       classificacao: inv.classification || "SEM CLASSIFICAÇÃO",
-      data: new Date(inv.createdAt).toLocaleString("pt-BR"),
+      data: inv.createdAt ? new Date(inv.createdAt).toLocaleString("pt-BR") : "N/A",
     }));
 
     // 6. Estatísticas de geração de contas a pagar
