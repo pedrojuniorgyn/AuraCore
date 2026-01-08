@@ -7,7 +7,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ const dockItems: DockItem[] = [
   },
 ];
 
-function DockIcon({ item, mouseX }: { item: DockItem; mouseX: unknown }) {
+function DockIcon({ item, mouseX }: { item: DockItem; mouseX: MotionValue<number> }) {
   const pathname = usePathname();
   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 

@@ -157,7 +157,8 @@ export default function UsersManagementPage() {
       setNewPassword("");
       await fetchUsers();
     } catch (err: unknown) {
-      toast.error("Erro ao definir senha", { description: err?.message });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao definir senha", { description: errorMessage });
     } finally {
       setSavingPassword(false);
     }
@@ -199,7 +200,8 @@ export default function UsersManagementPage() {
       setEditRoleIds(data.data.roleIds || []);
       setEditBranchIds(data.data.branchIds || []);
     } catch (err: unknown) {
-      toast.error("Erro ao carregar acessos", { description: err?.message });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao carregar acessos", { description: errorMessage });
     }
   };
 
@@ -229,7 +231,8 @@ export default function UsersManagementPage() {
       setEditingUser(null);
       await fetchUsers();
     } catch (err: unknown) {
-      toast.error("Erro ao atualizar acessos", { description: err?.message });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao atualizar acessos", { description: errorMessage });
     } finally {
       setSavingAccess(false);
     }
@@ -271,7 +274,8 @@ export default function UsersManagementPage() {
       setInviteBranchIds([]);
       await fetchUsers();
     } catch (err: unknown) {
-      toast.error("Erro ao convidar usuário", { description: err?.message });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao convidar usuário", { description: errorMessage });
     } finally {
       setInviting(false);
     }
@@ -305,7 +309,8 @@ export default function UsersManagementPage() {
       toast.success("Usuário excluído");
       await fetchUsers();
     } catch (err: unknown) {
-      toast.error("Erro ao excluir usuário", { description: err?.message });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao excluir usuário", { description: errorMessage });
     } finally {
       setDeletingUserId(null);
     }
