@@ -16,6 +16,7 @@ interface FileResult {
 
 interface UploadResult {
   success: boolean;
+  totalFiles?: number;
   imported: number;
   duplicates: number;
   errors: number;

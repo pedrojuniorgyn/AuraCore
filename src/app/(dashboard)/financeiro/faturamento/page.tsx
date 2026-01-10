@@ -212,13 +212,17 @@ export default function BillingPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, unknown> = {
+    interface StatusConfig {
+      label: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+    }
+    const variants: Record<string, StatusConfig> = {
       DRAFT: { label: "Rascunho", variant: "secondary" },
       SENT: { label: "Enviada", variant: "default" },
       FINALIZED: { label: "Finalizada", variant: "default" },
     };
 
-    const config = variants[status] || { label: status, variant: "outline" };
+    const config: StatusConfig = variants[status] || { label: status, variant: "outline" };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 

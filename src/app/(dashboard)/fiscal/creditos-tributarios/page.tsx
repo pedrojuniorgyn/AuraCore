@@ -20,7 +20,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 export default function CreditosFiscaisPage() {
-  const gridRef = useRef<unknown>(null);
+  const gridRef = useRef<AgGridReact>(null);
   const [credits, setCredits] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);

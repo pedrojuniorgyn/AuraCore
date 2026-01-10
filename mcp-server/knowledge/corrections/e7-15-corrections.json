@@ -52,6 +52,19 @@
       "pattern_created": "Date Validation Pattern",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-492250",
+      "date": "2026-01-10",
+      "epic": "E7.15",
+      "error": "Bug introduzido em categorias/page.tsx ao corrigir erro TypeScript. Interface FinancialCategory definia type: 'INCOME' | 'EXPENSE' mas o banco retornava 'REVENUE'. Ao corrigir o erro de comparação, removi REVENUE do filtro sem verificar uso no renderizador (linha 215), causando subcontagem no KPI de receitas.",
+      "correction": "1. Atualizei interface para incluir REVENUE: type: 'INCOME' | 'REVENUE' | 'EXPENSE'\n2. Restaurei filtro original: c.type === 'INCOME' || c.type === 'REVENUE'\n3. Atualizei formData.type para incluir REVENUE\n4. Apliquei AP-002: Interface DEVE corresponder aos dados reais do banco",
+      "files_affected": [
+        "src/app/(dashboard)/financeiro/categorias/page.tsx"
+      ],
+      "pattern_created": "VERIFY-BEFORE-REMOVE: grep patterns before removing logic",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

@@ -34,7 +34,9 @@ interface SimResult {
   fcp: number;
   fcpValue: number;
   totalTax: number;
+  total?: number;
   legal: string;
+  rule?: string;
 }
 
 export default function MatrizTributariaPage() {

@@ -349,7 +349,7 @@ export default function EditarDocumentoPage() {
                         {item.quantity} {item.unit}
                       </td>
                       <td className="py-6 px-3 text-white/80 font-semibold align-top">
-                        R$ {parseFloat(item.totalPrice || 0).toLocaleString("pt-BR", {
+                        R$ {parseFloat(String(item.totalPrice || 0)).toLocaleString("pt-BR", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
