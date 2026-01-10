@@ -51,12 +51,12 @@ export async function createBTGPixCharge(data: PixChargeRequest): Promise<PixCha
     console.log("✅ Cobrança Pix BTG criada:", response.id);
 
     return {
-      txid: response.id || response.txid || "generated-id",
-      location: response.location || "",
-      qrCode: response.qr_code || response.emv || "",
-      qrCodeImage: response.qr_code_image_url || "",
+      txid: String(response.id || response.txid || "generated-id"),
+      location: String(response.location || ""),
+      qrCode: String(response.qr_code || response.emv || ""),
+      qrCodeImage: String(response.qr_code_image_url || ""),
       valor: data.valor,
-      status: response.status || "ACTIVE",
+      status: String(response.status || "ACTIVE"),
       expiracao: String(data.expiracao || 86400),
     };
   } catch (error) {
@@ -68,7 +68,7 @@ export async function createBTGPixCharge(data: PixChargeRequest): Promise<PixCha
 /**
  * Consultar cobrança Pix
  */
-export async function getBTGPixCharge(chargeId: string): Promise<Record<string, unknown>> {
+export async function getBTGPixCharge(chargeId: string): Promise<PixChargeResponse> {
   try {
     console.log("🔍 Consultando cobrança Pix BTG:", chargeId);
 
@@ -76,13 +76,17 @@ export async function getBTGPixCharge(chargeId: string): Promise<Record<string, 
 
     console.log("✅ Cobrança Pix consultada:", response.status);
 
+    const amountObj = response.amount as { value?: number } | undefined;
+    const valor = amountObj?.value ? amountObj.value / 100 : 0;
+
     return {
-      txid: response.id || response.txid,
-      status: response.status,
-      valor: response.amount ? response.amount.value / 100 : 0,
-      valor_pago: response.paid_amount ? response.paid_amount / 100 : 0,
-      data_pagamento: response.paid_at,
-      qrCode: response.qr_code || response.emv,
+      txid: String(response.id || response.txid || ''),
+      location: String(response.location || ''),
+      qrCode: String(response.qr_code || response.emv || ''),
+      qrCodeImage: String(response.qr_code_image || ''),
+      valor,
+      status: String(response.status || 'PENDING'),
+      expiracao: String(response.expiration || response.expires_at || ''),
     };
   } catch (error) {
     console.error("❌ Erro ao consultar Pix BTG:", error);

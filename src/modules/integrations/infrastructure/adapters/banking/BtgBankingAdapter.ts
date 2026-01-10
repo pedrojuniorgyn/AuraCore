@@ -131,7 +131,7 @@ export class BtgBankingAdapter implements IBankingGateway {
       };
 
       // Chamar serviço BTG
-      const response = await createBTGPixCharge(pixRequest);
+      const response: BtgPixChargeResponse = await createBTGPixCharge(pixRequest);
 
       // Calcular expiração
       const expiresAt = new Date();

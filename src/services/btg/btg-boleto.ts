@@ -102,7 +102,7 @@ export async function generateBTGBoleto(data: BoletoRequest): Promise<BoletoResp
 /**
  * Consultar status de boleto
  */
-export async function getBTGBoletoStatus(boletoId: string): Promise<Record<string, unknown>> {
+export async function getBTGBoletoStatus(boletoId: string): Promise<BoletoResponse> {
   try {
     console.log("🔍 Consultando boleto BTG:", boletoId);
 
@@ -112,10 +112,13 @@ export async function getBTGBoletoStatus(boletoId: string): Promise<Record<strin
 
     return {
       id: response.id as string,
-      status: response.status as string,
-      valor_pago: response.paid_amount ? (response.paid_amount as number) / 100 : 0,
-      data_pagamento: response.paid_at as string | undefined,
-      linha_digitavel: response.digitable_line as string,
+      nosso_numero: (response.our_number as string) || '',
+      linha_digitavel: (response.digitable_line as string) || '',
+      codigo_barras: (response.barcode as string) || '',
+      pdf_url: (response.pdf_url as string) || '',
+      valor: response.paid_amount ? (response.paid_amount as number) / 100 : 0,
+      vencimento: (response.due_date as string) || '',
+      status: (response.status as string) || 'PENDING',
     };
   } catch (error) {
     console.error("❌ Erro ao consultar boleto BTG:", error);
