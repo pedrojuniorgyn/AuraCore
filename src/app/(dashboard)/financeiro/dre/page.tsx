@@ -46,15 +46,15 @@ interface DREByPlateItem {
   margin: number;
   netProfit: number;
   revenue?: number;
-  expenses?: number;
+  expense?: number;
 }
 
 interface DREByDimensionItem {
   dimension: string;
   margin: number;
   revenue?: number;
-  expenses?: number;
-  netIncome?: number;
+  expense?: number;
+  netProfit?: number;
 }
 
 interface DREData {
@@ -350,7 +350,7 @@ export default function DREPage() {
                               Despesa
                             </div>
                             <div className="text-lg font-semibold text-red-600">
-                              {formatCurrency(item.expenses ?? 0)}
+                              {formatCurrency(item.expense ?? 0)}
                             </div>
                           </div>
                           <div>
@@ -425,7 +425,7 @@ export default function DREPage() {
                               Despesa
                             </div>
                             <div className="text-lg font-semibold text-red-600">
-                              {formatCurrency(item.expenses ?? 0)}
+                              {formatCurrency(item.expense ?? 0)}
                             </div>
                           </div>
                           <div>
@@ -434,12 +434,12 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-semibold ${
-                                (item.netIncome ?? 0) >= 0
+                                (item.netProfit ?? 0) >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {formatCurrency(item.netIncome ?? 0)}
+                              {formatCurrency(item.netProfit ?? 0)}
                             </div>
                           </div>
                         </div>
