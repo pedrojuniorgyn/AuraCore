@@ -13,7 +13,7 @@ import type { WmsStockItemPersistence } from '../schemas/StockItemSchema';
  */
 
 export class StockItemMapper {
-  static toDomain(persistence: WmsStockItemPersistence): Result<StockItem> {
+  static toDomain(persistence: WmsStockItemPersistence): Result<StockItem, string> {
     // Reconstituir quantity
     const quantityResult = StockQuantity.reconstitute(
       parseFloat(String(persistence.quantity)),

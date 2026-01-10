@@ -57,9 +57,9 @@ export async function createBTGPixPayment(data: PixPaymentRequest): Promise<Paym
     console.log("✅ Pagamento Pix BTG realizado:", response.id);
 
     return {
-      id: response.id,
-      status: response.status,
-      transactionId: response.transaction_id,
+      id: String(response.id || ''),
+      status: String(response.status || 'PENDING'),
+      transactionId: response.transaction_id ? String(response.transaction_id) : undefined,
       message: "Pagamento Pix realizado com sucesso",
     };
   } catch (error) {
@@ -95,9 +95,9 @@ export async function createBTGTEDPayment(data: TEDPaymentRequest): Promise<Paym
     console.log("✅ TED BTG realizado:", response.id);
 
     return {
-      id: response.id,
-      status: response.status,
-      transactionId: response.transaction_id,
+      id: String(response.id || ''),
+      status: String(response.status || 'PENDING'),
+      transactionId: response.transaction_id ? String(response.transaction_id) : undefined,
       message: "TED realizado com sucesso",
     };
   } catch (error) {
@@ -117,11 +117,14 @@ export async function getBTGPaymentStatus(paymentId: string): Promise<Record<str
 
     console.log("✅ Pagamento consultado:", response.status);
 
+    const amountObj = response.amount as { value?: number } | undefined;
+    const amount = amountObj?.value ? amountObj.value / 100 : 0;
+
     return {
       id: response.id,
       status: response.status,
       type: response.type,
-      amount: response.amount.value / 100,
+      amount,
       created_at: response.created_at,
       processed_at: response.processed_at,
     };
