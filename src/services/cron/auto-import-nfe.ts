@@ -29,7 +29,8 @@ export function startAutoImportCron() {
     try {
       await runAutoImport();
     } catch (error: unknown) {
-      console.error("❌ [Auto-Import] Erro:", error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ [Auto-Import] Erro:", errorMessage);
     }
   });
 
@@ -127,13 +128,14 @@ async function runAutoImport() {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
       } catch (error: unknown) {
-        console.error(`❌ [Auto-Import] Erro na filial ${setting.branchId}:`, error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`❌ [Auto-Import] Erro na filial ${setting.branchId}:`, errorMessage);
         
         // 🔔 NOTIFICAR: Erro na importação
         await notificationService.notifyImportError(
           setting.organizationId,
           setting.branchId,
-          error.message
+          errorMessage
         );
       }
     }
@@ -141,7 +143,8 @@ async function runAutoImport() {
     console.log("✅ [Auto-Import] Importação automática concluída");
 
   } catch (error: unknown) {
-    console.error("❌ [Auto-Import] Erro geral:", error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ [Auto-Import] Erro geral:", errorMessage);
   }
 }
 

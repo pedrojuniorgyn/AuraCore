@@ -72,7 +72,7 @@ export async function createPickupOrderFromQuote(
       createdBy,
     });
 
-  const createdOrderId = await insertReturning(insertQuery, { id: pickupOrders.id });
+  const createdOrderId = await insertReturning(insertQuery, { id: pickupOrders.id }) as Array<{ id: number }>;
 
   const pickupOrderId = createdOrderId[0]?.id;
   const pickupOrder = pickupOrderId
@@ -153,7 +153,7 @@ export async function createCteFromPickupOrder(
       createdBy,
     });
 
-  const createdCteId = await insertReturning(insertCteQuery, { id: cteHeader.id });
+  const createdCteId = await insertReturning(insertCteQuery, { id: cteHeader.id }) as Array<{ id: number }>;
 
   const cteId = createdCteId[0]?.id;
   const cte = cteId

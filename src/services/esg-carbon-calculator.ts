@@ -196,8 +196,10 @@ export class ESGCarbonCalculator {
     const dashboardData = (dashboard.recordset || dashboard) as Array<Record<string, unknown>>;
     const data = dashboardData[0] || {};
     
-    const compensationRate = data.total_co2_tons > 0 
-      ? (data.compensated_tons / data.total_co2_tons) * 100 
+    const totalCo2Tons = Number(data.total_co2_tons) || 0;
+    const compensatedTons = Number(data.compensated_tons) || 0;
+    const compensationRate = totalCo2Tons > 0 
+      ? (compensatedTons / totalCo2Tons) * 100 
       : 0;
     
     return {

@@ -450,7 +450,7 @@ export class BtgDdaService {
       const [newPayable] = await insertReturning(
         db.insert(accountsPayable).values(payableData),
         { id: accountsPayable.id }
-      );
+      ) as Array<{ id: number }>;
 
       // Atualizar DDA
       await db

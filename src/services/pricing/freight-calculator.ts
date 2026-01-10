@@ -333,9 +333,10 @@ export async function calculateFreight(
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao calcular frete:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error.message || "Erro interno ao calcular frete.",
+      error: errorMessage || "Erro interno ao calcular frete.",
       freightWeight: 0,
       realWeight: params.realWeight,
       cubicWeight: 0,

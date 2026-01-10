@@ -165,7 +165,7 @@ describe('NodemailerAdapter Integration', () => {
           messageId: 'mock-id-1',
           accepted: ['test1@example.com'],
           rejected: [],
-        } as unknown)
+        } as import('nodemailer').SentMessageInfo)
         .mockRejectedValueOnce(new Error('SMTP Error'));
 
       const requests = [

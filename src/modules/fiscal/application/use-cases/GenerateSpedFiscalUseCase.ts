@@ -17,7 +17,7 @@ import { SpedError } from "../../domain/errors";
 import { IUseCase } from "@/shared/application/IUseCase";
 
 export class GenerateSpedFiscalUseCase
-  implements IUseCase<GenerateSpedFiscalInput, SpedDocument>
+  implements IUseCase<GenerateSpedFiscalInput, SpedDocument, SpedError>
 {
   constructor(
     private readonly generator: SpedFiscalGenerator,
@@ -39,13 +39,13 @@ export class GenerateSpedFiscalUseCase
       this.logger.info(
         `SPED Fiscal gerado com sucesso - ${result.value.totalLines} linhas, ${result.value.blockCount} blocos`
       );
+      return Result.ok(result.value);
     } else {
       this.logger.error(
-        `Erro ao gerar SPED Fiscal: ${result.error.message}`
+        `Erro ao gerar SPED Fiscal: ${result.error}`
       );
+      return Result.fail(new SpedError(result.error));
     }
-
-    return result;
   }
 }
 

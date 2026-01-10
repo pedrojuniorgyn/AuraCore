@@ -224,12 +224,13 @@ export async function createReceivablesFromCTe(
 
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar contas a receber:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
       receivablesCreated: 0,
       totalAmount: 0,
       receivableIds: [],
-      error: error.message,
+      error: errorMessage,
     };
   }
 }

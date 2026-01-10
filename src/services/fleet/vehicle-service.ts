@@ -170,9 +170,10 @@ export async function createVehicleWithCostCenter(
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao criar veículo:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error.message || "Falha ao criar veículo",
+      error: errorMessage || "Falha ao criar veículo",
     };
   }
 }

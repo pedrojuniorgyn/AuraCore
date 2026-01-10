@@ -69,7 +69,7 @@ async function generateBloco0ECD(config: SpedECDConfig): Promise<string[]> {
     SELECT document, name FROM organizations WHERE id = ${config.organizationId}
   `);
   
-  const orgData = (orgResult.recordset || orgResult) as Array<OrganizationRow>;
+  const orgData = (orgResult.recordset || orgResult) as unknown as Array<OrganizationRow>;
   const org = orgData[0];
   if (!org) {
     throw new Error('Organização não encontrada');

@@ -12,7 +12,7 @@ import type { WmsLocationPersistence } from '../schemas/LocationSchema';
  */
 
 export class LocationMapper {
-  static toDomain(persistence: WmsLocationPersistence): Result<Location> {
+  static toDomain(persistence: WmsLocationPersistence): Result<Location, string> {
     // Reconstituir LocationCode
     const codeResult = LocationCode.reconstitute(persistence.code);
     if (!Result.isOk(codeResult)) {

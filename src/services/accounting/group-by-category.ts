@@ -5,7 +5,7 @@
  * uma conta a pagar por categoria (Opção C - NCM Agrupado)
  */
 
-import { classifyNFeItems, ClassificationResult } from "./classification-engine";
+import { classifyNFeItems, ClassificationResult, type NFeItem } from "./classification-engine";
 
 export interface NFeItemWithClassification {
   // Dados do item
@@ -59,7 +59,7 @@ export async function groupItemsByCategory(
 ): Promise<CategoryGroup[]> {
   
   // Classifica todos os itens
-  const groupedMap = await classifyNFeItems(items, organizationId, supplierId, operationType);
+  const groupedMap = await classifyNFeItems(items as unknown as NFeItem[], organizationId, supplierId, operationType);
   
   const groups: CategoryGroup[] = [];
   

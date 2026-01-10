@@ -8,7 +8,7 @@
 import { db } from "@/lib/db";
 import { accountsPayable, payableItems, inboundInvoices } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { groupItemsByCategory, generatePayableDescription, generateDocumentNumber } from "../accounting/group-by-category";
+import { groupItemsByCategory, generatePayableDescription, generateDocumentNumber, type NFeItemWithClassification } from "../accounting/group-by-category";
 import type { ParsedNFe } from "../nfe-parser";
 
 export interface PayableGenerationResult {
@@ -62,7 +62,7 @@ export async function createPayablesFromNFe(
 
     // Agrupa itens por categoria (Opção C - NCM Agrupado)
     const groups = await groupItemsByCategory(
-      nfe.items as unknown,
+      nfe.items as NFeItemWithClassification[],
       organizationId,
       partnerId,
       "PURCHASE"
@@ -174,12 +174,13 @@ export async function createPayablesFromNFe(
 
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar contas a pagar:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
       payablesCreated: 0,
       totalAmount: 0,
       payableIds: [],
-      error: error.message,
+      error: errorMessage,
     };
   }
 }
