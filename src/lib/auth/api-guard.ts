@@ -138,11 +138,15 @@ export async function withPermission<T>(
     const allowedBranches = Array.isArray((session.user as SessionUser)?.allowedBranches)
       ? ((session.user as SessionUser).allowedBranches as number[])
       : [];
-    const defaultBranchId =
-      (session.user as SessionUser)?.defaultBranchId !== undefined ? (session.user as SessionUser).defaultBranchId : null;
+    const defaultBranchId = (session.user as SessionUser)?.defaultBranchId ?? null;
     const isAdmin = role === "ADMIN";
 
-    const ctx = {
+    const organizationId = (session.user as SessionUser).organizationId;
+    if (!organizationId) {
+      throw new Error("organizationId não definido na sessão");
+    }
+
+    const ctx: ApiContext = {
       user: session.user,
       userId: session.user.id,
       role,
@@ -154,7 +158,7 @@ export async function withPermission<T>(
         (session.user as SessionUser).branchId ??
         defaultBranchId ??
         null,
-      organizationId: (session.user as SessionUser).organizationId,
+      organizationId,
     };
 
     const res = await handler(session.user, ctx);
@@ -168,7 +172,7 @@ export async function withPermission<T>(
       status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as unknown).organizationId,
+      organizationId: ctx.organizationId,
       branchId: ctx.branchId,
       permission: permissionCode,
     });
@@ -179,7 +183,7 @@ export async function withPermission<T>(
       status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as unknown).organizationId,
+      organizationId: ctx.organizationId,
       branchId: ctx.branchId,
       permission: permissionCode,
     });
@@ -252,11 +256,15 @@ export async function withAuth<T>(
     const allowedBranches = Array.isArray((session.user as SessionUser)?.allowedBranches)
       ? ((session.user as SessionUser).allowedBranches as number[])
       : [];
-    const defaultBranchId =
-      (session.user as SessionUser)?.defaultBranchId !== undefined ? (session.user as SessionUser).defaultBranchId : null;
+    const defaultBranchId = (session.user as SessionUser)?.defaultBranchId ?? null;
     const isAdmin = role === "ADMIN";
 
-    const ctx = {
+    const organizationId = (session.user as SessionUser).organizationId;
+    if (!organizationId) {
+      throw new Error("organizationId não definido na sessão");
+    }
+
+    const ctx: ApiContext = {
       user: session.user,
       userId: session.user.id,
       role,
@@ -267,7 +275,7 @@ export async function withAuth<T>(
         (session.user as SessionUser).branchId ??
         defaultBranchId ??
         null,
-      organizationId: (session.user as SessionUser).organizationId,
+      organizationId,
     };
 
     const res = await handler(session.user, ctx);
@@ -281,7 +289,7 @@ export async function withAuth<T>(
       status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as unknown).organizationId,
+      organizationId: ctx.organizationId,
       branchId: ctx.branchId,
     });
     log("info", "api.request", {
@@ -291,7 +299,7 @@ export async function withAuth<T>(
       status: (res as { status?: number }).status ?? 200,
       durationMs,
       userId: session.user.id,
-      organizationId: (session.user as unknown).organizationId,
+      organizationId: ctx.organizationId,
       branchId: ctx.branchId,
     });
     if (durationMs >= slowMs) {
