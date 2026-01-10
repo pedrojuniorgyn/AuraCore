@@ -31,14 +31,15 @@ export async function POST(
         id,
         document_type AS documentType,
         partner_document AS partnerDocument,
-        xml_content AS xmlContent
+        xml_content AS xmlContent,
+        fiscal_classification AS fiscalClassification
       FROM fiscal_documents
       WHERE id = ${documentId}
         AND organization_id = ${session.user.organizationId}
         AND deleted_at IS NULL
     `);
 
-    const documents = getDbRows<{ id?: number; documentType?: string; partnerDocument?: string; xmlContent?: string }>(result);
+    const documents = getDbRows<{ id?: number; documentType?: string; partnerDocument?: string; xmlContent?: string; fiscalClassification?: string }>(result);
     
     if (documents.length === 0) {
       return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
@@ -66,6 +67,9 @@ export async function POST(
     }
 
     const branchCNPJ = branch.document;
+    if (!branchCNPJ) {
+      return NextResponse.json({ error: "CNPJ da filial não encontrado" }, { status: 400 });
+    }
 
     // Parse NFe
     const parsedNFe = await parseNFeXML(document.xmlContent);

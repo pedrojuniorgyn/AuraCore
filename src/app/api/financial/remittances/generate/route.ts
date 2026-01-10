@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
             createdBy: ctx.userId,
           });
 
-        const createdId = await insertReturning(insertQuery, { id: bankRemittances.id });
+        const createdId = await insertReturning(insertQuery, { id: bankRemittances.id }) as Array<Record<string, unknown>>;
         const remittanceId = Number(createdId[0]?.id);
         if (!Number.isFinite(remittanceId) || remittanceId <= 0) {
           throw new Error("Falha ao criar remessa (id não retornado)");
@@ -330,7 +330,7 @@ export async function POST(request: NextRequest) {
           scope,
           key: idemKey,
           status: "FAILED",
-          errorMessage: e?.message ?? String(e),
+          errorMessage: e instanceof Error ? e.message : String(e),
         });
       } catch (e2: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);

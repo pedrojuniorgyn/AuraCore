@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    const branchIdCandidate = (body as unknown)?.branchId ?? ctx.defaultBranchId;
+    const bodyData = body as Record<string, unknown>;
+    const branchIdCandidate = bodyData.branchId ?? ctx.defaultBranchId;
     if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
         {
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
       .insert(tripOccurrences)
       .values(occurrenceData);
 
-    const createdId = await insertReturning(insertQuery, { id: tripOccurrences.id });
+    const createdId = await insertReturning(insertQuery, { id: tripOccurrences.id }) as Array<Record<string, unknown>>;
     const occurrenceId = createdId[0]?.id;
 
     const occurrence = occurrenceId

@@ -405,10 +405,11 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Erro no Seed:", error);
     const message = error instanceof Error ? error.message : String(error);
+    const errorObj = error as Record<string, unknown>;
     return NextResponse.json(
       {
         error: "Falha ao criar seed.",
-        ...(canDebug ? { debug: { message, name: (error as unknown)?.name, stack: (error as unknown)?.stack } } : {}),
+        ...(canDebug ? { debug: { message, name: errorObj.name, stack: errorObj.stack } } : {}),
       },
       { status: 500 }
     );

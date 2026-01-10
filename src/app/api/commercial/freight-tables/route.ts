@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
           createdBy,
         });
 
-      const createdTableId = await insertReturning(insertQuery, { id: freightTables.id });
+      const createdTableId = await insertReturning(insertQuery, { id: freightTables.id }) as Array<Record<string, unknown>>;
       const tableId = createdTableId[0]?.id;
       if (!tableId) {
         throw new Error("Falha ao criar tabela de frete");
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
             displayOrder: route.displayOrder || 0,
           });
 
-        const createdRouteId = await insertReturning(insertRouteQuery, { id: freightTableRoutes.id });
+        const createdRouteId = await insertReturning(insertRouteQuery, { id: freightTableRoutes.id }) as Array<Record<string, unknown>>;
         const routeId = createdRouteId[0]?.id;
 
         // Criar preços para esta rota

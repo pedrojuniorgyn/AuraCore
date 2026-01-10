@@ -23,7 +23,8 @@ export async function GET(req: Request) {
         and(
           eq(trips.organizationId, organizationId),
           isNull(trips.deletedAt),
-          ...getBranchScopeFilter(ctx, trips.branchId)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(getBranchScopeFilter(ctx, trips.branchId) as any[])
         )
       )
       .orderBy(desc(trips.createdAt));
@@ -134,7 +135,7 @@ export async function POST(req: Request) {
         createdBy,
       });
 
-    const createdId = await insertReturning(insertQuery, { id: trips.id });
+    const createdId = await insertReturning(insertQuery, { id: trips.id }) as Array<Record<string, unknown>>;
     const tripId = createdId[0]?.id;
 
     const newTrip = tripId
