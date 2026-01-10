@@ -69,8 +69,9 @@ export default function ChartOfAccountsPage() {
     return (
       <div className="flex gap-2 h-full items-center justify-center">
         <button
-          onClick={() => handleEdit(props.data)}
-          className="text-blue-400 hover:text-blue-300 transition-colors"
+          onClick={() => props.data && handleEdit(props.data)}
+          disabled={!props.data}
+          className="text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
           title="Editar"
         >
           <Edit className="h-4 w-4" />
