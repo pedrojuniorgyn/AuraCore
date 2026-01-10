@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       .insert(costCenters)
       .values(costCenterData);
 
-    const createdId = await insertReturning(insertQuery, { id: costCenters.id });
+    const createdId = await insertReturning(insertQuery, { id: costCenters.id }) as Array<Record<string, unknown>>;
     const newCostCenterId = createdId[0]?.id;
 
     const newCostCenter = newCostCenterId

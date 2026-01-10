@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
           scope,
           key: idemKey,
           status: "FAILED",
-          errorMessage: e?.message ?? String(e),
+          errorMessage: e instanceof Error ? e.message : String(e),
         });
       } catch (e2: unknown) {
         console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);

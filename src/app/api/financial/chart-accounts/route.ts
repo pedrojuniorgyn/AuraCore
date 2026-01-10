@@ -176,7 +176,7 @@ export async function POST(req: Request) {
       .insert(chartOfAccounts)
       .values(accountData);
 
-    const createdId = await insertReturning(insertQuery, { id: chartOfAccounts.id });
+    const createdId = await insertReturning(insertQuery, { id: chartOfAccounts.id }) as Array<Record<string, unknown>>;
     const newAccountId = createdId[0]?.id;
 
     const newAccount = newAccountId

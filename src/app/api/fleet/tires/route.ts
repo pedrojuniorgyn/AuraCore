@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       .insert(tires)
       .values(tireData);
 
-    const createdId = await insertReturning(insertQuery, { id: tires.id });
+    const createdId = await insertReturning(insertQuery, { id: tires.id }) as Array<Record<string, unknown>>;
     const tireId = createdId[0]?.id;
 
     const tire = tireId

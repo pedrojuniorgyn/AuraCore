@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       .insert(taxCredits)
       .values(taxCreditData);
 
-    const createdId = await insertReturning(insertQuery, { id: taxCredits.id });
+    const createdId = await insertReturning(insertQuery, { id: taxCredits.id }) as Array<Record<string, unknown>>;
     const creditId = createdId[0]?.id;
 
     const credit = creditId

@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         await pool.request().batch(batches[i]);
         results.push({ batch: i + 1, ok: true });
       } catch (e: unknown) {
-        results.push({ batch: i + 1, ok: false, error: e?.message ?? String(e) });
+        results.push({ batch: i + 1, ok: false, error: e instanceof Error ? e.message : String(e) });
       }
     }
 
