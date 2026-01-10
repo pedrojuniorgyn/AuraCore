@@ -57,7 +57,7 @@ export async function PUT(
     const resultData = result as unknown as Record<string, unknown>;
     const rows = resultData.rowsAffected as number[] | undefined;
     const rowCount = rows?.[0] ?? 0;
-    if (rows === 0) {
+    if (rowCount === 0) {
       return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
     }
 
