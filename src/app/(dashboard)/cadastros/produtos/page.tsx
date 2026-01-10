@@ -74,11 +74,13 @@ export default function ProductsPage() {
     fetchProducts();
   }, [fetchProducts]);
 
-  const handleEdit = useCallback((product: Product) => {
+  const handleEdit = useCallback((data: unknown) => {
+    const product = data as Product;
     router.push(`/cadastros/produtos/edit/${product.id}`);
   }, [router]);
 
-  const handleView = useCallback((product: Product) => {
+  const handleView = useCallback((data: unknown) => {
+    const product = data as Product;
     router.push(`/cadastros/produtos/${product.id}`);
   }, [router]);
 

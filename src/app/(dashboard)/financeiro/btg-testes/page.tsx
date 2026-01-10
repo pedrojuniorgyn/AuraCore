@@ -5,9 +5,28 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { FileText, QrCode, Loader2 } from "lucide-react";
 
+interface BTGBoletoResult {
+  boleto: {
+    nosso_numero: string;
+  };
+  btgData: {
+    linha_digitavel: string;
+    pdf_url: string;
+  };
+}
+
+interface BTGPixResult {
+  charge: {
+    txid: string;
+    qr_code: string;
+  };
+}
+
+type BTGTestResult = BTGBoletoResult | BTGPixResult | null;
+
 export default function BTGTestesPage() {
   const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState<unknown>(null);
+  const [resultado, setResultado] = useState<BTGTestResult>(null);
   const { toast } = useToast();
 
   const gerarBoletoTeste = async () => {
@@ -172,7 +191,7 @@ export default function BTGTestesPage() {
           </h3>
           
           {/* Boleto */}
-          {resultado.boleto && (
+          {resultado && 'boleto' in resultado && resultado.boleto && (
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-green-700 font-semibold">Nosso Número:</p>
@@ -201,7 +220,7 @@ export default function BTGTestesPage() {
               </div>
 
               <Button
-                onClick={() => window.open(resultado.btgData.pdf_url, "_blank")}
+                onClick={() => 'btgData' in resultado && window.open(resultado.btgData.pdf_url, "_blank")}
                 className="mt-4"
               >
                 📄 Abrir PDF do Boleto
@@ -210,7 +229,7 @@ export default function BTGTestesPage() {
           )}
 
           {/* Pix */}
-          {resultado.charge && (
+          {resultado && 'charge' in resultado && resultado.charge && (
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-green-700 font-semibold">TXID:</p>
@@ -230,11 +249,13 @@ export default function BTGTestesPage() {
 
               <Button
                 onClick={() => {
-                  navigator.clipboard.writeText(resultado.charge.qr_code);
-                  toast({
-                    title: "✅ Copiado!",
-                    description: "QR Code copiado para área de transferência",
-                  });
+                  if ('charge' in resultado) {
+                    navigator.clipboard.writeText(resultado.charge.qr_code);
+                    toast({
+                      title: "✅ Copiado!",
+                      description: "QR Code copiado para área de transferência",
+                    });
+                  }
                 }}
                 className="mt-4"
               >

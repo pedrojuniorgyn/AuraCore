@@ -66,7 +66,8 @@ export default function BranchesPage() {
     fetchBranches();
   }, [fetchBranches]);
 
-  const handleEdit = useCallback((branch: Branch) => {
+  const handleEdit = useCallback((data: unknown) => {
+    const branch = data as Branch;
     router.push(`/configuracoes/filiais/${branch.id}`);
   }, [router]);
 
@@ -74,7 +75,8 @@ export default function BranchesPage() {
     router.push(`/configuracoes/filiais/${branch.id}`);
   }, [router]);
 
-  const handleConfig = useCallback((branch: Branch) => {
+  const handleConfig = useCallback((data: unknown) => {
+    const branch = data as Branch;
     router.push(`/configuracoes/filiais/${branch.id}`);
   }, [router]);
 
@@ -151,8 +153,9 @@ export default function BranchesPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleConfig(params.data)}
+              onClick={() => params.data && handleConfig(params.data)}
               className="h-8 w-8 p-0"
+              disabled={!params.data}
             >
               <Settings className="h-4 w-4" />
             </Button>

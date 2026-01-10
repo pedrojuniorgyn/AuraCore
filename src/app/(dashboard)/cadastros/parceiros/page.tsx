@@ -74,11 +74,13 @@ export default function BusinessPartnersPage() {
     fetchPartners();
   }, [fetchPartners]);
 
-  const handleEdit = useCallback((partner: Partner) => {
+  const handleEdit = useCallback((data: unknown) => {
+    const partner = data as Partner;
     router.push(`/cadastros/parceiros/edit/${partner.id}`);
   }, [router]);
 
-  const handleView = useCallback((partner: Partner) => {
+  const handleView = useCallback((data: unknown) => {
+    const partner = data as Partner;
     router.push(`/cadastros/parceiros/${partner.id}`);
   }, [router]);
 
