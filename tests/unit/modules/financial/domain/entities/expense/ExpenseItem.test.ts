@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 import { ExpenseItem } from '@/modules/financial/domain/entities/expense/ExpenseItem';
+import type { ExpenseCategory } from '@/modules/financial/domain/value-objects/expense/ExpenseCategory';
 
 describe('ExpenseItem', () => {
   const createValidProps = () => ({
@@ -49,9 +50,12 @@ describe('ExpenseItem', () => {
 
     it('should fail with invalid categoria', () => {
       const props = createValidProps();
-      (props as unknown).categoria = 'INVALID';
+      const propsWithInvalidCategoria = {
+        ...props,
+        categoria: 'INVALID' as ExpenseCategory,
+      };
 
-      const result = ExpenseItem.create(props);
+      const result = ExpenseItem.create(propsWithInvalidCategoria);
 
       expect(Result.isFail(result)).toBe(true);
       if (Result.isFail(result)) {
@@ -115,7 +119,7 @@ describe('ExpenseItem', () => {
     it('should fail with invalid categoria on reconstitute', () => {
       const props = {
         ...createValidProps(),
-        categoria: 'INVALID' as unknown,
+        categoria: 'INVALID' as ExpenseCategory,
         dentroPolitica: true,
       };
 

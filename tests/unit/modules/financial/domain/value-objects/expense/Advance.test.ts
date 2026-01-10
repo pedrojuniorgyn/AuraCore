@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
-import { Advance } from '@/modules/financial/domain/value-objects/expense/Advance';
+import { Advance, AdvanceApprovalStatus } from '@/modules/financial/domain/value-objects/expense/Advance';
 
 describe('Advance', () => {
   const createValidMoney = () => Money.create(1000, 'BRL').value;
@@ -128,7 +128,7 @@ describe('Advance', () => {
       const props = {
         valorSolicitado: money,
         dataSolicitacao: new Date(),
-        statusAprovacao: 'INVALID_STATUS' as unknown,
+        statusAprovacao: 'INVALID_STATUS' as AdvanceApprovalStatus,
       };
 
       const result = Advance.reconstitute(props);

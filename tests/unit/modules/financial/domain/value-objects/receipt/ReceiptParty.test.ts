@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Result } from '@/shared/domain';
-import { ReceiptParty } from '@/modules/financial/domain/value-objects/receipt/ReceiptParty';
+import { ReceiptParty, DocumentType } from '@/modules/financial/domain/value-objects/receipt/ReceiptParty';
 
 describe('ReceiptParty', () => {
   it('should create party with valid CPF', () => {
@@ -168,7 +168,7 @@ describe('ReceiptParty', () => {
     const result = ReceiptParty.reconstitute({
       nome: 'João da Silva',
       documento: '12345678901',
-      tipoDocumento: 'INVALID_TYPE' as unknown, // Intentionally invalid
+      tipoDocumento: 'INVALID_TYPE' as DocumentType, // Intentionally invalid
     });
 
     expect(Result.isFail(result)).toBe(true);

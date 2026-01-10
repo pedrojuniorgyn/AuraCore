@@ -26,7 +26,7 @@ describe('WMS Stock Queries API', () => {
       const response = await ctx.api.get('/api/wms/stock?hasStock=true');
 
       expect(response.status).toBe(200);
-      response.body.items.forEach((item: { quantity: number }) => {
+      (response.body as { items: Array<{ quantity: number }> }).items.forEach((item) => {
         expect(item.quantity).toBeGreaterThan(0);
       });
     });
@@ -35,7 +35,7 @@ describe('WMS Stock Queries API', () => {
       const response = await ctx.api.get('/api/wms/stock?hasStock=false');
 
       expect(response.status).toBe(200);
-      response.body.items.forEach((item: { quantity: number }) => {
+      (response.body as { items: Array<{ quantity: number }> }).items.forEach((item) => {
         expect(item.quantity).toBeLessThanOrEqual(0);
       });
     });

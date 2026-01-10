@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
-import { Receipt } from '@/modules/financial/domain/entities/receipt/Receipt';
+import { Receipt, ReceiptStatus, PaymentMethod } from '@/modules/financial/domain/entities/receipt/Receipt';
 import { ReceiptParty } from '@/modules/financial/domain/value-objects/receipt/ReceiptParty';
+import type { ReceiptType } from '@/modules/financial/domain/value-objects/receipt/ReceiptType';
 
 describe('Receipt', () => {
   const validPagador = ReceiptParty.create({
@@ -302,7 +303,7 @@ describe('Receipt', () => {
       dataRecebimento: new Date(),
       emitidoPor: 'user-1',
       emitidoEm: new Date(),
-      status: 'INVALID_STATUS' as unknown,
+      status: 'INVALID_STATUS' as ReceiptStatus,
       createdAt: new Date(),
       createdBy: 'user-1',
       updatedAt: new Date(),
@@ -320,7 +321,7 @@ describe('Receipt', () => {
       id: 'receipt-1',
       organizationId: 1,
       branchId: 1,
-      tipo: 'INVALID_TYPE' as unknown,
+      tipo: 'INVALID_TYPE' as ReceiptType,
       numero: 1,
       serie: 'A',
       pagador: validPagador,
@@ -358,7 +359,7 @@ describe('Receipt', () => {
       valor: validValor,
       valorPorExtenso: 'um mil reais',
       descricao: 'Pagamento de frete',
-      formaPagamento: 'INVALID_PAYMENT' as unknown,
+      formaPagamento: 'INVALID_PAYMENT' as PaymentMethod,
       dataRecebimento: new Date(),
       emitidoPor: 'user-1',
       emitidoEm: new Date(),
