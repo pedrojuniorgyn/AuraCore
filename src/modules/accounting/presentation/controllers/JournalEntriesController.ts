@@ -204,9 +204,11 @@ export class JournalEntriesController {
       const body = await request.json();
 
       const useCase = container.resolve(ReverseJournalEntryUseCase);
-      const result = await useCase.execute(
-        { journalEntryId: BigInt(params.id), reason: body.reason, ...ctx }
-      );
+      const result = await useCase.execute({
+        journalEntryId: BigInt(params.id),
+        organizationId: BigInt(ctx.organizationId),
+        userId: ctx.userId,
+      });
 
       if (Result.isFail(result)) {
         const errorMessage = result.error instanceof Error ? result.error.message : String(result.error);

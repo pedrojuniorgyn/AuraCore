@@ -220,7 +220,7 @@ export class DrizzleRomaneioRepository implements IRomaneioRepository {
       const romaneiosResult: RomaneioDocument[] = [];
 
       for (const romaneioRow of romaneioRows) {
-        const row = romaneioRow as { id: number };
+        const row = romaneioRow as RomaneioPersistence;
         const itemRows = await db
           .select()
           .from(romaneioItems)
