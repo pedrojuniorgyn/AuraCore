@@ -36,6 +36,14 @@ function safeJsonParse<T>(s: string | null): T | null {
   }
 }
 
+interface OpsSummary {
+  checks: Array<{
+    name: string;
+    ok: boolean;
+    durationMs: number;
+  }>;
+}
+
 export default function OperacoesPage() {
   const [latest, setLatest] = useState<OpsRun | null>(null);
   const [history, setHistory] = useState<OpsRun[]>([]);
@@ -101,7 +109,7 @@ export default function OperacoesPage() {
     }
   }, [load]);
 
-  const latestSummary = useMemo(() => safeJsonParse<unknown>(latest?.summaryJson ?? null), [latest]);
+  const latestSummary = useMemo(() => safeJsonParse<OpsSummary>(latest?.summaryJson ?? null), [latest]);
 
   return (
     <PageTransition>
@@ -162,7 +170,7 @@ export default function OperacoesPage() {
 
                     {latestSummary?.checks ? (
                       <div className="grid gap-2">
-                        {(latestSummary.checks as Array<{name: string; ok: boolean; durationMs: number}>).map((c, idx) => (
+                        {latestSummary.checks.map((c, idx) => (
                           <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">{c.name}</span>
                             <div className="flex items-center gap-2">

@@ -101,7 +101,7 @@ export default function CategoriasPage() {
       // Calcular KPIs
       setStats({
         total: catArray.length,
-        income: catArray.filter((c: FinancialCategory) => c.type === "INCOME" || c.type === "REVENUE").length,
+        income: catArray.filter((c: FinancialCategory) => c.type === "INCOME").length,
         expense: catArray.filter((c: FinancialCategory) => c.type === "EXPENSE").length,
         active: catArray.filter((c: FinancialCategory) => c.status === "ACTIVE").length,
       });
