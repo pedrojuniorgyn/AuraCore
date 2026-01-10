@@ -1,4 +1,4 @@
-import { db, getFirstRowOrThrow, getDbRows } from "@/lib/db";
+import { db, getFirstRowOrThrow, getDbRows, type DbExecuteResult } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -91,7 +91,7 @@ export async function generateJournalEntry(
         AND fdi.deleted_at IS NULL
     `);
 
-    const itemsData = getDbRows<FiscalDocumentItemRow>(items);
+    const itemsData = getDbRows<FiscalDocumentItemRow>(items as unknown as DbExecuteResult<FiscalDocumentItemRow>);
     if (itemsData.length === 0) {
       throw new Error("Documento sem itens para contabilizar");
     }
@@ -126,7 +126,7 @@ export async function generateJournalEntry(
       SELECT SCOPE_IDENTITY() AS id;
     `);
 
-    const entry = getFirstRowOrThrow<JournalEntryRow>(entryResult, 'Failed to create journal entry (SCOPE_IDENTITY not returned)');
+    const entry = getFirstRowOrThrow<JournalEntryRow>(entryResult as unknown as DbExecuteResult<JournalEntryRow>, 'Failed to create journal entry (SCOPE_IDENTITY not returned)');
     const journalEntryId = entry.id;
 
     // 5. Criar linhas (partidas)
@@ -143,7 +143,7 @@ export async function generateJournalEntry(
             AND deleted_at IS NULL
         `);
 
-        const accountData = getDbRows<AccountRow>(accountResult);
+        const accountData = getDbRows<AccountRow>(accountResult as unknown as DbExecuteResult<AccountRow>);
         if (accountData.length === 0) {
           throw new Error(`Conta contábil ${item.chart_account_id} não encontrada`);
         }
@@ -162,7 +162,7 @@ export async function generateJournalEntry(
             ORDER BY code ASC
           `);
 
-          const analyticalAccounts = getDbRows<{ code: string; name: string }>(analyticalAccountsResult);
+          const analyticalAccounts = getDbRows<{ code: string; name: string }>(analyticalAccountsResult as unknown as DbExecuteResult<{ code: string; name: string }>);
           const analyticalList = analyticalAccounts
             .map(a => `• ${a.code} - ${a.name}`)
             .join('\n');
@@ -212,7 +212,7 @@ export async function generateJournalEntry(
       ORDER BY code ASC
     `);
 
-    const creditAccountData = getDbRows<AccountRow>(creditAccountResult);
+    const creditAccountData = getDbRows<AccountRow>(creditAccountResult as unknown as DbExecuteResult<AccountRow>);
     if (creditAccountData.length > 0) {
       const creditAccount = creditAccountData[0];
 
@@ -281,7 +281,7 @@ export async function reverseJournalEntry(
       SELECT * FROM journal_entries WHERE id = ${journalEntryId}
     `);
 
-    const entryData = getDbRows<JournalEntryRow>(entryResult);
+    const entryData = getDbRows<JournalEntryRow>(entryResult as unknown as DbExecuteResult<JournalEntryRow>);
     if (entryData.length === 0) {
       throw new Error("Lançamento não encontrado");
     }

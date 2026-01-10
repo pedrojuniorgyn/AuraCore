@@ -178,18 +178,20 @@ export async function processSefazResponse(
               console.log("⚠️  CTe duplicado (já existe no sistema)");
             }
           } catch (cteError: unknown) {
-            console.error(`❌ Erro ao importar CTe:`, cteError.message);
+            const cteErrorMsg = cteError instanceof Error ? cteError.message : String(cteError);
+            console.error(`❌ Erro ao importar CTe:`, cteErrorMsg);
             result.errors++;
-            result.errorMessages.push(`CTe: ${cteError.message}`);
+            result.errorMessages.push(`CTe: ${cteErrorMsg}`);
           }
         } else {
           console.log(`⚠️  Tipo de documento não suportado: ${schema}`);
         }
 
       } catch (docError: unknown) {
-        console.error(`❌ Erro ao processar documento:`, docError.message);
+        const docErrorMsg = docError instanceof Error ? docError.message : String(docError);
+        console.error(`❌ Erro ao processar documento:`, docErrorMsg);
         result.errors++;
-        result.errorMessages.push(docError.message);
+        result.errorMessages.push(docErrorMsg);
       }
     }
 
@@ -483,7 +485,8 @@ async function importNFeAutomatically(
 
   } catch (error: unknown) {
     // Se chegou aqui, é erro real (não duplicata)
-    throw new Error(`Falha ao importar NFe: ${error.message}`);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Falha ao importar NFe: ${errorMsg}`);
   }
 }
 
@@ -656,7 +659,8 @@ async function importExternalCTe(
 
   } catch (error: unknown) {
     // Se chegou aqui, é erro real (não duplicata)
-    throw new Error(`Falha ao importar CTe externo: ${error.message}`);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Falha ao importar CTe externo: ${errorMsg}`);
   }
 }
 
