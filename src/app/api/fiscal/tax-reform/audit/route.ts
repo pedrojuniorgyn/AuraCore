@@ -58,7 +58,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Executar Use Case
-    const useCase = new AuditTaxTransitionUseCase();
+    const useCase = new AuditTaxTransitionUseCase({
+      generate: () => crypto.randomUUID()
+    });
 
     const result = await useCase.execute(
       {

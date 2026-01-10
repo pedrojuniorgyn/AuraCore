@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         const defaultBranchId = branchIds.length > 0 ? branchIds[0] : null;
         const primaryRole = roleName?.toUpperCase?.() === "ADMIN" ? "ADMIN" : "USER";
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await db.insert(users).values({
           id: userId,
           organizationId: ctx.organizationId,
@@ -110,7 +111,8 @@ export async function POST(request: NextRequest) {
           createdAt: new Date(),
           updatedAt: new Date(),
           deletedAt: null,
-        } as unknown);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
       }
 
       // 4) Garantir vínculo user_roles (idempotente)

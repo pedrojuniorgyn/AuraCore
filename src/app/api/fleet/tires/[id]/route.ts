@@ -212,7 +212,7 @@ export async function DELETE(
     }
 
     // Validar se pneu está instalado em veículo
-    const existingData = (existing.recordset || existing) as Array<{ status?: string; currentVehicleId?: number }>;
+    const existingData = existing as unknown as Array<{ status?: string; currentVehicleId?: number }>;
     if (existingData[0]?.status === "INSTALLED" && existingData[0]?.currentVehicleId) {
       return NextResponse.json(
         { error: "Pneu está instalado em um veículo. Remova-o antes de excluir." },

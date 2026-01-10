@@ -80,6 +80,9 @@ export async function POST(
 
       // 5. Autorizar na Sefaz
       console.log(`🚀 Autorizando CTe #${cteId} na Sefaz...`);
+      if (!ctx.branchId) {
+        return NextResponse.json({ error: "branchId obrigatório" }, { status: 400 });
+      }
       const resultado = await cteAuthorizationService.autorizarCTe(
         cteId,
         xmlSemAssinatura,

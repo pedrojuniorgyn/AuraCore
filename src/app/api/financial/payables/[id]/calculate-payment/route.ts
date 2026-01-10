@@ -50,7 +50,7 @@ export async function GET(
 
     // Calcular automaticamente
     const calculation = calculatePayment({
-      originalAmount: parseFloat(payable.amount as unknown),
+      originalAmount: parseFloat(String(payable.amount)),
       dueDate: new Date(payable.dueDate),
       paymentDate: new Date(paymentDate),
     });

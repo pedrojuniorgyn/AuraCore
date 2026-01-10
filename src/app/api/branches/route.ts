@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     const legacyColCheck = await pool.request().query(`
       SELECT COL_LENGTH('dbo.branches', 'legacy_company_branch_code') as col;
     `);
-    const legacyColExists = (legacyColCheck.recordset?.[0] as unknown)?.col != null;
+    const legacyColExists = (legacyColCheck.recordset?.[0] as Record<string, unknown>)?.col != null;
 
     // Verifica se CNPJ já existe nesta organização (e não está deletado)
     const existingBranch = await db

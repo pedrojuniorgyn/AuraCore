@@ -115,7 +115,7 @@ export async function GET() {
     }
     
     const result = await db.execute(rawSql`SELECT COUNT(*) as total FROM fiscal_documents`);
-    const rows = getDbRows<CountRow>(result);
+    const rows = getDbRows<CountRow>(result as unknown as { recordset?: CountRow[] });
     const total = rows[0]?.total || 0;
     
     console.log(`\n✅ Migração concluída! Total: ${total} documentos\n`);

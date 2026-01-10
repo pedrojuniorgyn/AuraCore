@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
             total: 0,
           };
         }
-        expensesByAccount[key].total += exp.amount || 0;
+        expensesByAccount[key].total += Number(exp.amount) || 0;
       });
 
       return NextResponse.json({

@@ -34,7 +34,7 @@ export async function GET() {
         AND xml_content IS NOT NULL
     `);
     
-    const nfes = getDbRows<NfeRow>(result);
+    const nfes = getDbRows<NfeRow>(result as unknown as { recordset?: NfeRow[] });
     
     for (const doc of nfes) {
       try {

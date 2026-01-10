@@ -80,7 +80,8 @@ export async function POST(
         corrections: JSON.stringify(corrections),
         status: "PENDING", // TODO: Enviar para Sefaz
         createdBy: ctx.userId,
-      } as unknown);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
       const [created] = await db
         .select({ id: cteCorrectionLetters.id })

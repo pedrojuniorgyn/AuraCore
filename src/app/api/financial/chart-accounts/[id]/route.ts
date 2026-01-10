@@ -214,8 +214,8 @@ export async function PUT(
       entityType: "CHART_ACCOUNT",
       entityId: id,
       operation: "UPDATE",
-      oldData: existing[0],
-      newData: updated,
+      oldData: existing[0] as unknown as Record<string, unknown>,
+      newData: updated as unknown as Record<string, unknown>,
       changedBy: updatedBy,
     }).catch(console.error);
 

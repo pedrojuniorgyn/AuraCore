@@ -152,7 +152,7 @@ export async function PUT(
     }
 
     // Não permitir que usuário mude seu próprio role para ADMIN
-    const existingData = (existing.recordset || existing) as Array<{ role?: string }>;
+    const existingData = existing as unknown as Array<{ role?: string }>;
     if (session.user.id === userId && body.role === "ADMIN" && existingData[0]?.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Você não pode promover a si mesmo para administrador" },

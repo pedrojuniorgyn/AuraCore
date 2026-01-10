@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
 
     if (!results.checks.fiscal_settings) {
       results.diagnosis.recommendations.push("Configurar fiscal_settings em /configuracoes/fiscal");
-    } else if (results.checks.fiscal_settings.auto_import_enabled !== "S") {
+    } else if ((results.checks.fiscal_settings as Record<string, unknown>).auto_import_enabled !== "S") {
       results.diagnosis.recommendations.push("Habilitar auto-import nas configurações fiscais");
     }
 

@@ -99,7 +99,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Erro ao criar ordem de coleta",
-          details: workflowError.message,
+          details: workflowError instanceof Error ? workflowError.message : String(workflowError),
         },
         { status: 500 }
       );
