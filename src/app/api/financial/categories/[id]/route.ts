@@ -54,7 +54,8 @@ export async function PUT(
         )
       );
 
-    const rows = (result as unknown)?.rowsAffected?.[0] ?? 0;
+    const rows = (result as Record<string, unknown>).rowsAffected as number[] | undefined;
+    const rowCount = rows?.[0] ?? 0;
     if (rows === 0) {
       return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
     }

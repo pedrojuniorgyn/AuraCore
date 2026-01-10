@@ -136,7 +136,7 @@ export async function PUT(
       })
       .where(and(eq(vehicleDocuments.id, documentId), eq(vehicleDocuments.organizationId, ctx.organizationId)));
 
-    const rowsAffectedRaw = (updateResult as unknown)?.rowsAffected;
+    const rowsAffectedRaw = (updateResult as Record<string, unknown>).rowsAffected;
     const rowsAffected = Array.isArray(rowsAffectedRaw)
       ? Number(rowsAffectedRaw[0] ?? 0)
       : Number(rowsAffectedRaw ?? 0);

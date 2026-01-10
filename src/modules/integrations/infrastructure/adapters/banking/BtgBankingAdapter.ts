@@ -15,8 +15,18 @@ import type {
 } from '../../../domain/ports/output/IBankingGateway';
 
 // Importar serviços BTG existentes
-import { generateBTGBoleto, getBTGBoletoStatus, cancelBTGBoleto } from '@/services/btg/btg-boleto';
-import { createBTGPixCharge, getBTGPixCharge, cancelBTGPixCharge } from '@/services/btg/btg-pix';
+import { 
+  generateBTGBoleto, 
+  getBTGBoletoStatus, 
+  cancelBTGBoleto,
+  type BoletoResponse as BtgBoletoResponse 
+} from '@/services/btg/btg-boleto';
+import { 
+  createBTGPixCharge, 
+  getBTGPixCharge, 
+  cancelBTGPixCharge,
+  type PixChargeResponse as BtgPixChargeResponse 
+} from '@/services/btg/btg-pix';
 import { getBTGAccessToken } from '@/services/btg/btg-auth';
 
 /**
@@ -47,7 +57,7 @@ export class BtgBankingAdapter implements IBankingGateway {
       };
 
       // Chamar serviço BTG
-      const response = await generateBTGBoleto(boletoRequest);
+      const response: BtgBoletoResponse = await generateBTGBoleto(boletoRequest);
 
       // Mapear resposta para Value Object
       const amountResult = Money.create(response.valor, 'BRL');
@@ -84,7 +94,7 @@ export class BtgBankingAdapter implements IBankingGateway {
   async queryBankSlipStatus(slipId: string): Promise<Result<BankSlipResponse, string>> {
     try {
       await this.ensureAuthenticated();
-      const response = await getBTGBoletoStatus(slipId);
+      const response: BtgBoletoResponse = await getBTGBoletoStatus(slipId);
 
       const amountResult = Money.create(response.valor, 'BRL');
       if (!Result.isOk(amountResult)) {
@@ -150,7 +160,7 @@ export class BtgBankingAdapter implements IBankingGateway {
   async queryPixChargeStatus(txId: string): Promise<Result<PixChargeResponse, string>> {
     try {
       await this.ensureAuthenticated();
-      const response = await getBTGPixCharge(txId);
+      const response: BtgPixChargeResponse = await getBTGPixCharge(txId);
 
       const amountResult = Money.create(response.valor, 'BRL');
       if (!Result.isOk(amountResult)) {
