@@ -272,7 +272,7 @@ export default function MatrizTributariaPage() {
                 <div className="text-green-400 font-bold mb-2">✅ Regra Encontrada: {simResult.rule}</div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                   <div><span className="text-gray-400">CST:</span> <span className="text-white">{simResult.cst} - Tributação Normal</span></div>
-                  <div><span className="text-gray-400">ICMS:</span> <span className="text-white">{simResult.icms}% = R$ {simResult.total.toFixed(2)}</span></div>
+                  <div><span className="text-gray-400">ICMS:</span> <span className="text-white">{simResult.icms}% = R$ {(simResult.total ?? 0).toFixed(2)}</span></div>
                   <div><span className="text-gray-400">FCP:</span> <span className="text-white">{simResult.fcp}% = R$ 0,00</span></div>
                   <div><span className="text-gray-400">DIFAL:</span> <span className="text-white">Não Aplicável</span></div>
                   <div className="col-span-2"><span className="text-gray-400">Base Legal:</span> <span className="text-white">{simResult.legal}</span></div>

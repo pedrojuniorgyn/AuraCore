@@ -205,7 +205,7 @@ export class JournalEntriesController {
 
       const useCase = container.resolve(ReverseJournalEntryUseCase);
       const result = await useCase.execute(
-        { journalEntryId: params.id, reason: body.reason, ...ctx }
+        { journalEntryId: BigInt(params.id), reason: body.reason, ...ctx }
       );
 
       if (Result.isFail(result)) {

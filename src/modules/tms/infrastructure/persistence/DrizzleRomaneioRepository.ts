@@ -207,23 +207,24 @@ export class DrizzleRomaneioRepository implements IRomaneioRepository {
         : baseQuery;
 
       // Aplicar limit se fornecido (SQL nativo para compatibilidade)
-      let romaneioRows;
+      let romaneioRows: unknown[];
       if (filters.limit !== undefined) {
         // Usar TOP no SQL Server via query nativa limitada
-        const limitedQuery = queryWithOffset as { limit: (n: number) => Promise<unknown[]> };
+        const limitedQuery = queryWithOffset as unknown as { limit: (n: number) => Promise<unknown[]> };
         romaneioRows = await limitedQuery.limit(filters.limit);
       } else {
-        romaneioRows = await queryWithOffset;
+        romaneioRows = await queryWithOffset as unknown[];
       }
 
       // Carregar itens para cada romaneio
       const romaneiosResult: RomaneioDocument[] = [];
 
       for (const romaneioRow of romaneioRows) {
+        const row = romaneioRow as { id: number };
         const itemRows = await db
           .select()
           .from(romaneioItems)
-          .where(eq(romaneioItems.romaneioId, romaneioRow.id))
+          .where(eq(romaneioItems.romaneioId, row.id))
           .orderBy(romaneioItems.sequencia);
 
         // Mapper items
