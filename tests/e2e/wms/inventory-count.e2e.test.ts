@@ -15,7 +15,7 @@ describe('WMS Inventory Count API', () => {
       name: 'Inventory Test Warehouse',
       type: 'WAREHOUSE',
     });
-    locationId = locResponse.body.id;
+    locationId = (locResponse.body as { id: string }).id;
     productId = 'test-product-inv-001';
 
     // Create initial stock
@@ -44,7 +44,7 @@ describe('WMS Inventory Count API', () => {
       expect(response.body.id).toBeDefined();
       expect(response.body.status).toBe('PENDING');
       expect(response.body.expectedQuantity).toBe(100);
-      inventoryCountId = response.body.id;
+      inventoryCountId = (response.body as { id: string }).id;
     });
 
     it('should return 409 for duplicate inventory count', async () => {

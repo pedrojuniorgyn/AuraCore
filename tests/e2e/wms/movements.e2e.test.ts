@@ -25,7 +25,7 @@ describe('WMS Movements API', () => {
       const response = await ctx.api.get('/api/wms/movements?type=ENTRY');
 
       expect(response.status).toBe(200);
-      response.body.items.forEach((item: { type: string }) => {
+      (response.body as { items: Array<{ type: string }> }).items.forEach((item) => {
         expect(item.type).toBe('ENTRY');
       });
     });

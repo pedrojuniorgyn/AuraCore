@@ -15,7 +15,7 @@ describe('WMS Stock Operations API', () => {
       name: 'Stock Test Warehouse',
       type: 'WAREHOUSE',
     });
-    locationId = locResponse.body.id;
+    locationId = (locResponse.body as { id: string }).id;
     productId = 'test-product-001';
   });
 
@@ -37,7 +37,7 @@ describe('WMS Stock Operations API', () => {
       expect(response.status).toBe(201);
       expect(response.body.stockItemId).toBeDefined();
       expect(response.body.quantity).toBe(100);
-      stockItemId = response.body.stockItemId;
+      stockItemId = (response.body as { stockItemId: string }).stockItemId;
     });
 
     it('should return 400 for negative quantity', async () => {
@@ -87,7 +87,7 @@ describe('WMS Stock Operations API', () => {
         name: 'Destination Warehouse',
         type: 'WAREHOUSE',
       });
-      destinationLocationId = locResponse.body.id;
+      destinationLocationId = (locResponse.body as { id: string }).id;
     });
 
     it('should transfer stock between locations', async () => {

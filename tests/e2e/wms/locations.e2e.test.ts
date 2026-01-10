@@ -26,7 +26,7 @@ describe('WMS Locations API', () => {
       expect(response.body.id).toBeDefined();
       expect(response.body.code).toBe('WH-TEST-001');
       expect(response.body.type).toBe('WAREHOUSE');
-      warehouseId = response.body.id;
+      warehouseId = (response.body as { id: string }).id;
     });
 
     it('should create an AISLE with parentId', async () => {
@@ -40,7 +40,7 @@ describe('WMS Locations API', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.parentId).toBe(warehouseId);
-      aisleId = response.body.id;
+      aisleId = (response.body as { id: string }).id;
     });
 
     it('should return 400 for AISLE without parentId', async () => {
@@ -83,7 +83,7 @@ describe('WMS Locations API', () => {
       const response = await ctx.api.get('/api/wms/locations?type=WAREHOUSE');
 
       expect(response.status).toBe(200);
-      response.body.items.forEach((item: { type: string }) => {
+      (response.body as { items: Array<{ type: string }> }).items.forEach((item) => {
         expect(item.type).toBe('WAREHOUSE');
       });
     });

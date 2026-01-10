@@ -23,11 +23,16 @@ interface FiscalDocument {
 
 interface DocumentItem {
   id: number;
+  itemNumber?: number;
   productCode: string;
   description: string;
   quantity: number;
   unitPrice: number;
   totalValue: number;
+  totalPrice?: number;
+  ncm?: string;
+  unit?: string;
+  categoryId?: number;
   fiscalCategoryId?: number;
   chartAccountId?: number;
   costCenterId?: number;
