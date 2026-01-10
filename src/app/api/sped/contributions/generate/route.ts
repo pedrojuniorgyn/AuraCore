@@ -114,7 +114,7 @@ export async function POST(req: Request) {
     console.log(`✅ SPED Contributions gerado com sucesso: ${fileName}`);
 
     // 10. Retornar arquivo
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         'Content-Type': 'text/plain; charset=ISO-8859-1',

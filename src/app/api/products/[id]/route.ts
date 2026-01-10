@@ -188,7 +188,7 @@ export async function PUT(
 
     // Se houve corrida entre SELECT e UPDATE, o UPDATE pode afetar 0 linhas.
     // Precisamos detectar e retornar 409 (em vez de "sucesso" silencioso).
-    const rowsAffectedRaw = (updateResult as unknown)?.rowsAffected;
+    const rowsAffectedRaw = (updateResult as unknown as Record<string, unknown>).rowsAffected;
     const rowsAffected = Array.isArray(rowsAffectedRaw)
       ? Number(rowsAffectedRaw[0] ?? 0)
       : Number(rowsAffectedRaw ?? 0);

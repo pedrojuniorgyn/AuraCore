@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     // Gerar nome do arquivo
     const fileName = `SPED_FISCAL_${String(month).padStart(2, '0')}_${year}.txt`;
 
-    return new NextResponse(spedBuffer, {
+    return new NextResponse(new Uint8Array(spedBuffer), {
       status: 200,
       headers: {
         "Content-Type": "text/plain; charset=ISO-8859-1",

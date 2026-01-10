@@ -55,7 +55,7 @@ export async function PUT(
       )
       ;
 
-    const rowsAffectedRaw = (updateResult as Record<string, unknown>).rowsAffected;
+    const rowsAffectedRaw = (updateResult as unknown as Record<string, unknown>).rowsAffected;
     const rowsAffected = Array.isArray(rowsAffectedRaw)
       ? Number(rowsAffectedRaw[0] ?? 0)
       : Number(rowsAffectedRaw ?? 0);

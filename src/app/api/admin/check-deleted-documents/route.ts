@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       ORDER BY id DESC
     `);
 
-    const documents = (allDocuments.recordset || allDocuments) as FiscalDocumentRow[];
+    const documents = (allDocuments.recordset || allDocuments) as unknown as FiscalDocumentRow[];
 
     // Separar ativos e deletados
     const active = documents.filter((d) => !d.deletedAt);

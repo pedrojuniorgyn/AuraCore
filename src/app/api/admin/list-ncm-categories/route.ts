@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       chartAccountName?: string;
       chartAccountCode?: string;
     }
-    const ncms = result.recordset as NcmRow[];
+    const ncms = result.recordset as unknown as NcmRow[];
 
     return NextResponse.json({
       total: ncms.length,

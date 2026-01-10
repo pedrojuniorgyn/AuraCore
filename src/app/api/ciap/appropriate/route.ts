@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     `);
 
     interface RevenueData { total_revenue: number; exempt_revenue: number; }
-    const revenueDataArray = (revenues.recordset || revenues) as Array<RevenueData>;
+    const revenueDataArray = (revenues.recordset || revenues) as unknown as Array<RevenueData>;
     const revenueData = revenueDataArray[0] || { total_revenue: 0, exempt_revenue: 0 };
     const totalRevenue = revenueData.total_revenue || 3850000;
     const exemptRevenue = revenueData.exempt_revenue || 570000;
