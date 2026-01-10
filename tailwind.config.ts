@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+// @ts-expect-error - tailwindcss internal module without types
 import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 import tailwindcssAnimate from "tailwindcss-animate";
 
@@ -94,6 +95,7 @@ const config: Config = {
   },
   plugins: [
     tailwindcssAnimate,
+    // @ts-expect-error - plugin function signature mismatch with Tailwind types
     addVariablesForColors,
   ],
 };
