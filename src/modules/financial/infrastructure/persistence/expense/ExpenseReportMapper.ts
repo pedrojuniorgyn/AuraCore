@@ -2,7 +2,7 @@ import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 import { ExpenseReport, ExpenseReportProps } from '../../../domain/entities/expense/ExpenseReport';
 import { ExpenseItem, ExpenseItemProps } from '../../../domain/entities/expense/ExpenseItem';
-import { Advance, AdvanceProps } from '../../../domain/value-objects/expense/Advance';
+import { Advance, AdvanceProps, type AdvanceApprovalStatus } from '../../../domain/value-objects/expense/Advance';
 import { ExpenseReportStatus } from '../../../domain/value-objects/expense/ExpenseReportStatus';
 import { ExpenseCategory } from '../../../domain/value-objects/expense/ExpenseCategory';
 import { ComprovanteType } from '../../../domain/entities/expense/ExpenseItem';
@@ -201,7 +201,7 @@ export class ExpenseReportMapper {
         const advanceProps: AdvanceProps = {
           valorSolicitado: valorSolicitadoResult.value,
           dataSolicitacao: persistence.advanceDataSolicitacao,
-          statusAprovacao: persistence.advanceStatusAprovacao as unknown,
+          statusAprovacao: persistence.advanceStatusAprovacao as AdvanceApprovalStatus,
           valorAprovado,
           dataLiberacao: persistence.advanceDataLiberacao || undefined,
           aprovadorId: persistence.advanceAprovadorId || undefined,

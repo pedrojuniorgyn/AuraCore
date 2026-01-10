@@ -14,9 +14,10 @@ import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJourn
  */
 export function registerAccountingModule(): void {
   // Repository
-  container.registerSingleton<IJournalEntryRepository>(
+  container.register<IJournalEntryRepository>(
     TOKENS.JournalEntryRepository,
-    DrizzleJournalEntryRepository
+    { useClass: DrizzleJournalEntryRepository },
+    { lifecycle: 'singleton' }
   );
 
   // Use Cases

@@ -205,14 +205,14 @@ export class JournalEntriesController {
 
       const useCase = container.resolve(ReverseJournalEntryUseCase);
       const result = await useCase.execute(
-        { journalEntryId: params.id, reason: body.reason },
-        ctx
+        { journalEntryId: params.id, reason: body.reason, ...ctx }
       );
 
       if (Result.isFail(result)) {
-        const status = result.error.includes('not found') ? 404 : 400;
+        const errorMessage = result.error instanceof Error ? result.error.message : String(result.error);
+        const status = errorMessage.includes('not found') ? 404 : 400;
         return NextResponse.json(
-          { error: result.error },
+          { error: errorMessage },
           { status }
         );
       }
