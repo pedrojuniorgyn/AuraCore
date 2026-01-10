@@ -78,6 +78,6 @@ export function getAllContracts() {
 }
 
 export function getContractsByCategory(category: string) {
-  return Object.values(contracts).filter(c => c.category === category);
+  return Object.values(contracts).filter(c => 'category' in c && c.category === category);
 }
 
