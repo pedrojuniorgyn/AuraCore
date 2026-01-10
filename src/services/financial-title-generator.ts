@@ -1,4 +1,4 @@
-import { db, getFirstRowOrThrow, getDbRows } from "@/lib/db";
+import { db, getFirstRowOrThrow, getDbRows, type DbExecuteResult } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
   fiscalDocuments,
@@ -130,7 +130,7 @@ export async function generatePayableFromNFe(
       amount: string;
     }
 
-    const payableRow = getFirstRowOrThrow<PayableRow>(createdPayable, 'Failed to retrieve created payable');
+    const payableRow = getFirstRowOrThrow<PayableRow>(createdPayable as unknown as DbExecuteResult<PayableRow>, 'Failed to retrieve created payable');
     const payableId = payableRow.id;
     const amount = parseFloat(payableRow.amount);
 
@@ -159,12 +159,13 @@ export async function generatePayableFromNFe(
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar Conta a Pagar:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
       titlesGenerated: 0,
       totalAmount: 0,
       titles: [],
-      error: error.message,
+      error: errorMessage,
     };
   }
 }
@@ -269,7 +270,7 @@ export async function generateReceivableFromCTe(
       amount: string;
     }
 
-    const receivableRow = getFirstRowOrThrow<ReceivableRow>(createdReceivable, 'Failed to retrieve created receivable');
+    const receivableRow = getFirstRowOrThrow<ReceivableRow>(createdReceivable as unknown as DbExecuteResult<ReceivableRow>, 'Failed to retrieve created receivable');
     const receivableId = receivableRow.id;
     const amount = parseFloat(receivableRow.amount);
 
@@ -298,12 +299,13 @@ export async function generateReceivableFromCTe(
     };
   } catch (error: unknown) {
     console.error("❌ Erro ao gerar Conta a Receber:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
       titlesGenerated: 0,
       totalAmount: 0,
       titles: [],
-      error: error.message,
+      error: errorMessage,
     };
   }
 }
@@ -382,7 +384,8 @@ export async function reverseTitles(
     return { success: true };
   } catch (error: unknown) {
     console.error("❌ Erro ao reverter títulos:", error);
-    return { success: false, error: error.message };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { success: false, error: errorMessage };
   }
 }
 
