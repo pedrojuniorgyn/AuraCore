@@ -37,7 +37,7 @@ import { Badge } from "@/components/ui/badge";
 interface FinancialCategory {
   id: number;
   name: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "REVENUE" | "EXPENSE";
   code: string | null;
   description: string | null;
   status: string;
@@ -58,7 +58,7 @@ export default function CategoriasPage() {
   const [formData, setFormData] = useState({
     name: "",
     code: "",
-    type: "EXPENSE" as "INCOME" | "EXPENSE",
+    type: "EXPENSE" as "INCOME" | "REVENUE" | "EXPENSE",
     description: "",
   });
 
@@ -101,7 +101,7 @@ export default function CategoriasPage() {
       // Calcular KPIs
       setStats({
         total: catArray.length,
-        income: catArray.filter((c: FinancialCategory) => c.type === "INCOME").length,
+        income: catArray.filter((c: FinancialCategory) => c.type === "INCOME" || c.type === "REVENUE").length,
         expense: catArray.filter((c: FinancialCategory) => c.type === "EXPENSE").length,
         active: catArray.filter((c: FinancialCategory) => c.status === "ACTIVE").length,
       });
