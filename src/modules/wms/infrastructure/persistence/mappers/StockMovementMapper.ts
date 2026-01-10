@@ -14,7 +14,7 @@ import type { WmsStockMovementPersistence } from '../schemas/StockMovementSchema
  */
 
 export class StockMovementMapper {
-  static toDomain(persistence: WmsStockMovementPersistence): Result<StockMovement> {
+  static toDomain(persistence: WmsStockMovementPersistence): Result<StockMovement, string> {
     // Reconstituir MovementType
     const typeResult = MovementType.reconstitute(persistence.type as MovementTypeEnum);
     if (!Result.isOk(typeResult)) {

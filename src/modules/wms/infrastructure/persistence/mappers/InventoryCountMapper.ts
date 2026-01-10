@@ -12,7 +12,7 @@ import type { WmsInventoryCountPersistence } from '../schemas/InventoryCountSche
  */
 
 export class InventoryCountMapper {
-  static toDomain(persistence: WmsInventoryCountPersistence): Result<InventoryCount> {
+  static toDomain(persistence: WmsInventoryCountPersistence): Result<InventoryCount, string> {
     // Reconstituir systemQuantity
     const systemQtyResult = StockQuantity.reconstitute(
       parseFloat(String(persistence.systemQuantity)),

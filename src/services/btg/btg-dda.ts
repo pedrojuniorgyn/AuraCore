@@ -39,9 +39,10 @@ export async function listBTGDDAs(companyId: string): Promise<DDAAuthorized[]> {
       `/v1/companies/${companyId}/authorized-direct-debits`
     );
 
-    console.log(`✅ ${response.data?.length || 0} DDAs encontrados`);
+    const dataArray = Array.isArray(response.data) ? response.data : [];
+    console.log(`✅ ${dataArray.length} DDAs encontrados`);
 
-    return response.data || [];
+    return dataArray as DDAAuthorized[];
   } catch (error) {
     console.error("❌ Erro ao listar DDAs BTG:", error);
     throw error;
@@ -76,9 +77,10 @@ export async function listBTGDDADebits(
 
     const response = await btgGet<Record<string, unknown>>(url);
 
-    console.log(`✅ ${response.data?.length || 0} débitos encontrados`);
+    const dataArray = Array.isArray(response.data) ? response.data : [];
+    console.log(`✅ ${dataArray.length} débitos encontrados`);
 
-    return response.data || [];
+    return dataArray as DDADebit[];
   } catch (error) {
     console.error("❌ Erro ao listar débitos DDA BTG:", error);
     throw error;
@@ -121,7 +123,7 @@ export async function getBTGDDADebitsummary(companyId: string): Promise<Record<s
 
     console.log("✅ Resumo obtido:", response);
 
-    return response.data || {};
+    return (response.data as Record<string, unknown>) || {};
   } catch (error) {
     console.error("❌ Erro ao obter resumo DDA BTG:", error);
     throw error;
