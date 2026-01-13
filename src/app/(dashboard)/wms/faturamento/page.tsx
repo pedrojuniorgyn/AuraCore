@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
+import type { ICellRendererParams, ValueFormatterParams, ColDef } from 'ag-grid-community';
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
@@ -161,7 +161,7 @@ export default function WMSFaturamentoPage() {
     }
   };
 
-  const eventsColumnDefs = [
+  const eventsColumnDefs: ColDef[] = [
     { field: 'date', headerName: 'Data', width: 120 },
     { field: 'customer', headerName: 'Cliente', width: 200 },
     { 
@@ -190,13 +190,13 @@ export default function WMSFaturamentoPage() {
       field: 'status', 
       headerName: 'Status', 
       width: 120,
-      cellStyle: (params: ICellRendererParams) => ({
+      cellStyle: (params) => ({
         color: params.value === 'PENDING' ? '#f59e0b' : '#10b981'
       })
     }
   ];
 
-  const invoicesColumnDefs = [
+  const invoicesColumnDefs: ColDef[] = [
     { field: 'period', headerName: 'Período', width: 120 },
     { field: 'customer', headerName: 'Cliente', width: 180 },
     { 

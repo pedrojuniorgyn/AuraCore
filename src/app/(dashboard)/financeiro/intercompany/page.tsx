@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
-import type { ValueFormatterParams } from "ag-grid-community";
+import type { ValueFormatterParams, ColDef } from "ag-grid-community";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -108,14 +108,14 @@ export default function IntercompanyPage() {
     }
   };
 
-  const rulesColumnDefs = [
+  const rulesColumnDefs: ColDef[] = [
     { field: 'name', headerName: 'Nome Regra', width: 250, pinned: 'left' as const },
     { field: 'origin', headerName: 'Origem', width: 150 },
     { field: 'method', headerName: 'Método', width: 150 },
     { field: 'frequency', headerName: 'Frequência', width: 150 }
   ];
 
-  const historyColumnDefs = [
+  const historyColumnDefs: ColDef[] = [
     { field: 'period', headerName: 'Período', width: 120 },
     { field: 'rule', headerName: 'Regra', width: 200 },
     { 

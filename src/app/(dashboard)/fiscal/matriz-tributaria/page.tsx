@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
-import type { ValueFormatterParams, CellClassParams } from "ag-grid-community";
+import type { ValueFormatterParams, CellClassParams, ColDef } from "ag-grid-community";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -114,7 +114,7 @@ export default function MatrizTributariaPage() {
     }
   };
 
-  const columnDefs = [
+  const columnDefs: ColDef[] = [
     { field: 'route', headerName: 'Rota', width: 150, pinned: 'left' as const },
     { field: 'cargo', headerName: 'Carga', width: 120 },
     { field: 'contributor', headerName: 'Contrib', width: 100 },
