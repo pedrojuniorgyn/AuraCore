@@ -346,6 +346,45 @@ git log --oneline --grep="fix(types)" --since="2025-12-27" --until="2026-01-10" 
 
 ---
 
+## 💡 DÍVIDA TÉCNICA IDENTIFICADA
+
+### 1. Schemas Duplicados: fiscal_documents
+
+**Problema:**  
+Existem duas definições conflitantes da tabela `fiscal_documents`:
+
+| Schema | Localização | Tipo ID | Uso |
+|--------|-------------|---------|-----|
+| **Antigo (Legacy)** | `src/lib/db/schema/accounting.ts` | `bigint mode:number` | Repositories atuais |
+| **DDD (Novo)** | `src/modules/fiscal/.../FiscalDocumentSchema.ts` | `char(36) UUID` | Módulos DDD |
+
+**Impacto:**
+- Repositórios que importam de `@/lib/db/schema` usam `bigint` e fazem `Number(fiscalDocumentId)` ✅ CORRETO
+- Novos módulos DDD usam UUID string
+- Durante E7.15, uma issue foi reportada como "bug" mas era **FALSO POSITIVO**
+- O código atual está correto para o schema que está usando
+
+**Exemplo Correto:**
+```typescript
+// src/modules/financial/infrastructure/persistence/DrizzleFinancialTitleRepository.ts
+import { fiscalDocuments } from "@/lib/db/schema"; // Schema antigo - bigint
+
+// ✅ CORRETO para schema antigo
+eq(fiscalDocuments.id, Number(fiscalDocumentId))
+```
+
+**Recomendação:**
+- **Escopo:** E7.x (migração DDD completa), **não** E7.15
+- Unificar para UUID string em toda codebase durante migração DDD
+- Atualizar todos os repositories para usar schema DDD unificado
+- Criar ADR documentando estratégia de migração
+
+**Status E7.15:**
+✅ Type safety garantida para os schemas atualmente em uso.  
+✅ Nenhum bug real identificado relacionado a tipos.
+
+---
+
 ## ✍️ ASSINATURAS
 
 **Relatório Preparado Por:**  
@@ -372,6 +411,6 @@ Pedro Lemes - Product Owner
 
 ---
 
-**Versão:** 1.0.0  
-**Última Atualização:** 10/01/2026  
+**Versão:** 1.1.0  
+**Última Atualização:** 13/01/2026  
 **Status:** ✅ FINAL
