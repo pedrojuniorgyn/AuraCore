@@ -427,7 +427,9 @@ export class BtgDdaService {
         throw new Error(`Conta bancária ${this.bankAccountId} não encontrada`);
       }
 
-      const branchId = bankAccount.branchId ?? 1; // Fallback para branch principal apenas se conta não tiver branch específico
+      // Multi-tenancy: Conta com branchId específico usa ele, conta compartilhada (branchId null) usa filial principal
+      // NOTA: Contas compartilhadas são válidas no schema e processam DDA para a filial principal da organização
+      const branchId = bankAccount.branchId ?? 1;
 
       // Criar Conta a Pagar
       const payableData: typeof accountsPayable.$inferInsert = {

@@ -115,7 +115,7 @@ export async function withPermission<T>(
         durationMs,
         userId: session.user.id,
         organizationId: (session.user as SessionUser).organizationId,
-        branchId: ((session.user as SessionUser).branchId ?? (session.user as SessionUser).defaultBranchId ?? null),
+        branchId: ((session.user as SessionUser).branchId ?? (session.user as SessionUser).defaultBranchId ?? null), // Para auditoria, pode ser null
         permission: permissionCode,
       });
       log("warn", "api.forbidden", {
@@ -153,7 +153,9 @@ export async function withPermission<T>(
       isAdmin,
       defaultBranchId,
       allowedBranches,
-      // Compatibilidade: alguns handlers antigos usam branchId; preferir defaultBranchId quando existir.
+      // INFO: branchId pode ser null para operações sem escopo de filial (ex: contas compartilhadas).
+      // Handlers que EXIGEM escopo de filial devem validar: if (!ctx.branchId) return 400;
+      // Para maioria dos casos, use ctx.defaultBranchId que é garantido.
       branchId:
         (session.user as SessionUser).branchId ??
         defaultBranchId ??
@@ -271,6 +273,9 @@ export async function withAuth<T>(
       isAdmin,
       defaultBranchId,
       allowedBranches,
+      // INFO: branchId pode ser null para operações sem escopo de filial (ex: contas compartilhadas).
+      // Handlers que EXIGEM escopo de filial devem validar: if (!ctx.branchId) return 400;
+      // Para maioria dos casos, use ctx.defaultBranchId que é garantido.
       branchId:
         (session.user as SessionUser).branchId ??
         defaultBranchId ??
