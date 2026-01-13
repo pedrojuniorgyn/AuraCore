@@ -116,7 +116,7 @@ describe('OfxParserAdapter Integration', () => {
     it('should handle invalid OFX format', async () => {
       // GIVEN - Mock retornando formato inválido
       const { parse } = await import('ofx-parser');
-      vi.mocked(parse).mockReturnValueOnce(null as unknown as Promise<unknown>);
+      vi.mocked(parse).mockResolvedValueOnce(null as never);
 
       const ofxContent = 'invalid-ofx';
 
@@ -133,7 +133,7 @@ describe('OfxParserAdapter Integration', () => {
     it('should handle OFX without transactions', async () => {
       // GIVEN - Mock sem transações
       const { parse } = await import('ofx-parser');
-      vi.mocked(parse).mockReturnValueOnce({
+      vi.mocked(parse).mockResolvedValueOnce({
         OFX: {
           BANKMSGSRSV1: {
             STMTTRNRS: [
@@ -159,7 +159,7 @@ describe('OfxParserAdapter Integration', () => {
             ],
           },
         },
-      } as unknown as Promise<unknown>);
+      } as never);
 
       const ofxContent = 'ofx-without-transactions';
 

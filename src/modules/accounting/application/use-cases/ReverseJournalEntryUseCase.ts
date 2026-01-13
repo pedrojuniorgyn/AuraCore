@@ -81,8 +81,6 @@ export class ReverseJournalEntryUseCase {
         return Result.fail(reverseResult.error);
       }
 
-      console.log(`✅ Lançamento contábil #${input.journalEntryId} revertido`);
-
       return Result.ok({
         journalEntryId: input.journalEntryId,
         status: 'REVERSED',

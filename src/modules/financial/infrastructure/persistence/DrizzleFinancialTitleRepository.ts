@@ -267,7 +267,7 @@ export class DrizzleFinancialTitleRepository
         })
         .where(
           and(
-            eq(fiscalDocuments.id, fiscalDocumentId),
+            eq(fiscalDocuments.id, Number(fiscalDocumentId)),
             eq(fiscalDocuments.organizationId, Number(organizationId))
           )
         );
