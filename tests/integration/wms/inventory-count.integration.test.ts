@@ -24,7 +24,7 @@ import { Result } from '@/shared/domain';
  * 
  * Ou usar: npm run test:integration:docker
  */
-describe('WMS Inventory Count - Integration Tests', () => {
+describe.skipIf(!process.env.DB_TEST_HOST)('WMS Inventory Count - Integration Tests', () => {
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {

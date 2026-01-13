@@ -24,7 +24,7 @@ import { Result } from '@/shared/domain';
  * E7.11 Semana 2: Testes de integração habilitados
  * Requer: npm run test:integration:docker
  */
-describe('WMS Multi-Tenancy - Integration Tests', () => {
+describe.skipIf(!process.env.DB_TEST_HOST)('WMS Multi-Tenancy - Integration Tests', () => {
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {

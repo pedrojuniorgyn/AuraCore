@@ -26,7 +26,7 @@ import { Result } from '@/shared/domain';
  * Requer SQL Server de teste rodando:
  * npm run test:integration:docker
  */
-describe('WMS Locations - Integration Tests', () => {
+describe.skipIf(!process.env.DB_TEST_HOST)('WMS Locations - Integration Tests', () => {
   let ctx: IntegrationTestContext;
 
   beforeAll(async () => {

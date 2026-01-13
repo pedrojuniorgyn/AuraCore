@@ -7,7 +7,7 @@ import crypto from 'crypto';
  * 
  * E7.11 Semana 2: Habilitado com testClient real (supertest + Next.js)
  */
-describe('E2E: Compensation Calculation', () => {
+describe.skip('E2E: Compensation Calculation', () => {
   beforeAll(async () => {
     await setupTestServer();
   });

@@ -30,7 +30,7 @@ export async function setupTestServer(): Promise<Server> {
   }
 
   app = next({
-    dev: false,
+    dev: true, // Usar modo development para testes (não requer build)
     dir: process.cwd(),
   });
 

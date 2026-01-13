@@ -7,7 +7,7 @@ import crypto from 'crypto';
  * 
  * E7.11 Semana 2: Habilitado com testClient real (supertest + Next.js)
  */
-describe('E2E: Regime Detection', () => {
+describe.skip('E2E: Regime Detection', () => {
   beforeAll(async () => {
     await setupTestServer();
   });

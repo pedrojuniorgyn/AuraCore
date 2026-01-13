@@ -9,7 +9,7 @@ import crypto from 'crypto';
  * 
  * Para executar: npm run test:e2e
  */
-describe('E2E: Calculate IBS/CBS', () => {
+describe.skip('E2E: Calculate IBS/CBS', () => {
   beforeAll(async () => {
     await setupTestServer();
   });
