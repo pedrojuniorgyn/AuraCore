@@ -65,6 +65,21 @@
       "pattern_created": "VERIFY-BEFORE-REMOVE: grep patterns before removing logic",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-985888",
+      "date": "2026-01-13",
+      "epic": "E7.15",
+      "error": "Bug de segurança multi-tenancy introduzido ao corrigir erros TypeScript em JournalEntriesController.ts. O branchId foi removido da chamada ao ReverseJournalEntryUseCase, permitindo que usuários de uma filial revertessem lançamentos contábeis de outras filiais da mesma organização. Violação do AP-008: branchId opcional em contexto de segurança.",
+      "correction": "1. Adicionado branchId: number à interface ReverseJournalEntryInput\n2. Adicionado validação no UseCase: if (entry.branchId !== BigInt(input.branchId)) return fail\n3. Adicionado branchId no controller: branchId: ctx.branchId\n4. Adicionado branchId na rota API: branchId: session.user.defaultBranchId com validação\n5. Convertido para BigInt na comparação para evitar type mismatch",
+      "files_affected": [
+        "src/modules/accounting/application/use-cases/ReverseJournalEntryUseCase.ts",
+        "src/modules/accounting/presentation/controllers/JournalEntriesController.ts",
+        "src/app/api/accounting/journal-entries/[id]/reverse/route.ts"
+      ],
+      "pattern_created": "VERIFY-BRANCH-ID: Never remove branchId when fixing TypeScript errors",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

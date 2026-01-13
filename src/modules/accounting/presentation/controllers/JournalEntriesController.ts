@@ -207,6 +207,7 @@ export class JournalEntriesController {
       const result = await useCase.execute({
         journalEntryId: BigInt(params.id),
         organizationId: BigInt(ctx.organizationId),
+        branchId: ctx.branchId,
         userId: ctx.userId,
       });
 

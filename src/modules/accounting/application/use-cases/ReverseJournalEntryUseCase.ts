@@ -15,6 +15,7 @@ import { AccountingError } from "@/modules/accounting/domain/errors";
 export interface ReverseJournalEntryInput {
   journalEntryId: bigint;
   organizationId: bigint;
+  branchId: number;
   userId: string;
 }
 
@@ -56,6 +57,11 @@ export class ReverseJournalEntryUseCase {
 
       if (!entry) {
         return Result.fail(new Error("Lançamento contábil não encontrado ou acesso negado"));
+      }
+
+      // Validação de multi-tenancy (branchId)
+      if (entry.branchId !== BigInt(input.branchId)) {
+        return Result.fail(new Error("Acesso negado: lançamento pertence a outra filial"));
       }
 
       // 2. Validar se pode ser revertido (Domain Service)

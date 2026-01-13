@@ -38,6 +38,15 @@ export async function POST(
     }
     const organizationId = BigInt(rawOrgId);
 
+    // Validar branchId (multi-tenancy)
+    const branchId = session.user.defaultBranchId;
+    if (!branchId) {
+      return NextResponse.json(
+        { success: false, error: 'branchId obrigatório' },
+        { status: 400 }
+      );
+    }
+
     // DDD: Instanciar Use Case com dependências
     const repository = createJournalEntryRepository();
     const domainService = new JournalEntryGenerator();
@@ -47,6 +56,7 @@ export async function POST(
     const result = await useCase.execute({
       journalEntryId,
       organizationId,
+      branchId,
       userId,
     });
 
