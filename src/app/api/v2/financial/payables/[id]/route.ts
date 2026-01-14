@@ -6,7 +6,7 @@ import { PayablesController } from '@/modules/financial/presentation/controllers
 initializeFinancialModule();
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /**
@@ -14,6 +14,7 @@ interface RouteParams {
  * Buscar conta a pagar por ID
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  return PayablesController.getById(request, params);
+  const { id } = await params;
+  return PayablesController.getById(request, { id });
 }
 

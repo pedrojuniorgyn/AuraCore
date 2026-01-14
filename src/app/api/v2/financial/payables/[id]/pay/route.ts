@@ -6,7 +6,7 @@ import { PayablesController } from '@/modules/financial/presentation/controllers
 initializeFinancialModule();
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /**
@@ -14,6 +14,7 @@ interface RouteParams {
  * Registrar pagamento
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  return PayablesController.pay(request, params);
+  const { id } = await params;
+  return PayablesController.pay(request, { id });
 }
 
