@@ -1,9 +1,16 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IExpenseReportRepository } from '../../../domain/ports/output/IExpenseReportRepository';
+import type {
+  IRejectExpenseReport,
+  RejectExpenseReportInput,
+  RejectExpenseReportOutput,
+  ExecutionContext,
+} from '../../../domain/ports/input';
 
 /**
- * DTO: Rejeitar Relatório de Despesas
+ * DTO: Rejeitar Relatório de Despesas (deprecated)
+ * @deprecated Use RejectExpenseReportInput from domain/ports/input
  */
 export interface RejectExpenseReportDTO {
   reportId: string;
@@ -16,13 +23,17 @@ export interface RejectExpenseReportDTO {
 /**
  * Use Case: Rejeitar Relatório de Despesas
  * 
+ * Implementa IRejectExpenseReport (Input Port)
+ * 
  * Transição: SUBMITTED | UNDER_REVIEW → REJECTED
  * 
  * Após rejeição, o colaborador pode revisar e resubmeter.
  * Notas são obrigatórias para explicar o motivo da rejeição.
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
  */
 @injectable()
-export class RejectExpenseReportUseCase {
+export class RejectExpenseReportUseCase implements IRejectExpenseReport {
   constructor(
     @inject('IExpenseReportRepository')
     private readonly expenseReportRepository: IExpenseReportRepository

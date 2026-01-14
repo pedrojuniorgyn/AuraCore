@@ -10,10 +10,12 @@ import {
   PayAccountPayableInputSchema, 
   PayAccountPayableOutput 
 } from '../dtos/PayAccountPayableDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import type { IPayAccountPayable, ExecutionContext } from '../../domain/ports/input';
 
 /**
  * Use Case: Pagar Conta a Pagar
+ * 
+ * Implementa IPayAccountPayable (Input Port)
  * 
  * Fluxo:
  * 1. Validar input
@@ -24,9 +26,11 @@ import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
  * 6. Confirmar (se autoConfirm)
  * 7. Persistir
  * 8. Retornar resultado
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
  */
 @injectable()
-export class PayAccountPayableUseCase implements IUseCaseWithContext<PayAccountPayableInput, PayAccountPayableOutput> {
+export class PayAccountPayableUseCase implements IPayAccountPayable {
   private readonly payableRepository: IPayableRepository;
 
   constructor(

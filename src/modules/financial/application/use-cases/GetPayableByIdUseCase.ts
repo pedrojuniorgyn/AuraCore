@@ -5,16 +5,21 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IPayableRepository } from '../../domain/ports/output/IPayableRepository';
 import { PayableNotFoundError } from '../../domain/errors/FinancialErrors';
 import { PayableResponseDTO, toPayableResponseDTO } from '../dtos/PayableResponseDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import type { IGetPayableById, GetPayableByIdInput, ExecutionContext } from '../../domain/ports/input';
 
 const GetPayableByIdInputSchema = z.object({
-  id: z.string().uuid('Invalid payable ID'),
+  payableId: z.string().uuid('Invalid payable ID'),
 });
 
-type GetPayableByIdInput = z.infer<typeof GetPayableByIdInputSchema>;
-
+/**
+ * Use Case: Buscar Conta a Pagar por ID
+ * 
+ * Implementa IGetPayableById (Input Port)
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
+ */
 @injectable()
-export class GetPayableByIdUseCase implements IUseCaseWithContext<GetPayableByIdInput, PayableResponseDTO> {
+export class GetPayableByIdUseCase implements IGetPayableById {
   private readonly payableRepository: IPayableRepository;
 
   constructor(@inject(TOKENS.PayableRepository) payableRepository: IPayableRepository) {
@@ -34,10 +39,10 @@ export class GetPayableByIdUseCase implements IUseCaseWithContext<GetPayableById
     }
 
     // 2. Buscar
-    const payable = await this.payableRepository.findById(input.id, ctx.organizationId);
+    const payable = await this.payableRepository.findById(input.payableId, ctx.organizationId);
     
     if (!payable) {
-      return Result.fail(new PayableNotFoundError(input.id).message);
+      return Result.fail(new PayableNotFoundError(input.payableId).message);
     }
 
     // 3. Validar permissão de branch

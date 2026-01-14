@@ -1,9 +1,16 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IExpenseReportRepository } from '../../../domain/ports/output/IExpenseReportRepository';
+import type {
+  IApproveExpenseReport,
+  ApproveExpenseReportInput,
+  ApproveExpenseReportOutput,
+  ExecutionContext,
+} from '../../../domain/ports/input';
 
 /**
- * DTO: Aprovar Relatório de Despesas
+ * DTO: Aprovar Relatório de Despesas (deprecated - usar Input Port)
+ * @deprecated Use ApproveExpenseReportInput from domain/ports/input
  */
 export interface ApproveExpenseReportDTO {
   reportId: string;
@@ -16,13 +23,17 @@ export interface ApproveExpenseReportDTO {
 /**
  * Use Case: Aprovar Relatório de Despesas
  * 
+ * Implementa IApproveExpenseReport (Input Port)
+ * 
  * Transição: SUBMITTED | UNDER_REVIEW → APPROVED
  * 
  * Após aprovação, o relatório fica disponível para processamento
  * pelo Financeiro (geração de título no Contas a Pagar).
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
  */
 @injectable()
-export class ApproveExpenseReportUseCase {
+export class ApproveExpenseReportUseCase implements IApproveExpenseReport {
   constructor(
     @inject('IExpenseReportRepository')
     private readonly expenseReportRepository: IExpenseReportRepository

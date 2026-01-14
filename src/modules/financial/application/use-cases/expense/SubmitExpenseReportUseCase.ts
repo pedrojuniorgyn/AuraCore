@@ -1,9 +1,16 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IExpenseReportRepository } from '../../../domain/ports/output/IExpenseReportRepository';
+import type {
+  ISubmitExpenseReport,
+  SubmitExpenseReportInput,
+  SubmitExpenseReportOutput,
+  ExecutionContext,
+} from '../../../domain/ports/input';
 
 /**
- * DTO: Submeter Relatório de Despesas
+ * DTO: Submeter Relatório de Despesas (deprecated)
+ * @deprecated Use SubmitExpenseReportInput from domain/ports/input
  */
 export interface SubmitExpenseReportDTO {
   reportId: string;
@@ -14,12 +21,16 @@ export interface SubmitExpenseReportDTO {
 /**
  * Use Case: Submeter Relatório de Despesas para Aprovação
  * 
+ * Implementa ISubmitExpenseReport (Input Port)
+ * 
  * Transição: DRAFT → SUBMITTED
  * 
  * Valida que o relatório tem itens antes de submeter.
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
  */
 @injectable()
-export class SubmitExpenseReportUseCase {
+export class SubmitExpenseReportUseCase implements ISubmitExpenseReport {
   constructor(
     @inject('IExpenseReportRepository')
     private readonly expenseReportRepository: IExpenseReportRepository

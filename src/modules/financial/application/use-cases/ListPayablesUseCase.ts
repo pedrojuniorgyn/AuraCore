@@ -4,11 +4,11 @@ import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IPayableRepository, FindPayablesFilter, PaginationOptions } from '../../domain/ports/output/IPayableRepository';
 import { PaginatedPayablesDTO, toPayableResponseDTO } from '../dtos/PayableResponseDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import type { IListPayables, ListPayablesInput, ExecutionContext } from '../../domain/ports/input';
 
 const ListPayablesInputSchema = z.object({
   supplierId: z.number().int().positive().optional(),
-  status: z.array(z.string()).optional(),
+  status: z.string().optional(),
   dueDateFrom: z.string().datetime().optional(),
   dueDateTo: z.string().datetime().optional(),
   search: z.string().max(100).optional(),
@@ -18,10 +18,15 @@ const ListPayablesInputSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
-type ListPayablesInput = z.infer<typeof ListPayablesInputSchema>;
-
+/**
+ * Use Case: Listar Contas a Pagar
+ * 
+ * Implementa IListPayables (Input Port)
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
+ */
 @injectable()
-export class ListPayablesUseCase implements IUseCaseWithContext<ListPayablesInput, PaginatedPayablesDTO> {
+export class ListPayablesUseCase implements IListPayables {
   private readonly payableRepository: IPayableRepository;
 
   constructor(@inject(TOKENS.PayableRepository) payableRepository: IPayableRepository) {

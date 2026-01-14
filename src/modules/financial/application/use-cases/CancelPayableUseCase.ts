@@ -4,23 +4,27 @@ import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IPayableRepository } from '../../domain/ports/output/IPayableRepository';
 import { PayableNotFoundError } from '../../domain/errors/FinancialErrors';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import type {
+  ICancelPayable,
+  CancelPayableInput,
+  CancelPayableOutput,
+  ExecutionContext,
+} from '../../domain/ports/input';
 
 const CancelPayableInputSchema = z.object({
   payableId: z.string().uuid('Invalid payable ID'),
   reason: z.string().min(1, 'Reason is required').max(500),
 });
 
-type CancelPayableInput = z.infer<typeof CancelPayableInputSchema>;
-
-interface CancelPayableOutput {
-  id: string;
-  status: string;
-  cancelledAt: string;
-}
-
+/**
+ * Use Case: Cancelar Conta a Pagar
+ * 
+ * Implementa ICancelPayable (Input Port)
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
+ */
 @injectable()
-export class CancelPayableUseCase implements IUseCaseWithContext<CancelPayableInput, CancelPayableOutput> {
+export class CancelPayableUseCase implements ICancelPayable {
   private readonly payableRepository: IPayableRepository;
 
   constructor(@inject(TOKENS.PayableRepository) payableRepository: IPayableRepository) {
@@ -72,6 +76,7 @@ export class CancelPayableUseCase implements IUseCaseWithContext<CancelPayableIn
       id: payable.id,
       status: payable.status,
       cancelledAt: payable.updatedAt.toISOString(),
+      cancelledBy: ctx.userId,
     });
   }
 }

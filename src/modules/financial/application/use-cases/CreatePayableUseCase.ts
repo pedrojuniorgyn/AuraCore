@@ -10,10 +10,12 @@ import {
   CreatePayableInputSchema, 
   CreatePayableOutput 
 } from '../dtos/CreatePayableDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import type { ICreatePayable, ExecutionContext } from '../../domain/ports/input';
 
 /**
  * Use Case: Criar Conta a Pagar
+ * 
+ * Implementa ICreatePayable (Input Port)
  * 
  * Responsabilidades:
  * - Validar input (Zod)
@@ -21,9 +23,11 @@ import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
  * - Criar Aggregate (AccountPayable)
  * - Persistir via Repository
  * - Retornar DTO
+ * 
+ * @see ARCH-010: Use Cases implementam Input Ports
  */
 @injectable()
-export class CreatePayableUseCase implements IUseCaseWithContext<CreatePayableInput, CreatePayableOutput> {
+export class CreatePayableUseCase implements ICreatePayable {
   private readonly payableRepository: IPayableRepository;
 
   constructor(
