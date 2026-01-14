@@ -39,13 +39,16 @@ export class ApproveExpenseReportUseCase implements IApproveExpenseReport {
     private readonly expenseReportRepository: IExpenseReportRepository
   ) {}
 
-  async execute(dto: ApproveExpenseReportDTO): Promise<Result<void, string>> {
+  async execute(
+    input: ApproveExpenseReportInput,
+    ctx: ExecutionContext
+  ): Promise<Result<ApproveExpenseReportOutput, string>> {
     try {
       // Buscar relatório
       const reportResult = await this.expenseReportRepository.findById(
-        dto.reportId,
-        dto.organizationId,
-        dto.branchId
+        input.reportId,
+        ctx.organizationId,
+        ctx.branchId
       );
 
       if (Result.isFail(reportResult)) {
@@ -53,13 +56,13 @@ export class ApproveExpenseReportUseCase implements IApproveExpenseReport {
       }
 
       if (!reportResult.value) {
-        return Result.fail(`Expense report ${dto.reportId} not found`);
+        return Result.fail(`Expense report ${input.reportId} not found`);
       }
 
       const report = reportResult.value;
 
       // Aprovar
-      const approveResult = report.approve(dto.reviewerId, dto.notes);
+      const approveResult = report.approve(ctx.userId, input.comments);
       if (Result.isFail(approveResult)) {
         return Result.fail(approveResult.error);
       }
@@ -73,7 +76,13 @@ export class ApproveExpenseReportUseCase implements IApproveExpenseReport {
       // TODO: Disparar evento para criar título no Contas a Pagar
       // ExpenseReportApprovedEvent → CreatePayableFromExpenseReportHandler
 
-      return Result.ok(undefined);
+      return Result.ok({
+        reportId: report.id,
+        status: report.status,
+        approvedAt: report.updatedAt.toISOString(),
+        approvedBy: ctx.userId,
+        payableIds: [], // TODO: Retornar IDs das contas criadas
+      });
     } catch (error) {
       return Result.fail(`Failed to approve expense report: ${(error as Error).message}`);
     }

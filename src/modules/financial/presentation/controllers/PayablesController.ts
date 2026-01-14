@@ -82,13 +82,13 @@ export class PayablesController {
         supplierId: searchParams.get('supplierId') 
           ? parseInt(searchParams.get('supplierId')!) 
           : undefined,
-        status: searchParams.get('status')?.split(',') as ('OPEN' | 'PROCESSING' | 'PARTIAL' | 'PAID' | 'CANCELLED')[] | undefined,
+        status: searchParams.get('status') as ('PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELLED' | 'OVERDUE') | undefined,
         dueDateFrom: searchParams.get('dueDateFrom') ?? undefined,
         dueDateTo: searchParams.get('dueDateTo') ?? undefined,
         search: searchParams.get('search') ?? undefined,
         page: parseInt(searchParams.get('page') ?? '1'),
         pageSize: parseInt(searchParams.get('pageSize') ?? '20'),
-        sortBy: (searchParams.get('sortBy') as 'dueDate' | 'createdAt' | undefined) ?? undefined,
+        sortBy: (searchParams.get('sortBy') as 'dueDate' | 'amount' | 'createdAt' | 'documentNumber' | undefined) ?? undefined,
         sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') ?? 'desc',
       };
 
@@ -119,7 +119,7 @@ export class PayablesController {
       const ctx = await PayablesController.getContext(request);
 
       const useCase = container.resolve(GetPayableByIdUseCase);
-      const result = await useCase.execute({ id: params.id }, ctx);
+      const result = await useCase.execute({ payableId: params.id }, ctx);
 
       if (Result.isFail(result)) {
         const status = result.error.includes('not found') ? 404 : 400;

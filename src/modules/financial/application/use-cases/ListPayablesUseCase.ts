@@ -52,7 +52,7 @@ export class ListPayablesUseCase implements IListPayables {
       organizationId: ctx.organizationId,
       branchId: ctx.isAdmin ? undefined : ctx.branchId, // Admin vê todas as filiais
       supplierId: data.supplierId,
-      status: data.status,
+      status: data.status ? [data.status] : undefined, // Converter string para array
       dueDateFrom: data.dueDateFrom ? new Date(data.dueDateFrom) : undefined,
       dueDateTo: data.dueDateTo ? new Date(data.dueDateTo) : undefined,
       search: data.search,

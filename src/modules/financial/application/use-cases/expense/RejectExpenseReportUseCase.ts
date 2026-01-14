@@ -39,18 +39,21 @@ export class RejectExpenseReportUseCase implements IRejectExpenseReport {
     private readonly expenseReportRepository: IExpenseReportRepository
   ) {}
 
-  async execute(dto: RejectExpenseReportDTO): Promise<Result<void, string>> {
+  async execute(
+    input: RejectExpenseReportInput,
+    ctx: ExecutionContext
+  ): Promise<Result<RejectExpenseReportOutput, string>> {
     try {
-      // Validar notas
-      if (!dto.notes || dto.notes.trim().length < 10) {
-        return Result.fail('Review notes must have at least 10 characters');
+      // Validar motivo
+      if (!input.reason || input.reason.trim().length < 10) {
+        return Result.fail('Rejection reason must have at least 10 characters');
       }
 
       // Buscar relatório
       const reportResult = await this.expenseReportRepository.findById(
-        dto.reportId,
-        dto.organizationId,
-        dto.branchId
+        input.reportId,
+        ctx.organizationId,
+        ctx.branchId
       );
 
       if (Result.isFail(reportResult)) {
@@ -58,13 +61,13 @@ export class RejectExpenseReportUseCase implements IRejectExpenseReport {
       }
 
       if (!reportResult.value) {
-        return Result.fail(`Expense report ${dto.reportId} not found`);
+        return Result.fail(`Expense report ${input.reportId} not found`);
       }
 
       const report = reportResult.value;
 
       // Rejeitar
-      const rejectResult = report.reject(dto.reviewerId, dto.notes);
+      const rejectResult = report.reject(ctx.userId, input.reason);
       if (Result.isFail(rejectResult)) {
         return Result.fail(rejectResult.error);
       }
@@ -78,7 +81,12 @@ export class RejectExpenseReportUseCase implements IRejectExpenseReport {
       // TODO: Notificar colaborador sobre rejeição
       // ExpenseReportRejectedEvent → SendNotificationHandler
 
-      return Result.ok(undefined);
+      return Result.ok({
+        reportId: report.id,
+        status: report.status,
+        rejectedAt: report.updatedAt.toISOString(),
+        rejectedBy: ctx.userId,
+      });
     } catch (error) {
       return Result.fail(`Failed to reject expense report: ${(error as Error).message}`);
     }

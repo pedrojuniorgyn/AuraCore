@@ -36,13 +36,16 @@ export class SubmitExpenseReportUseCase implements ISubmitExpenseReport {
     private readonly expenseReportRepository: IExpenseReportRepository
   ) {}
 
-  async execute(dto: SubmitExpenseReportDTO): Promise<Result<void, string>> {
+  async execute(
+    input: SubmitExpenseReportInput,
+    ctx: ExecutionContext
+  ): Promise<Result<SubmitExpenseReportOutput, string>> {
     try {
       // Buscar relatório
       const reportResult = await this.expenseReportRepository.findById(
-        dto.reportId,
-        dto.organizationId,
-        dto.branchId
+        input.reportId,
+        ctx.organizationId,
+        ctx.branchId
       );
 
       if (Result.isFail(reportResult)) {
@@ -50,7 +53,7 @@ export class SubmitExpenseReportUseCase implements ISubmitExpenseReport {
       }
 
       if (!reportResult.value) {
-        return Result.fail(`Expense report ${dto.reportId} not found`);
+        return Result.fail(`Expense report ${input.reportId} not found`);
       }
 
       const report = reportResult.value;
@@ -67,7 +70,13 @@ export class SubmitExpenseReportUseCase implements ISubmitExpenseReport {
         return Result.fail(saveResult.error);
       }
 
-      return Result.ok(undefined);
+      return Result.ok({
+        reportId: report.id,
+        status: report.status,
+        submittedAt: report.updatedAt.toISOString(),
+        totalAmount: 0, // TODO: Adicionar totalAmount ao ExpenseReport
+        expensesCount: 0, // TODO: Adicionar expenses ao ExpenseReport
+      });
     } catch (error) {
       return Result.fail(`Failed to submit expense report: ${(error as Error).message}`);
     }
