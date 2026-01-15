@@ -2,22 +2,27 @@ import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
 import { FiscalDocument } from '../../domain/entities/FiscalDocument';
 import { FiscalDocumentItem } from '../../domain/entities/FiscalDocumentItem';
 import { CFOP } from '../../domain/value-objects/CFOP';
-import { CreateFiscalDocumentInput, CreateFiscalDocumentOutput } from '../dtos';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import {
+  ICreateFiscalDocument,
+  CreateFiscalDocumentInput,
+  CreateFiscalDocumentOutput,
+} from '../../domain/ports/input';
 
 /**
  * Use Case: Create Fiscal Document
  *
  * Cria um novo documento fiscal em rascunho (DRAFT) com os itens fornecidos.
  * O documento pode ser editado até ser submetido (submit).
+ * 
+ * @see ARCH-010: Implementa ICreateFiscalDocument
  */
 @injectable()
-export class CreateFiscalDocumentUseCase implements IUseCaseWithContext<CreateFiscalDocumentInput, CreateFiscalDocumentOutput> {
+export class CreateFiscalDocumentUseCase implements ICreateFiscalDocument {
   constructor(
     @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository,
     @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
@@ -114,10 +119,10 @@ export class CreateFiscalDocumentUseCase implements IUseCaseWithContext<CreateFi
       // Retornar DTO
       return Result.ok({
         id: document.id,
-        documentType: document.documentType,
+        documentType: document.documentType as 'NFE' | 'NFCE' | 'CTE' | 'MDFE' | 'NFSE',
         series: document.series,
         number: document.number,
-        status: document.status,
+        status: 'DRAFT' as const,
         issueDate: document.issueDate,
         issuerId: document.issuerId,
         issuerName: document.issuerName,

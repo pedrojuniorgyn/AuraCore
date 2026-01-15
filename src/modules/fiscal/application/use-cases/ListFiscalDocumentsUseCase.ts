@@ -1,0 +1,94 @@
+import { inject, injectable } from 'tsyringe';
+import { Result } from '@/shared/domain';
+import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import {
+  IListFiscalDocuments,
+  ListFiscalDocumentsInput,
+  ListFiscalDocumentsOutput,
+  ExecutionContext,
+} from '../../domain/ports/input';
+
+/**
+ * Use Case: List Fiscal Documents
+ * 
+ * @see ARCH-010: Implementa IListFiscalDocuments
+ */
+@injectable()
+export class ListFiscalDocumentsUseCase implements IListFiscalDocuments {
+  constructor(
+    @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository
+  ) {}
+
+  async execute(
+    input: ListFiscalDocumentsInput,
+    context: ExecutionContext
+  ): Promise<Result<ListFiscalDocumentsOutput, string>> {
+    try {
+      const page = input.page ?? 1;
+      const pageSize = input.pageSize ?? 20;
+
+      const result = await this.repository.findMany(
+        {
+        organizationId: context.organizationId,
+        branchId: context.branchId,
+        page,
+        pageSize,
+        documentType: input.documentType,
+        status: input.status,
+        issueDateFrom: input.issueDateFrom,
+        issueDateTo: input.issueDateTo,
+        recipientDocument: input.recipientDocument,
+        search: input.search,
+      },
+      context.branchId
+      );
+
+      const items = result.data.map((doc: unknown) => {
+        const fiscalDoc = doc as {
+          id: string;
+          documentType: string;
+          series: string;
+          number: string;
+          status: string;
+          fiscalKey?: { value: string };
+          issueDate: Date;
+          totalDocument: { amount: number };
+          recipientCnpjCpf?: string;
+          recipientName?: string;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+        return {
+          id: fiscalDoc.id,
+          documentType: fiscalDoc.documentType,
+          series: fiscalDoc.series,
+          number: fiscalDoc.number,
+          status: fiscalDoc.status,
+          fiscalKey: fiscalDoc.fiscalKey?.value,
+          issueDate: fiscalDoc.issueDate,
+          totalValue: fiscalDoc.totalDocument.amount,
+          recipient: {
+            document: fiscalDoc.recipientCnpjCpf ?? '',
+            name: fiscalDoc.recipientName ?? '',
+          },
+          createdAt: fiscalDoc.createdAt,
+          updatedAt: fiscalDoc.updatedAt,
+        };
+      });
+
+      const totalPages = Math.ceil(result.total / pageSize);
+
+      return Result.ok({
+        items,
+        total: result.total,
+        page,
+        pageSize,
+        totalPages,
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return Result.fail(`Failed to list fiscal documents: ${errorMessage}`);
+    }
+  }
+}

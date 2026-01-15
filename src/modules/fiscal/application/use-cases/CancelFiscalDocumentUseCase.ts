@@ -1,23 +1,14 @@
 import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
 import type { ISefazService } from '../../domain/ports/output/ISefazService';
 import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-
-export interface CancelFiscalDocumentInput {
-  id: string;
-  reason: string;
-  protocolNumber: string;
-}
-
-export interface CancelFiscalDocumentOutput {
-  id: string;
-  status: string;
-  cancelReason: string;
-  cancelProtocolNumber: string;
-}
+import {
+  ICancelFiscalDocument,
+  CancelFiscalDocumentInput,
+  CancelFiscalDocumentOutput,
+} from '../../domain/ports/input';
 
 /**
  * Use Case: Cancel Fiscal Document
@@ -31,9 +22,11 @@ export interface CancelFiscalDocumentOutput {
  * 
  * Integrações:
  * - SEFAZ: Solicita cancelamento do documento
+ * 
+ * @see ARCH-010: Implementa ICancelFiscalDocument
  */
 @injectable()
-export class CancelFiscalDocumentUseCase implements IUseCaseWithContext<CancelFiscalDocumentInput, CancelFiscalDocumentOutput> {
+export class CancelFiscalDocumentUseCase implements ICancelFiscalDocument {
   constructor(
     @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository,
     @inject(TOKENS.SefazService) private sefazService: ISefazService
@@ -45,9 +38,9 @@ export class CancelFiscalDocumentUseCase implements IUseCaseWithContext<CancelFi
   ): Promise<Result<CancelFiscalDocumentOutput, string>> {
     try {
       // Buscar documento (BUG 2 FIX: passar branchId)
-      const document = await this.repository.findById(input.id, context.organizationId, context.branchId);
+      const document = await this.repository.findById(input.documentId, context.organizationId, context.branchId);
       if (!document) {
-        return Result.fail(new FiscalDocumentNotFoundError(input.id).message);
+        return Result.fail(new FiscalDocumentNotFoundError(input.documentId).message);
       }
 
       // Admin pode buscar qualquer branch, mas repository já filtrou por branchId do context
@@ -87,10 +80,10 @@ export class CancelFiscalDocumentUseCase implements IUseCaseWithContext<CancelFi
       await this.repository.save(document);
 
       return Result.ok({
-        id: document.id,
-        status: document.status,
-        cancelReason: input.reason,
-        cancelProtocolNumber: sefazResult.value.protocolNumber,
+        documentId: document.id,
+        status: 'CANCELLED' as const,
+        cancelledAt: new Date(),
+        protocolNumber: sefazResult.value.protocolNumber,
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);

@@ -1,26 +1,16 @@
 import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
 import type { ISefazService } from '../../domain/ports/output/ISefazService';
 import type { FiscalAccountingIntegration } from '../services/FiscalAccountingIntegration';
 import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
 import { FiscalKey } from '../../domain/value-objects/FiscalKey';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-
-export interface AuthorizeFiscalDocumentInput {
-  id: string;
-  fiscalKey: string;
-  protocolNumber: string;
-  protocolDate: Date;
-}
-
-export interface AuthorizeFiscalDocumentOutput {
-  id: string;
-  status: string;
-  fiscalKey: string;
-  protocolNumber: string;
-}
+import {
+  IAuthorizeFiscalDocument,
+  AuthorizeFiscalDocumentInput,
+  AuthorizeFiscalDocumentOutput,
+} from '../../domain/ports/input';
 
 /**
  * Use Case: Authorize Fiscal Document
@@ -31,9 +21,11 @@ export interface AuthorizeFiscalDocumentOutput {
  * Integrações:
  * - SEFAZ: Solicita autorização do documento
  * - Accounting: Gera lançamento contábil automático
+ * 
+ * @see ARCH-010: Implementa IAuthorizeFiscalDocument
  */
 @injectable()
-export class AuthorizeFiscalDocumentUseCase implements IUseCaseWithContext<AuthorizeFiscalDocumentInput, AuthorizeFiscalDocumentOutput> {
+export class AuthorizeFiscalDocumentUseCase implements IAuthorizeFiscalDocument {
   constructor(
     @inject(TOKENS.FiscalDocumentRepository) private repository: IFiscalDocumentRepository,
     @inject(TOKENS.SefazService) private sefazService: ISefazService,

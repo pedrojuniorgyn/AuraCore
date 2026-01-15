@@ -23,9 +23,9 @@ export class SubmitFiscalDocumentUseCase implements IUseCaseWithContext<{ id: st
   ): Promise<Result<{ id: string; status: string }, string>> {
     try {
       // Buscar documento (BUG 2 FIX: passar branchId)
-      const document = await this.repository.findById(input.id, context.organizationId, context.branchId);
+      const document = await this.repository.findById(input.documentId, context.organizationId, context.branchId);
       if (!document) {
-        return Result.fail(new FiscalDocumentNotFoundError(input.id).message);
+        return Result.fail(new FiscalDocumentNotFoundError(input.documentId).message);
       }
 
       // Admin pode buscar qualquer branch, mas repository já filtrou por branchId do context
@@ -41,8 +41,9 @@ export class SubmitFiscalDocumentUseCase implements IUseCaseWithContext<{ id: st
       await this.repository.save(document);
 
       return Result.ok({
-        id: document.id,
-        status: document.status,
+        documentId: document.id,
+        status: document.status === 'PROCESSING' ? 'PROCESSING' : 'SUBMITTED',
+        submittedAt: new Date(),
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);

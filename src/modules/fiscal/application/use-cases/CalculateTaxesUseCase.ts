@@ -1,11 +1,14 @@
 import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
 import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
-import { CalculateTaxesInput, CalculateTaxesOutput } from '../dtos';
 import { CurrentTaxEngine } from '../../domain/tax/engines/CurrentTaxEngine';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import {
+  ICalculateTax,
+  CalculateTaxInput,
+  CalculateTaxOutput,
+} from '../../domain/ports/input';
 
 /**
  * Use Case: Calculate Taxes for Fiscal Document
@@ -22,9 +25,11 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
  * 2. Para cada item, calcular impostos usando Tax Engine
  * 3. Agregar resultados
  * 4. Retornar DTO com breakdown de impostos
+ * 
+ * @see ARCH-010: Implementa ICalculateTax
  */
 @injectable()
-export class CalculateTaxesUseCase implements IUseCaseWithContext<CalculateTaxesInput, CalculateTaxesOutput> {
+export class CalculateTaxesUseCase implements ICalculateTax {
   private taxEngine = new CurrentTaxEngine();
 
   constructor(
@@ -32,14 +37,14 @@ export class CalculateTaxesUseCase implements IUseCaseWithContext<CalculateTaxes
   ) {}
 
   async execute(
-    input: CalculateTaxesInput,
+    input: CalculateTaxInput,
     context: ExecutionContext
-  ): Promise<Result<CalculateTaxesOutput, string>> {
+  ): Promise<Result<CalculateTaxOutput, string>> {
     try {
       // Buscar documento (BUG 2 FIX: passar branchId)
-      const document = await this.repository.findById(input.fiscalDocumentId, context.organizationId, context.branchId);
+      const document = await this.repository.findById(input.documentId, context.organizationId, context.branchId);
       if (!document) {
-        return Result.fail(new FiscalDocumentNotFoundError(input.fiscalDocumentId).message);
+        return Result.fail(new FiscalDocumentNotFoundError(input.documentId).message);
       }
 
       // Admin pode buscar qualquer branch, mas repository já filtrou por branchId do context
@@ -50,13 +55,13 @@ export class CalculateTaxesUseCase implements IUseCaseWithContext<CalculateTaxes
       // A implementação completa será feita quando integrarmos com o motor tributário
       
       // Por ora, retornar estrutura vazia
-      const output: CalculateTaxesOutput = {
-        fiscalDocumentId: document.id,
-        totalTaxes: 0,
-        taxes: {},
-      };
-
-      return Result.ok(output);
+      return Result.ok({
+        documentId: document.id,
+        taxes: [],
+        totalTax: 0,
+        totalDocument: document.totalDocument.amount,
+        calculatedAt: new Date(),
+      });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       return Result.fail(`Failed to calculate taxes: ${errorMessage}`);
