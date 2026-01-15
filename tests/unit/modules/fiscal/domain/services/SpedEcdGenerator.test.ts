@@ -9,56 +9,45 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SpedEcdGenerator } from '@/modules/fiscal/domain/services/SpedEcdGenerator';
 import { Result } from '@/shared/domain';
-import type {
-  ISpedDataRepository,
-  SpedFiscalPeriod,
-  OrganizationData,
-} from '@/modules/fiscal/domain/ports/ISpedDataRepository';
 
 describe('SpedEcdGenerator - Basic Tests', () => {
   let generator: SpedEcdGenerator;
-  let mockRepository: ISpedDataRepository;
 
   beforeEach(() => {
-    // Mock básico do repository
-    mockRepository = {
-      getOrganization: vi.fn().mockResolvedValue(
-        Result.ok({
-          cnpj: '12345678000190',
-          name: 'Empresa Teste LTDA',
-          stateRegistration: '123456789',
-          address: 'Rua Teste, 123',
-          city: 'São Paulo',
-          state: 'SP',
-        } as OrganizationData)
-      ),
-      
-      getChartOfAccounts: vi.fn().mockResolvedValue(Result.ok([])),
-      getAccountBalances: vi.fn().mockResolvedValue(Result.ok([])),
-      getJournalEntries: vi.fn().mockResolvedValue(Result.ok([])),
-      getFinancialStatements: vi.fn().mockResolvedValue(
-        Result.ok({
-          balanceSheet: [],
-          incomeStatement: [],
-        })
-      ),
-    } as unknown as ISpedDataRepository;
-
-    generator = new SpedEcdGenerator(mockRepository);
+    // Domain service puro (não depende de repository)
+    generator = new SpedEcdGenerator();
   });
 
   describe('generate()', () => {
     it('should generate SPED ECD document with mocked data', async () => {
       // Arrange
-      const period: SpedFiscalPeriod = {
+      const input = {
         organizationId: 1,
         branchId: 1,
-        referenceMonth: 12, // ECD é anual, mês 12
         referenceYear: 2025,
+        bookType: 'G' as const,
+      };
+
+      const data = {
+        company: {
+          document: '12345678000190',
+          name: 'Empresa Teste LTDA',
+        },
+        accounts: [
+          {
+            code: '1.01.01',
+            name: 'Caixa',
+            type: 'ASSET',
+            parentCode: null,
+            isAnalytical: true,
+          },
+        ],
+        journalEntries: new Map(),
+        balances: [],
       };
 
       // Act
-      const result = await generator.generate({ period });
+      const result = generator.generate(input, data);
 
       // Assert
       // Nota: Com mocks básicos, o método pode falhar em alguma validação interna
@@ -70,46 +59,75 @@ describe('SpedEcdGenerator - Basic Tests', () => {
       if (Result.isOk(result)) {
         const document = result.value;
         expect(document.documentType).toBe('ECD');
-        expect(document.blocks).toBeDefined();
+        expect(document.blockCount).toBeGreaterThanOrEqual(2);
+        expect(document.toFileContent()).toContain('\n');
       }
     });
 
     it('should reject invalid period (not December for annual ECD)', async () => {
       // Arrange
-      const period: SpedFiscalPeriod = {
+      const input = {
         organizationId: 1,
         branchId: 1,
-        referenceMonth: 6, // ECD deve ser dezembro (anual)
-        referenceYear: 2025,
+        referenceYear: 1999, // inválido
+        bookType: 'G' as const,
+      };
+
+      const data = {
+        company: {
+          document: '12345678000190',
+          name: 'Empresa Teste LTDA',
+        },
+        accounts: [
+          {
+            code: '1.01.01',
+            name: 'Caixa',
+            type: 'ASSET',
+            parentCode: null,
+            isAnalytical: true,
+          },
+        ],
+        journalEntries: new Map(),
+        balances: [],
       };
 
       // Act
-      const result = await generator.generate({ period });
+      const result = generator.generate(input, data);
 
       // Assert
-      // Nota: Dependendo da implementação, pode aceitar ou rejeitar
-      // Este teste documenta o comportamento esperado
-      expect(result).toBeDefined();
+      expect(Result.isFail(result)).toBe(true);
     });
 
     it('should handle repository errors gracefully', async () => {
-      // Arrange
-      const period: SpedFiscalPeriod = {
+      // Arrange/Act/Assert
+      // Domain service não chama repository; então a "graceful handling" aqui é garantir que
+      // dados inválidos retornam Result.fail ao invés de throw.
+      const input = {
         organizationId: 1,
         branchId: 1,
-        referenceMonth: 12,
         referenceYear: 2025,
+        bookType: 'G' as const,
       };
 
-      // Mock repository failure
-      mockRepository.getOrganization = vi.fn().mockResolvedValue(
-        Result.fail('Erro ao buscar dados da organização')
-      );
+      const data = {
+        company: {
+          document: '12345678000190',
+          name: ' ', // inválido (obrigatório)
+        },
+        accounts: [
+          {
+            code: '1.01.01',
+            name: 'Caixa',
+            type: 'ASSET',
+            parentCode: null,
+            isAnalytical: true,
+          },
+        ],
+        journalEntries: new Map(),
+        balances: [],
+      };
 
-      // Act
-      const result = await generator.generate({ period });
-
-      // Assert
+      const result = generator.generate(input, data);
       expect(Result.isFail(result)).toBe(true);
     });
 

@@ -20,32 +20,43 @@ describe('SpedFiscalGenerator - Basic Tests', () => {
   let mockRepository: ISpedDataRepository;
 
   beforeEach(() => {
-    // Mock básico do repository
+    // Mock básico do repository (casando com a interface real)
     mockRepository = {
       getOrganization: vi.fn().mockResolvedValue(
-        Result.ok({
-          cnpj: '12345678000190',
+        Result.ok<OrganizationData>({
+          document: '12345678000190',
           name: 'Empresa Teste LTDA',
-          stateRegistration: '123456789',
-          address: 'Rua Teste, 123',
-          city: 'São Paulo',
-          state: 'SP',
-        } as OrganizationData)
+        })
       ),
-      
+
+      // SPED Fiscal
       getPartners: vi.fn().mockResolvedValue(Result.ok([])),
       getProducts: vi.fn().mockResolvedValue(Result.ok([])),
       getInvoices: vi.fn().mockResolvedValue(Result.ok([])),
       getCtes: vi.fn().mockResolvedValue(Result.ok([])),
-      getApurationData: vi.fn().mockResolvedValue(
+      getApuration: vi.fn().mockResolvedValue(
         Result.ok({
-          debitIcms: 0,
-          creditIcms: 0,
-          balanceIcms: 0,
+          icmsDebit: 0,
+          icmsCredit: 0,
         })
       ),
-      getInventory: vi.fn().mockResolvedValue(Result.ok([])),
-    } as unknown as ISpedDataRepository;
+
+      // SPED ECD (não usado aqui, mas exigido pela interface)
+      getChartOfAccounts: vi.fn().mockResolvedValue(Result.ok([])),
+      getJournalEntries: vi.fn().mockResolvedValue(Result.ok([])),
+      getJournalEntryLines: vi.fn().mockResolvedValue(Result.ok([])),
+      getAccountBalances: vi.fn().mockResolvedValue(Result.ok([])),
+
+      // SPED Contributions (não usado aqui, mas exigido pela interface)
+      getCtesForContributions: vi.fn().mockResolvedValue(Result.ok([])),
+      getNFesEntradaForContributions: vi.fn().mockResolvedValue(Result.ok([])),
+      getTaxTotalsContributions: vi.fn().mockResolvedValue(
+        Result.ok({
+          baseDebito: 0,
+          baseCredito: 0,
+        })
+      ),
+    };
 
     generator = new SpedFiscalGenerator(mockRepository);
   });
@@ -54,10 +65,10 @@ describe('SpedFiscalGenerator - Basic Tests', () => {
     it('should generate SPED Fiscal document with mocked data', async () => {
       // Arrange
       const period: SpedFiscalPeriod = {
-        organizationId: 1,
-        branchId: 1,
+        organizationId: BigInt(1),
         referenceMonth: 1,
         referenceYear: 2026,
+        finality: 'ORIGINAL',
       };
 
       // Act
@@ -73,17 +84,18 @@ describe('SpedFiscalGenerator - Basic Tests', () => {
       if (Result.isOk(result)) {
         const document = result.value;
         expect(document.documentType).toBe('EFD_ICMS_IPI');
-        expect(document.blocks).toBeDefined();
+        expect(document.blockCount).toBeGreaterThanOrEqual(2);
+        expect(document.toFileContent()).toContain('\n');
       }
     });
 
     it('should reject invalid period (month out of range)', async () => {
       // Arrange
       const period: SpedFiscalPeriod = {
-        organizationId: 1,
-        branchId: 1,
+        organizationId: BigInt(1),
         referenceMonth: 13, // Inválido
         referenceYear: 2026,
+        finality: 'ORIGINAL',
       };
 
       // Act
@@ -99,15 +111,15 @@ describe('SpedFiscalGenerator - Basic Tests', () => {
     it('should handle repository errors gracefully', async () => {
       // Arrange
       const period: SpedFiscalPeriod = {
-        organizationId: 1,
-        branchId: 1,
+        organizationId: BigInt(1),
         referenceMonth: 1,
         referenceYear: 2026,
+        finality: 'ORIGINAL',
       };
 
       // Mock repository failure
       mockRepository.getOrganization = vi.fn().mockResolvedValue(
-        Result.fail('Erro ao buscar dados da organização')
+        Result.fail(new Error('Erro ao buscar dados da organização'))
       );
 
       // Act

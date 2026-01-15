@@ -6,66 +6,44 @@
  * Cobertura: Estrutura mínima SPED Contribuições (Blocos 0, A, C, M, 9)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { SpedContributionsGenerator } from '@/modules/fiscal/domain/services/SpedContributionsGenerator';
 import { Result } from '@/shared/domain';
 import type {
-  ISpedDataRepository,
-  SpedFiscalPeriod,
-  OrganizationData,
-} from '@/modules/fiscal/domain/ports/ISpedDataRepository';
+  SpedContributionsInput,
+  SpedContributionsData,
+} from '@/modules/fiscal/domain/services/SpedContributionsGenerator';
 
 describe('SpedContributionsGenerator - Basic Tests', () => {
-  let generator: SpedContributionsGenerator;
-  let mockRepository: ISpedDataRepository;
-
-  beforeEach(() => {
-    // Mock básico do repository
-    mockRepository = {
-      getOrganization: vi.fn().mockResolvedValue(
-        Result.ok({
-          cnpj: '12345678000190',
-          name: 'Empresa Teste LTDA',
-          stateRegistration: '123456789',
-          address: 'Rua Teste, 123',
-          city: 'São Paulo',
-          state: 'SP',
-        } as OrganizationData)
-      ),
-      
-      getPartners: vi.fn().mockResolvedValue(Result.ok([])),
-      getProducts: vi.fn().mockResolvedValue(Result.ok([])),
-      getInvoices: vi.fn().mockResolvedValue(Result.ok([])),
-      getServiceInvoices: vi.fn().mockResolvedValue(Result.ok([])),
-      getPisCofinsCreditData: vi.fn().mockResolvedValue(
-        Result.ok({
-          pisCredits: 0,
-          cofinsCredits: 0,
-          pisDebits: 0,
-          cofinsDebits: 0,
-        })
-      ),
-    } as unknown as ISpedDataRepository;
-
-    generator = new SpedContributionsGenerator(mockRepository);
-  });
+  const generator = new SpedContributionsGenerator();
 
   describe('generate()', () => {
-    it('should generate SPED Contributions document with mocked data', async () => {
+    it('should generate SPED Contributions document with mocked data', () => {
       // Arrange
-      const period: SpedFiscalPeriod = {
+      const input: SpedContributionsInput = {
         organizationId: 1,
         branchId: 1,
         referenceMonth: 1,
         referenceYear: 2026,
+        finality: 'ORIGINAL',
+      };
+
+      const data: SpedContributionsData = {
+        company: {
+          document: '12345678000190',
+        },
+        ctes: [],
+        nfesEntrada: [],
+        taxTotals: {
+          baseDebito: 0,
+          baseCredito: 0,
+        },
       };
 
       // Act
-      const result = await generator.generate({ period });
+      const result = generator.generate(input, data);
 
       // Assert
-      // Nota: Com mocks básicos, o método pode falhar em alguma validação interna
-      // Este teste documenta que o método executa sem lançar exceção
       expect(result).toBeDefined();
       expect(Result.isOk(result) || Result.isFail(result)).toBe(true);
       
@@ -73,29 +51,40 @@ describe('SpedContributionsGenerator - Basic Tests', () => {
       if (Result.isOk(result)) {
         const document = result.value;
         expect(document.documentType).toBe('EFD_CONTRIBUICOES');
-        expect(document.blocks).toBeDefined();
+        expect(document.totalLines).toBeGreaterThan(0);
       }
     });
 
-    it('should handle repository errors gracefully', async () => {
-      // Arrange
-      const period: SpedFiscalPeriod = {
+    it('should handle invalid input gracefully', () => {
+      // Arrange - CNPJ inválido
+      const input: SpedContributionsInput = {
         organizationId: 1,
         branchId: 1,
         referenceMonth: 1,
         referenceYear: 2026,
+        finality: 'ORIGINAL',
       };
 
-      // Mock repository failure
-      mockRepository.getOrganization = vi.fn().mockResolvedValue(
-        Result.fail('Erro ao buscar dados da organização')
-      );
+      const data: SpedContributionsData = {
+        company: {
+          document: '123', // CNPJ inválido (não tem 14 caracteres)
+        },
+        ctes: [],
+        nfesEntrada: [],
+        taxTotals: {
+          baseDebito: 0,
+          baseCredito: 0,
+        },
+      };
 
       // Act
-      const result = await generator.generate({ period });
+      const result = generator.generate(input, data);
 
       // Assert
       expect(Result.isFail(result)).toBe(true);
+      if (Result.isFail(result)) {
+        expect(result.error).toContain('CNPJ');
+      }
     });
 
   });

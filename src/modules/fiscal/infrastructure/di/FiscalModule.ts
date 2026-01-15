@@ -16,6 +16,13 @@ import { SubmitFiscalDocumentUseCase } from '../../application/use-cases/SubmitF
 import { AuthorizeFiscalDocumentUseCase } from '../../application/use-cases/AuthorizeFiscalDocumentUseCase';
 import { CancelFiscalDocumentUseCase } from '../../application/use-cases/CancelFiscalDocumentUseCase';
 import { CalculateTaxesUseCase } from '../../application/use-cases/CalculateTaxesUseCase';
+import type { IGenerateSpedFiscal } from '../../domain/ports/input/IGenerateSpedFiscal';
+import type { IGenerateSpedEcd } from '../../domain/ports/input/IGenerateSpedEcd';
+import type { IGenerateSpedContributions } from '../../domain/ports/input/IGenerateSpedContributions';
+import type { ISpedDataRepository } from '../../domain/ports/ISpedDataRepository';
+import { GenerateSpedFiscalUseCase as GenerateSpedFiscalUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedFiscalUseCase';
+import { GenerateSpedEcdUseCase as GenerateSpedEcdUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedEcdUseCase';
+import { GenerateSpedContributionsUseCase as GenerateSpedContributionsUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedContributionsUseCase';
 
 /**
  * Fiscal Module: Dependency Injection Registration
@@ -49,12 +56,33 @@ export function registerFiscalModule(): void {
 }
 
 /**
+ * Fiscal SPED Module: Dependency Injection Registration
+ */
+export function initializeFiscalSpedModule(): void {
+  container.register<ISpedDataRepository>('ISpedDataRepository', {
+    useClass: DrizzleSpedDataRepository,
+  });
+
+  container.register<IGenerateSpedFiscal>('IGenerateSpedFiscal', {
+    useClass: GenerateSpedFiscalUseCaseV2,
+  });
+
+  container.register<IGenerateSpedEcd>('IGenerateSpedEcd', {
+    useClass: GenerateSpedEcdUseCaseV2,
+  });
+
+  container.register<IGenerateSpedContributions>('IGenerateSpedContributions', {
+    useClass: GenerateSpedContributionsUseCaseV2,
+  });
+}
+
+/**
  * SPED Module Factories (DDD Architecture)
  * 
  * Factories para criação de Use Cases SPED sem container DI
  */
 
-import { createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
+import { DrizzleSpedDataRepository, createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
 import { SpedFiscalGenerator } from '../../domain/services/SpedFiscalGenerator';
 import { GenerateSpedFiscalUseCase } from '../../application/use-cases/GenerateSpedFiscalUseCase';
 import { ConsoleLogger } from '@/shared/infrastructure/logging/ConsoleLogger';
