@@ -2,24 +2,30 @@
  * 📄 SPED ECD GENERATION API ROUTE
  * 
  * POST /api/sped/ecd/generate
- * Gera arquivo ECD (Escrituração Contábil Digital) usando arquitetura DDD
+ * Gera arquivo ECD (Escrituração Contábil Digital) usando arquitetura DDD/Hexagonal
  * 
- * @epic E7.13 - Services → DDD/Hexagonal
+ * @epic E7.18 - Migração SPED para Input Ports + Use Cases
  * @layer Presentation
  */
 
 import { NextResponse } from 'next/server';
+import { container } from 'tsyringe';
 import { auth } from '@/lib/auth';
 import { getTenantContext } from '@/lib/auth/context';
 import { Result } from '@/shared/domain';
-import { createGenerateSpedEcdUseCase } from '@/modules/fiscal/infrastructure/di/FiscalModule';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import type { IGenerateSpedEcd } from '@/modules/fiscal/domain/ports/input';
+
+// Garantir que módulo está inicializado
+import '@/modules/fiscal/infrastructure/bootstrap';
 
 /**
  * POST /api/sped/ecd/generate
  * 
  * Body: {
- *   year: number;        // Ex: 2024
- *   bookType: "G" | "R"; // G = Livro Geral, R = Razão Auxiliar
+ *   anoExercicio: number;  // Ex: 2026
+ *   finalidade?: "ORIGINAL" | "RETIFICADORA" | "SUBSTITUTA";
+ *   hashRetificado?: string; // Obrigatório se finalidade != ORIGINAL
  * }
  * 
  * Response: Arquivo .txt com encoding ISO-8859-1
@@ -40,74 +46,70 @@ export async function POST(req: Request) {
 
     // 3. Parse body
     const body = await req.json();
-    const { year, bookType = 'G' } = body;
+    const { anoExercicio, finalidade = 'ORIGINAL', hashRetificado } = body;
 
     // 4. Validações
-    if (!year) {
+    if (!anoExercicio) {
       return NextResponse.json(
-        { error: 'year é obrigatório' },
+        { error: 'anoExercicio é obrigatório' },
         { status: 400 }
       );
     }
 
-    const referenceYear = parseInt(year, 10);
+    const referenceYear = parseInt(anoExercicio, 10);
     if (isNaN(referenceYear) || referenceYear < 2000 || referenceYear > 2100) {
       return NextResponse.json(
-        { error: 'year inválido. Deve estar entre 2000 e 2100' },
+        { error: 'anoExercicio inválido. Deve estar entre 2000 e 2100' },
         { status: 400 }
       );
     }
 
-    if (!['G', 'R'].includes(bookType)) {
-      return NextResponse.json(
-        { error: 'bookType inválido. Use "G" (Geral) ou "R" (Razão Auxiliar)' },
-        { status: 400 }
-      );
-    }
-
-    // 5. Validar que defaultBranchId não é null (ENFORCE-033)
+    // 5. Validar branchId
     if (ctx.defaultBranchId === null || ctx.defaultBranchId === undefined) {
       return NextResponse.json(
-        { success: false, error: 'Branch não configurado para este usuário' },
+        { error: 'Branch não configurado para este usuário' },
         { status: 400 }
       );
     }
 
-    // 6. Criar Use Case
-    const useCase = createGenerateSpedEcdUseCase();
+    // 6. Resolver Use Case via DI
+    const useCase = container.resolve<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase);
 
     // 7. Executar geração
-    console.log(`📄 Gerando SPED ECD ${referenceYear} (${bookType}) para org ${ctx.organizationId}...`);
+    console.log(`📄 Gerando SPED ECD ${referenceYear} (${finalidade}) para org ${ctx.organizationId}...`);
 
-    const result = await useCase.execute({
-      organizationId: ctx.organizationId,
-      branchId: ctx.defaultBranchId,  // Agora garantido não-null
-      referenceYear,
-      bookType,
-    });
+    const result = await useCase.execute(
+      {
+        anoExercicio: referenceYear,
+        finalidade: finalidade as 'ORIGINAL' | 'RETIFICADORA' | 'SUBSTITUTA',
+        hashRetificado,
+      },
+      {
+        organizationId: ctx.organizationId,
+        branchId: ctx.defaultBranchId,
+        userId: ctx.userId,
+      }
+    );
 
     // 8. Tratar resultado
     if (Result.isFail(result)) {
       console.error('❌ Erro ao gerar SPED ECD:', result.error);
       return NextResponse.json(
-        { error: result.error.message },
+        { error: result.error },
         { status: 400 }
       );
     }
 
-    // 9. Gerar buffer com encoding ISO-8859-1 (método já faz isso corretamente)
-    const buffer = result.value.toBuffer();
+    // 9. Retornar arquivo
+    console.log(`✅ SPED ECD gerado: ${result.value.filename}`);
 
-    const fileName = `ECD_${referenceYear}_${bookType}.txt`;
-
-    console.log(`✅ SPED ECD gerado com sucesso: ${fileName}`);
-
-    // 10. Retornar arquivo
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(result.value.content, {
       status: 200,
       headers: {
-        'Content-Type': 'text/plain; charset=ISO-8859-1',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${result.value.filename}"`,
+        'X-Sped-Hash': result.value.hash,
+        'X-Sped-Total-Registros': String(result.value.totalRegistros),
       },
     });
   } catch (error: unknown) {

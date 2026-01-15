@@ -31,6 +31,12 @@ export const TOKENS = {
   AuthorizeFiscalDocumentUseCase: Symbol('AuthorizeFiscalDocumentUseCase'),
   CancelFiscalDocumentUseCase: Symbol('CancelFiscalDocumentUseCase'),
   CalculateTaxesUseCase: Symbol('CalculateTaxesUseCase'),
+  
+  // Fiscal Module - SPED Use Cases (E7.18 Fase 3)
+  GenerateSpedFiscalUseCase: Symbol('GenerateSpedFiscalUseCase'),
+  GenerateSpedEcdUseCase: Symbol('GenerateSpedEcdUseCase'),
+  GenerateSpedContributionsUseCase: Symbol('GenerateSpedContributionsUseCase'),
+  SpedDataRepository: Symbol('SpedDataRepository'),
 
   // WMS Module - E7.8 Semana 2
   LocationRepository: Symbol('LocationRepository'),

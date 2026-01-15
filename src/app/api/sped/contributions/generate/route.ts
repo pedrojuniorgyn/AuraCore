@@ -2,25 +2,30 @@
  * 📄 SPED CONTRIBUTIONS GENERATION API ROUTE
  * 
  * POST /api/sped/contributions/generate
- * Gera arquivo SPED Contributions (EFD-Contribuições PIS/COFINS) usando arquitetura DDD
+ * Gera arquivo SPED Contributions (EFD-Contribuições PIS/COFINS) usando arquitetura DDD/Hexagonal
  * 
- * @epic E7.13 - Services → DDD/Hexagonal
+ * @epic E7.18 - Migração SPED para Input Ports + Use Cases
  * @layer Presentation
  */
 
 import { NextResponse } from 'next/server';
+import { container } from 'tsyringe';
 import { auth } from '@/lib/auth';
 import { getTenantContext } from '@/lib/auth/context';
 import { Result } from '@/shared/domain';
-import { createGenerateSpedContributionsUseCase } from '@/modules/fiscal/infrastructure/di/FiscalModule';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import type { IGenerateSpedContributions } from '@/modules/fiscal/domain/ports/input';
+
+// Garantir que módulo está inicializado
+import '@/modules/fiscal/infrastructure/bootstrap';
 
 /**
  * POST /api/sped/contributions/generate
  * 
  * Body: {
- *   month: number;                       // Ex: 12 (1-12)
- *   year: number;                        // Ex: 2024
- *   finality: "ORIGINAL" | "SUBSTITUTION"; // Opcional, default: ORIGINAL
+ *   competencia: string;  // Formato MMAAAA (ex: 012026)
+ *   finalidade?: "ORIGINAL" | "RETIFICADORA";
+ *   hashRetificado?: string; // Obrigatório se finalidade != ORIGINAL
  * }
  * 
  * Response: Arquivo .txt com encoding ISO-8859-1
@@ -41,84 +46,69 @@ export async function POST(req: Request) {
 
     // 3. Parse body
     const body = await req.json();
-    const { month, year, finality = 'ORIGINAL' } = body;
+    const { competencia, finalidade = 'ORIGINAL', hashRetificado } = body;
 
     // 4. Validações
-    if (!month || !year) {
+    if (!competencia) {
       return NextResponse.json(
-        { error: 'month e year são obrigatórios' },
+        { error: 'competencia é obrigatória (formato MMAAAA)' },
         { status: 400 }
       );
     }
 
-    const referenceMonth = parseInt(month, 10);
-    const referenceYear = parseInt(year, 10);
-
-    if (isNaN(referenceMonth) || referenceMonth < 1 || referenceMonth > 12) {
+    if (!/^\d{6}$/.test(competencia)) {
       return NextResponse.json(
-        { error: 'month inválido. Deve estar entre 1 e 12' },
+        { error: 'competencia deve estar no formato MMAAAA (ex: 012026)' },
         { status: 400 }
       );
     }
 
-    if (isNaN(referenceYear) || referenceYear < 2000 || referenceYear > 2100) {
-      return NextResponse.json(
-        { error: 'year inválido. Deve estar entre 2000 e 2100' },
-        { status: 400 }
-      );
-    }
-
-    if (!['ORIGINAL', 'SUBSTITUTION'].includes(finality)) {
-      return NextResponse.json(
-        { error: 'finality inválido. Use "ORIGINAL" ou "SUBSTITUTION"' },
-        { status: 400 }
-      );
-    }
-
-    // 5. Validar que defaultBranchId não é null (ENFORCE-033)
+    // 5. Validar branchId
     if (ctx.defaultBranchId === null || ctx.defaultBranchId === undefined) {
       return NextResponse.json(
-        { success: false, error: 'Branch não configurado para este usuário' },
+        { error: 'Branch não configurado para este usuário' },
         { status: 400 }
       );
     }
 
-    // 6. Criar Use Case
-    const useCase = createGenerateSpedContributionsUseCase();
+    // 6. Resolver Use Case via DI
+    const useCase = container.resolve<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase);
 
     // 7. Executar geração
-    console.log(`📄 Gerando SPED Contributions ${referenceMonth}/${referenceYear} (${finality}) para org ${ctx.organizationId}...`);
+    console.log(`📄 Gerando SPED Contributions ${competencia} (${finalidade}) para org ${ctx.organizationId}...`);
 
-    const result = await useCase.execute({
-      organizationId: ctx.organizationId,
-      branchId: ctx.defaultBranchId,  // Agora garantido não-null
-      referenceMonth,
-      referenceYear,
-      finality: finality as 'ORIGINAL' | 'SUBSTITUTION',
-    });
+    const result = await useCase.execute(
+      {
+        competencia,
+        finalidade: finalidade as 'ORIGINAL' | 'RETIFICADORA',
+        hashRetificado,
+      },
+      {
+        organizationId: ctx.organizationId,
+        branchId: ctx.defaultBranchId,
+        userId: ctx.userId,
+      }
+    );
 
     // 8. Tratar resultado
     if (Result.isFail(result)) {
       console.error('❌ Erro ao gerar SPED Contributions:', result.error);
       return NextResponse.json(
-        { error: result.error.message },
+        { error: result.error },
         { status: 400 }
       );
     }
 
-    // 9. Gerar buffer com encoding ISO-8859-1 (método já faz isso corretamente)
-    const buffer = result.value.toBuffer();
+    // 9. Retornar arquivo
+    console.log(`✅ SPED Contributions gerado: ${result.value.filename}`);
 
-    const fileName = `SPED_CONTRIBUICOES_${String(referenceMonth).padStart(2, '0')}_${referenceYear}.txt`;
-
-    console.log(`✅ SPED Contributions gerado com sucesso: ${fileName}`);
-
-    // 10. Retornar arquivo
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(result.value.content, {
       status: 200,
       headers: {
-        'Content-Type': 'text/plain; charset=ISO-8859-1',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${result.value.filename}"`,
+        'X-Sped-Hash': result.value.hash,
+        'X-Sped-Total-Registros': String(result.value.totalRegistros),
       },
     });
   } catch (error: unknown) {

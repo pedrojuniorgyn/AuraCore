@@ -53,27 +53,25 @@ export function registerFiscalModule(): void {
   container.registerSingleton(TOKENS.AuthorizeFiscalDocumentUseCase, AuthorizeFiscalDocumentUseCase);
   container.registerSingleton(TOKENS.CancelFiscalDocumentUseCase, CancelFiscalDocumentUseCase);
   container.registerSingleton(TOKENS.CalculateTaxesUseCase, CalculateTaxesUseCase);
+  
+  // SPED Use Cases (E7.18 Fase 3)
+  initializeFiscalSpedModule();
 }
 
 /**
  * Fiscal SPED Module: Dependency Injection Registration
+ * 
+ * Registra Use Cases SPED com arquitetura DDD/Hexagonal completa
+ * (Input Ports → Use Cases → Domain Services → Output Ports)
  */
 export function initializeFiscalSpedModule(): void {
-  container.register<ISpedDataRepository>('ISpedDataRepository', {
-    useClass: DrizzleSpedDataRepository,
-  });
+  // Repository
+  container.registerSingleton<ISpedDataRepository>(TOKENS.SpedDataRepository, DrizzleSpedDataRepository);
 
-  container.register<IGenerateSpedFiscal>('IGenerateSpedFiscal', {
-    useClass: GenerateSpedFiscalUseCaseV2,
-  });
-
-  container.register<IGenerateSpedEcd>('IGenerateSpedEcd', {
-    useClass: GenerateSpedEcdUseCaseV2,
-  });
-
-  container.register<IGenerateSpedContributions>('IGenerateSpedContributions', {
-    useClass: GenerateSpedContributionsUseCaseV2,
-  });
+  // Use Cases SPED
+  container.registerSingleton<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase, GenerateSpedFiscalUseCaseV2);
+  container.registerSingleton<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase, GenerateSpedEcdUseCaseV2);
+  container.registerSingleton<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase, GenerateSpedContributionsUseCaseV2);
 }
 
 /**
