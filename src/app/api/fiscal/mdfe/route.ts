@@ -110,8 +110,10 @@ export async function POST(req: Request) {
       status: "DRAFT",
       issueDate: new Date(),
       createdBy,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: 1,
+    });
 
     // Evita bugs do $returningId() no MSSQL e garante mdfeId sempre definido.
     const [newMdfe] = await db

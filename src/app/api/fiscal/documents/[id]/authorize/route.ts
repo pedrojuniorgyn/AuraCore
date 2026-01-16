@@ -67,8 +67,7 @@ export async function POST(
       {
         userId: ctx.userId,
         organizationId: ctx.organizationId,
-        branchId,
-        isAdmin: ctx.isAdmin || false
+        branchId
       }
     );
     

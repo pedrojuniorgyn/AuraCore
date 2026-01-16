@@ -63,15 +63,13 @@ export async function POST(request: NextRequest) {
 
     const result = await useCase.execute(
       {
-        organizationId: ctx.organizationId,
-        branchId,
-        fiscalDocumentId: validation.data.fiscalDocumentId,
+        documentId: validation.data.fiscalDocumentId,
+        regimes: ['SIMPLES_NACIONAL', 'LUCRO_PRESUMIDO', 'LUCRO_REAL'], // Default: comparar os 3 regimes
       },
       {
         userId: ctx.userId,
         organizationId: ctx.organizationId,
         branchId,
-        isAdmin: false,
       }
     );
 

@@ -49,8 +49,7 @@ export async function POST(request: NextRequest) {
     const result = await useCase.execute(validationResult.data, {
       userId: ctx.userId,
       organizationId: ctx.organizationId,
-      branchId,
-      isAdmin: ctx.isAdmin || false
+      branchId
     });
     
     // 4. Retornar resultado

@@ -27,10 +27,16 @@ export const TOKENS = {
   
   // Fiscal Module - Use Cases
   CreateFiscalDocumentUseCase: Symbol('CreateFiscalDocumentUseCase'),
+  ListFiscalDocumentsUseCase: Symbol('ListFiscalDocumentsUseCase'),
+  GetFiscalDocumentByIdUseCase: Symbol('GetFiscalDocumentByIdUseCase'),
   SubmitFiscalDocumentUseCase: Symbol('SubmitFiscalDocumentUseCase'),
   AuthorizeFiscalDocumentUseCase: Symbol('AuthorizeFiscalDocumentUseCase'),
   CancelFiscalDocumentUseCase: Symbol('CancelFiscalDocumentUseCase'),
+  ValidateFiscalDocumentUseCase: Symbol('ValidateFiscalDocumentUseCase'),
   CalculateTaxesUseCase: Symbol('CalculateTaxesUseCase'),
+  GenerateDanfeUseCase: Symbol('GenerateDanfeUseCase'),
+  TransmitToSefazUseCase: Symbol('TransmitToSefazUseCase'),
+  QuerySefazStatusUseCase: Symbol('QuerySefazStatusUseCase'),
   
   // Fiscal Module - SPED Use Cases (E7.18 Fase 3)
   GenerateSpedFiscalUseCase: Symbol('GenerateSpedFiscalUseCase'),

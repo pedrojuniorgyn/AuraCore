@@ -63,18 +63,15 @@ export async function POST(request: NextRequest) {
 
     const result = await useCase.execute(
       {
-        organizationId: ctx.organizationId,
-        branchId,
-        baseValue: validation.data.baseValue,
-        ufOrigem: validation.data.ufOrigem,
-        ufDestino: validation.data.ufDestino,
-        years: validation.data.years,
+        documentId: '', // Não aplicável para simulação de cenários futuros
+        scenario: 'REFORM_2026',
+        ibsRate: 27.5, // Alíquota padrão IBS (26.5% + 1% para saúde)
+        cbsRate: 8.8, // Alíquota padrão CBS
       },
       {
         userId: ctx.userId,
         organizationId: ctx.organizationId,
         branchId,
-        isAdmin: false,
       }
     );
 

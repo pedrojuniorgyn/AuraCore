@@ -10,6 +10,7 @@ import {
   IAuthorizeFiscalDocument,
   AuthorizeFiscalDocumentInput,
   AuthorizeFiscalDocumentOutput,
+  ExecutionContext,
 } from '../../domain/ports/input';
 
 /**

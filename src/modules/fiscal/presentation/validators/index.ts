@@ -22,13 +22,13 @@ export const CreateFiscalDocumentSchema = z.object({
   
   // Items (mínimo 1)
   items: z.array(z.object({
+    productCode: z.string().min(1, 'Código do produto é obrigatório').max(50, 'Código do produto deve ter no máximo 50 caracteres'),
     description: z.string().min(1, 'Descrição é obrigatória').max(500, 'Descrição deve ter no máximo 500 caracteres'),
     quantity: z.number().positive('Quantidade deve ser maior que zero'),
     unitPrice: z.number().nonnegative('Preço unitário não pode ser negativo'),
     ncm: z.string().length(8, 'NCM deve ter exatamente 8 dígitos').optional(),
     cfop: z.string().length(4, 'CFOP deve ter exatamente 4 dígitos'),
     unitOfMeasure: z.string().min(1).max(10, 'Unidade de medida deve ter no máximo 10 caracteres'),
-    currency: z.string().length(3, 'Moeda deve ter 3 caracteres (ISO 4217)').default('BRL'),
   })).min(1, 'Documento deve ter pelo menos 1 item'),
   
   notes: z.string().max(2000, 'Observações devem ter no máximo 2000 caracteres').optional(),

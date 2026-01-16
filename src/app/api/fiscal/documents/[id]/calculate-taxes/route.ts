@@ -57,13 +57,13 @@ export async function POST(
     const useCase = container.resolve(CalculateTaxesUseCase);
     const result = await useCase.execute(
       {
-        fiscalDocumentId: id
+        documentId: id, // Input Port usa 'documentId', não 'fiscalDocumentId'
+        force: validationResult.data.recalculate
       },
       {
         userId: ctx.userId,
         organizationId: ctx.organizationId,
-        branchId,
-        isAdmin: ctx.isAdmin || false
+        branchId
       }
     );
     

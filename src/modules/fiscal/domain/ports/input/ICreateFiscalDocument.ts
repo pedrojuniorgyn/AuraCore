@@ -20,8 +20,8 @@ export interface CreateFiscalDocumentInput {
   issuerCnpj: string;
   /** Nome do emitente */
   issuerName: string;
-  /** ID do destinatário */
-  recipientId: string;
+  /** ID do destinatário (opcional - ex: CTe sem destinatário específico) */
+  recipientId?: string;
   /** CNPJ/CPF do destinatário */
   recipientCnpjCpf?: string;
   /** Nome do destinatário */
