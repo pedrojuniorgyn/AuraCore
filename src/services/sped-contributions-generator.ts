@@ -1,6 +1,13 @@
 /**
- * 📄 SPED CONTRIBUIÇÕES GENERATOR
+ * 📄 SPED CONTRIBUIÇÕES GENERATOR (LEGACY - DEPRECATED)
  * Geração de arquivo EFD-Contribuições (PIS/COFINS)
+ * 
+ * @deprecated Este arquivo foi substituído pela arquitetura DDD/Hexagonal
+ * @see src/modules/fiscal/domain/services/SpedContributionsGenerator.ts (novo)
+ * @see src/modules/fiscal/application/use-cases/sped/GenerateSpedContributionsUseCase.ts
+ * 
+ * Mantido para referência histórica. NÃO use em código novo.
+ * Migração: E7.18 (Jan 2026)
  * 
  * Blocos Implementados:
  * - Bloco 0: Cadastros

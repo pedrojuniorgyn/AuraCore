@@ -1,6 +1,13 @@
 /**
- * 📄 SPED ECD GENERATOR
+ * 📄 SPED ECD GENERATOR (LEGACY - DEPRECATED)
  * Geração de Escrituração Contábil Digital
+ * 
+ * @deprecated Este arquivo foi substituído pela arquitetura DDD/Hexagonal
+ * @see src/modules/fiscal/domain/services/SpedEcdGenerator.ts (novo)
+ * @see src/modules/fiscal/application/use-cases/sped/GenerateSpedEcdUseCase.ts
+ * 
+ * Mantido para referência histórica. NÃO use em código novo.
+ * Migração: E7.18 (Jan 2026)
  * 
  * Blocos Implementados:
  * - Bloco 0: Cadastros

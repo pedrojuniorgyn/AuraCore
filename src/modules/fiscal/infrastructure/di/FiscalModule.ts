@@ -75,9 +75,19 @@ export function initializeFiscalSpedModule(): void {
 }
 
 /**
- * SPED Module Factories (DDD Architecture)
+ * SPED Module Factories (DEPRECATED - E7.18)
  * 
- * Factories para criação de Use Cases SPED sem container DI
+ * @deprecated Estas factories estão obsoletas. Use container.resolve() com TOKENS.
+ * Mantidas para retrocompatibilidade. Serão removidas em v2.0.
+ * 
+ * @example
+ * // ❌ Obsoleto
+ * const useCase = createGenerateSpedFiscalUseCase();
+ * 
+ * // ✅ Use isto
+ * import { container } from 'tsyringe';
+ * import { TOKENS } from '@/shared/infrastructure/di/tokens';
+ * const useCase = container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase);
  */
 
 import { DrizzleSpedDataRepository, createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
@@ -86,7 +96,8 @@ import { GenerateSpedFiscalUseCase } from '../../application/use-cases/GenerateS
 import { ConsoleLogger } from '@/shared/infrastructure/logging/ConsoleLogger';
 
 /**
- * Factory: Create SPED Fiscal Generator Use Case
+ * @deprecated Use container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase)
+ * Mantido para retrocompatibilidade. Será removido em v2.0.
  */
 export function createGenerateSpedFiscalUseCase(): GenerateSpedFiscalUseCase {
   const repository = createSpedDataRepository();
@@ -100,7 +111,8 @@ import { SpedEcdGenerator } from '../../domain/services/SpedEcdGenerator';
 import { GenerateSpedEcdUseCase } from '../../application/use-cases/GenerateSpedEcdUseCase';
 
 /**
- * Factory: Create SPED ECD Generator Use Case
+ * @deprecated Use container.resolve<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase)
+ * Mantido para retrocompatibilidade. Será removido em v2.0.
  */
 export function createGenerateSpedEcdUseCase(): GenerateSpedEcdUseCase {
   const repository = createSpedDataRepository();
@@ -113,7 +125,8 @@ import { SpedContributionsGenerator } from '../../domain/services/SpedContributi
 import { GenerateSpedContributionsUseCase } from '../../application/use-cases/GenerateSpedContributionsUseCase';
 
 /**
- * Factory: Create SPED Contributions Generator Use Case
+ * @deprecated Use container.resolve<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase)
+ * Mantido para retrocompatibilidade. Será removido em v2.0.
  */
 export function createGenerateSpedContributionsUseCase(): GenerateSpedContributionsUseCase {
   const repository = createSpedDataRepository();

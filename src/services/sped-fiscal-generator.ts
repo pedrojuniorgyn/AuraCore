@@ -1,6 +1,13 @@
 /**
- * 📄 SPED FISCAL GENERATOR
+ * 📄 SPED FISCAL GENERATOR (LEGACY - DEPRECATED)
  * Geração de arquivo EFD-ICMS/IPI (Escrituração Fiscal Digital)
+ * 
+ * @deprecated Este arquivo foi substituído pela arquitetura DDD/Hexagonal
+ * @see src/modules/fiscal/domain/services/SpedFiscalGenerator.ts (novo)
+ * @see src/modules/fiscal/application/use-cases/sped/GenerateSpedFiscalUseCase.ts
+ * 
+ * Mantido para referência histórica. NÃO use em código novo.
+ * Migração: E7.18 (Jan 2026)
  * 
  * Blocos Implementados:
  * - Bloco 0: Cadastros
