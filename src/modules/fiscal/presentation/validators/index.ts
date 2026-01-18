@@ -4,8 +4,8 @@ import { z } from 'zod';
  * Validator: Criar Documento Fiscal
  */
 export const CreateFiscalDocumentSchema = z.object({
-  documentType: z.enum(['NFE', 'CTE', 'MDFE', 'NFSE'], {
-    message: 'Tipo de documento inválido. Use: NFE, CTE, MDFE ou NFSE'
+  documentType: z.enum(['NFE', 'NFCE', 'CTE', 'MDFE', 'NFSE'], {
+    message: 'Tipo de documento inválido. Use: NFE, NFCE, CTE, MDFE ou NFSE'
   }),
   series: z.string().min(1).max(10, 'Série deve ter no máximo 10 caracteres'),
   issueDate: z.string().datetime().or(z.date()),
@@ -76,7 +76,7 @@ export const ListFiscalDocumentsQuerySchema = z.object({
   page: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive()).default(() => 1),
   limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100)).default(() => 20),
   status: z.enum(['DRAFT', 'SUBMITTED', 'AUTHORIZED', 'CANCELLED', 'REJECTED']).optional(),
-  documentType: z.enum(['NFE', 'CTE', 'MDFE', 'NFSE']).optional(),
+  documentType: z.enum(['NFE', 'NFCE', 'CTE', 'MDFE', 'NFSE']).optional(),
   issueDateFrom: z.string().datetime().or(z.date()).optional(),
   issueDateTo: z.string().datetime().or(z.date()).optional(),
 });

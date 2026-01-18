@@ -42,6 +42,9 @@ export const simulateTaxScenarioSchema = z.object({
  */
 export const compareTaxRegimesSchema = z.object({
   fiscalDocumentId: z.string().uuid('fiscalDocumentId deve ser um UUID válido'),
+  regimes: z.array(
+    z.enum(['SIMPLES_NACIONAL', 'LUCRO_PRESUMIDO', 'LUCRO_REAL'])
+  ).optional().default(['SIMPLES_NACIONAL', 'LUCRO_PRESUMIDO', 'LUCRO_REAL']),
 });
 
 /**

@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const result = await useCase.execute(
       {
         documentId: validation.data.fiscalDocumentId,
-        regimes: ['SIMPLES_NACIONAL', 'LUCRO_PRESUMIDO', 'LUCRO_REAL'], // Default: comparar os 3 regimes
+        regimes: validation.data.regimes, // Usa input do usuário (com default no schema)
       },
       {
         userId: ctx.userId,
