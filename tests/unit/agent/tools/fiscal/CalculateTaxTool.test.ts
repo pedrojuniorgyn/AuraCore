@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { CalculateTaxTool } from '@/agent/tools/fiscal/CalculateTaxTool';
 import type { AgentExecutionContext } from '@/agent/core/AgentContext';
+import { Result } from '@/shared/domain';
 
 describe('CalculateTaxTool', () => {
   const tool = new CalculateTaxTool();
@@ -43,7 +44,7 @@ describe('CalculateTaxTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.success).toBe(true);
@@ -66,7 +67,7 @@ describe('CalculateTaxTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.cfop).toBe('6102'); // CFOP interestadual
@@ -86,7 +87,7 @@ describe('CalculateTaxTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.impostos.pis.aliquota).toBe(0.65); // PIS cumulativo
@@ -105,7 +106,7 @@ describe('CalculateTaxTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.impostos.pis.aliquota).toBe(0);
@@ -127,7 +128,7 @@ describe('CalculateTaxTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.impostos.iss).toBeDefined();
@@ -150,7 +151,7 @@ describe('CalculateTaxTool', () => {
           mockContext
         );
 
-        expect(result.isSuccess).toBe(true);
+        expect(Result.isOk(result)).toBe(true);
         expect(result.value.natureza_operacao).toBeTruthy();
       }
     });
@@ -167,7 +168,7 @@ describe('CalculateTaxTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       // Verificar observação sobre operação interestadual
       expect(result.value.observacoes.some(obs => 
         obs.includes('interestadual') || obs.includes('DIFAL')

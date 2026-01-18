@@ -213,7 +213,7 @@ export class FiscalImportWorkflow {
             messageId,
             attachmentId
           );
-          if (attachmentResult.isFailure) {
+          if (Result.isFail(attachmentResult)) {
             return {
               status: 'failed' as const,
               errors: [...state.errors, `Erro ao buscar anexo: ${attachmentResult.error}`],
@@ -233,7 +233,7 @@ export class FiscalImportWorkflow {
             };
           }
           const fileResult = await this.googleWorkspace.getFileContent(state.identifier);
-          if (fileResult.isFailure) {
+          if (Result.isFail(fileResult)) {
             return {
               status: 'failed' as const,
               errors: [...state.errors, `Erro ao buscar arquivo: ${fileResult.error}`],
@@ -291,7 +291,7 @@ export class FiscalImportWorkflow {
 
       // Usar Document AI para extrair dados
       const extractResult = await this.googleCloud.extractNFeData(state.rawDocument);
-      if (extractResult.isFailure) {
+      if (Result.isFail(extractResult)) {
         return {
           status: 'failed' as const,
           errors: [...state.errors, `Erro na extração: ${extractResult.error}`],

@@ -8,6 +8,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VoiceHandler } from '@/agent/voice/VoiceHandler';
+import { Result } from '@/shared/domain';
 
 describe('VoiceHandler', () => {
   let voiceHandler: VoiceHandler;
@@ -173,7 +174,7 @@ describe('VoiceHandler', () => {
         async (text) => text
       );
 
-      expect(result.isFailure).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       expect(result.error).toContain('Sessão não encontrada');
     });
 
@@ -187,7 +188,7 @@ describe('VoiceHandler', () => {
         async (text) => text
       );
 
-      expect(result.isFailure).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       expect(result.error).toContain('inativa');
     });
   });

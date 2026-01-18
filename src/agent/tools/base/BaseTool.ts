@@ -111,7 +111,7 @@ export abstract class BaseTool<TInput = unknown, TOutput = unknown> {
     // Executar
     const result = await this.execute(parseResult.data, context);
 
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return {
         success: false,
         error: result.error,

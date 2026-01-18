@@ -12,6 +12,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { VoiceHandler } from '@/agent/voice/VoiceHandler';
 import { agentLogger } from '@/agent/observability';
+import { Result } from '@/shared/domain';
 
 const SynthesizeRequestSchema = z.object({
   text: z.string().min(1).max(5000),
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
       pitch: pitch ?? 0,
     });
 
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       agentLogger.error('voice', 'API.synthesize.failed', {
         error: result.error,
         durationMs: timer(),

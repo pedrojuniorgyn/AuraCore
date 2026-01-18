@@ -334,7 +334,7 @@ export class GoogleCloudClient {
   async extractNFeData(pdfContent: Buffer): Promise<Result<NFeExtractedData, string>> {
     const docResult = await this.processDocument(pdfContent, 'application/pdf', 'invoice');
     
-    if (docResult.isFailure) {
+    if (Result.isFail(docResult)) {
       return Result.fail(docResult.error);
     }
 

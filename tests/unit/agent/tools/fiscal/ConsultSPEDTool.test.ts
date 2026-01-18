@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { ConsultSPEDTool } from '@/agent/tools/fiscal/ConsultSPEDTool';
 import type { AgentExecutionContext } from '@/agent/core/AgentContext';
+import { Result } from '@/shared/domain';
 
 describe('ConsultSPEDTool', () => {
   const tool = new ConsultSPEDTool();
@@ -43,7 +44,7 @@ describe('ConsultSPEDTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.success).toBe(true);
@@ -68,7 +69,7 @@ describe('ConsultSPEDTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.tipo).toContain('Contribuições');
@@ -90,7 +91,7 @@ describe('ConsultSPEDTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       expect(data.tipo).toContain('Contábil');
@@ -112,7 +113,7 @@ describe('ConsultSPEDTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       const data = result.value;
       
       // Com filtro, valores são menores
@@ -133,7 +134,7 @@ describe('ConsultSPEDTool', () => {
         mockContext
       );
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       // Verificar alerta sobre período longo
       expect(result.value.alertas.some(alerta => 
         alerta.includes('12') || alerta.includes('meses')
@@ -152,7 +153,7 @@ describe('ConsultSPEDTool', () => {
         mockContext
       );
 
-      expect(result.isFailure).toBe(true);
+      expect(Result.isFail(result)).toBe(true);
       expect(result.error).toContain('Período inicial');
     });
   });

@@ -11,6 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { VoiceHandler } from '@/agent/voice/VoiceHandler';
 import { agentLogger } from '@/agent/observability';
+import { Result } from '@/shared/domain';
 
 export async function POST(request: NextRequest) {
   const timer = agentLogger.startTimer();
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
       language: (language as 'pt-BR' | 'en-US' | 'es-ES') ?? 'pt-BR',
     });
 
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       agentLogger.error('voice', 'API.transcribe.failed', {
         error: result.error,
         durationMs: timer(),

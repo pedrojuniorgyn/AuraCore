@@ -32,6 +32,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { AuraAgent } from '@/agent';
 import { z } from 'zod';
+import { Result } from '@/shared/domain';
 
 /**
  * Schema de validação do request
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
     // 4. Processar mensagem
     const response = await agent.chat(message);
 
-    if (response.isFailure) {
+    if (Result.isFail(response)) {
       return NextResponse.json(
         {
           success: false,

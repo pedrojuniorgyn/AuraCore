@@ -7,6 +7,7 @@ import {
   BankReconciliationWorkflow,
   type BankReconciliationInput,
 } from '@/agent/workflows/BankReconciliationWorkflow';
+import { Result } from '@/shared/domain';
 
 describe('BankReconciliationWorkflow', () => {
   let workflow: BankReconciliationWorkflow;
@@ -29,7 +30,7 @@ describe('BankReconciliationWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(result.value.status).toBe('completed');
       expect(result.value.reconciliationId).toBeDefined();
       expect(result.value.summary).toBeDefined();
@@ -155,7 +156,7 @@ describe('BankReconciliationWorkflow', () => {
         };
 
         const result = await workflow.execute(input);
-        expect(result.isSuccess).toBe(true);
+        expect(Result.isOk(result)).toBe(true);
         expect(result.value.status).toBe('completed');
       }
     });

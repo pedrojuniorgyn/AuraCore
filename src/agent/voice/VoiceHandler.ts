@@ -374,7 +374,7 @@ export class VoiceHandler {
 
       // 2. Transcrever entrada
       const transcriptionResult = await this.transcribe(audioInput);
-      if (transcriptionResult.isFailure) {
+      if (Result.isFail(transcriptionResult)) {
         this.updateSessionStatus(sessionId, 'error');
         return Result.fail(transcriptionResult.error);
       }
@@ -399,7 +399,7 @@ export class VoiceHandler {
 
       // 7. Sintetizar resposta
       const synthesisResult = await this.synthesize(responseText);
-      const responseAudio = synthesisResult.isSuccess ? synthesisResult.value : undefined;
+      const responseAudio = Result.isOk(synthesisResult) ? synthesisResult.value : undefined;
 
       // 8. Adicionar resposta à sessão
       this.addMessageToSession(sessionId, {

@@ -276,7 +276,7 @@ export class AuraAgent {
         message
       );
 
-      if (responseResult.isFailure) {
+      if (Result.isFail(responseResult)) {
         return Result.fail(responseResult.error);
       }
 
@@ -317,14 +317,14 @@ export class AuraAgent {
   ): Promise<Result<Record<string, unknown>, string>> {
     if (documentType === 'nfe') {
       const result = await this.googleCloud.extractNFeData(content);
-      if (result.isFailure) {
+      if (Result.isFail(result)) {
         return Result.fail(result.error);
       }
       return Result.ok(result.value as unknown as Record<string, unknown>);
     }
 
     const result = await this.googleCloud.processDocument(content, mimeType);
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return Result.fail(result.error);
     }
     return Result.ok(result.value as unknown as Record<string, unknown>);
@@ -345,7 +345,7 @@ export class AuraAgent {
     const fiscalQuery = query ?? 'has:attachment (filename:xml OR filename:pdf) (nfe OR cte OR danfe)';
     
     const result = await this.googleWorkspace.searchEmails(fiscalQuery, maxResults);
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return Result.fail(result.error);
     }
 
@@ -365,7 +365,7 @@ export class AuraAgent {
     mimeType = 'audio/webm'
   ): Promise<Result<string, string>> {
     const result = await this.googleCloud.transcribeAudio(audioContent, mimeType);
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return Result.fail(result.error);
     }
     return Result.ok(result.value.transcript);
@@ -376,7 +376,7 @@ export class AuraAgent {
    */
   async synthesizeSpeech(text: string): Promise<Result<string, string>> {
     const result = await this.googleCloud.synthesizeSpeech(text);
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return Result.fail(result.error);
     }
     return Result.ok(result.value.audioContent);
@@ -406,7 +406,7 @@ export class AuraAgent {
       ...options,
     });
 
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return Result.fail(result.error);
     }
 
@@ -431,7 +431,7 @@ export class AuraAgent {
 
     const result = await this.googleWorkspace.updateSheet(spreadsheetId, range, values, mode);
 
-    if (result.isFailure) {
+    if (Result.isFail(result)) {
       return Result.fail(result.error);
     }
 

@@ -78,7 +78,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(result.value.success).toBe(true);
       expect(result.value.fiscalDocumentId).toBeDefined();
       expect(result.value.summary).toBeDefined();
@@ -100,7 +100,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(mockGoogleWorkspace.getEmailAttachment).toHaveBeenCalledWith('msg-123', 'attach-456');
     });
 
@@ -118,7 +118,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(mockGoogleWorkspace.getFileContent).toHaveBeenCalledWith('file-123');
     });
 
@@ -136,7 +136,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true); // Workflow executa, mas retorna erro interno
+      expect(Result.isOk(result)).toBe(true); // Workflow executa, mas retorna erro interno
       expect(result.value.success).toBe(false);
       expect(result.value.errors).toContain('Google Workspace não configurado para buscar email');
     });
@@ -159,7 +159,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(result.value.success).toBe(false);
       expect(result.value.errors.some(e => e.includes('Erro na extração'))).toBe(true);
     });
@@ -210,7 +210,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(result.value.success).toBe(true);
     });
 
@@ -259,7 +259,7 @@ describe('FiscalImportWorkflow', () => {
 
       const result = await workflow.execute(input);
 
-      expect(result.isSuccess).toBe(true);
+      expect(Result.isOk(result)).toBe(true);
       expect(result.value.success).toBe(true);
       // Em modo validateOnly, não deve ter fiscalDocumentId
       // (documento não é salvo)

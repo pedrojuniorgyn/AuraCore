@@ -22,6 +22,7 @@ import { generateEntity } from './tools/generate-entity.js';
 import { generateUseCase } from './tools/generate-use-case.js';
 import { analyzeModuleDependencies } from './tools/analyze-module-dependencies.js';
 import { generateModuleDocs } from './tools/generate-module-docs.js';
+import { createFeature } from './tools/create-feature.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -459,6 +460,76 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['module', 'format', 'include_diagrams', 'include_api'],
+          },
+        },
+        {
+          name: 'create_feature',
+          description: 'Cria uma feature DDD completa: Entity + Repository + Mapper + Schema + Use Cases + API Routes (opcional) + Testes (opcional).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Nome da feature em PascalCase (ex: FreightQuote)',
+              },
+              module: {
+                type: 'string',
+                description: 'Nome do módulo em lowercase (ex: tms, fiscal, wms)',
+              },
+              description: {
+                type: 'string',
+                description: 'Descrição da feature',
+              },
+              entity: {
+                type: 'object',
+                description: 'Configuração da Entity',
+                properties: {
+                  properties: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        type: { type: 'string' },
+                        required: { type: 'boolean' },
+                        description: { type: 'string' },
+                      },
+                      required: ['name', 'type', 'required'],
+                    },
+                  },
+                  behaviors: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Behaviors da entity (ex: approve, cancel)',
+                  },
+                },
+                required: ['properties', 'behaviors'],
+              },
+              useCases: {
+                type: 'array',
+                description: 'Use Cases a criar',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', description: 'Nome do Use Case' },
+                    type: { type: 'string', enum: ['command', 'query'] },
+                    description: { type: 'string' },
+                  },
+                  required: ['name', 'type', 'description'],
+                },
+              },
+              options: {
+                type: 'object',
+                description: 'Opções de geração',
+                properties: {
+                  createApiRoute: { type: 'boolean', description: 'Criar API routes' },
+                  createTests: { type: 'boolean', description: 'Criar testes unitários' },
+                  isAggregateRoot: { type: 'boolean', description: 'Entity é Aggregate Root' },
+                },
+                required: ['createApiRoute', 'createTests', 'isAggregateRoot'],
+              },
+            },
+            required: ['name', 'module', 'description', 'entity', 'useCases', 'options'],
           },
         },
       ],
@@ -1393,6 +1464,115 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to generate module docs: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'create_feature') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for create_feature');
+        }
+
+        const typedArgs = args as {
+          name?: unknown;
+          module?: unknown;
+          description?: unknown;
+          entity?: unknown;
+          useCases?: unknown;
+          options?: unknown;
+        };
+
+        // Validar name
+        if (!typedArgs.name || typeof typedArgs.name !== 'string') {
+          throw new Error('name é obrigatório e deve ser string');
+        }
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar description
+        if (!typedArgs.description || typeof typedArgs.description !== 'string') {
+          throw new Error('description é obrigatório e deve ser string');
+        }
+
+        // Validar entity
+        if (!typedArgs.entity || typeof typedArgs.entity !== 'object') {
+          throw new Error('entity é obrigatório e deve ser objeto');
+        }
+
+        const entity = typedArgs.entity as {
+          properties?: unknown;
+          behaviors?: unknown;
+        };
+
+        if (!Array.isArray(entity.properties)) {
+          throw new Error('entity.properties é obrigatório e deve ser array');
+        }
+
+        if (!Array.isArray(entity.behaviors)) {
+          throw new Error('entity.behaviors é obrigatório e deve ser array');
+        }
+
+        // Validar useCases
+        if (!Array.isArray(typedArgs.useCases)) {
+          throw new Error('useCases é obrigatório e deve ser array');
+        }
+
+        // Validar options
+        if (!typedArgs.options || typeof typedArgs.options !== 'object') {
+          throw new Error('options é obrigatório e deve ser objeto');
+        }
+
+        const options = typedArgs.options as {
+          createApiRoute?: unknown;
+          createTests?: unknown;
+          isAggregateRoot?: unknown;
+        };
+
+        if (typeof options.createApiRoute !== 'boolean') {
+          throw new Error('options.createApiRoute é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.createTests !== 'boolean') {
+          throw new Error('options.createTests é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.isAggregateRoot !== 'boolean') {
+          throw new Error('options.isAggregateRoot é obrigatório e deve ser boolean');
+        }
+
+        try {
+          const result = await createFeature({
+            name: typedArgs.name,
+            module: typedArgs.module,
+            description: typedArgs.description,
+            entity: {
+              properties: entity.properties as { name: string; type: string; required: boolean; description?: string }[],
+              behaviors: entity.behaviors as string[],
+            },
+            useCases: typedArgs.useCases as { name: string; type: 'command' | 'query'; description: string }[],
+            options: {
+              createApiRoute: options.createApiRoute,
+              createTests: options.createTests,
+              isAggregateRoot: options.isAggregateRoot,
+            },
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to create feature: ${errorMessage}`);
         }
       }
 
