@@ -32,8 +32,9 @@ const connectionConfig: sql.config = {
   },
   pool: {
     max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000
+    min: 2,  // Mantém conexões mínimas para evitar cold starts
+    idleTimeoutMillis: 30000,
+    acquireTimeoutMillis: 30000,  // Timeout para adquirir conexão do pool
   }
 };
 
