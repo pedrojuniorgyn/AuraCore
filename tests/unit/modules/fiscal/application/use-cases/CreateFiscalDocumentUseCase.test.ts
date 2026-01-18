@@ -57,6 +57,7 @@ describe('CreateFiscalDocumentUseCase', () => {
       recipientName: 'Cliente Destinatário SA',
       items: [
         {
+          productCode: 'PROD-001',
           description: 'Produto Teste',
           quantity: 10,
           unitPrice: 100,
@@ -95,6 +96,7 @@ describe('CreateFiscalDocumentUseCase', () => {
       issuerName: 'Empresa Emissora LTDA',
       items: [
         {
+          productCode: 'PROD-001',
           description: 'Produto Teste',
           quantity: 10,
           unitPrice: 100,
@@ -122,6 +124,7 @@ describe('CreateFiscalDocumentUseCase', () => {
       issuerName: 'Empresa Emissora LTDA',
       items: [
         {
+          productCode: 'PROD-001',
           description: 'Produto Teste',
           quantity: 10,
           unitPrice: -100, // Preço negativo
@@ -151,6 +154,7 @@ describe('CreateFiscalDocumentUseCase', () => {
       // Sem recipient
       items: [
         {
+          productCode: 'PROD-001',
           description: 'Produto Teste',
           quantity: 5,
           unitPrice: 50,

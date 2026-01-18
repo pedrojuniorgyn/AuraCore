@@ -144,7 +144,7 @@ describe('CancelFiscalDocumentUseCase', () => {
 
   it('deve cancelar documento AUTHORIZED dentro do prazo de 24h', async () => {
     const input = {
-      id: 'doc-123',
+      documentId: 'doc-123',
       reason: 'Erro no valor do produto',
       protocolNumber: 'CANCEL-123456',
     };
@@ -153,16 +153,15 @@ describe('CancelFiscalDocumentUseCase', () => {
 
     expect(Result.isOk(result)).toBe(true);
     if (Result.isOk(result)) {
-      expect(result.value.id).toBe('doc-123');
+      expect(result.value.documentId).toBe('doc-123');
       expect(result.value.status).toBe('CANCELLED');
-      expect(result.value.cancelReason).toBe('Erro no valor do produto');
-      expect(result.value.cancelProtocolNumber).toBe('PROT-CANCEL-123'); // Protocol from SEFAZ mock
+      expect(result.value.protocolNumber).toBe('PROT-CANCEL-123'); // Protocol from SEFAZ mock
     }
   });
 
   it('deve rejeitar cancelamento de documento inexistente', async () => {
     const input = {
-      id: 'doc-999',
+      documentId: 'doc-999',
       reason: 'Motivo qualquer',
       protocolNumber: 'CANCEL-999',
     };
@@ -181,7 +180,7 @@ describe('CancelFiscalDocumentUseCase', () => {
     const otherBranchContext = { ...context, branchId: 2 };
 
     const input = {
-      id: 'doc-123',
+      documentId: 'doc-123',
       reason: 'Motivo qualquer',
       protocolNumber: 'CANCEL-123',
     };

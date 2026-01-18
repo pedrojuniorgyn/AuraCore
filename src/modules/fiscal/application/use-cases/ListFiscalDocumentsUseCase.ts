@@ -8,6 +8,7 @@ import {
   ListFiscalDocumentsOutput,
   ExecutionContext,
 } from '../../domain/ports/input';
+import type { DocumentType, DocumentStatus } from '../../domain/value-objects/DocumentType';
 
 /**
  * Use Case: List Fiscal Documents
@@ -28,21 +29,27 @@ export class ListFiscalDocumentsUseCase implements IListFiscalDocuments {
       const page = input.page ?? 1;
       const pageSize = input.pageSize ?? 20;
 
-      const result = await this.repository.findMany(
-        {
+      // Separar filter e pagination conforme interface IFiscalDocumentRepository
+      const filter = {
         organizationId: context.organizationId,
         branchId: context.branchId,
-        page,
-        pageSize,
-        documentType: input.documentType,
-        status: input.status,
+        // Cast string[] para tipos específicos (valores vêm validados da API)
+        documentType: input.documentType as DocumentType[] | undefined,
+        status: input.status as DocumentStatus[] | undefined,
         issueDateFrom: input.issueDateFrom,
         issueDateTo: input.issueDateTo,
-        recipientDocument: input.recipientDocument,
+        recipientCnpjCpf: input.recipientDocument,
         search: input.search,
-      },
-      context.branchId
-      );
+      };
+
+      const pagination = {
+        page,
+        pageSize,
+        sortBy: input.sortBy,
+        sortOrder: input.sortOrder,
+      };
+
+      const result = await this.repository.findMany(filter, pagination);
 
       const items = result.data.map((doc: unknown) => {
         const fiscalDoc = doc as {

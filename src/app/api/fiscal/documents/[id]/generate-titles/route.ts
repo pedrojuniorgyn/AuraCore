@@ -9,6 +9,12 @@ import type { IGenerateReceivableTitle } from '@/modules/financial/domain/ports/
 import type { ExecutionContext } from '@/modules/financial/domain/ports/input/IPayAccountPayable';
 import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
 
+/** Interface comum para outputs de geração de títulos */
+interface GenerateTitleOutput {
+  titleIds: string[];
+  titlesCount: number;
+}
+
 // Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)
 initializeFinancialModule();
 
@@ -65,7 +71,7 @@ export async function POST(
     };
 
     // 5. Executar Use Case apropriado
-    let result;
+    let result: Result<GenerateTitleOutput, string> | undefined;
 
     if (document.fiscalClassification === "PURCHASE") {
       // Gerar título a pagar
@@ -111,20 +117,29 @@ export async function POST(
       );
     }
 
-    // 6. Processar resultado
-    if (!result || Result.isFail(result)) {
-      const errorMsg = result ? String(result.error) : 'Erro desconhecido';
+    // 6. Processar resultado (type guard para union type)
+    if (!result) {
       return NextResponse.json(
-        { success: false, error: errorMsg },
+        { success: false, error: 'Erro desconhecido ao gerar títulos' },
         { status: 400 }
       );
     }
 
+    if (Result.isFail(result)) {
+      return NextResponse.json(
+        { success: false, error: String(result.error) },
+        { status: 400 }
+      );
+    }
+
+    // Ambos outputs (Payable/Receivable) têm titleIds e titlesCount
+    const { titleIds, titlesCount } = result.value;
+    
     return NextResponse.json({
       success: true,
-      titleIds: result.value.titleIds,
-      titlesCount: result.value.titlesCount,
-      message: `${result.value.titlesCount} título(s) gerado(s) com sucesso`,
+      titleIds,
+      titlesCount,
+      message: `${titlesCount} título(s) gerado(s) com sucesso`,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
