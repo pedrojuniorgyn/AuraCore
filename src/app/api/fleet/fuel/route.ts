@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { fuelTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, desc } from "drizzle-orm";
+import { insertWithReturningId } from "@/lib/db/query-helpers";
 
 export async function GET() {
   try {
@@ -57,25 +58,27 @@ export async function POST(request: Request) {
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
 
-    // Drizzle MSSQL: $returningId pode não estar tipado; use cast e requery robusto.
+    // Drizzle MSSQL: $returningId pode não estar tipado; use helper tipado.
     const transactionDateRaw = safeBody.transactionDate;
     const transactionDate = transactionDateRaw ? new Date(String(transactionDateRaw)) : new Date();
     
-     
-    const inserted = await (db
-      .insert(fuelTransactions)
-       
-      .values({
-        ...safeBody,
-        organizationId: ctx.organizationId,
-        transactionDate,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any) as any).$returningId();
+    // Tipo inferido para insert de fuel transactions
+    type FuelTransactionInsert = typeof fuelTransactions.$inferInsert;
+    
+    const insertData: FuelTransactionInsert = {
+      ...safeBody as Partial<FuelTransactionInsert>,
+      organizationId: ctx.organizationId,
+      transactionDate,
+      vehicleId: Number(safeBody.vehicleId),
+      totalValue: String(safeBody.totalValue || '0'),
+      liters: String(safeBody.liters || '0'),
+    };
+    
+    const inserted = await insertWithReturningId(
+      db.insert(fuelTransactions).values(insertData)
+    );
 
-    const insertedAny = inserted as Record<string, unknown> | Record<string, unknown>[];
-    const firstItem = Array.isArray(insertedAny) ? insertedAny[0] : insertedAny;
-    const insertedIdRaw = firstItem?.id ?? firstItem?.ID ?? firstItem;
-    const insertedId = Number(insertedIdRaw);
+    const insertedId = Number(inserted[0]?.id);
     if (!Number.isFinite(insertedId) || insertedId <= 0) {
       return NextResponse.json({ error: "Falha ao criar abastecimento (id não retornado)." }, { status: 500 });
     }

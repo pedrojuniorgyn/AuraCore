@@ -23,8 +23,7 @@ export async function GET(req: Request) {
         and(
           eq(trips.organizationId, organizationId),
           isNull(trips.deletedAt),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...(getBranchScopeFilter(ctx, trips.branchId) as any[])
+          ...getBranchScopeFilter(ctx, trips.branchId)
         )
       )
       .orderBy(desc(trips.createdAt));

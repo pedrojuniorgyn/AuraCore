@@ -4,6 +4,7 @@ import { freightQuotes } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { calculateFreight } from "@/services/pricing/freight-calculator";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
+import { insertWithReturningId } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/commercial/quotes
@@ -22,8 +23,7 @@ export async function GET(_req: Request) {
         and(
           eq(freightQuotes.organizationId, organizationId),
           isNull(freightQuotes.deletedAt),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...(getBranchScopeFilter(ctx, freightQuotes.branchId) as any[])
+          ...getBranchScopeFilter(ctx, freightQuotes.branchId)
         )
       )
       .orderBy(desc(freightQuotes.createdAt));
@@ -149,11 +149,8 @@ export async function POST(req: Request) {
     }
 
     // Criar cotação
-     
-    const result = await (db
-      .insert(freightQuotes)
-       
-      .values({
+    const result = await insertWithReturningId(
+      db.insert(freightQuotes).values({
         organizationId,
         branchId,
         quoteNumber,
@@ -180,11 +177,10 @@ export async function POST(req: Request) {
         priceBreakdown,
         status: "NEW",
         createdBy,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any) as any).$returningId();
+      })
+    );
 
-    const createdId = result[0] as Record<string, unknown> | undefined;
-    const quoteId = createdId?.id;
+    const quoteId = result[0]?.id;
     if (!quoteId) {
       return NextResponse.json(
         { error: "Falha ao criar cotação (id não retornado)" },

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { crmLeads } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
+import { insertWithReturningId } from "@/lib/db/query-helpers";
 
 export async function GET() {
   try {
@@ -63,21 +64,23 @@ export async function POST(request: Request) {
 
     // Drizzle MSSQL: $returningId existe em runtime, mas pode não estar tipado.
     // Além disso, nunca devolvemos success=true com data undefined.
-     
-    const result = await (db
-      .insert(crmLeads)
-       
-      .values({
-        ...safeBody,
-        organizationId: ctx.organizationId,
-        stage: String(safeBody.stage || "PROSPECTING"),
-        ownerId: ctx.userId,
-        createdBy: ctx.userId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any) as any).$returningId();
+    // Tipo inferido para insert de leads (campos obrigatórios do schema)
+    type CrmLeadInsert = typeof crmLeads.$inferInsert;
+    
+    const insertData: CrmLeadInsert = {
+      ...safeBody as Partial<CrmLeadInsert>,
+      organizationId: ctx.organizationId,
+      companyName: String(safeBody.companyName || ''),
+      stage: String(safeBody.stage || "PROSPECTING"),
+      ownerId: ctx.userId,
+      createdBy: ctx.userId,
+    };
+    
+    const result = await insertWithReturningId(
+      db.insert(crmLeads).values(insertData)
+    );
 
-    const createdId = result[0] as Record<string, unknown> | undefined;
-    const leadId = createdId?.id;
+    const leadId = result[0]?.id;
     if (!leadId) {
       return NextResponse.json(
         { error: "Falha ao criar lead (id não retornado)" },

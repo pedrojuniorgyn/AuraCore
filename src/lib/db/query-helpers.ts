@@ -97,3 +97,28 @@ export async function insertReturning<TReturn>(
   return (insertQuery as unknown as InsertWithReturning<TReturn>).returning(fields);
 }
 
+/**
+ * Interface para inserts MSSQL com método .$returningId()
+ * Específico do SQL Server, retorna o ID inserido
+ */
+interface InsertWithReturningId {
+  $returningId(): Promise<{ id: number | string }[]>;
+}
+
+/**
+ * Aplica .$returningId() com type-safety em inserts Drizzle MSSQL
+ * 
+ * Específico para SQL Server - retorna o identity/id da linha inserida
+ * 
+ * @example
+ * const result = await insertWithReturningId(
+ *   db.insert(users).values(userData)
+ * );
+ * const newId = result[0]?.id;
+ */
+export async function insertWithReturningId(
+  insertQuery: unknown
+): Promise<{ id: number | string }[]> {
+  return (insertQuery as InsertWithReturningId).$returningId();
+}
+

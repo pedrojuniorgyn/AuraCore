@@ -149,8 +149,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           role: isAdmin ? "ADMIN" : "USER",
           defaultBranchId: branchIds.length > 0 ? branchIds[0] : null,
           updatedAt: new Date(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        })
         .where(eq(users.id, id));
 
       return NextResponse.json({ success: true });

@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { inArray } from "drizzle-orm";
+import { SQL, inArray, type Column } from "drizzle-orm";
 
 /**
  * 🔐 TENANT CONTEXT (Multi-Tenant SaaS Security)
@@ -111,7 +111,10 @@ export function hasAccessToBranch(ctx: TenantContext, branchId: number): boolean
  * @param branchIdColumn - Coluna de branch_id da tabela
  * @returns {any[]} Array de condições SQL (vazio se Admin)
  */
-export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: unknown): unknown[] {
+export function getBranchScopeFilter<TColumn extends Column>(
+  ctx: TenantContext,
+  branchIdColumn: TColumn
+): SQL<unknown>[] {
   // Admin vê todas as filiais da organização
   if (ctx.isAdmin) {
     return [];
@@ -125,8 +128,7 @@ export function getBranchScopeFilter(ctx: TenantContext, branchIdColumn: unknown
   }
 
   // Filtra apenas filiais permitidas
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return [inArray(branchIdColumn as any, ctx.allowedBranches)];
+  return [inArray(branchIdColumn, ctx.allowedBranches)];
 }
 
 

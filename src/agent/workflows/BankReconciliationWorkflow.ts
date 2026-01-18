@@ -186,12 +186,16 @@ export class BankReconciliationWorkflow {
       return this.buildResult(state, timer);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      state.status = 'failed';
-      state.errors.push(`Erro no workflow: ${errorMessage}`);
 
       agentLogger.error('workflow', 'BankReconciliation.error', {
         error: errorMessage,
         durationMs: timer(),
+      });
+
+      // ✅ Aplicar mudanças via applyResult (sem mutação direta)
+      this.applyResult(state, {
+        status: 'failed',
+        errors: [...state.errors, `Erro no workflow: ${errorMessage}`],
       });
 
       return this.buildResult(state, timer);
@@ -200,12 +204,18 @@ export class BankReconciliationWorkflow {
 
   /**
    * Passo 1: Buscar extrato bancário
+   * 
+   * @note Função pura - não muta o estado de entrada
    */
   private async fetchStatement(state: BankReconciliationState): Promise<Partial<BankReconciliationState>> {
-    const logs = [...state.logs, `[${new Date().toISOString()}] Buscando extrato de ${state.statementSource}...`];
+    // ✅ Criar novo array de logs (imutável)
+    const logs = [
+      ...state.logs,
+      `[${new Date().toISOString()}] Buscando extrato de ${state.statementSource}...`,
+    ];
 
     try {
-      state.status = 'fetching';
+      // ✅ NÃO mutar state.status aqui - retornar no resultado
 
       // TODO: Implementar busca real por fonte
       // Por enquanto, simular dados

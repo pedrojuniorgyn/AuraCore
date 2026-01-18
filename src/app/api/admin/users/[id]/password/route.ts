@@ -50,8 +50,7 @@ export async function PUT(
         .set({
           passwordHash,
           updatedAt: new Date(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+        })
         .where(and(eq(users.id, id), eq(users.organizationId, ctx.organizationId)));
 
       return NextResponse.json({ success: true });
