@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { container } from 'tsyringe';
 import { getTenantContext } from "@/lib/auth/context";
-import {
-  createGeneratePayableTitleUseCase,
-  createGenerateReceivableTitleUseCase,
-} from "@/modules/financial/infrastructure/di/FinancialModule";
+import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import { Result } from '@/shared/domain';
+import type { IGeneratePayableTitle } from '@/modules/financial/domain/ports/input/IGeneratePayableTitle';
+import type { IGenerateReceivableTitle } from '@/modules/financial/domain/ports/input/IGenerateReceivableTitle';
+import type { ExecutionContext } from '@/modules/financial/domain/ports/input/IPayAccountPayable';
+import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
+
+// Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)
+initializeFinancialModule();
 
 /**
  * 💰 POST /api/fiscal/documents/:id/generate-titles
@@ -11,48 +18,20 @@ import {
  * Gera títulos financeiros (Contas a Pagar/Receber) automaticamente
  * 
  * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
+ * Atualizado: E7.22.2 P3 - Migração para DI container
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // 1. Validar contexto de tenant
-  let ctx;
   try {
-    ctx = await getTenantContext();
-  } catch (error) {
-    if (error instanceof NextResponse) {
-      return error;
-    }
-    return NextResponse.json(
-      { success: false, error: "Erro de autenticação" },
-      { status: 401 }
-    );
-  }
+    // 1. Contexto multi-tenant (OBRIGATÓRIO)
+    const ctx = await getTenantContext();
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
-  if (!ctx) {
-    return NextResponse.json(
-      { success: false, error: "Contexto não disponível" },
-      { status: 401 }
-    );
-  }
-
-  try {
-    // 2. Garantir que os valores são números válidos
-    const orgId = typeof ctx.organizationId === 'number'
-      ? ctx.organizationId
-      : Number(ctx.organizationId);
-
-    if (isNaN(orgId)) {
-      return NextResponse.json(
-        { error: 'IDs de organização inválidos' },
-        { status: 400 }
-      );
-    }
-
+    // 2. Resolver params
     const resolvedParams = await params;
-    const fiscalDocumentId = BigInt(resolvedParams.id);
-    const userId = ctx.userId;
+    const fiscalDocumentId = resolvedParams.id;
 
     // 3. Buscar documento para determinar o tipo de título
     const { db } = await import("@/lib/db");
@@ -65,40 +44,66 @@ export async function POST(
       .where(
         and(
           eq(fiscalDocuments.id, Number(fiscalDocumentId)),
-          eq(fiscalDocuments.organizationId, orgId)
+          eq(fiscalDocuments.organizationId, ctx.organizationId),
+          eq(fiscalDocuments.branchId, branchId)
         )
       );
 
     if (!document) {
       return NextResponse.json(
-        { error: "Documento fiscal não encontrado" },
+        { success: false, error: "Documento fiscal não encontrado" },
         { status: 404 }
       );
     }
 
-    // 4. Executar Use Case apropriado
+    // 4. Preparar ExecutionContext
+    const executionContext: ExecutionContext = {
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+      branchId,
+      isAdmin: false, // Financial module requer isAdmin
+    };
+
+    // 5. Executar Use Case apropriado
     let result;
 
     if (document.fiscalClassification === "PURCHASE") {
-      const useCase = createGeneratePayableTitleUseCase();
-      result = await useCase.execute({
-        fiscalDocumentId,
-        userId,
-        organizationId: BigInt(orgId),
-      });
+      // Gerar título a pagar
+      const useCase = container.resolve<IGeneratePayableTitle>(
+        TOKENS.GeneratePayableTitleUseCase
+      );
+      
+      result = await useCase.execute(
+        {
+          payableId: fiscalDocumentId,
+          installments: 1,
+          firstDueDate: new Date().toISOString(),
+          intervalDays: 30,
+        },
+        executionContext
+      );
     } else if (
       document.fiscalClassification === "CARGO" ||
       document.documentType === "CTE"
     ) {
-      const useCase = createGenerateReceivableTitleUseCase();
-      result = await useCase.execute({
-        fiscalDocumentId,
-        userId,
-        organizationId: BigInt(orgId),
-      });
+      // Gerar título a receber
+      const useCase = container.resolve<IGenerateReceivableTitle>(
+        TOKENS.GenerateReceivableTitleUseCase
+      );
+      
+      result = await useCase.execute(
+        {
+          receivableId: fiscalDocumentId,
+          installments: 1,
+          firstDueDate: new Date().toISOString(),
+          intervalDays: 30,
+        },
+        executionContext
+      );
     } else {
       return NextResponse.json(
         {
+          success: false,
           error: `Documento classificado como ${document.fiscalClassification}. ` +
                  `Apenas PURCHASE e CARGO geram títulos automaticamente.`,
         },
@@ -106,47 +111,32 @@ export async function POST(
       );
     }
 
-    // 5. Processar resultado
-    if (result.isFailure) {
-      const errorMessage = result.error instanceof Error 
-        ? result.error.message 
-        : typeof result.error === 'string'
-          ? result.error
-          : 'Erro desconhecido ao processar requisição';
-      
+    // 6. Processar resultado
+    if (!result || result.isFailure) {
+      const errorMsg = result ? String(result.error) : 'Erro desconhecido';
       return NextResponse.json(
-        { error: errorMessage },
+        { success: false, error: errorMsg },
         { status: 400 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      titleId: result.value.titleId.toString(), // BigInt como string
-      type: result.value.type,
-      amount: result.value.amount,
-      message: `Título ${result.value.type} gerado com sucesso`,
+      titleIds: result.value.titleIds,
+      titlesCount: result.value.titlesCount,
+      message: `${result.value.titlesCount} título(s) gerado(s) com sucesso`,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (error instanceof Response) {
+      return error;
+    }
+    
     console.error("❌ Erro ao gerar títulos:", error);
     return NextResponse.json(
-      { error: errorMessage },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

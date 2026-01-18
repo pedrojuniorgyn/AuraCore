@@ -8,6 +8,7 @@ import {
   ICancelFiscalDocument,
   CancelFiscalDocumentInput,
   CancelFiscalDocumentOutput,
+  ExecutionContext,
 } from '../../domain/ports/input';
 
 /**

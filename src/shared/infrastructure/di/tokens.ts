@@ -9,12 +9,19 @@ export const TOKENS = {
   EventDispatcher: Symbol('EventDispatcher'),
   UuidGenerator: Symbol('UuidGenerator'),
 
-  // Financial Module
+  // Financial Module - Repositories & Services
   PayableRepository: Symbol('PayableRepository'),
   ExpenseReportRepository: Symbol('ExpenseReportRepository'),
   ExpensePolicyService: Symbol('ExpensePolicyService'),
   ReceiptRepository: Symbol('ReceiptRepository'),
   ReceiptNumberGenerator: Symbol('ReceiptNumberGenerator'),
+  FinancialTitleRepository: Symbol('FinancialTitleRepository'),
+  FinancialTitleGenerator: Symbol('FinancialTitleGenerator'),
+  
+  // Financial Module - Use Cases
+  GeneratePayableTitleUseCase: Symbol('GeneratePayableTitleUseCase'),
+  GenerateReceivableTitleUseCase: Symbol('GenerateReceivableTitleUseCase'),
+  ReverseTitlesUseCase: Symbol('ReverseTitlesUseCase'),
 
   // Accounting Module
   JournalEntryRepository: Symbol('JournalEntryRepository'),

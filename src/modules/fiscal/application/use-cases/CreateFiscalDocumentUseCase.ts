@@ -11,6 +11,7 @@ import {
   ICreateFiscalDocument,
   CreateFiscalDocumentInput,
   CreateFiscalDocumentOutput,
+  ExecutionContext,
 } from '../../domain/ports/input';
 
 /**

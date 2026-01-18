@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { container } from 'tsyringe';
 import { getTenantContext } from "@/lib/auth/context";
-import { createReverseTitlesUseCase } from "@/modules/financial/infrastructure/di/FinancialModule";
+import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import { Result } from '@/shared/domain';
+import type { IReverseTitles } from '@/modules/financial/domain/ports/input/IReverseTitles';
+import type { ExecutionContext } from '@/modules/financial/domain/ports/input/IPayAccountPayable';
+import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
+
+// Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)
+initializeFinancialModule();
 
 /**
  * 🔄 POST /api/fiscal/documents/:id/reverse-titles
@@ -8,110 +17,66 @@ import { createReverseTitlesUseCase } from "@/modules/financial/infrastructure/d
  * Reverte geração de títulos (soft delete)
  * 
  * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
+ * Atualizado: E7.22.2 P3 - Migração para DI container
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // 1. Validar contexto de tenant
-  let ctx;
   try {
-    ctx = await getTenantContext();
-  } catch (error) {
-    if (error instanceof NextResponse) {
-      return error;
-    }
-    return NextResponse.json(
-      { success: false, error: "Erro de autenticação" },
-      { status: 401 }
-    );
-  }
+    // 1. Contexto multi-tenant (OBRIGATÓRIO)
+    const ctx = await getTenantContext();
+    const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
-  if (!ctx) {
-    return NextResponse.json(
-      { success: false, error: "Contexto não disponível" },
-      { status: 401 }
-    );
-  }
-
-  try {
-    // 2. Garantir que os valores são números válidos
-    const orgId = typeof ctx.organizationId === 'number'
-      ? ctx.organizationId
-      : Number(ctx.organizationId);
-
-    if (isNaN(orgId)) {
-      return NextResponse.json(
-        { error: 'IDs de organização inválidos' },
-        { status: 400 }
-      );
-    }
-
+    // 2. Resolver params
     const resolvedParams = await params;
-    const fiscalDocumentId = BigInt(resolvedParams.id);
+    const fiscalDocumentId = resolvedParams.id;
 
-    // 3. Executar Use Case
-    const useCase = createReverseTitlesUseCase();
-    const result = await useCase.execute({
-      fiscalDocumentId,
-      organizationId: BigInt(orgId),
-    });
+    // 3. Preparar ExecutionContext
+    const executionContext: ExecutionContext = {
+      userId: ctx.userId,
+      organizationId: ctx.organizationId,
+      branchId,
+      isAdmin: false, // Financial module requer isAdmin
+    };
 
-    // 4. Processar resultado
-    if (result.isFailure) {
-      const errorMessage = result.error instanceof Error 
-        ? result.error.message 
-        : typeof result.error === 'string'
-          ? result.error
-          : 'Erro desconhecido ao processar requisição';
-      
+    // 4. Executar Use Case
+    // Nota: Use Case busca os títulos internamente via fiscalDocumentId
+    const useCase = container.resolve<IReverseTitles>(TOKENS.ReverseTitlesUseCase);
+    
+    const result = await useCase.execute(
+      {
+        titleIds: [fiscalDocumentId], // Use Case busca títulos por fiscalDocumentId
+        reason: 'Estorno via API',
+      },
+      executionContext
+    );
+
+    // 5. Processar resultado
+    if (Result.isFail(result)) {
       return NextResponse.json(
-        { error: errorMessage },
+        { success: false, error: result.error },
         { status: 400 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: "Títulos revertidos com sucesso",
+      reversedTitleIds: result.value.reversedTitleIds,
+      count: result.value.count,
+      message: `${result.value.count} título(s) revertido(s) com sucesso`,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (error instanceof Response) {
+      return error;
+    }
+    
     console.error("❌ Erro ao reverter títulos:", error);
     return NextResponse.json(
-      { error: errorMessage },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

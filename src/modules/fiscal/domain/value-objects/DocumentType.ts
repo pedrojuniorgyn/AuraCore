@@ -1,7 +1,7 @@
 /**
  * Tipos de documentos fiscais eletrônicos brasileiros
  */
-export type DocumentType = 'NFE' | 'CTE' | 'MDFE' | 'NFSE';
+export type DocumentType = 'NFE' | 'NFCE' | 'CTE' | 'MDFE' | 'NFSE';
 
 /**
  * Status do documento fiscal
@@ -18,13 +18,14 @@ export type DocumentStatus =
 /**
  * Modelo do documento (série)
  */
-export type DocumentModel = '55' | '57' | '58' | '65';
+export type DocumentModel = '55' | '65' | '57' | '58';
 
 /**
  * Descrição dos tipos de documento
  */
 export const DOCUMENT_TYPE_DESCRIPTIONS: Record<DocumentType, string> = {
   NFE: 'Nota Fiscal Eletrônica',
+  NFCE: 'Nota Fiscal de Consumidor Eletrônica',
   CTE: 'Conhecimento de Transporte Eletrônico',
   MDFE: 'Manifesto Eletrônico de Documentos Fiscais',
   NFSE: 'Nota Fiscal de Serviço Eletrônica',
@@ -35,6 +36,7 @@ export const DOCUMENT_TYPE_DESCRIPTIONS: Record<DocumentType, string> = {
  */
 export const DOCUMENT_MODEL_BY_TYPE: Record<DocumentType, DocumentModel> = {
   NFE: '55',
+  NFCE: '65',
   CTE: '57',
   MDFE: '58',
   NFSE: '65', // Modelo simplificado
@@ -44,7 +46,7 @@ export const DOCUMENT_MODEL_BY_TYPE: Record<DocumentType, DocumentModel> = {
  * Verifica se é um tipo de documento válido
  */
 export function isValidDocumentType(type: string): type is DocumentType {
-  return ['NFE', 'CTE', 'MDFE', 'NFSE'].includes(type);
+  return ['NFE', 'NFCE', 'CTE', 'MDFE', 'NFSE'].includes(type);
 }
 
 /**
