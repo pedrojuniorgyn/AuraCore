@@ -1,28 +1,17 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
+import type { IGetLocationById, GetLocationByIdInput, GetLocationByIdOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 
-export interface GetLocationByIdInput {
-  id: string;
-}
-
-export interface GetLocationByIdOutput {
-  id: string;
-  warehouseId: string;
-  code: string;
-  name: string;
-  type: string;
-  parentId: string | null;
-  capacity: number | null;
-  capacityUnit: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
+/**
+ * GetLocationById Query - E7.8 WMS Semana 2
+ * 
+ * @implements IGetLocationById - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class GetLocationById {
+export class GetLocationById implements IGetLocationById {
   constructor(
     @inject('LocationRepository')
     private locationRepository: ILocationRepository

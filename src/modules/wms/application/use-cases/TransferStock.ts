@@ -2,6 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import type { ILocationRepository } from '../../domain/ports/ILocationRepository';
 import type { IStockRepository } from '../../domain/ports/IStockRepository';
 import type { IMovementRepository } from '../../domain/ports/IMovementRepository';
+import type { ITransferStock } from '../../domain/ports/input';
 import { StockMovement } from '../../domain/entities/StockMovement';
 import { StockItem } from '../../domain/entities/StockItem';
 import { MovementType, MovementTypeEnum } from '../../domain/value-objects/MovementType';
@@ -16,9 +17,12 @@ import type { ExecutionContext } from '../dtos/ExecutionContext';
  * TransferStock Use Case - E7.8 WMS Semana 2
  * 
  * Transfere estoque entre duas localizações
+ * 
+ * @implements ITransferStock - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class TransferStock {
+export class TransferStock implements ITransferStock {
   constructor(
     @inject(TOKENS.LocationRepository) private readonly locationRepository: ILocationRepository,
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,

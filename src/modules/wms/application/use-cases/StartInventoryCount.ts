@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import type { IStockRepository } from '../../domain/ports/IStockRepository';
 import type { IInventoryCountRepository } from '../../domain/ports/IInventoryCountRepository';
+import type { IStartInventoryCount } from '../../domain/ports/input';
 import { InventoryCount } from '../../domain/entities/InventoryCount';
 import { InventoryStatus, InventoryStatusEnum } from '../../domain/value-objects/InventoryStatus';
 import { Result } from '@/shared/domain';
@@ -13,9 +14,12 @@ import type { ExecutionContext } from '../dtos/ExecutionContext';
  * StartInventoryCount Use Case - E7.8 WMS Semana 2
  * 
  * Inicia contagem de inventário para um produto em uma localização
+ * 
+ * @implements IStartInventoryCount - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class StartInventoryCount {
+export class StartInventoryCount implements IStartInventoryCount {
   constructor(
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,
     @inject(TOKENS.InventoryCountRepository) private readonly inventoryCountRepository: IInventoryCountRepository,

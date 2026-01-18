@@ -2,29 +2,18 @@ import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { StockQuantity, UnitOfMeasure } from '@/modules/wms/domain/value-objects/StockQuantity';
 import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
+import type { IUpdateLocation } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
+import type { UpdateLocationInput, UpdateLocationOutput } from '../dtos/UpdateLocationDTO';
 
-export interface UpdateLocationInput {
-  id: string;
-  name?: string;
-  capacity?: number;
-  capacityUnit?: string;
-  isActive?: boolean;
-}
-
-export interface UpdateLocationOutput {
-  id: string;
-  code: string;
-  name: string;
-  type: string;
-  capacity: number | null;
-  capacityUnit: string | null;
-  isActive: boolean;
-  updatedAt: Date;
-}
-
+/**
+ * UpdateLocation Use Case - E7.8 WMS Semana 3
+ * 
+ * @implements IUpdateLocation - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class UpdateLocation {
+export class UpdateLocation implements IUpdateLocation {
   constructor(
     @inject('LocationRepository')
     private locationRepository: ILocationRepository

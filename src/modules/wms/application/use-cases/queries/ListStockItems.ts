@@ -1,33 +1,19 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IStockRepository } from '@/modules/wms/domain/ports/IStockRepository';
+import type { IListStockItems, ListStockItemsInput, StockItemListItem } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
-import type { FilterStockInput } from '../../dtos/FilterStockDTO';
 import type { StockItem } from '@/modules/wms/domain/entities/StockItem';
 
-export interface ListStockItemsInput extends FilterStockInput {
-  page: number;
-  limit: number;
-}
-
-export interface StockItemListItem {
-  id: string;
-  productId: string;
-  locationId: string;
-  quantity: number;
-  unit: string;
-  availableQuantity: number;
-  lotNumber: string | null;
-  expirationDate: Date | null;
-  isExpired: boolean;
-  unitCost: number;
-  currency: string;
-  createdAt: Date;
-}
-
+/**
+ * ListStockItems Query - E7.8 WMS Semana 2
+ * 
+ * @implements IListStockItems - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class ListStockItems {
+export class ListStockItems implements IListStockItems {
   constructor(
     @inject('StockRepository')
     private stockRepository: IStockRepository

@@ -2,6 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import type { ILocationRepository } from '../../domain/ports/ILocationRepository';
 import type { IStockRepository } from '../../domain/ports/IStockRepository';
 import type { IMovementRepository } from '../../domain/ports/IMovementRepository';
+import type { IRegisterStockExit } from '../../domain/ports/input';
 import { StockMovement } from '../../domain/entities/StockMovement';
 import { MovementType, MovementTypeEnum } from '../../domain/value-objects/MovementType';
 import { StockQuantity, UnitOfMeasure } from '../../domain/value-objects/StockQuantity'
@@ -15,9 +16,12 @@ import type { ExecutionContext } from '../dtos/ExecutionContext';
  * RegisterStockExit Use Case - E7.8 WMS Semana 2
  * 
  * Registra saída de estoque de uma localização
+ * 
+ * @implements IRegisterStockExit - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class RegisterStockExit {
+export class RegisterStockExit implements IRegisterStockExit {
   constructor(
     @inject(TOKENS.LocationRepository) private readonly locationRepository: ILocationRepository,
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,

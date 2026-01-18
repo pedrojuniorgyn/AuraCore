@@ -1,31 +1,17 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IStockRepository } from '@/modules/wms/domain/ports/IStockRepository';
+import type { IGetStockItemById, GetStockItemByIdInput, GetStockItemByIdOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 
-export interface GetStockItemByIdInput {
-  id: string;
-}
-
-export interface GetStockItemByIdOutput {
-  id: string;
-  productId: string;
-  locationId: string;
-  quantity: number;
-  unit: string;
-  reservedQuantity: number;
-  availableQuantity: number;
-  lotNumber: string | null;
-  expirationDate: Date | null;
-  isExpired: boolean;
-  unitCost: number;
-  currency: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
+/**
+ * GetStockItemById Query - E7.8 WMS Semana 2
+ * 
+ * @implements IGetStockItemById - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class GetStockItemById {
+export class GetStockItemById implements IGetStockItemById {
   constructor(
     @inject('StockRepository')
     private stockRepository: IStockRepository

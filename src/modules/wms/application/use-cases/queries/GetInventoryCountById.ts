@@ -1,31 +1,17 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IInventoryCountRepository } from '@/modules/wms/domain/ports/IInventoryCountRepository';
+import type { IGetInventoryCountById, GetInventoryCountByIdInput, GetInventoryCountByIdOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 
-export interface GetInventoryCountByIdInput {
-  id: string;
-}
-
-export interface GetInventoryCountByIdOutput {
-  id: string;
-  productId: string;
-  locationId: string;
-  systemQuantity: number;
-  systemUnit: string;
-  countedQuantity: number | null;
-  countedUnit: string | null;
-  difference: number | null;
-  status: string;
-  adjustmentMovementId: string | null;
-  countedBy: string | null;
-  countedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
+/**
+ * GetInventoryCountById Query - E7.8 WMS Semana 2
+ * 
+ * @implements IGetInventoryCountById - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class GetInventoryCountById {
+export class GetInventoryCountById implements IGetInventoryCountById {
   constructor(
     @inject('InventoryCountRepository')
     private inventoryCountRepository: IInventoryCountRepository

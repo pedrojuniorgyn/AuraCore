@@ -2,20 +2,18 @@ import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
 import type { IStockRepository } from '@/modules/wms/domain/ports/IStockRepository';
+import type { IDeleteLocation, DeleteLocationInput, DeleteLocationOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
 import type { Location } from '@/modules/wms/domain/entities/Location';
 
-export interface DeleteLocationInput {
-  id: string;
-}
-
-export interface DeleteLocationOutput {
-  id: string;
-  deletedAt: Date;
-}
-
+/**
+ * DeleteLocation Use Case - E7.8 WMS Semana 3
+ * 
+ * @implements IDeleteLocation - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class DeleteLocation {
+export class DeleteLocation implements IDeleteLocation {
   constructor(
     @inject('LocationRepository')
     private locationRepository: ILocationRepository,
@@ -67,7 +65,8 @@ export class DeleteLocation {
 
     return Result.ok<DeleteLocationOutput>({
       id: input.id,
-      deletedAt: new Date()
+      deleted: true,
+      deletedAt: new Date().toISOString()
     });
   }
 }

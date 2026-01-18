@@ -1,39 +1,19 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IMovementRepository } from '@/modules/wms/domain/ports/IMovementRepository';
+import type { IListMovements, ListMovementsInput, MovementListItem } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
 import type { StockMovement } from '@/modules/wms/domain/entities/StockMovement';
 
-export interface ListMovementsInput {
-  page: number;
-  limit: number;
-  productId?: string;
-  locationId?: string;
-  type?: string;
-  startDate?: Date;
-  endDate?: Date;
-}
-
-export interface MovementListItem {
-  id: string;
-  productId: string;
-  fromLocationId: string | null;
-  toLocationId: string | null;
-  type: string;
-  quantity: number;
-  unit: string;
-  unitCost: number;
-  currency: string;
-  totalCost: number;
-  reason: string | null;
-  executedBy: string;
-  executedAt: Date;
-  createdAt: Date;
-}
-
+/**
+ * ListMovements Query - E7.8 WMS Semana 2
+ * 
+ * @implements IListMovements - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class ListMovements {
+export class ListMovements implements IListMovements {
   constructor(
     @inject('MovementRepository')
     private movementRepository: IMovementRepository

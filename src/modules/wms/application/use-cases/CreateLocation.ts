@@ -1,5 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import type { ILocationRepository } from '../../domain/ports/ILocationRepository';
+import type { ICreateLocation } from '../../domain/ports/input';
 import { Location } from '../../domain/entities/Location';
 import { LocationCode } from '../../domain/value-objects/LocationCode';
 import { StockQuantity, UnitOfMeasure } from '../../domain/value-objects/StockQuantity'
@@ -13,9 +14,12 @@ import type { ExecutionContext } from '../dtos/ExecutionContext';
  * CreateLocation Use Case - E7.8 WMS Semana 2
  * 
  * Cria nova localização no armazém
+ * 
+ * @implements ICreateLocation - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class CreateLocation {
+export class CreateLocation implements ICreateLocation {
   constructor(
     @inject(TOKENS.LocationRepository) private readonly locationRepository: ILocationRepository,
     @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator

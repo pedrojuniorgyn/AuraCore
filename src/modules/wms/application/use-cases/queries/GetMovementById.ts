@@ -1,31 +1,17 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IMovementRepository } from '@/modules/wms/domain/ports/IMovementRepository';
+import type { IGetMovementById, GetMovementByIdInput, GetMovementByIdOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 
-export interface GetMovementByIdInput {
-  id: string;
-}
-
-export interface GetMovementByIdOutput {
-  id: string;
-  productId: string;
-  fromLocationId: string | null;
-  toLocationId: string | null;
-  type: string;
-  quantity: number;
-  unit: string;
-  unitCost: number;
-  currency: string;
-  totalCost: number;
-  reason: string | null;
-  executedBy: string;
-  executedAt: Date;
-  createdAt: Date;
-}
-
+/**
+ * GetMovementById Query - E7.8 WMS Semana 2
+ * 
+ * @implements IGetMovementById - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class GetMovementById {
+export class GetMovementById implements IGetMovementById {
   constructor(
     @inject('MovementRepository')
     private movementRepository: IMovementRepository

@@ -1,33 +1,19 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
+import type { IListLocations, ListLocationsInput, LocationListItem } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
 import type { Location } from '@/modules/wms/domain/entities/Location';
 
-export interface ListLocationsInput {
-  page: number;
-  limit: number;
-  type?: string;
-  warehouseId?: string;
-  isActive?: boolean;
-}
-
-export interface LocationListItem {
-  id: string;
-  warehouseId: string;
-  code: string;
-  name: string;
-  type: string;
-  parentId: string | null;
-  capacity: number | null;
-  capacityUnit: string | null;
-  isActive: boolean;
-  createdAt: Date;
-}
-
+/**
+ * ListLocations Query - E7.8 WMS Semana 2
+ * 
+ * @implements IListLocations - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class ListLocations {
+export class ListLocations implements IListLocations {
   constructor(
     @inject('LocationRepository')
     private locationRepository: ILocationRepository

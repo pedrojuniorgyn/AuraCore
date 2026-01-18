@@ -1,34 +1,19 @@
 import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IInventoryCountRepository } from '@/modules/wms/domain/ports/IInventoryCountRepository';
+import type { IListInventoryCounts, ListInventoryCountsInput, InventoryCountListItem } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
 import type { InventoryCount } from '@/modules/wms/domain/entities/InventoryCount';
 
-export interface ListInventoryCountsInput {
-  page: number;
-  limit: number;
-  status?: string;
-  locationId?: string;
-  productId?: string;
-}
-
-export interface InventoryCountListItem {
-  id: string;
-  productId: string;
-  locationId: string;
-  systemQuantity: number;
-  systemUnit: string;
-  countedQuantity: number | null;
-  difference: number | null;
-  status: string;
-  countedBy: string | null;
-  countedAt: Date | null;
-  createdAt: Date;
-}
-
+/**
+ * ListInventoryCounts Query - E7.8 WMS Semana 2
+ * 
+ * @implements IListInventoryCounts - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class ListInventoryCounts {
+export class ListInventoryCounts implements IListInventoryCounts {
   constructor(
     @inject('InventoryCountRepository')
     private inventoryCountRepository: IInventoryCountRepository

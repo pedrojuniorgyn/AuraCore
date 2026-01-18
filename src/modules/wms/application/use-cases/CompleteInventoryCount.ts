@@ -2,6 +2,7 @@ import { inject, injectable} from 'tsyringe';
 import type { IStockRepository } from '../../domain/ports/IStockRepository';
 import type { IMovementRepository } from '../../domain/ports/IMovementRepository';
 import type { IInventoryCountRepository } from '../../domain/ports/IInventoryCountRepository';
+import type { ICompleteInventoryCount } from '../../domain/ports/input';
 import { InventoryCount } from '../../domain/entities/InventoryCount';
 import { InventoryStatus, InventoryStatusEnum } from '../../domain/value-objects/InventoryStatus';
 import { StockQuantity, UnitOfMeasure } from '../../domain/value-objects/StockQuantity'
@@ -17,9 +18,12 @@ import type { ExecutionContext } from '../dtos/ExecutionContext';
  * CompleteInventoryCount Use Case - E7.8 WMS Semana 2
  * 
  * Completa contagem de inventário e cria ajuste se necessário
+ * 
+ * @implements ICompleteInventoryCount - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class CompleteInventoryCount {
+export class CompleteInventoryCount implements ICompleteInventoryCount {
   constructor(
     @inject(TOKENS.StockRepository) private readonly stockRepository: IStockRepository,
     @inject(TOKENS.MovementRepository) private readonly movementRepository: IMovementRepository,
