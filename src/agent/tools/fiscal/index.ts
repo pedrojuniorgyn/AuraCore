@@ -4,7 +4,5 @@
  */
 
 export { ImportNFeTool } from './ImportNFeTool';
-
-// TODO: Implementar nas próximas fases
-// export { ConsultSPEDTool } from './ConsultSPEDTool';
-// export { CalculateTaxTool } from './CalculateTaxTool';
+export { CalculateTaxTool } from './CalculateTaxTool';
+export { ConsultSPEDTool } from './ConsultSPEDTool';

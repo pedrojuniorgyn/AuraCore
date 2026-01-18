@@ -36,8 +36,9 @@ import type {
 import { createSession, addMessage, createExecutionContext } from './AgentContext';
 import { GoogleCloudClient } from '../integrations/google/GoogleCloudClient';
 import { GoogleWorkspaceClient } from '../integrations/google/GoogleWorkspaceClient';
-import type { GeminiContent, GeminiResponse } from '../integrations/google/types';
+import type { GeminiContent } from '../integrations/google/types';
 import { Result } from '@/shared/domain';
+import { allTools, getToolByName, getToolsDescription, type BaseTool, type ToolResult } from '../tools';
 
 /**
  * Opções para criar o agente
@@ -236,6 +237,20 @@ export class AuraAgent {
    */
   get hasWorkspaceAccess(): boolean {
     return this.googleWorkspace !== null;
+  }
+
+  /**
+   * Lista de tools disponíveis
+   */
+  get availableTools(): BaseTool[] {
+    return allTools;
+  }
+
+  /**
+   * Descrição das tools para o LLM
+   */
+  get toolsDescription(): string {
+    return getToolsDescription();
   }
 
   // ============================================================================
@@ -457,5 +472,52 @@ export class AuraAgent {
     if (this.googleWorkspace) {
       this.googleWorkspace.setAccessToken(accessToken);
     }
+  }
+
+  // ============================================================================
+  // EXECUÇÃO DE TOOLS
+  // ============================================================================
+
+  /**
+   * Executa uma tool pelo nome
+   * 
+   * @param toolName - Nome da tool (ex: 'calculate_tax', 'import_nfe')
+   * @param input - Parâmetros da tool
+   * @returns Resultado da execução
+   */
+  async executeTool(
+    toolName: string,
+    input: unknown
+  ): Promise<ToolResult> {
+    const tool = getToolByName(toolName);
+    
+    if (!tool) {
+      return {
+        success: false,
+        error: `Tool '${toolName}' não encontrada. Tools disponíveis: ${allTools.map(t => t.name).join(', ')}`,
+      };
+    }
+
+    // Verificar se tool requer Workspace
+    if (tool.requiresWorkspace && !this.googleWorkspace) {
+      return {
+        success: false,
+        error: `Tool '${toolName}' requer Google Workspace. Faça login com Google primeiro.`,
+      };
+    }
+
+    // Executar tool com contexto
+    return await tool.call(input, this.executionContext);
+  }
+
+  /**
+   * Lista tools disponíveis com suas descrições
+   */
+  listTools(): Array<{ name: string; description: string; category: string }> {
+    return allTools.map(tool => ({
+      name: tool.name,
+      description: tool.description.split('\n')[0],
+      category: tool.category,
+    }));
   }
 }

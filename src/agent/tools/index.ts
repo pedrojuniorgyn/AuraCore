@@ -10,13 +10,13 @@
 export { BaseTool, type ToolResult, type ToolConfig } from './base';
 
 // Fiscal
-export { ImportNFeTool } from './fiscal';
+export { ImportNFeTool, CalculateTaxTool, ConsultSPEDTool } from './fiscal';
 
 // Workspace
 export { SearchEmailTool } from './workspace';
 
 // Registry de todas as tools
-import { ImportNFeTool } from './fiscal';
+import { ImportNFeTool, CalculateTaxTool, ConsultSPEDTool } from './fiscal';
 import { SearchEmailTool } from './workspace';
 import type { BaseTool } from './base';
 
@@ -25,6 +25,8 @@ import type { BaseTool } from './base';
  */
 export const allTools: BaseTool[] = [
   new ImportNFeTool(),
+  new CalculateTaxTool(),
+  new ConsultSPEDTool(),
   new SearchEmailTool(),
 ];
 
