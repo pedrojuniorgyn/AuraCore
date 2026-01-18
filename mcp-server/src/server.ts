@@ -18,6 +18,8 @@ import { checkCompliance } from './tools/check-compliance.js';
 import { registerCorrection } from './tools/register-correction.js';
 import { validateFiscalCompliance } from './tools/validate-fiscal-compliance.js';
 import { calculateTaxScenario } from './tools/calculate-tax-scenario.js';
+import { generateEntity } from './tools/generate-entity.js';
+import { generateUseCase } from './tools/generate-use-case.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -297,6 +299,115 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['operation_type', 'origin_uf', 'dest_uf', 'value', 'is_simples_nacional'],
+          },
+        },
+        {
+          name: 'generate_entity',
+          description: 'Gera Entity DDD completa seguindo padrões AuraCore. Inclui create() com validações, reconstitute() sem validações, getters e behaviors.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Nome da Entity em PascalCase (ex: FreightContract)',
+              },
+              module: {
+                type: 'string',
+                description: 'Nome do módulo em lowercase (ex: tms, fiscal, wms)',
+              },
+              properties: {
+                type: 'array',
+                description: 'Lista de propriedades da Entity',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', description: 'Nome da propriedade' },
+                    type: { type: 'string', description: 'Tipo TypeScript (ex: string, number, Money, Date)' },
+                    required: { type: 'boolean', description: 'Se é obrigatório' },
+                    description: { type: 'string', description: 'Descrição opcional' },
+                  },
+                  required: ['name', 'type', 'required'],
+                },
+              },
+              behaviors: {
+                type: 'array',
+                description: 'Lista de behaviors/métodos (ex: approve, cancel, submit)',
+                items: { type: 'string' },
+              },
+              isAggregateRoot: {
+                type: 'boolean',
+                description: 'Se true, extends AggregateRoot; se false, extends Entity',
+              },
+              hasMultiTenancy: {
+                type: 'boolean',
+                description: 'Se true, inclui organizationId + branchId',
+              },
+            },
+            required: ['name', 'module', 'properties', 'behaviors', 'isAggregateRoot', 'hasMultiTenancy'],
+          },
+        },
+        {
+          name: 'generate_use_case',
+          description: 'Gera Use Case (Command ou Query) seguindo padrões DDD do AuraCore. Inclui Input Port e Use Case com DI.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Nome do Use Case em PascalCase (ex: ApproveFreightContract)',
+              },
+              type: {
+                type: 'string',
+                description: 'Tipo do Use Case',
+                enum: ['command', 'query'],
+              },
+              module: {
+                type: 'string',
+                description: 'Nome do módulo em lowercase (ex: tms, fiscal, wms)',
+              },
+              description: {
+                type: 'string',
+                description: 'Descrição do que o Use Case faz',
+              },
+              inputFields: {
+                type: 'array',
+                description: 'Campos do input',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', description: 'Nome do campo' },
+                    type: { type: 'string', description: 'Tipo TypeScript' },
+                    required: { type: 'boolean', description: 'Se é obrigatório' },
+                    description: { type: 'string', description: 'Descrição opcional' },
+                  },
+                  required: ['name', 'type', 'required'],
+                },
+              },
+              outputFields: {
+                type: 'array',
+                description: 'Campos do output',
+                items: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', description: 'Nome do campo' },
+                    type: { type: 'string', description: 'Tipo TypeScript' },
+                    description: { type: 'string', description: 'Descrição opcional' },
+                  },
+                  required: ['name', 'type'],
+                },
+              },
+              repositories: {
+                type: 'array',
+                description: 'Lista de repositories necessários (ex: IFreightContractRepository)',
+                items: { type: 'string' },
+              },
+              domainServices: {
+                type: 'array',
+                description: 'Lista de domain services (opcional)',
+                items: { type: 'string' },
+              },
+            },
+            required: ['name', 'type', 'module', 'description', 'inputFields', 'outputFields', 'repositories'],
           },
         },
       ],
@@ -887,6 +998,240 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to calculate tax scenario: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'generate_entity') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for generate_entity');
+        }
+
+        const typedArgs = args as {
+          name?: unknown;
+          module?: unknown;
+          properties?: unknown;
+          behaviors?: unknown;
+          isAggregateRoot?: unknown;
+          hasMultiTenancy?: unknown;
+        };
+
+        // Validar name
+        if (!typedArgs.name || typeof typedArgs.name !== 'string') {
+          throw new Error('name é obrigatório e deve ser string');
+        }
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar properties
+        if (!Array.isArray(typedArgs.properties)) {
+          throw new Error('properties é obrigatório e deve ser array');
+        }
+
+        // Validar behaviors
+        if (!Array.isArray(typedArgs.behaviors)) {
+          throw new Error('behaviors é obrigatório e deve ser array');
+        }
+
+        // Validar isAggregateRoot
+        if (typeof typedArgs.isAggregateRoot !== 'boolean') {
+          throw new Error('isAggregateRoot é obrigatório e deve ser boolean');
+        }
+
+        // Validar hasMultiTenancy
+        if (typeof typedArgs.hasMultiTenancy !== 'boolean') {
+          throw new Error('hasMultiTenancy é obrigatório e deve ser boolean');
+        }
+
+        // Validar cada property
+        const properties = typedArgs.properties.map((prop: unknown) => {
+          if (!prop || typeof prop !== 'object') {
+            throw new Error('Cada property deve ser objeto');
+          }
+          const p = prop as { name?: unknown; type?: unknown; required?: unknown; description?: unknown };
+          if (!p.name || typeof p.name !== 'string') {
+            throw new Error('Cada property deve ter name (string)');
+          }
+          if (!p.type || typeof p.type !== 'string') {
+            throw new Error('Cada property deve ter type (string)');
+          }
+          if (typeof p.required !== 'boolean') {
+            throw new Error('Cada property deve ter required (boolean)');
+          }
+          return {
+            name: p.name,
+            type: p.type,
+            required: p.required,
+            description: p.description && typeof p.description === 'string' ? p.description : undefined,
+          };
+        });
+
+        // Validar behaviors são strings
+        const behaviors = typedArgs.behaviors.filter(
+          (b: unknown): b is string => typeof b === 'string'
+        );
+
+        try {
+          const result = await generateEntity({
+            name: typedArgs.name,
+            module: typedArgs.module,
+            properties,
+            behaviors,
+            isAggregateRoot: typedArgs.isAggregateRoot,
+            hasMultiTenancy: typedArgs.hasMultiTenancy,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to generate entity: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'generate_use_case') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for generate_use_case');
+        }
+
+        const typedArgs = args as {
+          name?: unknown;
+          type?: unknown;
+          module?: unknown;
+          description?: unknown;
+          inputFields?: unknown;
+          outputFields?: unknown;
+          repositories?: unknown;
+          domainServices?: unknown;
+        };
+
+        // Validar name
+        if (!typedArgs.name || typeof typedArgs.name !== 'string') {
+          throw new Error('name é obrigatório e deve ser string');
+        }
+
+        // Validar type
+        if (!typedArgs.type || typeof typedArgs.type !== 'string') {
+          throw new Error('type é obrigatório e deve ser string');
+        }
+        if (!['command', 'query'].includes(typedArgs.type)) {
+          throw new Error('type deve ser "command" ou "query"');
+        }
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar description
+        if (!typedArgs.description || typeof typedArgs.description !== 'string') {
+          throw new Error('description é obrigatório e deve ser string');
+        }
+
+        // Validar inputFields
+        if (!Array.isArray(typedArgs.inputFields)) {
+          throw new Error('inputFields é obrigatório e deve ser array');
+        }
+
+        // Validar outputFields
+        if (!Array.isArray(typedArgs.outputFields)) {
+          throw new Error('outputFields é obrigatório e deve ser array');
+        }
+
+        // Validar repositories
+        if (!Array.isArray(typedArgs.repositories)) {
+          throw new Error('repositories é obrigatório e deve ser array');
+        }
+
+        // Processar inputFields
+        const inputFields = typedArgs.inputFields.map((field: unknown) => {
+          if (!field || typeof field !== 'object') {
+            throw new Error('Cada inputField deve ser objeto');
+          }
+          const f = field as { name?: unknown; type?: unknown; required?: unknown; description?: unknown };
+          if (!f.name || typeof f.name !== 'string') {
+            throw new Error('Cada inputField deve ter name (string)');
+          }
+          if (!f.type || typeof f.type !== 'string') {
+            throw new Error('Cada inputField deve ter type (string)');
+          }
+          if (typeof f.required !== 'boolean') {
+            throw new Error('Cada inputField deve ter required (boolean)');
+          }
+          return {
+            name: f.name,
+            type: f.type,
+            required: f.required,
+            description: f.description && typeof f.description === 'string' ? f.description : undefined,
+          };
+        });
+
+        // Processar outputFields
+        const outputFields = typedArgs.outputFields.map((field: unknown) => {
+          if (!field || typeof field !== 'object') {
+            throw new Error('Cada outputField deve ser objeto');
+          }
+          const f = field as { name?: unknown; type?: unknown; description?: unknown };
+          if (!f.name || typeof f.name !== 'string') {
+            throw new Error('Cada outputField deve ter name (string)');
+          }
+          if (!f.type || typeof f.type !== 'string') {
+            throw new Error('Cada outputField deve ter type (string)');
+          }
+          return {
+            name: f.name,
+            type: f.type,
+            description: f.description && typeof f.description === 'string' ? f.description : undefined,
+          };
+        });
+
+        // Processar repositories
+        const repositories = typedArgs.repositories.filter(
+          (r: unknown): r is string => typeof r === 'string'
+        );
+
+        // Processar domainServices (opcional)
+        const domainServices = Array.isArray(typedArgs.domainServices)
+          ? typedArgs.domainServices.filter((s: unknown): s is string => typeof s === 'string')
+          : undefined;
+
+        try {
+          const result = await generateUseCase({
+            name: typedArgs.name,
+            type: typedArgs.type as 'command' | 'query',
+            module: typedArgs.module,
+            description: typedArgs.description,
+            inputFields,
+            outputFields,
+            repositories,
+            domainServices,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to generate use case: ${errorMessage}`);
         }
       }
 
