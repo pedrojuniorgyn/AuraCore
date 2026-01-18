@@ -1,6 +1,5 @@
 import { container } from 'tsyringe';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import type { IJournalEntryRepository } from '../../domain/ports/output/IJournalEntryRepository';
 import { DrizzleJournalEntryRepository } from '../persistence/DrizzleJournalEntryRepository';
 import { CreateJournalEntryUseCase } from '../../application/use-cases/CreateJournalEntryUseCase';
 import { AddLineToEntryUseCase } from '../../application/use-cases/AddLineToEntryUseCase';
@@ -11,20 +10,49 @@ import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJourn
 
 /**
  * Registra todas as dependências do módulo Accounting
+ *
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ * @see ARCH-011: Repositories implementam interface de domain/ports/output/
  */
 export function registerAccountingModule(): void {
-  // Repository
+  // Repository (Output Port)
+  // NOTA: Existem duas interfaces IJournalEntryRepository no projeto:
+  // - domain/ports/IJournalEntryRepository.ts (legada, com bigint)
+  // - domain/ports/output/IJournalEntryRepository.ts (nova, com string UUID)
+  // O DrizzleJournalEntryRepository implementa a interface legada.
   container.registerSingleton(
     TOKENS.JournalEntryRepository,
     DrizzleJournalEntryRepository
   );
 
-  // Use Cases
-  container.registerSingleton(CreateJournalEntryUseCase);
-  container.registerSingleton(AddLineToEntryUseCase);
-  container.registerSingleton(PostJournalEntryUseCase);
-  container.registerSingleton(ReverseJournalEntryUseCase);
-  container.registerSingleton(ListJournalEntriesUseCase);
-  container.registerSingleton(GetJournalEntryByIdUseCase);
-}
+  // Use Cases (Input Ports)
+  container.registerSingleton(
+    TOKENS.CreateJournalEntryUseCase,
+    CreateJournalEntryUseCase
+  );
 
+  container.registerSingleton(
+    TOKENS.AddLineToEntryUseCase,
+    AddLineToEntryUseCase
+  );
+
+  container.registerSingleton(
+    TOKENS.PostJournalEntryUseCase,
+    PostJournalEntryUseCase
+  );
+
+  container.registerSingleton(
+    TOKENS.ReverseJournalEntryUseCase,
+    ReverseJournalEntryUseCase
+  );
+
+  container.registerSingleton(
+    TOKENS.ListJournalEntriesUseCase,
+    ListJournalEntriesUseCase
+  );
+
+  container.registerSingleton(
+    TOKENS.GetJournalEntryByIdUseCase,
+    GetJournalEntryByIdUseCase
+  );
+}

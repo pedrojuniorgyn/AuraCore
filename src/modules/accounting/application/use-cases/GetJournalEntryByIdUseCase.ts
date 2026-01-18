@@ -3,19 +3,23 @@ import { z } from 'zod';
 import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IJournalEntryRepository } from '../../domain/ports/output/IJournalEntryRepository';
+import type { IGetJournalEntryById, GetJournalEntryByIdInput } from '../../domain/ports/input';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
 import { JournalEntryResponseDTO, toJournalEntryResponseDTO } from '../dtos/JournalEntryResponseDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from './BaseUseCase';
 
 const GetJournalEntryByIdInputSchema = z.object({
   id: z.string().uuid('Invalid journal entry ID'),
 });
 
-type GetJournalEntryByIdInput = z.infer<typeof GetJournalEntryByIdInputSchema>;
-
+/**
+ * Use Case: Buscar Lançamento Contábil por ID
+ * 
+ * @implements IGetJournalEntryById - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class GetJournalEntryByIdUseCase 
-  implements IUseCaseWithContext<GetJournalEntryByIdInput, JournalEntryResponseDTO> {
+export class GetJournalEntryByIdUseCase implements IGetJournalEntryById {
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)

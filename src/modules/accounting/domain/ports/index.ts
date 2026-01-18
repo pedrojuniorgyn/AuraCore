@@ -1,9 +1,19 @@
 /**
  * Domain Ports
- * 
+ *
  * Exporta interfaces (Ports) do módulo Accounting
+ *
+ * Input Ports: Contratos de entrada para Use Cases
+ * Output Ports: Contratos de saída para Repositories e Services externos
  */
 
+// Input Ports (Use Cases)
+export * from './input';
+
+// Output Ports (Repositories)
+export * from './output';
+
+// Legacy exports (mantido para compatibilidade)
 export type {
   IJournalEntryRepository,
   FiscalDocumentData,

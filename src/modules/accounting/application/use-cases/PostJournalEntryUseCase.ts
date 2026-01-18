@@ -3,33 +3,24 @@ import { z } from 'zod';
 import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IJournalEntryRepository } from '../../domain/ports/output/IJournalEntryRepository';
+import type { IPostJournalEntry, PostJournalEntryInput, PostJournalEntryOutput } from '../../domain/ports/input';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from './BaseUseCase';
 
 const PostJournalEntryInputSchema = z.object({
   journalEntryId: z.string().uuid('Invalid journal entry ID'),
 });
 
-type PostJournalEntryInput = z.infer<typeof PostJournalEntryInputSchema>;
-
-interface PostJournalEntryOutput {
-  id: string;
-  entryNumber: string;
-  status: string;
-  totalDebit: number;
-  totalCredit: number;
-  postedAt: string;
-  postedBy: string;
-}
-
 /**
  * Use Case: Postar Lançamento Contábil
  * 
  * Valida partidas dobradas e muda status para POSTED.
+ * 
+ * @implements IPostJournalEntry - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class PostJournalEntryUseCase 
-  implements IUseCaseWithContext<PostJournalEntryInput, PostJournalEntryOutput> {
+export class PostJournalEntryUseCase implements IPostJournalEntry {
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)

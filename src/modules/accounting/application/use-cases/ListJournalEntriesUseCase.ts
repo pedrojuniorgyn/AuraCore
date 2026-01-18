@@ -7,8 +7,9 @@ import type {
   FindJournalEntriesFilter, 
   PaginationOptions 
 } from '../../domain/ports/output/IJournalEntryRepository';
+import type { IListJournalEntries, ListJournalEntriesInput } from '../../domain/ports/input';
 import { PaginatedJournalEntriesDTO, toJournalEntryResponseDTO } from '../dtos/JournalEntryResponseDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from './BaseUseCase';
 
 const ListJournalEntriesInputSchema = z.object({
   status: z.array(z.string()).optional(),
@@ -24,11 +25,14 @@ const ListJournalEntriesInputSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
-type ListJournalEntriesInput = z.infer<typeof ListJournalEntriesInputSchema>;
-
+/**
+ * Use Case: Listar Lançamentos Contábeis
+ * 
+ * @implements IListJournalEntries - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ */
 @injectable()
-export class ListJournalEntriesUseCase 
-  implements IUseCaseWithContext<ListJournalEntriesInput, PaginatedJournalEntriesDTO> {
+export class ListJournalEntriesUseCase implements IListJournalEntries {
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)

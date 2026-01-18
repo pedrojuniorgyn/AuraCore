@@ -4,16 +4,19 @@ import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { JournalEntryLine } from '../../domain/entities/JournalEntryLine';
 import type { IJournalEntryRepository } from '../../domain/ports/output/IJournalEntryRepository';
+import type { IAddLineToEntry } from '../../domain/ports/input';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
 import { AddLineInput, AddLineInputSchema, AddLineOutput } from '../dtos/AddLineDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from './BaseUseCase';
 
 /**
  * Use Case: Adicionar Linha ao Lançamento
+ * 
+ * @implements IAddLineToEntry - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class AddLineToEntryUseCase 
-  implements IUseCaseWithContext<AddLineInput, AddLineOutput> {
+export class AddLineToEntryUseCase implements IAddLineToEntry {
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)

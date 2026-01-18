@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { container } from 'tsyringe';
 import { auth } from "@/lib/auth";
 import { Result } from "@/shared/domain";
-import { ReverseJournalEntryUseCase } from "@/modules/accounting/application/use-cases";
-import { JournalEntryGenerator } from "@/modules/accounting/domain/services";
-import { createJournalEntryRepository } from "@/modules/accounting/infrastructure/persistence";
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import type { IReverseJournalEntry, ReverseJournalEntryOutput } from "@/modules/accounting/domain/ports/input";
 
 /**
  * 🔄 POST /api/accounting/journal-entries/:id/reverse
- * 
+ *
  * Reverter lançamento contábil
- * 
- * @epic E7.13 - Services → DDD Migration
- * @service 4/8 - accounting-engine.ts → JournalEntryGenerator
+ *
+ * @epic E7.23 - Input Ports Accounting Module
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 export async function POST(
   request: NextRequest,
@@ -19,16 +19,16 @@ export async function POST(
 ) {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id || !session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
     const resolvedParams = await params;
-    const journalEntryId = BigInt(resolvedParams.id);
+    const journalEntryId = resolvedParams.id;
     const userId = session.user.id;
-    
-    // Validar organizationId antes de converter para BigInt
+
+    // Validar organizationId
     const rawOrgId = session.user.organizationId;
     if (!rawOrgId || isNaN(Number(rawOrgId))) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST(
         { status: 400 }
       );
     }
-    const organizationId = BigInt(rawOrgId);
+    const organizationId = Number(rawOrgId);
 
     // Validar branchId (multi-tenancy)
     const branchId = session.user.defaultBranchId;
@@ -47,37 +47,47 @@ export async function POST(
       );
     }
 
-    // DDD: Instanciar Use Case com dependências
-    const repository = createJournalEntryRepository();
-    const domainService = new JournalEntryGenerator();
-    const useCase = new ReverseJournalEntryUseCase(domainService, repository);
+    // Parse body para obter motivo
+    const body = await request.json();
+    const reason = body.reason || 'Estorno solicitado pelo usuário';
 
-    // Executar Use Case
-    const result = await useCase.execute({
-      journalEntryId,
-      organizationId,
-      branchId,
-      userId,
-    });
+    // DI: Resolver Use Case via container
+    const useCase = container.resolve<IReverseJournalEntry>(
+      TOKENS.ReverseJournalEntryUseCase
+    );
+
+    // Executar Use Case com novo padrão
+    const result = await useCase.execute(
+      {
+        journalEntryId,
+        reason,
+        reversalDate: body.reversalDate,
+      },
+      {
+        userId,
+        organizationId,
+        branchId,
+        isAdmin: session.user.role === 'ADMIN',
+      }
+    );
 
     if (Result.isFail(result)) {
-      const errorMessage = result.error instanceof Error 
-        ? result.error.message 
-        : typeof result.error === 'string'
-          ? result.error
-          : 'Erro desconhecido ao reverter lançamento contábil';
-      
       return NextResponse.json(
-        { error: errorMessage },
+        { error: result.error },
         { status: 400 }
       );
     }
 
+    const output: ReverseJournalEntryOutput = result.value;
+
     return NextResponse.json({
       success: true,
       message: "Lançamento contábil revertido com sucesso",
-      journalEntryId: result.value.journalEntryId.toString(), // BigInt → string para preservar precisão
-      status: result.value.status,
+      originalEntryId: output.originalEntryId,
+      reversalEntryId: output.reversalEntryId,
+      reversalEntryNumber: output.reversalEntryNumber,
+      status: output.status,
+      reversedAt: output.reversedAt,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

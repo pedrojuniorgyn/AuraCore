@@ -5,22 +5,25 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { JournalEntry } from '../../domain/entities/JournalEntry';
 import { JournalEntryLine } from '../../domain/entities/JournalEntryLine';
 import type { IJournalEntryRepository } from '../../domain/ports/output/IJournalEntryRepository';
+import type { ICreateJournalEntry } from '../../domain/ports/input';
 import { 
   CreateJournalEntryInput, 
   CreateJournalEntryInputSchema, 
   CreateJournalEntryOutput 
 } from '../dtos/CreateJournalEntryDTO';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from './BaseUseCase';
 
 /**
  * Use Case: Criar Lançamento Contábil
  * 
  * Cria um lançamento em status DRAFT.
  * Linhas podem ser adicionadas na criação ou depois via AddLineToEntryUseCase.
+ * 
+ * @implements ICreateJournalEntry - Input Port de domain/ports/input/
+ * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 @injectable()
-export class CreateJournalEntryUseCase 
-  implements IUseCaseWithContext<CreateJournalEntryInput, CreateJournalEntryOutput> {
+export class CreateJournalEntryUseCase implements ICreateJournalEntry {
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)

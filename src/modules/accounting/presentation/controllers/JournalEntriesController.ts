@@ -204,18 +204,19 @@ export class JournalEntriesController {
       const body = await request.json();
 
       const useCase = container.resolve(ReverseJournalEntryUseCase);
-      const result = await useCase.execute({
-        journalEntryId: BigInt(params.id),
-        organizationId: BigInt(ctx.organizationId),
-        branchId: ctx.branchId,
-        userId: ctx.userId,
-      });
+      const result = await useCase.execute(
+        {
+          journalEntryId: params.id,
+          reason: body.reason || 'Estorno solicitado pelo usuário',
+          reversalDate: body.reversalDate,
+        },
+        ctx
+      );
 
       if (Result.isFail(result)) {
-        const errorMessage = result.error instanceof Error ? result.error.message : String(result.error);
-        const status = errorMessage.includes('not found') ? 404 : 400;
+        const status = result.error.includes('not found') ? 404 : 400;
         return NextResponse.json(
-          { error: errorMessage },
+          { error: result.error },
           { status }
         );
       }

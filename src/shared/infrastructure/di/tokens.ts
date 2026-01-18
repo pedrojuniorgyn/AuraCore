@@ -23,8 +23,16 @@ export const TOKENS = {
   GenerateReceivableTitleUseCase: Symbol('GenerateReceivableTitleUseCase'),
   ReverseTitlesUseCase: Symbol('ReverseTitlesUseCase'),
 
-  // Accounting Module
+  // Accounting Module - Repositories
   JournalEntryRepository: Symbol('JournalEntryRepository'),
+  
+  // Accounting Module - Use Cases
+  CreateJournalEntryUseCase: Symbol('CreateJournalEntryUseCase'),
+  AddLineToEntryUseCase: Symbol('AddLineToEntryUseCase'),
+  PostJournalEntryUseCase: Symbol('PostJournalEntryUseCase'),
+  ReverseJournalEntryUseCase: Symbol('ReverseJournalEntryUseCase'),
+  ListJournalEntriesUseCase: Symbol('ListJournalEntriesUseCase'),
+  GetJournalEntryByIdUseCase: Symbol('GetJournalEntryByIdUseCase'),
 
   // Fiscal Module - Repositories & Services
   FiscalDocumentRepository: Symbol('FiscalDocumentRepository'),
