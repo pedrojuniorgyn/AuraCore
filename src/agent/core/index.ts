@@ -16,3 +16,10 @@ export type {
   MessageAttachment,
 } from './AgentContext';
 export { createExecutionContext, createSession, addMessage } from './AgentContext';
+
+// Voice-Enabled Agent
+export {
+  VoiceEnabledAgent,
+  type VoiceConversationOptions,
+  type VoiceConversationResult,
+} from './VoiceEnabledAgent';
