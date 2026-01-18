@@ -26,3 +26,6 @@ export * from './tools';
 
 // Workflows
 export * from './workflows';
+
+// Voice (preparação para futuras fases)
+export * from './voice';

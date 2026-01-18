@@ -7,12 +7,16 @@
  * - Importar NFe de email e contabilizar automaticamente
  * - Conciliar extrato e gerar relatório
  * - Processar lote de documentos fiscais
- * 
- * Implementação futura com LangGraph.
  */
 
+// Tipos
+export * from './types';
+
+// Workflows
+export { FiscalImportWorkflow, type FiscalImportInput } from './FiscalImportWorkflow';
+
 /**
- * Estado base para workflows
+ * Estado base para workflows (compatibilidade)
  */
 export interface WorkflowState {
   /** ID do workflow */
@@ -30,7 +34,7 @@ export interface WorkflowState {
 }
 
 /**
- * Resultado de execução de workflow
+ * Resultado de execução de workflow (compatibilidade)
  */
 export interface WorkflowResult<T = unknown> {
   success: boolean;
@@ -39,22 +43,7 @@ export interface WorkflowResult<T = unknown> {
   steps: string[];
 }
 
-// TODO: Implementar workflows com LangGraph nas próximas fases
-// 
-// Exemplo de workflow planejado:
-// 
-// const importNFeWorkflow = new StateGraph<WorkflowState>({
-//   channels: {
-//     messages: { value: [] },
-//     data: { value: {} },
-//   },
-// })
-//   .addNode('search_email', searchEmailNode)
-//   .addNode('extract_nfe', extractNFeNode)
-//   .addNode('validate', validateNode)
-//   .addNode('import', importNode)
-//   .addNode('notify', notifyNode)
-//   .addEdge('search_email', 'extract_nfe')
-//   .addConditionalEdges('extract_nfe', routeByValidation)
-//   .addEdge('validate', 'import')
-//   .addEdge('import', 'notify');
+// TODO: Implementar workflows adicionais:
+// - BankReconciliationWorkflow - Conciliação bancária automática
+// - BatchImportWorkflow - Importação em lote
+// - ReportGenerationWorkflow - Geração de relatórios
