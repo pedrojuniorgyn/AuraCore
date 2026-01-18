@@ -20,6 +20,8 @@ import { validateFiscalCompliance } from './tools/validate-fiscal-compliance.js'
 import { calculateTaxScenario } from './tools/calculate-tax-scenario.js';
 import { generateEntity } from './tools/generate-entity.js';
 import { generateUseCase } from './tools/generate-use-case.js';
+import { analyzeModuleDependencies } from './tools/analyze-module-dependencies.js';
+import { generateModuleDocs } from './tools/generate-module-docs.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -408,6 +410,55 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['name', 'type', 'module', 'description', 'inputFields', 'outputFields', 'repositories'],
+          },
+        },
+        {
+          name: 'analyze_module_dependencies',
+          description: 'Analisa dependências entre camadas de um módulo DDD/Hexagonal. Detecta violações de arquitetura (ARCH-001 a ARCH-005).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              module: {
+                type: 'string',
+                description: 'Nome do módulo em lowercase (ex: fiscal, tms, wms)',
+              },
+              check_violations: {
+                type: 'boolean',
+                description: 'Se true, verifica violações de arquitetura DDD',
+              },
+              include_external: {
+                type: 'boolean',
+                description: 'Se true, inclui dependências externas (npm packages)',
+              },
+            },
+            required: ['module', 'check_violations', 'include_external'],
+          },
+        },
+        {
+          name: 'generate_module_docs',
+          description: 'Gera documentação automática de um módulo DDD. Inclui README, diagramas Mermaid, e API reference.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              module: {
+                type: 'string',
+                description: 'Nome do módulo em lowercase (ex: fiscal, tms, wms)',
+              },
+              format: {
+                type: 'string',
+                description: 'Formato de saída',
+                enum: ['markdown', 'html'],
+              },
+              include_diagrams: {
+                type: 'boolean',
+                description: 'Se true, gera diagramas Mermaid (classes, fluxo)',
+              },
+              include_api: {
+                type: 'boolean',
+                description: 'Se true, documenta API routes do módulo',
+              },
+            },
+            required: ['module', 'format', 'include_diagrams', 'include_api'],
           },
         },
       ],
@@ -1232,6 +1283,116 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to generate use case: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'analyze_module_dependencies') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for analyze_module_dependencies');
+        }
+
+        const typedArgs = args as {
+          module?: unknown;
+          check_violations?: unknown;
+          include_external?: unknown;
+        };
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar check_violations
+        if (typeof typedArgs.check_violations !== 'boolean') {
+          throw new Error('check_violations é obrigatório e deve ser boolean');
+        }
+
+        // Validar include_external
+        if (typeof typedArgs.include_external !== 'boolean') {
+          throw new Error('include_external é obrigatório e deve ser boolean');
+        }
+
+        try {
+          const result = await analyzeModuleDependencies({
+            module: typedArgs.module,
+            check_violations: typedArgs.check_violations,
+            include_external: typedArgs.include_external,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to analyze module dependencies: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'generate_module_docs') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for generate_module_docs');
+        }
+
+        const typedArgs = args as {
+          module?: unknown;
+          format?: unknown;
+          include_diagrams?: unknown;
+          include_api?: unknown;
+        };
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar format
+        if (!typedArgs.format || typeof typedArgs.format !== 'string') {
+          throw new Error('format é obrigatório e deve ser string');
+        }
+        if (!['markdown', 'html'].includes(typedArgs.format)) {
+          throw new Error('format deve ser "markdown" ou "html"');
+        }
+
+        // Validar include_diagrams
+        if (typeof typedArgs.include_diagrams !== 'boolean') {
+          throw new Error('include_diagrams é obrigatório e deve ser boolean');
+        }
+
+        // Validar include_api
+        if (typeof typedArgs.include_api !== 'boolean') {
+          throw new Error('include_api é obrigatório e deve ser boolean');
+        }
+
+        try {
+          const result = await generateModuleDocs({
+            module: typedArgs.module,
+            format: typedArgs.format as 'markdown' | 'html',
+            include_diagrams: typedArgs.include_diagrams,
+            include_api: typedArgs.include_api,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to generate module docs: ${errorMessage}`);
         }
       }
 

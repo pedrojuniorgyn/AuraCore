@@ -65,7 +65,38 @@ grep -r 'as any' src/
 - SPED: Fiscal, Contribuições, ECD
 - Reforma Tributária 2026: IBS, CBS, IS
 
-### Módulo Agent (NOVO)
+### MCP Tools Disponíveis
+
+**Verificação:**
+- `check_cursor_issues` - Executa tsc + eslint
+- `validate_code` - Valida código contra contratos
+- `check_compliance` - Verifica compliance de arquivo
+- `validate_fiscal_compliance` - Valida features fiscais (NFe, CTe, SPED)
+
+**Cálculo:**
+- `calculate_tax_scenario` - Calcula impostos (ICMS, PIS, COFINS, ISS)
+
+**Geração de Código:**
+- `generate_entity` - Gera Entity DDD completa
+- `generate_use_case` - Gera Use Case (Command/Query)
+
+**Análise:**
+- `analyze_module_dependencies` - Analisa dependências e violações de arquitetura
+
+**Documentação:**
+- `generate_module_docs` - Gera documentação automática de módulo
+
+**Consulta:**
+- `get_contract` - Retorna contrato MCP
+- `search_patterns` - Busca padrões aprovados
+- `get_epic_status` - Status de épico
+
+**Utilitários:**
+- `register_correction` - Registra correção de issue
+- `propose_pattern` - Propõe novo padrão de código
+- `ping` - Teste de conexão
+
+### Módulo Agent
 Localização: `src/agent/`
 - Usa Google Cloud (Gemini, Document AI, Speech)
 - Usa Google Workspace (Gmail, Drive, Calendar, Sheets)
