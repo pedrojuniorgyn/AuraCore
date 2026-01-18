@@ -14,6 +14,16 @@ export * from './types';
 
 // Workflows
 export { FiscalImportWorkflow, type FiscalImportInput } from './FiscalImportWorkflow';
+export {
+  BankReconciliationWorkflow,
+  type BankReconciliationInput,
+  type BankReconciliationState,
+  type BankStatementEntry,
+  type FinancialEntry,
+  type MatchedEntry,
+  type ReconciliationSummary,
+  type ReconciliationStatus,
+} from './BankReconciliationWorkflow';
 
 /**
  * Estado base para workflows (compatibilidade)
