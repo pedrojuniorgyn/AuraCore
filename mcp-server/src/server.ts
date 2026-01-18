@@ -16,6 +16,8 @@ import { proposePattern } from './tools/propose-pattern.js';
 import { validateCode } from './tools/validate-code.js';
 import { checkCompliance } from './tools/check-compliance.js';
 import { registerCorrection } from './tools/register-correction.js';
+import { validateFiscalCompliance } from './tools/validate-fiscal-compliance.js';
+import { calculateTaxScenario } from './tools/calculate-tax-scenario.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -225,6 +227,76 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['epic', 'error_description', 'correction_applied', 'files_affected'],
+          },
+        },
+        {
+          name: 'validate_fiscal_compliance',
+          description: 'Valida código de features fiscais contra legislação brasileira (ICMS, PIS/COFINS, Reforma 2026, ISS). Verifica campos obrigatórios, alíquotas e layout XML.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              feature_type: {
+                type: 'string',
+                description: 'Tipo de feature fiscal',
+                enum: ['nfe', 'cte', 'mdfe', 'sped', 'nfse'],
+              },
+              code_path: {
+                type: 'string',
+                description: 'Caminho do arquivo ou diretório a ser validado (ex: src/modules/fiscal/...)',
+              },
+              legislation: {
+                type: 'array',
+                items: {
+                  type: 'string',
+                  enum: ['icms', 'pis_cofins', 'reforma_2026', 'iss'],
+                },
+                description: 'Legislações a serem verificadas',
+              },
+            },
+            required: ['feature_type', 'code_path', 'legislation'],
+          },
+        },
+        {
+          name: 'calculate_tax_scenario',
+          description: 'Calcula impostos para cenários de operação no Brasil. Suporta ICMS, PIS/COFINS, ISS e preview da Reforma 2026 (IBS/CBS).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              operation_type: {
+                type: 'string',
+                description: 'Tipo de operação',
+                enum: ['venda', 'compra', 'transferencia', 'devolucao', 'servico'],
+              },
+              origin_uf: {
+                type: 'string',
+                description: 'UF de origem (ex: SP, RJ, MG)',
+              },
+              dest_uf: {
+                type: 'string',
+                description: 'UF de destino (ex: SP, RJ, MG)',
+              },
+              product_ncm: {
+                type: 'string',
+                description: 'NCM do produto (8 dígitos, opcional)',
+              },
+              service_code: {
+                type: 'string',
+                description: 'Código do serviço conforme LC 116/03 (opcional)',
+              },
+              value: {
+                type: 'number',
+                description: 'Valor da operação em reais',
+              },
+              is_simples_nacional: {
+                type: 'boolean',
+                description: 'Se a empresa é optante pelo Simples Nacional',
+              },
+              include_2026_preview: {
+                type: 'boolean',
+                description: 'Incluir preview dos impostos da Reforma 2026 (IBS/CBS)',
+              },
+            },
+            required: ['operation_type', 'origin_uf', 'dest_uf', 'value', 'is_simples_nacional'],
           },
         },
       ],
@@ -651,6 +723,170 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to register correction: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'validate_fiscal_compliance') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for validate_fiscal_compliance');
+        }
+
+        const typedArgs = args as {
+          feature_type?: unknown;
+          code_path?: unknown;
+          legislation?: unknown;
+        };
+
+        // Validar feature_type
+        const featureType = typedArgs.feature_type;
+        if (!featureType || typeof featureType !== 'string') {
+          throw new Error('feature_type é obrigatório e deve ser string');
+        }
+
+        const validFeatureTypes = ['nfe', 'cte', 'mdfe', 'sped', 'nfse'];
+        if (!validFeatureTypes.includes(featureType)) {
+          throw new Error(
+            `feature_type inválido: ${featureType}. Valores válidos: ${validFeatureTypes.join(', ')}`
+          );
+        }
+
+        // Validar code_path
+        const codePath = typedArgs.code_path;
+        if (!codePath || typeof codePath !== 'string') {
+          throw new Error('code_path é obrigatório e deve ser string');
+        }
+
+        // Validar legislation
+        const legislation = typedArgs.legislation;
+        if (!Array.isArray(legislation) || legislation.length === 0) {
+          throw new Error('legislation é obrigatório e deve ser array não vazio');
+        }
+
+        const validLegislation = ['icms', 'pis_cofins', 'reforma_2026', 'iss'];
+        const invalidLegislation = legislation.filter(
+          l => typeof l !== 'string' || !validLegislation.includes(l)
+        );
+        if (invalidLegislation.length > 0) {
+          throw new Error(
+            `Legislação inválida: ${JSON.stringify(invalidLegislation)}. ` +
+            `Valores válidos: ${validLegislation.join(', ')}`
+          );
+        }
+
+        try {
+          const result = await validateFiscalCompliance({
+            feature_type: featureType as 'nfe' | 'cte' | 'mdfe' | 'sped' | 'nfse',
+            code_path: codePath,
+            legislation: legislation as ('icms' | 'pis_cofins' | 'reforma_2026' | 'iss')[],
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to validate fiscal compliance: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'calculate_tax_scenario') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for calculate_tax_scenario');
+        }
+
+        const typedArgs = args as {
+          operation_type?: unknown;
+          origin_uf?: unknown;
+          dest_uf?: unknown;
+          product_ncm?: unknown;
+          service_code?: unknown;
+          value?: unknown;
+          is_simples_nacional?: unknown;
+          include_2026_preview?: unknown;
+        };
+
+        // Validar operation_type
+        const operationType = typedArgs.operation_type;
+        if (!operationType || typeof operationType !== 'string') {
+          throw new Error('operation_type é obrigatório e deve ser string');
+        }
+
+        const validOperations = ['venda', 'compra', 'transferencia', 'devolucao', 'servico'];
+        if (!validOperations.includes(operationType)) {
+          throw new Error(
+            `operation_type inválido: ${operationType}. Valores válidos: ${validOperations.join(', ')}`
+          );
+        }
+
+        // Validar origin_uf
+        const originUf = typedArgs.origin_uf;
+        if (!originUf || typeof originUf !== 'string') {
+          throw new Error('origin_uf é obrigatório e deve ser string');
+        }
+
+        // Validar dest_uf
+        const destUf = typedArgs.dest_uf;
+        if (!destUf || typeof destUf !== 'string') {
+          throw new Error('dest_uf é obrigatório e deve ser string');
+        }
+
+        // Validar value
+        const value = typedArgs.value;
+        if (typeof value !== 'number' || isNaN(value)) {
+          throw new Error('value é obrigatório e deve ser número');
+        }
+
+        // Validar is_simples_nacional
+        const isSimplesNacional = typedArgs.is_simples_nacional;
+        if (typeof isSimplesNacional !== 'boolean') {
+          throw new Error('is_simples_nacional é obrigatório e deve ser boolean');
+        }
+
+        // Campos opcionais
+        const productNcm = typedArgs.product_ncm && typeof typedArgs.product_ncm === 'string'
+          ? typedArgs.product_ncm
+          : undefined;
+
+        const serviceCode = typedArgs.service_code && typeof typedArgs.service_code === 'string'
+          ? typedArgs.service_code
+          : undefined;
+
+        const include2026Preview = typedArgs.include_2026_preview === true;
+
+        try {
+          const result = await calculateTaxScenario({
+            operation_type: operationType as 'venda' | 'compra' | 'transferencia' | 'devolucao' | 'servico',
+            origin_uf: originUf,
+            dest_uf: destUf,
+            product_ncm: productNcm,
+            service_code: serviceCode,
+            value,
+            is_simples_nacional: isSimplesNacional,
+            include_2026_preview: include2026Preview,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to calculate tax scenario: ${errorMessage}`);
         }
       }
 
