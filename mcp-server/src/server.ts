@@ -238,7 +238,7 @@ export class AuraCoreMCPServer {
               feature_type: {
                 type: 'string',
                 description: 'Tipo de feature fiscal',
-                enum: ['nfe', 'cte', 'mdfe', 'sped', 'nfse'],
+                enum: ['nfe', 'nfce', 'cte', 'mdfe', 'sped', 'nfse'],
               },
               code_path: {
                 type: 'string',
@@ -743,7 +743,7 @@ export class AuraCoreMCPServer {
           throw new Error('feature_type é obrigatório e deve ser string');
         }
 
-        const validFeatureTypes = ['nfe', 'cte', 'mdfe', 'sped', 'nfse'];
+        const validFeatureTypes = ['nfe', 'nfce', 'cte', 'mdfe', 'sped', 'nfse'];
         if (!validFeatureTypes.includes(featureType)) {
           throw new Error(
             `feature_type inválido: ${featureType}. Valores válidos: ${validFeatureTypes.join(', ')}`

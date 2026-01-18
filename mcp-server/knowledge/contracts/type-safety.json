@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -252,6 +252,20 @@
         "src/app/api/accounting/journal-entries/[id]/reverse/route.ts"
       ],
       "pattern_created": "VERIFY-BRANCH-ID: Never remove branchId when fixing TypeScript errors",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-144585",
+      "date": "2026-01-18",
+      "epic": "E7.22.2",
+      "error": "Bug 1: Uso de result.isFailure (propriedade) ao invés de Result.isFail(result) (type guard com método estático). Bug 2: NFCE faltando no enum e validação do MCP server para validate_fiscal_compliance.",
+      "correction": "Bug 1: Alterado result.isFailure para Result.isFail(result) na linha 115 do generate-titles/route.ts. Bug 2: Adicionado 'nfce' ao enum na linha 241 e ao validFeatureTypes na linha 746 do mcp-server/src/server.ts.",
+      "files_affected": [
+        "src/app/api/fiscal/documents/[id]/generate-titles/route.ts",
+        "mcp-server/src/server.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

@@ -112,7 +112,7 @@ export async function POST(
     }
 
     // 6. Processar resultado
-    if (!result || result.isFailure) {
+    if (!result || Result.isFail(result)) {
       const errorMsg = result ? String(result.error) : 'Erro desconhecido';
       return NextResponse.json(
         { success: false, error: errorMsg },

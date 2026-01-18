@@ -1,0 +1,19 @@
+{
+  "epic": "E7.22.2",
+  "corrections": [
+    {
+      "id": "LC-144585",
+      "date": "2026-01-18",
+      "epic": "E7.22.2",
+      "error": "Bug 1: Uso de result.isFailure (propriedade) ao invés de Result.isFail(result) (type guard com método estático). Bug 2: NFCE faltando no enum e validação do MCP server para validate_fiscal_compliance.",
+      "correction": "Bug 1: Alterado result.isFailure para Result.isFail(result) na linha 115 do generate-titles/route.ts. Bug 2: Adicionado 'nfce' ao enum na linha 241 e ao validFeatureTypes na linha 746 do mcp-server/src/server.ts.",
+      "files_affected": [
+        "src/app/api/fiscal/documents/[id]/generate-titles/route.ts",
+        "mcp-server/src/server.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
