@@ -3,11 +3,14 @@
  * =====================
  *
  * MCP Tool para processamento de documentos PDF via Docling.
- * Suporta DANFe, DACTe, Contratos de Frete e documentos genéricos.
+ * Suporta DANFe, DACTe, Contratos de Frete, Extratos Bancários e documentos genéricos.
  *
  * @module mcp-server/tools/process-document
- * @see E-Agent-Fase-D7
+ * @see E-Agent-Fase-D7, D6 (BankStatementParser)
  */
+
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import type {
   ProcessDocumentInput,
@@ -17,6 +20,7 @@ import type {
   DACTeOutputData,
   FreightContractOutputData,
   GenericOutputData,
+  BankStatementOutputData,
 } from '../contracts/process-document.contract.js';
 
 import {
@@ -24,6 +28,9 @@ import {
   createErrorOutput,
   createSuccessOutput,
 } from '../contracts/process-document.contract.js';
+
+// D6 Integration - Bank Statement Parser (local implementation for MCP)
+import { parseBankStatement as parseStatementContent } from '../parsers/bank-statement-parser.js';
 
 // ============================================================================
 // TYPES (Internal)
@@ -156,7 +163,12 @@ export async function processDocument(
     );
   }
 
-  // 2. Determinar caminho do arquivo
+  // 2. Caminho especial para bank_statement (não usa Docling - lê arquivo diretamente)
+  if (input.document_type === 'bank_statement') {
+    return processBankStatement(input, startTime);
+  }
+
+  // 3. Determinar caminho do arquivo (para documentos via Docling)
   const filePath = resolveFilePath(input);
   if (!filePath) {
     return createErrorOutput(
@@ -166,7 +178,7 @@ export async function processDocument(
     );
   }
 
-  // 3. Processar documento via Docling
+  // 4. Processar documento via Docling
   const extractionResult = await doclingClient.processDocument(filePath);
   
   if (!extractionResult.success || !extractionResult.value) {
@@ -179,7 +191,7 @@ export async function processDocument(
 
   const extraction = extractionResult.value;
 
-  // 4. Rotear para parser específico baseado no tipo
+  // 5. Rotear para parser específico baseado no tipo
   try {
     const result = await routeToParser(
       input.document_type,
@@ -198,6 +210,142 @@ export async function processDocument(
     return createErrorOutput(
       input.document_type,
       [`Error parsing document: ${errorMessage}`],
+      Date.now() - startTime
+    );
+  }
+}
+
+/**
+ * Processa extrato bancário (OFX/CSV) usando BankStatementParser do D6.
+ * Não usa Docling - lê conteúdo diretamente do arquivo.
+ */
+async function processBankStatement(
+  input: ProcessDocumentInput,
+  startTime: number
+): Promise<ProcessDocumentOutput> {
+  try {
+    // 1. Verificar formato suportado
+    const fileName = input.file_name.toLowerCase();
+    const isOFX = fileName.endsWith('.ofx') || fileName.endsWith('.qfx');
+    const isCSV = fileName.endsWith('.csv') || fileName.endsWith('.txt');
+
+    if (!isOFX && !isCSV) {
+      return createErrorOutput(
+        'bank_statement',
+        ['Formato não suportado. Use arquivos .ofx, .qfx, .csv ou .txt'],
+        Date.now() - startTime
+      );
+    }
+
+    // 2. Ler conteúdo do arquivo
+    let content: string;
+    
+    if (input.file_base64) {
+      // Decodificar base64
+      content = Buffer.from(input.file_base64, 'base64').toString('utf-8');
+    } else if (input.file_path) {
+      // Ler do sistema de arquivos
+      try {
+        content = await fs.readFile(input.file_path, 'utf-8');
+      } catch (fsError: unknown) {
+        const errorMsg = fsError instanceof Error ? fsError.message : String(fsError);
+        return createErrorOutput(
+          'bank_statement',
+          [`Erro ao ler arquivo: ${errorMsg}`],
+          Date.now() - startTime
+        );
+      }
+    } else {
+      return createErrorOutput(
+        'bank_statement',
+        ['Nenhum conteúdo de arquivo fornecido (file_path ou file_base64)'],
+        Date.now() - startTime
+      );
+    }
+
+    if (!content || content.trim() === '') {
+      return createErrorOutput(
+        'bank_statement',
+        ['Arquivo vazio ou sem conteúdo válido'],
+        Date.now() - startTime
+      );
+    }
+
+    // 3. Fazer parse usando parser local do MCP (baseado em D6)
+    const parseResult = parseStatementContent(content, input.file_name);
+
+    if (!parseResult.success || !parseResult.statement) {
+      return createErrorOutput(
+        'bank_statement',
+        [parseResult.error ?? 'Erro desconhecido ao processar extrato'],
+        Date.now() - startTime
+      );
+    }
+
+    const { statement, parserUsed } = parseResult;
+
+    // 4. Mapear para output do MCP
+    const bankStatementData: BankStatementOutputData = {
+      account: {
+        bankCode: statement.account.bankCode,
+        bankName: statement.account.bankName,
+        branchCode: statement.account.branchCode,
+        accountNumber: statement.account.accountNumber,
+        accountType: statement.account.accountType,
+        currency: statement.account.currency,
+      },
+      period: {
+        start: statement.period.startDate.toISOString().split('T')[0],
+        end: statement.period.endDate.toISOString().split('T')[0],
+        generatedAt: statement.period.generatedAt?.toISOString(),
+      },
+      balance: {
+        opening: statement.balance.openingBalance,
+        closing: statement.balance.closingBalance,
+        available: statement.balance.availableBalance,
+      },
+      statistics: {
+        transactionCount: statement.summary.totalTransactions,
+        creditCount: statement.summary.creditCount,
+        debitCount: statement.summary.debitCount,
+        totalCredits: statement.summary.totalCredits,
+        totalDebits: statement.summary.totalDebits,
+        netMovement: statement.summary.netMovement,
+        averageAmount: statement.summary.averageTransactionAmount,
+      },
+      transactions: statement.transactions.map(txn => ({
+        fitId: txn.fitId,
+        date: txn.transactionDate.toISOString().split('T')[0],
+        postDate: txn.postDate?.toISOString().split('T')[0],
+        description: txn.description,
+        normalizedDescription: txn.normalizedDescription,
+        amount: txn.amount,
+        type: txn.direction,
+        transactionType: txn.type,
+        category: txn.category,
+        categoryConfidence: txn.categoryConfidence,
+        payee: txn.payee,
+      })),
+      validation: {
+        isValid: statement.isValid,
+        errors: statement.validationErrors,
+        warnings: statement.validationWarnings,
+      },
+      parserUsed: parserUsed ?? 'OFX',
+      format: statement.format,
+    };
+
+    return createSuccessOutput(
+      'bank_statement',
+      { bank_statement: bankStatementData },
+      Date.now() - startTime,
+      statement.validationWarnings.length > 0 ? statement.validationWarnings : undefined
+    );
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return createErrorOutput(
+      'bank_statement',
+      [`Erro ao processar extrato bancário: ${errorMessage}`],
       Date.now() - startTime
     );
   }
@@ -246,7 +394,9 @@ async function routeToParser(
       return parseFreightContract(extraction, fileName, warnings);
 
     case 'bank_statement':
-      return parseBankStatement(extraction, warnings);
+      // Nota: bank_statement é processado diretamente em processBankStatement()
+      // Este case não deve ser alcançado, mas mantemos por segurança
+      return parseGeneric(extraction, warnings);
 
     case 'generic':
     default:
@@ -495,25 +645,7 @@ function parseFreightContract(
   };
 }
 
-/**
- * Parser para Extrato Bancário (placeholder).
- * TODO: Implementar em D6.
- */
-function parseBankStatement(
-  extraction: DoclingExtractionResult,
-  warnings: string[]
-): { data: ProcessDocumentOutput['data']; warnings?: string[] } {
-  warnings.push('Bank statement parsing is not fully implemented yet (Phase D6)');
-
-  return {
-    data: {
-      bank_statement: {
-        transactions: [],
-      },
-    },
-    warnings,
-  };
-}
+// Note: parseBankStatement was replaced by processBankStatement() which uses D6 BankStatementParser directly
 
 /**
  * Parser genérico - retorna texto e tabelas raw.

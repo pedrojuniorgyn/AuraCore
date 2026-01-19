@@ -183,25 +183,64 @@ export interface GenericOutputData {
 }
 
 /**
- * Dados de extrato bancário (placeholder para D6).
+ * Dados de extrato bancário extraídos (D6 Integration).
  */
 export interface BankStatementOutputData {
-  bankName?: string;
-  accountNumber?: string;
-  period?: {
+  /** Informações da conta */
+  account: {
+    bankCode?: string;
+    bankName?: string;
+    branchCode?: string;
+    accountNumber?: string;
+    accountType?: string;
+    currency: string;
+  };
+  /** Período do extrato */
+  period: {
     start: string;
     end: string;
+    generatedAt?: string;
   };
+  /** Saldos */
+  balance: {
+    opening: number;
+    closing: number;
+    available?: number;
+  };
+  /** Estatísticas resumidas */
+  statistics: {
+    transactionCount: number;
+    creditCount: number;
+    debitCount: number;
+    totalCredits: number;
+    totalDebits: number;
+    netMovement: number;
+    averageAmount: number;
+  };
+  /** Transações categorizadas */
   transactions: Array<{
+    fitId: string;
     date: string;
+    postDate?: string;
     description: string;
-    value: number;
-    type: 'credit' | 'debit';
+    normalizedDescription?: string;
+    amount: number;
+    type: 'CREDIT' | 'DEBIT';
+    transactionType: string;
+    category?: string;
+    categoryConfidence?: number;
+    payee?: string;
   }>;
-  balance?: {
-    initial: number;
-    final: number;
+  /** Validação */
+  validation: {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
   };
+  /** Parser utilizado */
+  parserUsed: 'OFX' | 'CSV';
+  /** Formato detectado */
+  format: string;
 }
 
 /**

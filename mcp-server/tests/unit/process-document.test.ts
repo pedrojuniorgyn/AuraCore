@@ -455,32 +455,62 @@ describe('processDocument', () => {
   // ==========================================================================
 
   describe('processamento de extrato bancário', () => {
-    it('deve retornar warning para extrato bancário (não implementado)', async () => {
-      const mockClient = createMockDoclingClient({
-        processResult: {
-          success: true,
-          value: {
-            text: 'Extrato Bancário',
-            tables: [],
-            metadata: { pageCount: 1, fileSize: 1024 },
-            processingTimeMs: 50,
-          },
-        },
-      });
-      setDoclingClient(mockClient);
-
+    it('deve retornar erro para PDF (formato não suportado)', async () => {
+      // Bank statement agora suporta apenas OFX, QFX, CSV e TXT
+      // PDF deve retornar erro de formato não suportado
       const input: ProcessDocumentInput = {
         document_type: 'bank_statement',
         file_name: 'extrato.pdf',
-        file_path: '/uploads/extrato.pdf',
+        file_base64: Buffer.from('conteudo pdf').toString('base64'),
+      };
+
+      const result = await processDocument(input);
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors![0]).toContain('Formato não suportado');
+    });
+
+    it('deve processar arquivo OFX com sucesso', async () => {
+      const mockOFX = `
+<OFX>
+<BANKMSGSRSV1>
+<STMTTRNRS>
+<STMTRS>
+<CURDEF>BRL
+<BANKACCTFROM>
+<BANKID>341
+<ACCTID>12345-6
+<ACCTTYPE>CHECKING
+</BANKACCTFROM>
+<BANKTRANLIST>
+<DTSTART>20260101
+<DTEND>20260115
+<STMTTRN>
+<TRNTYPE>CREDIT
+<DTPOSTED>20260105
+<TRNAMT>1000.00
+<FITID>001
+<MEMO>TED RECEBIDA
+</STMTTRN>
+</BANKTRANLIST>
+</STMTRS>
+</STMTTRNRS>
+</BANKMSGSRSV1>
+</OFX>
+`;
+      const input: ProcessDocumentInput = {
+        document_type: 'bank_statement',
+        file_name: 'extrato.ofx',
+        file_base64: Buffer.from(mockOFX).toString('base64'),
       };
 
       const result = await processDocument(input);
 
       expect(result.success).toBe(true);
       expect(result.data.bank_statement).toBeDefined();
-      expect(result.warnings).toBeDefined();
-      expect(result.warnings?.some(w => w.includes('D6'))).toBe(true);
+      expect(result.data.bank_statement!.transactions.length).toBeGreaterThan(0);
+      expect(result.data.bank_statement!.parserUsed).toBe('OFX');
     });
   });
 
