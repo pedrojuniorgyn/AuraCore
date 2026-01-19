@@ -18,4 +18,5 @@ export type {
 export type { IPayableRepository, FindPayablesFilter, PaginationOptions, PaginatedResult } from './IPayableRepository';
 export type { IReceiptRepository } from './IReceiptRepository';
 export type { IExpenseReportRepository } from './IExpenseReportRepository';
+export type { IReceivableRepository, ReceivableFilter, ReceivableListResult, ReceivableSummary } from './IReceivableRepository';
 

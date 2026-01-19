@@ -5,6 +5,7 @@
  * 
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
  * Atualizado: E7.22.2 P3 - Migração para DI container com tsyringe
+ * Atualizado: Onda 7.2 - Adicionados Receivables Use Cases
  */
 
 import { container } from '@/shared/infrastructure/di/container';
@@ -15,10 +16,16 @@ import {
   GeneratePayableTitleUseCase,
   GenerateReceivableTitleUseCase,
   ReverseTitlesUseCase,
+  CreateReceivableUseCase,
+  GetReceivableByIdUseCase,
+  ListReceivablesUseCase,
+  CancelReceivableUseCase,
+  ReceivePaymentUseCase,
 } from "../../application/use-cases";
 import { ConsoleLogger } from "@/shared/infrastructure/logging/ConsoleLogger";
 import type { IGeneratePayableTitle } from '../../domain/ports/input/IGeneratePayableTitle';
 import type { IGenerateReceivableTitle } from '../../domain/ports/input/IGenerateReceivableTitle';
+import { DrizzleReceivableRepository } from '../persistence/DrizzleReceivableRepository';
 
 /**
  * Factory: Create Financial Title Repository
@@ -68,6 +75,7 @@ export function createReverseTitlesUseCase(): ReverseTitlesUseCase {
  * Registra todos os Use Cases, Services e Repositories no container tsyringe
  * 
  * @see E7.22.2 P3 - Migração para DI container
+ * @see Onda 7.2 - Receivables Use Cases
  */
 export function initializeFinancialModule(): void {
   // Repositories
@@ -76,13 +84,18 @@ export function initializeFinancialModule(): void {
     DrizzleFinancialTitleRepository
   );
   
+  container.registerSingleton(
+    'IReceivableRepository',
+    DrizzleReceivableRepository
+  );
+  
   // Domain Services
   container.registerSingleton(
     TOKENS.FinancialTitleGenerator,
     FinancialTitleGenerator
   );
   
-  // Use Cases
+  // Title Use Cases
   container.registerSingleton<IGeneratePayableTitle>(
     TOKENS.GeneratePayableTitleUseCase,
     GeneratePayableTitleUseCase
@@ -97,4 +110,13 @@ export function initializeFinancialModule(): void {
     TOKENS.ReverseTitlesUseCase,
     ReverseTitlesUseCase
   );
+  
+  // Receivable Use Cases
+  container.registerSingleton(CreateReceivableUseCase);
+  container.registerSingleton(GetReceivableByIdUseCase);
+  container.registerSingleton(ListReceivablesUseCase);
+  container.registerSingleton(CancelReceivableUseCase);
+  container.registerSingleton(ReceivePaymentUseCase);
+  
+  console.log('[Financial Module] DI configured - Receivables Use Cases registered');
 }

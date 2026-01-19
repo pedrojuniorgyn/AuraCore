@@ -11,6 +11,13 @@ export * from './ICreatePayable';
 export * from './IGetPayableById';
 export * from './IListPayables';
 
+// Receivables
+export * from './ICreateReceivable';
+export * from './IGetReceivableById';
+export * from './IListReceivables';
+export * from './ICancelReceivable';
+export * from './IReceivePayment';
+
 // Titles
 export * from './IGeneratePayableTitle';
 export * from './IGenerateReceivableTitle';

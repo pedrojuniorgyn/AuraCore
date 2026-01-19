@@ -68,3 +68,31 @@ export {
   type ValidationWarning,
 } from './ValidateIbsCbsGroupDto';
 
+// Onda 7.3 - DTOs adicionais (com sufixo Dto para evitar conflitos com ports)
+export {
+  ListFiscalDocumentsDtoSchema,
+  type ListFiscalDocumentsDtoInput,
+} from './ListFiscalDocumentsDTO';
+
+export {
+  SubmitFiscalDocumentDtoSchema,
+  type SubmitFiscalDocumentDtoInput,
+  type SubmitFiscalDocumentDtoOutput,
+} from './SubmitFiscalDocumentDTO';
+
+export {
+  GenerateSpedFiscalDtoSchema,
+  GenerateSpedContributionsDtoSchema,
+  GenerateSpedEcdDtoSchema,
+  type GenerateSpedFiscalDtoInput,
+  type GenerateSpedContributionsDtoInput,
+  type GenerateSpedEcdDtoInput,
+  type GenerateSpedDtoOutput,
+} from './GenerateSpedDTO';
+
+export {
+  CancelFiscalDocumentDtoSchema,
+  type CancelFiscalDocumentDtoInput,
+  type CancelFiscalDocumentDtoOutput,
+} from './CancelFiscalDocumentDTO';
+
