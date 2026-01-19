@@ -79,8 +79,9 @@ export const paymentsTable = mssqlTable('payments', {
 });
 
 // Types inferidos
+// NOTA: Renomeado para evitar conflito com domain/ports/output/IFinancialTitleRepository
 export type AccountPayableRow = typeof accountsPayableTable.$inferSelect;
-export type AccountPayableInsert = typeof accountsPayableTable.$inferInsert;
+export type AccountPayableSchemaInsert = typeof accountsPayableTable.$inferInsert;
 export type PaymentRow = typeof paymentsTable.$inferSelect;
 export type PaymentInsert = typeof paymentsTable.$inferInsert;
 

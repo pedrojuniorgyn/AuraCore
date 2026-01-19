@@ -11,14 +11,16 @@ export interface ValidateIbsCbsGroupInput {
 
 /**
  * Output da validação
+ * 
+ * NOTA: IbsCbsValidationError renomeado para evitar conflito com domain/ports/input/IValidateFiscalDocument
  */
 export interface ValidateIbsCbsGroupOutput {
   valid: boolean;
-  errors: ValidationError[];
+  errors: IbsCbsValidationError[];
   warnings: ValidationWarning[];
 }
 
-export interface ValidationError {
+export interface IbsCbsValidationError {
   field: string;
   message: string;
   code: string;

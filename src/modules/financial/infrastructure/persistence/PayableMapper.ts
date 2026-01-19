@@ -4,7 +4,7 @@ import { Payment, PaymentMethod, PaymentStatus } from '../../domain/entities/Pay
 import { PaymentTerms } from '../../domain/value-objects/PaymentTerms';
 import { 
   AccountPayableRow, 
-  AccountPayableInsert,
+  AccountPayableSchemaInsert,
   PaymentRow,
   PaymentInsert 
 } from './PayableSchema';
@@ -21,7 +21,7 @@ export class PayableMapper {
   /**
    * Domain → Persistence (para INSERT/UPDATE)
    */
-  static toPersistence(payable: AccountPayable): AccountPayableInsert {
+  static toPersistence(payable: AccountPayable): AccountPayableSchemaInsert {
     return {
       id: payable.id,
       organizationId: payable.organizationId,

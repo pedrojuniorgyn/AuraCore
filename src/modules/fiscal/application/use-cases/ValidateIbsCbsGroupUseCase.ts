@@ -4,7 +4,7 @@ import {
   ValidateIbsCbsGroupInput,
   ValidateIbsCbsGroupInputSchema,
   ValidateIbsCbsGroupOutput,
-  ValidationError,
+  IbsCbsValidationError,
   ValidationWarning,
 } from '../dtos/ValidateIbsCbsGroupDto';
 import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
@@ -63,7 +63,7 @@ export class ValidateIbsCbsGroupUseCase implements IUseCaseWithContext<ValidateI
     // }
 
     // 4. Validar grupo IBS/CBS (mockado para demonstração)
-    const errors: ValidationError[] = [];
+    const errors: IbsCbsValidationError[] = [];
     const warnings: ValidationWarning[] = [];
 
     // Exemplo de validações

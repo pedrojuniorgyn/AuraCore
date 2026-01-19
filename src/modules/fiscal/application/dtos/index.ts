@@ -1,7 +1,7 @@
 export {
-  CreateFiscalDocumentInputSchema,
-  type CreateFiscalDocumentInput,
-  type CreateFiscalDocumentOutput,
+  CreateFiscalDocumentDtoSchema,
+  type CreateFiscalDocumentDtoInput,
+  type CreateFiscalDocumentDtoOutput,
 } from './CreateFiscalDocumentDTO';
 
 export {
@@ -36,8 +36,8 @@ export {
 
 export {
   CompareTaxRegimesInputSchema,
-  type CompareTaxRegimesInput,
-  type CompareTaxRegimesOutput,
+  type CompareTaxRegimesDtoInput,
+  type CompareTaxRegimesDtoOutput,
   type CurrentRegimeTaxes,
   type NewRegimeTaxes,
 } from './CompareTaxRegimesDto';
@@ -64,7 +64,7 @@ export {
   ValidateIbsCbsGroupInputSchema,
   type ValidateIbsCbsGroupInput,
   type ValidateIbsCbsGroupOutput,
-  type ValidationError,
+  type IbsCbsValidationError,
   type ValidationWarning,
 } from './ValidateIbsCbsGroupDto';
 

@@ -1,18 +1,20 @@
 import { z } from 'zod';
 
 /**
- * Input para comparação de regimes tributários
+ * Input para comparação de regimes tributários (DTO)
+ * 
+ * NOTA: Renomeado para evitar conflito com domain/ports/input/ICompareTaxRegimes
  */
-export interface CompareTaxRegimesInput {
+export interface CompareTaxRegimesDtoInput {
   organizationId: number;
   branchId: number;
   fiscalDocumentId: string;
 }
 
 /**
- * Output da comparação
+ * Output da comparação (DTO)
  */
-export interface CompareTaxRegimesOutput {
+export interface CompareTaxRegimesDtoOutput {
   currentRegime: CurrentRegimeTaxes;
   newRegime: NewRegimeTaxes;
   difference: { amount: number; currency: string };

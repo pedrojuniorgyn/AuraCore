@@ -3,8 +3,10 @@ import { DocumentType, DocumentStatus } from '../../domain/value-objects/Documen
 
 /**
  * DTO: Create Fiscal Document Input
+ * 
+ * NOTA: Renomeado para evitar conflito com domain/ports/input/ICreateFiscalDocument
  */
-export const CreateFiscalDocumentInputSchema = z.object({
+export const CreateFiscalDocumentDtoSchema = z.object({
   documentType: z.enum(['NFE', 'CTE', 'MDFE', 'NFSE'] as const),
   series: z.string().min(1).max(10),
   issueDate: z.string().datetime().or(z.date()),
@@ -30,12 +32,12 @@ export const CreateFiscalDocumentInputSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-export type CreateFiscalDocumentInput = z.infer<typeof CreateFiscalDocumentInputSchema>;
+export type CreateFiscalDocumentDtoInput = z.infer<typeof CreateFiscalDocumentDtoSchema>;
 
 /**
  * DTO: Create Fiscal Document Output
  */
-export interface CreateFiscalDocumentOutput {
+export interface CreateFiscalDocumentDtoOutput {
   id: string;
   documentType: DocumentType;
   series: string;

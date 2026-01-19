@@ -18,6 +18,7 @@ import type {
   DocumentChunk,
   SearchResult,
   IndexedDocument,
+  LegislationCategory,
 } from '@/modules/fiscal/domain/services/rag/types';
 
 // ============================================================================
@@ -204,7 +205,7 @@ export class ChromaVectorStore implements IVectorStore {
               totalChunks: (metadata.totalChunks as number) ?? 0,
               source: (metadata.source as string) ?? '',
               section: metadata.section as string | undefined,
-              category: (metadata.category as string) ?? 'GERAL',
+              category: ((metadata.category as string) ?? 'GERAL') as LegislationCategory,
             },
           },
           score,
@@ -302,7 +303,7 @@ export class ChromaVectorStore implements IVectorStore {
           id: documentId,
           title: (metadata.documentTitle as string) ?? documentId,
           fileName: documentId,
-          category: (metadata.category as string) ?? 'GERAL',
+          category: ((metadata.category as string) ?? 'GERAL') as LegislationCategory,
           totalChunks: (metadata.totalChunks as number) ?? 0,
           indexedAt: new Date(),
           metadata: {
