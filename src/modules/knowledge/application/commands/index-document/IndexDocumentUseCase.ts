@@ -5,9 +5,12 @@
  * Divide documento em chunks e salva no vector store.
  * 
  * @module knowledge/application/commands
+ * @see Phase D.3 - Integração com EmbeddingService
  */
 
+import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { DocumentChunker } from '../../../domain/services/DocumentChunker';
 import type { IVectorStore } from '../../../domain/ports/output/IVectorStore';
 import type { IEmbeddingService } from '../../../domain/ports/output/IEmbeddingService';
@@ -77,11 +80,16 @@ export interface IndexDocumentOutput {
 
 /**
  * Use Case para indexação de documentos
+ * 
+ * Pode ser usado via DI ou instanciado diretamente:
+ * - Via DI: container.resolve(IndexDocumentUseCase)
+ * - Direto: new IndexDocumentUseCase(vectorStore, embeddingService?)
  */
+@injectable()
 export class IndexDocumentUseCase {
   constructor(
-    private readonly vectorStore: IVectorStore,
-    private readonly embeddingService?: IEmbeddingService
+    @inject(TOKENS.KnowledgeVectorStore) private readonly vectorStore: IVectorStore,
+    @inject(TOKENS.KnowledgeEmbeddingService) private readonly embeddingService?: IEmbeddingService
   ) {}
 
   /**
@@ -140,7 +148,23 @@ export class IndexDocumentUseCase {
 
     const chunks = chunkResult.value;
 
-    // 7. Gerar embeddings (se serviço disponível)
+    // 7. Adicionar metadados aos chunks (para filtros no ChromaDB)
+    for (const chunk of chunks) {
+      chunk.metadata = {
+        ...chunk.metadata,
+        title: input.title,
+        documentType: input.type,
+        legislationType: input.legislationType ?? '',
+        source: input.source,
+        tags: input.tags?.join(',') ?? '',
+        organizationId: input.organizationId ?? 0,
+        version: input.version ?? '1.0',
+        effectiveDate: input.effectiveDate?.toISOString() ?? '',
+        indexedAt: new Date().toISOString(),
+      };
+    }
+
+    // 8. Gerar embeddings (se serviço disponível)
     if (this.embeddingService && chunks.length > 0) {
       const texts = chunks.map(c => c.content);
       const embeddingsResult = await this.embeddingService.generateEmbeddings(texts);
@@ -159,13 +183,13 @@ export class IndexDocumentUseCase {
       // Se embeddings falharem, continuar sem eles (busca por texto ainda funciona)
     }
 
-    // 8. Salvar chunks no vector store
+    // 9. Salvar chunks no vector store
     const upsertResult = await this.vectorStore.upsert(chunks);
     if (Result.isFail(upsertResult)) {
       return Result.fail(upsertResult.error);
     }
 
-    // 9. Retornar resultado
+    // 10. Retornar resultado
     return Result.ok({
       documentId,
       chunksCreated: chunks.length,

@@ -4,16 +4,22 @@
  * Use case para busca em legislação fiscal brasileira.
  * Usa o vector store para busca semântica e retorna respostas estruturadas.
  * 
+ * Atualizado: Phase D.3 - Integração com EmbeddingService
+ * 
  * @module knowledge/application/queries
  */
 
+import { injectable, inject } from 'tsyringe';
 import { Result } from '@/shared/domain';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { LegislationSearchService } from '../../../domain/services/LegislationSearchService';
 import type { IVectorStore } from '../../../domain/ports/output/IVectorStore';
+import type { IEmbeddingService } from '../../../domain/ports/output/IEmbeddingService';
 import type {
   LegislationType,
   LegislationAnswer,
 } from '../../../domain/types';
+import type { SearchOptionsWithEmbedding } from '../../../infrastructure/vector-store';
 
 // ============================================================================
 // INPUT/OUTPUT
@@ -59,9 +65,19 @@ export interface SearchLegislationOutput extends LegislationAnswer {
 
 /**
  * Use Case para busca em legislação fiscal
+ * 
+ * Fluxo:
+ * 1. Detectar tipos de legislação na query
+ * 2. Gerar embedding da query (se embedding service disponível)
+ * 3. Buscar documentos similares no vector store
+ * 4. Formatar resposta com fontes e confiança
  */
+@injectable()
 export class SearchLegislationUseCase {
-  constructor(private readonly vectorStore: IVectorStore) {}
+  constructor(
+    @inject(TOKENS.KnowledgeVectorStore) private readonly vectorStore: IVectorStore,
+    @inject(TOKENS.KnowledgeEmbeddingService) private readonly embeddingService: IEmbeddingService
+  ) {}
 
   /**
    * Executa a busca
@@ -88,16 +104,31 @@ export class SearchLegislationUseCase {
       topK = Math.max(topK, 8); // Queries complexas precisam de mais contexto
     }
 
-    // 5. Buscar no vector store
-    const searchResult = await this.vectorStore.search({
+    // 5. Gerar embedding da query (se serviço disponível)
+    let queryEmbedding: number[] | undefined;
+    
+    if (this.embeddingService) {
+      const embeddingResult = await this.embeddingService.generateEmbedding(trimmedQuery);
+      
+      if (Result.isOk(embeddingResult)) {
+        queryEmbedding = embeddingResult.value;
+      }
+      // Se embedding falhar, continua com busca por texto (fallback)
+    }
+
+    // 6. Buscar no vector store
+    const searchOptions: SearchOptionsWithEmbedding = {
       query: trimmedQuery,
+      queryEmbedding,
       topK,
       minScore: input.minScore ?? 0.3,
       filters: {
         legislationType: detectedTypes,
         organizationId: input.organizationId,
       },
-    });
+    };
+
+    const searchResult = await this.vectorStore.search(searchOptions);
 
     if (Result.isFail(searchResult)) {
       return Result.fail(searchResult.error);
@@ -105,12 +136,12 @@ export class SearchLegislationUseCase {
 
     const results = searchResult.value;
 
-    // 6. Filtrar documentos revogados se necessário
+    // 7. Filtrar documentos revogados se necessário
     const filteredResults = input.includeRevoked
       ? results
       : results.filter(r => !r.document.expirationDate);
 
-    // 7. Formatar resposta
+    // 8. Formatar resposta
     const formatResult = LegislationSearchService.formatSearchResults(
       filteredResults,
       trimmedQuery
@@ -123,7 +154,7 @@ export class SearchLegislationUseCase {
     const answer = formatResult.value;
     const searchTimeMs = Date.now() - startTime;
 
-    // 8. Retornar output completo
+    // 9. Retornar output completo
     return Result.ok({
       ...answer,
       detectedTypes,
