@@ -257,8 +257,10 @@ export class SessionStore {
           .where(whereCondition),
       ]);
 
-      // Mapear resultados (db.execute retorna array direto)
-      const sessionRows = (sessions as unknown as AgentSessionRow[]) || [];
+      // Mapear resultados (db.execute pode retornar { recordset: [...] } ou array direto)
+      // Usar padrão PC-001 do codebase para tratar ambos os casos
+      const rawResult = sessions as unknown as { recordset?: AgentSessionRow[] };
+      const sessionRows = (rawResult.recordset || sessions) as unknown as AgentSessionRow[];
 
       return Result.ok({
         sessions: sessionRows.map(rowToSession),
