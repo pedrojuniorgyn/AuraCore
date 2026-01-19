@@ -1565,5 +1565,96 @@ npm test -- src/shared/infrastructure/adapters/__tests__/UuidGenerator.test.ts -
 
 ---
 
+## 17. MIGRATIONS - LIÇÕES APRENDIDAS (E8.4)
+
+### 17.1 Incidentes Identificados
+
+Durante E8.4 (Performance Migration), foram identificados problemas críticos:
+
+| # | Incidente | Impacto | Causa Raiz |
+|---|-----------|---------|------------|
+| 1 | Migration 0034 referenciava colunas inexistentes | Índices não criados | Schema Drizzle divergente do banco real |
+| 2 | `drizzle-kit push` causou DATA LOSS | Tabelas deletadas | Comando destrutivo sem validação |
+| 3 | Índices filtrados falharam | Erro SQL Server | Falta de `SET QUOTED_IDENTIFIER ON` |
+
+### 17.2 Regras Estabelecidas
+
+| Regra | Descrição | Severidade |
+|-------|-----------|------------|
+| MIGRATION-001 | Validar colunas existem antes de criar índices | CRÍTICA |
+| MIGRATION-002 | NUNCA usar `drizzle-kit push` em prod/homolog | CRÍTICA |
+| MIGRATION-003 | Sempre `SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;` | ALTA |
+| MIGRATION-004 | Sempre `IF NOT EXISTS` para CREATE INDEX | ALTA |
+| MIGRATION-005 | Testar local antes de homolog/prod | CRÍTICA |
+| MIGRATION-006 | Nunca criar migration sem verificar schema real | ALTA |
+
+### 17.3 Comandos Proibidos em Produção
+
+| Comando | Risco | Alternativa |
+|---------|-------|-------------|
+| `drizzle-kit push` | DATA LOSS | Migration SQL manual |
+| `drizzle-kit drop` | DATA LOSS | Migration com backup |
+| `DROP TABLE` sem backup | DATA LOSS | Backup + validação |
+| `TRUNCATE TABLE` | DATA LOSS | DELETE com WHERE |
+| `DELETE sem WHERE` | DATA LOSS | DELETE com filtro |
+
+### 17.4 Checklist Pré-Migration
+
+```bash
+# 1. Validar colunas existem
+SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'tabela';
+
+# 2. Verificar se índice já existe
+SELECT name FROM sys.indexes WHERE name = 'idx_nome';
+
+# 3. Testar localmente primeiro
+# 4. Fazer backup em produção
+# 5. Documentar rollback
+```
+
+### 17.5 Template de Migration
+
+```sql
+-- Migration: XXXX_descricao.sql
+-- Data: YYYY-MM-DD
+-- Épico: EX.X
+-- Autor: [nome]
+-- Rollback: [comandos]
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_xxx')
+BEGIN
+    CREATE NONCLUSTERED INDEX [idx_xxx] ON [tabela] ([col1], [col2])
+    INCLUDE ([col3], [col4])
+    WHERE [deleted_at] IS NULL;
+    PRINT 'Criado: idx_xxx';
+END
+GO
+```
+
+### 17.6 Correções Registradas
+
+| ID | Padrão | Descrição |
+|----|--------|-----------|
+| LC-740883 | P-MIGRATION-001 | Validar colunas antes de índices |
+| LC-743510 | P-MIGRATION-002 | Proibir drizzle-kit push em prod |
+| LC-745627 | P-MIGRATION-003 | SET QUOTED_IDENTIFIER obrigatório |
+
+### 17.7 Referências
+
+- **Contrato:** `mcp-server/knowledge/contracts/migrations-contract.json`
+- **Gaps de Schema:** `docs/technical-debt/SCHEMA_GAPS_E8.4.md`
+- **Migration corrigida:** `drizzle/migrations/0036_fix_tenant_indexes.sql`
+
+---
+
+*Seção adicionada em: 2026-01-19*
+*Épico: E8.4 - Performance Migration*
+
+---
+
 *Seção atualizada em: 2026-01-06 08:45:00 UTC*
 *Épico: E7.14 - IUuidGenerator Port Implementation*

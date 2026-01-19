@@ -28,3 +28,6 @@ export * from './IValidateFiscalDocument';
 export * from './ITransmitToSefaz';
 export * from './IQuerySefazStatus';
 export * from './IGenerateDanfe';
+
+// ===== IMPORTAÇÃO (E-Agent-Fase-D2) =====
+export * from './IImportDANFeUseCase';

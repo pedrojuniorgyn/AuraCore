@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.15",
+  "version": "2.0.18",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -382,6 +382,46 @@
         "src/modules/**/adapters/*.ts (8 adapters)"
       ],
       "pattern_created": "P-DI-001: Import tsyringe from container",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-740883",
+      "date": "2026-01-19",
+      "epic": "E8.4",
+      "error": "Migration de índices com colunas inexistentes - schema Drizzle divergente do banco real. Migration 0034 referenciava branch_id e deleted_at em tabelas que não tinham essas colunas.",
+      "correction": "Auditoria completa do schema antes de criar migrations. Validar colunas com INFORMATION_SCHEMA antes de criar índices. Criar migration 0036 com índices corrigidos.",
+      "files_affected": [
+        "drizzle/migrations/0034_add_tenant_indexes.sql",
+        "drizzle/migrations/0036_fix_tenant_indexes.sql"
+      ],
+      "pattern_created": "P-MIGRATION-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-743510",
+      "date": "2026-01-19",
+      "epic": "E8.4",
+      "error": "drizzle-kit push executado sem validação causou DATA LOSS em tabelas de produção. Comando destrutivo deletou tabelas existentes.",
+      "correction": "NUNCA usar drizzle-kit push em produção/homologação. Usar apenas migrations SQL manuais revisadas. Adicionar validação prévia obrigatória.",
+      "files_affected": [
+        "drizzle/migrations/*"
+      ],
+      "pattern_created": "P-MIGRATION-002",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-745627",
+      "date": "2026-01-19",
+      "epic": "E8.4",
+      "error": "Índices filtrados (WHERE deleted_at IS NULL) falham sem SET QUOTED_IDENTIFIER ON no SQL Server",
+      "correction": "Toda migration SQL deve iniciar com SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON; antes de qualquer comando.",
+      "files_affected": [
+        "drizzle/migrations/*"
+      ],
+      "pattern_created": "P-MIGRATION-003",
       "status": "APPROVED",
       "must_not_repeat": true
     }

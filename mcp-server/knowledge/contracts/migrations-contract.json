@@ -1,0 +1,135 @@
+{
+  "id": "migrations-contract",
+  "version": "1.0.0",
+  "name": "Database Migrations Contract",
+  "description": "Regras obrigatórias para criação e execução de migrations SQL Server",
+  "category": "infrastructure",
+  "severity": "critical",
+  "rules": {
+    "pre_migration": [
+      {
+        "id": "MIGRATION-001",
+        "title": "Validar colunas existentes",
+        "rule": "SEMPRE validar que colunas existem no schema real antes de referenciar em índices ou constraints",
+        "validation_query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @tableName",
+        "severity": "CRITICAL",
+        "rationale": "Migration 0034 falhou por referenciar colunas inexistentes (branch_id, deleted_at em tabelas que não as tinham)"
+      },
+      {
+        "id": "MIGRATION-002",
+        "title": "Proibido drizzle-kit push em produção",
+        "rule": "NUNCA usar drizzle-kit push ou drizzle-kit drop em produção ou homologação",
+        "forbidden_commands": [
+          "drizzle-kit push",
+          "drizzle-kit drop",
+          "npx drizzle-kit push",
+          "npx drizzle-kit drop"
+        ],
+        "severity": "CRITICAL",
+        "rationale": "drizzle-kit push causou DATA LOSS ao deletar tabelas existentes. Usar apenas migrations SQL manuais revisadas."
+      },
+      {
+        "id": "MIGRATION-003",
+        "title": "Headers SQL obrigatórios",
+        "rule": "Toda migration SQL deve iniciar com SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;",
+        "severity": "HIGH",
+        "rationale": "Índices filtrados (WHERE deleted_at IS NULL) falham sem estas configurações no SQL Server"
+      },
+      {
+        "id": "MIGRATION-004",
+        "title": "IF NOT EXISTS obrigatório",
+        "rule": "SEMPRE usar IF NOT EXISTS para CREATE INDEX e verificar existência antes de DROP",
+        "severity": "HIGH",
+        "rationale": "Permite reexecução segura da migration"
+      },
+      {
+        "id": "MIGRATION-005",
+        "title": "Teste local obrigatório",
+        "rule": "SEMPRE testar migration em ambiente local ANTES de executar em homolog/prod",
+        "severity": "CRITICAL",
+        "rationale": "Validar sintaxe e comportamento antes de afetar dados reais"
+      },
+      {
+        "id": "MIGRATION-006",
+        "title": "Schema real verificado",
+        "rule": "NUNCA criar migration baseada apenas no schema Drizzle - verificar banco real",
+        "severity": "HIGH",
+        "rationale": "Schema Drizzle pode divergir do banco real por migrations anteriores ou alterações manuais"
+      }
+    ],
+    "migration_template": {
+      "required_headers": [
+        "SET QUOTED_IDENTIFIER ON;",
+        "SET ANSI_NULLS ON;"
+      ],
+      "required_metadata": [
+        "-- Migration: XXXX_descricao.sql",
+        "-- Data: YYYY-MM-DD",
+        "-- Épico: EX.X",
+        "-- Rollback: [comandos]"
+      ],
+      "required_patterns": [
+        "IF NOT EXISTS",
+        "PRINT ou SELECT para confirmação"
+      ]
+    },
+    "prohibited_in_production": [
+      {
+        "command": "drizzle-kit push",
+        "risk": "DATA LOSS - pode deletar tabelas",
+        "alternative": "Migration SQL manual revisada"
+      },
+      {
+        "command": "drizzle-kit drop",
+        "risk": "DATA LOSS - deleta dados",
+        "alternative": "Migration SQL com backup prévio"
+      },
+      {
+        "command": "DROP TABLE sem backup",
+        "risk": "DATA LOSS irreversível",
+        "alternative": "Backup + validação + DROP"
+      },
+      {
+        "command": "TRUNCATE TABLE",
+        "risk": "DATA LOSS sem log",
+        "alternative": "DELETE com WHERE ou backup"
+      },
+      {
+        "command": "DELETE sem WHERE",
+        "risk": "DATA LOSS total",
+        "alternative": "DELETE com WHERE específico"
+      }
+    ],
+    "checklist_pre_execution": [
+      "Schema real verificado (INFORMATION_SCHEMA)",
+      "Migration testada localmente",
+      "SET QUOTED_IDENTIFIER ON no início",
+      "IF NOT EXISTS em todos CREATE",
+      "Rollback documentado",
+      "Backup realizado (prod)"
+    ]
+  },
+  "learned_from": [
+    {
+      "epic": "E8.4",
+      "date": "2026-01-19",
+      "incident": "Migration 0034 tinha colunas inexistentes (branch_id, deleted_at em 9 tabelas)",
+      "lesson": "Sempre auditar schema real antes de criar migrations",
+      "correction_id": "LC-740883"
+    },
+    {
+      "epic": "E8.4",
+      "date": "2026-01-19",
+      "incident": "drizzle-kit push causou DATA LOSS em tabelas de produção",
+      "lesson": "NUNCA usar comandos destrutivos automáticos",
+      "correction_id": "LC-743510"
+    },
+    {
+      "epic": "E8.4",
+      "date": "2026-01-19",
+      "incident": "Índices filtrados falharam sem SET QUOTED_IDENTIFIER ON",
+      "lesson": "Sempre incluir headers SQL obrigatórios",
+      "correction_id": "LC-745627"
+    }
+  ]
+}

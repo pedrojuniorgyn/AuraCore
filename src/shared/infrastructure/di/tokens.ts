@@ -78,4 +78,8 @@ export const TOKENS = {
   BankingGateway: Symbol('BankingGateway'),
   NotificationService: Symbol('NotificationService'),
   BankStatementParser: Symbol('BankStatementParser'),
+
+  // Docling Integration - E-Agent-Fase-D1/D2
+  DoclingClient: Symbol('DoclingClient'),
+  ImportDANFeUseCase: Symbol('ImportDANFeUseCase'),
 } as const;
