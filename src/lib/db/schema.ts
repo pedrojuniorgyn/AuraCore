@@ -294,6 +294,7 @@ export const products = mssqlTable("products", {
   organizationId: int("organization_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }), // 🔑 Multi-Tenant
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   
   // Identificação do Produto
   sku: nvarchar("sku", { length: 50 }).notNull(),
@@ -834,6 +835,7 @@ export const autoClassificationRules = mssqlTable("auto_classification_rules", {
 export const drivers = mssqlTable("drivers", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(), // FK organizations
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   
   // Dados Pessoais
   name: nvarchar("name", { length: 255 }).notNull(), // Nome completo
@@ -1233,6 +1235,7 @@ export const freightTableRoutes = mssqlTable("freight_table_routes", {
 export const costCenters = mssqlTable("cost_centers", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   
   // Identificação Hierárquica
   code: nvarchar("code", { length: 50 }).notNull(), // Ex: "01.01.001"
@@ -1918,6 +1921,7 @@ export const tripCheckpoints = mssqlTable("trip_checkpoints", {
   recordedBy: nvarchar("recorded_by", { length: 255 }),
   
   createdAt: datetime2("created_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
 // --- TRIPS: STOPS (Paradas de Coleta/Entrega) ---
@@ -2424,6 +2428,7 @@ export const tireMovements = mssqlTable("tire_movements", {
 export const fuelTransactions = mssqlTable("fuel_transactions", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   
   vehicleId: int("vehicle_id").notNull(),
   driverId: int("driver_id"),
@@ -2444,6 +2449,7 @@ export const fuelTransactions = mssqlTable("fuel_transactions", {
   nfeKey: nvarchar("nfe_key", { length: 44 }),
   
   createdAt: datetime2("created_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
 // ==========================================
@@ -2508,6 +2514,7 @@ export const warehouseLocations = mssqlTable("warehouse_locations", {
   status: nvarchar("status", { length: 20 }).default("AVAILABLE"),
   
   createdAt: datetime2("created_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
 export const stockLocations = mssqlTable("stock_locations", {
@@ -2525,6 +2532,7 @@ export const stockLocations = mssqlTable("stock_locations", {
 export const warehouseMovements = mssqlTable("warehouse_movements", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   
   movementType: nvarchar("movement_type", { length: 20 }).notNull(),
   
@@ -2539,6 +2547,7 @@ export const warehouseMovements = mssqlTable("warehouse_movements", {
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   createdAt: datetime2("created_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
 // ==========================================
@@ -2548,6 +2557,7 @@ export const warehouseMovements = mssqlTable("warehouse_movements", {
 export const bankTransactions = mssqlTable("bank_transactions", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   bankAccountId: int("bank_account_id").notNull(),
   
   transactionDate: datetime2("transaction_date").notNull(),
@@ -2568,6 +2578,7 @@ export const bankTransactions = mssqlTable("bank_transactions", {
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   createdAt: datetime2("created_at").default(new Date()),
   updatedAt: datetime2("updated_at").default(new Date()),
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
 // ==========================================
@@ -2663,6 +2674,7 @@ export const maintenanceProviders = mssqlTable("maintenance_providers", {
 export const maintenanceWorkOrders = mssqlTable("maintenance_work_orders", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
   
   woNumber: nvarchar("wo_number", { length: 20 }).notNull(),
   
@@ -2880,6 +2892,7 @@ export const fiscalSettings = mssqlTable("fiscal_settings", {
   createdAt: datetime2("created_at").default(new Date()),
   updatedAt: datetime2("updated_at").default(new Date()),
   version: int("version").default(1).notNull(),
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
 // ==========================================
