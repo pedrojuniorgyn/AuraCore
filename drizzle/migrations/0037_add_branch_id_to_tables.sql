@@ -208,7 +208,50 @@ END
 GO
 
 -- ============================================
--- 6. VERIFICAÇÃO FINAL
+-- 6. TABELAS ADICIONAIS (E9.1.3)
+-- ============================================
+
+PRINT ''
+PRINT '=== E9.1.3 - TABELAS ADICIONAIS ==='
+GO
+
+-- vehicles (já tem branch_id, só precisa do índice)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_vehicles_tenant')
+BEGIN
+    CREATE NONCLUSTERED INDEX [idx_vehicles_tenant] 
+    ON [vehicles] ([organization_id], [branch_id]) 
+    INCLUDE ([plate], [type], [status])
+    WHERE [deleted_at] IS NULL;
+    PRINT '✅ Criado índice idx_vehicles_tenant';
+END
+GO
+
+-- warehouse_locations (adicionar organization_id e branch_id)
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'warehouse_locations' AND COLUMN_NAME = 'organization_id')
+BEGIN
+    ALTER TABLE [warehouse_locations] ADD [organization_id] INT NOT NULL DEFAULT 1;
+    PRINT '✅ Adicionado organization_id em warehouse_locations';
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'warehouse_locations' AND COLUMN_NAME = 'branch_id')
+BEGIN
+    ALTER TABLE [warehouse_locations] ADD [branch_id] INT NOT NULL DEFAULT 1;
+    PRINT '✅ Adicionado branch_id em warehouse_locations';
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_warehouse_locations_tenant')
+BEGIN
+    CREATE NONCLUSTERED INDEX [idx_warehouse_locations_tenant] 
+    ON [warehouse_locations] ([organization_id], [branch_id]) 
+    INCLUDE ([code], [status]);
+    PRINT '✅ Criado índice idx_warehouse_locations_tenant';
+END
+GO
+
+-- ============================================
+-- 7. VERIFICAÇÃO FINAL
 -- ============================================
 
 PRINT ''
@@ -225,7 +268,8 @@ INNER JOIN sys.columns c ON t.object_id = c.object_id
 INNER JOIN sys.types ty ON c.user_type_id = ty.user_type_id
 WHERE c.name = 'branch_id'
 AND t.name IN ('bank_transactions', 'fuel_transactions', 'warehouse_movements', 
-               'maintenance_work_orders', 'cost_centers', 'drivers', 'products')
+               'maintenance_work_orders', 'cost_centers', 'drivers', 'products',
+               'vehicles', 'warehouse_locations')
 ORDER BY t.name;
 GO
 
@@ -237,7 +281,8 @@ FROM sys.indexes i
 INNER JOIN sys.tables t ON i.object_id = t.object_id
 WHERE i.name LIKE 'idx_%_tenant'
 AND t.name IN ('bank_transactions', 'fuel_transactions', 'warehouse_movements', 
-               'maintenance_work_orders', 'cost_centers', 'drivers', 'products')
+               'maintenance_work_orders', 'cost_centers', 'drivers', 'products',
+               'vehicles', 'warehouse_locations')
 ORDER BY t.name;
 GO
 

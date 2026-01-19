@@ -928,6 +928,7 @@ export const vehicles = mssqlTable("vehicles", {
   uniqueIndex("vehicles_plate_org_idx")
     .on(table.plate, table.organizationId)
     .where(sql`deleted_at IS NULL`),
+  index("idx_vehicles_tenant").on(table.organizationId, table.branchId), // E9.1.3: SCHEMA-003
 ]));
 
 // ==========================================
@@ -2510,6 +2511,8 @@ export const warehouseZones = mssqlTable("warehouse_zones", {
 
 export const warehouseLocations = mssqlTable("warehouse_locations", {
   id: int("id").primaryKey().identity(),
+  organizationId: int("organization_id").notNull(), // E9.1.3: Multi-tenancy
+  branchId: int("branch_id").notNull().default(1), // E9.1.3: Multi-tenancy
   zoneId: int("zone_id").notNull(),
   
   code: nvarchar("code", { length: 20 }).notNull(),
@@ -2521,7 +2524,9 @@ export const warehouseLocations = mssqlTable("warehouse_locations", {
   
   createdAt: datetime2("created_at").default(new Date()),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-});
+}, (table) => ([
+  index("idx_warehouse_locations_tenant").on(table.organizationId, table.branchId), // E9.1.3: SCHEMA-003
+]));
 
 export const stockLocations = mssqlTable("stock_locations", {
   id: int("id").primaryKey().identity(),
