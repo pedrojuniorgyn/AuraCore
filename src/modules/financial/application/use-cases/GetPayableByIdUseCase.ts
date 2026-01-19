@@ -38,19 +38,18 @@ export class GetPayableByIdUseCase implements IGetPayableById {
       return Result.fail(`Validation failed: ${errors}`);
     }
 
-    // 2. Buscar
-    const payable = await this.payableRepository.findById(input.payableId, ctx.organizationId);
+    // 2. Buscar (branchId obrigatório - ENFORCE-004)
+    const payable = await this.payableRepository.findById(
+      input.payableId,
+      ctx.organizationId,
+      ctx.branchId
+    );
     
     if (!payable) {
       return Result.fail(new PayableNotFoundError(input.payableId).message);
     }
 
-    // 3. Validar permissão de branch
-    if (!ctx.isAdmin && payable.branchId !== ctx.branchId) {
-      return Result.fail('Access denied: payable belongs to another branch');
-    }
-
-    // 4. Retornar DTO
+    // 3. Retornar DTO (branchId já filtrado na query)
     return Result.ok(toPayableResponseDTO(payable));
   }
 }

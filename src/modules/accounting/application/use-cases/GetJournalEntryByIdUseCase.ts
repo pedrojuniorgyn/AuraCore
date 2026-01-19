@@ -42,19 +42,18 @@ export class GetJournalEntryByIdUseCase implements IGetJournalEntryById {
       return Result.fail(`Validation failed: ${errors}`);
     }
 
-    // 2. Buscar
-    const entry = await this.repository.findById(input.id, ctx.organizationId);
+    // 2. Buscar (branchId obrigatório - ENFORCE-004)
+    const entry = await this.repository.findById(
+      input.id,
+      ctx.organizationId,
+      ctx.branchId
+    );
     
     if (!entry) {
       return Result.fail(new JournalEntryNotFoundError(input.id).message);
     }
 
-    // 3. Validar permissão de branch
-    if (!ctx.isAdmin && entry.branchId !== ctx.branchId) {
-      return Result.fail('Access denied: journal entry belongs to another branch');
-    }
-
-    // 4. Retornar DTO
+    // 3. Retornar DTO (branchId já filtrado na query)
     return Result.ok(toJournalEntryResponseDTO(entry));
   }
 }

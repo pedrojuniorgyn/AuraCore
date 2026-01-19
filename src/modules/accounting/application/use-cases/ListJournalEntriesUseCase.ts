@@ -57,10 +57,10 @@ export class ListJournalEntriesUseCase implements IListJournalEntries {
 
     const data = validation.data;
 
-    // 2. Construir filtro
+    // 2. Construir filtro (branchId SEMPRE obrigatório - ENFORCE-004)
     const filter: FindJournalEntriesFilter = {
       organizationId: ctx.organizationId,
-      branchId: ctx.isAdmin ? undefined : ctx.branchId,
+      branchId: ctx.branchId, // Sempre obrigatório, admin também filtra por branch
       status: data.status,
       source: data.source,
       periodYear: data.periodYear,

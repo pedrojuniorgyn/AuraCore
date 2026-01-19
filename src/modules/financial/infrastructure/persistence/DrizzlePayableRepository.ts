@@ -24,9 +24,17 @@ export class DrizzlePayableRepository implements IPayableRepository {
 
   /**
    * Busca por ID com payments
+   * 
+   * @param id ID da conta a pagar
+   * @param organizationId ID da organização
+   * @param branchId ID da filial (OBRIGATÓRIO - ENFORCE-004)
    */
-  async findById(id: string, organizationId: number): Promise<AccountPayable | null> {
-    // 1. Buscar payable
+  async findById(
+    id: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<AccountPayable | null> {
+    // 1. Buscar payable com filtro multi-tenancy completo
     const rows = await db
       .select()
       .from(accountsPayableTable)
@@ -34,6 +42,7 @@ export class DrizzlePayableRepository implements IPayableRepository {
         and(
           eq(accountsPayableTable.id, id),
           eq(accountsPayableTable.organizationId, organizationId),
+          eq(accountsPayableTable.branchId, branchId),
           isNull(accountsPayableTable.deletedAt)
         )
       );
@@ -57,20 +66,20 @@ export class DrizzlePayableRepository implements IPayableRepository {
 
   /**
    * Busca com filtros e paginação
+   * 
+   * @param filter Filtros de busca (branchId OBRIGATÓRIO - ENFORCE-004)
+   * @param pagination Opções de paginação
    */
   async findMany(
     filter: FindPayablesFilter,
     pagination: PaginationOptions
   ): Promise<PaginatedResult<AccountPayable>> {
-    // 1. Construir condições
+    // 1. Construir condições - branchId SEMPRE aplicado (ENFORCE-004)
     const conditions = [
       eq(accountsPayableTable.organizationId, filter.organizationId),
+      eq(accountsPayableTable.branchId, filter.branchId), // OBRIGATÓRIO
       isNull(accountsPayableTable.deletedAt),
     ];
-
-    if (filter.branchId) {
-      conditions.push(eq(accountsPayableTable.branchId, filter.branchId));
-    }
 
     if (filter.supplierId) {
       conditions.push(eq(accountsPayableTable.supplierId, filter.supplierId));
@@ -214,22 +223,24 @@ export class DrizzlePayableRepository implements IPayableRepository {
 
   /**
    * Busca vencidos
+   * 
+   * @param organizationId ID da organização
+   * @param branchId ID da filial (OBRIGATÓRIO - ENFORCE-004)
+   * @param referenceDate Data de referência (default: hoje)
    */
   async findOverdue(
     organizationId: number,
-    branchId?: number,
+    branchId: number,
     referenceDate: Date = new Date()
   ): Promise<AccountPayable[]> {
+    // branchId SEMPRE aplicado (ENFORCE-004)
     const conditions = [
       eq(accountsPayableTable.organizationId, organizationId),
+      eq(accountsPayableTable.branchId, branchId), // OBRIGATÓRIO
       isNull(accountsPayableTable.deletedAt),
       inArray(accountsPayableTable.status, ['OPEN', 'PARTIAL']),
       lte(accountsPayableTable.dueDate, referenceDate),
     ];
-
-    if (branchId) {
-      conditions.push(eq(accountsPayableTable.branchId, branchId));
-    }
 
     const rows = await db
       .select()
@@ -251,11 +262,17 @@ export class DrizzlePayableRepository implements IPayableRepository {
 
   /**
    * Busca por fornecedor
+   * 
+   * @param supplierId ID do fornecedor
+   * @param organizationId ID da organização
+   * @param branchId ID da filial (OBRIGATÓRIO - ENFORCE-004)
    */
   async findBySupplier(
     supplierId: number,
-    organizationId: number
+    organizationId: number,
+    branchId: number
   ): Promise<AccountPayable[]> {
+    // branchId SEMPRE aplicado (ENFORCE-004)
     const rows = await db
       .select()
       .from(accountsPayableTable)
@@ -263,6 +280,7 @@ export class DrizzlePayableRepository implements IPayableRepository {
         and(
           eq(accountsPayableTable.supplierId, supplierId),
           eq(accountsPayableTable.organizationId, organizationId),
+          eq(accountsPayableTable.branchId, branchId), // OBRIGATÓRIO
           isNull(accountsPayableTable.deletedAt)
         )
       )
@@ -281,8 +299,17 @@ export class DrizzlePayableRepository implements IPayableRepository {
 
   /**
    * Verifica existência
+   * 
+   * @param id ID da conta a pagar
+   * @param organizationId ID da organização
+   * @param branchId ID da filial (OBRIGATÓRIO - ENFORCE-004)
    */
-  async exists(id: string, organizationId: number): Promise<boolean> {
+  async exists(
+    id: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<boolean> {
+    // branchId SEMPRE aplicado (ENFORCE-004)
     const result = await db
       .select({ id: accountsPayableTable.id })
       .from(accountsPayableTable)
@@ -290,6 +317,7 @@ export class DrizzlePayableRepository implements IPayableRepository {
         and(
           eq(accountsPayableTable.id, id),
           eq(accountsPayableTable.organizationId, organizationId),
+          eq(accountsPayableTable.branchId, branchId), // OBRIGATÓRIO
           isNull(accountsPayableTable.deletedAt)
         )
       );

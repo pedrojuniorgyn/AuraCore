@@ -47,10 +47,10 @@ export class ListPayablesUseCase implements IListPayables {
 
     const data = validation.data;
 
-    // 2. Construir filtro (sempre com organizationId do contexto)
+    // 2. Construir filtro (branchId SEMPRE obrigatório - ENFORCE-004)
     const filter: FindPayablesFilter = {
       organizationId: ctx.organizationId,
-      branchId: ctx.isAdmin ? undefined : ctx.branchId, // Admin vê todas as filiais
+      branchId: ctx.branchId, // Sempre obrigatório, admin também filtra por branch
       supplierId: data.supplierId,
       status: data.status ? [data.status] : undefined, // Converter string para array
       dueDateFrom: data.dueDateFrom ? new Date(data.dueDateFrom) : undefined,

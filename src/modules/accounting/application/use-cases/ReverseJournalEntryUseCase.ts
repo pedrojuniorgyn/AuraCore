@@ -64,10 +64,11 @@ export class ReverseJournalEntryUseCase implements IReverseJournalEntry {
 
     const data = validation.data;
 
-    // 2. Buscar lançamento
+    // 2. Buscar lançamento (branchId obrigatório - ENFORCE-004)
     const entry = await this.repository.findById(
       data.journalEntryId,
-      ctx.organizationId
+      ctx.organizationId,
+      ctx.branchId
     );
 
     if (!entry) {

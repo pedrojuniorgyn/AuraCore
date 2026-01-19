@@ -43,10 +43,11 @@ export class PostJournalEntryUseCase implements IPostJournalEntry {
       return Result.fail(`Validation failed: ${errors}`);
     }
 
-    // 2. Buscar lançamento
+    // 2. Buscar lançamento (branchId obrigatório - ENFORCE-004)
     const entry = await this.repository.findById(
       input.journalEntryId, 
-      ctx.organizationId
+      ctx.organizationId,
+      ctx.branchId
     );
     
     if (!entry) {

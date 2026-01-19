@@ -54,17 +54,18 @@ export class PayAccountPayableUseCase implements IPayAccountPayable {
 
     const data = validation.data;
 
-    // 2. Buscar payable
-    const payable = await this.payableRepository.findById(data.payableId, ctx.organizationId);
+    // 2. Buscar payable (branchId obrigatório - ENFORCE-004)
+    const payable = await this.payableRepository.findById(
+      data.payableId,
+      ctx.organizationId,
+      ctx.branchId
+    );
     
     if (!payable) {
       return Result.fail(new PayableNotFoundError(data.payableId).message);
     }
 
-    // 3. Validar permissão de branch
-    if (!ctx.isAdmin && payable.branchId !== ctx.branchId) {
-      return Result.fail('Access denied: payable belongs to another branch');
-    }
+    // 3. branchId já filtrado na query (ENFORCE-004)
 
     // 4. Criar Money
     const amountResult = Money.create(data.amount, data.currency);

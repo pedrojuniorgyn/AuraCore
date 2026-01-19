@@ -45,17 +45,18 @@ export class CancelPayableUseCase implements ICancelPayable {
 
     const data = validation.data;
 
-    // 2. Buscar payable
-    const payable = await this.payableRepository.findById(data.payableId, ctx.organizationId);
+    // 2. Buscar payable (branchId obrigatório - ENFORCE-004)
+    const payable = await this.payableRepository.findById(
+      data.payableId,
+      ctx.organizationId,
+      ctx.branchId
+    );
     
     if (!payable) {
       return Result.fail(new PayableNotFoundError(data.payableId).message);
     }
 
-    // 3. Validar permissão de branch
-    if (!ctx.isAdmin && payable.branchId !== ctx.branchId) {
-      return Result.fail('Access denied: payable belongs to another branch');
-    }
+    // 3. branchId já filtrado na query (ENFORCE-004)
 
     // 4. Cancelar (invariantes validadas no domain)
     const cancelResult = payable.cancel(data.reason, ctx.userId);

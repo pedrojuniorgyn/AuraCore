@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.7",
+  "version": "2.0.10",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -266,6 +266,57 @@
         "mcp-server/src/server.ts"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-844126",
+      "date": "2026-01-18",
+      "epic": "E-Agent-Fase2",
+      "error": "Promise aninhada no método executeTool - faltava await antes de tool.call(), causando retorno Promise&lt;Promise&lt;ToolResult&gt;&gt;",
+      "correction": "Adicionado await antes de tool.call(input, this.executionContext)",
+      "files_affected": [
+        "src/agent/core/AuraAgent.ts"
+      ],
+      "pattern_created": "P-ASYNC-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-165549",
+      "date": "2026-01-18",
+      "epic": "E-Agent-Fase4",
+      "error": "Mutação direta do estado em nodos do workflow LangGraph - state.status = 'fetching' e state.errors.push() dentro de funções de nodo, violando o padrão de funções puras",
+      "correction": "Removidas mutações diretas do parâmetro state. Agora todas as mudanças são retornadas via Partial<State> ou aplicadas via applyResult(). Logs usam spread operator [...state.logs, newLog]",
+      "files_affected": [
+        "src/agent/workflows/BankReconciliationWorkflow.ts"
+      ],
+      "pattern_created": "P-WORKFLOW-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-288236",
+      "date": "2026-01-18",
+      "epic": "E7.26",
+      "error": "Output Ports com branchId opcional (VIOLAÇÃO ENFORCE-004) em IPayableRepository e IJournalEntryRepository. Métodos findById, exists, findBySupplier, findByPeriod, findBySourceId não exigiam branchId. TOKENS faltantes para TaxRateRepository, TaxCreditRepository e RomaneioRepository.",
+      "correction": "1) IPayableRepository: branchId obrigatório em FindPayablesFilter e todos os métodos (findById, findOverdue, findBySupplier, exists). 2) IJournalEntryRepository: branchId obrigatório em FindJournalEntriesFilter e todos os métodos (findById, findByPeriod, findBySourceId, exists). 3) DrizzlePayableRepository: atualizado para incluir branchId em todas as queries. 4) Use Cases de Accounting e Financial: atualizados para passar ctx.branchId em todas as chamadas de repositório. 5) TOKENS: adicionados TaxRateRepository, TaxCreditRepository e RomaneioRepository.",
+      "files_affected": [
+        "src/modules/financial/domain/ports/output/IPayableRepository.ts",
+        "src/modules/accounting/domain/ports/output/IJournalEntryRepository.ts",
+        "src/modules/financial/infrastructure/persistence/DrizzlePayableRepository.ts",
+        "src/modules/accounting/application/use-cases/AddLineToEntryUseCase.ts",
+        "src/modules/accounting/application/use-cases/GetJournalEntryByIdUseCase.ts",
+        "src/modules/accounting/application/use-cases/ListJournalEntriesUseCase.ts",
+        "src/modules/accounting/application/use-cases/PostJournalEntryUseCase.ts",
+        "src/modules/accounting/application/use-cases/ReverseJournalEntryUseCase.ts",
+        "src/modules/financial/application/use-cases/CancelPayableUseCase.ts",
+        "src/modules/financial/application/use-cases/GetPayableByIdUseCase.ts",
+        "src/modules/financial/application/use-cases/ListPayablesUseCase.ts",
+        "src/modules/financial/application/use-cases/PayAccountPayableUseCase.ts",
+        "src/shared/infrastructure/di/tokens.ts"
+      ],
+      "pattern_created": "P-MULTITENANCY-001",
       "status": "APPROVED",
       "must_not_repeat": true
     }

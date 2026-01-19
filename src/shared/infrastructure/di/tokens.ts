@@ -58,6 +58,13 @@ export const TOKENS = {
   GenerateSpedEcdUseCase: Symbol('GenerateSpedEcdUseCase'),
   GenerateSpedContributionsUseCase: Symbol('GenerateSpedContributionsUseCase'),
   SpedDataRepository: Symbol('SpedDataRepository'),
+  
+  // Fiscal Module - Tax Repositories (E7.26)
+  TaxRateRepository: Symbol('TaxRateRepository'),
+  TaxCreditRepository: Symbol('TaxCreditRepository'),
+
+  // TMS Module - Repositories (E7.26)
+  RomaneioRepository: Symbol('RomaneioRepository'),
 
   // WMS Module - E7.8 Semana 2
   LocationRepository: Symbol('LocationRepository'),
