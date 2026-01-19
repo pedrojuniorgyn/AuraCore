@@ -4,35 +4,38 @@
  * 
  * @module strategic/infrastructure/di
  */
-// import { container } from '@/shared/infrastructure/di/container';
-// import { STRATEGIC_TOKENS } from './tokens';
+import { container } from '@/shared/infrastructure/di/container';
+import { STRATEGIC_TOKENS } from './tokens';
 
-// Repositories (a serem implementados nas próximas fases)
-// import { DrizzleStrategyRepository } from '../persistence/repositories/DrizzleStrategyRepository';
-// import { DrizzleStrategicGoalRepository } from '../persistence/repositories/DrizzleStrategicGoalRepository';
-// import { DrizzleActionPlanRepository } from '../persistence/repositories/DrizzleActionPlanRepository';
-// import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIdeaBoxRepository';
+// Repositories
+import { DrizzleStrategyRepository } from '../persistence/repositories/DrizzleStrategyRepository';
+import { DrizzleActionPlanRepository } from '../persistence/repositories/DrizzleActionPlanRepository';
+import { DrizzleKPIRepository } from '../persistence/repositories/DrizzleKPIRepository';
+import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIdeaBoxRepository';
 
 export function registerStrategicModule(): void {
-  // NOTA: Os repositories serão implementados nas próximas fases (F2+)
-  // Por enquanto, apenas registramos os tokens para documentação
+  // Repositories - Fase F1 Complete
+  container.register(STRATEGIC_TOKENS.StrategyRepository, {
+    useClass: DrizzleStrategyRepository,
+  });
   
-  // Repositories
-  // container.register(STRATEGIC_TOKENS.StrategyRepository, {
-  //   useClass: DrizzleStrategyRepository,
-  // });
+  container.register(STRATEGIC_TOKENS.ActionPlanRepository, {
+    useClass: DrizzleActionPlanRepository,
+  });
   
-  // container.register(STRATEGIC_TOKENS.StrategicGoalRepository, {
-  //   useClass: DrizzleStrategicGoalRepository,
-  // });
+  container.register(STRATEGIC_TOKENS.KPIRepository, {
+    useClass: DrizzleKPIRepository,
+  });
   
-  // container.register(STRATEGIC_TOKENS.ActionPlanRepository, {
-  //   useClass: DrizzleActionPlanRepository,
-  // });
+  container.register(STRATEGIC_TOKENS.IdeaBoxRepository, {
+    useClass: DrizzleIdeaBoxRepository,
+  });
   
-  // container.register(STRATEGIC_TOKENS.IdeaBoxRepository, {
-  //   useClass: DrizzleIdeaBoxRepository,
-  // });
+  // NOTA: Os demais repositories e use cases serão registrados nas próximas fases (F2+)
+  // - StrategicGoalRepository (requer GoalCascade)
+  // - ActionPlanFollowUpRepository
+  // - WarRoomMeetingRepository
+  // - SwotAnalysisRepository
   
-  console.log('[Strategic Module] DI tokens definidos - repositories serão registrados na fase F2');
+  console.log('[Strategic Module] DI registrado: 4 repositories (Strategy, ActionPlan, KPI, IdeaBox)');
 }
