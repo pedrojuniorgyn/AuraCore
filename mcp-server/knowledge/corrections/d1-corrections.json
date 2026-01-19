@@ -1,0 +1,18 @@
+{
+  "epic": "D1",
+  "corrections": [
+    {
+      "id": "LC-094913",
+      "date": "2026-01-19",
+      "epic": "D1",
+      "error": "Bug no DoclingClient.fetchWithRetry: quando erro 5xx na última tentativa de retry, o código não retornava Result.fail() e tentava fazer response.json() novamente, causando erro 'Cannot read properties of undefined'",
+      "correction": "Adicionado return Result.fail(lastError) após verificar que é a última tentativa em caso de erro 5xx, garantindo que o fluxo não continue para response.json() após erro",
+      "files_affected": [
+        "src/shared/infrastructure/docling/DoclingClient.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+version: '3.8'
+
+# ============================================================================
+# Docling Service - Processamento de Documentos Fiscais
+# ============================================================================
+# Este serviço provê extração de texto e tabelas de PDFs usando a biblioteca
+# Docling da IBM. Execução 100% local (dados fiscais sensíveis).
+#
+# Uso:
+#   docker-compose up -d
+#   curl http://localhost:8000/health
+#
+# @see docs/agent/DOCLING_INTEGRATION.md
+# ============================================================================
+
+services:
+  docling:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auracore-docling
+    ports:
+      - "8000:8000"
+    volumes:
+      # Volume para upload de PDFs
+      - ./uploads:/app/uploads
+    environment:
+      - DOCLING_LOG_LEVEL=${DOCLING_LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    # Recursos recomendados para processamento de PDFs
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+networks:
+  default:
+    name: auracore-network
+    external: false
