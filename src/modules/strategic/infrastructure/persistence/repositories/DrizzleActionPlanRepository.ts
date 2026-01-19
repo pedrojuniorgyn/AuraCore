@@ -14,6 +14,36 @@ import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleActionPlanRepository implements IActionPlanRepository {
+  async getNextCode(organizationId: number, branchId: number): Promise<string> {
+    // Buscar último código do ano atual para gerar sequencial
+    const year = new Date().getFullYear();
+    const prefix = `PA-${year}-`;
+    
+    const result = await db
+      .select({ code: actionPlanTable.code })
+      .from(actionPlanTable)
+      .where(
+        and(
+          eq(actionPlanTable.organizationId, organizationId),
+          eq(actionPlanTable.branchId, branchId),
+          sql`${actionPlanTable.code} LIKE ${prefix + '%'}`
+        )
+      )
+      .orderBy(desc(actionPlanTable.code))
+      .offset(0)
+      .fetch(1);
+    
+    if (result.length === 0) {
+      return `${prefix}0001`;
+    }
+    
+    const lastCode = result[0].code;
+    const lastNumber = parseInt(lastCode.replace(prefix, ''), 10) || 0;
+    const nextNumber = (lastNumber + 1).toString().padStart(4, '0');
+    
+    return `${prefix}${nextNumber}`;
+  }
+
   async findById(
     id: string, 
     organizationId: number, 

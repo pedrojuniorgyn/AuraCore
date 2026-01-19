@@ -23,6 +23,11 @@ export interface ActionPlanFilter {
 
 export interface IActionPlanRepository {
   /**
+   * Gera próximo código sequencial de plano de ação
+   */
+  getNextCode(organizationId: number, branchId: number): Promise<string>;
+  
+  /**
    * Busca plano por ID
    */
   findById(

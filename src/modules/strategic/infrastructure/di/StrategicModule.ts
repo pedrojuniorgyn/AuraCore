@@ -13,6 +13,7 @@ import { DrizzleStrategicGoalRepository } from '../persistence/repositories/Driz
 import { DrizzleActionPlanRepository } from '../persistence/repositories/DrizzleActionPlanRepository';
 import { DrizzleKPIRepository } from '../persistence/repositories/DrizzleKPIRepository';
 import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIdeaBoxRepository';
+import { DrizzleActionPlanFollowUpRepository } from '../persistence/repositories/DrizzleActionPlanFollowUpRepository';
 
 // Use Cases - Commands
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
@@ -23,6 +24,9 @@ import { UpdateGoalProgressUseCase } from '../../application/commands/UpdateGoal
 import { CreateKPIUseCase } from '../../application/commands/CreateKPIUseCase';
 import { UpdateKPIValueUseCase } from '../../application/commands/UpdateKPIValueUseCase';
 import { SyncKPIValuesUseCase } from '../../application/commands/SyncKPIValuesUseCase';
+import { CreateActionPlanUseCase } from '../../application/commands/CreateActionPlanUseCase';
+import { AdvancePDCACycleUseCase } from '../../application/commands/AdvancePDCACycleUseCase';
+import { ExecuteFollowUpUseCase } from '../../application/commands/ExecuteFollowUpUseCase';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -48,6 +52,10 @@ export function registerStrategicModule(): void {
   
   container.register(STRATEGIC_TOKENS.IdeaBoxRepository, {
     useClass: DrizzleIdeaBoxRepository,
+  });
+  
+  container.register(STRATEGIC_TOKENS.ActionPlanFollowUpRepository, {
+    useClass: DrizzleActionPlanFollowUpRepository,
   });
   
   // Use Cases - Commands (Fase F2)
@@ -94,10 +102,23 @@ export function registerStrategicModule(): void {
     useClass: TMSKPIDataSource,
   });
   
-  // NOTA: Demais repositories e use cases serão registrados nas próximas fases (F5+)
-  // - ActionPlanFollowUpRepository
+  // Use Cases - Commands (Fase F6 - 5W2H + Follow-up 3G)
+  container.register(STRATEGIC_TOKENS.CreateActionPlanUseCase, {
+    useClass: CreateActionPlanUseCase,
+  });
+  
+  container.register(STRATEGIC_TOKENS.AdvancePDCAUseCase, {
+    useClass: AdvancePDCACycleUseCase,
+  });
+  
+  container.register(STRATEGIC_TOKENS.ExecuteFollowUpUseCase, {
+    useClass: ExecuteFollowUpUseCase,
+  });
+  
+  // NOTA: Demais repositories serão registrados nas próximas fases (F7+)
+  // - ActionPlanFollowUpRepository (mock implementado nas APIs)
   // - WarRoomMeetingRepository
   // - SwotAnalysisRepository
   
-  console.log('[Strategic Module] DI registrado: 5 repositories + 8 use cases + 2 integrations');
+  console.log('[Strategic Module] DI registrado: 6 repositories + 11 use cases + 2 integrations');
 }

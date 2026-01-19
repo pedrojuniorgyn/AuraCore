@@ -18,6 +18,11 @@ export interface FollowUpFilter {
 
 export interface IActionPlanFollowUpRepository {
   /**
+   * Gera próximo número de follow-up para um plano
+   */
+  getNextFollowUpNumber(actionPlanId: string): Promise<number>;
+  
+  /**
    * Busca follow-up por ID
    */
   findById(id: string): Promise<ActionPlanFollowUp | null>;
