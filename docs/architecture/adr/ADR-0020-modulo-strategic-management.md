@@ -2,11 +2,11 @@
 
 ## Status
 
-Proposto
+**Accepted** ✅
 
 ## Data
 
-2026-01-18
+2026-01-18 (Atualizado: 2026-01-19)
 
 ## Contexto
 
