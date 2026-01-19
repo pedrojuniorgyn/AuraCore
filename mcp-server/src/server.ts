@@ -29,6 +29,7 @@ import { generateRepository } from './tools/generate-repository.js';
 import { generateApiRoute } from './tools/generate-api-route.js';
 import { validateSchema } from './tools/validate-schema.js';
 import { processDocument } from './tools/process-document.js';
+import { searchLegislation } from './tools/search-legislation.js';
 import type { ProcessDocumentInput } from './contracts/process-document.contract.js';
 import { validateProcessDocumentInput } from './contracts/process-document.contract.js';
 
@@ -804,6 +805,40 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['document_type', 'file_name'],
+          },
+        },
+        {
+          name: 'search_legislation',
+          description: 'Busca informações em legislação fiscal brasileira (ICMS, PIS/COFINS, Reforma 2026, SPED, CTe, NFe, CLT motorista).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Pergunta sobre legislação fiscal brasileira',
+              },
+              legislation_types: {
+                type: 'array',
+                description: 'Tipos de legislação para filtrar (opcional)',
+                items: {
+                  type: 'string',
+                  enum: ['ICMS', 'PIS_COFINS', 'IPI', 'IRPJ_CSLL', 'ISS', 'REFORMA_2026', 'SPED', 'CTE', 'NFE', 'TRABALHISTA', 'OUTROS'],
+                },
+              },
+              top_k: {
+                type: 'number',
+                description: 'Número máximo de resultados (1-20, default: 5)',
+              },
+              min_score: {
+                type: 'number',
+                description: 'Score mínimo de relevância (0-1, default: 0.3)',
+              },
+              include_revoked: {
+                type: 'boolean',
+                description: 'Incluir legislação revogada (default: false)',
+              },
+            },
+            required: ['query'],
           },
         },
       ],
@@ -2287,6 +2322,46 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to process document: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'search_legislation') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for search_legislation');
+        }
+
+        const typedArgs = args as Record<string, unknown>;
+
+        // Validar query
+        if (!typedArgs.query || typeof typedArgs.query !== 'string') {
+          throw new Error('query is required and must be a string');
+        }
+
+        try {
+          const result = await searchLegislation({
+            query: typedArgs.query,
+            legislation_types: Array.isArray(typedArgs.legislation_types) 
+              ? typedArgs.legislation_types as string[] 
+              : undefined,
+            top_k: typeof typedArgs.top_k === 'number' ? typedArgs.top_k : undefined,
+            min_score: typeof typedArgs.min_score === 'number' ? typedArgs.min_score : undefined,
+            include_revoked: typeof typedArgs.include_revoked === 'boolean' ? typedArgs.include_revoked : undefined,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to search legislation: ${errorMessage}`);
         }
       }
 
