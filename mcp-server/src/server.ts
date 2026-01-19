@@ -25,6 +25,9 @@ import { generateModuleDocs } from './tools/generate-module-docs.js';
 import { createFeature } from './tools/create-feature.js';
 import { migrateLegacyService } from './tools/migrate-legacy-service.js';
 import { checkMigrationStatus } from './tools/check-migration-status.js';
+import { generateRepository } from './tools/generate-repository.js';
+import { generateApiRoute } from './tools/generate-api-route.js';
+import { validateSchema } from './tools/validate-schema.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -586,6 +589,169 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['verbose', 'includeMetrics'],
+          },
+        },
+        {
+          name: 'generate_repository',
+          description: 'Gera Repository DDD completo: Interface, Implementação Drizzle, Mapper e Schema.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              entityName: {
+                type: 'string',
+                description: 'Nome da Entity em PascalCase (ex: FreightContract)',
+              },
+              module: {
+                type: 'string',
+                description: 'Nome do módulo em lowercase (ex: tms)',
+              },
+              entity: {
+                type: 'object',
+                properties: {
+                  properties: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        type: { type: 'string' },
+                        isNullable: { type: 'boolean' },
+                        isUnique: { type: 'boolean' },
+                        hasIndex: { type: 'boolean' },
+                        dbColumnName: { type: 'string' },
+                      },
+                      required: ['name', 'type', 'isNullable', 'isUnique', 'hasIndex'],
+                    },
+                  },
+                  hasMultiTenancy: {
+                    type: 'boolean',
+                    description: 'Se true, inclui organizationId e branchId',
+                  },
+                },
+                required: ['properties', 'hasMultiTenancy'],
+              },
+              options: {
+                type: 'object',
+                properties: {
+                  includeSoftDelete: { type: 'boolean' },
+                  includePagination: { type: 'boolean' },
+                  includeSearch: { type: 'boolean' },
+                  customMethods: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        parameters: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              name: { type: 'string' },
+                              type: { type: 'string' },
+                            },
+                          },
+                        },
+                        returnType: { type: 'string', enum: ['single', 'array', 'paginated'] },
+                        description: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+                required: ['includeSoftDelete', 'includePagination', 'includeSearch', 'customMethods'],
+              },
+            },
+            required: ['entityName', 'module', 'entity', 'options'],
+          },
+        },
+        {
+          name: 'generate_api_route',
+          description: 'Gera API Route Next.js 15 completa com validação Zod e autenticação.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Nome em kebab-case (ex: freight-contracts)',
+              },
+              module: {
+                type: 'string',
+                description: 'Nome do módulo (ex: tms)',
+              },
+              basePath: {
+                type: 'string',
+                description: 'Base path da API (ex: /api/tms/freight-contracts)',
+              },
+              entity: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  properties: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        type: { type: 'string' },
+                        required: { type: 'boolean' },
+                        description: { type: 'string' },
+                      },
+                      required: ['name', 'type', 'required'],
+                    },
+                  },
+                },
+                required: ['name', 'properties'],
+              },
+              endpoints: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] },
+                    path: { type: 'string' },
+                    action: { type: 'string' },
+                    useCaseName: { type: 'string' },
+                    description: { type: 'string' },
+                    requestBody: {
+                      type: 'object',
+                      properties: {
+                        properties: { type: 'array' },
+                      },
+                    },
+                    responseType: { type: 'string', enum: ['single', 'array', 'paginated', 'void'] },
+                  },
+                  required: ['method', 'path', 'action', 'useCaseName', 'description', 'responseType'],
+                },
+              },
+              options: {
+                type: 'object',
+                properties: {
+                  includeOpenAPI: { type: 'boolean' },
+                  includeRateLimit: { type: 'boolean' },
+                  includeCache: { type: 'boolean' },
+                },
+                required: ['includeOpenAPI', 'includeRateLimit', 'includeCache'],
+              },
+            },
+            required: ['name', 'module', 'basePath', 'entity', 'endpoints', 'options'],
+          },
+        },
+        {
+          name: 'validate_schema',
+          description: 'Valida se um schema Drizzle segue os padrões SCHEMA-001 a SCHEMA-010 do AuraCore.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              schemaPath: {
+                type: 'string',
+                description: 'Caminho do arquivo de schema (ex: src/modules/tms/infrastructure/persistence/schemas/freight-contract.schema.ts)',
+              },
+              entityPath: {
+                type: 'string',
+                description: 'Caminho opcional da Entity para comparar campos',
+              },
+            },
+            required: ['schemaPath'],
           },
         },
       ],
@@ -1744,6 +1910,285 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to check migration status: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'generate_repository') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for generate_repository');
+        }
+
+        const typedArgs = args as {
+          entityName?: unknown;
+          module?: unknown;
+          entity?: unknown;
+          options?: unknown;
+        };
+
+        // Validar entityName
+        if (!typedArgs.entityName || typeof typedArgs.entityName !== 'string') {
+          throw new Error('entityName é obrigatório e deve ser string');
+        }
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar entity
+        if (!typedArgs.entity || typeof typedArgs.entity !== 'object') {
+          throw new Error('entity é obrigatório e deve ser objeto');
+        }
+
+        const entity = typedArgs.entity as {
+          properties?: unknown;
+          hasMultiTenancy?: unknown;
+        };
+
+        if (!Array.isArray(entity.properties)) {
+          throw new Error('entity.properties é obrigatório e deve ser array');
+        }
+
+        if (typeof entity.hasMultiTenancy !== 'boolean') {
+          throw new Error('entity.hasMultiTenancy é obrigatório e deve ser boolean');
+        }
+
+        // Validar options
+        if (!typedArgs.options || typeof typedArgs.options !== 'object') {
+          throw new Error('options é obrigatório e deve ser objeto');
+        }
+
+        const options = typedArgs.options as {
+          includeSoftDelete?: unknown;
+          includePagination?: unknown;
+          includeSearch?: unknown;
+          customMethods?: unknown;
+        };
+
+        if (typeof options.includeSoftDelete !== 'boolean') {
+          throw new Error('options.includeSoftDelete é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.includePagination !== 'boolean') {
+          throw new Error('options.includePagination é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.includeSearch !== 'boolean') {
+          throw new Error('options.includeSearch é obrigatório e deve ser boolean');
+        }
+
+        if (!Array.isArray(options.customMethods)) {
+          throw new Error('options.customMethods é obrigatório e deve ser array');
+        }
+
+        try {
+          const result = await generateRepository({
+            entityName: typedArgs.entityName,
+            module: typedArgs.module,
+            entity: {
+              properties: entity.properties as Array<{
+                name: string;
+                type: string;
+                isNullable: boolean;
+                isUnique: boolean;
+                hasIndex: boolean;
+                dbColumnName?: string;
+              }>,
+              hasMultiTenancy: entity.hasMultiTenancy,
+            },
+            options: {
+              includeSoftDelete: options.includeSoftDelete,
+              includePagination: options.includePagination,
+              includeSearch: options.includeSearch,
+              customMethods: options.customMethods as Array<{
+                name: string;
+                parameters: Array<{ name: string; type: string }>;
+                returnType: 'single' | 'array' | 'paginated';
+                description: string;
+              }>,
+            },
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to generate repository: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'generate_api_route') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for generate_api_route');
+        }
+
+        const typedArgs = args as {
+          name?: unknown;
+          module?: unknown;
+          basePath?: unknown;
+          entity?: unknown;
+          endpoints?: unknown;
+          options?: unknown;
+        };
+
+        // Validar name
+        if (!typedArgs.name || typeof typedArgs.name !== 'string') {
+          throw new Error('name é obrigatório e deve ser string');
+        }
+
+        // Validar module
+        if (!typedArgs.module || typeof typedArgs.module !== 'string') {
+          throw new Error('module é obrigatório e deve ser string');
+        }
+
+        // Validar basePath
+        if (!typedArgs.basePath || typeof typedArgs.basePath !== 'string') {
+          throw new Error('basePath é obrigatório e deve ser string');
+        }
+
+        // Validar entity
+        if (!typedArgs.entity || typeof typedArgs.entity !== 'object') {
+          throw new Error('entity é obrigatório e deve ser objeto');
+        }
+
+        const entity = typedArgs.entity as {
+          name?: unknown;
+          properties?: unknown;
+        };
+
+        if (!entity.name || typeof entity.name !== 'string') {
+          throw new Error('entity.name é obrigatório e deve ser string');
+        }
+
+        if (!Array.isArray(entity.properties)) {
+          throw new Error('entity.properties é obrigatório e deve ser array');
+        }
+
+        // Validar endpoints
+        if (!Array.isArray(typedArgs.endpoints)) {
+          throw new Error('endpoints é obrigatório e deve ser array');
+        }
+
+        // Validar options
+        if (!typedArgs.options || typeof typedArgs.options !== 'object') {
+          throw new Error('options é obrigatório e deve ser objeto');
+        }
+
+        const options = typedArgs.options as {
+          includeOpenAPI?: unknown;
+          includeRateLimit?: unknown;
+          includeCache?: unknown;
+        };
+
+        if (typeof options.includeOpenAPI !== 'boolean') {
+          throw new Error('options.includeOpenAPI é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.includeRateLimit !== 'boolean') {
+          throw new Error('options.includeRateLimit é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.includeCache !== 'boolean') {
+          throw new Error('options.includeCache é obrigatório e deve ser boolean');
+        }
+
+        try {
+          const result = await generateApiRoute({
+            name: typedArgs.name,
+            module: typedArgs.module,
+            basePath: typedArgs.basePath,
+            entity: {
+              name: entity.name,
+              properties: entity.properties as Array<{
+                name: string;
+                type: string;
+                required: boolean;
+                description?: string;
+              }>,
+            },
+            endpoints: typedArgs.endpoints as Array<{
+              method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+              path: string;
+              action: string;
+              useCaseName: string;
+              description: string;
+              requestBody?: {
+                properties: Array<{
+                  name: string;
+                  type: string;
+                  required: boolean;
+                }>;
+              };
+              responseType: 'single' | 'array' | 'paginated' | 'void';
+            }>,
+            options: {
+              includeOpenAPI: options.includeOpenAPI,
+              includeRateLimit: options.includeRateLimit,
+              includeCache: options.includeCache,
+            },
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to generate api route: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'validate_schema') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for validate_schema');
+        }
+
+        const typedArgs = args as {
+          schemaPath?: unknown;
+          entityPath?: unknown;
+        };
+
+        // Validar schemaPath
+        if (!typedArgs.schemaPath || typeof typedArgs.schemaPath !== 'string') {
+          throw new Error('schemaPath é obrigatório e deve ser string');
+        }
+
+        try {
+          const result = await validateSchema({
+            schemaPath: typedArgs.schemaPath,
+            entityPath: typeof typedArgs.entityPath === 'string' ? typedArgs.entityPath : undefined,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to validate schema: ${errorMessage}`);
         }
       }
 

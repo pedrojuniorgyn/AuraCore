@@ -72,6 +72,7 @@ grep -r 'as any' src/
 - `validate_code` - Valida código contra contratos
 - `check_compliance` - Verifica compliance de arquivo
 - `validate_fiscal_compliance` - Valida features fiscais (NFe, CTe, SPED)
+- `validate_schema` - Valida schema Drizzle contra regras SCHEMA-001 a SCHEMA-010
 
 **Cálculo:**
 - `calculate_tax_scenario` - Calcula impostos (ICMS, PIS, COFINS, ISS)
@@ -79,6 +80,8 @@ grep -r 'as any' src/
 **Geração de Código:**
 - `generate_entity` - Gera Entity DDD completa
 - `generate_use_case` - Gera Use Case (Command/Query)
+- `generate_repository` - Gera Repository completo (Interface + Drizzle + Mapper + Schema)
+- `generate_api_route` - Gera API Route Next.js 15 com Zod e autenticação
 - `create_feature` - Cria feature completa (Entity + Repository + Use Cases + API)
 
 **Análise:**
