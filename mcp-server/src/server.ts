@@ -30,6 +30,7 @@ import { generateApiRoute } from './tools/generate-api-route.js';
 import { validateSchema } from './tools/validate-schema.js';
 import { processDocument } from './tools/process-document.js';
 import { searchLegislation } from './tools/search-legislation.js';
+import { analyzeContractHandler } from './tools/analyze-contract.js';
 import type { ProcessDocumentInput } from './contracts/process-document.contract.js';
 import { validateProcessDocumentInput } from './contracts/process-document.contract.js';
 
@@ -839,6 +840,36 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['query'],
+          },
+        },
+        {
+          name: 'analyze_contract',
+          description: 'Analisa contratos de frete e extrai partes, cláusulas, valores, datas e riscos',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              file_path: {
+                type: 'string',
+                description: 'Caminho do arquivo local',
+              },
+              file_base64: {
+                type: 'string',
+                description: 'Conteúdo do arquivo em base64',
+              },
+              file_name: {
+                type: 'string',
+                description: 'Nome do arquivo',
+              },
+              organization_id: {
+                type: 'number',
+                description: 'ID da organização',
+              },
+              branch_id: {
+                type: 'number',
+                description: 'ID da filial',
+              },
+            },
+            required: ['file_name'],
           },
         },
       ],
@@ -2362,6 +2393,49 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to search legislation: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'analyze_contract') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for analyze_contract');
+        }
+
+        const typedArgs = args as Record<string, unknown>;
+
+        // Validar file_name
+        if (!typedArgs.file_name || typeof typedArgs.file_name !== 'string') {
+          throw new Error('file_name is required and must be a string');
+        }
+
+        // Validar que pelo menos um dos file_path ou file_base64 existe
+        if (!typedArgs.file_path && !typedArgs.file_base64) {
+          throw new Error('Either file_path or file_base64 is required');
+        }
+
+        try {
+          const result = await analyzeContractHandler({
+            file_name: typedArgs.file_name,
+            file_path: typeof typedArgs.file_path === 'string' ? typedArgs.file_path : undefined,
+            file_base64: typeof typedArgs.file_base64 === 'string' ? typedArgs.file_base64 : undefined,
+            organization_id: typeof typedArgs.organization_id === 'number' ? typedArgs.organization_id : undefined,
+            branch_id: typeof typedArgs.branch_id === 'number' ? typedArgs.branch_id : undefined,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to analyze contract: ${errorMessage}`);
         }
       }
 
