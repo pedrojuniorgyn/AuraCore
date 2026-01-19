@@ -1,12 +1,19 @@
 -- Migration: 0034_add_tenant_indexes.sql
 -- Data: 2026-01-18
--- Épico: E8.1 - Performance & Observability
+-- Épico: E8.1 + E8.2 - Performance & Observability
 -- Descrição: Adiciona índices compostos (organizationId, branchId) para multi-tenancy
 -- 
 -- IMPORTANTE: Esta migration deve ser executada em horário de baixo uso.
--- Os índices são criados com ONLINE = ON quando possível para minimizar bloqueios.
+-- Os índices usam INCLUDE para criar covering indexes (evita Key Lookups).
+-- Índices filtrados (WHERE deleted_at IS NULL) reduzem tamanho do índice.
 --
 -- Rollback: DROP INDEX [nome_do_indice] ON [tabela];
+--
+-- Estatísticas:
+-- - 23 índices tenant (organizationId + branchId)
+-- - 9 índices simples (organizationId)
+-- - 3 índices de status/data
+-- - Total: 35 índices
 
 -- ============================================
 -- ÍNDICES TENANT (organizationId, branchId)
@@ -14,21 +21,23 @@
 
 -- === FINANCEIRO ===
 
--- accounts_payable - Contas a pagar
+-- accounts_payable - Contas a pagar (CRÍTICO - alta frequência)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_accounts_payable_tenant')
 BEGIN
   CREATE NONCLUSTERED INDEX [idx_accounts_payable_tenant] 
     ON [accounts_payable] ([organization_id], [branch_id]) 
+    INCLUDE ([status], [due_date], [amount], [partner_id])
     WHERE [deleted_at] IS NULL;
   PRINT 'Created index: idx_accounts_payable_tenant';
 END;
 GO
 
--- accounts_receivable - Contas a receber
+-- accounts_receivable - Contas a receber (CRÍTICO - alta frequência)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_accounts_receivable_tenant')
 BEGIN
   CREATE NONCLUSTERED INDEX [idx_accounts_receivable_tenant] 
     ON [accounts_receivable] ([organization_id], [branch_id]) 
+    INCLUDE ([status], [due_date], [amount], [customer_id])
     WHERE [deleted_at] IS NULL;
   PRINT 'Created index: idx_accounts_receivable_tenant';
 END;
@@ -55,11 +64,12 @@ GO
 
 -- === TMS ===
 
--- trips - Viagens
+-- trips - Viagens (CRÍTICO - alta frequência)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_trips_tenant')
 BEGIN
   CREATE NONCLUSTERED INDEX [idx_trips_tenant] 
     ON [trips] ([organization_id], [branch_id]) 
+    INCLUDE ([status], [driver_id], [vehicle_id], [created_at])
     WHERE [deleted_at] IS NULL;
   PRINT 'Created index: idx_trips_tenant';
 END;
@@ -101,11 +111,12 @@ BEGIN
 END;
 GO
 
--- cargo_documents - Documentos de carga
+-- cargo_documents - Documentos de carga (CRÍTICO - operacional)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_cargo_documents_tenant')
 BEGIN
   CREATE NONCLUSTERED INDEX [idx_cargo_documents_tenant] 
     ON [cargo_documents] ([organization_id], [branch_id]) 
+    INCLUDE ([status], [document_type], [trip_id])
     WHERE [deleted_at] IS NULL;
   PRINT 'Created index: idx_cargo_documents_tenant';
 END;
@@ -113,11 +124,12 @@ GO
 
 -- === FISCAL ===
 
--- cte_header - CT-e
+-- cte_header - CT-e (CRÍTICO - documentos fiscais)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_cte_header_tenant')
 BEGIN
   CREATE NONCLUSTERED INDEX [idx_cte_header_tenant] 
     ON [cte_header] ([organization_id], [branch_id]) 
+    INCLUDE ([status], [issue_date], [access_key], [number])
     WHERE [deleted_at] IS NULL;
   PRINT 'Created index: idx_cte_header_tenant';
 END;
@@ -143,11 +155,12 @@ BEGIN
 END;
 GO
 
--- billing_invoices - Faturas
+-- billing_invoices - Faturas (CRÍTICO - faturamento)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_billing_invoices_tenant')
 BEGIN
   CREATE NONCLUSTERED INDEX [idx_billing_invoices_tenant] 
     ON [billing_invoices] ([organization_id], [branch_id]) 
+    INCLUDE ([status], [issue_date], [total_amount], [customer_id])
     WHERE [deleted_at] IS NULL;
   PRINT 'Created index: idx_billing_invoices_tenant';
 END;
