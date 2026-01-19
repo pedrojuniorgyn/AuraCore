@@ -23,6 +23,8 @@ import { generateUseCase } from './tools/generate-use-case.js';
 import { analyzeModuleDependencies } from './tools/analyze-module-dependencies.js';
 import { generateModuleDocs } from './tools/generate-module-docs.js';
 import { createFeature } from './tools/create-feature.js';
+import { migrateLegacyService } from './tools/migrate-legacy-service.js';
+import { checkMigrationStatus } from './tools/check-migration-status.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -530,6 +532,60 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['name', 'module', 'description', 'entity', 'useCases', 'options'],
+          },
+        },
+        {
+          name: 'migrate_legacy_service',
+          description: 'Analisa serviço legado em src/services/ e gera plano de migração para arquitetura DDD.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              servicePath: {
+                type: 'string',
+                description: 'Caminho do serviço legado (ex: src/services/fiscal/tax-calculator.ts)',
+              },
+              targetModule: {
+                type: 'string',
+                description: 'Nome do módulo DDD destino (ex: fiscal, tms)',
+              },
+              options: {
+                type: 'object',
+                properties: {
+                  generateCode: {
+                    type: 'boolean',
+                    description: 'Se true, gera código migrado; se false, só plano',
+                  },
+                  preserveInterface: {
+                    type: 'boolean',
+                    description: 'Manter interface pública compatível',
+                  },
+                  dryRun: {
+                    type: 'boolean',
+                    description: 'Simular sem criar arquivos',
+                  },
+                },
+                required: ['generateCode', 'preserveInterface', 'dryRun'],
+              },
+            },
+            required: ['servicePath', 'targetModule', 'options'],
+          },
+        },
+        {
+          name: 'check_migration_status',
+          description: 'Verifica status geral da migração DDD do projeto AuraCore.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              verbose: {
+                type: 'boolean',
+                description: 'Incluir detalhes por arquivo',
+              },
+              includeMetrics: {
+                type: 'boolean',
+                description: 'Incluir métricas de código',
+              },
+            },
+            required: ['verbose', 'includeMetrics'],
           },
         },
       ],
@@ -1573,6 +1629,121 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to create feature: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'migrate_legacy_service') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for migrate_legacy_service');
+        }
+
+        const typedArgs = args as {
+          servicePath?: unknown;
+          targetModule?: unknown;
+          options?: unknown;
+        };
+
+        // Validar servicePath
+        if (!typedArgs.servicePath || typeof typedArgs.servicePath !== 'string') {
+          throw new Error('servicePath é obrigatório e deve ser string');
+        }
+
+        // Validar targetModule
+        if (!typedArgs.targetModule || typeof typedArgs.targetModule !== 'string') {
+          throw new Error('targetModule é obrigatório e deve ser string');
+        }
+
+        // Validar options
+        if (!typedArgs.options || typeof typedArgs.options !== 'object') {
+          throw new Error('options é obrigatório e deve ser objeto');
+        }
+
+        const options = typedArgs.options as {
+          generateCode?: unknown;
+          preserveInterface?: unknown;
+          dryRun?: unknown;
+        };
+
+        if (typeof options.generateCode !== 'boolean') {
+          throw new Error('options.generateCode é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.preserveInterface !== 'boolean') {
+          throw new Error('options.preserveInterface é obrigatório e deve ser boolean');
+        }
+
+        if (typeof options.dryRun !== 'boolean') {
+          throw new Error('options.dryRun é obrigatório e deve ser boolean');
+        }
+
+        try {
+          const result = await migrateLegacyService({
+            servicePath: typedArgs.servicePath,
+            targetModule: typedArgs.targetModule,
+            options: {
+              generateCode: options.generateCode,
+              preserveInterface: options.preserveInterface,
+              dryRun: options.dryRun,
+            },
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to migrate legacy service: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'check_migration_status') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for check_migration_status');
+        }
+
+        const typedArgs = args as {
+          verbose?: unknown;
+          includeMetrics?: unknown;
+        };
+
+        // Validar verbose
+        if (typeof typedArgs.verbose !== 'boolean') {
+          throw new Error('verbose é obrigatório e deve ser boolean');
+        }
+
+        // Validar includeMetrics
+        if (typeof typedArgs.includeMetrics !== 'boolean') {
+          throw new Error('includeMetrics é obrigatório e deve ser boolean');
+        }
+
+        try {
+          const result = await checkMigrationStatus({
+            verbose: typedArgs.verbose,
+            includeMetrics: typedArgs.includeMetrics,
+          });
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to check migration status: ${errorMessage}`);
         }
       }
 

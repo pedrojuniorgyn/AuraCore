@@ -79,9 +79,14 @@ grep -r 'as any' src/
 **Geração de Código:**
 - `generate_entity` - Gera Entity DDD completa
 - `generate_use_case` - Gera Use Case (Command/Query)
+- `create_feature` - Cria feature completa (Entity + Repository + Use Cases + API)
 
 **Análise:**
 - `analyze_module_dependencies` - Analisa dependências e violações de arquitetura
+- `check_migration_status` - Status geral da migração DDD do projeto
+
+**Migração:**
+- `migrate_legacy_service` - Analisa serviço legado e gera plano de migração DDD
 
 **Documentação:**
 - `generate_module_docs` - Gera documentação automática de módulo
