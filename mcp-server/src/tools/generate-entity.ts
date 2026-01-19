@@ -360,7 +360,8 @@ function generateBehaviorMethod(
   isAggregateRoot: boolean
 ): string {
   const methodName = behavior;
-  const eventName = `${entityName}${capitalize(behavior)}dEvent`;
+  const pastTense = toPastTense(capitalize(behavior));
+  const eventName = `${entityName}${pastTense}Event`;
   
   const lines: string[] = [
     `  /**`,
@@ -371,7 +372,7 @@ function generateBehaviorMethod(
     `  ${methodName}(): Result<void, string> {`,
     `    // TODO: Adicionar validações de negócio`,
     `    // Exemplo:`,
-    `    // if (!this.canBe${capitalize(behavior)}d) {`,
+    `    // if (!this.canBe${pastTense}) {`,
     `    //   return Result.fail('Cannot ${behavior}: invalid state');`,
     `    // }`,
     ``,
@@ -549,10 +550,11 @@ function generateEventsCode(entityName: string, behaviors: string[]): string {
   ];
 
   for (const behavior of behaviors) {
-    const eventName = `${entityName}${capitalize(behavior)}dEvent`;
+    const pastTense = toPastTense(capitalize(behavior));
+    const eventName = `${entityName}${pastTense}Event`;
     
     lines.push(`/**`);
-    lines.push(` * Event: ${entityName} was ${behavior}d`);
+    lines.push(` * Event: ${entityName} was ${pastTense.toLowerCase()}`);
     lines.push(` */`);
     lines.push(`export class ${eventName} extends BaseDomainEvent {`);
     lines.push(`  constructor(`);
@@ -574,4 +576,40 @@ function generateEventsCode(entityName: string, behaviors: string[]): string {
 
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Converte verbo para past tense (conjugação correta em inglês)
+ * 
+ * Regras:
+ * - Termina em 'e': adiciona 'd' (approve → approved)
+ * - Termina em consoante + vogal + consoante (CVC): duplica última consoante + 'ed' (cancel → cancelled)
+ * - Outros: adiciona 'ed' (reject → rejected)
+ */
+function toPastTense(verb: string): string {
+  if (!verb) return verb;
+  
+  const lower = verb.toLowerCase();
+  
+  // Termina em 'e': apenas adiciona 'd'
+  if (lower.endsWith('e')) {
+    return verb + 'd';
+  }
+  
+  // Verbos que devem duplicar a última consoante (padrão CVC com acento na última sílaba)
+  // Comum em inglês britânico: cancel → cancelled, travel → travelled
+  // submit → submitted, commit → committed, etc.
+  const doubleConsonantVerbs = [
+    'cancel', 'travel', 'level', 'model', 'label', 'signal', 'control',
+    'submit', 'commit', 'permit', 'admit', 'transmit', 'omit', 'emit',
+    'occur', 'prefer', 'refer', 'defer', 'transfer', 'confer',
+    'stop', 'drop', 'ship', 'skip', 'slip', 'trip', 'wrap',
+    'plan', 'scan', 'ban', 'man', 'tan', 'fan',
+  ];
+  if (doubleConsonantVerbs.includes(lower)) {
+    return verb + lower.slice(-1) + 'ed';
+  }
+  
+  // Padrão geral: adiciona 'ed'
+  return verb + 'ed';
 }

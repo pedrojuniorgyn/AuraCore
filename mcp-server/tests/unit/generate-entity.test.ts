@@ -212,9 +212,9 @@ describe('generateEntity', () => {
       expect(result.files).toHaveLength(2);
       
       const eventsContent = result.files[1].content;
-      expect(eventsContent).toContain('OrderSubmitdEvent');
+      expect(eventsContent).toContain('OrderSubmittedEvent');
       expect(eventsContent).toContain('OrderApprovedEvent');
-      expect(eventsContent).toContain('OrderCanceldEvent');
+      expect(eventsContent).toContain('OrderCancelledEvent');
       expect(eventsContent).toContain('extends BaseDomainEvent');
     });
 

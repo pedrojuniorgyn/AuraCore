@@ -32,3 +32,7 @@ export * from './IGenerateDanfe';
 // ===== IMPORTAÇÃO (E-Agent-Fase-D2/D3) =====
 export * from './IImportDANFeUseCase';
 export * from './IImportDACTeUseCase';
+
+// ===== RAG LEGISLAÇÃO (E-Agent-Fase-D4) =====
+export * from './IIndexLegislationUseCase';
+export * from './IQueryLegislationUseCase';

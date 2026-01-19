@@ -83,4 +83,12 @@ export const TOKENS = {
   DoclingClient: Symbol('DoclingClient'),
   ImportDANFeUseCase: Symbol('ImportDANFeUseCase'),
   ImportDACTeUseCase: Symbol('ImportDACTeUseCase'),
+
+  // RAG System - E-Agent-Fase-D4
+  Embedder: Symbol('Embedder'),
+  VectorStore: Symbol('VectorStore'),
+  AnswerGenerator: Symbol('AnswerGenerator'),
+  LegislationRAG: Symbol('LegislationRAG'),
+  IndexLegislationUseCase: Symbol('IndexLegislationUseCase'),
+  QueryLegislationUseCase: Symbol('QueryLegislationUseCase'),
 } as const;

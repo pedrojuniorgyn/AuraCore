@@ -1,0 +1,27 @@
+{
+  "epic": "E9.3",
+  "corrections": [
+    {
+      "id": "LC-335685",
+      "date": "2026-01-19",
+      "epic": "E9.3",
+      "error": "APIs não filtravam por branchId (REPO-005) e deletedAt IS NULL (REPO-006) violando regras de multi-tenancy e soft delete. TenantContext não tinha branchId obrigatório.",
+      "correction": "Adicionado branchId ao TenantContext. Corrigidas 10 APIs para filtrar por branchId + deletedAt IS NULL em queries e incluir branchId em inserts.",
+      "files_affected": [
+        "src/lib/auth/context.ts",
+        "src/app/api/financial/bank-transactions/route.ts",
+        "src/app/api/fleet/fuel/route.ts",
+        "src/app/api/fleet/drivers/route.ts",
+        "src/app/api/fleet/vehicles/route.ts",
+        "src/app/api/products/route.ts",
+        "src/app/api/financial/cost-centers/route.ts",
+        "src/app/api/fiscal/settings/route.ts",
+        "src/app/api/fleet/maintenance/work-orders/route.ts",
+        "src/app/api/financial/remittances/generate/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

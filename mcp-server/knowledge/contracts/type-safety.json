@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.18",
+  "version": "2.0.21",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -422,6 +422,55 @@
         "drizzle/migrations/*"
       ],
       "pattern_created": "P-MIGRATION-003",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-335685",
+      "date": "2026-01-19",
+      "epic": "E9.3",
+      "error": "APIs não filtravam por branchId (REPO-005) e deletedAt IS NULL (REPO-006) violando regras de multi-tenancy e soft delete. TenantContext não tinha branchId obrigatório.",
+      "correction": "Adicionado branchId ao TenantContext. Corrigidas 10 APIs para filtrar por branchId + deletedAt IS NULL em queries e incluir branchId em inserts.",
+      "files_affected": [
+        "src/lib/auth/context.ts",
+        "src/app/api/financial/bank-transactions/route.ts",
+        "src/app/api/fleet/fuel/route.ts",
+        "src/app/api/fleet/drivers/route.ts",
+        "src/app/api/fleet/vehicles/route.ts",
+        "src/app/api/products/route.ts",
+        "src/app/api/financial/cost-centers/route.ts",
+        "src/app/api/fiscal/settings/route.ts",
+        "src/app/api/fleet/maintenance/work-orders/route.ts",
+        "src/app/api/financial/remittances/generate/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-509306",
+      "date": "2026-01-19",
+      "epic": "E10-F2",
+      "error": "1) DrizzleStrategicGoalRepository implementava métodos não definidos na interface (violação ARCH-011). 2) Código morto em [id]/route.ts verificando /activate que já é tratado em arquivo dedicado.",
+      "correction": "1) Adicionados métodos findByCascadeLevel e findRootGoals na interface IStrategicGoalRepository. 2) Removido código duplicado de /activate em [id]/route.ts.",
+      "files_affected": [
+        "src/modules/strategic/domain/ports/output/IStrategicGoalRepository.ts",
+        "src/app/api/strategic/strategies/[id]/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-628225",
+      "date": "2026-01-19",
+      "epic": "E10-F4",
+      "error": "SyncKPIValuesUseCase tinha Map<string, IKPIDataSource> que nunca era populado. O método registerDataSource() existia mas nunca era chamado, causando 100% de falha em sincronizações automáticas de KPI com erro 'Fonte de dados não registrada'.",
+      "correction": "Injetados FinancialKPIDataSource e TMSKPIDataSource via constructor usando DI (@inject). Map inicializado no constructor com os DataSources injetados usando moduleName como chave. Método registerDataSource() removido.",
+      "files_affected": [
+        "src/modules/strategic/application/commands/SyncKPIValuesUseCase.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

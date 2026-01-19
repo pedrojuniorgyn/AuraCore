@@ -6,34 +6,34 @@
  */
 
 // Process & Quality Contracts
-import verifyBeforeCode from './verify-before-code.json';
-import codeConsistency from './code-consistency.json';
-import typeSafety from './type-safety.json';
-import mcpEnforcementRules from './mcp-enforcement-rules.json';
-import knownBugsRegistry from './known-bugs-registry.json';
-import smpMethodology from './smp-methodology.json';
-import lessonLearned from './lesson-learned.json';
-import enforcementProtocol from './enforcement-protocol.json';
+import verifyBeforeCode from './verify-before-code.json' with { type: 'json' };
+import codeConsistency from './code-consistency.json' with { type: 'json' };
+import typeSafety from './type-safety.json' with { type: 'json' };
+import mcpEnforcementRules from './mcp-enforcement-rules.json' with { type: 'json' };
+import knownBugsRegistry from './known-bugs-registry.json' with { type: 'json' };
+import smpMethodology from './smp-methodology.json' with { type: 'json' };
+import lessonLearned from './lesson-learned.json' with { type: 'json' };
+import enforcementProtocol from './enforcement-protocol.json' with { type: 'json' };
 
 // Architecture Contracts
-import architectureLayers from './architecture-layers.json';
-import infrastructureLayer from './infrastructure-layer.json';
+import architectureLayers from './architecture-layers.json' with { type: 'json' };
+import infrastructureLayer from './infrastructure-layer.json' with { type: 'json' };
 
 // Domain Pattern Contracts
-import entityPattern from './entity-pattern.json';
-import valueObjectPattern from './value-object-pattern.json';
-import aggregatePattern from './aggregate-pattern.json';
-import domainServicePattern from './domain-service-pattern.json';
+import entityPattern from './entity-pattern.json' with { type: 'json' };
+import valueObjectPattern from './value-object-pattern.json' with { type: 'json' };
+import aggregatePattern from './aggregate-pattern.json' with { type: 'json' };
+import domainServicePattern from './domain-service-pattern.json' with { type: 'json' };
 
 // Application Pattern Contracts
-import useCasePattern from './use-case-pattern.json';
-import dtoPattern from './dto-pattern.json';
+import useCasePattern from './use-case-pattern.json' with { type: 'json' };
+import dtoPattern from './dto-pattern.json' with { type: 'json' };
 
 // Infrastructure Pattern Contracts
-import repositoryPattern from './repository-pattern.json';
-import mapperPattern from './mapper-pattern.json';
-import validatorPattern from './validator-pattern.json';
-import schemaPattern from './schema-pattern.json';
+import repositoryPattern from './repository-pattern.json' with { type: 'json' };
+import mapperPattern from './mapper-pattern.json' with { type: 'json' };
+import validatorPattern from './validator-pattern.json' with { type: 'json' };
+import schemaPattern from './schema-pattern.json' with { type: 'json' };
 
 export const contracts = {
   // Process & Quality (consultar ANTES de codificar)

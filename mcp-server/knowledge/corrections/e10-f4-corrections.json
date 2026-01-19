@@ -1,0 +1,18 @@
+{
+  "epic": "E10-F4",
+  "corrections": [
+    {
+      "id": "LC-628225",
+      "date": "2026-01-19",
+      "epic": "E10-F4",
+      "error": "SyncKPIValuesUseCase tinha Map<string, IKPIDataSource> que nunca era populado. O método registerDataSource() existia mas nunca era chamado, causando 100% de falha em sincronizações automáticas de KPI com erro 'Fonte de dados não registrada'.",
+      "correction": "Injetados FinancialKPIDataSource e TMSKPIDataSource via constructor usando DI (@inject). Map inicializado no constructor com os DataSources injetados usando moduleName como chave. Método registerDataSource() removido.",
+      "files_affected": [
+        "src/modules/strategic/application/commands/SyncKPIValuesUseCase.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
