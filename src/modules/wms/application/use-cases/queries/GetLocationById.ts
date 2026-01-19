@@ -1,4 +1,4 @@
-import { injectable, inject } from 'tsyringe';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
 import type { IGetLocationById, GetLocationByIdInput, GetLocationByIdOutput } from '@/modules/wms/domain/ports/input';

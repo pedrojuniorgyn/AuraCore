@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { auth } from "@/lib/auth";
 import { Result } from "@/shared/domain";
 import { TOKENS } from '@/shared/infrastructure/di/tokens';

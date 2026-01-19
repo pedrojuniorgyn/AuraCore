@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 import { BankSlip } from '../../../domain/value-objects/BankSlip';

@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { ReceiptType } from '../../domain/value-objects/receipt/ReceiptType';
 import { IReceiptNumberGenerator } from '../../domain/services/IReceiptNumberGenerator';

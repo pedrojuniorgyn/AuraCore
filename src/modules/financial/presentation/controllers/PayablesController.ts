@@ -1,4 +1,4 @@
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';

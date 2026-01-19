@@ -1,4 +1,4 @@
-import { injectable, inject } from 'tsyringe';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IMovementRepository } from '@/modules/wms/domain/ports/IMovementRepository';
 import type { IGetMovementById, GetMovementByIdInput, GetMovementByIdOutput } from '@/modules/wms/domain/ports/input';

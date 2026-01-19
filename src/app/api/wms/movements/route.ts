@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { ListMovements } from '@/modules/wms/application/use-cases/queries/ListMovements';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';

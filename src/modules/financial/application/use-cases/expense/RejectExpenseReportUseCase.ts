@@ -1,4 +1,4 @@
-import { injectable, inject } from 'tsyringe';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IExpenseReportRepository } from '../../../domain/ports/output/IExpenseReportRepository';
 import type {

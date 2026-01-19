@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { eq, and, gte, lte, like, inArray, isNull, sql, desc, asc } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';

@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { auth } from '@/lib/auth';
 import { getTenantContext } from '@/lib/auth/context';
 import { Result } from '@/shared/domain';

@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import type { IUuidGenerator } from '../../domain/ports/IUuidGenerator';
 
 /**

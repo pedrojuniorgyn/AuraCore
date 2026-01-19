@@ -1,4 +1,4 @@
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 
 // Repositories

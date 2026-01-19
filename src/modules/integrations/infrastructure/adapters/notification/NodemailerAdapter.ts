@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import nodemailer, { Transporter } from 'nodemailer';
 import { Result } from '@/shared/domain';
 import type {

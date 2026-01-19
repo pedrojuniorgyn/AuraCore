@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.10",
+  "version": "2.0.15",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -317,6 +317,86 @@
         "src/shared/infrastructure/di/tokens.ts"
       ],
       "pattern_created": "P-MULTITENANCY-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-116299",
+      "date": "2026-01-19",
+      "epic": "E-Agent-Fase6",
+      "error": "Bug 1: Paginação ineficiente no listSessions - buscava todas as sessões e fazia slice em memória. Bug 2: Bypass de multi-tenancy no getMessages - não validava se a sessão pertencia ao tenant. Bug 3: Stale closure no useAgentChat - loadSession não estava memoizada com useCallback.",
+      "correction": "Bug 1: Implementado OFFSET/FETCH NEXT no SQL com COUNT separado para paginação correta. Bug 2: Adicionado organizationId e branchId como parâmetros obrigatórios em getMessages com verificação prévia de pertencimento ao tenant. Bug 3: Memoizado loadSession com useCallback e adicionado às dependências do useEffect.",
+      "files_affected": [
+        "src/agent/persistence/SessionStore.ts",
+        "src/app/api/agent/sessions/[sessionId]/route.ts",
+        "src/hooks/useAgentChat.ts"
+      ],
+      "pattern_created": "P-SEC-001: Multi-tenancy obrigatório em getMessages, P-PERF-001: Paginação no SQL, P-REACT-001: useCallback para funções em useEffect",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-306581",
+      "date": "2026-01-19",
+      "epic": "E-Agent-Fase6",
+      "error": "Bug 1: Paginação ineficiente no listSessions - buscava todas as sessões e fazia slice em memória. Bug 2: Bypass de multi-tenancy no getMessages - não validava se a sessão pertencia ao tenant. Bug 3: Stale closure no useAgentChat - loadSession não estava memoizada com useCallback.",
+      "correction": "Bug 1: Implementado OFFSET/FETCH NEXT no SQL com COUNT separado para paginação correta. Bug 2: Adicionado organizationId e branchId como parâmetros obrigatórios em getMessages com verificação prévia de pertencimento ao tenant. Bug 3: Memoizado loadSession com useCallback e adicionado às dependências do useEffect.",
+      "files_affected": [
+        "src/agent/persistence/SessionStore.ts",
+        "src/app/api/agent/sessions/[sessionId]/route.ts",
+        "src/hooks/useAgentChat.ts"
+      ],
+      "pattern_created": "P-SEC-001: Multi-tenancy obrigatório em getMessages, P-PERF-001: Paginação no SQL, P-REACT-001: useCallback para funções em useEffect",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-366609",
+      "date": "2026-01-19",
+      "epic": "E7.27",
+      "error": "Interfaces IJournalEntryRepository duplicadas com propósitos diferentes causando confusão arquitetural. A interface legada (ports/IJournalEntryRepository.ts) era para contabilização fiscal enquanto a DDD (ports/output/IJournalEntryRepository.ts) era para CRUD de Entity.",
+      "correction": "Renomeou interface legada para IFiscalAccountingRepository, criou implementação DDD real do IJournalEntryRepository, atualizou DI para registrar ambos corretamente, atualizou todos os imports e consumidores.",
+      "files_affected": [
+        "src/modules/accounting/domain/ports/IFiscalAccountingRepository.ts",
+        "src/modules/accounting/domain/ports/index.ts",
+        "src/modules/accounting/infrastructure/persistence/DrizzleFiscalAccountingRepository.ts",
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts",
+        "src/modules/accounting/infrastructure/di/AccountingModule.ts",
+        "src/modules/accounting/application/use-cases/GenerateJournalEntryUseCase.ts",
+        "src/shared/infrastructure/di/tokens.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-094913",
+      "date": "2026-01-19",
+      "epic": "D1",
+      "error": "Bug no DoclingClient.fetchWithRetry: quando erro 5xx na última tentativa de retry, o código não retornava Result.fail() e tentava fazer response.json() novamente, causando erro 'Cannot read properties of undefined'",
+      "correction": "Adicionado return Result.fail(lastError) após verificar que é a última tentativa em caso de erro 5xx, garantindo que o fluxo não continue para response.json() após erro",
+      "files_affected": [
+        "src/shared/infrastructure/docling/DoclingClient.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-257847",
+      "date": "2026-01-19",
+      "epic": "D1",
+      "error": "Build falhando no Coolify: tsyringe requires a reflect polyfill. Os arquivos importavam diretamente de 'tsyringe' sem garantir que reflect-metadata fosse carregado primeiro. Isso causava erro durante npm run build no Next.js 16 com Turbopack.",
+      "correction": "1) Expandido container.ts para re-exportar injectable, inject, singleton, etc do tsyringe após importar reflect-metadata. 2) Alterados 106 arquivos para importar de '@/shared/infrastructure/di/container' em vez de 'tsyringe'. Isso garante que reflect-metadata seja sempre carregado primeiro.",
+      "files_affected": [
+        "src/shared/infrastructure/di/container.ts",
+        "src/app/api/**/*.ts (24 rotas)",
+        "src/modules/**/use-cases/*.ts (50+ arquivos)",
+        "src/modules/**/di/*.ts (7 módulos)",
+        "src/modules/**/persistence/*.ts (10 repositórios)",
+        "src/modules/**/adapters/*.ts (8 adapters)"
+      ],
+      "pattern_created": "P-DI-001: Import tsyringe from container",
       "status": "APPROVED",
       "must_not_repeat": true
     }

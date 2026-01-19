@@ -1,0 +1,18 @@
+{
+  "epic": "E-Agent-Fase4",
+  "corrections": [
+    {
+      "id": "LC-165549",
+      "date": "2026-01-18",
+      "epic": "E-Agent-Fase4",
+      "error": "Mutação direta do estado em nodos do workflow LangGraph - state.status = 'fetching' e state.errors.push() dentro de funções de nodo, violando o padrão de funções puras",
+      "correction": "Removidas mutações diretas do parâmetro state. Agora todas as mudanças são retornadas via Partial<State> ou aplicadas via applyResult(). Logs usam spread operator [...state.logs, newLog]",
+      "files_affected": [
+        "src/agent/workflows/BankReconciliationWorkflow.ts"
+      ],
+      "pattern_created": "P-WORKFLOW-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

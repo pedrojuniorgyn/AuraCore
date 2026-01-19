@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { RegisterStockEntry } from '@/modules/wms/application/use-cases/RegisterStockEntry';
 import { RegisterStockEntrySchema } from '@/modules/wms/application/dtos/RegisterStockEntryDTO';
 import { getTenantContext } from '@/lib/auth/context';

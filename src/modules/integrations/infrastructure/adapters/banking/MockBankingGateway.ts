@@ -3,7 +3,7 @@
  * E7.9 Integrações - Semana 1
  */
 
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IBankingGateway } from '../../../domain/ports/output/IBankingGateway';
 import { Money } from '@/shared/domain/value-objects/Money';

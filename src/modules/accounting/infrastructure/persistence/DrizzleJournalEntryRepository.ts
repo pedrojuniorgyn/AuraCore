@@ -8,7 +8,7 @@
  * @see IJournalEntryRepository (ports/output/)
  */
 
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { eq, and, isNull, sql, desc, asc, or, like } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { queryWithLimit } from '@/lib/db/query-helpers';

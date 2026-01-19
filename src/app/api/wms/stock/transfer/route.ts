@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { TransferStock } from '@/modules/wms/application/use-cases/TransferStock';
 import { TransferStockSchema } from '@/modules/wms/application/dtos/TransferStockDTO';
 import { getTenantContext } from '@/lib/auth/context';

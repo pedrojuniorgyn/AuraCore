@@ -1,4 +1,4 @@
-import { inject, injectable} from 'tsyringe';
+import { inject, injectable} from '@/shared/infrastructure/di/container';
 import type { IStockRepository } from '../../domain/ports/IStockRepository';
 import type { IMovementRepository } from '../../domain/ports/IMovementRepository';
 import type { IInventoryCountRepository } from '../../domain/ports/IInventoryCountRepository';

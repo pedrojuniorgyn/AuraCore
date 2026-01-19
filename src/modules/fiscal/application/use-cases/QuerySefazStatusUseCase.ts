@@ -1,4 +1,4 @@
-import { inject, injectable } from 'tsyringe';
+import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { ISefazService } from '../../domain/ports/output/ISefazService';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';

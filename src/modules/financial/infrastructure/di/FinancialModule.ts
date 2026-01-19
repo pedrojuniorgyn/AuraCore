@@ -7,7 +7,7 @@
  * Atualizado: E7.22.2 P3 - Migração para DI container com tsyringe
  */
 
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { DrizzleFinancialTitleRepository } from "../persistence/DrizzleFinancialTitleRepository";
 import { FinancialTitleGenerator } from "../../domain/services/FinancialTitleGenerator";

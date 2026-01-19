@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'crypto';
-import { inject, injectable } from 'tsyringe';
+import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type {
   IGenerateSpedFiscal,

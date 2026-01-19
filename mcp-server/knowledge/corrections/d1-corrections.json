@@ -13,6 +13,24 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-257847",
+      "date": "2026-01-19",
+      "epic": "D1",
+      "error": "Build falhando no Coolify: tsyringe requires a reflect polyfill. Os arquivos importavam diretamente de 'tsyringe' sem garantir que reflect-metadata fosse carregado primeiro. Isso causava erro durante npm run build no Next.js 16 com Turbopack.",
+      "correction": "1) Expandido container.ts para re-exportar injectable, inject, singleton, etc do tsyringe após importar reflect-metadata. 2) Alterados 106 arquivos para importar de '@/shared/infrastructure/di/container' em vez de 'tsyringe'. Isso garante que reflect-metadata seja sempre carregado primeiro.",
+      "files_affected": [
+        "src/shared/infrastructure/di/container.ts",
+        "src/app/api/**/*.ts (24 rotas)",
+        "src/modules/**/use-cases/*.ts (50+ arquivos)",
+        "src/modules/**/di/*.ts (7 módulos)",
+        "src/modules/**/persistence/*.ts (10 repositórios)",
+        "src/modules/**/adapters/*.ts (8 adapters)"
+      ],
+      "pattern_created": "P-DI-001: Import tsyringe from container",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

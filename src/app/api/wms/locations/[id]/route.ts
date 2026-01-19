@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { GetLocationById } from '@/modules/wms/application/use-cases/queries/GetLocationById';
 import { UpdateLocation } from '@/modules/wms/application/use-cases/UpdateLocation';
 import { DeleteLocation } from '@/modules/wms/application/use-cases/DeleteLocation';

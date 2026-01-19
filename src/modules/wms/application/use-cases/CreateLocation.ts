@@ -1,4 +1,4 @@
-import { inject, injectable } from 'tsyringe';
+import { inject, injectable } from '@/shared/infrastructure/di/container';
 import type { ILocationRepository } from '../../domain/ports/ILocationRepository';
 import type { ICreateLocation } from '../../domain/ports/input';
 import { Location } from '../../domain/entities/Location';

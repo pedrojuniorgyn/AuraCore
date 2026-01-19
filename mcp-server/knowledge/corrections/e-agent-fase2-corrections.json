@@ -1,0 +1,18 @@
+{
+  "epic": "E-Agent-Fase2",
+  "corrections": [
+    {
+      "id": "LC-844126",
+      "date": "2026-01-18",
+      "epic": "E-Agent-Fase2",
+      "error": "Promise aninhada no método executeTool - faltava await antes de tool.call(), causando retorno Promise&lt;Promise&lt;ToolResult&gt;&gt;",
+      "correction": "Adicionado await antes de tool.call(input, this.executionContext)",
+      "files_affected": [
+        "src/agent/core/AuraAgent.ts"
+      ],
+      "pattern_created": "P-ASYNC-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

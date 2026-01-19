@@ -1,4 +1,4 @@
-import { inject, injectable } from 'tsyringe';
+import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result, Money } from '@/shared/domain';
 import type { FiscalDocument } from '../../domain/entities/FiscalDocument';
 import type { IJournalEntryRepository } from '@/modules/accounting/domain/ports/output/IJournalEntryRepository';

@@ -1,0 +1,24 @@
+{
+  "epic": "E7.27",
+  "corrections": [
+    {
+      "id": "LC-366609",
+      "date": "2026-01-19",
+      "epic": "E7.27",
+      "error": "Interfaces IJournalEntryRepository duplicadas com propósitos diferentes causando confusão arquitetural. A interface legada (ports/IJournalEntryRepository.ts) era para contabilização fiscal enquanto a DDD (ports/output/IJournalEntryRepository.ts) era para CRUD de Entity.",
+      "correction": "Renomeou interface legada para IFiscalAccountingRepository, criou implementação DDD real do IJournalEntryRepository, atualizou DI para registrar ambos corretamente, atualizou todos os imports e consumidores.",
+      "files_affected": [
+        "src/modules/accounting/domain/ports/IFiscalAccountingRepository.ts",
+        "src/modules/accounting/domain/ports/index.ts",
+        "src/modules/accounting/infrastructure/persistence/DrizzleFiscalAccountingRepository.ts",
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts",
+        "src/modules/accounting/infrastructure/di/AccountingModule.ts",
+        "src/modules/accounting/application/use-cases/GenerateJournalEntryUseCase.ts",
+        "src/shared/infrastructure/di/tokens.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

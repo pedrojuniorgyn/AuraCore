@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { parse as parseOFX } from 'ofx-parser';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';

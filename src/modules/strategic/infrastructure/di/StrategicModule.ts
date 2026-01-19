@@ -4,7 +4,7 @@
  * 
  * @module strategic/infrastructure/di
  */
-// import { container } from 'tsyringe';
+// import { container } from '@/shared/infrastructure/di/container';
 // import { STRATEGIC_TOKENS } from './tokens';
 
 // Repositories (a serem implementados nas próximas fases)

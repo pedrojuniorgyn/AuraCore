@@ -1,4 +1,4 @@
-import { container } from 'tsyringe';
+import { container } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 
 // Repository
@@ -85,7 +85,7 @@ export function initializeFiscalSpedModule(): void {
  * const useCase = createGenerateSpedFiscalUseCase();
  * 
  * // ✅ Use isto
- * import { container } from 'tsyringe';
+ * import { container } from '@/shared/infrastructure/di/container';
  * import { TOKENS } from '@/shared/infrastructure/di/tokens';
  * const useCase = container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase);
  */

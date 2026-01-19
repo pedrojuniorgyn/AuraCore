@@ -8,7 +8,7 @@
  * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 
-import { injectable, inject } from 'tsyringe';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { z } from 'zod';
 import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';

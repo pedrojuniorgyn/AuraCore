@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable } from '@/shared/infrastructure/di/container';
 import { eq, and, inArray, gte, lte, or, like, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { Result } from '@/shared/domain';
