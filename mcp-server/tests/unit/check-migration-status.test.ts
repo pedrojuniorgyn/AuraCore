@@ -5,6 +5,29 @@ import { checkMigrationStatus } from '../../src/tools/check-migration-status.js'
 // Mock do fs
 vi.mock('fs');
 
+// Helper para criar Dirent mock (evita problemas de tipagem com Node.js 20+)
+function createDirent(name: string, isDir: boolean): fs.Dirent {
+  return {
+    name,
+    isDirectory: () => isDir,
+    isFile: () => !isDir,
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+    parentPath: '',
+    path: '',
+  } as fs.Dirent;
+}
+
+// Helper para mockar readdirSync de forma type-safe
+type ReaddirMockFn = (dir: fs.PathLike) => fs.Dirent[] | string[];
+function mockReaddirSync(fn: ReaddirMockFn): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockReaddirSync(fn as any);
+}
+
 describe('checkMigrationStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -39,26 +62,26 @@ describe('checkMigrationStatus', () => {
         );
       });
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.endsWith('modules')) {
           return [
-            { name: 'fiscal', isDirectory: () => true, isFile: () => false },
-            { name: 'wms', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('fiscal', true),
+            createDirent('wms', true),
+          ] ;
         }
 
         if (dirStr.includes('entities')) {
-          return ['FiscalDocument.ts', 'TaxEntry.ts'] as unknown as fs.Dirent[];
+          return ['FiscalDocument.ts', 'TaxEntry.ts'] ;
         }
 
         if (dirStr.includes('commands') || dirStr.includes('queries')) {
-          return ['CreateDocument.ts'] as unknown as fs.Dirent[];
+          return ['CreateDocument.ts'] ;
         }
 
         if (dirStr.includes('repositories')) {
-          return ['DrizzleFiscalRepository.ts'] as unknown as fs.Dirent[];
+          return ['DrizzleFiscalRepository.ts'] ;
         }
 
         return [];
@@ -77,30 +100,30 @@ describe('checkMigrationStatus', () => {
     it('deve calcular score DDD corretamente', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.endsWith('modules')) {
           return [
-            { name: 'accounting', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('accounting', true),
+          ] ;
         }
 
         // Módulo bem estruturado
         if (dirStr.includes('entities')) {
-          return ['JournalEntry.ts', 'AccountingLine.ts'] as unknown as fs.Dirent[];
+          return ['JournalEntry.ts', 'AccountingLine.ts'] ;
         }
 
         if (dirStr.includes('input')) {
-          return ['ICreateJournalEntry.ts'] as unknown as fs.Dirent[];
+          return ['ICreateJournalEntry.ts'] ;
         }
 
         if (dirStr.includes('output')) {
-          return ['IJournalEntryRepository.ts'] as unknown as fs.Dirent[];
+          return ['IJournalEntryRepository.ts'] ;
         }
 
         if (dirStr.includes('commands')) {
-          return ['CreateJournalEntryUseCase.ts'] as unknown as fs.Dirent[];
+          return ['CreateJournalEntryUseCase.ts'] ;
         }
 
         return [];
@@ -126,12 +149,12 @@ describe('checkMigrationStatus', () => {
         return pathStr.includes('modules') && !pathStr.includes('domain');
       });
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.endsWith('modules')) {
           return [
-            { name: 'broken', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('broken', true),
+          ] ;
         }
         return [];
       });
@@ -156,20 +179,20 @@ describe('checkMigrationStatus', () => {
         return pathStr.includes('services');
       });
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike, _options) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.endsWith('services')) {
           return [
-            { name: 'fiscal', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('fiscal', true),
+          ] ;
         }
 
         if (dirStr.includes('fiscal')) {
           return [
-            { name: 'tax-calculator.ts', isDirectory: () => false, isFile: () => true },
-            { name: 'sped-generator.ts', isDirectory: () => false, isFile: () => true },
-          ] as unknown as fs.Dirent[];
+            createDirent('tax-calculator.ts', false),
+            createDirent('sped-generator.ts', false),
+          ] ;
         }
 
         return [];
@@ -195,14 +218,14 @@ export function calculate(): number {
         return pathStr.includes('services');
       });
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.endsWith('services')) {
           return [
-            { name: 'sped-fiscal-generator.ts', isDirectory: () => false, isFile: () => true },
-            { name: 'simple-helper.ts', isDirectory: () => false, isFile: () => true },
-          ] as unknown as fs.Dirent[];
+            createDirent('sped-fiscal-generator.ts', false),
+            createDirent('simple-helper.ts', false),
+          ] ;
         }
 
         return [];
@@ -233,17 +256,17 @@ export function calculate(): number {
     it('deve sugerir módulo correto para migração', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.endsWith('services')) {
           return [
-            { name: 'accounting', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('accounting', true),
+          ] ;
         }
         if (dirStr.includes('accounting')) {
           return [
-            { name: 'journal-entry.ts', isDirectory: () => false, isFile: () => true },
-          ] as unknown as fs.Dirent[];
+            createDirent('journal-entry.ts', false),
+          ] ;
         }
         return [];
       });
@@ -264,28 +287,28 @@ export function calculate(): number {
     it('deve calcular progresso de migração', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.endsWith('modules')) {
           return [
-            { name: 'migrated', isDirectory: () => true, isFile: () => false },
-            { name: 'partial', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('migrated', true),
+            createDirent('partial', true),
+          ] ;
         }
 
         // Módulo migrado = tem tudo
         if (dirStr.includes('migrated/domain/entities')) {
-          return ['Entity.ts'] as unknown as fs.Dirent[];
+          return ['Entity.ts'] ;
         }
         if (dirStr.includes('migrated/domain/ports/input')) {
-          return ['IUseCase.ts'] as unknown as fs.Dirent[];
+          return ['IUseCase.ts'] ;
         }
         if (dirStr.includes('migrated/domain/ports/output')) {
-          return ['IRepository.ts'] as unknown as fs.Dirent[];
+          return ['IRepository.ts'] ;
         }
         if (dirStr.includes('migrated/application/commands')) {
-          return ['UseCase.ts'] as unknown as fs.Dirent[];
+          return ['UseCase.ts'] ;
         }
 
         return [];
@@ -304,13 +327,13 @@ export function calculate(): number {
     it('deve estimar esforço restante', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.endsWith('services')) {
           return [
-            { name: 'service1.ts', isDirectory: () => false, isFile: () => true },
-            { name: 'service2.ts', isDirectory: () => false, isFile: () => true },
-          ] as unknown as fs.Dirent[];
+            createDirent('service1.ts', false),
+            createDirent('service2.ts', false),
+          ] ;
         }
         return [];
       });
@@ -331,12 +354,12 @@ export function calculate(): number {
     it('deve gerar recomendações prioritizadas', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.endsWith('services')) {
           return [
-            { name: 'sped-generator.ts', isDirectory: () => false, isFile: () => true },
-          ] as unknown as fs.Dirent[];
+            createDirent('sped-generator.ts', false),
+          ] ;
         }
         return [];
       });
@@ -361,18 +384,18 @@ export function calculate(): number {
     it('deve gerar timeline com fases', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.endsWith('services')) {
           return [
-            { name: 'fiscal', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('fiscal', true),
+          ] ;
         }
         if (dirStr.includes('fiscal')) {
           return [
-            { name: 'sped-fiscal.ts', isDirectory: () => false, isFile: () => true },
-            { name: 'nfe-processor.ts', isDirectory: () => false, isFile: () => true },
-          ] as unknown as fs.Dirent[];
+            createDirent('sped-fiscal.ts', false),
+            createDirent('nfe-processor.ts', false),
+          ] ;
         }
         return [];
       });
@@ -394,15 +417,15 @@ export function calculate(): number {
     it('deve calcular métricas quando includeMetrics=true', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.endsWith('modules')) {
           return [
-            { name: 'test', isDirectory: () => true, isFile: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('test', true),
+          ] ;
         }
         if (dirStr.includes('entities')) {
-          return ['Entity.ts'] as unknown as fs.Dirent[];
+          return ['Entity.ts'] ;
         }
         return [];
       });

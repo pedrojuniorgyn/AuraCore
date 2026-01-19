@@ -156,7 +156,7 @@ export async function checkMigrationStatus(
 // ANÁLISE DE MÓDULOS DDD
 // ============================================================================
 
-async function analyzeModules(_verbose: boolean): Promise<ModuleStatus[]> {
+async function analyzeModules(verbose: boolean): Promise<ModuleStatus[]> {
   const modulesPath = path.join(process.cwd(), DDD_MODULES_PATH);
   const modules: ModuleStatus[] = [];
 

@@ -4,6 +4,29 @@ import { generateModuleDocs } from '../../src/tools/generate-module-docs.js';
 
 // Mock do fs
 vi.mock('fs');
+
+// Helper para criar Dirent mock (evita problemas de tipagem com Node.js 20+)
+function createDirent(name: string, isDir: boolean): fs.Dirent {
+  return {
+    name,
+    isDirectory: () => isDir,
+    isFile: () => !isDir,
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+    parentPath: '',
+    path: '',
+  } as fs.Dirent;
+}
+
+// Helper para mockar readdirSync de forma type-safe
+type ReaddirMockFn = (dir: fs.PathLike) => fs.Dirent[] | string[];
+function mockReaddirSync(fn: ReaddirMockFn): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockReaddirSync(fn as any);
+}
 vi.mock('path', async () => {
   const actual = await vi.importActual<typeof import('path')>('path');
   return {
@@ -110,27 +133,27 @@ describe('generateModuleDocs', () => {
         );
       });
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.endsWith('entities') || dirStr.includes('/entities')) {
           return [
-            { name: 'FiscalDocument.ts', isFile: () => true, isDirectory: () => false },
-            { name: 'TaxEntry.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('FiscalDocument.ts', false),
+            createDirent('TaxEntry.ts', false),
+          ] ;
         }
 
         if (dirStr.includes('ports/output')) {
           return [
-            { name: 'IFiscalDocumentRepository.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('IFiscalDocumentRepository.ts', false),
+          ] ;
         }
 
         if (dirStr.endsWith('use-cases') || dirStr.includes('/use-cases')) {
           return [
-            { name: 'CreateFiscalDocumentUseCase.ts', isFile: () => true, isDirectory: () => false },
-            { name: 'CalculateTaxesUseCase.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('CreateFiscalDocumentUseCase.ts', false),
+            createDirent('CalculateTaxesUseCase.ts', false),
+          ] ;
         }
 
         return [];
@@ -279,17 +302,17 @@ export class CalculateTaxesUseCase {}
   describe('diagramas Mermaid', () => {
     beforeEach(() => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('entities')) {
           return [
-            { name: 'Order.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('Order.ts', false),
+          ] ;
         }
         if (dirStr.includes('use-cases')) {
           return [
-            { name: 'CreateOrderUseCase.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('CreateOrderUseCase.ts', false),
+          ] ;
         }
         return [];
       });
@@ -407,7 +430,7 @@ export class CreateOrderUseCase {}
         return pathStr.includes('modules/fiscal') || pathStr.includes('app/api/fiscal');
       });
 
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         
         // Evitar recursão infinita
@@ -418,8 +441,8 @@ export class CreateOrderUseCase {}
 
         if (dirStr.endsWith('api/fiscal')) {
           return [
-            { name: 'route.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('route.ts', false),
+          ] ;
         }
         return [];
       });

@@ -778,7 +778,7 @@ function findAffectedFiles(_servicePath: string): string[] {
 
 function generateBreakingChanges(
   analysis: AnalysisResult,
-  _servicePath: string,
+  servicePath: string,
   affectedFiles: string[]
 ): BreakingChange[] {
   const breakingChanges: BreakingChange[] = [];

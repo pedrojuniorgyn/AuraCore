@@ -5,6 +5,29 @@ import { analyzeModuleDependencies } from '../../src/tools/analyze-module-depend
 
 // Mock do fs
 vi.mock('fs');
+
+// Helper para criar Dirent mock (evita problemas de tipagem com Node.js 20+)
+function createDirent(name: string, isDir: boolean): fs.Dirent {
+  return {
+    name,
+    isDirectory: () => isDir,
+    isFile: () => !isDir,
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+    parentPath: '',
+    path: '',
+  } as fs.Dirent;
+}
+
+// Helper para mockar readdirSync de forma type-safe
+type ReaddirMockFn = (dir: fs.PathLike) => fs.Dirent[] | string[];
+function mockReaddirSync(fn: ReaddirMockFn): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockReaddirSync(fn as any);
+}
 vi.mock('path', async () => {
   const actual = await vi.importActual<typeof import('path')>('path');
   return {
@@ -95,25 +118,25 @@ describe('analyzeModuleDependencies', () => {
       });
 
       // Estrutura de diretórios
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
 
         if (dirStr.includes('domain')) {
           return [
-            { name: 'FiscalDocument.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('FiscalDocument.ts', false),
+          ] ;
         }
 
         if (dirStr.includes('application')) {
           return [
-            { name: 'CreateFiscalDocumentUseCase.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('CreateFiscalDocumentUseCase.ts', false),
+          ] ;
         }
 
         if (dirStr.includes('infrastructure')) {
           return [
-            { name: 'DrizzleFiscalRepository.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('DrizzleFiscalRepository.ts', false),
+          ] ;
         }
 
         return [];
@@ -209,12 +232,12 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
     });
 
     it('deve detectar ARCH-001: Domain importando de Application', async () => {
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('domain')) {
           return [
-            { name: 'BadEntity.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('BadEntity.ts', false),
+          ] ;
         }
         return [];
       });
@@ -239,12 +262,12 @@ export class BadEntity {}
     });
 
     it('deve detectar ARCH-002: Domain importando de Infrastructure', async () => {
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('domain')) {
           return [
-            { name: 'BadEntity.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('BadEntity.ts', false),
+          ] ;
         }
         return [];
       });
@@ -267,12 +290,12 @@ export class BadEntity {}
     });
 
     it('deve detectar ARCH-003: Domain importando bibliotecas externas', async () => {
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('domain')) {
           return [
-            { name: 'BadEntity.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('BadEntity.ts', false),
+          ] ;
         }
         return [];
       });
@@ -295,12 +318,12 @@ export class BadEntity {}
     });
 
     it('deve detectar ARCH-004: Domain importando módulos Node.js', async () => {
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('domain')) {
           return [
-            { name: 'BadEntity.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('BadEntity.ts', false),
+          ] ;
         }
         return [];
       });
@@ -326,12 +349,12 @@ export class BadEntity {}
   describe('dependências externas', () => {
     beforeEach(() => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('infrastructure')) {
           return [
-            { name: 'Repository.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('Repository.ts', false),
+          ] ;
         }
         return [];
       });
@@ -373,14 +396,14 @@ export class Repository {}
     });
 
     it('deve retornar score menor quando há violações', async () => {
-      vi.mocked(fs.readdirSync).mockImplementation((dir: fs.PathLike) => {
+      mockReaddirSync((dir: fs.PathLike) => {
         const dirStr = String(dir);
         if (dirStr.includes('domain')) {
           return [
-            { name: 'Entity1.ts', isFile: () => true, isDirectory: () => false },
-            { name: 'Entity2.ts', isFile: () => true, isDirectory: () => false },
-            { name: 'Entity3.ts', isFile: () => true, isDirectory: () => false },
-          ] as unknown as fs.Dirent[];
+            createDirent('Entity1.ts', false),
+            createDirent('Entity2.ts', false),
+            createDirent('Entity3.ts', false),
+          ] ;
         }
         return [];
       });
