@@ -91,4 +91,7 @@ export const TOKENS = {
   LegislationRAG: Symbol('LegislationRAG'),
   IndexLegislationUseCase: Symbol('IndexLegislationUseCase'),
   QueryLegislationUseCase: Symbol('QueryLegislationUseCase'),
+
+  // Contracts Module - E-Agent-Fase-D5
+  AnalyzeFreightContractUseCase: Symbol('AnalyzeFreightContractUseCase'),
 } as const;

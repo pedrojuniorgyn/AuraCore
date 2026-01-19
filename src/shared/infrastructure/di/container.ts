@@ -33,6 +33,10 @@ container.register(TOKENS.LegislationRAG, { useClass: LegislationRAG });
 container.register(TOKENS.IndexLegislationUseCase, { useClass: IndexLegislationUseCase });
 container.register(TOKENS.QueryLegislationUseCase, { useClass: QueryLegislationUseCase });
 
+// Contracts Module (E-Agent-Fase-D5)
+import { AnalyzeFreightContractUseCase } from '@/modules/contracts/application/commands/analyze-freight-contract';
+container.register(TOKENS.AnalyzeFreightContractUseCase, { useClass: AnalyzeFreightContractUseCase });
+
 // Strategic Module (E10)
 registerStrategicModule();
 
