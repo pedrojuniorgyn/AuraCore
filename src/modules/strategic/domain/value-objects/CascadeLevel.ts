@@ -70,6 +70,18 @@ export class CascadeLevel extends ValueObject<CascadeLevelProps> {
   }
 
   /**
+   * Obtém o nível filho (para cascateamento)
+   * Retorna Result para tratamento de erro quando não há nível abaixo
+   */
+  getChildLevel(): Result<CascadeLevel, string> {
+    const nextLevel = this.next();
+    if (!nextLevel) {
+      return Result.fail(`Nível ${this.value} não pode ser cascateado (é o último nível)`);
+    }
+    return Result.ok(nextLevel);
+  }
+
+  /**
    * Obtém o nível anterior na hierarquia
    */
   previous(): CascadeLevel | null {

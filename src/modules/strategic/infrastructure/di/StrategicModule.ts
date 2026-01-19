@@ -18,6 +18,8 @@ import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIde
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
 import { ActivateStrategyUseCase } from '../../application/commands/ActivateStrategyUseCase';
 import { CreateStrategicGoalUseCase } from '../../application/commands/CreateStrategicGoalUseCase';
+import { CascadeGoalUseCase } from '../../application/commands/CascadeGoalUseCase';
+import { UpdateGoalProgressUseCase } from '../../application/commands/UpdateGoalProgressUseCase';
 
 export function registerStrategicModule(): void {
   // Repositories - Fase F1 + F2
@@ -54,10 +56,19 @@ export function registerStrategicModule(): void {
     useClass: CreateStrategicGoalUseCase,
   });
   
-  // NOTA: Demais repositories e use cases serão registrados nas próximas fases (F3+)
+  // Use Cases - Commands (Fase F3)
+  container.register(STRATEGIC_TOKENS.CascadeGoalUseCase, {
+    useClass: CascadeGoalUseCase,
+  });
+  
+  container.register(STRATEGIC_TOKENS.UpdateGoalProgressUseCase, {
+    useClass: UpdateGoalProgressUseCase,
+  });
+  
+  // NOTA: Demais repositories e use cases serão registrados nas próximas fases (F4+)
   // - ActionPlanFollowUpRepository
   // - WarRoomMeetingRepository
   // - SwotAnalysisRepository
   
-  console.log('[Strategic Module] DI registrado: 5 repositories + 3 use cases');
+  console.log('[Strategic Module] DI registrado: 5 repositories + 5 use cases');
 }

@@ -19,3 +19,15 @@ export type {
   CreateStrategicGoalInput, 
   CreateStrategicGoalOutput 
 } from './ICreateStrategicGoalUseCase';
+
+export type { 
+  ICascadeGoalUseCase, 
+  CascadeGoalInput, 
+  CascadeGoalOutput 
+} from './ICascadeGoalUseCase';
+
+export type { 
+  IUpdateGoalProgressUseCase, 
+  UpdateGoalProgressInput, 
+  UpdateGoalProgressOutput 
+} from './IUpdateGoalProgressUseCase';
