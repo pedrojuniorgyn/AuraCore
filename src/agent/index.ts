@@ -32,3 +32,6 @@ export * from './voice';
 
 // Observability
 export * from './observability';
+
+// Persistence
+export * from './persistence';

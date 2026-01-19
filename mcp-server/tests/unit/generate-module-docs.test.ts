@@ -25,7 +25,7 @@ function createDirent(name: string, isDir: boolean): fs.Dirent {
 type ReaddirMockFn = (dir: fs.PathLike) => fs.Dirent[] | string[];
 function mockReaddirSync(fn: ReaddirMockFn): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockReaddirSync(fn as any);
+  vi.mocked(fs.readdirSync).mockImplementation(fn as any);
 }
 vi.mock('path', async () => {
   const actual = await vi.importActual<typeof import('path')>('path');
