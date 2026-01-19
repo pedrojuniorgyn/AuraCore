@@ -31,9 +31,13 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Run TypeScript Check
         run: npx tsc --noEmit
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
   # ═══════════════════════════════════════════════════════════
   # JOB 2: Unit Tests
@@ -89,6 +93,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
           SKIP_ENV_VALIDATION: true
           # Variáveis mínimas para build
           DATABASE_URL: "sqlserver://localhost:1433;database=test;trustServerCertificate=true"
