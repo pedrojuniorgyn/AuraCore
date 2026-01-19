@@ -7,3 +7,5 @@ export { GoalTreemap } from './GoalTreemap';
 export { CascadeTimeline } from './CascadeTimeline';
 export { KPIGaugeCard } from './KPIGaugeCard';
 export { KPIAlertList } from './KPIAlertList';
+export { GEROTDashboard } from './GEROTDashboard';
+export { FiveWhysForm } from './FiveWhysForm';
