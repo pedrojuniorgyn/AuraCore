@@ -32,20 +32,21 @@ export interface ISyncKPIValuesUseCase {
 
 @injectable()
 export class SyncKPIValuesUseCase implements ISyncKPIValuesUseCase {
-  private dataSources: Map<string, IKPIDataSource> = new Map();
+  private readonly dataSources: Map<string, IKPIDataSource>;
 
   constructor(
     @inject(STRATEGIC_TOKENS.KPIRepository)
-    private readonly kpiRepository: IKPIRepository
+    private readonly kpiRepository: IKPIRepository,
+    @inject(STRATEGIC_TOKENS.FinancialKPIAdapter)
+    financialDataSource: IKPIDataSource,
+    @inject(STRATEGIC_TOKENS.TMSKPIAdapter)
+    tmsDataSource: IKPIDataSource
   ) {
-    // Fontes de dados serão registradas via registerDataSource
-  }
-
-  /**
-   * Registra uma fonte de dados para KPIs automáticos
-   */
-  registerDataSource(source: IKPIDataSource): void {
-    this.dataSources.set(source.moduleName, source);
+    // Inicializar Map com DataSources injetados via DI
+    this.dataSources = new Map<string, IKPIDataSource>([
+      [financialDataSource.moduleName, financialDataSource],
+      [tmsDataSource.moduleName, tmsDataSource],
+    ]);
   }
 
   async execute(context: TenantContext): Promise<Result<SyncKPIValuesOutput, string>> {
@@ -123,8 +124,19 @@ export class SyncKPIValuesUseCase implements ISyncKPIValuesUseCase {
       // Guardar valor anterior
       const previousValue = kpi.currentValue;
 
-      // Atualizar valor
-      kpi.updateValue(dataPoint.value);
+      // Atualizar valor (verificar Result - REGRA: SEMPRE verificar Result.isFail())
+      const updateResult = kpi.updateValue(dataPoint.value);
+      if (Result.isFail(updateResult)) {
+        return {
+          kpiId: kpi.id,
+          code: kpi.code,
+          previousValue,
+          newValue: dataPoint.value,
+          status: 'ERROR',
+          error: updateResult.error,
+        };
+      }
+
       await this.kpiRepository.save(kpi);
 
       return {
