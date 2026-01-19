@@ -1,61 +1,69 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, ModuleRegistry, ICellRendererParams } from "ag-grid-community";
+import { ColDef, ModuleRegistry, ICellRendererParams, GridReadyEvent, type GridApi } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
-import { GradientText, NumberCounter } from "@/components/ui/magic-components";
+import { NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
-import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Download, Edit, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { auraTheme } from "@/lib/ag-grid/theme";
 
-interface Cte {
-  id: number;
-  cteNumber: number;
-  serie: string;
-  cteKey: string;
-  issueDate: string;
-  takerId: number;
-  serviceValue: string;
-  totalValue: string;
-  icmsValue: string;
-  status: string;
-  protocolNumber?: string;
-  rejectionMessage?: string;
-  // ✅ OPÇÃO A - BLOCO 4
-  cteOrigin?: string; // INTERNAL ou EXTERNAL
-  externalEmitter?: string;
+// SSRM Hook
+import { useSSRMDatasource } from "@/hooks/useSSRMDatasource";
+
+interface CteSummary {
+  total: number;
+  draft: number;
+  authorized: number;
+  rejected: number;
+  totalValue: number;
 }
 
 export default function CtePage() {
-  const router = useRouter();
   const gridRef = useRef<AgGridReact>(null);
-  const [ctes, setCtes] = useState<Cte[]>([]);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const [totalRows, setTotalRows] = useState(0);
+  
+  // KPIs (buscados separadamente)
+  const [stats, setStats] = useState<CteSummary>({
+    total: 0,
+    draft: 0,
+    authorized: 0,
+    rejected: 0,
+    totalValue: 0,
+  });
 
-  const handleEdit = (data: Cte) => {
-    router.push(`/fiscal/cte/editar/${data.id}`);
-  };
+  // SSRM Datasource Hook
+  const datasource = useSSRMDatasource({
+    endpoint: '/api/fiscal/cte/ssrm',
+    onError: (error) => toast.error(`Erro ao carregar dados: ${error.message}`),
+    onSuccess: (rowCount) => setTotalRows(rowCount),
+  });
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Tem certeza que deseja excluir este CTe?")) return;
+  // Buscar KPIs separadamente
+  const fetchKPIs = useCallback(async () => {
     try {
-      const res = await fetch(`/api/fiscal/cte/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
-      toast.success("Excluído com sucesso!");
-      fetchCtes();
-    } catch (error) { toast.error("Erro ao excluir"); }
-  };
+      const response = await fetch("/api/fiscal/cte/summary");
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error("Error fetching KPIs:", error);
+    }
+  }, []);
 
-  const columnDefs: ColDef[] = [
+
+  // Column Definitions - Campos correspondem ao retorno de /api/fiscal/cte/ssrm
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const columnDefs: ColDef[] = useMemo(() => [
     {
       field: "cteNumber",
       headerName: "Número",
@@ -69,88 +77,74 @@ export default function CtePage() {
       field: "serie",
       headerName: "Série",
       width: 80,
+      filter: "agTextColumnFilter",
     },
     {
-      field: "cteKey",
-      headerName: "Chave de Acesso",
+      field: "takerName",
+      headerName: "Tomador",
       width: 200,
       filter: "agTextColumnFilter",
-      cellRenderer: (params: ICellRendererParams) => (
-        <span className="font-mono text-xs">{params.value || "-"}</span>
-      ),
+    },
+    {
+      field: "originUf",
+      headerName: "UF Origem",
+      width: 100,
+      filter: "agSetColumnFilter",
+    },
+    {
+      field: "destinationUf",
+      headerName: "UF Destino",
+      width: 100,
+      filter: "agSetColumnFilter",
     },
     {
       field: "issueDate",
       headerName: "Emissão",
       width: 120,
+      filter: "agDateColumnFilter",
       cellRenderer: (params: ICellRendererParams) =>
-        params.value ? new Date(params.value).toLocaleDateString() : "-",
+        params.value ? new Date(params.value).toLocaleDateString('pt-BR') : "-",
     },
     {
       field: "serviceValue",
       headerName: "Valor Serviço",
-      width: 130,
+      width: 140,
+      filter: "agNumberColumnFilter",
       cellRenderer: (params: ICellRendererParams) => (
         <span className="font-semibold">
-          R$ {parseFloat(params.value || "0").toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      field: "icmsValue",
-      headerName: "ICMS",
-      width: 110,
-      cellRenderer: (params: ICellRendererParams) => (
-        <span className="text-red-600">
-          R$ {parseFloat(params.value || "0").toFixed(2)}
+          {params.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(params.value)) : 'R$ 0,00'}
         </span>
       ),
     },
     {
       field: "totalValue",
       headerName: "Total",
-      width: 130,
+      width: 140,
+      filter: "agNumberColumnFilter",
       cellRenderer: (params: ICellRendererParams) => (
-        <span className="font-bold text-blue-600">
-          R$ {parseFloat(params.value || "0").toFixed(2)}
+        <span className="font-bold text-green-400">
+          {params.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(params.value)) : 'R$ 0,00'}
         </span>
       ),
-    },
-    {
-      field: "cteOrigin",
-      headerName: "Origem",
-      width: 140,
-      cellRenderer: (params: ICellRendererParams) => {
-        const origin = params.value || "INTERNAL";
-        
-        if (origin === "EXTERNAL") {
-          return (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700 border border-purple-300">
-              🌐 Externo (Multicte)
-            </span>
-          );
-        }
-        
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 border border-blue-300">
-            🏢 Interno (Aura)
-          </span>
-        );
-      },
     },
     {
       field: "status",
       headerName: "Status SEFAZ",
       width: 150,
       filter: "agSetColumnFilter",
+      filterParams: {
+        values: ['DRAFT', 'SIGNED', 'SENT', 'AUTHORIZED', 'REJECTED', 'CANCELLED'],
+        buttons: ['apply', 'reset'],
+        closeOnApply: true,
+      },
       cellRenderer: (params: ICellRendererParams) => {
         const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-          DRAFT: { label: "Rascunho", color: "bg-gray-100 text-gray-700", icon: Clock },
-          SIGNED: { label: "Assinado", color: "bg-blue-100 text-blue-700", icon: FileText },
-          SENT: { label: "Enviado", color: "bg-yellow-100 text-yellow-700", icon: AlertTriangle },
-          AUTHORIZED: { label: "Autorizado", color: "bg-green-100 text-green-700", icon: CheckCircle },
-          REJECTED: { label: "Rejeitado", color: "bg-red-100 text-red-700", icon: XCircle },
-          CANCELLED: { label: "Cancelado", color: "bg-gray-100 text-gray-700", icon: XCircle },
+          DRAFT: { label: "Rascunho", color: "bg-gray-500/20 text-gray-300", icon: Clock },
+          SIGNED: { label: "Assinado", color: "bg-blue-500/20 text-blue-300", icon: FileText },
+          SENT: { label: "Enviado", color: "bg-yellow-500/20 text-yellow-300", icon: AlertTriangle },
+          AUTHORIZED: { label: "Autorizado", color: "bg-green-500/20 text-green-300", icon: CheckCircle },
+          REJECTED: { label: "Rejeitado", color: "bg-red-500/20 text-red-300", icon: XCircle },
+          CANCELLED: { label: "Cancelado", color: "bg-gray-500/20 text-gray-400", icon: XCircle },
         };
 
         const config = statusConfig[params.value] || statusConfig.DRAFT;
@@ -165,82 +159,78 @@ export default function CtePage() {
       },
     },
     {
-      field: "protocolNumber",
-      headerName: "Protocolo",
-      width: 140,
+      field: "cteKey",
+      headerName: "Chave de Acesso",
+      width: 350,
+      filter: "agTextColumnFilter",
       cellRenderer: (params: ICellRendererParams) => (
-        <span className="font-mono text-xs">{params.value || "-"}</span>
+        <span className="font-mono text-xs text-slate-400">{params.value || "-"}</span>
       ),
     },
     {
       headerName: "Ações",
-      width: 150,
+      width: 120,
+      pinned: "right",
+      filter: false,
+      sortable: false,
       cellRenderer: (params: ICellRendererParams) => (
-        <div className="flex gap-2 items-center h-full">
+        <div className="flex gap-1 items-center h-full">
           {params.data.status === "AUTHORIZED" && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownloadXml(params.data.id)}
-              >
-                <Download className="h-4 w-4 mr-1" />
-                XML
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownloadPdf(params.data.id)}
-              >
-                <FileText className="h-4 w-4 mr-1" />
-                PDF
-              </Button>
-            </>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDownloadXml(params.data.id)}
+              className="h-7 px-2"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
           )}
           {params.data.status === "REJECTED" && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => alert(params.data.rejectionMessage || "Sem detalhes")}
+              onClick={() => toast.info("Mensagem de rejeição não disponível")}
+              className="h-7 px-2"
             >
-              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <AlertTriangle className="h-4 w-4 text-red-400" />
             </Button>
           )}
         </div>
       ),
     },
-  ];
+  ], []);
 
-  const fetchCtes = async () => {
-    try {
-      const response = await fetch("/api/fiscal/cte");
-      const result = await response.json();
-      if (result.success) {
-        setCtes(result.data);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar CTes:", error);
-      toast.error("Erro ao carregar CTes");
-    }
-  };
+  const defaultColDef: ColDef = useMemo(() => ({
+    sortable: true,
+    resizable: true,
+    filter: true,
+    floatingFilter: true,
+    filterParams: {
+      buttons: ['apply', 'reset'],
+      closeOnApply: true,
+    },
+  }), []);
 
+  // Buscar KPIs ao montar
   useEffect(() => {
-    fetchCtes();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchKPIs();
+  }, [fetchKPIs]);
 
-  const handleDownloadXml = async (id: number) => {
+  // Callback quando grid está pronto
+  const onGridReady = useCallback((event: GridReadyEvent) => {
+    setGridApi(event.api);
+    event.api.setGridOption('serverSideDatasource', datasource);
+  }, [datasource]);
+
+  // Refresh dados
+  const handleRefresh = useCallback(() => {
+    gridApi?.refreshServerSide({ purge: true });
+    void fetchKPIs();
+  }, [gridApi, fetchKPIs]);
+
+  const handleDownloadXml = (_id: number) => {
     toast.info("Download de XML será implementado em produção");
-  };
-
-  const handleDownloadPdf = async (id: number) => {
-    toast.info("Geração de DACTE (PDF) será implementada em produção");
-  };
-
-  const statusCounts = {
-    total: ctes.length,
-    draft: ctes.filter((c) => c.status === "DRAFT").length,
-    authorized: ctes.filter((c) => c.status === "AUTHORIZED").length,
-    rejected: ctes.filter((c) => c.status === "REJECTED").length,
   };
 
   return (
@@ -277,7 +267,7 @@ export default function CtePage() {
                 </div>
                 <h3 className="text-sm font-medium text-slate-400 mb-2">Total de CTes</h3>
                 <div className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  <NumberCounter value={statusCounts.total} />
+                  <NumberCounter value={stats.total} />
                 </div>
               </div>
             </GlassmorphismCard>
@@ -297,7 +287,7 @@ export default function CtePage() {
                 </div>
                 <h3 className="text-sm font-medium text-slate-400 mb-2">CTes Autorizados</h3>
                 <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                  <NumberCounter value={statusCounts.authorized} />
+                  <NumberCounter value={stats.authorized} />
                 </div>
               </div>
             </GlassmorphismCard>
@@ -317,7 +307,7 @@ export default function CtePage() {
                 </div>
                 <h3 className="text-sm font-medium text-slate-400 mb-2">Rascunhos</h3>
                 <div className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">
-                  <NumberCounter value={statusCounts.draft} />
+                  <NumberCounter value={stats.draft} />
                 </div>
               </div>
             </GlassmorphismCard>
@@ -337,7 +327,7 @@ export default function CtePage() {
                 </div>
                 <h3 className="text-sm font-medium text-slate-400 mb-2">Rejeitados</h3>
                 <div className="text-2xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
-                  <NumberCounter value={statusCounts.rejected} />
+                  <NumberCounter value={stats.rejected} />
                 </div>
               </div>
             </GlassmorphismCard>
@@ -347,44 +337,63 @@ export default function CtePage() {
 
       {/* Grid */}
       <FadeIn delay={0.2}>
-        <div className="space-y-4 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="flex items-center gap-2 text-xl font-semibold">
             <FileText className="h-5 w-5 text-blue-400" />
-            CTes Emitidos ({ctes.length})
+            CTes Emitidos ({totalRows} registros)
           </h2>
+          <RippleButton
+            onClick={handleRefresh}
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </RippleButton>
         </div>
         
         <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
           <div className="ag-theme-quartz-dark" style={{ height: 'calc(100vh - 300px)', width: "100%" }}>
             <AgGridReact
-                ref={gridRef}
-                
-                rowData={ctes}
-                columnDefs={columnDefs}
-                defaultColDef={{
-                  sortable: true,
-                  resizable: true,
-                  filter: true,
-                  floatingFilter: true,
-                  enableRowGroup: true,
-                  enablePivot: true,
-                  enableValue: true,
-                }}
-                sideBar={{
-                  toolPanels: [
-                    { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
-                    { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
-                  ],
-                  defaultToolPanel: "",
-                }}
-                enableRangeSelection={true}
-                rowGroupPanelShow="always"
-                groupDisplayType="groupRows"
-                pagination={true}
-                paginationPageSize={20}
-                paginationPageSizeSelector={[10, 20, 50, 100]}
-                domLayout="normal"
-              />
+              ref={gridRef}
+              columnDefs={columnDefs}
+              defaultColDef={defaultColDef}
+              onGridReady={onGridReady}
+              
+              // SSRM Configuration
+              rowModelType="serverSide"
+              cacheBlockSize={100}
+              maxBlocksInCache={10}
+              
+              // Enterprise Features
+              sideBar={{
+                toolPanels: [
+                  { id: "columns", labelDefault: "Colunas", labelKey: "columns", iconKey: "columns", toolPanel: "agColumnsToolPanel" },
+                  { id: "filters", labelDefault: "Filtros", labelKey: "filters", iconKey: "filter", toolPanel: "agFiltersToolPanel" },
+                ],
+                defaultToolPanel: "",
+              }}
+              enableRangeSelection={true}
+              rowGroupPanelShow="always"
+              
+              // Pagination
+              pagination={true}
+              paginationPageSize={50}
+              paginationPageSizeSelector={[25, 50, 100, 200]}
+              
+              // Loading Overlay
+              loadingOverlayComponent={() => (
+                <div className="flex flex-col items-center justify-center p-8">
+                  <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4" />
+                  <p className="text-blue-300">Carregando CTes...</p>
+                </div>
+              )}
+              
+              // Other
+              animateRows={true}
+              enableCellTextSelection={true}
+              ensureDomOrder={true}
+              suppressDragLeaveHidesColumns={true}
+            />
           </div>
         </div>
       </FadeIn>

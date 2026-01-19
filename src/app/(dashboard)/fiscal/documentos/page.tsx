@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, GridReadyEvent, IDetailCellRendererParams, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
+import { ModuleRegistry, type GridApi } from "ag-grid-community";
+import type { ColDef, GridReadyEvent, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
 
 // AG Grid Enterprise Modules (v34+)
 import { AllEnterpriseModule } from "ag-grid-enterprise";
@@ -18,49 +18,50 @@ import { RippleButton } from "@/components/ui/ripple-button";
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import "@/styles/aurora-premium-grid.css";
-import { auraTheme } from "@/lib/ag-grid/theme";
-import { auraThemePremium } from "@/lib/ag-grid/aurora-premium-theme";
 import { 
   FileText, 
   Plus, 
   RefreshCw, 
-  Filter,
   Download,
   Eye,
   Edit,
   Trash2,
   CheckCircle,
-  XCircle,
   Clock,
   TrendingUp,
-  AlertCircle,
   DollarSign,
   FileCheck,
-  Receipt
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DocumentDetailModal } from "@/components/fiscal/document-detail-modal";
 import { toast } from "sonner";
 
-interface FiscalDocument {
+// SSRM Hook
+import { useSSRMDatasource } from "@/hooks/useSSRMDatasource";
+
+// Interface para dados SSRM
+interface _FiscalDocumentSSRM {
   id: number;
-  documentType: string;
-  documentNumber: string;
-  documentSeries: string;
   accessKey: string;
-  partnerId: number;
-  partnerName: string;
-  issueDate: Date;
-  grossAmount: number;
-  taxAmount: number;
-  netAmount: number;
-  fiscalStatus: string;
-  accountingStatus: string;
-  financialStatus: string;
-  fiscalClassification: string;
-  operationType: string;
-  journalEntryId: number;
-  editable: boolean;
+  number: string | null;
+  series: string | null;
+  model: string | null;
+  partnerName: string | null;
+  partnerId: number | null;
+  issueDate: string;
+  entryDate: string | null;
+  totalProducts: string | null;
+  totalNfe: string | null;
+  status: string | null;
+  createdAt: string | null;
+}
+
+interface FiscalDocumentStats {
+  total: number;
+  pending: number;
+  classified: number;
+  posted: number;
+  totalValue: number;
 }
 
 // Registrar módulos Enterprise
@@ -68,120 +69,73 @@ ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 export default function FiscalDocumentsPage() {
   const gridRef = useRef<AgGridReact>(null);
-  const [documents, setDocuments] = useState<FiscalDocument[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
   
   // Modal de visualização
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   
-  // Filtros
-  const [filters, setFilters] = useState({
-    dateFrom: "",
-    dateTo: "",
-    partnerId: "",
-    documentType: "",
-    fiscalStatus: "",
-  });
-  
-  const [stats, setStats] = useState({
+  // KPIs (buscados separadamente)
+  const [stats, setStats] = useState<FiscalDocumentStats>({
     total: 0,
     pending: 0,
     classified: 0,
     posted: 0,
     totalValue: 0,
   });
+  const [totalRows, setTotalRows] = useState(0);
 
-  // Buscar documentos
-  const fetchDocuments = useCallback(async () => {
+  // SSRM Datasource Hook
+  const datasource = useSSRMDatasource({
+    endpoint: '/api/fiscal/documents/ssrm',
+    onError: (error) => toast.error(`Erro ao carregar dados: ${error.message}`),
+    onSuccess: (rowCount) => setTotalRows(rowCount),
+  });
+
+  // Buscar KPIs separadamente (não depende do grid)
+  const fetchKPIs = useCallback(async () => {
     try {
-      setLoading(true);
-      const branchId = localStorage.getItem("auracore:current-branch") || "";
-      const response = await fetch("/api/fiscal/documents?limit=1000", {
-        headers: branchId ? { "x-branch-id": branchId } : {},
-      });
-      const data = await response.json().catch(() => ({ data: [] }));
-
-      if (!response.ok) {
-        const msg = data?.error ?? "Falha ao carregar documentos (verifique a filial ativa)";
-        throw new Error(msg);
+      const response = await fetch("/api/fiscal/documents/summary");
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
       }
-      
-      setDocuments(data.data || []);
-      
-      // Calcular estatísticas
-      const docs = data.data || [];
-      setStats({
-        total: docs.length,
-        pending: docs.filter((d: FiscalDocument) => d.fiscalStatus === "PENDING_CLASSIFICATION").length,
-        classified: docs.filter((d: FiscalDocument) => d.fiscalStatus === "CLASSIFIED").length,
-        posted: docs.filter((d: FiscalDocument) => d.accountingStatus === "POSTED").length,
-        totalValue: docs.reduce((sum: number, d: FiscalDocument) => sum + (typeof d.netAmount === 'number' ? d.netAmount : parseFloat(String(d.netAmount))), 0),
-      });
     } catch (error) {
-      console.error("Erro ao buscar documentos:", error);
-      toast.error(error instanceof Error ? error.message : "Falha ao carregar documentos fiscais");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching KPIs:", error);
     }
   }, []);
 
   // Excluir documento (soft delete)
-  const handleDelete = async (id: number) => {
+  const handleDelete = useCallback(async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este documento?")) {
       return;
     }
 
     try {
-      const branchId = localStorage.getItem("auracore:current-branch") || "";
       const response = await fetch(`/api/fiscal/documents/${id}`, {
         method: "DELETE",
-        headers: branchId ? { "x-branch-id": branchId } : {},
       });
 
       if (response.ok) {
-        alert("Documento excluído com sucesso!");
-        fetchDocuments(); // Recarregar lista
+        toast.success("Documento excluído com sucesso!");
+        // Refresh grid e KPIs
+        gridApi?.refreshServerSide({ purge: true });
+        void fetchKPIs();
       } else {
         const error = await response.json();
-        alert(`Erro ao excluir: ${error.error}`);
+        toast.error(`Erro ao excluir: ${error.error}`);
       }
     } catch (error) {
       console.error("Erro ao excluir documento:", error);
-      alert("Erro ao excluir documento");
+      toast.error("Erro ao excluir documento");
     }
-  };
+  }, [gridApi, fetchKPIs]);
 
-  // Reclassificar documento automaticamente
-  const handleReclassify = async (id: number) => {
-    if (!confirm("Reclassificar este documento automaticamente?")) {
-      return;
-    }
-
-    try {
-      const branchId = localStorage.getItem("auracore:current-branch") || "";
-      const response = await fetch(`/api/fiscal/documents/${id}/reclassify`, {
-        method: "POST",
-        headers: branchId ? { "x-branch-id": branchId } : {},
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert(`Documento reclassificado!\nDe: ${result.oldClassification}\nPara: ${result.newClassification}`);
-        fetchDocuments(); // Recarregar lista
-      } else {
-        const error = await response.json();
-        alert(`Erro ao reclassificar: ${error.error}`);
-      }
-    } catch (error) {
-      console.error("Erro ao reclassificar documento:", error);
-      alert("Erro ao reclassificar documento");
-    }
-  };
-
+  // Buscar KPIs ao montar
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchKPIs();
+  }, [fetchKPIs]);
 
   // Status Badge Renderers
   const statusCellRenderer = (status: string, type: 'fiscal' | 'accounting' | 'financial') => {
@@ -227,37 +181,40 @@ export default function FiscalDocumentsPage() {
     );
   };
 
-  // Column Definitions
+  // Column Definitions - Campos correspondem ao retorno de /api/fiscal/documents/ssrm
   const columnDefs = useMemo(() => [
     {
-      headerName: "Tipo",
-      field: "documentType",
+      headerName: "Modelo",
+      field: "model",
       width: 90,
       filter: "agSetColumnFilter",
       cellRenderer: (params: ICellRendererParams) => {
-        const icons = {
-          NFE: <FileText className="h-4 w-4 text-blue-400" />,
-          CTE: <TrendingUp className="h-4 w-4 text-green-400" />,
-          NFSE: <FileCheck className="h-4 w-4 text-purple-400" />,
-          RECEIPT: <Receipt className="h-4 w-4 text-orange-400" />,
-          MANUAL: <Edit className="h-4 w-4 text-gray-400" />,
+        const icons: Record<string, React.ReactNode> = {
+          '55': <FileText className="h-4 w-4 text-blue-400" />,
+          '57': <TrendingUp className="h-4 w-4 text-green-400" />,
         };
         return (
           <div className="flex items-center gap-2">
-            {icons[params.value as keyof typeof icons]}
-            <span className="font-medium">{params.value}</span>
+            {icons[params.value] || <FileText className="h-4 w-4 text-gray-400" />}
+            <span className="font-medium">{params.value === '55' ? 'NFe' : params.value === '57' ? 'CTe' : params.value}</span>
           </div>
         );
       },
     },
     {
       headerName: "Número",
-      field: "documentNumber",
+      field: "number",
       width: 120,
       filter: "agTextColumnFilter",
       cellRenderer: (params: ICellRendererParams) => (
         <span className="font-mono text-purple-400">{params.value}</span>
       ),
+    },
+    {
+      headerName: "Série",
+      field: "series",
+      width: 80,
+      filter: "agTextColumnFilter",
     },
     {
       headerName: "Parceiro",
@@ -274,58 +231,50 @@ export default function FiscalDocumentsPage() {
         params.value ? new Date(params.value).toLocaleDateString('pt-BR') : '',
     },
     {
-      headerName: "Valor Bruto",
-      field: "grossAmount",
-      width: 130,
-      filter: "agNumberColumnFilter",
-      valueFormatter: (params: ValueFormatterParams) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(params.value),
-      cellStyle: { textAlign: 'right' },
+      headerName: "Entrada",
+      field: "entryDate",
+      width: 110,
+      filter: "agDateColumnFilter",
+      valueFormatter: (params: ValueFormatterParams) => 
+        params.value ? new Date(params.value).toLocaleDateString('pt-BR') : '',
     },
     {
-      headerName: "Impostos",
-      field: "taxAmount",
-      width: 120,
-      filter: "agNumberColumnFilter",
-      valueFormatter: (params: ValueFormatterParams) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(params.value),
-      cellStyle: { textAlign: 'right', color: '#F59E0B' },
-    },
-    {
-      headerName: "Valor Líquido",
-      field: "netAmount",
+      headerName: "Valor Total",
+      field: "totalNfe",
       width: 140,
       filter: "agNumberColumnFilter",
       valueFormatter: (params: ValueFormatterParams) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(params.value),
+        params.value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(params.value)) : 'R$ 0,00',
       cellStyle: { textAlign: 'right', fontWeight: 'bold', color: '#10B981' },
     },
     {
-      headerName: "Status Fiscal",
-      field: "fiscalStatus",
-      width: 130,
+      headerName: "Status",
+      field: "status",
+      width: 140,
       filter: "agSetColumnFilter",
-      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value, 'fiscal'),
+      filterParams: {
+        values: ['IMPORTED', 'PENDING_CLASSIFICATION', 'CLASSIFIED', 'REJECTED'],
+        buttons: ['apply', 'reset'],
+        closeOnApply: true,
+      },
+      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value || 'IMPORTED', 'fiscal'),
     },
     {
-      headerName: "Status Contábil",
-      field: "accountingStatus",
-      width: 150,
-      filter: "agSetColumnFilter",
-      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value, 'accounting'),
-    },
-    {
-      headerName: "Status Financeiro",
-      field: "financialStatus",
-      width: 150,
-      filter: "agSetColumnFilter",
-      cellRenderer: (params: ICellRendererParams) => statusCellRenderer(params.value, 'financial'),
+      headerName: "Chave de Acesso",
+      field: "accessKey",
+      width: 350,
+      filter: "agTextColumnFilter",
+      cellRenderer: (params: ICellRendererParams) => (
+        <span className="font-mono text-xs text-slate-400">{params.value}</span>
+      ),
     },
     {
       headerName: "Ações",
       field: "id",
-      width: 160,
+      width: 120,
       pinned: "right",
+      filter: false,
+      sortable: false,
       cellRenderer: (params: ICellRendererParams) => (
         <div className="flex gap-1">
           <button
@@ -338,53 +287,53 @@ export default function FiscalDocumentsPage() {
           >
             <Eye className="h-4 w-4" />
           </button>
-          {params.data.editable && (
-            <button
-              onClick={() => {
-                window.location.href = `/fiscal/documentos/${params.value}/editar`;
-              }}
-              className="p-1 rounded hover:bg-green-500/20 text-green-400 transition-colors"
-              title="Editar/Reclassificar"
-            >
-              <Edit className="h-4 w-4" />
-            </button>
-          )}
-          {params.data.fiscalClassification === "OTHER" && (
-            <button
-              onClick={() => handleReclassify(params.value)}
-              className="p-1 rounded hover:bg-emerald-500/20 text-emerald-400 transition-colors"
-              title="Reclassificar"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-          )}
-          {params.data.accountingStatus === "PENDING" && (
-            <button
-              onClick={() => handleDelete(params.value)}
-              className="p-1 rounded hover:bg-red-500/20 text-red-400 transition-colors"
-              title="Excluir"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            onClick={() => {
+              window.location.href = `/fiscal/documentos/${params.value}/editar`;
+            }}
+            className="p-1 rounded hover:bg-green-500/20 text-green-400 transition-colors"
+            title="Editar"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => handleDelete(params.value)}
+            className="p-1 rounded hover:bg-red-500/20 text-red-400 transition-colors"
+            title="Excluir"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         </div>
       ),
     },
-  ] as ColDef[], [handleDelete, handleReclassify]);
+  ] as ColDef[], [handleDelete]);
 
   const defaultColDef: ColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
     filter: true,
     floatingFilter: true,
+    filterParams: {
+      buttons: ['apply', 'reset'],
+      closeOnApply: true,
+    },
     enableRowGroup: true,
     enablePivot: true,
     enableValue: true,
   }), []);
 
-  const onGridReady = useCallback((params: GridReadyEvent) => {
-    params.api.sizeColumnsToFit();
-  }, []);
+  // Callback quando grid está pronto
+  const onGridReady = useCallback((event: GridReadyEvent) => {
+    setGridApi(event.api);
+    event.api.setGridOption('serverSideDatasource', datasource);
+    event.api.sizeColumnsToFit();
+  }, [datasource]);
+
+  // Refresh dados
+  const handleRefresh = useCallback(() => {
+    gridApi?.refreshServerSide({ purge: true });
+    void fetchKPIs();
+  }, [gridApi, fetchKPIs]);
 
   return (
     <PageTransition>
@@ -397,13 +346,13 @@ export default function FiscalDocumentsPage() {
                 Monitor de Documentos Fiscais
               </GradientText>
               <p className="text-slate-400">
-                Visualização unificada de NFe, CTe, NFSe, Recibos e Documentos Manuais
+                Visualização unificada de NFe, CTe, NFSe, Recibos e Documentos Manuais ({totalRows} registros)
               </p>
             </div>
             
             <div className="flex gap-3">
               <RippleButton
-                onClick={fetchDocuments}
+                onClick={handleRefresh}
                 className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -514,15 +463,22 @@ export default function FiscalDocumentsPage() {
           <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
             <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 380px)" }}>
               <AgGridReact
-                
                 ref={gridRef}
-                rowData={documents}
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
                 onGridReady={onGridReady}
+                
+                // SSRM Configuration
+                rowModelType="serverSide"
+                cacheBlockSize={100}
+                maxBlocksInCache={10}
+                
+                // Pagination
                 pagination={true}
                 paginationPageSize={50}
                 paginationPageSizeSelector={[25, 50, 100, 200]}
+                
+                // Enterprise Features
                 enableRangeSelection={true}
                 rowGroupPanelShow="always"
                 sideBar={{
@@ -544,9 +500,21 @@ export default function FiscalDocumentsPage() {
                   ],
                   defaultToolPanel: "",
                 }}
-                loading={loading}
                 animateRows={true}
                 groupDisplayType="multipleColumns"
+                
+                // Loading Overlay
+                loadingOverlayComponent={() => (
+                  <div className="flex flex-col items-center justify-center p-8">
+                    <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mb-4" />
+                    <p className="text-purple-300">Carregando documentos fiscais...</p>
+                  </div>
+                )}
+                
+                // Other
+                enableCellTextSelection={true}
+                ensureDomOrder={true}
+                suppressDragLeaveHidesColumns={true}
               />
             </div>
           </div>
