@@ -321,21 +321,6 @@
       "must_not_repeat": true
     },
     {
-      "id": "LC-116299",
-      "date": "2026-01-19",
-      "epic": "E-Agent-Fase6",
-      "error": "Bug 1: Paginação ineficiente no listSessions - buscava todas as sessões e fazia slice em memória. Bug 2: Bypass de multi-tenancy no getMessages - não validava se a sessão pertencia ao tenant. Bug 3: Stale closure no useAgentChat - loadSession não estava memoizada com useCallback.",
-      "correction": "Bug 1: Implementado OFFSET/FETCH NEXT no SQL com COUNT separado para paginação correta. Bug 2: Adicionado organizationId e branchId como parâmetros obrigatórios em getMessages com verificação prévia de pertencimento ao tenant. Bug 3: Memoizado loadSession com useCallback e adicionado às dependências do useEffect.",
-      "files_affected": [
-        "src/agent/persistence/SessionStore.ts",
-        "src/app/api/agent/sessions/[sessionId]/route.ts",
-        "src/hooks/useAgentChat.ts"
-      ],
-      "pattern_created": "P-SEC-001: Multi-tenancy obrigatório em getMessages, P-PERF-001: Paginação no SQL, P-REACT-001: useCallback para funções em useEffect",
-      "status": "APPROVED",
-      "must_not_repeat": true
-    },
-    {
       "id": "LC-306581",
       "date": "2026-01-19",
       "epic": "E-Agent-Fase6",
