@@ -5,3 +5,5 @@
  */
 export { GoalTreemap } from './GoalTreemap';
 export { CascadeTimeline } from './CascadeTimeline';
+export { KPIGaugeCard } from './KPIGaugeCard';
+export { KPIAlertList } from './KPIAlertList';

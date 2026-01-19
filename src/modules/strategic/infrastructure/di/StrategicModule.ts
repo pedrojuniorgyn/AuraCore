@@ -20,6 +20,13 @@ import { ActivateStrategyUseCase } from '../../application/commands/ActivateStra
 import { CreateStrategicGoalUseCase } from '../../application/commands/CreateStrategicGoalUseCase';
 import { CascadeGoalUseCase } from '../../application/commands/CascadeGoalUseCase';
 import { UpdateGoalProgressUseCase } from '../../application/commands/UpdateGoalProgressUseCase';
+import { CreateKPIUseCase } from '../../application/commands/CreateKPIUseCase';
+import { UpdateKPIValueUseCase } from '../../application/commands/UpdateKPIValueUseCase';
+import { SyncKPIValuesUseCase } from '../../application/commands/SyncKPIValuesUseCase';
+
+// Integrations
+import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
+import { TMSKPIDataSource } from '../integrations/TMSKPIDataSource';
 
 export function registerStrategicModule(): void {
   // Repositories - Fase F1 + F2
@@ -65,10 +72,32 @@ export function registerStrategicModule(): void {
     useClass: UpdateGoalProgressUseCase,
   });
   
-  // NOTA: Demais repositories e use cases serão registrados nas próximas fases (F4+)
+  // Use Cases - Commands (Fase F4 - KPIs)
+  container.register(STRATEGIC_TOKENS.CreateKPIUseCase, {
+    useClass: CreateKPIUseCase,
+  });
+  
+  container.register(STRATEGIC_TOKENS.UpdateKPIValueUseCase, {
+    useClass: UpdateKPIValueUseCase,
+  });
+  
+  container.register(STRATEGIC_TOKENS.SyncKPIValuesUseCase, {
+    useClass: SyncKPIValuesUseCase,
+  });
+  
+  // Integrations (Fase F4)
+  container.register(STRATEGIC_TOKENS.FinancialKPIAdapter, {
+    useClass: FinancialKPIDataSource,
+  });
+  
+  container.register(STRATEGIC_TOKENS.TMSKPIAdapter, {
+    useClass: TMSKPIDataSource,
+  });
+  
+  // NOTA: Demais repositories e use cases serão registrados nas próximas fases (F5+)
   // - ActionPlanFollowUpRepository
   // - WarRoomMeetingRepository
   // - SwotAnalysisRepository
   
-  console.log('[Strategic Module] DI registrado: 5 repositories + 5 use cases');
+  console.log('[Strategic Module] DI registrado: 5 repositories + 8 use cases + 2 integrations');
 }
