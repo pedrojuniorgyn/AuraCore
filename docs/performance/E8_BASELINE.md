@@ -249,9 +249,12 @@ sqlcmd -S localhost -U sa -P [password] -d AuraCore
 - [ ] Refatorar 6 arquivos com `.slice()`
 - [ ] Usar `queryPaginated()` ou TOP/OFFSET no SQL
 
-### E8.4 - SSRM (AG Grid)
-- [ ] Implementar Server-Side Row Model em telas críticas
-- [ ] Configurar paginação server-side
+### E8.4 - SSRM (AG Grid) ✅ IMPLEMENTADO
+- [x] Tipos TypeScript: `src/types/ag-grid-ssrm.ts`
+- [x] Helper reutilizável: `src/lib/ag-grid/ssrm-helper.ts`
+- [x] API SSRM Contas a Pagar: `POST /api/financial/payables/ssrm`
+- [x] API SSRM Contas a Receber: `POST /api/financial/receivables/ssrm`
+- [ ] **Pendente:** Atualizar componentes para usar `rowModelType="serverSide"`
 
 ### E8.5 - Observabilidade
 - [ ] Configurar métricas p95/p99 por endpoint
@@ -274,6 +277,8 @@ sqlcmd -S localhost -U sa -P [password] -d AuraCore
 
 | Data | Ação | Responsável |
 |------|------|-------------|
+| 19/01/2026 | E8.4: APIs SSRM criadas (payables, receivables) | E8.4 |
+| 19/01/2026 | E8.3: Paginação .slice() corrigida | E8.3 |
 | 19/01/2026 | E8.2: Confirmado migrations existentes, atualizada documentação | E8.2 |
 | 19/01/2026 | E8.1: Baseline documentado | E8.1 |
 | 18/01/2026 | Audit de índices | E8.1 |
