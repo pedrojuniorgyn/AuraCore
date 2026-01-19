@@ -13,11 +13,11 @@ export * from './input';
 // Output Ports (Repositories)
 export * from './output';
 
-// Legacy exports (mantido para compatibilidade)
+// Fiscal Accounting Repository (para contabilização de documentos fiscais)
 export type {
-  IJournalEntryRepository,
+  IFiscalAccountingRepository,
   FiscalDocumentData,
   FiscalDocumentItem,
   ChartAccount,
   JournalEntryData,
-} from './IJournalEntryRepository';
+} from './IFiscalAccountingRepository';

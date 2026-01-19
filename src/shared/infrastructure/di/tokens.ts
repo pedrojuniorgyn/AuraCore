@@ -25,6 +25,7 @@ export const TOKENS = {
 
   // Accounting Module - Repositories
   JournalEntryRepository: Symbol('JournalEntryRepository'),
+  FiscalAccountingRepository: Symbol('FiscalAccountingRepository'),
   
   // Accounting Module - Use Cases
   CreateJournalEntryUseCase: Symbol('CreateJournalEntryUseCase'),

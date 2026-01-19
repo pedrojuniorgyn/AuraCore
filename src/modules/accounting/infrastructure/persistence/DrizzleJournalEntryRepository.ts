@@ -1,461 +1,378 @@
 /**
  * Drizzle Journal Entry Repository
  * 
- * Implementação do repositório de lançamentos contábeis usando Drizzle ORM
+ * Implementação DDD do repositório de lançamentos contábeis.
+ * Implementa a interface IJournalEntryRepository de ports/output/.
  * 
- * @epic E7.13 - Services → DDD Migration
- * @service 4/8 - accounting-engine.ts → JournalEntryGenerator
+ * @epic E7.27 - Architecture Cleanup
+ * @see IJournalEntryRepository (ports/output/)
  */
 
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
-import { Result } from "@/shared/domain";
+import { injectable } from 'tsyringe';
+import { eq, and, isNull, sql, desc, asc, or, like } from 'drizzle-orm';
+import { db } from '@/lib/db';
+import { queryWithLimit } from '@/lib/db/query-helpers';
+import { Result } from '@/shared/domain';
+import { JournalEntry } from '../../domain/entities/JournalEntry';
+import { JournalEntryMapper } from './JournalEntryMapper';
+import { 
+  journalEntriesTable, 
+  journalEntryLinesTable,
+  JournalEntryRow,
+  JournalEntryLineRow 
+} from './JournalEntrySchema';
 import type {
   IJournalEntryRepository,
-  FiscalDocumentData,
-  FiscalDocumentItem,
-  ChartAccount,
-  JournalEntryData,
-} from "@/modules/accounting/domain/ports";
-import type { JournalLine } from "@/modules/accounting/domain/value-objects";
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SQL RESULT TYPES
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-interface FiscalDocumentQueryResult {
-  id: bigint;
-  organization_id: bigint;
-  branch_id: bigint;
-  document_type: string;
-  document_number: string;
-  issue_date: Date;
-  net_amount: string;
-  fiscal_classification: string;
-  accounting_status: string;
-}
-
-interface FiscalDocumentItemQueryResult {
-  id: bigint;
-  chart_account_id: bigint | null;
-  chart_account_code: string | null;
-  chart_account_name: string | null;
-  net_amount: string;
-}
-
-interface ChartAccountQueryResult {
-  id: bigint;
-  code: string;
-  name: string;
-  is_analytical: boolean;
-}
-
-interface JournalEntryQueryResult {
-  id: bigint;
-  organization_id: bigint;
-  branch_id: bigint;
-  fiscal_document_id: bigint | null;
-  entry_type: string;
-  entry_date: Date;
-  description: string;
-  total_debit: string;
-  total_credit: string;
-  status: string;
-  created_by: string;
-}
-
-interface InsertIdResult {
-  id: bigint;
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// REPOSITORY IMPLEMENTATION
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
-  async getFiscalDocumentData(
-    fiscalDocumentId: bigint,
-    organizationId: bigint
-  ): Promise<Result<FiscalDocumentData | null, Error>> {
-    try {
-      const result = await db.execute(sql`
-        SELECT 
-          id,
-          organization_id,
-          branch_id,
-          document_type,
-          document_number,
-          issue_date,
-          net_amount,
-          fiscal_classification,
-          accounting_status
-        FROM fiscal_documents
-        WHERE id = ${fiscalDocumentId}
-          AND organization_id = ${organizationId}
-          AND deleted_at IS NULL
-      `);
-
-      const rows = (result.recordset || result) as unknown as FiscalDocumentQueryResult[];
-      const doc = rows[0];
-
-      if (!doc) {
-        return Result.ok(null);
-      }
-
-      return Result.ok({
-        id: doc.id,
-        organizationId: doc.organization_id,
-        branchId: doc.branch_id,
-        documentType: doc.document_type,
-        documentNumber: doc.document_number,
-        issueDate: doc.issue_date,
-        netAmount: parseFloat(doc.net_amount),
-        fiscalClassification: doc.fiscal_classification,
-        accountingStatus: doc.accounting_status,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao buscar documento fiscal: ${errorMessage}`));
-    }
-  }
-
-  async getFiscalDocumentItems(
-    fiscalDocumentId: bigint
-  ): Promise<Result<FiscalDocumentItem[], Error>> {
-    try {
-      const result = await db.execute(sql`
-        SELECT 
-          fdi.id,
-          fdi.chart_account_id,
-          fdi.net_amount,
-          coa.code AS chart_account_code,
-          coa.name AS chart_account_name
-        FROM fiscal_document_items fdi
-        LEFT JOIN chart_of_accounts coa ON coa.id = fdi.chart_account_id
-        WHERE fdi.fiscal_document_id = ${fiscalDocumentId}
-          AND fdi.deleted_at IS NULL
-      `);
-
-      const rows = (result.recordset || result) as unknown as FiscalDocumentItemQueryResult[];
-
-      const items: FiscalDocumentItem[] = rows.map(row => ({
-        id: row.id,
-        chartAccountId: row.chart_account_id,
-        chartAccountCode: row.chart_account_code,
-        chartAccountName: row.chart_account_name,
-        netAmount: parseFloat(row.net_amount),
-      }));
-
-      return Result.ok(items);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao buscar itens do documento: ${errorMessage}`));
-    }
-  }
-
-  async getChartAccountById(
-    accountId: bigint,
-    organizationId: bigint
-  ): Promise<Result<ChartAccount | null, Error>> {
-    try {
-      const result = await db.execute(sql`
-        SELECT id, code, name, is_analytical
-        FROM chart_of_accounts
-        WHERE id = ${accountId}
-          AND organization_id = ${organizationId}
-          AND deleted_at IS NULL
-      `);
-
-      const rows = (result.recordset || result) as unknown as ChartAccountQueryResult[];
-      const account = rows[0];
-
-      if (!account) {
-        return Result.ok(null);
-      }
-
-      return Result.ok({
-        id: account.id,
-        code: account.code,
-        name: account.name,
-        isAnalytical: account.is_analytical,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao buscar conta contábil: ${errorMessage}`));
-    }
-  }
-
-  async getAnalyticalAccounts(
-    parentAccountId: bigint,
-    organizationId: bigint
-  ): Promise<Result<ChartAccount[], Error>> {
-    try {
-      const result = await db.execute(sql`
-        SELECT TOP 5 id, code, name, is_analytical
-        FROM chart_of_accounts
-        WHERE parent_id = ${parentAccountId}
-          AND organization_id = ${organizationId}
-          AND is_analytical = 1
-          AND deleted_at IS NULL
-        ORDER BY code ASC
-      `);
-
-      const rows = (result.recordset || result) as unknown as ChartAccountQueryResult[];
-
-      const accounts: ChartAccount[] = rows.map(row => ({
-        id: row.id,
-        code: row.code,
-        name: row.name,
-        isAnalytical: row.is_analytical,
-      }));
-
-      return Result.ok(accounts);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao buscar contas analíticas: ${errorMessage}`));
-    }
-  }
-
-  async getCounterpartAccount(
-    organizationId: bigint,
-    fiscalClassification: string
-  ): Promise<Result<ChartAccount | null, Error>> {
-    try {
-      // PURCHASE → Fornecedores (2.1.01%)
-      // SALE → Clientes (1.1.01%)
-      const accountCodePattern = fiscalClassification === "PURCHASE" ? "2.1.01%" : "1.1.01%";
-
-      const result = await db.execute(sql`
-        SELECT TOP 1 id, code, name, is_analytical
-        FROM chart_of_accounts
-        WHERE organization_id = ${organizationId}
-          AND code LIKE ${accountCodePattern}
-          AND deleted_at IS NULL
-        ORDER BY code ASC
-      `);
-
-      const rows = (result.recordset || result) as unknown as ChartAccountQueryResult[];
-      const account = rows[0];
-
-      if (!account) {
-        return Result.ok(null);
-      }
-
-      return Result.ok({
-        id: account.id,
-        code: account.code,
-        name: account.name,
-        isAnalytical: account.is_analytical,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao buscar conta de contrapartida: ${errorMessage}`));
-    }
-  }
-
-  async createJournalEntry(
-    entry: Omit<JournalEntryData, 'id'>
-  ): Promise<Result<bigint, Error>> {
-    try {
-      const result = await db.execute(sql`
-        INSERT INTO journal_entries (
-          organization_id,
-          branch_id,
-          fiscal_document_id,
-          entry_type,
-          entry_date,
-          description,
-          total_debit,
-          total_credit,
-          status,
-          created_by,
-          created_at
-        )
-        OUTPUT INSERTED.id
-        VALUES (
-          ${entry.organizationId},
-          ${entry.branchId},
-          ${entry.fiscalDocumentId},
-          ${entry.entryType},
-          ${entry.entryDate},
-          ${entry.description},
-          ${entry.totalDebit},
-          ${entry.totalCredit},
-          ${entry.status},
-          ${entry.createdBy},
-          GETDATE()
-        )
-      `);
-
-      const rows = (result.recordset || result) as unknown as InsertIdResult[];
-      const insertedId = rows[0]?.id;
-
-      if (!insertedId) {
-        return Result.fail(new Error("Falha ao criar lançamento contábil"));
-      }
-
-      return Result.ok(insertedId);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao criar lançamento contábil: ${errorMessage}`));
-    }
-  }
-
-  async createJournalEntryLines(
-    journalEntryId: bigint,
-    lines: JournalLine[]
-  ): Promise<Result<void, Error>> {
-    try {
-      for (const line of lines) {
-        await db.execute(sql`
-          INSERT INTO journal_entry_lines (
-            journal_entry_id,
-            line_number,
-            entry_type,
-            chart_account_id,
-            description,
-            debit_amount,
-            credit_amount,
-            created_at
-          )
-          VALUES (
-            ${journalEntryId},
-            ${line.lineNumber},
-            ${line.type},
-            ${line.accountId},
-            ${line.description},
-            ${line.debitAmount},
-            ${line.creditAmount},
-            GETDATE()
-          )
-        `);
-      }
-
-      return Result.ok(undefined);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao criar linhas do lançamento: ${errorMessage}`));
-    }
-  }
-
-  async updateFiscalDocumentAccountingStatus(
-    fiscalDocumentId: bigint,
-    journalEntryId: bigint,
-    status: string
-  ): Promise<Result<void, Error>> {
-    try {
-      await db.execute(sql`
-        UPDATE fiscal_documents
-        SET 
-          journal_entry_id = ${journalEntryId},
-          accounting_status = ${status},
-          updated_at = GETDATE()
-        WHERE id = ${fiscalDocumentId}
-      `);
-
-      return Result.ok(undefined);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao atualizar status contábil: ${errorMessage}`));
-    }
-  }
-
-  async getJournalEntryById(
-    journalEntryId: bigint,
-    organizationId: bigint
-  ): Promise<Result<JournalEntryData | null, Error>> {
-    try {
-      const result = await db.execute(sql`
-        SELECT 
-          id,
-          organization_id,
-          branch_id,
-          fiscal_document_id,
-          entry_type,
-          entry_date,
-          description,
-          total_debit,
-          total_credit,
-          status,
-          created_by
-        FROM journal_entries
-        WHERE id = ${journalEntryId}
-          AND organization_id = ${organizationId}
-      `);
-
-      const rows = (result.recordset || result) as unknown as JournalEntryQueryResult[];
-      const entry = rows[0];
-
-      if (!entry) {
-        return Result.ok(null);
-      }
-
-      return Result.ok({
-        id: entry.id,
-        organizationId: entry.organization_id,
-        branchId: entry.branch_id,
-        fiscalDocumentId: entry.fiscal_document_id,
-        entryType: entry.entry_type,
-        entryDate: entry.entry_date,
-        description: entry.description,
-        totalDebit: parseFloat(entry.total_debit),
-        totalCredit: parseFloat(entry.total_credit),
-        status: entry.status,
-        createdBy: entry.created_by,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao buscar lançamento contábil: ${errorMessage}`));
-    }
-  }
-
-  async reverseJournalEntry(
-    journalEntryId: bigint,
-    userId: string
-  ): Promise<Result<void, Error>> {
-    try {
-      // 1. Atualizar status do lançamento
-      await db.execute(sql`
-        UPDATE journal_entries
-        SET 
-          status = 'REVERSED',
-          reversed_at = GETDATE(),
-          reversed_by = ${userId}
-        WHERE id = ${journalEntryId}
-      `);
-
-      // 2. Buscar fiscal_document_id
-      const entryResult = await db.execute(sql`
-        SELECT fiscal_document_id
-        FROM journal_entries
-        WHERE id = ${journalEntryId}
-      `);
-
-      const entryRows = (entryResult.recordset || entryResult) as unknown as { fiscal_document_id: bigint | null }[];
-      const fiscalDocumentId = entryRows[0]?.fiscal_document_id;
-
-      // 3. Atualizar documento fiscal (se existir)
-      if (fiscalDocumentId) {
-        await db.execute(sql`
-          UPDATE fiscal_documents
-          SET 
-            accounting_status = 'PENDING',
-            updated_at = GETDATE()
-          WHERE id = ${fiscalDocumentId}
-        `);
-      }
-
-      return Result.ok(undefined);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(new Error(`Erro ao reverter lançamento: ${errorMessage}`));
-    }
-  }
-}
+  FindJournalEntriesFilter,
+  PaginationOptions,
+  PaginatedResult,
+} from '../../domain/ports/output/IJournalEntryRepository';
+import type { AccountingPeriod } from '../../domain/value-objects/AccountingPeriod';
 
 /**
- * Factory para criar repositório
+ * Repository: Journal Entry (DDD)
+ * 
+ * REGRAS CRÍTICAS (INFRA-004):
+ * - TODOS os métodos filtram por organizationId + branchId
+ * - branchId NUNCA é opcional
+ * - Soft delete: filtrar deletedAt IS NULL
  */
-export function createJournalEntryRepository(): DrizzleJournalEntryRepository {
-  return new DrizzleJournalEntryRepository();
+@injectable()
+export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
+  
+  /**
+   * Busca por ID
+   */
+  async findById(
+    id: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<JournalEntry | null> {
+    // Buscar entry
+    const query = db
+      .select()
+      .from(journalEntriesTable)
+      .where(
+        and(
+          eq(journalEntriesTable.id, id),
+          eq(journalEntriesTable.organizationId, organizationId),
+          eq(journalEntriesTable.branchId, branchId),
+          isNull(journalEntriesTable.deletedAt)
+        )
+      );
+    
+    const rows = await queryWithLimit<JournalEntryRow>(query, 1);
+
+    const row = rows[0];
+    if (!row) {
+      return null;
+    }
+
+    // Buscar lines
+    const lineRows = await db
+      .select()
+      .from(journalEntryLinesTable)
+      .where(eq(journalEntryLinesTable.journalEntryId, id));
+
+    const mapResult = JournalEntryMapper.toDomain(row, lineRows);
+    if (Result.isOk(mapResult)) {
+      return mapResult.value;
+    }
+
+    return null;
+  }
+
+  /**
+   * Busca com filtros e paginação
+   */
+  async findMany(
+    filter: FindJournalEntriesFilter,
+    pagination: PaginationOptions
+  ): Promise<PaginatedResult<JournalEntry>> {
+    const { organizationId, branchId, status, source, periodYear, periodMonth, entryDateFrom, entryDateTo, search } = filter;
+    const { page, pageSize, sortBy = 'entryDate', sortOrder = 'desc' } = pagination;
+
+    // Construir condições
+    const conditions = [
+      eq(journalEntriesTable.organizationId, organizationId),
+      eq(journalEntriesTable.branchId, branchId),
+      isNull(journalEntriesTable.deletedAt),
+    ];
+
+    if (status && status.length > 0) {
+      conditions.push(
+        or(...status.map(s => eq(journalEntriesTable.status, s))) ?? sql`1=1`
+      );
+    }
+
+    if (source && source.length > 0) {
+      conditions.push(
+        or(...source.map(s => eq(journalEntriesTable.source, s))) ?? sql`1=1`
+      );
+    }
+
+    if (periodYear) {
+      conditions.push(eq(journalEntriesTable.periodYear, periodYear));
+    }
+
+    if (periodMonth) {
+      conditions.push(eq(journalEntriesTable.periodMonth, periodMonth));
+    }
+
+    if (entryDateFrom) {
+      conditions.push(sql`${journalEntriesTable.entryDate} >= ${entryDateFrom}`);
+    }
+
+    if (entryDateTo) {
+      conditions.push(sql`${journalEntriesTable.entryDate} <= ${entryDateTo}`);
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          like(journalEntriesTable.description, `%${search}%`),
+          like(journalEntriesTable.entryNumber, `%${search}%`)
+        ) ?? sql`1=1`
+      );
+    }
+
+    // Count total
+    const countResult = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(journalEntriesTable)
+      .where(and(...conditions));
+    
+    const total = countResult[0]?.count ?? 0;
+
+    // Ordenação
+    const orderColumn = sortBy === 'entryDate' 
+      ? journalEntriesTable.entryDate 
+      : sortBy === 'entryNumber'
+        ? journalEntriesTable.entryNumber
+        : journalEntriesTable.createdAt;
+    
+    const orderFn = sortOrder === 'desc' ? desc : asc;
+
+    // Buscar entries com paginação
+    const offsetValue = (page - 1) * pageSize;
+    const baseQuery = db
+      .select()
+      .from(journalEntriesTable)
+      .where(and(...conditions))
+      .orderBy(orderFn(orderColumn))
+      .offset(offsetValue);
+    
+    const rows = await queryWithLimit<JournalEntryRow>(baseQuery, pageSize);
+
+    // Mapear para domain (sem lines por performance)
+    const entries: JournalEntry[] = [];
+    for (const row of rows) {
+      const mapResult = JournalEntryMapper.toDomain(row, []);
+      if (Result.isOk(mapResult)) {
+        entries.push(mapResult.value);
+      }
+    }
+
+    return {
+      data: entries,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  /**
+   * Salva (create ou update)
+   */
+  async save(entry: JournalEntry): Promise<void> {
+    const persistenceData = JournalEntryMapper.toPersistence(entry);
+    
+    // Verificar se existe
+    const existQuery = db
+      .select({ id: journalEntriesTable.id })
+      .from(journalEntriesTable)
+      .where(eq(journalEntriesTable.id, entry.id));
+    
+    const existing = await queryWithLimit<{ id: string }>(existQuery, 1);
+
+    if (existing.length > 0) {
+      // UPDATE
+      await db
+        .update(journalEntriesTable)
+        .set({
+          ...persistenceData,
+          updatedAt: new Date(),
+        })
+        .where(eq(journalEntriesTable.id, entry.id));
+    } else {
+      // INSERT
+      await db.insert(journalEntriesTable).values(persistenceData);
+    }
+
+    // Sincronizar lines
+    // 1. Deletar lines existentes
+    await db
+      .delete(journalEntryLinesTable)
+      .where(eq(journalEntryLinesTable.journalEntryId, entry.id));
+
+    // 2. Inserir novas lines
+    if (entry.lines.length > 0) {
+      const lineData = entry.lines.map(line => 
+        JournalEntryMapper.lineToPersistence(line)
+      );
+      await db.insert(journalEntryLinesTable).values(lineData);
+    }
+  }
+
+  /**
+   * Salva múltiplos lançamentos atomicamente (em transação)
+   */
+  async saveMany(entries: JournalEntry[]): Promise<void> {
+    // TODO: Implementar com transação real
+    for (const entry of entries) {
+      await this.save(entry);
+    }
+  }
+
+  /**
+   * Busca por período
+   */
+  async findByPeriod(
+    organizationId: number,
+    period: AccountingPeriod,
+    branchId: number
+  ): Promise<JournalEntry[]> {
+    const rows = await db
+      .select()
+      .from(journalEntriesTable)
+      .where(
+        and(
+          eq(journalEntriesTable.organizationId, organizationId),
+          eq(journalEntriesTable.branchId, branchId),
+          eq(journalEntriesTable.periodYear, period.year),
+          eq(journalEntriesTable.periodMonth, period.month),
+          isNull(journalEntriesTable.deletedAt)
+        )
+      )
+      .orderBy(desc(journalEntriesTable.entryDate));
+
+    const entries: JournalEntry[] = [];
+    for (const row of rows) {
+      // Buscar lines
+      const lineRows = await db
+        .select()
+        .from(journalEntryLinesTable)
+        .where(eq(journalEntryLinesTable.journalEntryId, row.id));
+
+      const mapResult = JournalEntryMapper.toDomain(row, lineRows);
+      if (Result.isOk(mapResult)) {
+        entries.push(mapResult.value);
+      }
+    }
+
+    return entries;
+  }
+
+  /**
+   * Busca por documento origem
+   */
+  async findBySourceId(
+    sourceId: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<JournalEntry | null> {
+    const query = db
+      .select()
+      .from(journalEntriesTable)
+      .where(
+        and(
+          eq(journalEntriesTable.sourceId, sourceId),
+          eq(journalEntriesTable.organizationId, organizationId),
+          eq(journalEntriesTable.branchId, branchId),
+          isNull(journalEntriesTable.deletedAt)
+        )
+      );
+    
+    const rows = await queryWithLimit<JournalEntryRow>(query, 1);
+
+    const row = rows[0];
+    if (!row) {
+      return null;
+    }
+
+    // Buscar lines
+    const lineRows = await db
+      .select()
+      .from(journalEntryLinesTable)
+      .where(eq(journalEntryLinesTable.journalEntryId, row.id));
+
+    const mapResult = JournalEntryMapper.toDomain(row, lineRows);
+    if (Result.isOk(mapResult)) {
+      return mapResult.value;
+    }
+
+    return null;
+  }
+
+  /**
+   * Verifica existência
+   */
+  async exists(
+    id: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<boolean> {
+    const query = db
+      .select({ id: journalEntriesTable.id })
+      .from(journalEntriesTable)
+      .where(
+        and(
+          eq(journalEntriesTable.id, id),
+          eq(journalEntriesTable.organizationId, organizationId),
+          eq(journalEntriesTable.branchId, branchId),
+          isNull(journalEntriesTable.deletedAt)
+        )
+      );
+    
+    const rows = await queryWithLimit<{ id: string }>(query, 1);
+
+    return rows.length > 0;
+  }
+
+  /**
+   * Gera próximo número de lançamento
+   */
+  async nextEntryNumber(organizationId: number, branchId: number): Promise<string> {
+    const currentYear = new Date().getFullYear();
+    
+    // Buscar último número do ano
+    const query = db
+      .select({ entryNumber: journalEntriesTable.entryNumber })
+      .from(journalEntriesTable)
+      .where(
+        and(
+          eq(journalEntriesTable.organizationId, organizationId),
+          eq(journalEntriesTable.branchId, branchId),
+          like(journalEntriesTable.entryNumber, `JE-${currentYear}-%`)
+        )
+      )
+      .orderBy(desc(journalEntriesTable.entryNumber));
+    
+    const result = await queryWithLimit<{ entryNumber: string }>(query, 1);
+
+    let nextSeq = 1;
+    if (result.length > 0 && result[0].entryNumber) {
+      const lastNumber = result[0].entryNumber;
+      const parts = lastNumber.split('-');
+      if (parts.length === 3) {
+        const lastSeq = parseInt(parts[2], 10);
+        if (!isNaN(lastSeq)) {
+          nextSeq = lastSeq + 1;
+        }
+      }
+    }
+
+    return `JE-${currentYear}-${nextSeq.toString().padStart(6, '0')}`;
+  }
 }

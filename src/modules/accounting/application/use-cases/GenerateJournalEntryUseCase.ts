@@ -9,7 +9,7 @@
 
 import { Result } from "@/shared/domain";
 import { JournalEntryGenerator } from "@/modules/accounting/domain/services";
-import type { IJournalEntryRepository } from "@/modules/accounting/domain/ports";
+import type { IFiscalAccountingRepository } from "@/modules/accounting/domain/ports";
 import {
   DocumentAlreadyPostedError,
   AccountingError,
@@ -43,7 +43,7 @@ export interface GenerateJournalEntryOutput {
 export class GenerateJournalEntryUseCase {
   constructor(
     private readonly journalEntryGenerator: JournalEntryGenerator,
-    private readonly repository: IJournalEntryRepository
+    private readonly repository: IFiscalAccountingRepository
   ) {}
 
   async execute(

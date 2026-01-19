@@ -1,15 +1,24 @@
 /**
- * Journal Entry Repository Port
+ * Fiscal Accounting Repository Port
  * 
- * Interface para persistência de lançamentos contábeis
+ * Interface para contabilização automática de documentos fiscais.
+ * Esta interface é usada pelo JournalEntryGenerator para criar
+ * lançamentos contábeis a partir de NFe, CTe e outros documentos fiscais.
+ * 
+ * NOTA: Esta interface é DIFERENTE de IJournalEntryRepository (ports/output/)
+ * que é usada para operações CRUD de JournalEntry Entity.
  * 
  * @epic E7.13 - Services → DDD Migration
  * @service 4/8 - accounting-engine.ts → JournalEntryGenerator
+ * @see IJournalEntryRepository (ports/output/) para CRUD de lançamentos
  */
 
 import { Result } from "@/shared/domain";
 import type { JournalLine } from "../value-objects/JournalLine";
 
+/**
+ * Dados de documento fiscal para contabilização
+ */
 export interface FiscalDocumentData {
   id: bigint;
   organizationId: bigint;
@@ -22,6 +31,9 @@ export interface FiscalDocumentData {
   accountingStatus: string;
 }
 
+/**
+ * Item de documento fiscal com categorização contábil
+ */
 export interface FiscalDocumentItem {
   id: bigint;
   chartAccountId: bigint | null;
@@ -30,6 +42,9 @@ export interface FiscalDocumentItem {
   netAmount: number;
 }
 
+/**
+ * Conta contábil para contabilização
+ */
 export interface ChartAccount {
   id: bigint;
   code: string;
@@ -37,6 +52,9 @@ export interface ChartAccount {
   isAnalytical: boolean;
 }
 
+/**
+ * Dados de lançamento contábil (legado - usa bigint)
+ */
 export interface JournalEntryData {
   id: bigint;
   organizationId: bigint;
@@ -51,7 +69,17 @@ export interface JournalEntryData {
   createdBy: string;
 }
 
-export interface IJournalEntryRepository {
+/**
+ * Port: Repository para Contabilização Fiscal
+ * 
+ * Responsabilidades:
+ * - Buscar dados de documentos fiscais para contabilização
+ * - Criar lançamentos contábeis a partir de documentos fiscais
+ * - Gerenciar status de contabilização de documentos
+ * 
+ * @see IJournalEntryRepository (ports/output/) para CRUD de JournalEntry Entity
+ */
+export interface IFiscalAccountingRepository {
   /**
    * Busca dados do documento fiscal para contabilização
    */

@@ -10,7 +10,7 @@
 import { Result } from "@/shared/domain";
 import { Money } from "@/shared/domain";
 import { JournalLine } from "../value-objects/JournalLine";
-import type { FiscalDocumentItem, ChartAccount } from "../ports/IJournalEntryRepository";
+import type { FiscalDocumentItem, ChartAccount } from "../ports/IFiscalAccountingRepository";
 import {
   SyntheticAccountError,
   UnbalancedEntryError,

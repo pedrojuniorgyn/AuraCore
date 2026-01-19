@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { Result } from "@/shared/domain";
 import { GenerateJournalEntryUseCase } from "@/modules/accounting/application/use-cases";
 import { JournalEntryGenerator } from "@/modules/accounting/domain/services";
-import { createJournalEntryRepository } from "@/modules/accounting/infrastructure/persistence";
+import { createFiscalAccountingRepository } from "@/modules/accounting/infrastructure/persistence";
 
 /**
  * 📊 POST /api/accounting/journal-entries/:id/post
@@ -39,7 +39,8 @@ export async function POST(
     const organizationId = BigInt(rawOrgId);
 
     // DDD: Instanciar Use Case com dependências
-    const repository = createJournalEntryRepository();
+    // Usa FiscalAccountingRepository pois esta rota contabiliza documentos fiscais
+    const repository = createFiscalAccountingRepository();
     const domainService = new JournalEntryGenerator();
     const useCase = new GenerateJournalEntryUseCase(domainService, repository);
 
