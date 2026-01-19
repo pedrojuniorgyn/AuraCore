@@ -28,6 +28,9 @@ import { checkMigrationStatus } from './tools/check-migration-status.js';
 import { generateRepository } from './tools/generate-repository.js';
 import { generateApiRoute } from './tools/generate-api-route.js';
 import { validateSchema } from './tools/validate-schema.js';
+import { processDocument } from './tools/process-document.js';
+import type { ProcessDocumentInput } from './contracts/process-document.contract.js';
+import { validateProcessDocumentInput } from './contracts/process-document.contract.js';
 
 export class AuraCoreMCPServer {
   private server: Server;
@@ -752,6 +755,55 @@ export class AuraCoreMCPServer {
               },
             },
             required: ['schemaPath'],
+          },
+        },
+        {
+          name: 'process_document',
+          description: 'Processa documento PDF (DANFe, DACTe, Contrato de Frete, Extrato Bancário) via Docling e retorna dados estruturados.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              document_type: {
+                type: 'string',
+                description: 'Tipo de documento',
+                enum: ['danfe', 'dacte', 'freight_contract', 'bank_statement', 'generic'],
+              },
+              file_path: {
+                type: 'string',
+                description: 'Caminho do arquivo local',
+              },
+              file_base64: {
+                type: 'string',
+                description: 'Conteúdo do arquivo em base64',
+              },
+              file_name: {
+                type: 'string',
+                description: 'Nome do arquivo (para identificar extensão)',
+              },
+              extract_tables: {
+                type: 'boolean',
+                description: 'Extrair tabelas (default: true)',
+              },
+              extract_text: {
+                type: 'boolean',
+                description: 'Extrair texto (default: true)',
+              },
+              options: {
+                type: 'object',
+                description: 'Opções de processamento',
+                properties: {
+                  language: {
+                    type: 'string',
+                    description: 'Idioma do documento (default: pt-BR)',
+                  },
+                  ocr_enabled: {
+                    type: 'boolean',
+                    description: 'Habilitar OCR (default: true)',
+                  },
+                },
+              },
+            },
+            required: ['document_type', 'file_name'],
           },
         },
       ],
@@ -2189,6 +2241,52 @@ export class AuraCoreMCPServer {
             : 'Unknown error';
 
           throw new Error(`Failed to validate schema: ${errorMessage}`);
+        }
+      }
+
+      if (name === 'process_document') {
+        if (!args || typeof args !== 'object') {
+          throw new Error('Invalid arguments for process_document');
+        }
+
+        const typedArgs = args as Record<string, unknown>;
+
+        // Validar input usando função do contrato
+        const validationErrors = validateProcessDocumentInput(typedArgs);
+        if (validationErrors.length > 0) {
+          throw new Error(`Validation errors: ${validationErrors.join(', ')}`);
+        }
+
+        // Construir input tipado
+        const input: ProcessDocumentInput = {
+          document_type: typedArgs.document_type as ProcessDocumentInput['document_type'],
+          file_name: typedArgs.file_name as string,
+          file_path: typeof typedArgs.file_path === 'string' ? typedArgs.file_path : undefined,
+          file_base64: typeof typedArgs.file_base64 === 'string' ? typedArgs.file_base64 : undefined,
+          extract_tables: typeof typedArgs.extract_tables === 'boolean' ? typedArgs.extract_tables : true,
+          extract_text: typeof typedArgs.extract_text === 'boolean' ? typedArgs.extract_text : true,
+          options: typedArgs.options && typeof typedArgs.options === 'object'
+            ? typedArgs.options as ProcessDocumentInput['options']
+            : undefined,
+        };
+
+        try {
+          const result = await processDocument(input);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
+          };
+        } catch (error: unknown) {
+          const errorMessage = error && typeof error === 'object' && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Unknown error';
+
+          throw new Error(`Failed to process document: ${errorMessage}`);
         }
       }
 
