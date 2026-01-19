@@ -144,20 +144,19 @@ ORDER BY total_reads DESC;
 
 ## 🔴 PROBLEMAS IDENTIFICADOS
 
-### 1. `.slice()` para Paginação (VIOLA ADR-0006)
+### 1. `.slice()` para Paginação ✅ CORRIGIDO (E8.3)
 
 **Severidade:** ALTA  
-**Quantidade:** 6 ocorrências problemáticas  
-**Ação:** Corrigir em E8.3
+**Status:** ✅ Corrigido em E8.3 (19/01/2026)
 
-| # | Arquivo | Linha | Descrição |
-|---|---------|-------|-----------|
-| 1 | `src/app/api/strategic/war-room/dashboard/route.ts` | 39 | `.filter().slice(0, 5)` - KPIs críticos |
-| 2 | `src/app/api/strategic/war-room/dashboard/route.ts` | 52 | `.filter().slice(0, 5)` - KPIs alerta |
-| 3 | `src/app/api/strategic/war-room/dashboard/route.ts` | 77 | `.filter().slice(0, 5)` - Planos atrasados |
-| 4 | `src/app/api/admin/test-classification/route.ts` | 104 | `.slice(0, 10)` - Amostra NFes |
-| 5 | `src/app/api/comercial/proposals/route.ts` | 44 | `.slice(0, 1)` - Última proposta |
-| 6 | `src/app/api/tms/control-tower/route.ts` | 60 | `.slice(0, 10)` - Checkpoints |
+| # | Arquivo | Correção | Status |
+|---|---------|----------|--------|
+| 1 | `war-room/dashboard/route.ts` | Usar `status` filter + `pageSize: 5` | ✅ SQL Server |
+| 2 | `war-room/dashboard/route.ts` | Usar `status` filter + `pageSize: 5` | ✅ SQL Server |
+| 3 | `war-room/dashboard/route.ts` | Usar `overdueOnly` filter + `pageSize: 5` | ✅ SQL Server |
+| 4 | `test-classification/route.ts` | Mantido (amostragem de TOP 100) | ✅ Documentado |
+| 5 | `proposals/route.ts` | Usar `queryFirst()` helper | ✅ SQL Server |
+| 6 | `control-tower/route.ts` | Mantido (partição por trip) | ✅ Documentado |
 
 ### 2. LIKE '%x%' (Aceitáveis)
 

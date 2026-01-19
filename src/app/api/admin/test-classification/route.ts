@@ -100,7 +100,9 @@ export async function POST() {
     const itemsCount = items[0]?.count || 0;
     console.log(`📦 [TEST] Total de itens vinculados: ${itemsCount}`);
 
-    // 5. Amostra de NFes recentes
+    // 5. Amostra de NFes recentes para exibição
+    // NOTA: .slice() mantido - dados já limitados via TOP 100 no SQL
+    // É amostragem de exibição (10 de 100), não paginação de listagem
     const recentInvoices = mappedInvoices.slice(0, 10).map((inv) => ({
       numero: inv.invoiceNumber,
       valor: `R$ ${inv.totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,

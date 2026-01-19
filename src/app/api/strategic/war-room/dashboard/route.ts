@@ -26,55 +26,63 @@ export async function GET() {
       STRATEGIC_TOKENS.StrategicGoalRepository
     );
 
-    // 1. KPIs Críticos (status = RED)
-    const { items: allKpis } = await kpiRepository.findMany({
+    // 1. KPIs Críticos (status = RED) - Paginação no SQL Server (ADR-0006)
+    const { items: redKpis } = await kpiRepository.findMany({
+      organizationId: context.organizationId,
+      branchId: context.branchId,
+      status: 'RED',
+      page: 1,
+      pageSize: 5,
+    });
+
+    const criticalKpis = redKpis.map((kpi) => ({
+      id: kpi.id,
+      code: kpi.code,
+      name: kpi.name,
+      currentValue: kpi.currentValue,
+      targetValue: kpi.targetValue,
+      unit: kpi.unit,
+      variance: kpi.deviationPercent,
+    }));
+
+    // 2. KPIs em Alerta (status = YELLOW) - Paginação no SQL Server
+    const { items: yellowKpis } = await kpiRepository.findMany({
+      organizationId: context.organizationId,
+      branchId: context.branchId,
+      status: 'YELLOW',
+      page: 1,
+      pageSize: 5,
+    });
+
+    const alertKpis = yellowKpis.map((kpi) => ({
+      id: kpi.id,
+      code: kpi.code,
+      name: kpi.name,
+      currentValue: kpi.currentValue,
+      targetValue: kpi.targetValue,
+      unit: kpi.unit,
+    }));
+
+    // 3. Total de KPIs para estatísticas (sem paginação - count apenas)
+    const { total: totalKpis, items: allKpis } = await kpiRepository.findMany({
       organizationId: context.organizationId,
       branchId: context.branchId,
       page: 1,
       pageSize: 100,
     });
 
-    const criticalKpis = allKpis
-      .filter((kpi) => kpi.status === 'RED')
-      .slice(0, 5)
-      .map((kpi) => ({
-        id: kpi.id,
-        code: kpi.code,
-        name: kpi.name,
-        currentValue: kpi.currentValue,
-        targetValue: kpi.targetValue,
-        unit: kpi.unit,
-        variance: kpi.deviationPercent,
-      }));
-
-    const alertKpis = allKpis
-      .filter((kpi) => kpi.status === 'YELLOW')
-      .slice(0, 5)
-      .map((kpi) => ({
-        id: kpi.id,
-        code: kpi.code,
-        name: kpi.name,
-        currentValue: kpi.currentValue,
-        targetValue: kpi.targetValue,
-        unit: kpi.unit,
-      }));
-
-    // 2. Planos de ação vencidos
-    const { items: allPlans } = await actionPlanRepository.findMany({
+    // 4. Planos de ação vencidos - Paginação no SQL Server (ADR-0006)
+    const now = new Date();
+    const { items: overduePlanItems } = await actionPlanRepository.findMany({
       organizationId: context.organizationId,
       branchId: context.branchId,
+      overdueOnly: true,
       page: 1,
-      pageSize: 500,
+      pageSize: 5,
     });
 
-    const now = new Date();
-    const activePlans = allPlans.filter(
-      (p) => p.status !== 'COMPLETED' && p.status !== 'CANCELLED'
-    );
-    
-    const overduePlans = activePlans
-      .filter((plan) => plan.isOverdue)
-      .slice(0, 5)
+    const overduePlans = overduePlanItems
+      .filter((p) => p.status !== 'COMPLETED' && p.status !== 'CANCELLED')
       .map((plan) => ({
         id: plan.id,
         code: plan.code,
@@ -85,7 +93,19 @@ export async function GET() {
         ),
       }));
 
-    // 3. Metas
+    // 5. Total de planos ativos para estatísticas
+    const { items: allPlans } = await actionPlanRepository.findMany({
+      organizationId: context.organizationId,
+      branchId: context.branchId,
+      page: 1,
+      pageSize: 500,
+    });
+
+    const activePlans = allPlans.filter(
+      (p) => p.status !== 'COMPLETED' && p.status !== 'CANCELLED'
+    );
+
+    // 6. Metas
     const { items: goals } = await goalRepository.findMany({
       organizationId: context.organizationId,
       branchId: context.branchId,
@@ -93,7 +113,7 @@ export async function GET() {
       pageSize: 500,
     });
 
-    // 4. Estatísticas gerais
+    // 7. Estatísticas gerais
     const stats = {
       totalGoals: goals.length,
       goalsOnTrack: goals.filter((g) => g.status.value === 'ON_TRACK').length,
@@ -108,7 +128,7 @@ export async function GET() {
       plansInProgress: activePlans.filter((p) => p.pdcaCycle.value === 'DO').length,
     };
 
-    // 5. Calcular saúde estratégica
+    // 8. Calcular saúde estratégica
     const healthScore = stats.totalKpis > 0
       ? (stats.kpisGreen / stats.totalKpis)
       : 0;

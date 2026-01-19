@@ -4,6 +4,7 @@ import { commercialProposals } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { proposalPdfGenerator } from "@/services/commercial/proposal-pdf-generator";
+import { queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET() {
   try {
@@ -34,15 +35,17 @@ export async function POST(request: Request) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    // Gerar número sequencial
-    const allProposals = await db
-      .select()
-      .from(commercialProposals)
-      .where(eq(commercialProposals.organizationId, ctx.organizationId))
-      .orderBy(desc(commercialProposals.id));
+    // Gerar número sequencial - Paginação no SQL Server (ADR-0006)
+    type ProposalRow = { id: number };
+    const lastProposal = await queryFirst<ProposalRow>(
+      db
+        .select({ id: commercialProposals.id })
+        .from(commercialProposals)
+        .where(eq(commercialProposals.organizationId, ctx.organizationId))
+        .orderBy(desc(commercialProposals.id))
+    );
 
-    const lastProposal = allProposals.slice(0, 1); // Usar slice() ao invés de .limit() para evitar TS2339
-    const nextNumber = (lastProposal[0]?.id || 0) + 1;
+    const nextNumber = (lastProposal?.id || 0) + 1;
     const proposalNumber = `PROP-${new Date().getFullYear()}-${String(nextNumber).padStart(4, "0")}`;
 
     interface ProposalInsert {

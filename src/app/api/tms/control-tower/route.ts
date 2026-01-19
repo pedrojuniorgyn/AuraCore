@@ -57,7 +57,10 @@ export async function GET() {
       return {
         ...trip,
         slaStatus,
-        checkpoints: cps.slice(0, 10), // últimos 10 eventos
+        // NOTA: .slice() mantido aqui intencionalmente (não é paginação de listagem)
+        // É limitação de exibição após ordenação customizada por viagem
+        // Para mover para SQL, seria necessário ROW_NUMBER() OVER (PARTITION BY trip_id)
+        checkpoints: cps.slice(0, 10),
       };
     });
 
