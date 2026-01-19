@@ -607,7 +607,13 @@ function toPastTense(verb: string): string {
     'plan', 'scan', 'ban', 'man', 'tan', 'fan',
   ];
   if (doubleConsonantVerbs.includes(lower)) {
-    return verb + lower.slice(-1) + 'ed';
+    // CORREÇÃO: usar 'lower' para manter minúsculas, depois capitalizar se necessário
+    const lastChar = lower.slice(-1);
+    const result = lower + lastChar + 'ed';
+    // Preservar capitalização original (Submit → Submitted)
+    return verb[0] === verb[0].toUpperCase()
+      ? result.charAt(0).toUpperCase() + result.slice(1)
+      : result;
   }
   
   // Padrão geral: adiciona 'ed'

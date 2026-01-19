@@ -6,7 +6,7 @@
  * @see ADR-0020, ADR-0022
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { actionPlanTable } from './action-plan.schema';
 
 export const standardProcedureTable = mssqlTable('strategic_standard_procedure', {
@@ -55,15 +55,15 @@ export const standardProcedureTable = mssqlTable('strategic_standard_procedure',
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_standard_procedure_tenant ON strategic_standard_procedure (organization_id, branch_id);
-// CREATE INDEX idx_standard_procedure_code ON strategic_standard_procedure (organization_id, branch_id, code);
-// CREATE INDEX idx_standard_procedure_source ON strategic_standard_procedure (source_action_plan_id);
-// CREATE INDEX idx_standard_procedure_status ON strategic_standard_procedure (status);
-// CREATE INDEX idx_standard_procedure_owner ON strategic_standard_procedure (owner_user_id);
-// CREATE INDEX idx_standard_procedure_review ON strategic_standard_procedure (next_review_date);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_standard_procedure_tenant').on(table.organizationId, table.branchId),
+  index('idx_standard_procedure_code').on(table.organizationId, table.branchId, table.code),
+  index('idx_standard_procedure_source').on(table.sourceActionPlanId),
+  index('idx_standard_procedure_status').on(table.status),
+  index('idx_standard_procedure_owner').on(table.ownerUserId),
+  index('idx_standard_procedure_review').on(table.nextReviewDate),
+]));
 
 export type StandardProcedureRow = typeof standardProcedureTable.$inferSelect;
 export type StandardProcedureInsert = typeof standardProcedureTable.$inferInsert;

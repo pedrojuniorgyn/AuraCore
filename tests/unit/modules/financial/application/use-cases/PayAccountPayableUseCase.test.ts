@@ -37,9 +37,15 @@ describe('PayAccountPayableUseCase', () => {
 
     existingPayable = payableResult.value!;
 
-    // Mock repository
+    // Mock repository - filtra por branchId (ENFORCE-004)
     mockRepository = {
-      findById: vi.fn().mockResolvedValue(existingPayable),
+      findById: vi.fn().mockImplementation(async (id, _orgId, branchId) => {
+        // Repository filtra por branchId - só retorna se branch bater
+        if (id === existingPayable.id && branchId === existingPayable.branchId) {
+          return existingPayable;
+        }
+        return null;
+      }),
       findMany: vi.fn(),
       save: vi.fn().mockResolvedValue(undefined),
       findOverdue: vi.fn(),
@@ -96,6 +102,8 @@ describe('PayAccountPayableUseCase', () => {
     });
 
     it('should fail if branch mismatch for non-admin', async () => {
+      // Com multi-tenancy completo, o repository filtra por branchId
+      // Documento de branch 1 não é encontrado quando busca com branchId: 999
       const result = await useCase.execute(validInput, {
         ...ctx,
         branchId: 999, // Diferente do payable
@@ -104,15 +112,18 @@ describe('PayAccountPayableUseCase', () => {
 
       expect(Result.isFail(result)).toBe(true);
       if (Result.isFail(result)) {
-        expect(result.error).toContain('Access denied');
+        // Repository retorna null quando branchId não bate
+        expect(result.error).toContain('not found');
       }
     });
 
-    it('should allow admin to pay any branch', async () => {
+    it('should allow admin to pay same branch', async () => {
+      // Admin também precisa estar na mesma branch para acessar o documento
+      // (multi-tenancy é enforçado no repository)
       const result = await useCase.execute(validInput, {
         ...ctx,
-        branchId: 999,
-        isAdmin: true, // Admin pode acessar qualquer branch
+        branchId: 1, // Mesma branch do payable
+        isAdmin: true,
       });
 
       expect(Result.isOk(result)).toBe(true);

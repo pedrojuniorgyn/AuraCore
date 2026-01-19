@@ -31,7 +31,17 @@ export class CompareTaxRegimesUseCase implements ICompareTaxRegimes {
     input: CompareTaxRegimesInput,
     _ctx: ExecutionContext
   ): Promise<Result<CompareTaxRegimesOutput, string>> {
-    // TODO: Implementar validação e comparação completa
+    // Validação de input (USE-CASE-007)
+    const trimmedDocumentId = input.documentId?.trim() ?? '';
+    if (!trimmedDocumentId) {
+      return Result.fail('documentId is required');
+    }
+
+    if (!input.regimes || input.regimes.length === 0) {
+      return Result.fail('At least one tax regime is required for comparison');
+    }
+
+    // TODO: Implementar comparação completa
     // Por enquanto, retorna stub básico
 
     return Result.ok({

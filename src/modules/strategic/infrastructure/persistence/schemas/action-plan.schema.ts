@@ -6,7 +6,7 @@
  * @see ADR-0020, ADR-0022
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { strategicGoalTable } from './strategic-goal.schema';
 
 export const actionPlanTable = mssqlTable('strategic_action_plan', {
@@ -56,16 +56,17 @@ export const actionPlanTable = mssqlTable('strategic_action_plan', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_action_plan_tenant ON strategic_action_plan (organization_id, branch_id);
-// CREATE INDEX idx_action_plan_goal ON strategic_action_plan (goal_id);
-// CREATE INDEX idx_action_plan_pdca ON strategic_action_plan (pdca_cycle);
-// CREATE INDEX idx_action_plan_status ON strategic_action_plan (status);
-// CREATE INDEX idx_action_plan_parent ON strategic_action_plan (parent_action_plan_id);
-// CREATE INDEX idx_action_plan_who ON strategic_action_plan (who_user_id);
-// CREATE INDEX idx_action_plan_follow_up ON strategic_action_plan (next_follow_up_date);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_action_plan_tenant').on(table.organizationId, table.branchId),
+  // Índices adicionais
+  index('idx_action_plan_goal').on(table.goalId),
+  index('idx_action_plan_pdca').on(table.pdcaCycle),
+  index('idx_action_plan_status').on(table.status),
+  index('idx_action_plan_parent').on(table.parentActionPlanId),
+  index('idx_action_plan_who').on(table.whoUserId),
+  index('idx_action_plan_follow_up').on(table.nextFollowUpDate),
+]));
 
 export type ActionPlanRow = typeof actionPlanTable.$inferSelect;
 export type ActionPlanInsert = typeof actionPlanTable.$inferInsert;

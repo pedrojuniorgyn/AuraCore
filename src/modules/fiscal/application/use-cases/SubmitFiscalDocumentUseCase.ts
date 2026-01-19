@@ -41,9 +41,10 @@ export class SubmitFiscalDocumentUseCase implements IUseCaseWithContext<{ id: st
       await this.repository.save(document);
 
       // Retornar conforme interface { id, status }
+      // O status correto após submit() é PENDING (conforme FiscalDocument.submit())
       return Result.ok({
         id: document.id,
-        status: document.status === 'PROCESSING' ? 'PROCESSING' : 'SUBMITTED',
+        status: document.status,
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);

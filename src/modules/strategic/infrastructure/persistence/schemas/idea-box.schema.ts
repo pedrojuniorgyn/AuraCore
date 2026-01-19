@@ -6,7 +6,7 @@
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 
 export const ideaBoxTable = mssqlTable('strategic_idea_box', {
   id: varchar('id', { length: 36 }).primaryKey(),
@@ -53,14 +53,14 @@ export const ideaBoxTable = mssqlTable('strategic_idea_box', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_idea_box_tenant ON strategic_idea_box (organization_id, branch_id);
-// CREATE INDEX idx_idea_box_code ON strategic_idea_box (organization_id, branch_id, code);
-// CREATE INDEX idx_idea_box_status ON strategic_idea_box (status);
-// CREATE INDEX idx_idea_box_submitter ON strategic_idea_box (submitted_by);
-// CREATE INDEX idx_idea_box_source ON strategic_idea_box (source_type);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_idea_box_tenant').on(table.organizationId, table.branchId),
+  index('idx_idea_box_code').on(table.organizationId, table.branchId, table.code),
+  index('idx_idea_box_status').on(table.status),
+  index('idx_idea_box_submitter').on(table.submittedBy),
+  index('idx_idea_box_source').on(table.sourceType),
+]));
 
 export type IdeaBoxRow = typeof ideaBoxTable.$inferSelect;
 export type IdeaBoxInsert = typeof ideaBoxTable.$inferInsert;

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { container, injectable, inject, singleton, autoInjectable, registry, delay } from 'tsyringe';
 import { TOKENS } from './tokens';
+import { CryptoUuidGenerator } from '../adapters/CryptoUuidGenerator';
 import { DoclingClient } from '../docling';
 import { ImportDANFeUseCase } from '@/modules/fiscal/application/commands/import-danfe';
 import { ImportDACTeUseCase } from '@/modules/fiscal/application/commands/import-dacte';
@@ -16,8 +17,8 @@ import { QueryLegislationUseCase } from '@/modules/fiscal/application/queries/qu
 // Strategic Module (E10)
 import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
 
-// Registros globais - usar delay() para evitar circular import
-container.registerSingleton(TOKENS.UuidGenerator, delay(() => import('../adapters/CryptoUuidGenerator').then(m => m.CryptoUuidGenerator)));
+// Registros globais
+container.registerSingleton(TOKENS.UuidGenerator, CryptoUuidGenerator);
 
 // Docling Integration (E-Agent-Fase-D1/D2/D3)
 container.registerSingleton(TOKENS.DoclingClient, DoclingClient);

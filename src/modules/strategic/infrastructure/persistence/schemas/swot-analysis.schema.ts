@@ -6,7 +6,7 @@
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { strategyTable } from './strategy.schema';
 
 export const swotAnalysisTable = mssqlTable('strategic_swot_analysis', {
@@ -43,14 +43,14 @@ export const swotAnalysisTable = mssqlTable('strategic_swot_analysis', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_swot_tenant ON strategic_swot_analysis (organization_id, branch_id);
-// CREATE INDEX idx_swot_strategy ON strategic_swot_analysis (strategy_id);
-// CREATE INDEX idx_swot_quadrant ON strategic_swot_analysis (quadrant);
-// CREATE INDEX idx_swot_priority ON strategic_swot_analysis (priority_score);
-// CREATE INDEX idx_swot_status ON strategic_swot_analysis (status);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_swot_tenant').on(table.organizationId, table.branchId),
+  index('idx_swot_strategy').on(table.strategyId),
+  index('idx_swot_quadrant').on(table.quadrant),
+  index('idx_swot_priority').on(table.priorityScore),
+  index('idx_swot_status').on(table.status),
+]));
 
 export type SwotAnalysisRow = typeof swotAnalysisTable.$inferSelect;
 export type SwotAnalysisInsert = typeof swotAnalysisTable.$inferInsert;

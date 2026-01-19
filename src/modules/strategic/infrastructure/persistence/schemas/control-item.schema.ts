@@ -6,7 +6,7 @@
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 
 export const controlItemTable = mssqlTable('strategic_control_item', {
   id: varchar('id', { length: 36 }).primaryKey(),
@@ -41,13 +41,14 @@ export const controlItemTable = mssqlTable('strategic_control_item', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_control_item_tenant ON strategic_control_item (organization_id, branch_id);
-// CREATE INDEX idx_control_item_code ON strategic_control_item (organization_id, branch_id, code);
-// CREATE INDEX idx_control_item_status ON strategic_control_item (status);
-// CREATE INDEX idx_control_item_owner ON strategic_control_item (process_owner_user_id);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_control_item_tenant').on(table.organizationId, table.branchId),
+  // Índices adicionais
+  index('idx_control_item_code').on(table.organizationId, table.branchId, table.code),
+  index('idx_control_item_status').on(table.status),
+  index('idx_control_item_owner').on(table.processOwnerUserId),
+]));
 
 export type ControlItemRow = typeof controlItemTable.$inferSelect;
 export type ControlItemInsert = typeof controlItemTable.$inferInsert;

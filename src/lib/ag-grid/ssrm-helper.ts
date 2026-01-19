@@ -10,6 +10,7 @@ import {
   eq, and, like, gte, lte, desc, asc, isNull, count, inArray, 
   type SQL 
 } from 'drizzle-orm';
+import type { AnyMsSqlTable } from 'drizzle-orm/mssql-core';
 import type { 
   IServerSideGetRowsRequest, 
   IServerSideGetRowsResponse,
@@ -17,6 +18,21 @@ import type {
   SSRMContext,
   FilterModel,
 } from '@/types/ag-grid-ssrm';
+
+/**
+ * Tipo genérico para tabela Drizzle com campos acessíveis
+ * Permite acesso dinâmico aos campos enquanto mantém type-safety
+ */
+type DrizzleTableWithColumns = AnyMsSqlTable & Record<string, unknown>;
+
+/**
+ * Interface para queries com métodos de paginação
+ * @see LC-001 (Type Safety Contract) - usar unknown ao invés de any
+ */
+interface PaginatedQuery<T> {
+  limit(count: number): { offset(count: number): Promise<T[]> };
+  offset(count: number): { limit(count: number): Promise<T[]> };
+}
 
 /**
  * Executa query SSRM genérica para qualquer tabela Drizzle
@@ -41,8 +57,8 @@ import type {
  * );
  * ```
  */
-export async function executeSSRMQuery<TTable extends Record<string, unknown>>(
-  table: TTable,
+export async function executeSSRMQuery(
+  table: DrizzleTableWithColumns,
   request: IServerSideGetRowsRequest,
   context: SSRMContext,
   options: SSRMHelperOptions
@@ -82,23 +98,26 @@ export async function executeSSRMQuery<TTable extends Record<string, unknown>>(
   // Construir query base
   const whereClause = and(...conditions) as SQL;
   
-  // Query de dados (tipagem simplificada para evitar erros TS complexos)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const baseQuery = db.select().from(table as any);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queryWithWhere = (baseQuery as any).where(whereClause);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queryWithOrder = (queryWithWhere as any).orderBy(...orderByClause);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queryWithOffset = (queryWithOrder as any).offset(startRow);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows: Record<string, unknown>[] = await (queryWithOffset as any).limit(pageSize);
+  // Query de dados - usar cast explícito para AnyMsSqlTable que é aceito pelo Drizzle
+  const drizzleTable = table as AnyMsSqlTable;
+  
+  // Construir query base
+  const baseQuery = db
+    .select()
+    .from(drizzleTable)
+    .where(whereClause)
+    .orderBy(...orderByClause);
+  
+  // Aplicar paginação com type-safety (usando unknown ao invés de any)
+  // @see LC-001 (Type Safety Contract) - usar interface específica
+  const paginatedQuery = baseQuery as unknown as PaginatedQuery<Record<string, unknown>>;
+  const rows = await paginatedQuery.limit(pageSize).offset(startRow);
 
   // Query de count
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const countQuery = db.select({ total: count() }).from(table as any);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const countResult: Array<{ total: number }> = await (countQuery as any).where(whereClause);
+  const countResult = await db
+    .select({ total: count() })
+    .from(drizzleTable)
+    .where(whereClause);
 
   const total = countResult[0]?.total ?? 0;
 
@@ -111,8 +130,8 @@ export async function executeSSRMQuery<TTable extends Record<string, unknown>>(
 /**
  * Constrói condições base de multi-tenancy e soft delete
  */
-function buildBaseConditions<TTable extends Record<string, unknown>>(
-  table: TTable,
+function buildBaseConditions(
+  table: DrizzleTableWithColumns,
   context: SSRMContext
 ): SQL[] {
   const conditions: SQL[] = [];
@@ -136,8 +155,8 @@ function buildBaseConditions<TTable extends Record<string, unknown>>(
 /**
  * Constrói condições de filtro do AG Grid
  */
-function buildFilterConditions<TTable extends Record<string, unknown>>(
-  table: TTable,
+function buildFilterConditions(
+  table: DrizzleTableWithColumns,
   filterModel: Record<string, FilterModel>,
   allowedFields: string[]
 ): SQL[] {
@@ -269,8 +288,8 @@ function buildSetFilter(column: SQL, filter: FilterModel & { filterType: 'set' }
 /**
  * Constrói cláusula ORDER BY
  */
-function buildOrderBy<TTable extends Record<string, unknown>>(
-  table: TTable,
+function buildOrderBy(
+  table: DrizzleTableWithColumns,
   sortModel: Array<{ colId: string; sort: 'asc' | 'desc' }>,
   allowedFields: string[],
   defaultSort: { field: string; direction: 'asc' | 'desc' }

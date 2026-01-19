@@ -6,7 +6,7 @@
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 
 export const strategyTable = mssqlTable('strategic_strategy', {
   id: varchar('id', { length: 36 }).primaryKey(),
@@ -28,11 +28,11 @@ export const strategyTable = mssqlTable('strategic_strategy', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_strategic_strategy_tenant ON strategic_strategy (organization_id, branch_id);
-// CREATE INDEX idx_strategic_strategy_status ON strategic_strategy (status);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_strategic_strategy_tenant').on(table.organizationId, table.branchId),
+  index('idx_strategic_strategy_status').on(table.status),
+]));
 
 export type StrategyRow = typeof strategyTable.$inferSelect;
 export type StrategyInsert = typeof strategyTable.$inferInsert;

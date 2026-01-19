@@ -1,4 +1,5 @@
-import { injectable } from '@/shared/infrastructure/di/container';
+import 'reflect-metadata';
+import { injectable } from 'tsyringe';
 import type { IUuidGenerator } from '../../domain/ports/IUuidGenerator';
 
 /**

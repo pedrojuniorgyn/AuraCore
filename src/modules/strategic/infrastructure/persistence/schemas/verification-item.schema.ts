@@ -6,7 +6,7 @@
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { controlItemTable } from './control-item.schema';
 
 export const verificationItemTable = mssqlTable('strategic_verification_item', {
@@ -46,13 +46,13 @@ export const verificationItemTable = mssqlTable('strategic_verification_item', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_verification_item_tenant ON strategic_verification_item (organization_id, branch_id);
-// CREATE INDEX idx_verification_item_control ON strategic_verification_item (control_item_id);
-// CREATE INDEX idx_verification_item_code ON strategic_verification_item (organization_id, branch_id, code);
-// CREATE INDEX idx_verification_item_status ON strategic_verification_item (status);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_verification_item_tenant').on(table.organizationId, table.branchId),
+  index('idx_verification_item_control').on(table.controlItemId),
+  index('idx_verification_item_code').on(table.organizationId, table.branchId, table.code),
+  index('idx_verification_item_status').on(table.status),
+]));
 
 export type VerificationItemRow = typeof verificationItemTable.$inferSelect;
 export type VerificationItemInsert = typeof verificationItemTable.$inferInsert;

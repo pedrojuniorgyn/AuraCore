@@ -6,7 +6,7 @@
  * @see ADR-0021
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { bscPerspectiveTable } from './bsc-perspective.schema';
 
 export const strategicGoalTable = mssqlTable('strategic_goal', {
@@ -47,15 +47,15 @@ export const strategicGoalTable = mssqlTable('strategic_goal', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_strategic_goal_tenant ON strategic_goal (organization_id, branch_id);
-// CREATE INDEX idx_strategic_goal_perspective ON strategic_goal (perspective_id);
-// CREATE INDEX idx_strategic_goal_parent ON strategic_goal (parent_goal_id);
-// CREATE INDEX idx_strategic_goal_cascade ON strategic_goal (cascade_level);
-// CREATE INDEX idx_strategic_goal_status ON strategic_goal (status);
-// CREATE INDEX idx_strategic_goal_owner ON strategic_goal (owner_user_id);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_strategic_goal_tenant').on(table.organizationId, table.branchId),
+  index('idx_strategic_goal_perspective').on(table.perspectiveId),
+  index('idx_strategic_goal_parent').on(table.parentGoalId),
+  index('idx_strategic_goal_cascade').on(table.cascadeLevel),
+  index('idx_strategic_goal_status').on(table.status),
+  index('idx_strategic_goal_owner').on(table.ownerUserId),
+]));
 
 export type StrategicGoalRow = typeof strategicGoalTable.$inferSelect;
 export type StrategicGoalInsert = typeof strategicGoalTable.$inferInsert;

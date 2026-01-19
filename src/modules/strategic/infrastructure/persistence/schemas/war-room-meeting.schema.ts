@@ -6,7 +6,7 @@
  * @see ADR-0023
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { strategyTable } from './strategy.schema';
 
 export const warRoomMeetingTable = mssqlTable('strategic_war_room_meeting', {
@@ -54,15 +54,15 @@ export const warRoomMeetingTable = mssqlTable('strategic_war_room_meeting', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_war_room_meeting_tenant ON strategic_war_room_meeting (organization_id, branch_id);
-// CREATE INDEX idx_war_room_meeting_strategy ON strategic_war_room_meeting (strategy_id);
-// CREATE INDEX idx_war_room_meeting_type ON strategic_war_room_meeting (meeting_type);
-// CREATE INDEX idx_war_room_meeting_scheduled ON strategic_war_room_meeting (scheduled_at);
-// CREATE INDEX idx_war_room_meeting_status ON strategic_war_room_meeting (status);
-// CREATE INDEX idx_war_room_meeting_facilitator ON strategic_war_room_meeting (facilitator_user_id);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_war_room_meeting_tenant').on(table.organizationId, table.branchId),
+  index('idx_war_room_meeting_strategy').on(table.strategyId),
+  index('idx_war_room_meeting_type').on(table.meetingType),
+  index('idx_war_room_meeting_scheduled').on(table.scheduledAt),
+  index('idx_war_room_meeting_status').on(table.status),
+  index('idx_war_room_meeting_facilitator').on(table.facilitatorUserId),
+]));
 
 export type WarRoomMeetingRow = typeof warRoomMeetingTable.$inferSelect;
 export type WarRoomMeetingInsert = typeof warRoomMeetingTable.$inferInsert;

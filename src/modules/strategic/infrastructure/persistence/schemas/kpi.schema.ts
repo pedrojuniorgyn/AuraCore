@@ -6,7 +6,7 @@
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, decimal, datetime2, bit, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, decimal, datetime2, bit, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { strategicGoalTable } from './strategic-goal.schema';
 
 export const kpiTable = mssqlTable('strategic_kpi', {
@@ -51,14 +51,14 @@ export const kpiTable = mssqlTable('strategic_kpi', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_kpi_tenant ON strategic_kpi (organization_id, branch_id);
-// CREATE INDEX idx_kpi_goal ON strategic_kpi (goal_id);
-// CREATE INDEX idx_kpi_code ON strategic_kpi (organization_id, branch_id, code);
-// CREATE INDEX idx_kpi_status ON strategic_kpi (status);
-// CREATE INDEX idx_kpi_source ON strategic_kpi (source_module);
+}, (table) => ([
+  // SCHEMA-003: Índice composto obrigatório para multi-tenancy
+  index('idx_kpi_tenant').on(table.organizationId, table.branchId),
+  index('idx_kpi_goal').on(table.goalId),
+  index('idx_kpi_code').on(table.organizationId, table.branchId, table.code),
+  index('idx_kpi_status').on(table.status),
+  index('idx_kpi_source').on(table.sourceModule),
+]));
 
 export type KPIRow = typeof kpiTable.$inferSelect;
 export type KPIInsert = typeof kpiTable.$inferInsert;

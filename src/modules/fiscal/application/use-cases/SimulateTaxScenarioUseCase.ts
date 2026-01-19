@@ -30,7 +30,13 @@ export class SimulateTaxScenarioUseCase implements ISimulateTaxReform {
     input: SimulateTaxReformInput,
     _ctx: ExecutionContext
   ): Promise<Result<SimulateTaxReformOutput, string>> {
-    // TODO: Implementar validação e simulação completa
+    // Validação de input (USE-CASE-007)
+    const trimmedDocumentId = input.documentId?.trim() ?? '';
+    if (!trimmedDocumentId) {
+      return Result.fail('documentId is required');
+    }
+
+    // TODO: Implementar simulação completa
     // Por enquanto, retorna stub básico
 
     return Result.ok({
