@@ -347,6 +347,77 @@ src/modules/{module}/
 
 ---
 
+## 🔄 MIGRATIONS - REGRAS OBRIGATÓRIAS (MIGRATION-001 a MIGRATION-006)
+
+### Criação de Migrations
+
+| Regra | Descrição | Prioridade |
+|-------|-----------|------------|
+| MIGRATION-001 | SEMPRE validar colunas existem antes de criar índices | CRÍTICA |
+| MIGRATION-002 | NUNCA usar `drizzle-kit push` em produção/homologação | CRÍTICA |
+| MIGRATION-003 | SEMPRE iniciar migration com `SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;` | ALTA |
+| MIGRATION-004 | SEMPRE usar `IF NOT EXISTS` para CREATE INDEX | ALTA |
+| MIGRATION-005 | SEMPRE testar migration em ambiente local ANTES de homolog/prod | CRÍTICA |
+| MIGRATION-006 | NUNCA criar migration sem verificar schema real do banco | ALTA |
+
+### Validação Pré-Migration
+
+```sql
+-- OBRIGATÓRIO antes de criar índice
+SELECT COLUMN_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'nome_tabela';
+
+-- Verificar se índice já existe
+SELECT name FROM sys.indexes WHERE name = 'nome_indice';
+```
+
+### Comandos Proibidos em Produção
+
+| Comando | Risco | Alternativa |
+|---------|-------|-------------|
+| `drizzle-kit push` | DATA LOSS | Migration SQL manual |
+| `drizzle-kit drop` | DATA LOSS | Migration com DROP controlado |
+| `DROP TABLE` sem backup | DATA LOSS | Backup + validação primeiro |
+| `TRUNCATE TABLE` | DATA LOSS | DELETE com WHERE |
+| `DELETE sem WHERE` | DATA LOSS | DELETE com filtro específico |
+
+### Template de Migration SQL
+
+```sql
+-- Migration: XXXX_descricao.sql
+-- Data: YYYY-MM-DD
+-- Épico: EX.X
+-- Autor: [nome]
+--
+-- IMPORTANTE: Testar em ambiente local antes de executar em homolog/prod
+-- Rollback: [comandos de rollback]
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
+-- Índice 1: [descrição]
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_xxx')
+BEGIN
+    CREATE NONCLUSTERED INDEX [idx_xxx] ON [tabela] ([col1], [col2])
+    INCLUDE ([col3], [col4])
+    WHERE [deleted_at] IS NULL;
+    PRINT 'Criado: idx_xxx';
+END
+GO
+```
+
+### Lições Aprendidas (E8.4)
+
+| ID | Incidente | Correção |
+|----|-----------|----------|
+| LC-740883 | Migration com colunas inexistentes | Validar INFORMATION_SCHEMA |
+| LC-743510 | drizzle-kit push causou DATA LOSS | Usar migrations manuais |
+| LC-745627 | Índices filtrados falharam | SET QUOTED_IDENTIFIER ON |
+
+---
+
 ## 🔷 ENTITY PATTERN (ENTITY-001 a ENTITY-012)
 
 | Regra | Descrição |
