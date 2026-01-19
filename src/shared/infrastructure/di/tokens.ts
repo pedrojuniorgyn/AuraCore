@@ -98,4 +98,10 @@ export const TOKENS = {
   // Financial Module - Bank Statement Import - E-Agent-Fase-D6
   ImportBankStatementUseCase: Symbol('ImportBankStatementUseCase'),
   BankTransactionRepository: Symbol('BankTransactionRepository'),
+
+  // Knowledge Module - E-Agent-Fase-D1/D2/D3
+  KnowledgeEmbeddingService: Symbol('KnowledgeEmbeddingService'),
+  KnowledgeVectorStore: Symbol('KnowledgeVectorStore'),
+  IndexDocumentUseCase: Symbol('IndexDocumentUseCase'),
+  SearchLegislationUseCase: Symbol('SearchLegislationUseCase'),
 } as const;
