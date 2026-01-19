@@ -3,16 +3,16 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams, IDetailCellRendererParams, ValueFormatterParams, SetFilterValuesFuncParams } from "ag-grid-community";
+import type { ColDef, IDetailCellRendererParams, ValueFormatterParams, GridReadyEvent, GridApi } from "ag-grid-community";
 
 // AG Grid Enterprise Modules (v34+)
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
-import { GradientText, NumberCounter } from "@/components/ui/magic-components";
+import { NumberCounter } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
-import { Plus, Download, RefreshCw, Filter, DollarSign, TrendingUp, AlertCircle, Clock } from "lucide-react";
+import { Plus, Download, RefreshCw, DollarSign, TrendingUp, AlertCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -20,8 +20,6 @@ import { toast } from "sonner";
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import "@/styles/aurora-premium-grid.css";
-import { auraTheme } from "@/lib/ag-grid/theme";
-import { auraThemePremium } from "@/lib/ag-grid/aurora-premium-theme";
 import {
   PremiumStatusCell,
   PremiumCurrencyCell,
@@ -31,6 +29,9 @@ import {
   PremiumPartnerCell,
   PremiumOriginCell
 } from "@/lib/ag-grid/aurora-premium-cells";
+
+// SSRM Hook
+import { useSSRMDatasource } from "@/hooks/useSSRMDatasource";
 
 // Registrar TODOS os módulos Enterprise de uma vez
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -64,7 +65,14 @@ interface Payable {
   createdAt: string;
 }
 
-// REMOVIDO - Usando PremiumStatusCell agora
+interface KPIs {
+  totalOpen: number;
+  countOpen: number;
+  totalOverdue: number;
+  countOverdue: number;
+  totalPaidThisMonth: number;
+  countPaidThisMonth: number;
+}
 
 // Detail Grid (Master-Detail)
 function DetailCellRenderer(props: IDetailCellRendererParams) {
@@ -158,23 +166,36 @@ function DetailCellRenderer(props: IDetailCellRendererParams) {
 export default function ContasPagarPage() {
   const router = useRouter();
   const gridRef = useRef<AgGridReact>(null);
-  const [payables, setPayables] = useState<Payable[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const [kpis, setKpis] = useState<KPIs>({
+    totalOpen: 0,
+    countOpen: 0,
+    totalOverdue: 0,
+    countOverdue: 0,
+    totalPaidThisMonth: 0,
+    countPaidThisMonth: 0,
+  });
+  const [totalRows, setTotalRows] = useState(0);
 
-  const fetchPayables = async () => {
-    setLoading(true);
+  // ✅ SSRM Datasource Hook
+  const datasource = useSSRMDatasource({
+    endpoint: '/api/financial/payables/ssrm',
+    onError: (error) => toast.error(`Erro ao carregar dados: ${error.message}`),
+    onSuccess: (rowCount) => setTotalRows(rowCount),
+  });
+
+  // Buscar KPIs separadamente (não depende do grid)
+  const fetchKPIs = useCallback(async () => {
     try {
-      const response = await fetch("/api/financial/payables");
+      const response = await fetch("/api/financial/payables/summary");
       if (response.ok) {
         const data = await response.json();
-        setPayables(Array.isArray(data) ? data : data.data || []);
+        setKpis(data);
       }
     } catch (error) {
-      console.error("Error fetching payables:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching KPIs:", error);
     }
-  };
+  }, []);
 
   // Handler para editar
   const handleEdit = useCallback((data: Payable) => {
@@ -182,7 +203,7 @@ export default function ContasPagarPage() {
   }, [router]);
 
   // Handler para excluir
-  const handleDelete = useCallback(async (id: number, data: Payable) => {
+  const handleDelete = useCallback(async (id: number) => {
     try {
       const response = await fetch(`/api/financial/payables/${id}`, {
         method: "DELETE",
@@ -195,12 +216,14 @@ export default function ContasPagarPage() {
       }
 
       toast.success("Conta a pagar excluída com sucesso!");
-      fetchPayables(); // Recarregar dados
+      // Refresh grid e KPIs
+      gridApi?.refreshServerSide({ purge: true });
+      void fetchKPIs();
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error("Erro ao excluir conta a pagar");
     }
-  }, []);
+  }, [gridApi, fetchKPIs]);
 
   // Context para o AG Grid (passa handlers para PremiumActionCell)
   const gridContext = useMemo(() => ({
@@ -208,19 +231,11 @@ export default function ContasPagarPage() {
     onDelete: handleDelete,
   }), [handleEdit, handleDelete]);
 
+  // Buscar KPIs ao montar (fetch on mount pattern)
   useEffect(() => {
-    fetchPayables();
-  }, []);
-
-  // Calcular KPIs
-  const kpis = useMemo(() => {
-    const total = payables.reduce((sum, p) => sum + p.amount, 0);
-    const paid = payables.filter(p => p.status === "PAID").reduce((sum, p) => sum + p.amount, 0);
-    const pending = payables.filter(p => p.status === "PENDING").reduce((sum, p) => sum + p.amount, 0);
-    const overdue = payables.filter(p => p.status === "OVERDUE").reduce((sum, p) => sum + p.amount, 0);
-
-    return { total, paid, pending, overdue };
-  }, [payables]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchKPIs();
+  }, [fetchKPIs]);
 
   const columnDefs: ColDef[] = useMemo(() => [
     {
@@ -261,12 +276,9 @@ export default function ContasPagarPage() {
           field: "partnerName",
           headerName: "Nome",
           width: 250,
-          filter: "agSetColumnFilter",
+          filter: "agTextColumnFilter",
           filterParams: {
-            values: (params: SetFilterValuesFuncParams) => {
-              const uniquePartners = [...new Set(payables.map(p => p.partnerName))];
-              params.success(uniquePartners);
-            },
+            filterOptions: ['contains', 'startsWith', 'equals'],
             buttons: ['apply', 'reset'],
             closeOnApply: true,
           },
@@ -328,12 +340,6 @@ export default function ContasPagarPage() {
             defaultOption: 'inRange',
             buttons: ['apply', 'reset'],
             closeOnApply: true,
-            comparator: (filterDate: Date, cellValue: string) => {
-              const cellDate = new Date(cellValue);
-              if (cellDate < filterDate) return -1;
-              if (cellDate > filterDate) return 1;
-              return 0;
-            },
           },
           cellRenderer: PremiumDateCell,
         },
@@ -375,12 +381,24 @@ export default function ContasPagarPage() {
     sortable: true,
     resizable: true,
     filter: true,
-    floatingFilter: true, // ✅ Barra de filtro flutuante
+    floatingFilter: true,
     filterParams: {
       buttons: ['apply', 'reset'],
       closeOnApply: true,
     },
   }), []);
+
+  // Callback quando grid está pronto
+  const onGridReady = useCallback((event: GridReadyEvent) => {
+    setGridApi(event.api);
+    event.api.setGridOption('serverSideDatasource', datasource);
+  }, [datasource]);
+
+  // Refresh dados
+  const handleRefresh = useCallback(() => {
+    gridApi?.refreshServerSide({ purge: true });
+    void fetchKPIs();
+  }, [gridApi, fetchKPIs]);
 
   const handleExport = useCallback(() => {
     gridRef.current?.api.exportDataAsExcel({
@@ -400,12 +418,12 @@ export default function ContasPagarPage() {
                 💰 Contas a Pagar
               </h1>
               <p className="text-slate-400">
-                Gestão completa de contas a pagar com detalhamento por NCM
+                Gestão completa de contas a pagar com detalhamento por NCM ({totalRows} registros)
               </p>
             </div>
             <div className="flex gap-3">
               <RippleButton
-                onClick={() => fetchPayables()}
+                onClick={handleRefresh}
                 className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -431,7 +449,7 @@ export default function ContasPagarPage() {
         {/* KPI Cards */}
         <StaggerContainer>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Total a Pagar */}
+            {/* Total Aberto */}
             <FadeIn delay={0.2}>
               <GlassmorphismCard className="border-purple-500/30 hover:border-purple-400/50 transition-all hover:shadow-lg hover:shadow-purple-500/20">
                 <div className="p-6 bg-gradient-to-br from-purple-900/10 to-purple-800/5">
@@ -440,19 +458,19 @@ export default function ContasPagarPage() {
                       <DollarSign className="h-6 w-6 text-purple-400" />
                     </div>
                     <span className="text-xs text-purple-300 font-semibold px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-400/30">
-                      Total
+                      Em Aberto
                     </span>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total a Pagar</h3>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total em Aberto</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.total} />
+                    R$ <NumberCounter value={kpis.totalOpen} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">{payables.length} conta(s)</p>
+                  <p className="text-xs text-slate-500 mt-2">{kpis.countOpen} conta(s)</p>
                 </div>
               </GlassmorphismCard>
             </FadeIn>
 
-            {/* Total Pago */}
+            {/* Total Pago Este Mês */}
             <FadeIn delay={0.3}>
               <GlassmorphismCard className="border-green-500/30 hover:border-green-400/50 transition-all hover:shadow-lg hover:shadow-green-500/20">
                 <div className="p-6 bg-gradient-to-br from-green-900/10 to-green-800/5">
@@ -464,18 +482,18 @@ export default function ContasPagarPage() {
                       ✅ Pago
                     </span>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total Pago</h3>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Pago Este Mês</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.paid} />
+                    R$ <NumberCounter value={kpis.totalPaidThisMonth} />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    {payables.filter(p => p.status === "PAID").length} conta(s)
+                    {kpis.countPaidThisMonth} conta(s)
                   </p>
                 </div>
               </GlassmorphismCard>
             </FadeIn>
 
-            {/* Total Pendente */}
+            {/* Placeholder para Pendente */}
             <FadeIn delay={0.4}>
               <GlassmorphismCard className="border-amber-500/30 hover:border-amber-400/50 transition-all hover:shadow-lg hover:shadow-amber-500/20">
                 <div className="p-6 bg-gradient-to-br from-amber-900/10 to-amber-800/5">
@@ -484,16 +502,14 @@ export default function ContasPagarPage() {
                       <Clock className="h-6 w-6 text-amber-400" />
                     </div>
                     <span className="text-xs text-amber-300 font-semibold px-3 py-1 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-full border border-amber-400/30">
-                      ⏰ Pendente
+                      ⏰ Total
                     </span>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total Pendente</h3>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total de Registros</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.pending} />
+                    <NumberCounter value={totalRows} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
-                    {payables.filter(p => p.status === "PENDING").length} conta(s)
-                  </p>
+                  <p className="text-xs text-slate-500 mt-2">conta(s) no sistema</p>
                 </div>
               </GlassmorphismCard>
             </FadeIn>
@@ -512,10 +528,10 @@ export default function ContasPagarPage() {
                   </div>
                   <h3 className="text-sm font-medium text-slate-400 mb-2">Total Vencido</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.overdue} />
+                    R$ <NumberCounter value={kpis.totalOverdue} />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    {payables.filter(p => p.status === "OVERDUE").length} conta(s)
+                    {kpis.countOverdue} conta(s)
                   </p>
                 </div>
               </GlassmorphismCard>
@@ -523,18 +539,26 @@ export default function ContasPagarPage() {
           </div>
         </StaggerContainer>
 
-        {/* AG Grid */}
+        {/* AG Grid - SSRM */}
         <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
           <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 300px)" }}>
             <AgGridReact
               ref={gridRef}
-              rowData={payables}
               columnDefs={columnDefs}
               defaultColDef={defaultColDef}
               context={gridContext}
+              
+              // ✅ SSRM Configuration
+              rowModelType="serverSide"
+              cacheBlockSize={100}
+              maxBlocksInCache={10}
+              
+              // Master-Detail
               masterDetail={true}
               detailCellRenderer={DetailCellRenderer}
               detailRowAutoHeight={true}
+              
+              // Enterprise Features
               animateRows={true}
               enableRangeSelection={true}
               sideBar={{
@@ -558,16 +582,24 @@ export default function ContasPagarPage() {
               }}
               rowGroupPanelShow="always"
               groupDisplayType="groupRows"
+              
+              // Pagination
               pagination={true}
               paginationPageSize={50}
               paginationPageSizeSelector={[25, 50, 100, 200]}
-              loading={loading}
+              
+              // Callbacks
+              onGridReady={onGridReady}
+              
+              // Loading
               loadingOverlayComponent={() => (
                 <div className="flex flex-col items-center justify-center p-8">
                   <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mb-4" />
                   <p className="text-purple-300">Carregando contas a pagar...</p>
                 </div>
               )}
+              
+              // Other
               enableCellTextSelection={true}
               ensureDomOrder={true}
               suppressDragLeaveHidesColumns={true}

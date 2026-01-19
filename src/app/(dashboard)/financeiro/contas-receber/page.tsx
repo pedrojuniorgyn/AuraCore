@@ -3,13 +3,13 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
+import type { ColDef, ICellRendererParams, ValueFormatterParams, GridReadyEvent, GridApi } from "ag-grid-community";
 
 // AG Grid Enterprise Modules (v34+)
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
-import { GradientText, NumberCounter } from "@/components/ui/magic-components";
+import { NumberCounter } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { Plus, Download, RefreshCw, DollarSign, TrendingUp, AlertCircle, Clock, Edit, Trash2 } from "lucide-react";
@@ -20,6 +20,9 @@ import { Button } from "@/components/ui/button";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
+
+// SSRM Hook
+import { useSSRMDatasource } from "@/hooks/useSSRMDatasource";
 
 // Registrar TODOS os módulos Enterprise de uma vez
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -45,6 +48,15 @@ interface Receivable {
   createdAt: string;
 }
 
+interface KPIs {
+  totalOpen: number;
+  countOpen: number;
+  totalOverdue: number;
+  countOverdue: number;
+  totalPaidThisMonth: number;
+  countPaidThisMonth: number;
+}
+
 // Custom Cell Renderer para Status
 function StatusCellRenderer(props: ICellRendererParams) {
   const statusConfig = {
@@ -67,23 +79,36 @@ function StatusCellRenderer(props: ICellRendererParams) {
 export default function ContasReceberPage() {
   const router = useRouter();
   const gridRef = useRef<AgGridReact>(null);
-  const [receivables, setReceivables] = useState<Receivable[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const [kpis, setKpis] = useState<KPIs>({
+    totalOpen: 0,
+    countOpen: 0,
+    totalOverdue: 0,
+    countOverdue: 0,
+    totalPaidThisMonth: 0,
+    countPaidThisMonth: 0,
+  });
+  const [totalRows, setTotalRows] = useState(0);
 
-  const fetchReceivables = async () => {
-    setLoading(true);
+  // ✅ SSRM Datasource Hook
+  const datasource = useSSRMDatasource({
+    endpoint: '/api/financial/receivables/ssrm',
+    onError: (error) => toast.error(`Erro ao carregar dados: ${error.message}`),
+    onSuccess: (rowCount) => setTotalRows(rowCount),
+  });
+
+  // Buscar KPIs separadamente
+  const fetchKPIs = useCallback(async () => {
     try {
-      const response = await fetch("/api/financial/receivables");
+      const response = await fetch("/api/financial/receivables/summary");
       if (response.ok) {
         const data = await response.json();
-        setReceivables(Array.isArray(data) ? data : data.data || []);
+        setKpis(data);
       }
     } catch (error) {
-      console.error("Error fetching receivables:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching KPIs:", error);
     }
-  };
+  }, []);
 
   const handleEdit = useCallback((data: Receivable) => {
     router.push(`/financeiro/contas-receber/editar/${data.id}`);
@@ -99,27 +124,21 @@ export default function ContasReceberPage() {
         return;
       }
       toast.success("Excluído com sucesso!");
-      fetchReceivables();
-    } catch (error) {
+      // Refresh grid e KPIs
+      gridApi?.refreshServerSide({ purge: true });
+      void fetchKPIs();
+    } catch {
       toast.error("Erro ao excluir");
     }
-  }, []);
+  }, [gridApi, fetchKPIs]);
 
   const gridContext = useMemo(() => ({ onEdit: handleEdit, onDelete: handleDelete }), [handleEdit, handleDelete]);
 
+  // Buscar KPIs ao montar (fetch on mount pattern)
   useEffect(() => {
-    fetchReceivables();
-  }, []);
-
-  // Calcular KPIs
-  const kpis = useMemo(() => {
-    const total = receivables.reduce((sum, r) => sum + r.amount, 0);
-    const received = receivables.filter(r => r.status === "RECEIVED").reduce((sum, r) => sum + r.amount, 0);
-    const open = receivables.filter(r => r.status === "OPEN").reduce((sum, r) => sum + r.amount, 0);
-    const overdue = receivables.filter(r => r.status === "OVERDUE").reduce((sum, r) => sum + r.amount, 0);
-
-    return { total, received, open, overdue };
-  }, [receivables]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchKPIs();
+  }, [fetchKPIs]);
 
   const columnDefs: ColDef[] = useMemo(() => [
     {
@@ -130,6 +149,11 @@ export default function ContasReceberPage() {
           headerName: "Número",
           width: 150,
           filter: "agTextColumnFilter",
+          filterParams: {
+            filterOptions: ['contains', 'startsWith', 'equals'],
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
           cellRenderer: (params: ICellRendererParams) => (
             <span className="font-mono text-purple-300">{params.value}</span>
           ),
@@ -139,6 +163,11 @@ export default function ContasReceberPage() {
           headerName: "Origem",
           width: 140,
           filter: "agSetColumnFilter",
+          filterParams: {
+            values: ['MANUAL', 'CTE_EMISSION', 'INVOICE', 'OTHER'],
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
           cellRenderer: (params: ICellRendererParams) => {
             const badges: Record<string, string> = {
               MANUAL: "🖊️ Manual",
@@ -163,6 +192,11 @@ export default function ContasReceberPage() {
           headerName: "Nome",
           width: 250,
           filter: "agTextColumnFilter",
+          filterParams: {
+            filterOptions: ['contains', 'startsWith', 'equals'],
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
           enableRowGroup: true,
         },
       ],
@@ -176,6 +210,11 @@ export default function ContasReceberPage() {
           width: 140,
           type: "numericColumn",
           filter: "agNumberColumnFilter",
+          filterParams: {
+            filterOptions: ['equals', 'greaterThan', 'lessThan', 'inRange'],
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
           valueFormatter: (params: ValueFormatterParams) =>
             `R$ ${params.value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
           aggFunc: "sum",
@@ -194,6 +233,11 @@ export default function ContasReceberPage() {
           headerName: "Status",
           width: 140,
           filter: "agSetColumnFilter",
+          filterParams: {
+            values: ['OPEN', 'RECEIVED', 'PARTIAL', 'OVERDUE', 'CANCELLED'],
+            buttons: ['apply', 'reset'],
+            closeOnApply: true,
+          },
           cellRenderer: StatusCellRenderer,
         },
       ],
@@ -279,6 +323,18 @@ export default function ContasReceberPage() {
     },
   }), []);
 
+  // Callback quando grid está pronto
+  const onGridReady = useCallback((event: GridReadyEvent) => {
+    setGridApi(event.api);
+    event.api.setGridOption('serverSideDatasource', datasource);
+  }, [datasource]);
+
+  // Refresh dados
+  const handleRefresh = useCallback(() => {
+    gridApi?.refreshServerSide({ purge: true });
+    void fetchKPIs();
+  }, [gridApi, fetchKPIs]);
+
   const handleExport = useCallback(() => {
     gridRef.current?.api.exportDataAsExcel({
       fileName: `contas-receber-${new Date().toISOString().split("T")[0]}.xlsx`,
@@ -297,12 +353,12 @@ export default function ContasReceberPage() {
                 💵 Contas a Receber
               </h1>
               <p className="text-slate-400">
-                Gestão completa de contas a receber e fluxo de caixa
+                Gestão completa de contas a receber e fluxo de caixa ({totalRows} registros)
               </p>
             </div>
             <div className="flex gap-3">
               <RippleButton
-                onClick={() => fetchReceivables()}
+                onClick={handleRefresh}
                 className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -328,7 +384,7 @@ export default function ContasReceberPage() {
         {/* KPI Cards */}
         <StaggerContainer>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Total a Receber */}
+            {/* Total em Aberto */}
             <FadeIn delay={0.2}>
               <GlassmorphismCard className="border-purple-500/30 hover:border-purple-400/50 transition-all hover:shadow-lg hover:shadow-purple-500/20">
                 <div className="p-6 bg-gradient-to-br from-purple-900/10 to-purple-800/5">
@@ -337,19 +393,19 @@ export default function ContasReceberPage() {
                       <DollarSign className="h-6 w-6 text-purple-400" />
                     </div>
                     <span className="text-xs text-purple-300 font-semibold px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-400/30">
-                      Total
+                      Em Aberto
                     </span>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total a Receber</h3>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total em Aberto</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.total} />
+                    R$ <NumberCounter value={kpis.totalOpen} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">{receivables.length} conta(s)</p>
+                  <p className="text-xs text-slate-500 mt-2">{kpis.countOpen} conta(s)</p>
                 </div>
               </GlassmorphismCard>
             </FadeIn>
 
-            {/* Total Recebido */}
+            {/* Total Recebido Este Mês */}
             <FadeIn delay={0.3}>
               <GlassmorphismCard className="border-green-500/30 hover:border-green-400/50 transition-all hover:shadow-lg hover:shadow-green-500/20">
                 <div className="p-6 bg-gradient-to-br from-green-900/10 to-green-800/5">
@@ -361,18 +417,18 @@ export default function ContasReceberPage() {
                       ✅ Recebido
                     </span>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total Recebido</h3>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Recebido Este Mês</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.received} />
+                    R$ <NumberCounter value={kpis.totalPaidThisMonth} />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    {receivables.filter(r => r.status === "RECEIVED").length} conta(s)
+                    {kpis.countPaidThisMonth} conta(s)
                   </p>
                 </div>
               </GlassmorphismCard>
             </FadeIn>
 
-            {/* Total Aberto */}
+            {/* Total de Registros */}
             <FadeIn delay={0.4}>
               <GlassmorphismCard className="border-amber-500/30 hover:border-amber-400/50 transition-all hover:shadow-lg hover:shadow-amber-500/20">
                 <div className="p-6 bg-gradient-to-br from-amber-900/10 to-amber-800/5">
@@ -381,16 +437,14 @@ export default function ContasReceberPage() {
                       <Clock className="h-6 w-6 text-amber-400" />
                     </div>
                     <span className="text-xs text-amber-300 font-semibold px-3 py-1 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-full border border-amber-400/30">
-                      ⏰ Aberto
+                      ⏰ Total
                     </span>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total Aberto</h3>
+                  <h3 className="text-sm font-medium text-slate-400 mb-2">Total de Registros</h3>
                   <div className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">
-                    R$ <NumberCounter value={kpis.open} />
+                    <NumberCounter value={totalRows} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
-                    {receivables.filter(r => r.status === "OPEN").length} conta(s)
-                  </p>
+                  <p className="text-xs text-slate-500 mt-2">conta(s) no sistema</p>
                 </div>
               </GlassmorphismCard>
             </FadeIn>
@@ -408,11 +462,11 @@ export default function ContasReceberPage() {
                     </span>
                   </div>
                   <h3 className="text-sm font-medium text-gray-400 mb-2">Total Vencido</h3>
-                  <div className="text-2xl font-bold text-white">
-                    R$ <NumberCounter value={kpis.overdue} />
+                  <div className="text-2xl font-bold bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent">
+                    R$ <NumberCounter value={kpis.totalOverdue} />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    {receivables.filter(r => r.status === "OVERDUE").length} conta(s)
+                    {kpis.countOverdue} conta(s)
                   </p>
                 </div>
               </GlassmorphismCard>
@@ -420,15 +474,22 @@ export default function ContasReceberPage() {
           </div>
         </StaggerContainer>
 
-        {/* AG Grid */}
+        {/* AG Grid - SSRM */}
         <FadeIn delay={0.6}>
           <div className="bg-gradient-to-br from-gray-900/90 to-purple-900/20 rounded-2xl border border-purple-500/20 overflow-hidden shadow-2xl">
             <div className="ag-theme-quartz-dark" style={{ height: "calc(100vh - 500px)" }}>
               <AgGridReact
                 ref={gridRef}
-                rowData={receivables}
                 columnDefs={columnDefs}
                 defaultColDef={defaultColDef}
+                context={gridContext}
+                
+                // ✅ SSRM Configuration
+                rowModelType="serverSide"
+                cacheBlockSize={100}
+                maxBlocksInCache={10}
+                
+                // Enterprise Features
                 animateRows={true}
                 enableRangeSelection={true}
                 sideBar={{
@@ -452,10 +513,16 @@ export default function ContasReceberPage() {
                 }}
                 rowGroupPanelShow="always"
                 groupDisplayType="groupRows"
+                
+                // Pagination
                 pagination={true}
                 paginationPageSize={50}
                 paginationPageSizeSelector={[25, 50, 100, 200]}
-                loading={loading}
+                
+                // Callbacks
+                onGridReady={onGridReady}
+                
+                // Loading
                 loadingOverlayComponent={() => (
                   <div className="flex flex-col items-center justify-center p-8">
                     <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mb-4" />
