@@ -15,13 +15,14 @@ export async function GET(req: Request) {
     await ensureConnection();
     const ctx = await getTenantContext();
 
-    // Buscar todos os centros de custo
+    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const allCostCenters = await db
       .select()
       .from(costCenters)
       .where(
         and(
           eq(costCenters.organizationId, ctx.organizationId),
+          eq(costCenters.branchId, ctx.branchId), // REPO-005: branchId obrigatório
           isNull(costCenters.deletedAt)
         )
       )
@@ -86,13 +87,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verificar duplicação de código
+    // E9.3: Verificar duplicação de código com branchId
     const existing = await db
       .select()
       .from(costCenters)
       .where(
         and(
           eq(costCenters.organizationId, ctx.organizationId),
+          eq(costCenters.branchId, ctx.branchId), // REPO-005: branchId obrigatório
           eq(costCenters.code, code),
           isNull(costCenters.deletedAt)
         )
@@ -105,7 +107,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Calcular nível baseado no pai
+    // E9.3: Calcular nível baseado no pai com branchId
     let level = 0;
     if (parentId) {
       const parent = await db
@@ -115,6 +117,7 @@ export async function POST(req: Request) {
           and(
             eq(costCenters.id, parentId),
             eq(costCenters.organizationId, ctx.organizationId),
+            eq(costCenters.branchId, ctx.branchId), // REPO-005: branchId obrigatório
             isNull(costCenters.deletedAt)
           )
         );
@@ -129,9 +132,10 @@ export async function POST(req: Request) {
       level = (parent[0].level || 0) + 1;
     }
 
-    // Criar
+    // E9.3: REPO-005 - branchId obrigatório no insert
     const costCenterData: typeof costCenters.$inferInsert = {
       organizationId: ctx.organizationId,
+      branchId: ctx.branchId, // REPO-005: branchId obrigatório
       code,
       name,
       type,

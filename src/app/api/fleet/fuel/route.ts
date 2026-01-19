@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fuelTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 import { insertWithReturningId } from "@/lib/db/query-helpers";
 
 export async function GET() {
@@ -11,10 +11,17 @@ export async function GET() {
     await ensureConnection();
     const ctx = await getTenantContext();
 
+    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const transactions = await db
       .select()
       .from(fuelTransactions)
-      .where(eq(fuelTransactions.organizationId, ctx.organizationId))
+      .where(
+        and(
+          eq(fuelTransactions.organizationId, ctx.organizationId),
+          eq(fuelTransactions.branchId, ctx.branchId), // REPO-005: branchId obrigatório
+          isNull(fuelTransactions.deletedAt) // REPO-006: soft delete
+        )
+      )
       .orderBy(fuelTransactions.transactionDate);
 
     return NextResponse.json({ success: true, data: transactions });
@@ -65,9 +72,11 @@ export async function POST(request: Request) {
     // Tipo inferido para insert de fuel transactions
     type FuelTransactionInsert = typeof fuelTransactions.$inferInsert;
     
+    // E9.3: REPO-005 - branchId obrigatório no insert
     const insertData: FuelTransactionInsert = {
       ...safeBody as Partial<FuelTransactionInsert>,
       organizationId: ctx.organizationId,
+      branchId: ctx.branchId, // REPO-005: branchId obrigatório
       transactionDate,
       vehicleId: Number(safeBody.vehicleId),
       totalValue: String(safeBody.totalValue || '0'),

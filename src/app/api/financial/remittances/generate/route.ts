@@ -33,11 +33,14 @@ function isInternalTokenOk(req: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const tokenOk = isInternalTokenOk(request);
+    // E9.3: branchId obrigatório no TenantContext
+    const headerBranchId = Number(request.headers.get("x-branch-id") || "1");
     const ctx = tokenOk
       ? {
           userId: "SYSTEM",
           organizationId: Number(request.headers.get("x-organization-id")),
           role: "ADMIN",
+          branchId: headerBranchId, // E9.3: branchId obrigatório
           defaultBranchId: null,
           allowedBranches: [],
           isAdmin: true,

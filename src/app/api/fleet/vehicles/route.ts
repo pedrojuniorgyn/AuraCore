@@ -8,17 +8,20 @@ import { db } from "@/lib/db";
 import { vehicles } from "@/lib/db/schema";
 import { and, eq, isNull, desc, like } from "drizzle-orm";
 import { createVehicleWithCostCenter } from "@/services/fleet/vehicle-service";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function GET(request: NextRequest) {
   try {
+    // E9.3: Usar getTenantContext para multi-tenancy
+    const ctx = await getTenantContext();
     const searchParams = request.nextUrl.searchParams;
-    const organizationId = Number(searchParams.get("organizationId") || "1");
     const status = searchParams.get("status");
     const type = searchParams.get("type");
 
-    // === BUSCAR VEHICLES ===
+    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const conditions = [
-      eq(vehicles.organizationId, organizationId),
+      eq(vehicles.organizationId, ctx.organizationId),
+      eq(vehicles.branchId, ctx.branchId), // REPO-005: branchId obrigatório
       isNull(vehicles.deletedAt),
     ];
 
@@ -37,7 +40,8 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(vehicles.createdAt));
 
     return NextResponse.json({ data: vehiclesList });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Response) return error;
     console.error("❌ Erro ao listar veículos:", error);
     return NextResponse.json(
       { error: "Falha ao listar veículos" },

@@ -27,6 +27,7 @@ export interface TenantContext {
   userId: string;
   organizationId: number;
   role: string;
+  branchId: number; // E9.3: branchId sempre obrigatório para queries
   defaultBranchId: number | null;
   allowedBranches: number[];
   isAdmin: boolean;
@@ -61,10 +62,25 @@ export async function getTenantContext(): Promise<TenantContext> {
     );
   }
 
+  // E9.3: branchId é obrigatório - usa defaultBranchId ou primeiro da lista
+  const branchId = defaultBranchId || (allowedBranches && allowedBranches.length > 0 ? allowedBranches[0] : null);
+  
+  if (!branchId) {
+    throw NextResponse.json(
+      { 
+        error: "Usuário sem filial vinculada", 
+        code: "NO_BRANCH",
+        details: "Configure uma filial padrão para o usuário."
+      },
+      { status: 400 }
+    );
+  }
+
   return {
     userId: id,
     organizationId,
     role: role || "USER",
+    branchId, // E9.3: sempre obrigatório
     defaultBranchId: defaultBranchId || null,
     allowedBranches: allowedBranches || [],
     isAdmin: role === "ADMIN",

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fiscalSettings } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,14 +20,15 @@ export async function GET(request: NextRequest) {
     const organizationId = session.user.organizationId;
     const userId = session.user.id;
 
-    // Buscar configurações da filial
+    // E9.3: REPO-006 - Buscar configurações da filial com soft delete
     const [settings] = await db
       .select()
       .from(fiscalSettings)
       .where(
         and(
           eq(fiscalSettings.organizationId, organizationId),
-          eq(fiscalSettings.branchId, branchId)
+          eq(fiscalSettings.branchId, branchId),
+          isNull(fiscalSettings.deletedAt) // REPO-006: soft delete
         )
       );
 
@@ -45,14 +46,15 @@ export async function GET(request: NextRequest) {
         version: 1,
       });
 
-      // Busca o registro criado
+      // E9.3: REPO-006 - Busca o registro criado com soft delete
       const [newSettings] = await db
         .select()
         .from(fiscalSettings)
         .where(
           and(
             eq(fiscalSettings.organizationId, organizationId),
-            eq(fiscalSettings.branchId, branchId)
+            eq(fiscalSettings.branchId, branchId),
+            isNull(fiscalSettings.deletedAt) // REPO-006: soft delete
           )
         );
 
@@ -104,14 +106,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Buscar configuração existente
+    // E9.3: REPO-006 - Buscar configuração existente com soft delete
     const [existing] = await db
       .select()
       .from(fiscalSettings)
       .where(
         and(
           eq(fiscalSettings.organizationId, organizationId),
-          eq(fiscalSettings.branchId, branchId)
+          eq(fiscalSettings.branchId, branchId),
+          isNull(fiscalSettings.deletedAt) // REPO-006: soft delete
         )
       );
 
@@ -154,14 +157,15 @@ export async function PUT(request: NextRequest) {
           version: 1,
         });
 
-      // Busca registro criado
+      // E9.3: REPO-006 - Busca registro criado com soft delete
       [result] = await db
         .select()
         .from(fiscalSettings)
         .where(
           and(
             eq(fiscalSettings.organizationId, organizationId),
-            eq(fiscalSettings.branchId, branchId)
+            eq(fiscalSettings.branchId, branchId),
+            isNull(fiscalSettings.deletedAt) // REPO-006: soft delete
           )
         );
     }

@@ -8,17 +8,20 @@ import { db } from "@/lib/db";
 import { drivers } from "@/lib/db/schema";
 import { and, eq, isNull, desc, like } from "drizzle-orm";
 import { validateCPF, formatCPF } from "@/lib/validators/fleet-validators";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function GET(request: NextRequest) {
   try {
+    // E9.3: Usar getTenantContext para multi-tenancy
+    const ctx = await getTenantContext();
     const searchParams = request.nextUrl.searchParams;
-    const organizationId = Number(searchParams.get("organizationId") || "1");
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
-    // === BUSCAR DRIVERS ===
+    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const conditions = [
-      eq(drivers.organizationId, organizationId),
+      eq(drivers.organizationId, ctx.organizationId),
+      eq(drivers.branchId, ctx.branchId), // REPO-005: branchId obrigatório
       isNull(drivers.deletedAt),
     ];
 
@@ -37,7 +40,8 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(drivers.createdAt));
 
     return NextResponse.json({ data: driversList });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Response) return error;
     console.error("❌ Erro ao listar motoristas:", error);
     return NextResponse.json(
       { error: "Falha ao listar motoristas" },
@@ -48,9 +52,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // E9.3: Usar getTenantContext para multi-tenancy
+    const ctx = await getTenantContext();
     const body = await request.json();
     const {
-      organizationId,
       name,
       cpf,
       phone,
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se CPF já existe
+    // E9.3: Verificar se CPF já existe com branchId
     const cleanCpf = cpf.replace(/\D/g, "");
     const [existingDriver] = await db
       .select()
@@ -87,7 +92,8 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(drivers.cpf, formatCPF(cleanCpf)),
-          eq(drivers.organizationId, organizationId),
+          eq(drivers.organizationId, ctx.organizationId),
+          eq(drivers.branchId, ctx.branchId), // REPO-005: branchId obrigatório
           isNull(drivers.deletedAt)
         )
       );
@@ -112,11 +118,12 @@ export async function POST(request: NextRequest) {
       warning = "⚠️ CNH vencida! Motorista criado com status BLOQUEADO.";
     }
 
-    // === CRIAR MOTORISTA ===
+    // E9.3: REPO-005 - branchId obrigatório no insert
     await db
       .insert(drivers)
       .values({
-        organizationId,
+        organizationId: ctx.organizationId,
+        branchId: ctx.branchId, // REPO-005: branchId obrigatório
         name,
         cpf: formatCPF(cleanCpf),
         phone,
@@ -128,7 +135,7 @@ export async function POST(request: NextRequest) {
         partnerId,
         status: driverStatus,
         notes,
-        createdBy: "system", // TODO: Pegar usuário logado
+        createdBy: ctx.userId || "system",
         createdAt: new Date(),
         updatedAt: new Date(),
       });

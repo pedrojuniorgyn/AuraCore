@@ -30,8 +30,10 @@ export async function GET(request: NextRequest) {
 
     // Filtros
     const search = searchParams.get("q") || searchParams.get("search");
+    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const where = and(
       eq(products.organizationId, ctx.organizationId), // 🔐 ISOLAMENTO
+      eq(products.branchId, ctx.branchId), // REPO-005: branchId obrigatório
       isNull(products.deletedAt), // 🗑️ NÃO DELETADO
       ...(search
         ? [
@@ -120,13 +122,14 @@ export async function POST(request: NextRequest) {
 
     const data = parsedBody.data;
 
-    // Verifica duplicidade de SKU (único por organização)
+    // E9.3: Verifica duplicidade de SKU (único por organização + branch)
     const [existingProduct] = await db
       .select()
       .from(products)
       .where(
         and(
           eq(products.organizationId, ctx.organizationId),
+          eq(products.branchId, ctx.branchId), // REPO-005: branchId obrigatório
           eq(products.sku, data.sku),
           isNull(products.deletedAt)
         )
@@ -139,10 +142,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insere com Enterprise Base Pattern
+    // E9.3: REPO-005 - branchId obrigatório no insert
     const productData = {
       ...data,
       organizationId: ctx.organizationId, // 🔐 MULTI-TENANT
+      branchId: ctx.branchId, // REPO-005: branchId obrigatório
       createdBy: ctx.userId, // 📊 AUDITORIA
       updatedBy: ctx.userId,
       createdAt: new Date(),
@@ -152,13 +156,14 @@ export async function POST(request: NextRequest) {
 
     await db.insert(products).values(productData);
 
-    // Busca o produto recém-criado
+    // E9.3: Busca o produto recém-criado com branchId
     const [newProduct] = await db
       .select()
       .from(products)
       .where(
         and(
           eq(products.organizationId, ctx.organizationId),
+          eq(products.branchId, ctx.branchId), // REPO-005: branchId obrigatório
           eq(products.sku, data.sku),
           isNull(products.deletedAt)
         )

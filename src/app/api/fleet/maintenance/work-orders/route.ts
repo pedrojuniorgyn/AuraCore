@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
 
     await ensureConnection();
 
-    const reqq = pool.request().input("orgId", sql.Int, ctx.organizationId);
+    // E9.3: REPO-005 - branchId obrigatório
+    const reqq = pool.request()
+      .input("orgId", sql.Int, ctx.organizationId)
+      .input("branchId", sql.Int, ctx.branchId);
     if (status) reqq.input("status", sql.NVarChar(50), status);
 
     const result = await reqq.query(
@@ -32,6 +35,7 @@ export async function GET(request: NextRequest) {
       FROM maintenance_work_orders wo
       LEFT JOIN vehicles v ON v.id = wo.vehicle_id
       WHERE wo.organization_id = @orgId
+        AND wo.branch_id = @branchId
         AND wo.deleted_at IS NULL
         ${status ? "AND wo.status = @status" : ""}
       ORDER BY wo.opened_at DESC
@@ -96,9 +100,11 @@ export async function POST(request: NextRequest) {
         const nextNumber = numberResult.recordset?.[0]?.next_number ?? 1;
         const woNumber = `OS-${year}-${String(nextNumber).padStart(6, "0")}`;
 
+        // E9.3: REPO-005 - branchId obrigatório no insert
         const result = await tx
           .request()
           .input("orgId", sql.Int, ctx.organizationId)
+          .input("branchId", sql.Int, ctx.branchId)
           .input("woNumber", sql.NVarChar(30), woNumber)
           .input("vehicleId", sql.Int, Number(vehicleId))
           .input("woType", sql.NVarChar(50), String(woType))
@@ -110,13 +116,13 @@ export async function POST(request: NextRequest) {
           .query(
             `
             INSERT INTO maintenance_work_orders (
-              organization_id, wo_number, vehicle_id, wo_type, priority,
+              organization_id, branch_id, wo_number, vehicle_id, wo_type, priority,
               reported_by_driver_id, reported_issue, odometer,
               created_by, created_at
             )
             OUTPUT INSERTED.*
             VALUES (
-              @orgId, @woNumber, @vehicleId, @woType, @priority,
+              @orgId, @branchId, @woNumber, @vehicleId, @woType, @priority,
               @reportedByDriverId, @reportedIssue, @odometer,
               @createdBy, GETDATE()
             )

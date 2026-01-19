@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { queryWithLimit } from "@/lib/db/query-helpers";
 import { bankTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lte, isNull } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,8 +28,11 @@ export async function GET(req: NextRequest) {
     const start = parsed.data.start ? new Date(`${parsed.data.start}T00:00:00Z`) : null;
     const end = parsed.data.end ? new Date(`${parsed.data.end}T23:59:59Z`) : null;
 
+    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const where = [
       eq(bankTransactions.organizationId, ctx.organizationId),
+      eq(bankTransactions.branchId, ctx.branchId), // REPO-005: branchId obrigatório
+      isNull(bankTransactions.deletedAt), // REPO-006: soft delete
       eq(bankTransactions.bankAccountId, parsed.data.bankAccountId),
       ...(start ? [gte(bankTransactions.transactionDate, start)] : []),
       ...(end ? [lte(bankTransactions.transactionDate, end)] : []),
