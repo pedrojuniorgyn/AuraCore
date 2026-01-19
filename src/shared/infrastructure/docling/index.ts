@@ -53,6 +53,11 @@ export type {
   DANFeData,
   DANFeProduto,
   DACTeData,
+  DACTeParticipante,
+  DACTeVolume,
+  DACTeDocumento,
+  DACTeModal,
+  DACTeTipoServico,
 } from './types';
 
 // Types - Error

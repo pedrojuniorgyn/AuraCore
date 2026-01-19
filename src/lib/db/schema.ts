@@ -10,7 +10,8 @@ import {
   decimal, 
   mssqlTable, 
   uniqueIndex, 
-  primaryKey 
+  primaryKey,
+  index, // E9.1.1: Para índices compostos SCHEMA-003
 } from "drizzle-orm/mssql-core";
 
 import { type AdapterAccount } from "next-auth/adapters";
@@ -327,6 +328,7 @@ export const products = mssqlTable("products", {
   status: nvarchar("status", { length: 20 }).default("ACTIVE"),
 }, (table) => ([
   uniqueIndex("products_sku_org_idx").on(table.sku, table.organizationId), // SKU único por organização
+  index("idx_products_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
 ]));
 
 // === INBOUND INVOICES (Notas Fiscais de Entrada) ===
@@ -870,6 +872,7 @@ export const drivers = mssqlTable("drivers", {
   uniqueIndex("drivers_cpf_org_idx")
     .on(table.cpf, table.organizationId)
     .where(sql`deleted_at IS NULL`),
+  index("idx_drivers_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
 ]));
 
 // === VEHICLES (Veículos) ===
@@ -1272,6 +1275,7 @@ export const costCenters = mssqlTable("cost_centers", {
   uniqueIndex("cost_centers_code_org_idx")
     .on(table.code, table.organizationId)
     .where(sql`deleted_at IS NULL`),
+  index("idx_cost_centers_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
 ]));
 
 // --- PCG NCM RULES (Relacionamento Gerencial x Fiscal) ---
@@ -2450,7 +2454,9 @@ export const fuelTransactions = mssqlTable("fuel_transactions", {
   
   createdAt: datetime2("created_at").default(new Date()),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-});
+}, (table) => ([
+  index("idx_fuel_transactions_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
+]));
 
 // ==========================================
 // 👨‍🔧 JORNADA MOTORISTA (ONDA 5.1)
@@ -2548,7 +2554,9 @@ export const warehouseMovements = mssqlTable("warehouse_movements", {
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   createdAt: datetime2("created_at").default(new Date()),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-});
+}, (table) => ([
+  index("idx_warehouse_movements_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
+]));
 
 // ==========================================
 // 💰 CONCILIAÇÃO BANCÁRIA (ONDA 2.3)
@@ -2579,7 +2587,9 @@ export const bankTransactions = mssqlTable("bank_transactions", {
   createdAt: datetime2("created_at").default(new Date()),
   updatedAt: datetime2("updated_at").default(new Date()),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-});
+}, (table) => ([
+  index("idx_bank_transactions_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
+]));
 
 // ==========================================
 // 🔧 PLANO DE MANUTENÇÃO (ONDA 4.2)
@@ -2706,7 +2716,9 @@ export const maintenanceWorkOrders = mssqlTable("maintenance_work_orders", {
   createdAt: datetime2("created_at").default(new Date()),
   updatedAt: datetime2("updated_at").default(new Date()),
   deletedAt: datetime2("deleted_at"),
-});
+}, (table) => ([
+  index("idx_maintenance_work_orders_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
+]));
 
 export const workOrderItems = mssqlTable("work_order_items", {
   id: int("id").primaryKey().identity(),
