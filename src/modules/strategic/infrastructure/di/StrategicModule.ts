@@ -28,6 +28,9 @@ import { CreateActionPlanUseCase } from '../../application/commands/CreateAction
 import { AdvancePDCACycleUseCase } from '../../application/commands/AdvancePDCACycleUseCase';
 import { ExecuteFollowUpUseCase } from '../../application/commands/ExecuteFollowUpUseCase';
 
+// Use Cases - Queries
+import { GenerateAgendaUseCase } from '../../application/queries/GenerateAgendaUseCase';
+
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
 import { TMSKPIDataSource } from '../integrations/TMSKPIDataSource';
@@ -115,10 +118,14 @@ export function registerStrategicModule(): void {
     useClass: ExecuteFollowUpUseCase,
   });
   
-  // NOTA: Demais repositories serão registrados nas próximas fases (F7+)
-  // - ActionPlanFollowUpRepository (mock implementado nas APIs)
+  // Use Cases - Queries (Fase F7 - War Room)
+  container.register(STRATEGIC_TOKENS.GenerateAgendaUseCase, {
+    useClass: GenerateAgendaUseCase,
+  });
+  
+  // NOTA: Demais repositories serão registrados nas próximas fases
   // - WarRoomMeetingRepository
   // - SwotAnalysisRepository
   
-  console.log('[Strategic Module] DI registrado: 6 repositories + 11 use cases + 2 integrations');
+  console.log('[Strategic Module] DI registrado: 6 repositories + 12 use cases + 2 integrations');
 }
