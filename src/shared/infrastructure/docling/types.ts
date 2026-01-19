@@ -319,6 +319,101 @@ export interface DANFeData {
   informacoesAdicionais?: string;
 }
 
+// ============================================================================
+// DACTE TYPES (Phase D3)
+// ============================================================================
+
+/**
+ * Participante de DACTe (emitente, remetente, destinatário, expedidor, recebedor).
+ */
+export interface DACTeParticipante {
+  /** CNPJ ou CPF */
+  cnpjCpf: string;
+
+  /** Razão Social ou Nome */
+  razaoSocial: string;
+
+  /** Inscrição Estadual (opcional) */
+  inscricaoEstadual?: string;
+
+  /** UF */
+  uf: string;
+
+  /** Endereço (opcional) */
+  endereco?: string;
+
+  /** Município (opcional) */
+  municipio?: string;
+}
+
+/**
+ * Volume de carga do DACTe.
+ */
+export interface DACTeVolume {
+  /** Quantidade de volumes */
+  quantidade: number;
+
+  /** Espécie (CAIXA, PALETE, SACARIA, etc) */
+  especie: string;
+
+  /** Marca (opcional) */
+  marca?: string;
+
+  /** Numeração (opcional) */
+  numeracao?: string;
+
+  /** Peso líquido em kg */
+  pesoLiquido: number;
+
+  /** Peso bruto em kg */
+  pesoBruto: number;
+
+  /** Cubagem em m³ (opcional) */
+  cubagem?: number;
+}
+
+/**
+ * Documento transportado (NFe vinculada ao CTe).
+ */
+export interface DACTeDocumento {
+  /** Tipo de documento */
+  tipo: 'NFE' | 'NFSE' | 'OUTROS';
+
+  /** Chave da NFe (se tipo = NFE) */
+  chaveNFe?: string;
+
+  /** Número do documento */
+  numero?: string;
+
+  /** Série do documento */
+  serie?: string;
+
+  /** Data de emissão */
+  dataEmissao?: Date;
+
+  /** Valor do documento */
+  valor?: number;
+}
+
+/**
+ * Modal de transporte.
+ */
+export type DACTeModal =
+  | 'RODOVIARIO'
+  | 'AEREO'
+  | 'AQUAVIARIO'
+  | 'FERROVIARIO'
+  | 'DUTOVIARIO';
+
+/**
+ * Tipo de serviço de transporte.
+ */
+export type DACTeTipoServico =
+  | 'NORMAL'
+  | 'SUBCONTRATACAO'
+  | 'REDESPACHO'
+  | 'REDESPACHO_INTERMEDIARIO';
+
 /**
  * Dados extraídos de DACTe (Documento Auxiliar do Conhecimento de Transporte Eletrônico).
  *
@@ -337,94 +432,72 @@ export interface DACTeData {
   /** Data de emissão */
   dataEmissao: Date;
 
-  /** CFOP */
+  /** CFOP (5353, 6353, etc) */
   cfop: string;
 
   /** Natureza da operação */
   naturezaOperacao: string;
 
   /** Modal de transporte */
-  modal: 'rodoviario' | 'aereo' | 'aquaviario' | 'ferroviario' | 'dutoviario';
+  modal: DACTeModal;
+
+  /** Tipo de serviço */
+  tipoServico: DACTeTipoServico;
 
   /** Dados do emitente (transportadora) */
-  emitente: {
-    cnpj: string;
-    razaoSocial: string;
-    inscricaoEstadual: string;
-    uf: string;
-    endereco?: string;
-    municipio?: string;
-  };
+  emitente: DACTeParticipante;
 
   /** Dados do remetente */
-  remetente: {
-    cnpjCpf: string;
-    razaoSocial: string;
-    inscricaoEstadual?: string;
-    uf: string;
-    endereco?: string;
-    municipio?: string;
-  };
+  remetente: DACTeParticipante;
 
   /** Dados do destinatário */
-  destinatario: {
-    cnpjCpf: string;
-    razaoSocial: string;
-    inscricaoEstadual?: string;
-    uf: string;
-    endereco?: string;
-    municipio?: string;
-  };
+  destinatario: DACTeParticipante;
 
   /** Dados do expedidor (opcional) */
-  expedidor?: {
-    cnpjCpf: string;
-    razaoSocial: string;
-    uf: string;
-  };
+  expedidor?: DACTeParticipante;
 
   /** Dados do recebedor (opcional) */
-  recebedor?: {
-    cnpjCpf: string;
-    razaoSocial: string;
-    uf: string;
-  };
+  recebedor?: DACTeParticipante;
 
   /** Valores do CTe */
   valores: {
+    /** Valor do serviço de transporte */
     valorServico: number;
-    valorCarga: number;
+    /** Valor total a receber */
     valorReceber: number;
-    baseIcms: number;
-    aliquotaIcms: number;
-    valorIcms: number;
+    /** Valor total da carga */
+    valorCarga: number;
+    /** ICMS */
+    icms: {
+      baseCalculo: number;
+      aliquota: number;
+      valor: number;
+    };
   };
 
   /** Informações da carga */
   carga: {
+    /** Valor total da carga */
     valorCarga: number;
+    /** Produto predominante */
     produtoPredominante: string;
-    quantidadeVolumes?: number;
-    pesoTotal?: number;
-    cubagem?: number;
+    /** Características da carga */
+    caracteristicas?: string;
+    /** Volumes */
+    volumes: DACTeVolume[];
   };
 
-  /** Documentos de origem (NFes vinculadas) */
-  documentosOrigem: Array<{
-    tipo: 'NFe' | 'CTe' | 'Outros';
-    chave?: string;
-    numero?: number;
-    serie?: number;
-    emissao?: Date;
-  }>;
+  /** Documentos transportados (NFes vinculadas) */
+  documentos: DACTeDocumento[];
 
   /** Informações do percurso */
   percurso?: {
-    ufOrigem: string;
-    ufDestino: string;
-    municipioOrigem?: string;
-    municipioDestino?: string;
-    ufsPercurso?: string[];
+    /** UF de início */
+    ufInicio: string;
+    /** UF de fim */
+    ufFim: string;
+    /** UFs de percurso intermediário */
+    ufPercurso?: string[];
   };
 
   /** Informações adicionais */

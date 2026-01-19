@@ -29,5 +29,6 @@ export * from './ITransmitToSefaz';
 export * from './IQuerySefazStatus';
 export * from './IGenerateDanfe';
 
-// ===== IMPORTAÇÃO (E-Agent-Fase-D2) =====
+// ===== IMPORTAÇÃO (E-Agent-Fase-D2/D3) =====
 export * from './IImportDANFeUseCase';
+export * from './IImportDACTeUseCase';

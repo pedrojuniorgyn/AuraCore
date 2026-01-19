@@ -12,3 +12,6 @@ export type { FiscalDocumentData } from './TaxCreditCalculator';
 
 // DANFe Parser (E-Agent-Fase-D2)
 export * from './danfe';
+
+// DACTe Parser (E-Agent-Fase-D3)
+export * from './dacte';
