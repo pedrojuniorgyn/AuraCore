@@ -12,3 +12,6 @@ export { FiveWhysForm } from './FiveWhysForm';
 export { PDCAKanban } from './PDCAKanban';
 export { FollowUp3GForm } from './FollowUp3GForm';
 export { WarRoomDashboard } from './WarRoomDashboard';
+export { SWOTRadar } from './SWOTRadar';
+export { SWOTMatrix } from './SWOTMatrix';
+export { SWOTPriorityMatrix } from './SWOTPriorityMatrix';
