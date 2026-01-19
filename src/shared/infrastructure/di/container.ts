@@ -15,8 +15,12 @@ import { LegislationRAG } from '@/modules/fiscal/application/services/Legislatio
 import { IndexLegislationUseCase } from '@/modules/fiscal/application/commands/index-legislation';
 import { QueryLegislationUseCase } from '@/modules/fiscal/application/queries/query-legislation';
 
-// Knowledge Module (E-Agent-Fase-D1/D2/D3)
-import { GeminiEmbeddingService } from '@/modules/knowledge/infrastructure/embeddings';
+// Knowledge Module (E-Agent-Fase-D1/D2/D3/D4)
+import {
+  GeminiEmbeddingService,
+  OpenAIEmbeddingService,
+  EmbeddingRouter,
+} from '@/modules/knowledge/infrastructure/embeddings';
 import { ChromaVectorStore, JsonVectorStore } from '@/modules/knowledge/infrastructure/vector-store';
 import { IndexDocumentUseCase } from '@/modules/knowledge/application/commands/index-document';
 import { SearchLegislationUseCase } from '@/modules/knowledge/application/queries/search-legislation';
@@ -62,26 +66,60 @@ container.register(TOKENS.QueryLegislationUseCase, { useClass: QueryLegislationU
 // KNOWLEDGE MODULE (E-Agent-Fase-D1/D2/D3)
 // ============================================================================
 
-// Embedding Service (Gemini) - Phase D.1
+// Embedding Service (Gemini + OpenAI Fallback) - Phase D.1/D.4
 container.register<IEmbeddingService>(TOKENS.KnowledgeEmbeddingService, {
   useFactory: () => {
-    const apiKey = process.env.GOOGLE_AI_API_KEY;
-    if (!apiKey) {
-      console.warn('[DI] GOOGLE_AI_API_KEY não configurada. Embedding service retornará erro.');
-      // Mock que falha graciosamente
+    const geminiKey = process.env.GOOGLE_AI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const enableFallback = process.env.EMBEDDING_FALLBACK_ENABLED === 'true';
+
+    // Nenhuma key configurada
+    if (!geminiKey && !openaiKey) {
+      console.warn('[DI] Nenhuma API key de embedding configurada.');
       return {
-        generateEmbeddings: async () => Result.fail('GOOGLE_AI_API_KEY não configurada'),
-        generateEmbedding: async () => Result.fail('GOOGLE_AI_API_KEY não configurada'),
+        generateEmbeddings: async () => Result.fail('Nenhuma API key de embedding configurada'),
+        generateEmbedding: async () => Result.fail('Nenhuma API key de embedding configurada'),
         getDimension: () => 768,
         getModelName: () => 'not-configured',
       } as IEmbeddingService;
     }
-    return new GeminiEmbeddingService({
-      apiKey,
-      model: process.env.GEMINI_EMBEDDING_MODEL ?? 'embedding-004',
-      maxBatchSize: parseInt(process.env.GEMINI_BATCH_SIZE ?? '100', 10),
-      cacheTTL: parseInt(process.env.GEMINI_CACHE_TTL ?? '3600', 10),
-    });
+
+    // Criar services disponíveis
+    const gemini = geminiKey
+      ? new GeminiEmbeddingService({
+          apiKey: geminiKey,
+          model: process.env.GEMINI_EMBEDDING_MODEL ?? 'embedding-004',
+          maxBatchSize: parseInt(process.env.GEMINI_BATCH_SIZE ?? '100', 10),
+          cacheTTL: parseInt(process.env.GEMINI_CACHE_TTL ?? '3600', 10),
+        })
+      : null;
+
+    const openai = openaiKey
+      ? new OpenAIEmbeddingService({
+          apiKey: openaiKey,
+          model: process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-3-small',
+          maxBatchSize: parseInt(process.env.OPENAI_EMBEDDING_BATCH_SIZE ?? '100', 10),
+        })
+      : null;
+
+    // Usar Gemini como primary (se disponível), OpenAI como fallback
+    const primary = gemini ?? openai!;
+    const fallback = gemini && openai && enableFallback ? openai : undefined;
+
+    // Se fallback habilitado, usar router
+    if (fallback) {
+      console.log('[DI] EmbeddingRouter configurado: Gemini (primary) + OpenAI (fallback)');
+      return new EmbeddingRouter({
+        primary,
+        fallback,
+        maxRetries: parseInt(process.env.EMBEDDING_MAX_RETRIES ?? '2', 10),
+        retryDelayMs: parseInt(process.env.EMBEDDING_RETRY_DELAY_MS ?? '1000', 10),
+      });
+    }
+
+    // Retornar o disponível
+    console.log(`[DI] EmbeddingService: ${primary.getModelName()}`);
+    return primary;
   },
 });
 
