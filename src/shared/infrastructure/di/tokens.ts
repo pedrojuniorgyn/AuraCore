@@ -94,4 +94,8 @@ export const TOKENS = {
 
   // Contracts Module - E-Agent-Fase-D5
   AnalyzeFreightContractUseCase: Symbol('AnalyzeFreightContractUseCase'),
+
+  // Financial Module - Bank Statement Import - E-Agent-Fase-D6
+  ImportBankStatementUseCase: Symbol('ImportBankStatementUseCase'),
+  BankTransactionRepository: Symbol('BankTransactionRepository'),
 } as const;

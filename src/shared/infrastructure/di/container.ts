@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import { container, injectable, inject, singleton, autoInjectable, registry, delay } from 'tsyringe';
 import { TOKENS } from './tokens';
-import { CryptoUuidGenerator } from '../adapters/CryptoUuidGenerator';
 import { DoclingClient } from '../docling';
 import { ImportDANFeUseCase } from '@/modules/fiscal/application/commands/import-danfe';
 import { ImportDACTeUseCase } from '@/modules/fiscal/application/commands/import-dacte';
@@ -17,8 +16,8 @@ import { QueryLegislationUseCase } from '@/modules/fiscal/application/queries/qu
 // Strategic Module (E10)
 import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
 
-// Registros globais
-container.registerSingleton(TOKENS.UuidGenerator, CryptoUuidGenerator);
+// Registros globais - usar delay() para evitar circular import
+container.registerSingleton(TOKENS.UuidGenerator, delay(() => import('../adapters/CryptoUuidGenerator').then(m => m.CryptoUuidGenerator)));
 
 // Docling Integration (E-Agent-Fase-D1/D2/D3)
 container.registerSingleton(TOKENS.DoclingClient, DoclingClient);
@@ -36,6 +35,32 @@ container.register(TOKENS.QueryLegislationUseCase, { useClass: QueryLegislationU
 // Contracts Module (E-Agent-Fase-D5)
 import { AnalyzeFreightContractUseCase } from '@/modules/contracts/application/commands/analyze-freight-contract';
 container.register(TOKENS.AnalyzeFreightContractUseCase, { useClass: AnalyzeFreightContractUseCase });
+
+// Bank Statement Import (E-Agent-Fase-D6)
+import { ImportBankStatementUseCase, type IBankTransactionRepository } from '@/modules/financial/application/commands/import-bank-statement';
+import type { BankTransaction } from '@/modules/financial/domain/types';
+
+// Stub Repository for Bank Transactions (to be replaced with real implementation)
+class StubBankTransactionRepository implements IBankTransactionRepository {
+  async findByFitId(): Promise<BankTransaction | null> {
+    return null;
+  }
+  async findByAccountId(): Promise<BankTransaction[]> {
+    return [];
+  }
+  async save(): Promise<void> {
+    // No-op
+  }
+  async saveBatch(): Promise<{ saved: number; failed: number }> {
+    return { saved: 0, failed: 0 };
+  }
+  async updateCategory(): Promise<void> {
+    // No-op
+  }
+}
+
+container.register(TOKENS.BankTransactionRepository, { useClass: StubBankTransactionRepository });
+container.register(TOKENS.ImportBankStatementUseCase, { useClass: ImportBankStatementUseCase });
 
 // Strategic Module (E10)
 registerStrategicModule();
