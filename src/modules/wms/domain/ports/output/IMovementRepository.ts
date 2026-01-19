@@ -1,18 +1,22 @@
-import { StockMovement } from '../entities/StockMovement';
-import { MovementType } from '../value-objects/MovementType';
+import { StockMovement } from '../../entities/StockMovement';
+import { MovementType } from '../../value-objects/MovementType';
 
 /**
  * IMovementRepository: Port para repositório de movimentações de estoque
- * 
+ *
  * E7.8 WMS - Semana 1
- * 
+ * E7.26 - Movido para domain/ports/output/
+ *
  * Padrão: Repository Pattern com multi-tenancy obrigatório
+ * @see ARCH-011: Repositories implementam interface de domain/ports/output/
+ * @see REPO-005: TODA query filtra organizationId + branchId
+ * @see REPO-006: Soft delete: filtrar deletedAt IS NULL
  */
 
 export interface IMovementRepository {
   /**
    * Busca movimentação por ID
-   * 
+   *
    * @param id ID da movimentação
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -22,7 +26,7 @@ export interface IMovementRepository {
 
   /**
    * Busca todas as movimentações de um produto
-   * 
+   *
    * @param productId ID do produto
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -32,7 +36,7 @@ export interface IMovementRepository {
 
   /**
    * Busca todas as movimentações de uma localização (origem ou destino)
-   * 
+   *
    * @param locationId ID da localização
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -42,7 +46,7 @@ export interface IMovementRepository {
 
   /**
    * Busca movimentações por intervalo de datas
-   * 
+   *
    * @param startDate Data inicial
    * @param endDate Data final
    * @param organizationId ID da organização
@@ -58,7 +62,7 @@ export interface IMovementRepository {
 
   /**
    * Busca movimentações por tipo
-   * 
+   *
    * @param type Tipo de movimentação
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -68,7 +72,7 @@ export interface IMovementRepository {
 
   /**
    * Busca movimentações por referência (ex: documento fiscal, pedido)
-   * 
+   *
    * @param referenceType Tipo de referência
    * @param referenceId ID da referência
    * @param organizationId ID da organização
@@ -84,7 +88,7 @@ export interface IMovementRepository {
 
   /**
    * Busca movimentações de entrada de um produto
-   * 
+   *
    * @param productId ID do produto
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -94,7 +98,7 @@ export interface IMovementRepository {
 
   /**
    * Busca movimentações de saída de um produto
-   * 
+   *
    * @param productId ID do produto
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -104,7 +108,7 @@ export interface IMovementRepository {
 
   /**
    * Busca movimentações de um usuário
-   * 
+   *
    * @param userId ID do usuário
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -114,7 +118,7 @@ export interface IMovementRepository {
 
   /**
    * Verifica se uma movimentação existe
-   * 
+   *
    * @param id ID da movimentação
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -157,10 +161,9 @@ export interface IMovementRepository {
 
   /**
    * Salva uma movimentação (insert apenas - movimentações não são alteradas)
-   * 
+   *
    * @param movement Movimentação a salvar
    * @returns void
    */
   save(movement: StockMovement): Promise<void>;
 }
-

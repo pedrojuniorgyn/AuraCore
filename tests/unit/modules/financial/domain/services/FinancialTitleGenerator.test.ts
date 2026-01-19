@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FinancialTitleGenerator } from '@/modules/financial/domain/services/FinancialTitleGenerator';
-import { IFinancialTitleRepository, FiscalDocumentData } from '@/modules/financial/domain/ports/IFinancialTitleRepository';
+import { IFinancialTitleRepository, FiscalDocumentData } from '@/modules/financial/domain/ports/output/IFinancialTitleRepository';
 import { Result } from '@/shared/domain';
 
 // Mock Repository

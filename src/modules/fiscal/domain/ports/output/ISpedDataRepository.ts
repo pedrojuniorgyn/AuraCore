@@ -1,12 +1,14 @@
 /**
- * 📄 SPED DATA REPOSITORY PORT
- * 
+ * SPED DATA REPOSITORY PORT
+ *
  * Interface defining the contract for SPED data retrieval
- * 
+ *
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
+ * @see E7.26 - Movido para domain/ports/output/
+ * @see ARCH-011: Repositories implementam interface de domain/ports/output/
  */
 
-import { Result } from "@/shared/domain";
+import { Result } from '@/shared/domain';
 
 // ============================================================================
 // Types para dados de entrada
@@ -14,7 +16,7 @@ import { Result } from "@/shared/domain";
 
 export interface SpedFiscalPeriod {
   organizationId: bigint;
-  referenceMonth: number;  // 1-12
+  referenceMonth: number; // 1-12
   referenceYear: number;
   finality: 'ORIGINAL' | 'SUBSTITUTION';
 }
@@ -25,7 +27,7 @@ export interface SpedFiscalPeriod {
 
 export interface OrganizationData {
   name: string;
-  document: string;  // CNPJ
+  document: string; // CNPJ
 }
 
 export interface PartnerData {
@@ -145,8 +147,8 @@ export interface NFeContribData {
 }
 
 export interface TaxTotalsContribData {
-  baseDebito: number;   // Base de cálculo para débitos (receitas de CTes)
-  baseCredito: number;  // Base de cálculo para créditos (compras em NFes)
+  baseDebito: number; // Base de cálculo para débitos (receitas de CTes)
+  baseCredito: number; // Base de cálculo para créditos (compras em NFes)
 }
 
 // ============================================================================
@@ -227,4 +229,3 @@ export interface ISpedDataRepository {
    */
   getTaxTotalsContributions(period: SpedContributionsPeriod): Promise<Result<TaxTotalsContribData, Error>>;
 }
-

@@ -1,5 +1,5 @@
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
-import type { ILocationRepository } from '../../../domain/ports/ILocationRepository';
+import type { ILocationRepository } from '../../../domain/ports/output/ILocationRepository';
 import { Location } from '../../../domain/entities/Location';
 import type { LocationCode } from '../../../domain/value-objects/LocationCode';
 import { LocationMapper } from '../mappers/LocationMapper';

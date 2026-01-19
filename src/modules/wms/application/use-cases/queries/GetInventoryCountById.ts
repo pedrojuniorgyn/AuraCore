@@ -1,6 +1,6 @@
 import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { IInventoryCountRepository } from '@/modules/wms/domain/ports/IInventoryCountRepository';
+import type { IInventoryCountRepository } from '@/modules/wms/domain/ports/output/IInventoryCountRepository';
 import type { IGetInventoryCountById, GetInventoryCountByIdInput, GetInventoryCountByIdOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 

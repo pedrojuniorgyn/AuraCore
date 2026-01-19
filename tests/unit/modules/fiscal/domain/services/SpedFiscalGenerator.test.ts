@@ -13,7 +13,7 @@ import type {
   ISpedDataRepository,
   SpedFiscalPeriod,
   OrganizationData,
-} from '@/modules/fiscal/domain/ports/ISpedDataRepository';
+} from '@/modules/fiscal/domain/ports/output/ISpedDataRepository';
 
 describe('SpedFiscalGenerator - Basic Tests', () => {
   let generator: SpedFiscalGenerator;

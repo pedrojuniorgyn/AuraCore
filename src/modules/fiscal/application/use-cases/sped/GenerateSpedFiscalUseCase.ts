@@ -17,7 +17,7 @@ import type {
 import type {
   ISpedDataRepository,
   SpedFiscalPeriod,
-} from '@/modules/fiscal/domain/ports/ISpedDataRepository';
+} from '@/modules/fiscal/domain/ports/output/ISpedDataRepository';
 import { SpedFiscalGenerator } from '@/modules/fiscal/domain/services/SpedFiscalGenerator';
 
 @injectable()

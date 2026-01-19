@@ -9,7 +9,7 @@
 
 import { Result } from "@/shared/domain";
 import { TaxCreditCalculator } from "@/modules/fiscal/domain/services/TaxCreditCalculator";
-import type { TaxCreditRepository } from "@/modules/fiscal/domain/ports/ITaxCreditRepository";
+import type { ITaxCreditRepository } from '@/modules/fiscal/domain/ports/output/ITaxCreditRepository';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // TYPES
@@ -33,7 +33,7 @@ export interface ProcessTaxCreditsResponse {
 export class ProcessTaxCreditsUseCase {
   constructor(
     private readonly calculator: TaxCreditCalculator,
-    private readonly repository: TaxCreditRepository
+    private readonly repository: ITaxCreditRepository
   ) {}
 
   async execute(
@@ -137,9 +137,12 @@ export class ProcessTaxCreditsUseCase {
 /**
  * Factory para criar use case
  */
+/**
+ * Factory para criar use case
+ */
 export function createProcessTaxCreditsUseCase(
   calculator: TaxCreditCalculator,
-  repository: TaxCreditRepository
+  repository: ITaxCreditRepository
 ): ProcessTaxCreditsUseCase {
   return new ProcessTaxCreditsUseCase(calculator, repository);
 }

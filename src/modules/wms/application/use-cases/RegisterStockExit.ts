@@ -1,7 +1,7 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
-import type { ILocationRepository } from '../../domain/ports/ILocationRepository';
-import type { IStockRepository } from '../../domain/ports/IStockRepository';
-import type { IMovementRepository } from '../../domain/ports/IMovementRepository';
+import type { ILocationRepository } from '../../domain/ports/output/ILocationRepository';
+import type { IStockRepository } from '../../domain/ports/output/IStockRepository';
+import type { IMovementRepository } from '../../domain/ports/output/IMovementRepository';
 import type { IRegisterStockExit } from '../../domain/ports/input';
 import { StockMovement } from '../../domain/entities/StockMovement';
 import { MovementType, MovementTypeEnum } from '../../domain/value-objects/MovementType';

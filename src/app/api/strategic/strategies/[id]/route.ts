@@ -2,13 +2,13 @@
  * API Routes: /api/strategic/strategies/[id]
  * Operações em estratégia específica
  * 
+ * Nota: POST /activate é tratado em ./activate/route.ts
+ * 
  * @module app/api/strategic
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
-import { ActivateStrategyUseCase } from '@/modules/strategic/application/commands/ActivateStrategyUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 
@@ -51,36 +51,6 @@ export async function GET(
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     console.error('GET /api/strategic/strategies/[id] error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-}
-
-// POST /api/strategic/strategies/[id]/activate
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const context = await getTenantContext();
-    const { id } = await params;
-    
-    // Verificar se é ação de ativação
-    const url = new URL(request.url);
-    if (url.pathname.endsWith('/activate')) {
-      const useCase = container.resolve(ActivateStrategyUseCase);
-      const result = await useCase.execute({ strategyId: id }, context);
-
-      if (Result.isFail(result)) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
-      }
-
-      return NextResponse.json({ message: 'Estratégia ativada com sucesso' });
-    }
-
-    return NextResponse.json({ error: 'Ação não suportada' }, { status: 400 });
-  } catch (error: unknown) {
-    if (error instanceof Response) return error;
-    console.error('POST /api/strategic/strategies/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -1,18 +1,22 @@
-import { Location } from '../entities/Location';
-import { LocationCode } from '../value-objects/LocationCode';
+import { Location } from '../../entities/Location';
+import { LocationCode } from '../../value-objects/LocationCode';
 
 /**
  * ILocationRepository: Port para repositório de localizações
- * 
+ *
  * E7.8 WMS - Semana 1
- * 
+ * E7.26 - Movido para domain/ports/output/
+ *
  * Padrão: Repository Pattern com multi-tenancy obrigatório
+ * @see ARCH-011: Repositories implementam interface de domain/ports/output/
+ * @see REPO-005: TODA query filtra organizationId + branchId
+ * @see REPO-006: Soft delete: filtrar deletedAt IS NULL
  */
 
 export interface ILocationRepository {
   /**
    * Busca localização por ID
-   * 
+   *
    * @param id ID da localização
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -22,7 +26,7 @@ export interface ILocationRepository {
 
   /**
    * Busca localização por código dentro de um armazém
-   * 
+   *
    * @param code Código da localização
    * @param warehouseId ID do armazém
    * @param organizationId ID da organização
@@ -38,7 +42,7 @@ export interface ILocationRepository {
 
   /**
    * Busca todas as localizações de um armazém
-   * 
+   *
    * @param warehouseId ID do armazém
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -48,7 +52,7 @@ export interface ILocationRepository {
 
   /**
    * Busca localizações filhas de uma localização pai
-   * 
+   *
    * @param parentId ID da localização pai
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -58,7 +62,7 @@ export interface ILocationRepository {
 
   /**
    * Busca localizações ativas de um armazém
-   * 
+   *
    * @param warehouseId ID do armazém
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -68,7 +72,7 @@ export interface ILocationRepository {
 
   /**
    * Verifica se uma localização existe
-   * 
+   *
    * @param id ID da localização
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -97,10 +101,9 @@ export interface ILocationRepository {
     filters: { type?: string; warehouseId?: string; isActive?: boolean }
   ): Promise<number>;
 
-
   /**
    * Salva uma localização (insert ou update)
-   * 
+   *
    * @param location Localização a salvar
    * @returns void
    */
@@ -108,7 +111,7 @@ export interface ILocationRepository {
 
   /**
    * Deleta uma localização (soft delete)
-   * 
+   *
    * @param id ID da localização
    * @param organizationId ID da organização
    * @param branchId ID da filial
@@ -116,4 +119,3 @@ export interface ILocationRepository {
    */
   delete(id: string, organizationId: number, branchId: number): Promise<void>;
 }
-

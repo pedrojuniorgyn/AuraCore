@@ -14,7 +14,7 @@ import type { ExecutionContext } from '@/modules/fiscal/domain/ports/input/IGene
 import type {
   ISpedDataRepository,
   SpedEcdPeriod,
-} from '@/modules/fiscal/domain/ports/ISpedDataRepository';
+} from '@/modules/fiscal/domain/ports/output/ISpedDataRepository';
 import type {
   SpedEcdInput,
   SpedEcdData,

@@ -1,5 +1,5 @@
 import { eq, and, isNull, sql, lte, isNotNull, desc } from 'drizzle-orm';
-import type { IStockRepository } from '../../../domain/ports/IStockRepository';
+import type { IStockRepository } from '../../../domain/ports/output/IStockRepository';
 import { StockItem } from '../../../domain/entities/StockItem';
 import { StockQuantity, UnitOfMeasure } from '../../../domain/value-objects/StockQuantity';
 import { StockItemMapper } from '../mappers/StockItemMapper';

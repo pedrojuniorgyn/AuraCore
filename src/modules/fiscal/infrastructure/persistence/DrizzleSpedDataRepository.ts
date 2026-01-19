@@ -32,7 +32,7 @@ import {
   CteContribData,
   NFeContribData,
   TaxTotalsContribData,
-} from "../../domain/ports/ISpedDataRepository";
+} from '../../domain/ports/output/ISpedDataRepository';
 
 export class DrizzleSpedDataRepository implements ISpedDataRepository {
   async getOrganization(

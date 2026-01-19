@@ -19,7 +19,7 @@ import { CalculateTaxesUseCase } from '../../application/use-cases/CalculateTaxe
 import type { IGenerateSpedFiscal } from '../../domain/ports/input/IGenerateSpedFiscal';
 import type { IGenerateSpedEcd } from '../../domain/ports/input/IGenerateSpedEcd';
 import type { IGenerateSpedContributions } from '../../domain/ports/input/IGenerateSpedContributions';
-import type { ISpedDataRepository } from '../../domain/ports/ISpedDataRepository';
+import type { ISpedDataRepository } from '../../domain/ports/output/ISpedDataRepository';
 import { GenerateSpedFiscalUseCase as GenerateSpedFiscalUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedFiscalUseCase';
 import { GenerateSpedEcdUseCase as GenerateSpedEcdUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedEcdUseCase';
 import { GenerateSpedContributionsUseCase as GenerateSpedContributionsUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedContributionsUseCase';

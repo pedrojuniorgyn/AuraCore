@@ -24,7 +24,7 @@ import {
   FiscalDocumentData,
   AccountPayableInsert,
   AccountReceivableInsert,
-} from "../../domain/ports/IFinancialTitleRepository";
+} from '../../domain/ports/output/IFinancialTitleRepository';
 
 interface FiscalDocumentQueryResult {
   id: bigint;

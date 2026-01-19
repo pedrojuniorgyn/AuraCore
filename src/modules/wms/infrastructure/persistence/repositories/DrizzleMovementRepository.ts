@@ -1,5 +1,5 @@
 import { eq, and, isNull, gte, lte, or, desc, sql, type SQL } from 'drizzle-orm';
-import type { IMovementRepository } from '../../../domain/ports/IMovementRepository';
+import type { IMovementRepository } from '../../../domain/ports/output/IMovementRepository';
 import { StockMovement } from '../../../domain/entities/StockMovement';
 import type { MovementType } from '../../../domain/value-objects/MovementType';
 import { StockMovementMapper } from '../mappers/StockMovementMapper';

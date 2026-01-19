@@ -1,12 +1,16 @@
 /**
- * 💰 FINANCIAL TITLE REPOSITORY PORT
- * 
+ * FINANCIAL TITLE REPOSITORY PORT
+ *
  * Interface defining the contract for financial title persistence
- * 
+ *
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
+ * E7.26 - Movido para domain/ports/output/
+ *
+ * @see ARCH-011: Repositories implementam interface de domain/ports/output/
+ * @see REPO-005: TODA query filtra organizationId + branchId
  */
 
-import { Result } from "@/shared/domain";
+import { Result } from '@/shared/domain';
 
 export interface FiscalDocumentData {
   id: bigint;
@@ -80,16 +84,12 @@ export interface IFinancialTitleRepository {
   /**
    * Cria uma conta a pagar
    */
-  createAccountPayable(
-    data: AccountPayableInsert
-  ): Promise<Result<bigint, Error>>;
+  createAccountPayable(data: AccountPayableInsert): Promise<Result<bigint, Error>>;
 
   /**
    * Cria uma conta a receber
    */
-  createAccountReceivable(
-    data: AccountReceivableInsert
-  ): Promise<Result<bigint, Error>>;
+  createAccountReceivable(data: AccountReceivableInsert): Promise<Result<bigint, Error>>;
 
   /**
    * Atualiza status financeiro do documento fiscal
@@ -103,17 +103,10 @@ export interface IFinancialTitleRepository {
   /**
    * Verifica se existem títulos pagos/recebidos para um documento
    */
-  hasPaidTitles(
-    fiscalDocumentId: bigint,
-    organizationId: bigint
-  ): Promise<Result<boolean, Error>>;
+  hasPaidTitles(fiscalDocumentId: bigint, organizationId: bigint): Promise<Result<boolean, Error>>;
 
   /**
    * Reverte (soft delete) todos os títulos de um documento
    */
-  reverseTitles(
-    fiscalDocumentId: bigint,
-    organizationId: bigint
-  ): Promise<Result<void, Error>>;
+  reverseTitles(fiscalDocumentId: bigint, organizationId: bigint): Promise<Result<void, Error>>;
 }
-

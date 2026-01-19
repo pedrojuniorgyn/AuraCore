@@ -19,7 +19,7 @@ import {
   FiscalDocumentData,
   AccountPayableInsert,
   AccountReceivableInsert,
-} from "../ports/IFinancialTitleRepository";
+} from '../ports/output/IFinancialTitleRepository';
 
 export interface GeneratePayableInput {
   fiscalDocumentId: bigint;

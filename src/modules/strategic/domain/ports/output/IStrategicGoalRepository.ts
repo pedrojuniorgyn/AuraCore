@@ -55,6 +55,23 @@ export interface IStrategicGoalRepository {
   ): Promise<StrategicGoal[]>;
   
   /**
+   * Busca metas por nível de cascateamento
+   */
+  findByCascadeLevel(
+    cascadeLevel: string,
+    organizationId: number, 
+    branchId: number
+  ): Promise<StrategicGoal[]>;
+  
+  /**
+   * Busca metas raiz (sem parent)
+   */
+  findRootGoals(
+    organizationId: number, 
+    branchId: number
+  ): Promise<StrategicGoal[]>;
+  
+  /**
    * Salva (insert ou update)
    */
   save(entity: StrategicGoal): Promise<void>;

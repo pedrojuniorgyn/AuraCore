@@ -25,10 +25,8 @@ export * from './domain/events/WmsEvents';
 // Errors
 export * from './domain/errors/WmsErrors';
 
-// Ports
-export * from './domain/ports/ILocationRepository';
-export * from './domain/ports/IStockRepository';
-export * from './domain/ports/IMovementRepository';
+// Ports (Input & Output)
+export * from './domain/ports';
 
 // Services
 export * from './domain/services/StockCalculator';

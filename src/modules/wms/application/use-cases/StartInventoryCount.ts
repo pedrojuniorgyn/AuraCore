@@ -1,6 +1,6 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
-import type { IStockRepository } from '../../domain/ports/IStockRepository';
-import type { IInventoryCountRepository } from '../../domain/ports/IInventoryCountRepository';
+import type { IStockRepository } from '../../domain/ports/output/IStockRepository';
+import type { IInventoryCountRepository } from '../../domain/ports/output/IInventoryCountRepository';
 import type { IStartInventoryCount } from '../../domain/ports/input';
 import { InventoryCount } from '../../domain/entities/InventoryCount';
 import { InventoryStatus, InventoryStatusEnum } from '../../domain/value-objects/InventoryStatus';

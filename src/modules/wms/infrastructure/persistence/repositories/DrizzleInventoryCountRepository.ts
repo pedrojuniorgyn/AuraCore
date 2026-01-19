@@ -1,5 +1,5 @@
 import { eq, and, isNull } from 'drizzle-orm';
-import type { IInventoryCountRepository } from '../../../domain/ports/IInventoryCountRepository';
+import type { IInventoryCountRepository } from '../../../domain/ports/output/IInventoryCountRepository';
 import { InventoryCount } from '../../../domain/entities/InventoryCount';
 import { InventoryCountMapper } from '../mappers/InventoryCountMapper';
 import { wmsInventoryCounts } from '../schemas/InventoryCountSchema';

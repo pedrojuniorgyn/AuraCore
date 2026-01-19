@@ -28,7 +28,7 @@ import {
   InvoiceData,
   CteData,
   ApurationData,
-} from "../ports/ISpedDataRepository";
+} from '../ports/output/ISpedDataRepository';
 
 export interface GenerateSpedFiscalInput {
   period: SpedFiscalPeriod;

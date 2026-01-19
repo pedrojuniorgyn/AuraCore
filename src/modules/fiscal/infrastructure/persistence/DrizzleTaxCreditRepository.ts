@@ -11,7 +11,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { Result } from "@/shared/domain";
 import { Money } from "@/shared/domain";
-import type { TaxCreditRepository, ChartAccount } from "@/modules/fiscal/domain/ports/ITaxCreditRepository";
+import type { ITaxCreditRepository, ChartAccount } from '@/modules/fiscal/domain/ports/output/ITaxCreditRepository';
 import type { TaxCredit } from "@/modules/fiscal/domain/value-objects/TaxCredit";
 import type { FiscalDocumentData } from "@/modules/fiscal/domain/services/TaxCreditCalculator";
 
@@ -46,7 +46,7 @@ interface PendingDocumentResult {
 // REPOSITORY IMPLEMENTATION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-export class DrizzleTaxCreditRepository implements TaxCreditRepository {
+export class DrizzleTaxCreditRepository implements ITaxCreditRepository {
   async getFiscalDocumentData(
     fiscalDocumentId: bigint,
     organizationId: bigint

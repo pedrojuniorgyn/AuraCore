@@ -28,7 +28,7 @@ import { SpedError } from '../../domain/errors/SpedError';
 import {
   ISpedDataRepository,
   SpedContributionsPeriod,
-} from '../../domain/ports/ISpedDataRepository';
+} from '../../domain/ports/output/ISpedDataRepository';
 
 // ==========================================
 // INPUT DTO

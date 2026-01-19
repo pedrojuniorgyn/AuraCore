@@ -1,7 +1,7 @@
 import { inject, injectable} from '@/shared/infrastructure/di/container';
-import type { IStockRepository } from '../../domain/ports/IStockRepository';
-import type { IMovementRepository } from '../../domain/ports/IMovementRepository';
-import type { IInventoryCountRepository } from '../../domain/ports/IInventoryCountRepository';
+import type { IStockRepository } from '../../domain/ports/output/IStockRepository';
+import type { IMovementRepository } from '../../domain/ports/output/IMovementRepository';
+import type { IInventoryCountRepository } from '../../domain/ports/output/IInventoryCountRepository';
 import type { ICompleteInventoryCount } from '../../domain/ports/input';
 import { InventoryCount } from '../../domain/entities/InventoryCount';
 import { InventoryStatus, InventoryStatusEnum } from '../../domain/value-objects/InventoryStatus';

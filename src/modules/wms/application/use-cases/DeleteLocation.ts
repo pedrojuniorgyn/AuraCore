@@ -1,7 +1,7 @@
 import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { ILocationRepository } from '@/modules/wms/domain/ports/ILocationRepository';
-import type { IStockRepository } from '@/modules/wms/domain/ports/IStockRepository';
+import type { ILocationRepository } from '@/modules/wms/domain/ports/output/ILocationRepository';
+import type { IStockRepository } from '@/modules/wms/domain/ports/output/IStockRepository';
 import type { IDeleteLocation, DeleteLocationInput, DeleteLocationOutput } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../dtos/ExecutionContext';
 import type { Location } from '@/modules/wms/domain/entities/Location';

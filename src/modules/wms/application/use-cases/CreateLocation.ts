@@ -1,5 +1,5 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
-import type { ILocationRepository } from '../../domain/ports/ILocationRepository';
+import type { ILocationRepository } from '../../domain/ports/output/ILocationRepository';
 import type { ICreateLocation } from '../../domain/ports/input';
 import { Location } from '../../domain/entities/Location';
 import { LocationCode } from '../../domain/value-objects/LocationCode';
