@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { accountsReceivable, businessPartners, financialCategories } from '@/lib/db/schema';
 import { 
-  eq, and, like, gte, lte, desc, asc, isNull, count, inArray,
+  eq, and, like, gte, lte, desc, asc, isNull, isNotNull, count, inArray,
   type SQL 
 } from 'drizzle-orm';
 import { getTenantContext } from '@/lib/auth/context';
@@ -177,7 +177,18 @@ function buildFilterCondition(field: string, filter: FilterModel): SQL | null {
 
 function buildTextFilter(field: string, filter: FilterModel & { filterType: 'text' }): SQL | null {
   const column = getColumn(field);
-  if (!column || !filter.filter) return null;
+  if (!column) return null;
+
+  // FIX: Tratar blank/notBlank ANTES de verificar filter.filter
+  if (filter.type === 'blank') {
+    return isNull(column);
+  }
+  if (filter.type === 'notBlank') {
+    return isNotNull(column);
+  }
+
+  // Agora sim verificar se tem valor
+  if (!filter.filter) return null;
 
   switch (filter.type) {
     case 'equals':
@@ -188,8 +199,6 @@ function buildTextFilter(field: string, filter: FilterModel & { filterType: 'tex
       return like(column, `${filter.filter}%`);
     case 'endsWith':
       return like(column, `%${filter.filter}`);
-    case 'blank':
-      return isNull(column);
     default:
       return null;
   }
@@ -197,7 +206,18 @@ function buildTextFilter(field: string, filter: FilterModel & { filterType: 'tex
 
 function buildNumberFilter(field: string, filter: FilterModel & { filterType: 'number' }): SQL | null {
   const column = getColumn(field);
-  if (!column || filter.filter === undefined) return null;
+  if (!column) return null;
+
+  // FIX: Tratar blank/notBlank ANTES de verificar filter.filter
+  if (filter.type === 'blank') {
+    return isNull(column);
+  }
+  if (filter.type === 'notBlank') {
+    return isNotNull(column);
+  }
+
+  // Agora sim verificar se tem valor
+  if (filter.filter === undefined) return null;
 
   switch (filter.type) {
     case 'equals':
