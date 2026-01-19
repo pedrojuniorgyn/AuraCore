@@ -1,0 +1,371 @@
+{
+  "id": "E10",
+  "name": "Módulo de Gestão Estratégica e Qualidade Total",
+  "status": "PLANNED",
+  "progress": 0,
+  "startDate": "2026-02-01",
+  "endDate": "2026-08-15",
+  "estimatedHours": 1071,
+  "owner": "Pedro Jr.",
+  "description": "Implementação completa do módulo Strategic com BSC, PDCA, GEROT, 5W2H, Follow-up 3G, War Room, SWOT e Banco de Ideias.",
+  "module": "strategic",
+  "modulePath": "src/modules/strategic",
+  "deliverables": [
+    "BSC com 4 perspectivas e mapa estratégico interativo (ReactFlow)",
+    "Desdobramento de metas (CEO → DIRECTOR → MANAGER → TEAM)",
+    "KPIs com integrações automáticas (Financial, TMS, WMS)",
+    "GEROT com Itens de Controle, Itens de Verificação e tratamento de anomalias",
+    "Planos de Ação 5W2H com ciclo PDCA e Kanban visual",
+    "Follow-up 3G (GEMBA/GEMBUTSU/GENJITSU) com reproposição",
+    "War Room com dashboard real-time (SSE) e gerador automático de pautas",
+    "Análise SWOT com priorização e conversão para planos",
+    "Banco de Ideias com fluxo de aprovação e conversão",
+    "Relatório 3 Gerações (Passado/Presente/Futuro)"
+  ],
+  "dependencies": [
+    {
+      "epicId": "E7",
+      "name": "DDD Migration",
+      "type": "REQUIRED",
+      "description": "Infraestrutura DDD/Hexagonal base"
+    },
+    {
+      "module": "financial",
+      "type": "INTEGRATION",
+      "description": "KPIs: EBITDA, Receita, Custos, Inadimplência"
+    },
+    {
+      "module": "tms",
+      "type": "INTEGRATION",
+      "description": "KPIs: OTD, Lead Time, Custo/Km, Avarias"
+    },
+    {
+      "module": "wms",
+      "type": "INTEGRATION",
+      "description": "KPIs: Acuracidade, Giro de Estoque, Ocupação"
+    }
+  ],
+  "phases": [
+    {
+      "id": "F1",
+      "name": "Fundação",
+      "status": "PLANNED",
+      "weeks": "1-4",
+      "hours": 160,
+      "deliverables": [
+        "Schemas de banco de dados (13 tabelas)",
+        "Entities: Strategy, StrategicGoal, KPI, ActionPlan, etc.",
+        "Value Objects: BSCPerspective, GoalStatus, PDCACycle, etc.",
+        "Repositories: DrizzleStrategyRepository, etc.",
+        "Dependency Injection container"
+      ],
+      "tasks": [
+        "Criar schemas Drizzle para todas as tabelas",
+        "Implementar Entity Strategy com create/reconstitute",
+        "Implementar Entity StrategicGoal com cascateamento",
+        "Implementar Entity ActionPlan com 5W2H e PDCA",
+        "Implementar todos os Value Objects",
+        "Implementar Mappers toDomain/toPersistence",
+        "Configurar DI container"
+      ]
+    },
+    {
+      "id": "F2",
+      "name": "BSC Core",
+      "status": "PLANNED",
+      "weeks": "5-7",
+      "hours": 120,
+      "deliverables": [
+        "CRUD de Estratégias",
+        "CRUD de Objetivos por perspectiva",
+        "Mapa estratégico interativo (ReactFlow)",
+        "Relações causa-efeito visuais",
+        "Dashboard BSC com gauges"
+      ],
+      "tasks": [
+        "Implementar CreateStrategyUseCase",
+        "Implementar CreateGoalUseCase com validações",
+        "Criar componente StrategicMap com ReactFlow",
+        "Implementar drag & drop de nós no mapa",
+        "Criar edges animados para causa-efeito",
+        "Implementar Dashboard BSC com Tremor charts",
+        "Criar gauges para cada perspectiva"
+      ]
+    },
+    {
+      "id": "F3",
+      "name": "Desdobramento",
+      "status": "PLANNED",
+      "weeks": "8-10",
+      "hours": 120,
+      "deliverables": [
+        "Cascateamento hierárquico de metas",
+        "Validação de níveis (CEO → TEAM)",
+        "Cálculo de pesos e contribuições",
+        "Agregação bottom-up de progresso",
+        "Visualização em Treemap"
+      ],
+      "tasks": [
+        "Implementar CascadeGoalUseCase",
+        "Implementar GoalCascadeService",
+        "Criar validações de hierarquia",
+        "Implementar cálculo de agregação",
+        "Criar componente Treemap de cascateamento",
+        "Implementar atribuição multi-branch"
+      ]
+    },
+    {
+      "id": "F4",
+      "name": "KPIs",
+      "status": "PLANNED",
+      "weeks": "11-12.5",
+      "hours": 100,
+      "deliverables": [
+        "CRUD de KPIs manuais",
+        "Integrações com Financial/TMS/WMS",
+        "Sistema de alertas (WARNING/CRITICAL)",
+        "Histórico e tendências",
+        "Previsões baseadas em regressão"
+      ],
+      "tasks": [
+        "Implementar CreateKPIUseCase",
+        "Implementar UpdateKPIValueUseCase",
+        "Criar FinancialKPIAdapter",
+        "Criar TMSKPIAdapter",
+        "Criar WMSKPIAdapter",
+        "Implementar KPICalculatorService",
+        "Criar job de atualização automática",
+        "Implementar sistema de alertas"
+      ]
+    },
+    {
+      "id": "F5",
+      "name": "GEROT",
+      "status": "PLANNED",
+      "weeks": "13-15.5",
+      "hours": 140,
+      "deliverables": [
+        "Itens de Controle (IC) - Resultados",
+        "Itens de Verificação (IV) - Causas",
+        "Tratamento de Anomalias",
+        "Padronização de procedimentos (POP)",
+        "Integração com planos de ação"
+      ],
+      "tasks": [
+        "Criar Entity ControlItem",
+        "Criar Entity VerificationItem",
+        "Implementar fluxo de anomalias",
+        "Implementar padronização pós-resolução",
+        "Criar telas de gestão GEROT"
+      ]
+    },
+    {
+      "id": "F5.5",
+      "name": "Banco de Ideias",
+      "status": "PLANNED",
+      "weeks": "16-16.5",
+      "hours": 60,
+      "deliverables": [
+        "CRUD de ideias",
+        "Fluxo de submissão e aprovação",
+        "Priorização por matriz Eisenhower",
+        "Análise de ROI",
+        "Conversão para planos/metas/projetos"
+      ],
+      "tasks": [
+        "Implementar Entity IdeaBox",
+        "Implementar SubmitIdeaUseCase",
+        "Implementar ReviewIdeaUseCase",
+        "Implementar ConvertIdeaUseCase",
+        "Criar componente de matriz Eisenhower",
+        "Criar telas de gestão de ideias"
+      ]
+    },
+    {
+      "id": "F6",
+      "name": "5W2H + Follow-up 3G",
+      "status": "PLANNED",
+      "weeks": "17-19",
+      "hours": 120,
+      "deliverables": [
+        "CRUD de planos de ação 5W2H",
+        "Ciclo PDCA com validações",
+        "Kanban visual por etapa PDCA",
+        "Follow-up 3G obrigatório",
+        "Sistema de reproposição com limite",
+        "Timeline de proposições"
+      ],
+      "tasks": [
+        "Implementar CreateActionPlanUseCase",
+        "Implementar AdvancePDCAUseCase",
+        "Criar componente PDCAKanban com hello-pangea/dnd",
+        "Implementar RegisterFollowUpUseCase",
+        "Implementar ReproposeActionPlanUseCase",
+        "Criar tela de follow-up 3G",
+        "Criar componente Timeline de reproposições"
+      ]
+    },
+    {
+      "id": "F7",
+      "name": "War Room",
+      "status": "PLANNED",
+      "weeks": "20-23",
+      "hours": 160,
+      "deliverables": [
+        "Dashboard executivo real-time (SSE)",
+        "Gestão de reuniões",
+        "Gerador automático de pautas",
+        "Registro de decisões",
+        "Atas automáticas",
+        "Participantes online"
+      ],
+      "tasks": [
+        "Criar endpoint SSE /war-room/stream",
+        "Implementar WarRoomBroadcaster",
+        "Criar componente WarRoomDashboard",
+        "Implementar ScheduleMeetingUseCase",
+        "Implementar StartMeetingUseCase",
+        "Criar AgendaGeneratorService",
+        "Implementar RecordDecisionUseCase",
+        "Criar gerador de atas",
+        "Implementar componente de participantes"
+      ]
+    },
+    {
+      "id": "F8",
+      "name": "SWOT",
+      "status": "PLANNED",
+      "weeks": "24-25",
+      "hours": 80,
+      "deliverables": [
+        "CRUD de análises SWOT",
+        "4 quadrantes editáveis",
+        "Priorização por impacto",
+        "Gráfico radar",
+        "Conversão para planos de ação"
+      ],
+      "tasks": [
+        "Implementar Entity SwotAnalysis",
+        "Implementar CreateSwotUseCase",
+        "Criar componente de matriz SWOT",
+        "Implementar priorização drag & drop",
+        "Criar gráfico radar com Tremor",
+        "Implementar conversão para planos"
+      ]
+    },
+    {
+      "id": "F9",
+      "name": "Integração e Finalização",
+      "status": "PLANNED",
+      "weeks": "25.5",
+      "hours": 11,
+      "deliverables": [
+        "Testes E2E completos",
+        "Documentação de usuário",
+        "Relatório 3 Gerações",
+        "Performance optimization"
+      ],
+      "tasks": [
+        "Escrever testes E2E Playwright",
+        "Otimizar queries para dashboards",
+        "Criar documentação de usuário",
+        "Implementar Relatório 3 Gerações",
+        "Code review final"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "description": "Performance do mapa estratégico com muitos nós (>50 goals)",
+      "probability": "MEDIUM",
+      "impact": "MEDIUM",
+      "mitigation": "Virtualização com ReactFlow, lazy loading de nós fora do viewport"
+    },
+    {
+      "id": "R2",
+      "description": "Integração de KPIs com módulos legados (pré-DDD)",
+      "probability": "HIGH",
+      "impact": "HIGH",
+      "mitigation": "Adapters específicos com queries otimizadas, fallback para dados manuais"
+    },
+    {
+      "id": "R3",
+      "description": "Adoção baixa por usuários (resistência a metodologia)",
+      "probability": "MEDIUM",
+      "impact": "HIGH",
+      "mitigation": "Treinamento obrigatório, gamificação, integração com rotina existente"
+    },
+    {
+      "id": "R4",
+      "description": "Latência no SSE do War Room com muitas conexões",
+      "probability": "LOW",
+      "impact": "MEDIUM",
+      "mitigation": "Pooling de conexões, throttling de eventos, fallback para polling"
+    }
+  ],
+  "adrs": [
+    "ADR-0020-modulo-strategic-management.md",
+    "ADR-0021-bsc-implementation.md",
+    "ADR-0022-follow-up-3g-pattern.md",
+    "ADR-0023-real-time-war-room.md"
+  ],
+  "documentation": {
+    "domain": "docs/architecture/domains/strategic/",
+    "module": "docs/modules/strategic/",
+    "api": "docs/modules/strategic/API.md",
+    "screens": "docs/modules/strategic/SCREENS.md"
+  },
+  "references": [
+    "_documentation/PLANEJAMENTO_MODULO_ESTRATEGICO_AURACORE.md",
+    "_documentation/ANALISE_MODULO_ESTRATEGICO_AURACORE.md",
+    "_documentation/ANALISE_COMPONENTES_MODULO_ESTRATEGICO.md",
+    "_documentation/PLANEJAMENTO_DESENVOLVIMENTO_MODULO_ESTRATEGICO.md"
+  ],
+  "methodologies": [
+    {
+      "name": "Balanced Scorecard (BSC)",
+      "author": "Kaplan & Norton",
+      "year": 1996
+    },
+    {
+      "name": "PDCA",
+      "author": "Deming",
+      "year": 1950
+    },
+    {
+      "name": "GEROT / 3G",
+      "author": "Falconi",
+      "year": 2004
+    },
+    {
+      "name": "5W2H",
+      "author": "Toyota Production System",
+      "year": 1960
+    }
+  ],
+  "technologies": [
+    {
+      "name": "ReactFlow",
+      "version": "^11.0.0",
+      "purpose": "Mapa estratégico interativo"
+    },
+    {
+      "name": "@tremor/react",
+      "version": "^3.0.0",
+      "purpose": "Gráficos e dashboards"
+    },
+    {
+      "name": "@hello-pangea/dnd",
+      "version": "^16.0.0",
+      "purpose": "Kanban PDCA drag & drop"
+    },
+    {
+      "name": "react-gauge-chart",
+      "version": "^0.4.0",
+      "purpose": "Gauges de KPI"
+    }
+  ],
+  "createdAt": "2026-01-18T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z"
+}
