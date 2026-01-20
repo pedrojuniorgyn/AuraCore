@@ -1,15 +1,45 @@
+/**
+ * API: Enviar pré-fatura WMS para aprovação
+ * PUT /api/wms/pre-invoices/:id/send-approval
+ * 
+ * @since E9 Fase 2 - Migrado para IWmsBillingGateway via DI
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
-import { WMSBillingEngine } from "@/services/wms-billing-engine";
+import { auth } from "@/lib/auth";
+import { container } from "@/shared/infrastructure/di/container";
+import { WMS_TOKENS } from "@/modules/wms/infrastructure/di/WmsModule";
+import type { IWmsBillingGateway } from "@/modules/wms/domain/ports/output/IWmsBillingGateway";
+import { Result } from "@/shared/domain";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
     const resolvedParams = await params;
-    await WMSBillingEngine.sendForApproval(parseInt(resolvedParams.id));
+    const preInvoiceId = parseInt(resolvedParams.id);
+
+    // Resolver gateway via DI
+    const wmsBilling = container.resolve<IWmsBillingGateway>(WMS_TOKENS.BillingGateway);
+
+    const result = await wmsBilling.sendForApproval({
+      preInvoiceId,
+      organizationId: session.user.organizationId,
+      branchId: session.user.defaultBranchId || 1,
+    });
+
+    if (Result.isFail(result)) {
+      return NextResponse.json({
+        success: false,
+        error: result.error
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -23,33 +53,3 @@ export async function PUT(
     }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

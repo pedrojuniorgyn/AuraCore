@@ -62,3 +62,24 @@ export * from './IAnswerGenerator';
 
 // ===== DACTE GENERATOR (E8 Fase 2.3) =====
 export type { IDacteGenerator } from './IDacteGenerator';
+
+// ===== GATEWAYS (E9 Fase 2) =====
+export type {
+  ITaxCalculatorGateway,
+  TaxCalculationParams,
+  TaxMatrixResult,
+  IcmsCalculationParams,
+  IcmsCalculationResult,
+} from './ITaxCalculatorGateway';
+
+export type {
+  IFiscalClassificationGateway,
+  ClassificationParams,
+  ClassificationResult,
+} from './IFiscalClassificationGateway';
+
+export type {
+  IPcgNcmGateway,
+  PcgNcmParams,
+  FiscalFlagsResult,
+} from './IPcgNcmGateway';

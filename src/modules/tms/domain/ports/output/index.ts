@@ -8,5 +8,11 @@ export type {
   FreightComponent 
 } from './IFreightCalculatorGateway';
 
+export type {
+  IWorkflowAutomatorGateway,
+  CreatePickupOrderParams,
+  PickupOrderCreatedResult,
+} from './IWorkflowAutomatorGateway';
+
 // Re-export existing
 export type { IRomaneioRepository } from '../IRomaneioRepository';

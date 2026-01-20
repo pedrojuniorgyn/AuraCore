@@ -12,3 +12,8 @@ export type { IStockRepository } from './IStockRepository';
 export type { ILocationRepository } from './ILocationRepository';
 export type { IMovementRepository } from './IMovementRepository';
 export type { IInventoryCountRepository } from './IInventoryCountRepository';
+export type { 
+  IWmsBillingGateway,
+  PreInvoiceApprovalParams,
+  IssueNfseParams,
+} from './IWmsBillingGateway';

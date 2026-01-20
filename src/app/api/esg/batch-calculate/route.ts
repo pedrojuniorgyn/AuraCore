@@ -1,20 +1,49 @@
+/**
+ * POST /api/esg/batch-calculate
+ * Calcula emissões de carbono em lote
+ * 
+ * @since E9 Fase 2 - Migrado para IEsgCalculatorGateway via DI
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { ESGCarbonCalculator } from "@/services/esg-carbon-calculator";
+import { auth } from "@/lib/auth";
+import { container } from "@/shared/infrastructure/di/container";
+import { INTEGRATIONS_TOKENS } from "@/modules/integrations/infrastructure/di/IntegrationsModule";
+import type { IEsgCalculatorGateway } from "@/modules/integrations/domain/ports/output/IEsgCalculatorGateway";
+import { Result } from "@/shared/domain";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { organizationId = 1, startDate, endDate } = body;
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
 
-    const result = await ESGCarbonCalculator.batchCalculate(
-      organizationId,
-      new Date(startDate),
-      new Date(endDate)
+    const body = await request.json();
+    const { startDate, endDate } = body;
+
+    // Resolver gateway via DI
+    const esgCalculator = container.resolve<IEsgCalculatorGateway>(
+      INTEGRATIONS_TOKENS.EsgCalculatorGateway
     );
+
+    const result = await esgCalculator.batchCalculate({
+      organizationId: session.user.organizationId,
+      branchId: session.user.defaultBranchId || 1,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    });
+
+    if (Result.isFail(result)) {
+      return NextResponse.json({
+        success: false,
+        error: result.error
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      ...result
+      ...result.value
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -24,33 +53,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

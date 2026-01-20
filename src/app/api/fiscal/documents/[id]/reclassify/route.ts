@@ -1,13 +1,20 @@
+/**
+ * 🔄 POST /api/fiscal/documents/:id/reclassify
+ * 
+ * Reclassifica automaticamente um documento fiscal
+ * 
+ * @since E9 Fase 2 - Migrado para IFiscalClassificationGateway via DI
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { container } from "@/shared/infrastructure/di/container";
+import { FISCAL_TOKENS } from "@/modules/fiscal/infrastructure/di/FiscalModule";
+import type { IFiscalClassificationGateway } from "@/modules/fiscal/domain/ports/output/IFiscalClassificationGateway";
+import { Result } from "@/shared/domain";
 
-/**
- * 🔄 POST /api/fiscal/documents/:id/reclassify
- * 
- * Reclassifica automaticamente um documento fiscal usando a lógica corrigida
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -51,10 +58,8 @@ export async function POST(
       return NextResponse.json({ error: "Documento sem XML para reclassificar" }, { status: 400 });
     }
 
-    // Parse XML novamente usando Domain Service
+    // Parse XML usando Domain Service
     const { NfeXmlParser } = await import("@/modules/fiscal/domain/services");
-    const { Result } = await import("@/shared/domain");
-    const { classifyNFe, getFiscalStatusFromClassification } = await import("@/services/fiscal-classification-service");
 
     // Buscar branch
     const branchResult = await db.execute(sql`
@@ -81,9 +86,23 @@ export async function POST(
     
     const parsedNFe = parseResult.value;
 
-    // Reclassificar
-    const newClassification = classifyNFe(parsedNFe, branchCNPJ);
-    const newFiscalStatus = getFiscalStatusFromClassification(newClassification);
+    // Reclassificar via Gateway DI
+    const classificationGateway = container.resolve<IFiscalClassificationGateway>(
+      FISCAL_TOKENS.FiscalClassificationGateway
+    );
+
+    const classResult = await classificationGateway.classifyNfe({
+      organizationId: session.user.organizationId,
+      branchId: session.user.defaultBranchId || 1,
+      nfeData: parsedNFe as unknown as Record<string, unknown>,
+    });
+
+    if (Result.isFail(classResult)) {
+      return NextResponse.json({ error: classResult.error }, { status: 500 });
+    }
+
+    const newClassification = classResult.value.classification;
+    const newFiscalStatus = classResult.value.fiscalStatus;
 
     // Atualizar no banco
     const userId = parseInt(session.user.id, 10);
@@ -114,4 +133,3 @@ export async function POST(
     );
   }
 }
-

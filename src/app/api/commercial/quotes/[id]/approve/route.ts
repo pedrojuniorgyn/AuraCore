@@ -1,14 +1,20 @@
+/**
+ * POST /api/commercial/quotes/:id/approve
+ * Aprova cotação e cria automaticamente Ordem de Coleta
+ * 
+ * @since E9 Fase 2 - Migrado para IWorkflowAutomatorGateway via DI
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { freightQuotes } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import { createPickupOrderFromQuote } from "@/services/tms/workflow-automator";
+import { container } from "@/shared/infrastructure/di/container";
+import { TMS_TOKENS } from "@/modules/tms/infrastructure/di/TmsModule";
+import type { IWorkflowAutomatorGateway } from "@/modules/tms/domain/ports/output/IWorkflowAutomatorGateway";
+import { Result } from "@/shared/domain";
 
-/**
- * POST /api/commercial/quotes/:id/approve
- * Aprova cotação e cria automaticamente Ordem de Coleta
- */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,6 +27,7 @@ export async function POST(
     }
 
     const organizationId = session.user.organizationId;
+    const branchId = session.user.defaultBranchId || 1;
     const approvedBy = session.user.email || "system";
     const id = parseInt(resolvedParams.id);
 
@@ -69,18 +76,46 @@ export async function POST(
       })
       .where(eq(freightQuotes.id, id));
 
-    // Criar Ordem de Coleta automaticamente
+    // Criar Ordem de Coleta via Gateway DI
     try {
-    const resolvedParams = await params;
-      const pickupOrder = await createPickupOrderFromQuote(id, approvedBy);
+      const workflowAutomator = container.resolve<IWorkflowAutomatorGateway>(
+        TMS_TOKENS.WorkflowAutomatorGateway
+      );
+
+      const pickupResult = await workflowAutomator.createPickupOrderFromQuote({
+        quoteId: id,
+        createdBy: approvedBy,
+        organizationId,
+        branchId,
+      });
+
+      if (Result.isFail(pickupResult)) {
+        // Reverter aprovação
+        await db
+          .update(freightQuotes)
+          .set({
+            status: "NEW",
+            approvedBy: null,
+            approvedAt: null,
+          })
+          .where(eq(freightQuotes.id, id));
+
+        return NextResponse.json(
+          {
+            error: "Erro ao criar ordem de coleta",
+            details: pickupResult.error,
+          },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
         success: true,
         message: "Cotação aprovada e Ordem de Coleta criada!",
         data: {
           quoteId: id,
-          pickupOrderId: pickupOrder.id,
-          pickupOrderNumber: pickupOrder.orderNumber,
+          pickupOrderId: pickupResult.value.id,
+          pickupOrderNumber: pickupResult.value.orderNumber,
         },
       });
     } catch (workflowError: unknown) {
@@ -113,37 +148,3 @@ export async function POST(
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

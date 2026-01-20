@@ -27,6 +27,21 @@ import type { IGeneratePayableTitle } from '../../domain/ports/input/IGeneratePa
 import type { IGenerateReceivableTitle } from '../../domain/ports/input/IGenerateReceivableTitle';
 import { DrizzleReceivableRepository } from '../persistence/DrizzleReceivableRepository';
 
+// Gateways (E9 Fase 2)
+import { BillingPdfAdapter } from '../adapters/BillingPdfAdapter';
+import type { IBillingPdfGateway } from '../../domain/ports/output/IBillingPdfGateway';
+import { BoletoAdapter } from '../adapters/BoletoAdapter';
+import type { IBoletoGateway } from '../../domain/ports/output/IBoletoGateway';
+import { CnabAdapter } from '../adapters/CnabAdapter';
+import type { ICnabGateway } from '../../domain/ports/output/ICnabGateway';
+
+// Tokens locais (E9 Fase 2)
+export const FINANCIAL_TOKENS = {
+  BillingPdfGateway: Symbol.for('IBillingPdfGateway'),
+  BoletoGateway: Symbol.for('IBoletoGateway'),
+  CnabGateway: Symbol.for('ICnabGateway'),
+};
+
 /**
  * Factory: Create Financial Title Repository
  */
@@ -118,5 +133,19 @@ export function initializeFinancialModule(): void {
   container.registerSingleton(CancelReceivableUseCase);
   container.registerSingleton(ReceivePaymentUseCase);
   
-  console.log('[Financial Module] DI configured - Receivables Use Cases registered');
+  // Gateways (E9 Fase 2)
+  container.registerSingleton<IBillingPdfGateway>(
+    FINANCIAL_TOKENS.BillingPdfGateway,
+    BillingPdfAdapter
+  );
+  container.registerSingleton<IBoletoGateway>(
+    FINANCIAL_TOKENS.BoletoGateway,
+    BoletoAdapter
+  );
+  container.registerSingleton<ICnabGateway>(
+    FINANCIAL_TOKENS.CnabGateway,
+    CnabAdapter
+  );
+  
+  console.log('[Financial Module] DI configured - Receivables Use Cases + 3 Gateways');
 }

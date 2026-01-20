@@ -13,3 +13,9 @@ export type {
   AllocationResult,
 } from './IManagementAccountingGateway';
 
+export type {
+  ICostCenterAllocationGateway,
+  CostCenterAllocationParams,
+  AllocationResult as CostCenterAllocationResult,
+} from './ICostCenterAllocationGateway';
+

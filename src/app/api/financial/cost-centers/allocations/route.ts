@@ -1,15 +1,21 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { createCostCenterAllocations } from "@/services/cost-center-allocation";
-
 /**
  * POST /api/financial/cost-centers/allocations
  * Cria rateio multi-CC para uma linha de lançamento
+ * 
+ * @since E9 Fase 2 - Migrado para ICostCenterAllocationGateway via DI
  */
+
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { container } from "@/shared/infrastructure/di/container";
+import { ACCOUNTING_TOKENS } from "@/modules/accounting/infrastructure/di/AccountingModule";
+import type { ICostCenterAllocationGateway } from "@/modules/accounting/domain/ports/output/ICostCenterAllocationGateway";
+import { Result } from "@/shared/domain";
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -23,13 +29,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await createCostCenterAllocations({
-      journalEntryLineId,
-      allocations,
-      createdBy: session.user.email || "system",
+    // Resolver gateway via DI
+    const allocationGateway = container.resolve<ICostCenterAllocationGateway>(
+      ACCOUNTING_TOKENS.CostCenterAllocationGateway
+    );
+
+    const result = await allocationGateway.createAllocations({
+      organizationId: session.user.organizationId,
+      branchId: session.user.defaultBranchId || 1,
+      allocations: allocations.map((a: Record<string, unknown>) => ({
+        ...a,
+        documentId: journalEntryLineId,
+        documentType: 'JOURNAL_ENTRY_LINE',
+      })),
     });
 
-    if (!result.success) {
+    if (Result.isFail(result)) {
       return NextResponse.json(
         { error: result.error },
         { status: 400 }
@@ -49,34 +64,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

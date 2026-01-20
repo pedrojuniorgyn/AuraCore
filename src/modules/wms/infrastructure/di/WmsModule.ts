@@ -7,6 +7,15 @@ import { DrizzleStockRepository } from '../persistence/repositories/DrizzleStock
 import { DrizzleMovementRepository } from '../persistence/repositories/DrizzleMovementRepository';
 import { DrizzleInventoryCountRepository } from '../persistence/repositories/DrizzleInventoryCountRepository';
 
+// Gateways (E9 Fase 2)
+import { WmsBillingAdapter } from '../adapters/WmsBillingAdapter';
+import type { IWmsBillingGateway } from '../../domain/ports/output/IWmsBillingGateway';
+
+// Tokens locais (E9 Fase 2)
+export const WMS_TOKENS = {
+  BillingGateway: Symbol.for('IWmsBillingGateway'),
+};
+
 // Command Use Cases (existentes - Semana 2)
 import { RegisterStockEntry } from '../../application/use-cases/RegisterStockEntry';
 import { RegisterStockExit } from '../../application/use-cases/RegisterStockExit';
@@ -96,8 +105,16 @@ export function registerWmsModule(): void {
   container.registerSingleton(GetMovementById);
   container.registerSingleton(ListMovements);
 
+  // ============================================
+  // GATEWAYS (E9 Fase 2)
+  // ============================================
+  container.registerSingleton<IWmsBillingGateway>(
+    WMS_TOKENS.BillingGateway,
+    WmsBillingAdapter
+  );
+
   isRegistered = true;
-  console.log('[WMS Module] Dependency injection configured - 4 repos + 8 commands + 9 queries');
+  console.log('[WMS Module] DI configured - 4 repos + 8 commands + 9 queries + 1 gateway');
 }
 
 export function initializeWmsModule(): void {

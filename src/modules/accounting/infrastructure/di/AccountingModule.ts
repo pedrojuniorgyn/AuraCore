@@ -9,13 +9,16 @@ import { ReverseJournalEntryUseCase } from '../../application/use-cases/ReverseJ
 import { ListJournalEntriesUseCase } from '../../application/use-cases/ListJournalEntriesUseCase';
 import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJournalEntryByIdUseCase';
 
-// Gateways (E9 Fase 1)
+// Gateways (E9 Fase 1 + Fase 2)
 import { ManagementAccountingAdapter } from '../adapters/ManagementAccountingAdapter';
 import type { IManagementAccountingGateway } from '../../domain/ports/output/IManagementAccountingGateway';
+import { CostCenterAllocationAdapter } from '../adapters/CostCenterAllocationAdapter';
+import type { ICostCenterAllocationGateway } from '../../domain/ports/output/ICostCenterAllocationGateway';
 
-// Tokens locais (E9 Fase 1)
+// Tokens locais (E9 Fase 1 + Fase 2)
 export const ACCOUNTING_TOKENS = {
   ManagementAccountingGateway: Symbol.for('IManagementAccountingGateway'),
+  CostCenterAllocationGateway: Symbol.for('ICostCenterAllocationGateway'),
 };
 
 /**
@@ -80,5 +83,11 @@ export function registerAccountingModule(): void {
     ManagementAccountingAdapter
   );
 
-  console.log('[Accounting Module] DI registrado: 2 repos + 6 use cases + 1 gateway');
+  // Gateway de Alocação de Centro de Custo (E9 Fase 2)
+  container.registerSingleton<ICostCenterAllocationGateway>(
+    ACCOUNTING_TOKENS.CostCenterAllocationGateway,
+    CostCenterAllocationAdapter
+  );
+
+  console.log('[Accounting Module] DI registrado: 2 repos + 6 use cases + 2 gateways');
 }

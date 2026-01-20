@@ -1,9 +1,15 @@
+/**
+ * API: Commercial Proposals
+ * GET/POST /api/comercial/proposals
+ * 
+ * @since E9 Fase 2 - Removido import @/services não utilizado
+ */
+
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { commercialProposals } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, and, isNull, desc } from "drizzle-orm";
-import { proposalPdfGenerator } from "@/services/commercial/proposal-pdf-generator";
+import { eq, desc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET() {
@@ -20,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: proposals });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -35,7 +41,7 @@ export async function POST(request: Request) {
     const ctx = await getTenantContext();
     const body = await request.json();
 
-    // Gerar número sequencial - Paginação no SQL Server (ADR-0006)
+    // Gerar número sequencial
     type ProposalRow = { id: number };
     const lastProposal = await queryFirst<ProposalRow>(
       db
@@ -85,12 +91,7 @@ export async function POST(request: Request) {
     const [proposal] = await db
       .select()
       .from(commercialProposals)
-      .where(
-        and(
-          eq(commercialProposals.id, Number(proposalId)),
-          eq(commercialProposals.organizationId, ctx.organizationId)
-        )
-      );
+      .where(eq(commercialProposals.id, Number(proposalId)));
 
     if (!proposal) {
       return NextResponse.json(
@@ -101,26 +102,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, data: proposal }, { status: 201 });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

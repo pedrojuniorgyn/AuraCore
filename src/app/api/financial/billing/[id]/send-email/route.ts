@@ -1,17 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { withPermission } from "@/lib/auth/api-guard";
-import { db } from "@/lib/db";
-import { billingInvoices, businessPartners } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { billingPDFGenerator } from "@/services/financial/billing-pdf-generator";
-import nodemailer from "nodemailer";
-
 /**
  * POST /api/financial/billing/:id/send-email
  * 🔐 Requer permissão: financial.billing.create
  * 
  * Envia fatura por email
+ * 
+ * @since E9 Fase 2 - Migrado para IBillingPdfGateway via DI
  */
+
+import { NextRequest, NextResponse } from "next/server";
+import { withPermission } from "@/lib/auth/api-guard";
+import { db } from "@/lib/db";
+import { billingInvoices, businessPartners } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import nodemailer from "nodemailer";
+import { container } from "@/shared/infrastructure/di/container";
+import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/FinancialModule";
+import type { IBillingPdfGateway } from "@/modules/financial/domain/ports/output/IBillingPdfGateway";
+import { Result } from "@/shared/domain";
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -55,9 +61,21 @@ export async function POST(
         );
       }
 
-      // Gerar PDF
+      // Gerar PDF via Gateway DI
       console.log("📄 Gerando PDF da fatura...");
-      const pdfBuffer = await billingPDFGenerator.gerarPDF(billingId);
+      const billingPdf = container.resolve<IBillingPdfGateway>(FINANCIAL_TOKENS.BillingPdfGateway);
+      
+      const pdfResult = await billingPdf.generatePdf({
+        billingId,
+        organizationId: ctx.organizationId,
+        branchId: ctx.branchId ?? 1,
+      });
+
+      if (Result.isFail(pdfResult)) {
+        return NextResponse.json({ error: pdfResult.error }, { status: 500 });
+      }
+
+      const pdfBuffer = pdfResult.value;
 
       // Configurar transporter SMTP
       const transporter = nodemailer.createTransport({
@@ -133,7 +151,7 @@ export async function POST(
         message: "Fatura enviada por email com sucesso!",
       });
     } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Erro ao enviar email:", error);
       return NextResponse.json(
         { error: errorMessage },
@@ -142,19 +160,3 @@ export async function POST(
     }
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

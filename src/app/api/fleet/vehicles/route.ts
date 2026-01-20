@@ -1,27 +1,30 @@
 /**
  * API: Vehicles (Veículos)
  * GET/POST /api/fleet/vehicles
+ * 
+ * @since E9 Fase 2 - Migrado para IVehicleServiceGateway via DI
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vehicles } from "@/lib/db/schema";
-import { and, eq, isNull, desc, like } from "drizzle-orm";
-import { createVehicleWithCostCenter } from "@/services/fleet/vehicle-service";
+import { and, eq, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { container } from "@/shared/infrastructure/di/container";
+import { FLEET_TOKENS } from "@/modules/fleet/infrastructure/di/FleetModule";
+import type { IVehicleServiceGateway } from "@/modules/fleet/domain/ports/output/IVehicleServiceGateway";
+import { Result } from "@/shared/domain";
 
 export async function GET(request: NextRequest) {
   try {
-    // E9.3: Usar getTenantContext para multi-tenancy
     const ctx = await getTenantContext();
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
     const type = searchParams.get("type");
 
-    // E9.3: REPO-005 + REPO-006 - Multi-tenancy completo + soft delete
     const conditions = [
       eq(vehicles.organizationId, ctx.organizationId),
-      eq(vehicles.branchId, ctx.branchId), // REPO-005: branchId obrigatório
+      eq(vehicles.branchId, ctx.branchId),
       isNull(vehicles.deletedAt),
     ];
 
@@ -52,53 +55,44 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = await getTenantContext();
     const body = await request.json();
     const {
-      organizationId,
-      branchId,
       plate,
-      renavam,
-      chassis,
       type,
       brand,
       model,
       year,
-      color,
       capacityKg,
-      capacityM3,
-      taraKg,
-      currentKm,
-      notes,
     } = body;
 
     // === VALIDAÇÕES ===
-    if (!plate || !type || !branchId) {
+    if (!plate || !type) {
       return NextResponse.json(
-        { error: "Campos obrigatórios: Placa, Tipo e Filial" },
+        { error: "Campos obrigatórios: Placa e Tipo" },
         { status: 400 }
       );
     }
 
-    // === CRIAR VEÍCULO + CENTRO DE CUSTO AUTOMÁTICO ===
-    const result = await createVehicleWithCostCenter({
-      organizationId,
-      branchId,
-      plate,
-      renavam,
-      chassis,
-      type,
-      brand,
-      model,
-      year,
-      color,
-      capacityKg,
-      capacityM3,
-      taraKg,
-      currentKm,
-      notes,
-    }, "system"); // TODO: Pegar usuário logado
+    // === CRIAR VEÍCULO VIA GATEWAY ===
+    const vehicleGateway = container.resolve<IVehicleServiceGateway>(
+      FLEET_TOKENS.VehicleServiceGateway
+    );
 
-    if (!result.success) {
+    const result = await vehicleGateway.createWithCostCenter({
+      organizationId: ctx.organizationId,
+      branchId: ctx.branchId,
+      plate,
+      model: model || '',
+      brand: brand || '',
+      year: year || new Date().getFullYear(),
+      vehicleType: type,
+      capacity: capacityKg || 0,
+      createCostCenter: true,
+      createdBy: ctx.userId,
+    });
+
+    if (Result.isFail(result)) {
       return NextResponse.json(
         { error: result.error },
         { status: 400 }
@@ -108,8 +102,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Veículo criado com sucesso! Centro de Custo criado automaticamente.",
-      vehicleId: result.vehicleId,
-      costCenterId: result.costCenterId,
+      vehicleId: result.value.vehicleId,
+      costCenterId: result.value.costCenterId,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -120,5 +114,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

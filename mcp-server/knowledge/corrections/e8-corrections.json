@@ -1,0 +1,31 @@
+{
+  "epic": "E8",
+  "corrections": [
+    {
+      "id": "LC-702579",
+      "date": "2026-01-20",
+      "epic": "E8",
+      "error": "list_integrations endpoint não passava branch_id para o hub, violando regra ARCH-006 de multi-tenancy obrigatório",
+      "correction": "Adicionado branch_id=auth[\"branch_id\"] na chamada hub.list_integrations() para garantir filtragem por filial",
+      "files_affected": [
+        "agents/src/api/integrations.py"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-113889",
+      "date": "2026-01-20",
+      "epic": "E8",
+      "error": "DurationTracker.__aexit__ usa self._start_time sem verificar se é None. Se __aenter__ falhar ou não for chamado, __aexit__ crashará com TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'",
+      "correction": "Adicionado null check para _start_time antes de calcular duration. Se _start_time é None, usa 0.0 como fallback e emite warning via logger",
+      "files_affected": [
+        "agents/src/services/analytics/event_tracker.py"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

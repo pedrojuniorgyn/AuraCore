@@ -1,20 +1,51 @@
+/**
+ * POST /api/claims/:id/decide
+ * Registra decisão em reclamação/sinistro
+ * 
+ * @since E9 Fase 2 - Migrado para IClaimsEngineGateway via DI
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { ClaimsWorkflowEngine } from "@/services/claims-workflow-engine";
+import { auth } from "@/lib/auth";
+import { container } from "@/shared/infrastructure/di/container";
+import { INTEGRATIONS_TOKENS } from "@/modules/integrations/infrastructure/di/IntegrationsModule";
+import type { IClaimsEngineGateway } from "@/modules/integrations/domain/ports/output/IClaimsEngineGateway";
+import { Result } from "@/shared/domain";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
     const resolvedParams = await params;
     const body = await request.json();
     const { decision, amount, notes } = body;
 
-    await ClaimsWorkflowEngine.decideAction(parseInt(resolvedParams.id), {
+    // Resolver gateway via DI
+    const claimsEngine = container.resolve<IClaimsEngineGateway>(
+      INTEGRATIONS_TOKENS.ClaimsEngineGateway
+    );
+
+    const result = await claimsEngine.decide({
+      claimId: parseInt(resolvedParams.id),
       decision,
       amount,
-      notes
+      notes,
+      organizationId: session.user.organizationId,
+      branchId: session.user.defaultBranchId || 1,
     });
+
+    if (Result.isFail(result)) {
+      return NextResponse.json({
+        success: false,
+        error: result.error
+      }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
@@ -28,33 +59,3 @@ export async function POST(
     }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

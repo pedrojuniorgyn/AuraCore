@@ -1,11 +1,17 @@
+/**
+ * GET /api/fiscal/tax-matrix/calculate
+ * Calcula ICMS e CFOP para uma rota específica
+ * 
+ * @since E9 Fase 2 - Migrado para ITaxCalculatorGateway via DI
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { calculateTax, calculateIcmsValue } from "@/services/fiscal/tax-calculator";
+import { container } from "@/shared/infrastructure/di/container";
+import { FISCAL_TOKENS } from "@/modules/fiscal/infrastructure/di/FiscalModule";
+import type { ITaxCalculatorGateway } from "@/modules/fiscal/domain/ports/output/ITaxCalculatorGateway";
+import { Result } from "@/shared/domain";
 
-/**
- * GET /api/fiscal/tax-matrix/calculate?originUf=SP&destUf=RJ&regime=NORMAL&serviceValue=1000
- * Calcula ICMS e CFOP para uma rota específica
- */
 export async function GET(req: Request) {
   try {
     const session = await auth();
@@ -14,6 +20,7 @@ export async function GET(req: Request) {
     }
 
     const organizationId = session.user.organizationId;
+    const branchId = session.user.defaultBranchId || 1;
 
     const { searchParams } = new URL(req.url);
     const originUf = searchParams.get("originUf");
@@ -28,21 +35,49 @@ export async function GET(req: Request) {
       );
     }
 
+    // Resolver gateway via DI
+    const taxCalculator = container.resolve<ITaxCalculatorGateway>(
+      FISCAL_TOKENS.TaxCalculatorGateway
+    );
+
     // Buscar regra fiscal
-    const taxInfo = await calculateTax({
+    const taxResult = await taxCalculator.calculateTax({
       organizationId,
+      branchId,
       originUf,
       destinationUf: destUf,
       regime,
     });
 
-    // Se foi passado o valor do serviço, calcular ICMS
-    let icmsCalculation;
-    if (serviceValue) {
-      icmsCalculation = calculateIcmsValue(
-        parseFloat(serviceValue),
-        taxInfo
+    if (Result.isFail(taxResult)) {
+      const errorMessage = taxResult.error;
+      if (errorMessage.includes("não configurada")) {
+        return NextResponse.json(
+          {
+            error: errorMessage,
+            suggestion: "Configure a matriz tributária para esta rota em /fiscal/matriz-tributaria",
+          },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Erro ao calcular imposto", details: errorMessage },
+        { status: 500 }
       );
+    }
+
+    const taxInfo = taxResult.value;
+
+    // Se foi passado o valor do serviço, calcular ICMS
+    let icmsCalculation = null;
+    if (serviceValue) {
+      const icmsResult = taxCalculator.calculateIcmsValue({
+        value: parseFloat(serviceValue),
+        taxInfo: taxInfo,
+      });
+      if (!Result.isFail(icmsResult)) {
+        icmsCalculation = icmsResult.value;
+      }
     }
 
     return NextResponse.json({
@@ -51,61 +86,15 @@ export async function GET(req: Request) {
         route: `${originUf} → ${destUf}`,
         regime,
         taxInfo,
-        icmsCalculation: icmsCalculation || null,
+        icmsCalculation,
       },
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao calcular imposto:", error);
-    
-    // Se for erro de matriz não configurada, retornar erro específico
-    if (errorMessage.includes("não configurada")) {
-      return NextResponse.json(
-        {
-          error: errorMessage,
-          suggestion: "Configure a matriz tributária para esta rota em /fiscal/matriz-tributaria",
-        },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(
       { error: "Erro ao calcular imposto", details: errorMessage },
       { status: 500 }
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

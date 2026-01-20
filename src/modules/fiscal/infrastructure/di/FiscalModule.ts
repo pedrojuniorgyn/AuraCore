@@ -4,6 +4,21 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 // Repository
 import { DrizzleFiscalDocumentRepository } from '../persistence/DrizzleFiscalDocumentRepository';
 
+// Gateways (E9 Fase 2)
+import { TaxCalculatorAdapter } from '../adapters/TaxCalculatorAdapter';
+import type { ITaxCalculatorGateway } from '../../domain/ports/output/ITaxCalculatorGateway';
+import { FiscalClassificationAdapter } from '../adapters/FiscalClassificationAdapter';
+import type { IFiscalClassificationGateway } from '../../domain/ports/output/IFiscalClassificationGateway';
+import { PcgNcmAdapter } from '../adapters/PcgNcmAdapter';
+import type { IPcgNcmGateway } from '../../domain/ports/output/IPcgNcmGateway';
+
+// Tokens locais (E9 Fase 2)
+export const FISCAL_TOKENS = {
+  TaxCalculatorGateway: Symbol.for('ITaxCalculatorGateway'),
+  FiscalClassificationGateway: Symbol.for('IFiscalClassificationGateway'),
+  PcgNcmGateway: Symbol.for('IPcgNcmGateway'),
+};
+
 // Services
 import { MockSefazService } from '../services/MockSefazService';
 import { SefazGatewayAdapter, createSefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
@@ -66,6 +81,20 @@ export function registerFiscalModule(): void {
   container.registerSingleton<IAuthorizeCteUseCase>(TOKENS.AuthorizeCteUseCase, AuthorizeCteUseCase);
   container.registerSingleton<ICreateCteUseCase>(TOKENS.CreateCteUseCase, CreateCteUseCase);
   container.registerSingleton<IDownloadNfesUseCase>(TOKENS.DownloadNfesUseCase, DownloadNfesUseCase);
+
+  // Gateways (E9 Fase 2)
+  container.registerSingleton<ITaxCalculatorGateway>(
+    FISCAL_TOKENS.TaxCalculatorGateway,
+    TaxCalculatorAdapter
+  );
+  container.registerSingleton<IFiscalClassificationGateway>(
+    FISCAL_TOKENS.FiscalClassificationGateway,
+    FiscalClassificationAdapter
+  );
+  container.registerSingleton<IPcgNcmGateway>(
+    FISCAL_TOKENS.PcgNcmGateway,
+    PcgNcmAdapter
+  );
   
   // SPED Use Cases (E7.18 Fase 3)
   initializeFiscalSpedModule();

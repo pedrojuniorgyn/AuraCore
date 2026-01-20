@@ -19,4 +19,7 @@ export type { IPayableRepository, FindPayablesFilter, PaginationOptions, Paginat
 export type { IReceiptRepository } from './IReceiptRepository';
 export type { IExpenseReportRepository } from './IExpenseReportRepository';
 export type { IReceivableRepository, ReceivableFilter, ReceivableListResult, ReceivableSummary } from './IReceivableRepository';
+export type { IBillingPdfGateway, BillingPdfParams } from './IBillingPdfGateway';
+export type { IBoletoGateway, BoletoGenerationParams, BoletoResult } from './IBoletoGateway';
+export type { ICnabGateway, CnabGenerationParams, CnabResult } from './ICnabGateway';
 

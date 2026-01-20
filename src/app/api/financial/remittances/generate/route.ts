@@ -1,13 +1,18 @@
 /**
  * API: Gerar Remessa CNAB 240
  * POST /api/financial/remittances/generate
+ * 
+ * @since E9 Fase 2 - Migrado para ICnabGateway via DI
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bankAccounts, accountsPayable, bankRemittances, branches } from "@/lib/db/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import { generateCNAB240, type CNAB240Options } from "@/services/banking/cnab-generator";
+import { container } from "@/shared/infrastructure/di/container";
+import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/FinancialModule";
+import type { ICnabGateway } from "@/modules/financial/domain/ports/output/ICnabGateway";
+import { Result } from "@/shared/domain";
 import { format } from "date-fns";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
@@ -33,14 +38,13 @@ function isInternalTokenOk(req: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const tokenOk = isInternalTokenOk(request);
-    // E9.3: branchId obrigatório no TenantContext
     const headerBranchId = Number(request.headers.get("x-branch-id") || "1");
     const ctx = tokenOk
       ? {
           userId: "SYSTEM",
           organizationId: Number(request.headers.get("x-organization-id")),
           role: "ADMIN",
-          branchId: headerBranchId, // E9.3: branchId obrigatório
+          branchId: headerBranchId,
           defaultBranchId: null,
           allowedBranches: [],
           isAdmin: true,
@@ -67,9 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // === IDEMPOTÊNCIA (efeito único) ===
-    // Deve ocorrer ANTES de qualquer validação baseada em estado mutável (ex.: títulos OPEN),
-    // para que retries com a mesma key retornem o mesmo sucesso mesmo após mudanças de status.
+    // === IDEMPOTÊNCIA ===
     const scope = "financial.remittances.generate";
     const keyFromHeader =
       request.headers.get("idempotency-key") ||
@@ -166,7 +168,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // === BUSCAR DADOS DA FILIAL (EMPRESA) ===
+    // === BUSCAR DADOS DA FILIAL ===
     const branch = await queryFirst<typeof branches.$inferSelect>(
       db
         .select()
@@ -211,37 +213,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // === PREPARAR DADOS PARA CNAB ===
-    const cnabOptions: CNAB240Options = {
-      bankAccount: {
-        bankCode: bankAccount.bankCode || "208",
-        bankName: bankAccount.bankName || "BTG Pactual",
-        agency: bankAccount.agency || "0001",
-        accountNumber: bankAccount.accountNumber || "0000000001",
-        accountDigit: bankAccount.accountDigit || "0",
-        wallet: bankAccount.wallet || "09",
-        agreementNumber: bankAccount.agreementNumber || "",
-        remittanceNumber: bankAccount.nextRemittanceNumber || 1,
-      },
-      company: {
-        document: branch.document.replace(/\D/g, ""),
-        name: branch.name,
-      },
-      titles: payables.map((p) => ({
-        id: p.payable.id,
-        partnerId: p.payable.partnerId || 0,
-        partnerDocument: "00000000000000", // TODO: Buscar do partner
-        partnerName: "FORNECEDOR", // TODO: Buscar do partner
-        amount: Number(p.payable.amount),
-        dueDate: new Date(p.payable.dueDate),
-        documentNumber: p.payable.documentNumber || `DOC${p.payable.id}`,
-        barCode: undefined, // TODO: Implementar se houver boleto
-      })),
-      type: "PAYMENT",
-    };
+    // === GERAR CNAB VIA GATEWAY ===
+    const cnabGateway = container.resolve<ICnabGateway>(
+      FINANCIAL_TOKENS.CnabGateway
+    );
 
-    // === GERAR CNAB ===
-    const cnabContent = generateCNAB240(cnabOptions);
+    const cnabResult = await cnabGateway.generateCnab240({
+      organizationId: ctx.organizationId,
+      branchId,
+      bankCode: bankAccount.bankCode || "208",
+      bankAgency: bankAccount.agency || "0001",
+      bankAccount: bankAccount.accountNumber || "0000000001",
+      payableIds,
+      paymentDate: new Date(),
+    });
+
+    if (Result.isFail(cnabResult)) {
+      await finalizeFailedAndContinue(cnabResult.error);
+      return NextResponse.json(
+        { error: cnabResult.error },
+        { status: 500 }
+      );
+    }
+
+    const cnabData = cnabResult.value;
 
     // === SALVAR REMESSA ===
     const fileName = `REM_${format(new Date(), "yyyyMMdd")}_${String(
@@ -253,9 +248,6 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    // Tudo abaixo é mutação; precisa ser atômico.
-    // Se o INSERT da remessa acontecer e algum UPDATE falhar depois, um retry com status FAILED
-    // pode inserir remessa duplicada. Por isso, usamos transação.
     let remittance: { id: number } | null = null;
     try {
       remittance = await db.transaction(async (tx) => {
@@ -265,7 +257,7 @@ export async function POST(request: NextRequest) {
             organizationId: ctx.organizationId,
             bankAccountId: bankAccount.id,
             fileName,
-            content: cnabContent,
+            content: cnabData.content,
             remittanceNumber: bankAccount.nextRemittanceNumber || 1,
             type: "PAYMENT",
             status: "GENERATED",
@@ -280,7 +272,6 @@ export async function POST(request: NextRequest) {
           throw new Error("Falha ao criar remessa (id não retornado)");
         }
 
-        // === ATUALIZAR CONTADOR DE REMESSAS ===
         await tx
           .update(bankAccounts)
           .set({
@@ -295,7 +286,6 @@ export async function POST(request: NextRequest) {
             )
           );
 
-        // === MARCAR TÍTULOS COMO "PROCESSING" ===
         await tx
           .update(accountsPayable)
           .set({
@@ -314,7 +304,6 @@ export async function POST(request: NextRequest) {
         return { id: remittanceId };
       });
 
-      // Idempotência: best-effort (não derruba sucesso da operação se a finalização falhar).
       try {
         await finalizeIdempotency({
           organizationId: ctx.organizationId,
@@ -355,7 +344,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    // getTenantContext() pode lançar NextResponse (401/500). Preserve.
     if (error instanceof Response) return error;
     console.error("❌ Erro ao gerar remessa:", error);
     return NextResponse.json(
@@ -364,20 +352,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

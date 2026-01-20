@@ -24,6 +24,10 @@ import type { IBankingGateway } from '../../domain/ports/output/IBankingGateway'
 import type { INotificationService } from '../../domain/ports/output/INotificationService';
 import type { IBankStatementParser } from '../../domain/ports/output/IBankStatementParser';
 import type { IAgentsGateway } from '../../domain/ports/output/IAgentsGateway';
+import type { IEsgCalculatorGateway } from '../../domain/ports/output/IEsgCalculatorGateway';
+import type { ICiapEngineGateway } from '../../domain/ports/output/ICiapEngineGateway';
+import type { IClaimsEngineGateway } from '../../domain/ports/output/IClaimsEngineGateway';
+import type { IIntercompanyGateway } from '../../domain/ports/output/IIntercompanyGateway';
 
 // Adapters - Real
 import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
@@ -33,6 +37,18 @@ import { BtgLegacyClientAdapter } from '../adapters/banking/BtgLegacyClientAdapt
 import { NodemailerAdapter } from '../adapters/notification/NodemailerAdapter';
 import { OfxParserAdapter } from '../adapters/ofx/OfxParserAdapter';
 import { AgentsAdapter } from '../adapters/AgentsAdapter';
+import { EsgCalculatorAdapter } from '../adapters/EsgCalculatorAdapter';
+import { CiapEngineAdapter } from '../adapters/CiapEngineAdapter';
+import { ClaimsEngineAdapter } from '../adapters/ClaimsEngineAdapter';
+import { IntercompanyAdapter } from '../adapters/IntercompanyAdapter';
+
+// Tokens locais (E9 Fase 2)
+export const INTEGRATIONS_TOKENS = {
+  EsgCalculatorGateway: Symbol.for('IEsgCalculatorGateway'),
+  CiapEngineGateway: Symbol.for('ICiapEngineGateway'),
+  ClaimsEngineGateway: Symbol.for('IClaimsEngineGateway'),
+  IntercompanyGateway: Symbol.for('IIntercompanyGateway'),
+};
 
 // Ports - Legacy Clients
 import type { ISefazClient } from '../../domain/ports/output/ISefazClient';
@@ -177,6 +193,26 @@ export function initializeIntegrationsModule(): void {
     AgentsAdapter
   );
   console.log('✅ AGENTS: Using AgentsAdapter');
+
+  // === Engine Gateways (E9 Fase 2) ===
+  // Wrappers para serviços legados - TODO E10: migrar lógica para Domain Services
+  container.registerSingleton<IEsgCalculatorGateway>(
+    INTEGRATIONS_TOKENS.EsgCalculatorGateway,
+    EsgCalculatorAdapter
+  );
+  container.registerSingleton<ICiapEngineGateway>(
+    INTEGRATIONS_TOKENS.CiapEngineGateway,
+    CiapEngineAdapter
+  );
+  container.registerSingleton<IClaimsEngineGateway>(
+    INTEGRATIONS_TOKENS.ClaimsEngineGateway,
+    ClaimsEngineAdapter
+  );
+  container.registerSingleton<IIntercompanyGateway>(
+    INTEGRATIONS_TOKENS.IntercompanyGateway,
+    IntercompanyAdapter
+  );
+  console.log('✅ ENGINE_GATEWAYS: ESG, CIAP, Claims, Intercompany registered');
 
   initialized = true;
   console.log(`✅ IntegrationsModule initialized (useMocks: ${useMocks})`);

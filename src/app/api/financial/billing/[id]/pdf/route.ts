@@ -1,16 +1,22 @@
+/**
+ * GET /api/financial/billing/:id/pdf
+ * Gera e retorna PDF da fatura
+ * 
+ * @since E9 Fase 2 - Migrado para IBillingPdfGateway via DI
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth/api-guard";
-import { billingPDFGenerator } from "@/services/financial/billing-pdf-generator";
 import { db } from "@/lib/db";
 import { billingInvoices } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { writeFile } from "fs/promises";
 import path from "path";
+import { container } from "@/shared/infrastructure/di/container";
+import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/FinancialModule";
+import type { IBillingPdfGateway } from "@/modules/financial/domain/ports/output/IBillingPdfGateway";
+import { Result } from "@/shared/domain";
 
-/**
- * GET /api/financial/billing/:id/pdf
- * Gera e retorna PDF da fatura
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,15 +35,27 @@ export async function GET(
     try {
       console.log(`📄 Gerando PDF da fatura #${billingId}...`);
 
-      // Gerar PDF
-      const pdfBuffer = await billingPDFGenerator.gerarPDF(billingId);
+      // Resolver gateway via DI
+      const billingPdf = container.resolve<IBillingPdfGateway>(FINANCIAL_TOKENS.BillingPdfGateway);
+
+      // Gerar PDF via Gateway
+      const result = await billingPdf.generatePdf({
+        billingId,
+        organizationId: ctx.organizationId,
+        branchId: ctx.branchId ?? 1,
+      });
+
+      if (Result.isFail(result)) {
+        return NextResponse.json({ error: result.error }, { status: 500 });
+      }
+
+      const pdfBuffer = result.value;
 
       // Salvar PDF (opcional - para histórico)
       const fileName = `fatura-${billingId}-${Date.now()}.pdf`;
       const filePath = path.join(process.cwd(), "public", "billing", fileName);
       
       try {
-    const resolvedParams = await params;
         await writeFile(filePath, pdfBuffer);
         
         // Atualizar URL no banco
@@ -62,7 +80,7 @@ export async function GET(
         },
       });
     } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Erro ao gerar PDF:", error);
       return NextResponse.json(
         { error: errorMessage },
@@ -71,19 +89,3 @@ export async function GET(
     }
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
