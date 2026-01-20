@@ -58,6 +58,41 @@ export interface SefazStatusResponse {
   responseTime?: number;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// TIPOS CTe EXTRAS (E8 Fase 2.2)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Resposta de consulta de CTe
+ */
+export interface CteQueryResponse {
+  success: boolean;
+  status?: string;
+  message?: string;
+  protocolNumber?: string;
+  authorizationDate?: Date;
+}
+
+/**
+ * Resposta de cancelamento de CTe
+ */
+export interface CteCancelResponse {
+  success: boolean;
+  status?: string;
+  message?: string;
+  protocolNumber?: string;
+}
+
+/**
+ * Resposta de inutilização de CTe
+ */
+export interface CteInutilizationResponse {
+  success: boolean;
+  status?: string;
+  message?: string;
+  protocolNumber?: string;
+}
+
 /**
  * Port: Cliente SEFAZ de baixo nível
  *
@@ -65,6 +100,8 @@ export interface SefazStatusResponse {
  * - Esta interface é implementada por SefazLegacyClientAdapter (produção) e MockSefazClient (testes)
  * - Todas as operações devem ser idempotentes quando possível
  * - Timeout padrão: 30 segundos
+ *
+ * E8 Fase 2.2: Adicionados métodos CTe (cancel, query, inutilize)
  */
 export interface ISefazClient {
   /**
@@ -78,6 +115,46 @@ export interface ISefazClient {
     cteXml: string,
     config: SefazClientConfig
   ): Promise<CteAuthorizationResponse>;
+
+  /**
+   * Consulta status de um CTe na SEFAZ
+   *
+   * @param cteKey Chave de acesso do CTe (44 dígitos)
+   * @param config Configuração de ambiente
+   * @returns Resposta com status atual
+   */
+  queryCteStatus(
+    cteKey: string,
+    config: SefazClientConfig
+  ): Promise<CteQueryResponse>;
+
+  /**
+   * Cancela um CTe autorizado na SEFAZ
+   *
+   * @param cteKey Chave de acesso do CTe
+   * @param protocolNumber Protocolo de autorização
+   * @param justification Justificativa (min 15 caracteres)
+   * @param config Configuração de ambiente
+   * @returns Resposta com protocolo de cancelamento
+   */
+  cancelCte(
+    cteKey: string,
+    protocolNumber: string,
+    justification: string,
+    config: SefazClientConfig
+  ): Promise<CteCancelResponse>;
+
+  /**
+   * Inutiliza numeração de CTe na SEFAZ
+   *
+   * @param inutilizationXml XML de inutilização assinado
+   * @param config Configuração de ambiente
+   * @returns Resposta com protocolo de inutilização
+   */
+  inutilizeCte(
+    inutilizationXml: string,
+    config: SefazClientConfig
+  ): Promise<CteInutilizationResponse>;
 
   /**
    * Envia MDFe para autorização na SEFAZ

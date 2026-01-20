@@ -17,6 +17,9 @@ import type {
   ISefazClient,
   SefazClientConfig,
   CteAuthorizationResponse,
+  CteQueryResponse,
+  CteCancelResponse,
+  CteInutilizationResponse,
   MdfeAuthorizationResponse,
   SefazStatusResponse,
 } from '../../../domain/ports/output/ISefazClient';
@@ -27,8 +30,8 @@ import {
   sendCteToSefaz,
   sendMdfeToSefaz,
   checkSefazStatus,
-  getDefaultSefazConfig,
 } from '@/services/fiscal/sefaz-client';
+import { SefazCTeClient } from '@/services/fiscal/sefaz-cte-client';
 import { getDefaultCertificateConfig as getLegacyCertificateConfig } from '@/services/fiscal/certificate-manager';
 
 /**
@@ -60,6 +63,75 @@ export class SefazLegacyClientAdapter implements ISefazClient {
       cteKey: response.cteKey,
       rejectionCode: response.rejectionCode,
       rejectionMessage: response.rejectionMessage,
+    };
+  }
+
+  /**
+   * Consulta status de um CTe na SEFAZ
+   * E8 Fase 2.2
+   */
+  async queryCteStatus(
+    cteKey: string,
+    config: SefazClientConfig
+  ): Promise<CteQueryResponse> {
+    const environment = config.environment === 'production' ? 'production' : 'homologacao';
+    const client = new SefazCTeClient(config.uf, environment);
+    
+    const response = await client.consultarCTe(cteKey);
+    
+    return {
+      success: response.success,
+      status: response.status,
+      message: response.motivo,
+      protocolNumber: response.numeroProtocolo,
+      authorizationDate: response.dataAutorizacao 
+        ? new Date(response.dataAutorizacao) 
+        : undefined,
+    };
+  }
+
+  /**
+   * Cancela um CTe autorizado na SEFAZ
+   * E8 Fase 2.2
+   */
+  async cancelCte(
+    cteKey: string,
+    protocolNumber: string,
+    justification: string,
+    config: SefazClientConfig
+  ): Promise<CteCancelResponse> {
+    const environment = config.environment === 'production' ? 'production' : 'homologacao';
+    const client = new SefazCTeClient(config.uf, environment);
+    
+    const response = await client.cancelarCTe(cteKey, protocolNumber, justification);
+    
+    return {
+      success: response.success,
+      status: response.status,
+      message: response.motivo,
+      protocolNumber: response.protocolo,
+    };
+  }
+
+  /**
+   * Inutiliza numeração de CTe na SEFAZ
+   * E8 Fase 2.2
+   */
+  async inutilizeCte(
+    inutilizationXml: string,
+    config: SefazClientConfig
+  ): Promise<CteInutilizationResponse> {
+    const environment = config.environment === 'production' ? 'production' : 'homologacao';
+    const client = new SefazCTeClient(config.uf, environment);
+    
+    // O XML já vem montado e assinado - chamar diretamente
+    const response = await client.inutilizarCTe('', 0, 0, 0, '', inutilizationXml);
+    
+    return {
+      success: response.success,
+      status: response.status,
+      message: response.motivo,
+      protocolNumber: response.protocolo,
     };
   }
 

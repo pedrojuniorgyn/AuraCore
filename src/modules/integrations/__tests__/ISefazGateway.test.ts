@@ -74,14 +74,15 @@ describe('ISefazGateway (Mock)', () => {
   });
 
   describe('queryCteStatus', () => {
-    it('should return status code 100 for authorized CTe', async () => {
-      const result = await gateway.queryCteStatus(
-        '35240100000000000000570010000000011000000019',
-        'homologation'
-      );
+    it('should return status for authorized CTe', async () => {
+      const result = await gateway.queryCteStatus({
+        cteKey: '35240100000000000000570010000000011000000019',
+        environment: 'homologation',
+      });
 
       expect(Result.isOk(result)).toBe(true);
-      expect(result.value).toBe('100');
+      if (!Result.isOk(result)) return;
+      expect(result.value.status).toBe('AUTHORIZED');
     });
   });
 

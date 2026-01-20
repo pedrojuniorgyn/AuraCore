@@ -14,6 +14,11 @@ import type {
   AuthorizeCteRequest,
   AuthorizeCteResponse,
   CancelCteRequest,
+  CancelCteResponse,
+  QueryCteStatusRequest,
+  QueryCteStatusResponse,
+  InutilizeCteRequest,
+  InutilizeCteResponse,
   QueryNfeRequest,
   NfeDistribuicaoResponse,
   ManifestNfeRequest,
@@ -57,23 +62,43 @@ export class MockSefazGateway implements ISefazGateway {
     });
   }
 
-  async cancelCte(request: CancelCteRequest): Promise<Result<void, string>> {
+  async cancelCte(request: CancelCteRequest): Promise<Result<CancelCteResponse, string>> {
     if (this.shouldFail) {
       return Result.fail(this.failureMessage);
     }
 
-    return Result.ok(undefined);
+    return Result.ok({
+      protocolNumber: `MOCK_CANCEL_${Date.now()}`,
+      cancellationDate: new Date(),
+      status: 'CANCELLED',
+      message: 'CTe cancelado com sucesso (mock)',
+    });
   }
 
-  async queryCteStatus(
-    cteKey: string,
-    environment: 'production' | 'homologation'
-  ): Promise<Result<string, string>> {
+  async queryCteStatus(request: QueryCteStatusRequest): Promise<Result<QueryCteStatusResponse, string>> {
     if (this.shouldFail) {
       return Result.fail(this.failureMessage);
     }
 
-    return Result.ok('100'); // Código 100 = Autorizado
+    return Result.ok({
+      status: 'AUTHORIZED',
+      protocolNumber: `MOCK_PROTOCOL_${Date.now()}`,
+      authorizationDate: new Date(),
+      message: 'CTe autorizado (mock)',
+    });
+  }
+
+  async inutilizeCte(request: InutilizeCteRequest): Promise<Result<InutilizeCteResponse, string>> {
+    if (this.shouldFail) {
+      return Result.fail(this.failureMessage);
+    }
+
+    return Result.ok({
+      protocolNumber: `MOCK_INUT_${Date.now()}`,
+      inutilizationDate: new Date(),
+      status: 'INUTILIZED',
+      message: `Numeração ${request.startNumber}-${request.endNumber} inutilizada (mock)`,
+    });
   }
 
   async queryDistribuicaoDFe(
