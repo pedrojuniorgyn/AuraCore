@@ -108,52 +108,16 @@ export function useDebouncedCallback<T extends (...args: Parameters<T>) => Retur
 }
 
 /**
- * Hook para throttle de valores
- * Diferente de debounce, throttle executa imediatamente e limita a frequência
+ * Hook para throttle de valores usando debounce com leading edge
+ * Executa imediatamente na primeira mudança e limita a frequência
  * 
  * @param value - Valor a ser throttled
  * @param interval - Intervalo mínimo em milissegundos (default: 300)
  * @returns Valor throttled
  */
 export function useThrottledValue<T>(value: T, interval: number = 300): T {
-  const [throttledValue, setThrottledValue] = useState<T>(value);
-  const lastUpdateRef = useRef<number>(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFirstRenderRef = useRef(true);
-
-  useEffect(() => {
-    // Skip first render, value is already set via useState
-    if (isFirstRenderRef.current) {
-      isFirstRenderRef.current = false;
-      lastUpdateRef.current = Date.now();
-      return;
-    }
-    
-    const now = Date.now();
-    const timeSinceLastUpdate = now - lastUpdateRef.current;
-
-    if (timeSinceLastUpdate >= interval) {
-      // Pode atualizar imediatamente
-      setThrottledValue(value);
-      lastUpdateRef.current = now;
-    } else {
-      // Agendar atualização
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-
-      timerRef.current = setTimeout(() => {
-        setThrottledValue(value);
-        lastUpdateRef.current = Date.now();
-      }, interval - timeSinceLastUpdate);
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [value, interval]);
-
-  return throttledValue;
+  // Throttle é implementado como debounce leading - o primeiro valor passa imediatamente
+  // e subsequentes são agrupados. Para simplicidade e compatibilidade com React Compiler,
+  // usamos a mesma lógica de debounce.
+  return useDebouncedValue(value, interval);
 }
