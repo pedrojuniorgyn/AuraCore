@@ -13,11 +13,12 @@ from typing import Optional, Any, Protocol
 from dataclasses import dataclass
 import base64
 
-from src.core.observability import get_logger
+from src.core.observability import get_logger, get_observability
 from .speech_to_text import SpeechToTextService, get_stt_service, TranscriptionResult
 from .text_to_speech import TextToSpeechService, get_tts_service, SynthesisResult
 
 logger = get_logger(__name__)
+obs = get_observability()
 
 
 class OrchestratorProtocol(Protocol):
@@ -137,13 +138,15 @@ class VoiceProcessor:
         )
 
         # 1. Speech-to-Text
-        transcription = await self.stt.transcribe_bytes(
-            audio_content=audio_content,
-            encoding=encoding,
-        )
+        with obs.measure_voice_duration("transcribe"):
+            transcription = await self.stt.transcribe_bytes(
+                audio_content=audio_content,
+                encoding=encoding,
+            )
 
         if not transcription.text.strip():
             logger.warning("voice_empty_transcription")
+            obs.record_voice_operation("transcribe", "empty")
             return VoiceResult(
                 success=False,
                 transcribed_text="",
@@ -151,6 +154,7 @@ class VoiceProcessor:
                 error="Não foi possível transcrever o áudio. Tente falar mais claramente.",
             )
 
+        obs.record_voice_operation("transcribe", "success")
         logger.info(
             "voice_transcription_complete",
             text_length=len(transcription.text),
@@ -193,15 +197,18 @@ class VoiceProcessor:
         audio_response_base64 = None
 
         if respond_with_audio and agent_response:
-            synthesis = await self.tts.synthesize(agent_response)
+            with obs.measure_voice_duration("synthesize"):
+                synthesis = await self.tts.synthesize(agent_response)
             if synthesis.success and synthesis.audio_content:
                 audio_response = synthesis.audio_content
                 audio_response_base64 = base64.b64encode(audio_response).decode("utf-8")
+                obs.record_voice_operation("synthesize", "success")
                 logger.info(
                     "voice_tts_complete",
                     audio_size=len(audio_response),
                 )
             else:
+                obs.record_voice_operation("synthesize", "error")
                 logger.warning("voice_tts_failed", error=synthesis.error)
 
         return VoiceResult(

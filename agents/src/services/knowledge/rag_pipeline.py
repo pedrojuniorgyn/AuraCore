@@ -15,8 +15,10 @@ import structlog
 
 from .embedding_service import EmbeddingService, get_embedding_service
 from .vector_store import VectorStore, SearchResult, get_vector_store
+from src.core.observability import get_observability
 
 logger = structlog.get_logger()
+obs = get_observability()
 
 
 @dataclass
@@ -100,50 +102,57 @@ class RAGPipeline:
         """
         logger.info("rag_retrieve", query=query[:50])
         
-        # 1. Gerar embedding da query
-        query_embedding = await self.embeddings.embed_text(query)
-        
-        # 2. Buscar no vector store
-        filter_metadata: Optional[Dict[str, Any]] = None
-        if filter_type:
-            filter_metadata = {"type": filter_type}
-        
-        results = await self.vector_store.search(
-            query_embedding=query_embedding,
-            top_k=top_k or self.config.top_k,
-            filter_metadata=filter_metadata
-        )
-        
-        # 3. Filtrar por score mínimo
-        filtered_results = [
-            r for r in results 
-            if r.score >= self.config.min_score
-        ]
-        
-        # 4. Construir contexto
-        context_parts: List[str] = []
-        sources: List[Dict[str, Any]] = []
-        total_length = 0
-        
-        for result in filtered_results:
-            # Verificar limite de tamanho
-            if total_length + len(result.content) > self.config.max_context_length:
-                break
+        with obs.measure_rag_duration():
+            # 1. Gerar embedding da query
+            query_embedding = await self.embeddings.embed_text(query)
             
-            context_parts.append(result.content)
-            total_length += len(result.content)
+            # 2. Buscar no vector store
+            filter_metadata: Optional[Dict[str, Any]] = None
+            if filter_type:
+                filter_metadata = {"type": filter_type}
             
-            # Adicionar fonte
-            sources.append({
-                "id": result.id,
-                "title": result.metadata.get("title", "Documento"),
-                "type": result.metadata.get("type", "unknown"),
-                "score": result.score,
-                "article": result.metadata.get("article"),
-                "law": result.metadata.get("law_number")
-            })
+            results = await self.vector_store.search(
+                query_embedding=query_embedding,
+                top_k=top_k or self.config.top_k,
+                filter_metadata=filter_metadata
+            )
+            
+            # 3. Filtrar por score mínimo
+            filtered_results = [
+                r for r in results 
+                if r.score >= self.config.min_score
+            ]
+            
+            # 4. Construir contexto
+            context_parts: List[str] = []
+            sources: List[Dict[str, Any]] = []
+            total_length = 0
+            
+            for result in filtered_results:
+                # Verificar limite de tamanho
+                if total_length + len(result.content) > self.config.max_context_length:
+                    break
+                
+                context_parts.append(result.content)
+                total_length += len(result.content)
+                
+                # Adicionar fonte
+                sources.append({
+                    "id": result.id,
+                    "title": result.metadata.get("title", "Documento"),
+                    "type": result.metadata.get("type", "unknown"),
+                    "score": result.score,
+                    "article": result.metadata.get("article"),
+                    "law": result.metadata.get("law_number")
+                })
         
         context = "\n\n---\n\n".join(context_parts)
+        
+        # Registrar métricas
+        if context:
+            obs.record_rag_query(filter_type or "all", "success")
+        else:
+            obs.record_rag_query(filter_type or "all", "empty")
         
         logger.info(
             "rag_retrieve_complete",

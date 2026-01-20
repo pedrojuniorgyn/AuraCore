@@ -14,6 +14,7 @@ from src.config import get_settings
 from src.api.routes import chat, agents, health
 from src.api import voice as voice_api
 from src.api import knowledge as knowledge_api
+from src.api import observability as observability_api
 from src.core.orchestrator import get_orchestrator
 
 
@@ -126,6 +127,7 @@ app.include_router(agents.router, prefix="/agents", tags=["Agents"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 app.include_router(voice_api.router, prefix="/api/voice", tags=["Voice"])
 app.include_router(knowledge_api.router, prefix="/api/knowledge", tags=["Knowledge"])
+app.include_router(observability_api.router, tags=["Observability"])
 
 
 @app.get("/", include_in_schema=False)

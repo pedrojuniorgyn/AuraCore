@@ -12,7 +12,7 @@ import base64
 from typing import Any, Optional
 
 from src.core.guardrails import GuardrailLevel
-from src.core.observability import get_logger
+from src.core.observability import get_logger, get_observability
 from src.services.document_processing import (
     DanfeExtractor,
     DacteExtractor,
@@ -20,6 +20,7 @@ from src.services.document_processing import (
 )
 
 logger = get_logger(__name__)
+obs = get_observability()
 
 
 class DocumentImporterTool:
@@ -202,6 +203,9 @@ class DocumentImporterTool:
                     
                     chave_preview = data.chave_acesso[:20] + "..." if data.chave_acesso else "N/A"
                     
+                    # Registrar métrica de sucesso
+                    obs.record_document_import("danfe", "success")
+                    
                     return {
                         "success": True,
                         "extracted_data": extracted,
@@ -275,6 +279,9 @@ class DocumentImporterTool:
                     
                     chave_preview = data.chave_acesso[:20] + "..." if data.chave_acesso else "N/A"
                     
+                    # Registrar métrica de sucesso
+                    obs.record_document_import("dacte", "success")
+                    
                     return {
                         "success": True,
                         "extracted_data": extracted,
@@ -294,6 +301,8 @@ class DocumentImporterTool:
                 
         except Exception as e:
             logger.error("document_import_error", extra={"error": str(e)})
+            # Registrar métrica de erro
+            obs.record_document_import(document_type, "error")
             return {
                 "success": False,
                 "errors": [str(e)],

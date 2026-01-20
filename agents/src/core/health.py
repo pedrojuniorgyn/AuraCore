@@ -7,13 +7,18 @@ Verifica:
 - LLM Provider (conexão com Anthropic)
 - AuraCore API (backend principal)
 - Memory Store (SQLite)
+- Google Cloud Speech (STT)
+- Google Cloud TTS
+- OpenAI Embeddings
 """
 
 import os
 import asyncio
 import sqlite3
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any, List
+from enum import Enum
+from dataclasses import dataclass, field
 
 import httpx
 import structlog
@@ -22,6 +27,39 @@ logger = structlog.get_logger()
 
 # Timeouts para health checks
 HEALTH_CHECK_TIMEOUT = 5.0  # segundos
+
+
+class HealthStatus(Enum):
+    """Status de saúde do serviço."""
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    UNHEALTHY = "unhealthy"
+    UNCONFIGURED = "unconfigured"
+    INITIALIZING = "initializing"
+    TIMEOUT = "timeout"
+    ERROR = "error"
+
+
+@dataclass
+class ServiceCheck:
+    """Resultado de check de um serviço."""
+    name: str
+    status: str
+    latency_ms: Optional[float] = None
+    message: Optional[str] = None
+    details: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        result = {
+            "status": self.status,
+        }
+        if self.latency_ms is not None:
+            result["latency_ms"] = self.latency_ms
+        if self.message:
+            result["message"] = self.message
+        if self.details:
+            result.update(self.details)
+        return result
 
 
 async def check_chromadb() -> dict:
@@ -139,6 +177,96 @@ async def check_memory_store() -> dict:
         return {"status": "error", "error": str(e)[:100]}
 
 
+async def check_google_speech() -> dict:
+    """Verifica Google Cloud Speech-to-Text."""
+    try:
+        # Verificar se credenciais estão configuradas
+        google_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        google_project = os.getenv("GOOGLE_CLOUD_PROJECT")
+        
+        if not google_creds and not google_project:
+            return {"status": "unconfigured", "message": "Google Cloud credentials not set"}
+        
+        # Verificar se a biblioteca está disponível
+        try:
+            from google.cloud import speech  # noqa: F401
+            
+            return {
+                "status": "healthy",
+                "provider": "google_cloud_speech",
+                "message": "Biblioteca disponível"
+            }
+        except ImportError:
+            return {
+                "status": "degraded",
+                "message": "google-cloud-speech não instalado"
+            }
+    except Exception as e:
+        logger.error("google_speech_health_error", error=str(e))
+        return {"status": "error", "error": str(e)[:100]}
+
+
+async def check_google_tts() -> dict:
+    """Verifica Google Cloud Text-to-Speech."""
+    try:
+        # Verificar se credenciais estão configuradas
+        google_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        google_project = os.getenv("GOOGLE_CLOUD_PROJECT")
+        
+        if not google_creds and not google_project:
+            return {"status": "unconfigured", "message": "Google Cloud credentials not set"}
+        
+        # Verificar se a biblioteca está disponível
+        try:
+            from google.cloud import texttospeech  # noqa: F401
+            
+            return {
+                "status": "healthy",
+                "provider": "google_cloud_tts",
+                "message": "Biblioteca disponível"
+            }
+        except ImportError:
+            return {
+                "status": "degraded",
+                "message": "google-cloud-texttospeech não instalado"
+            }
+    except Exception as e:
+        logger.error("google_tts_health_error", error=str(e))
+        return {"status": "error", "error": str(e)[:100]}
+
+
+async def check_openai_embeddings() -> dict:
+    """Verifica OpenAI para embeddings."""
+    try:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        
+        if not openai_key:
+            return {"status": "unconfigured", "message": "OPENAI_API_KEY not set"}
+        
+        # Verificar formato básico
+        if not openai_key.startswith("sk-"):
+            return {"status": "invalid_key", "error": "API key format invalid"}
+        
+        # Verificar se a biblioteca está disponível
+        try:
+            from openai import OpenAI  # noqa: F401
+            
+            return {
+                "status": "healthy",
+                "provider": "openai",
+                "model": "text-embedding-3-small",
+                "message": "Biblioteca disponível"
+            }
+        except ImportError:
+            return {
+                "status": "degraded",
+                "message": "openai não instalado"
+            }
+    except Exception as e:
+        logger.error("openai_health_error", error=str(e))
+        return {"status": "error", "error": str(e)[:100]}
+
+
 async def get_full_health_status() -> dict:
     """
     Executa todos os health checks em paralelo.
@@ -154,21 +282,33 @@ async def get_full_health_status() -> dict:
         check_llm_connection(),
         check_auracore_api(),
         check_memory_store(),
+        check_google_speech(),
+        check_google_tts(),
+        check_openai_embeddings(),
         return_exceptions=True
     )
+    
+    # Helper para processar resultado
+    def process_result(result: Any, default_error: str = "Unknown error") -> dict:
+        if isinstance(result, Exception):
+            return {"status": "error", "error": str(result)[:100]}
+        return result
     
     # Mapear resultados
     checks = {
         "api": {"status": "healthy"},  # Se chegou aqui, a API está OK
-        "chromadb": results[0] if not isinstance(results[0], Exception) else {"status": "error", "error": str(results[0])[:100]},
-        "llm": results[1] if not isinstance(results[1], Exception) else {"status": "error", "error": str(results[1])[:100]},
-        "auracore": results[2] if not isinstance(results[2], Exception) else {"status": "error", "error": str(results[2])[:100]},
-        "memory": results[3] if not isinstance(results[3], Exception) else {"status": "error", "error": str(results[3])[:100]},
+        "chromadb": process_result(results[0]),
+        "llm": process_result(results[1]),
+        "auracore": process_result(results[2]),
+        "memory": process_result(results[3]),
+        "google_speech": process_result(results[4]),
+        "google_tts": process_result(results[5]),
+        "openai_embeddings": process_result(results[6]),
     }
     
     # Determinar status geral
     critical_services = ["api", "auracore"]  # Serviços que devem estar healthy
-    optional_services = ["chromadb", "llm", "memory"]  # Serviços que podem estar degradados
+    optional_services = ["chromadb", "llm", "memory", "google_speech", "google_tts", "openai_embeddings"]
     
     critical_healthy = all(
         checks[svc].get("status") == "healthy" 
@@ -177,7 +317,7 @@ async def get_full_health_status() -> dict:
     
     optional_issues = [
         svc for svc in optional_services 
-        if checks[svc].get("status") not in ["healthy", "initializing", "unconfigured"]
+        if checks[svc].get("status") not in ["healthy", "initializing", "unconfigured", "degraded"]
     ]
     
     if critical_healthy and not optional_issues:
@@ -204,3 +344,72 @@ async def get_full_health_status() -> dict:
         "version": os.getenv("APP_VERSION", "1.0.0"),
         "environment": os.getenv("ENVIRONMENT", "development")
     }
+
+
+class HealthChecker:
+    """
+    Classe wrapper para health checks com cache.
+    
+    Uso:
+        checker = get_health_checker()
+        health = await checker.check_all()
+    """
+    
+    def __init__(self):
+        self._start_time = datetime.utcnow()
+        self._cache: Optional[dict] = None
+        self._cache_time: Optional[datetime] = None
+        self._cache_ttl_seconds = 5  # Cache por 5 segundos
+    
+    async def check_all(self, use_cache: bool = True) -> dict:
+        """
+        Executa todos os health checks.
+        
+        Args:
+            use_cache: Se True, usa cache de 5 segundos
+            
+        Returns:
+            Dict com status de todos os serviços
+        """
+        now = datetime.utcnow()
+        
+        # Verificar cache
+        if use_cache and self._cache and self._cache_time:
+            elapsed = (now - self._cache_time).total_seconds()
+            if elapsed < self._cache_ttl_seconds:
+                return self._cache
+        
+        # Executar checks
+        result = await get_full_health_status()
+        
+        # Adicionar uptime
+        uptime = (now - self._start_time).total_seconds()
+        result["uptime_seconds"] = round(uptime, 2)
+        
+        # Atualizar cache
+        self._cache = result
+        self._cache_time = now
+        
+        return result
+    
+    async def is_healthy(self) -> bool:
+        """Retorna True se o sistema está saudável."""
+        health = await self.check_all()
+        return health["status"] == "healthy"
+    
+    async def is_ready(self) -> bool:
+        """Retorna True se o sistema está pronto para receber tráfego."""
+        health = await self.check_all()
+        return health["status"] in ["healthy", "degraded"]
+
+
+# Singleton
+_health_checker: Optional[HealthChecker] = None
+
+
+def get_health_checker() -> HealthChecker:
+    """Retorna instância singleton do health checker."""
+    global _health_checker
+    if _health_checker is None:
+        _health_checker = HealthChecker()
+    return _health_checker
