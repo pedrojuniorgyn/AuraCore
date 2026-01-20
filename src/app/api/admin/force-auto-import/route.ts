@@ -10,12 +10,21 @@ import { NextRequest, NextResponse } from "next/server";
  * 
  * Uso:
  * curl -X POST http://localhost:3000/api/admin/force-auto-import
+ * 
+ * @since E8 Fase 2.5 - Migração parcial documentada
+ * 
+ * TODO (E8 Fase 3): Migrar auto-import-nfe para Use Case DDD:
+ *   1. Criar ImportNfesAutomaticallyUseCase
+ *   2. Injetar ISefazGateway via DI
+ *   3. Remover dependência de @/services/cron/
  */
 export async function POST(request: NextRequest) {
   try {
     console.log("🔧 [FORCE] Iniciando importação manual forçada...");
     console.log("━".repeat(80));
 
+    // Legacy: Import dinâmico do serviço cron
+    // Este serviço internamente usa SefazService legacy
     const { runManualImport } = await import("@/services/cron/auto-import-nfe");
     
     await runManualImport();
@@ -58,35 +67,3 @@ export async function GET(request: NextRequest) {
     note: "A importação será executada imediatamente, sem aguardar o cron job.",
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

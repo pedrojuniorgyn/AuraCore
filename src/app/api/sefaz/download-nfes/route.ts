@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
-import { createSefazService } from "@/services/sefaz-service";
 import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
 import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
 import { Result } from "@/shared/domain";
+
+// Legacy: createSefazService ainda busca certificado/NSU do banco
+// TODO (E8 Fase 3): Criar DownloadNfesUseCase que orquestre:
+//   1. Buscar configuração (certificado, NSU) do banco
+//   2. Chamar ISefazGateway.queryDistribuicaoDFe()
+//   3. Processar documentos com SefazDocumentProcessor
+import { createSefazService } from "@/services/sefaz-service";
 
 /**
  * POST /api/sefaz/download-nfes
@@ -16,10 +22,14 @@ import { Result } from "@/shared/domain";
  * - XML bruto da resposta
  * - Quantidade de documentos
  * - Novo maxNSU
+ * 
+ * @since E8 Fase 2.5 - Migração parcial documentada
+ *   - SefazDocumentProcessor: Domain Service (DDD)
+ *   - createSefazService: Legacy (busca certificado do banco)
  */
 export async function POST(request: NextRequest) {
   try {
-    // 🔗 Garante conexão com banco
+    // Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
@@ -30,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`🤖 Iniciando download de NFes da Sefaz (Branch: ${branchId})...`);
 
-    // Cria instância do serviço
+    // Legacy: Cria instância do serviço (busca certificado do banco)
     const sefazService = createSefazService(branchId, ctx.organizationId);
 
     // Consulta DistribuicaoDFe
@@ -75,14 +85,14 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Cria adapter de importação
+        // DDD: Cria adapter de importação
         const importAdapter = createFiscalDocumentImportAdapter(
           orgId,
           branchIdNum,
           ctx.userId
         );
 
-        // Cria processor
+        // DDD: Cria processor (Domain Service)
         const processor = new SefazDocumentProcessor(importAdapter);
 
         // Processa o XML da Sefaz
@@ -117,7 +127,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -135,4 +145,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

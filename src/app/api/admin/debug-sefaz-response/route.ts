@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// Legacy: createSefazService ainda busca certificado/NSU do banco
+// TODO (E8 Fase 3): Criar QueryNfeStatusUseCase que orquestre:
+//   1. Buscar configuração (certificado, NSU) do banco
+//   2. Chamar ISefazGateway.queryDistribuicaoDFe()
 import { createSefazService } from "@/services/sefaz-service";
 
 /**
- * 🔍 DEBUG: Ver resposta completa da SEFAZ
+ * POST /api/admin/debug-sefaz-response
+ * 
+ * 🔍 DEBUG: Ver resposta completa da SEFAZ com parsing
+ * 
+ * ⚠️ ADMIN ONLY: Rota de debug para desenvolvimento
+ * 
+ * @since E8 Fase 2.5 - Migração parcial documentada
  */
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +26,7 @@ export async function POST(request: NextRequest) {
 
     console.log("🔍 Consultando SEFAZ em modo DEBUG...");
 
+    // Legacy: Cria instância do serviço (busca certificado do banco)
     const sefazService = createSefazService(branchId, organizationId);
     const result = await sefazService.getDistribuicaoDFe();
 
@@ -63,35 +75,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
