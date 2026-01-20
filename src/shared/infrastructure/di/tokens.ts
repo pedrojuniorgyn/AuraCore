@@ -64,6 +64,11 @@ export const TOKENS = {
   TaxRateRepository: Symbol('TaxRateRepository'),
   TaxCreditRepository: Symbol('TaxCreditRepository'),
 
+  // Fiscal Module - CTe/NFe Use Cases (E8 Fase 3)
+  AuthorizeCteUseCase: Symbol('AuthorizeCteUseCase'),
+  CreateCteUseCase: Symbol('CreateCteUseCase'),
+  DownloadNfesUseCase: Symbol('DownloadNfesUseCase'),
+
   // TMS Module - Repositories (E7.26)
   RomaneioRepository: Symbol('RomaneioRepository'),
 

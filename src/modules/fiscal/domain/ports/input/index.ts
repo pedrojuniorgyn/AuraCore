@@ -36,3 +36,8 @@ export * from './IImportDACTeUseCase';
 // ===== RAG LEGISLAÇÃO (E-Agent-Fase-D4) =====
 export * from './IIndexLegislationUseCase';
 export * from './IQueryLegislationUseCase';
+
+// ===== CTe/NFe USE CASES (E8 Fase 3) =====
+export * from './IAuthorizeCteUseCase';
+export * from './ICreateCteUseCase';
+export * from './IDownloadNfesUseCase';

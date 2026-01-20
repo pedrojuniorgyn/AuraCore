@@ -4,11 +4,10 @@ import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
-
-// Legacy: buildCteXml ainda busca dados do banco e monta XML
-// TODO (E8 Fase 3): Criar CreateCteUseCase que orquestre busca + CteBuilderService
-import { buildCteXml } from "@/services/fiscal/cte-builder";
-import { validatePickupOrderInsurance } from "@/services/validators/insurance-validator";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { ICreateCteUseCase } from "@/modules/fiscal/domain/ports/input/ICreateCteUseCase";
+import { Result } from "@/shared/domain";
 
 /**
  * GET /api/fiscal/cte
@@ -50,17 +49,12 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/fiscal/cte
- * Cria CTe a partir de uma Ordem de Coleta
+ * Cria CTe a partir de uma Ordem de Coleta via Use Case (DDD)
  * 🔐 Requer permissão: fiscal.cte.create
  * 
- * @since E8 Fase 2.4 - Migração parcial:
- *   - Mantém buildCteXml legacy (busca DB)
- *   - Mantém validatePickupOrderInsurance legacy
- * 
- * TODO (E8 Fase 3): Criar CreateCteUseCase que orquestre:
- *   1. Validar averbação via domain service
- *   2. Buscar dados da ordem de coleta
- *   3. CteBuilderService.build() para gerar XML
+ * @since E8 Fase 3 - Use Case orquestrador
+ *   - CreateCteUseCase via DI
+ *   - Encapsula: validação seguro, geração XML
  */
 export async function POST(req: NextRequest) {
   return withPermission(req, "fiscal.cte.create", async (user, ctx) => {
@@ -75,21 +69,46 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Validar Averbação (OBRIGATÓRIO) - mantém serviço legacy
-      await validatePickupOrderInsurance(pickupOrderId);
+      if (!ctx.branchId) {
+        return NextResponse.json(
+          { error: "branchId obrigatório" },
+          { status: 400 }
+        );
+      }
 
-      // Gerar XML - mantém serviço legacy (busca dados do DB)
-      const xml = await buildCteXml({
+      // Resolver Use Case via DI
+      const createCteUseCase = container.resolve<ICreateCteUseCase>(
+        TOKENS.CreateCteUseCase
+      );
+
+      // Executar Use Case
+      const result = await createCteUseCase.execute({
         pickupOrderId,
         organizationId: ctx.organizationId,
+        branchId: ctx.branchId,
+        userId: ctx.userId,
       });
+
+      if (Result.isFail(result)) {
+        const error = result.error;
+
+        if (error.includes('não encontrada')) {
+          return NextResponse.json({ error }, { status: 404 });
+        }
+        if (error.includes('seguro') || error.includes('Averbação')) {
+          return NextResponse.json(
+            { error, hint: "Configure a averbação de seguro antes de criar o CTe" },
+            { status: 400 }
+          );
+        }
+
+        return NextResponse.json({ error }, { status: 500 });
+      }
 
       return NextResponse.json({
         success: true,
         message: "CTe criado!",
-        data: {
-          xml: xml.substring(0, 500) + "...", // Preview
-        },
+        data: result.value,
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);

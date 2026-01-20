@@ -1,34 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
-import { db } from "@/lib/db";
-import { cteHeader, fiscalSettings } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
 import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
-import type { ISefazGateway } from "@/modules/integrations/domain/ports/output/ISefazGateway";
+import type { IAuthorizeCteUseCase } from "@/modules/fiscal/domain/ports/input/IAuthorizeCteUseCase";
 import { Result } from "@/shared/domain";
-
-// Legacy: buildCteXml ainda busca dados do banco e monta XML
-// TODO (E8 Fase 3): Criar Use Case que orquestre busca + CteBuilderService
-import { buildCteXml } from "@/services/fiscal/cte-builder";
-import { createXmlSignerFromDb } from "@/services/fiscal/xml-signer";
 
 /**
  * POST /api/fiscal/cte/:id/authorize
  * 🔐 Requer permissão: fiscal.cte.authorize
  * 
- * Autoriza um CTe na Sefaz
+ * Autoriza um CTe na Sefaz via Use Case (DDD)
  * 
- * @since E8 Fase 2.4 - Migração parcial:
- *   - ISefazGateway via DI (novo)
- *   - buildCteXml ainda legacy (busca DB)
- *   - Assinatura digital ainda legacy
- * 
- * TODO (E8 Fase 3): Criar AuthorizeCteUseCase que orquestre:
- *   1. Buscar dados da ordem de coleta
- *   2. CteBuilderService.build() para gerar XML
- *   3. XmlSignerService (Domain Service) para assinar
- *   4. ISefazGateway.authorizeCte() para enviar
+ * @since E8 Fase 3 - Use Case orquestrador
+ *   - AuthorizeCteUseCase via DI
+ *   - Encapsula: busca CTe, gera XML, assina, transmite SEFAZ
  */
 export async function POST(
   request: NextRequest,
@@ -45,152 +30,64 @@ export async function POST(
       );
     }
 
-    // 1. Buscar CTe
-    const [cte] = await db
-      .select()
-      .from(cteHeader)
-      .where(eq(cteHeader.id, cteId));
-
-    if (!cte) {
+    if (!ctx.branchId) {
       return NextResponse.json(
-        { error: "CTe não encontrado" },
-        { status: 404 }
-      );
-    }
-
-    // 2. Verificar se já está autorizado
-    if (cte.status === "AUTHORIZED") {
-      return NextResponse.json(
-        {
-          error: "CTe já está autorizado",
-          chave: cte.cteKey,
-          protocolo: cte.protocolNumber,
-        },
-        { status: 400 }
-      );
-    }
-
-    // 3. Verificar se está cancelado
-    if (cte.status === "CANCELLED") {
-      return NextResponse.json(
-        { error: "CTe está cancelado, não pode ser autorizado" },
+        { error: "branchId obrigatório" },
         { status: 400 }
       );
     }
 
     try {
-      // 4. Verificar ordem de coleta
-      if (!cte.pickupOrderId) {
-        return NextResponse.json(
-          { error: "CTe sem ordem de coleta vinculada" },
-          { status: 400 }
-        );
-      }
+      // Resolver Use Case via DI
+      const authorizeCteUseCase = container.resolve<IAuthorizeCteUseCase>(
+        TOKENS.AuthorizeCteUseCase
+      );
 
-      // 5. Buscar configurações fiscais
-      if (!ctx.branchId) {
-        return NextResponse.json({ error: "branchId obrigatório" }, { status: 400 });
-      }
-
-      const [settings] = await db
-        .select()
-        .from(fiscalSettings)
-        .where(
-          and(
-            eq(fiscalSettings.organizationId, ctx.organizationId),
-            eq(fiscalSettings.branchId, ctx.branchId)
-          )
-        );
-
-      const environment = settings?.cteEnvironment === "production" ? "production" : "homologation";
-
-      // 6. Gerar XML (legacy - busca dados do DB)
-      console.log(`🔨 Gerando XML do CTe #${cteId}...`);
-      const xmlSemAssinatura = await buildCteXml({
-        pickupOrderId: cte.pickupOrderId,
+      // Executar Use Case
+      const result = await authorizeCteUseCase.execute({
+        cteId,
         organizationId: ctx.organizationId,
+        branchId: ctx.branchId,
+        userId: ctx.userId,
       });
 
-      // 7. Assinar XML (legacy)
-      console.log("🔐 Assinando XML...");
-      const signer = await createXmlSignerFromDb(ctx.organizationId);
-      
-      const certInfo = signer.verifyCertificate();
-      if (!certInfo.valid) {
+      if (Result.isFail(result)) {
+        // Determinar status code baseado no tipo de erro
+        const error = result.error;
+        
+        if (error.includes('não encontrado')) {
+          return NextResponse.json({ error }, { status: 404 });
+        }
+        if (error.includes('já está autorizado') || 
+            error.includes('cancelado') || 
+            error.includes('Certificado')) {
+          return NextResponse.json({ error }, { status: 400 });
+        }
+        if (error.includes('rejeitado')) {
+          return NextResponse.json(
+            { error, success: false },
+            { status: 422 }
+          );
+        }
+        
         return NextResponse.json(
-          {
-            success: false,
-            error: "Certificado digital inválido ou vencido",
-          },
-          { status: 400 }
-        );
-      }
-
-      const xmlAssinado = signer.signCteXml(xmlSemAssinatura);
-      console.log("✅ XML assinado com sucesso");
-
-      // 8. Extrair UF do emitente do XML
-      const ufMatch = xmlSemAssinatura.match(/<enderEmit>[\s\S]*?<UF>(.*?)<\/UF>/);
-      const uf = ufMatch?.[1] || "SP";
-
-      // 9. Autorizar via ISefazGateway (DI) - NOVO!
-      console.log(`🚀 Autorizando CTe #${cteId} na Sefaz ${uf}...`);
-      const sefazGateway = container.resolve<ISefazGateway>(TOKENS.SefazGateway);
-
-      const authResult = await sefazGateway.authorizeCte({
-        cteXml: xmlAssinado,
-        environment,
-        uf,
-      });
-
-      if (Result.isFail(authResult)) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Erro ao comunicar com SEFAZ",
-            motivo: authResult.error,
-          },
+          { error, success: false },
           { status: 500 }
         );
       }
 
-      const resultado = authResult.value;
+      const output = result.value;
 
-      // 10. Processar resultado
-      if (resultado.success) {
-        // Atualizar CTe no banco
-        await db
-          .update(cteHeader)
-          .set({
-            status: "AUTHORIZED",
-            cteKey: resultado.cteKey,
-            protocolNumber: resultado.protocolNumber,
-            authorizationDate: resultado.authorizationDate,
-            updatedAt: new Date(),
-          })
-          .where(eq(cteHeader.id, cteId));
-
-        return NextResponse.json({
-          success: true,
-          message: "CTe autorizado com sucesso na Sefaz!",
-          data: {
-            cteId,
-            chave: resultado.cteKey,
-            protocolo: resultado.protocolNumber,
-            dataAutorizacao: resultado.authorizationDate,
-          },
-        });
-      } else {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "CTe rejeitado pela Sefaz",
-            motivo: resultado.rejectionMessage,
-            codigoRejeicao: resultado.rejectionCode,
-          },
-          { status: 422 }
-        );
-      }
+      return NextResponse.json({
+        success: true,
+        message: "CTe autorizado com sucesso na Sefaz!",
+        data: {
+          cteId: output.cteId,
+          chave: output.cteKey,
+          protocolo: output.protocolNumber,
+          dataAutorizacao: output.authorizationDate,
+        },
+      });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Erro ao autorizar CTe:", error);

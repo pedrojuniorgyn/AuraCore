@@ -16,6 +16,14 @@ import { SubmitFiscalDocumentUseCase } from '../../application/use-cases/SubmitF
 import { AuthorizeFiscalDocumentUseCase } from '../../application/use-cases/AuthorizeFiscalDocumentUseCase';
 import { CancelFiscalDocumentUseCase } from '../../application/use-cases/CancelFiscalDocumentUseCase';
 import { CalculateTaxesUseCase } from '../../application/use-cases/CalculateTaxesUseCase';
+
+// CTe/NFe Use Cases (E8 Fase 3)
+import { AuthorizeCteUseCase } from '../../application/use-cases/AuthorizeCteUseCase';
+import { CreateCteUseCase } from '../../application/use-cases/CreateCteUseCase';
+import { DownloadNfesUseCase } from '../../application/use-cases/DownloadNfesUseCase';
+import type { IAuthorizeCteUseCase } from '../../domain/ports/input/IAuthorizeCteUseCase';
+import type { ICreateCteUseCase } from '../../domain/ports/input/ICreateCteUseCase';
+import type { IDownloadNfesUseCase } from '../../domain/ports/input/IDownloadNfesUseCase';
 import type { IGenerateSpedFiscal } from '../../domain/ports/input/IGenerateSpedFiscal';
 import type { IGenerateSpedEcd } from '../../domain/ports/input/IGenerateSpedEcd';
 import type { IGenerateSpedContributions } from '../../domain/ports/input/IGenerateSpedContributions';
@@ -53,6 +61,11 @@ export function registerFiscalModule(): void {
   container.registerSingleton(TOKENS.AuthorizeFiscalDocumentUseCase, AuthorizeFiscalDocumentUseCase);
   container.registerSingleton(TOKENS.CancelFiscalDocumentUseCase, CancelFiscalDocumentUseCase);
   container.registerSingleton(TOKENS.CalculateTaxesUseCase, CalculateTaxesUseCase);
+
+  // CTe/NFe Use Cases (E8 Fase 3)
+  container.registerSingleton<IAuthorizeCteUseCase>(TOKENS.AuthorizeCteUseCase, AuthorizeCteUseCase);
+  container.registerSingleton<ICreateCteUseCase>(TOKENS.CreateCteUseCase, CreateCteUseCase);
+  container.registerSingleton<IDownloadNfesUseCase>(TOKENS.DownloadNfesUseCase, DownloadNfesUseCase);
   
   // SPED Use Cases (E7.18 Fase 3)
   initializeFiscalSpedModule();

@@ -31,3 +31,9 @@ export { ActionPlanKanban, type ActionPlanKanbanProps, type StatusColumn, type A
 export { TemplateCard, type Template } from './TemplateCard';
 export { TemplatePreview, type TemplateDetail, type TemplateStructure } from './TemplatePreview';
 export { TemplateEditor, type TemplateData } from './TemplateEditor';
+
+// Dashboard Customizável
+export { DashboardWidget } from './DashboardWidget';
+export { DashboardGrid, type WidgetConfig, type DashboardData } from './DashboardGrid';
+export { WidgetPicker, widgetOptions, type WidgetType } from './WidgetPicker';
+export * from './widgets';
