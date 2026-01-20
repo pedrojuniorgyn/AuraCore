@@ -165,7 +165,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Validação falhou', details: error.errors },
+        { success: false, error: 'Validação falhou', details: error.issues },
         { status: 400 }
       );
     }
