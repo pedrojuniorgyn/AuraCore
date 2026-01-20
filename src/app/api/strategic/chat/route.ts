@@ -16,17 +16,33 @@ import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/out
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
 // Google Generative AI - usando import dinâmico para evitar erro se não configurado
-let genAI: { getGenerativeModel: (config: { model: string }) => { generateContent: (prompt: string) => Promise<{ response: { text: () => string } }> } } | null = null;
+// Bug 4 Fix: Cache both success AND failure states
+type AIState = 
+  | { status: 'uninitialized' }
+  | { status: 'initialized'; client: { getGenerativeModel: (config: { model: string }) => { generateContent: (prompt: string) => Promise<{ response: { text: () => string } }> } } }
+  | { status: 'failed' };
 
-async function initializeAI() {
-  if (!process.env.GOOGLE_AI_API_KEY) return null;
+let aiState: AIState = { status: 'uninitialized' };
+
+async function initializeAI(): Promise<AIState> {
+  if (aiState.status !== 'uninitialized') {
+    return aiState;
+  }
+  
+  if (!process.env.GOOGLE_AI_API_KEY) {
+    aiState = { status: 'failed' };
+    return aiState;
+  }
   
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    return new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+    const client = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+    aiState = { status: 'initialized', client };
+    return aiState;
   } catch {
     console.warn('Google AI não configurado');
-    return null;
+    aiState = { status: 'failed' };
+    return aiState;
   }
 }
 
@@ -156,6 +172,14 @@ function generateFallbackResponse(
 export async function POST(request: Request) {
   try {
     const tenantContext = await getTenantContext();
+    
+    // Bug 3 Fix: Validar tenantContext antes de usar
+    if (!tenantContext || typeof tenantContext.organizationId !== 'number' || typeof tenantContext.branchId !== 'number') {
+      return NextResponse.json({ error: 'Contexto de tenant inválido' }, { status: 401 });
+    }
+    
+    const { organizationId, branchId } = tenantContext;
+    
     const { message } = await request.json();
 
     if (!message || typeof message !== 'string') {
@@ -169,16 +193,16 @@ export async function POST(request: Request) {
 
     // Buscar KPIs
     const { items: allKpis } = await kpiRepository.findMany({
-      organizationId: tenantContext.organizationId,
-      branchId: tenantContext.branchId,
+      organizationId,
+      branchId,
       page: 1,
       pageSize: 100,
     });
 
     // Buscar planos de ação vencidos
     const { items: overduePlans } = await actionPlanRepository.findMany({
-      organizationId: tenantContext.organizationId,
-      branchId: tenantContext.branchId,
+      organizationId,
+      branchId,
       overdueOnly: true,
       page: 1,
       pageSize: 10,
@@ -186,8 +210,8 @@ export async function POST(request: Request) {
 
     // Buscar objetivos
     const { items: goals } = await goalRepository.findMany({
-      organizationId: tenantContext.organizationId,
-      branchId: tenantContext.branchId,
+      organizationId,
+      branchId,
       page: 1,
       pageSize: 100,
     });
@@ -212,14 +236,12 @@ export async function POST(request: Request) {
     // Detectar ações sugeridas
     const actions = detectActions(message);
 
-    // Tentar usar IA se configurada
-    if (!genAI) {
-      genAI = await initializeAI();
-    }
+    // Bug 4 Fix: Usar estado cacheado da IA
+    const currentAIState = await initializeAI();
 
     let responseText: string;
 
-    if (genAI) {
+    if (currentAIState.status === 'initialized') {
       try {
         const systemPrompt = `Você é a Aurora AI, assistente de gestão estratégica do AuraCore ERP.
 
@@ -243,7 +265,7 @@ PERGUNTA DO USUÁRIO: ${message}
 
 Responda de forma profissional e útil:`;
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const model = currentAIState.client.getGenerativeModel({ model: 'gemini-pro' });
         const result = await model.generateContent(systemPrompt);
         responseText = result.response.text();
       } catch (aiError) {
@@ -251,7 +273,7 @@ Responda de forma profissional e útil:`;
         responseText = generateFallbackResponse(message, context);
       }
     } else {
-      // Fallback sem IA
+      // Fallback sem IA (status = 'failed' ou 'uninitialized')
       responseText = generateFallbackResponse(message, context);
     }
 

@@ -2,12 +2,17 @@
  * IBtgClient - Interface para cliente BTG Pactual
  *
  * E7-Onda A: Abstração dos serviços legados btg-boleto, btg-pix, btg-auth
+ * E8 Fase 1.1: Expandido com DDA, Pix Payment e Health Check
  *
  * Esta interface unifica as operações BTG em uma única abstração,
  * permitindo que a implementação real ou mock seja injetada via DI.
  *
  * O BtgBankingAdapter usa IBtgClient internamente.
  */
+
+// ============================================================================
+// BOLETO TYPES
+// ============================================================================
 
 /**
  * Request para geração de boleto
@@ -43,6 +48,10 @@ export interface BtgBoletoResponse {
   status: string;
 }
 
+// ============================================================================
+// PIX CHARGE TYPES (Cobrança - receber dinheiro)
+// ============================================================================
+
 /**
  * Request para criação de cobrança Pix
  */
@@ -66,6 +75,86 @@ export interface BtgPixChargeResponse {
   valor: number;
   status: string;
   expiracao: string;
+}
+
+// ============================================================================
+// PIX PAYMENT TYPES (Pagamento - enviar dinheiro) - E8 Fase 1.1
+// ============================================================================
+
+/**
+ * Request para pagamento Pix
+ */
+export interface BtgPixPaymentRequest {
+  beneficiaryName: string;
+  beneficiaryDocument: string;
+  pixKey: string;
+  amount: number;
+  description?: string;
+}
+
+/**
+ * Response de pagamento Pix BTG
+ */
+export interface BtgPixPaymentResponse {
+  id: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  transactionId?: string;
+  message: string;
+}
+
+// ============================================================================
+// DDA TYPES (Débito Direto Autorizado) - E8 Fase 1.1
+// ============================================================================
+
+/**
+ * DDA autorizado (representante/empresa autorizada a receber DDAs)
+ */
+export interface BtgDdaAuthorized {
+  id: string;
+  companyId: string;
+  creditorName: string;
+  creditorDocument: string;
+  status: string;
+  createdAt: string;
+}
+
+/**
+ * Débito DDA (boleto a pagar)
+ */
+export interface BtgDdaDebit {
+  id: string;
+  barcode: string;
+  digitableLine: string;
+  amount: number;
+  dueDate: string;
+  creditorName: string;
+  creditorDocument: string;
+  status: string;
+  description?: string;
+}
+
+/**
+ * Parâmetros para listar débitos DDA
+ */
+export interface BtgDdaDebitsParams {
+  companyId: string;
+  ddaId: string;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+  status?: string;
+}
+
+// ============================================================================
+// HEALTH CHECK TYPES - E8 Fase 1.1
+// ============================================================================
+
+/**
+ * Status de saúde da integração BTG
+ */
+export interface BtgHealthStatus {
+  healthy: boolean;
+  message: string;
+  checkedAt: Date;
 }
 
 /**
@@ -147,4 +236,45 @@ export interface IBtgClient {
    * @param chargeId ID da cobrança (txid)
    */
   cancelPixCharge(chargeId: string): Promise<void>;
+
+  // ========== Pix Payments (E8 Fase 1.1) ==========
+
+  /**
+   * Realiza pagamento via Pix (enviar dinheiro)
+   *
+   * Diferente de createPixCharge (que recebe), este método PAGA.
+   *
+   * @param data Dados do pagamento
+   * @returns Confirmação do pagamento
+   */
+  createPixPayment(data: BtgPixPaymentRequest): Promise<BtgPixPaymentResponse>;
+
+  // ========== DDA (E8 Fase 1.1) ==========
+
+  /**
+   * Lista DDAs autorizados para a empresa
+   *
+   * @param companyId ID da empresa no BTG
+   * @returns Lista de DDAs autorizados
+   */
+  listDdaAuthorized(companyId: string): Promise<BtgDdaAuthorized[]>;
+
+  /**
+   * Lista débitos (boletos) de um DDA específico
+   *
+   * @param params Parâmetros de busca
+   * @returns Lista de débitos DDA
+   */
+  listDdaDebits(params: BtgDdaDebitsParams): Promise<BtgDdaDebit[]>;
+
+  // ========== Health Check (E8 Fase 1.1) ==========
+
+  /**
+   * Verifica saúde da conexão com BTG
+   *
+   * Testa autenticação e conectividade básica.
+   *
+   * @returns Status de saúde
+   */
+  healthCheck(): Promise<BtgHealthStatus>;
 }

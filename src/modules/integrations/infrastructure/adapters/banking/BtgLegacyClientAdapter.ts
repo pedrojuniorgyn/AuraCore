@@ -19,6 +19,12 @@ import type {
   BtgBoletoResponse,
   BtgPixChargeRequest,
   BtgPixChargeResponse,
+  BtgPixPaymentRequest,
+  BtgPixPaymentResponse,
+  BtgDdaAuthorized,
+  BtgDdaDebit,
+  BtgDdaDebitsParams,
+  BtgHealthStatus,
 } from '../../../domain/ports/output/IBtgClient';
 
 // Imports dos serviços legados
@@ -38,6 +44,17 @@ import {
   invalidateBTGToken,
   isBTGTokenValid,
 } from '@/services/btg/btg-auth';
+// E8 Fase 1.1 - Novos imports
+import {
+  createBTGPixPayment,
+} from '@/services/btg/btg-payments';
+import {
+  listBTGDDAs,
+  listBTGDDADebits,
+} from '@/services/btg/btg-dda';
+import {
+  btgHealthCheck,
+} from '@/services/btg/btg-client';
 
 /**
  * Adapter para serviços BTG Pactual legados
@@ -124,5 +141,71 @@ export class BtgLegacyClientAdapter implements IBtgClient {
 
   async cancelPixCharge(chargeId: string): Promise<void> {
     await cancelBTGPixCharge(chargeId);
+  }
+
+  // ========== Pix Payments (E8 Fase 1.1) ==========
+
+  async createPixPayment(data: BtgPixPaymentRequest): Promise<BtgPixPaymentResponse> {
+    const response = await createBTGPixPayment({
+      beneficiaryName: data.beneficiaryName,
+      beneficiaryDocument: data.beneficiaryDocument,
+      pixKey: data.pixKey,
+      amount: data.amount,
+      description: data.description,
+    });
+    return {
+      id: response.id,
+      status: response.status as BtgPixPaymentResponse['status'],
+      transactionId: response.transactionId,
+      message: response.message,
+    };
+  }
+
+  // ========== DDA (E8 Fase 1.1) ==========
+
+  async listDdaAuthorized(companyId: string): Promise<BtgDdaAuthorized[]> {
+    const response = await listBTGDDAs(companyId);
+    return response.map((dda) => ({
+      id: dda.id,
+      companyId: dda.companyId,
+      creditorName: dda.creditorName,
+      creditorDocument: dda.creditorDocument,
+      status: dda.status,
+      createdAt: dda.createdAt,
+    }));
+  }
+
+  async listDdaDebits(params: BtgDdaDebitsParams): Promise<BtgDdaDebit[]> {
+    const response = await listBTGDDADebits(
+      params.companyId,
+      params.ddaId,
+      {
+        startDate: params.startDate,
+        endDate: params.endDate,
+        status: params.status,
+      }
+    );
+    return response.map((debit) => ({
+      id: debit.id,
+      barcode: debit.barcode,
+      digitableLine: debit.digitableLine,
+      amount: debit.amount,
+      dueDate: debit.dueDate,
+      creditorName: debit.creditorName,
+      creditorDocument: debit.creditorDocument,
+      status: debit.status,
+      description: debit.description,
+    }));
+  }
+
+  // ========== Health Check (E8 Fase 1.1) ==========
+
+  async healthCheck(): Promise<BtgHealthStatus> {
+    const isHealthy = await btgHealthCheck();
+    return {
+      healthy: isHealthy,
+      message: isHealthy ? 'BTG API está acessível' : 'BTG API não está acessível',
+      checkedAt: new Date(),
+    };
   }
 }

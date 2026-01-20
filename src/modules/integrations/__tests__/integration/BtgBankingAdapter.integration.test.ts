@@ -49,6 +49,41 @@ const mockBtgClient: IBtgClient = {
     expiracao: new Date(Date.now() + 1800000).toISOString(),
   }),
   cancelPixCharge: vi.fn().mockResolvedValue(undefined),
+  // E8 Fase 1.1 - Novos métodos
+  createPixPayment: vi.fn().mockResolvedValue({
+    id: 'PAY-123',
+    status: 'COMPLETED',
+    transactionId: 'TXN-456',
+    message: 'Pagamento realizado com sucesso',
+  }),
+  listDdaAuthorized: vi.fn().mockResolvedValue([
+    {
+      id: 'DDA-123',
+      companyId: 'COMP-1',
+      creditorName: 'Fornecedor ABC',
+      creditorDocument: '12345678000199',
+      status: 'ACTIVE',
+      createdAt: '2024-01-01T00:00:00Z',
+    },
+  ]),
+  listDdaDebits: vi.fn().mockResolvedValue([
+    {
+      id: 'DEBIT-123',
+      barcode: '12345678901234567890123456789012345678901234',
+      digitableLine: '12345.67890 12345.678901 12345.678901 1 12340000010000',
+      amount: 100,
+      dueDate: '2024-12-31',
+      creditorName: 'Fornecedor XYZ',
+      creditorDocument: '98765432000188',
+      status: 'PENDING',
+      description: 'Fatura mensal',
+    },
+  ]),
+  healthCheck: vi.fn().mockResolvedValue({
+    healthy: true,
+    message: 'BTG API está acessível',
+    checkedAt: new Date(),
+  }),
 };
 
 describe('BtgBankingAdapter Integration', () => {

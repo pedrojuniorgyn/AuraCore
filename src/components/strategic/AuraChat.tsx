@@ -19,6 +19,27 @@ interface Message {
   isError?: boolean;
 }
 
+// Bug 1 Fix: Contador monotônico para evitar colisão de IDs
+let messageIdCounter = 0;
+function generateMessageId(prefix: string): string {
+  messageIdCounter += 1;
+  return `${prefix}-${Date.now()}-${messageIdCounter}`;
+}
+
+// Bug 2 Fix: Type guard para validar resposta da API
+interface ChatApiResponse {
+  response?: string;
+  actions?: ChatAction[];
+  context?: {
+    healthScore?: number;
+    criticalKpis?: number;
+  };
+}
+
+function isValidChatResponse(data: unknown): data is ChatApiResponse {
+  return typeof data === 'object' && data !== null;
+}
+
 const SUGGESTIONS = [
   'Qual o status geral da estratégia?',
   'Quais KPIs estão críticos?',
@@ -58,7 +79,7 @@ export function AuraChat() {
     if (!messageText.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: generateMessageId('user'),
       role: 'user',
       content: messageText,
       timestamp: new Date(),
@@ -79,21 +100,26 @@ export function AuraChat() {
         throw new Error('Falha na comunicação');
       }
 
-      const data = await response.json();
+      const data: unknown = await response.json();
+
+      // Bug 2 Fix: Validar resposta antes de usar
+      if (!isValidChatResponse(data)) {
+        throw new Error('Resposta inválida do servidor');
+      }
 
       const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
+        id: generateMessageId('assistant'),
         role: 'assistant',
-        content: data.response,
+        content: data.response ?? 'Desculpe, não consegui processar sua pergunta.',
         timestamp: new Date(),
-        actions: data.actions,
+        actions: Array.isArray(data.actions) ? data.actions : undefined,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
-        id: `error-${Date.now()}`,
+        id: generateMessageId('error'),
         role: 'assistant',
         content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
         timestamp: new Date(),
