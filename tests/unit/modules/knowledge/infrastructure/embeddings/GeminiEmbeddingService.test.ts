@@ -79,7 +79,7 @@ describe('GeminiEmbeddingService', () => {
     it('deve usar valores padrão quando não especificados', () => {
       const svc = new GeminiEmbeddingService({ apiKey: 'test-key' });
       expect(svc.getDimension()).toBe(768);
-      expect(svc.getModelName()).toBe('embedding-004');
+      expect(svc.getModelName()).toBe('text-embedding-004');
     });
 
     it('deve aceitar modelo customizado', () => {
@@ -96,7 +96,7 @@ describe('GeminiEmbeddingService', () => {
   // ===========================================================================
 
   describe('getDimension', () => {
-    it('deve retornar 768 (embedding-004)', () => {
+    it('deve retornar 768 (text-embedding-004)', () => {
       const service = new GeminiEmbeddingService({ apiKey: 'test-key' });
       expect(service.getDimension()).toBe(768);
     });
@@ -105,7 +105,7 @@ describe('GeminiEmbeddingService', () => {
   describe('getModelName', () => {
     it('deve retornar nome do modelo padrão', () => {
       const service = new GeminiEmbeddingService({ apiKey: 'test-key' });
-      expect(service.getModelName()).toBe('embedding-004');
+      expect(service.getModelName()).toBe('text-embedding-004');
     });
   });
 

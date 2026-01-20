@@ -234,7 +234,7 @@ async function generateQueryEmbedding(query: string, apiKey: string): Promise<nu
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const client = new GoogleGenerativeAI(apiKey);
     const embeddingModel = client.getGenerativeModel({
-      model: process.env.GEMINI_EMBEDDING_MODEL ?? 'embedding-004',
+      model: process.env.GEMINI_EMBEDDING_MODEL ?? 'text-embedding-004',
     });
 
     const embeddingResponse = await embeddingModel.embedContent({

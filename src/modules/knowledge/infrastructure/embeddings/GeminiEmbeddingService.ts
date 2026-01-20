@@ -5,7 +5,7 @@
  * @see Phase D.1 - Embedding Service Implementation
  *
  * Características:
- * - Modelo: embedding-004 (768 dimensões)
+ * - Modelo: text-embedding-004 (768 dimensões)
  * - Suporte nativo a português
  * - Batch processing até 100 textos
  * - Cache em memória com TTL
@@ -25,7 +25,7 @@ import type { IEmbeddingService } from '../../domain/ports/output/IEmbeddingServ
 interface GeminiEmbeddingConfig {
   /** API Key do Google AI (obrigatória) */
   apiKey: string;
-  /** Modelo de embedding (default: embedding-004) */
+  /** Modelo de embedding (default: text-embedding-004) */
   model?: string;
   /** Tamanho máximo de batch (default: 100) */
   maxBatchSize?: number;
@@ -71,7 +71,7 @@ export class GeminiEmbeddingService implements IEmbeddingService {
     }
 
     this.client = new GoogleGenerativeAI(config.apiKey);
-    this.model = config.model ?? 'embedding-004';
+    this.model = config.model ?? 'text-embedding-004';
     this.maxBatchSize = config.maxBatchSize ?? 100;
     this.cacheTTL = (config.cacheTTL ?? 3600) * 1000; // Converter para ms
     this.cache = new Map();
@@ -180,7 +180,7 @@ export class GeminiEmbeddingService implements IEmbeddingService {
   /**
    * Retorna dimensão do embedding
    *
-   * embedding-004 = 768 dimensões
+   * text-embedding-004 = 768 dimensões
    */
   getDimension(): number {
     return 768;

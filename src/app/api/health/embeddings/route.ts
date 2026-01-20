@@ -152,7 +152,7 @@ async function checkGeminiEmbedding(): Promise<ServiceStatus> {
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const client = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    const modelName = process.env.GEMINI_EMBEDDING_MODEL ?? 'embedding-004';
+    const modelName = process.env.GEMINI_EMBEDDING_MODEL ?? 'text-embedding-004';
     const model = client.getGenerativeModel({ model: modelName });
 
     const response = await model.embedContent({

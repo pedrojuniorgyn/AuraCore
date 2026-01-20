@@ -158,7 +158,7 @@ describe.skipIf(SKIP)('GeminiEmbeddingService - Integration', () => {
     });
 
     it('deve retornar nome do modelo', () => {
-      expect(service.getModelName()).toBe('embedding-004');
+      expect(service.getModelName()).toBe('text-embedding-004');
     });
 
     it('deve retornar estatísticas', async () => {

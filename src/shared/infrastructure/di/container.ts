@@ -88,7 +88,7 @@ container.register<IEmbeddingService>(TOKENS.KnowledgeEmbeddingService, {
     const gemini = geminiKey
       ? new GeminiEmbeddingService({
           apiKey: geminiKey,
-          model: process.env.GEMINI_EMBEDDING_MODEL ?? 'embedding-004',
+          model: process.env.GEMINI_EMBEDDING_MODEL ?? 'text-embedding-004',
           maxBatchSize: parseInt(process.env.GEMINI_BATCH_SIZE ?? '100', 10),
           cacheTTL: parseInt(process.env.GEMINI_CACHE_TTL ?? '3600', 10),
         })

@@ -80,7 +80,7 @@ export async function GET(): Promise<NextResponse<StatsResponse>> {
       fallbackProvider: process.env.OPENAI_API_KEY ? 'openai' : 'none',
       fallbackEnabled: process.env.EMBEDDING_FALLBACK_ENABLED === 'true',
       models: {
-        gemini: process.env.GEMINI_EMBEDDING_MODEL ?? 'embedding-004',
+        gemini: process.env.GEMINI_EMBEDDING_MODEL ?? 'text-embedding-004',
         openai: process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-3-small',
       },
     },
