@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useId } from 'react';
+import { useState, useId, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, MessageCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
@@ -34,15 +34,37 @@ export function AuroraInsightWidget({ insight, isLoading = false, onRefresh }: P
   // useId gera ID único e estável por instância (React 18+)
   const instanceId = useId();
   
-  // FIX Bug 2: Índice baseado no ID da instância - estável e único
-  const [currentInsight, setCurrentInsight] = useState<string>(() => {
-    if (insight) return insight;
+  // FIX Bug 2: Função para obter insight default baseado no ID da instância
+  const getDefaultInsight = useCallback(() => {
     const index = hashStringToIndex(instanceId, defaultInsights.length);
     return defaultInsights[index];
-  });
+  }, [instanceId]);
+
+  // State para insight local (usado quando não há prop ou após refresh)
+  // FIX Bug 2 & 3: Prop insight sempre tem precedência sobre state
+  const [localInsight, setLocalInsight] = useState<string>(() => getDefaultInsight());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = async () => {
+  // FIX Bug 4: Selecionar próximo insight com precedência clara
+  const selectNextInsight = useCallback(() => {
+    const displayedInsight = insight || localInsight;
+    const currentIndex = defaultInsights.indexOf(displayedInsight);
+    
+    // Se insight atual não é default (veio de prop externa), começar do índice baseado em hash
+    if (currentIndex === -1) {
+      return getDefaultInsight();
+    }
+    
+    // Calcular próximo índice de forma determinística
+    // Precedência explícita: (Date.now() % (len - 1)) é calculado primeiro
+    const len = defaultInsights.length;
+    const offset = 1 + (Date.now() % Math.max(1, len - 1));
+    const nextIndex = (currentIndex + offset) % len;
+    
+    return defaultInsights[nextIndex];
+  }, [insight, localInsight, getDefaultInsight]);
+
+  const handleRefresh = useCallback(async () => {
     if (onRefresh) {
       onRefresh();
       return;
@@ -51,15 +73,15 @@ export function AuroraInsightWidget({ insight, isLoading = false, onRefresh }: P
     setIsRefreshing(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Selecionar insight diferente do atual usando timestamp
-    const currentIndex = defaultInsights.indexOf(currentInsight);
-    const newIndex = (currentIndex + 1 + Date.now() % (defaultInsights.length - 1)) % defaultInsights.length;
-    
-    setCurrentInsight(defaultInsights[newIndex]);
+    // FIX Bug 4: Usar função com precedência clara
+    const newInsight = selectNextInsight();
+    setLocalInsight(newInsight);
     setIsRefreshing(false);
-  };
+  }, [onRefresh, selectNextInsight]);
 
-  const displayInsight = insight || currentInsight;
+  // FIX Bug 2 & 3: Prop insight sempre tem precedência sobre localInsight
+  const displayInsight = insight || localInsight;
+
   const showLoading = isLoading || isRefreshing;
 
   return (
