@@ -26,13 +26,14 @@ import {
   type LucideIcon 
 } from 'lucide-react';
 
-type PerspectiveType = 'FINANCIAL' | 'CUSTOMER' | 'INTERNAL_PROCESS' | 'LEARNING_GROWTH';
+// Código de perspectiva BSC (FIN, CLI, INT, LRN)
+type PerspectiveCode = 'FIN' | 'CLI' | 'INT' | 'LRN';
 
 interface GoalData {
   id: string;
   code: string;
   description: string;
-  perspectiveId: string;
+  perspectiveId: string; // Agora é o código da perspectiva (FIN, CLI, INT, LRN)
   progress: number;
   status: 'ON_TRACK' | 'AT_RISK' | 'DELAYED' | 'NOT_STARTED' | 'COMPLETED';
   targetValue: number;
@@ -48,31 +49,32 @@ interface StrategicMapProps {
   onGoalClick?: (goalId: string) => void;
 }
 
-const perspectiveConfig: Record<PerspectiveType, {
+// Configuração de perspectivas usando código BSC (FIN, CLI, INT, LRN)
+const perspectiveConfig: Record<PerspectiveCode, {
   icon: LucideIcon;
   label: string;
   color: string;
   yPosition: number;
 }> = {
-  FINANCIAL: {
+  FIN: {
     icon: DollarSign,
     label: 'Financeira',
-    color: '#10b981',
+    color: '#fbbf24',
     yPosition: 50,
   },
-  CUSTOMER: {
+  CLI: {
     icon: Users,
     label: 'Cliente',
     color: '#3b82f6',
     yPosition: 250,
   },
-  INTERNAL_PROCESS: {
+  INT: {
     icon: Cog,
     label: 'Processos Internos',
-    color: '#f59e0b',
+    color: '#22c55e',
     yPosition: 450,
   },
-  LEARNING_GROWTH: {
+  LRN: {
     icon: GraduationCap,
     label: 'Aprendizado e Crescimento',
     color: '#a855f7',
@@ -84,38 +86,39 @@ const nodeTypes = {
   goalNode: GoalNode,
 };
 
-function getPerspectiveFromId(perspectiveId: string): PerspectiveType {
-  // Map perspectiveId to type (adjust based on your data)
-  const mapping: Record<string, PerspectiveType> = {
-    'financial': 'FINANCIAL',
-    'customer': 'CUSTOMER',
-    'internal': 'INTERNAL_PROCESS',
-    'learning': 'LEARNING_GROWTH',
-  };
+/**
+ * Normaliza o código de perspectiva para um dos valores válidos
+ */
+function normalizePerspectiveCode(perspectiveId: string): PerspectiveCode {
+  const code = perspectiveId.toUpperCase();
   
-  // Try to find by keyword in the ID
-  const lowerId = perspectiveId.toLowerCase();
-  if (lowerId.includes('financ')) return 'FINANCIAL';
-  if (lowerId.includes('client') || lowerId.includes('customer')) return 'CUSTOMER';
-  if (lowerId.includes('process') || lowerId.includes('internal')) return 'INTERNAL_PROCESS';
-  if (lowerId.includes('learn') || lowerId.includes('growth')) return 'LEARNING_GROWTH';
+  // Verificar se já é um código válido
+  if (code === 'FIN' || code === 'CLI' || code === 'INT' || code === 'LRN') {
+    return code;
+  }
   
-  return mapping[perspectiveId] || 'FINANCIAL';
+  // Fallback para casos legados (não deve acontecer com a nova API)
+  if (code.includes('FINANC') || code.startsWith('FIN')) return 'FIN';
+  if (code.includes('CLIENT') || code.includes('CUSTOMER') || code.startsWith('CLI')) return 'CLI';
+  if (code.includes('PROCESS') || code.includes('INTERNAL') || code.startsWith('INT')) return 'INT';
+  if (code.includes('LEARN') || code.includes('GROWTH') || code.startsWith('LRN')) return 'LRN';
+  
+  return 'FIN'; // Default fallback
 }
 
 export function StrategicMap({ goals, onGoalClick }: StrategicMapProps) {
-  // Group goals by perspective
+  // Group goals by perspective code
   const goalsByPerspective = useMemo(() => {
-    const groups: Record<PerspectiveType, GoalData[]> = {
-      FINANCIAL: [],
-      CUSTOMER: [],
-      INTERNAL_PROCESS: [],
-      LEARNING_GROWTH: [],
+    const groups: Record<PerspectiveCode, GoalData[]> = {
+      FIN: [],
+      CLI: [],
+      INT: [],
+      LRN: [],
     };
 
     goals.forEach(goal => {
-      const perspective = getPerspectiveFromId(goal.perspectiveId);
-      groups[perspective].push(goal);
+      const perspectiveCode = normalizePerspectiveCode(goal.perspectiveId);
+      groups[perspectiveCode].push(goal);
     });
 
     return groups;
@@ -126,7 +129,7 @@ export function StrategicMap({ goals, onGoalClick }: StrategicMapProps) {
     const nodes: Node[] = [];
     
     Object.entries(goalsByPerspective).forEach(([perspective, perspectiveGoals]) => {
-      const config = perspectiveConfig[perspective as PerspectiveType];
+      const config = perspectiveConfig[perspective as PerspectiveCode];
       
       perspectiveGoals.forEach((goal, index) => {
         nodes.push({

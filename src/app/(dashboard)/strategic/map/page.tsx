@@ -25,86 +25,136 @@ import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { StrategicMap } from '@/components/strategic/StrategicMap';
 
-interface Goal {
+// Tipos que correspondem à resposta da API /api/strategic/map
+interface MapNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: {
+    code: string;
+    description: string;
+    perspectiveCode: string; // FIN, CLI, INT, LRN
+    cascadeLevel: string;
+    targetValue: number;
+    currentValue: number;
+    unit: string;
+    status: string;
+    statusColor: string;
+    progress: number;
+    color: string;
+    ownerUserId: string;
+  };
+}
+
+interface MapEdge {
+  id: string;
+  source: string;
+  target: string;
+}
+
+interface MapApiResponse {
+  strategyId?: string;
+  strategyName?: string;
+  nodes: MapNode[];
+  edges: MapEdge[];
+  perspectives: Array<{
+    code: string;
+    name: string;
+    color: string;
+    y: number;
+  }>;
+  summary?: {
+    totalGoals: number;
+    byStatus: Record<string, number>;
+  };
+}
+
+// Formato para o componente StrategicMap
+interface GoalForMap {
   id: string;
   code: string;
   description: string;
-  perspectiveId: string;
+  perspectiveId: string; // Código da perspectiva (FIN, CLI, INT, LRN)
   progress: number;
   status: 'ON_TRACK' | 'AT_RISK' | 'DELAYED' | 'NOT_STARTED' | 'COMPLETED';
   targetValue: number;
   currentValue: number;
   unit: string;
   parentGoalId: string | null;
-  ownerUserId: string;
-}
-
-interface GoalWithKpiCount extends Goal {
   kpiCount: number;
   ownerName?: string;
 }
 
-// Mapeamento explícito de filtros para perspectivas
-const PERSPECTIVE_FILTER_MAP = {
-  financ: 'FINANCIAL',
-  client: 'CUSTOMER',
-  process: 'INTERNAL_PROCESS',
-  learn: 'LEARNING_GROWTH',
+// Mapeamento de filtro para código de perspectiva
+const PERSPECTIVE_FILTER_TO_CODE = {
+  FIN: 'FIN',
+  CLI: 'CLI',
+  INT: 'INT',
+  LRN: 'LRN',
 } as const;
 
-type PerspectiveFilterKey = keyof typeof PERSPECTIVE_FILTER_MAP;
+type PerspectiveCode = keyof typeof PERSPECTIVE_FILTER_TO_CODE;
 
 export default function StrategicMapPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [goals, setGoals] = useState<GoalWithKpiCount[]>([]);
+  const [goals, setGoals] = useState<GoalForMap[]>([]);
+  const [edges, setEdges] = useState<MapEdge[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [perspectiveFilter, setPerspectiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchGoals();
+    fetchMapData();
   }, []);
 
-  const fetchGoals = async () => {
+  const fetchMapData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/goals?pageSize=100');
+      // Usar a API /api/strategic/map que já retorna perspectiveCode
+      const response = await fetch('/api/strategic/map');
       if (response.ok) {
-        const result = await response.json();
+        const result: MapApiResponse = await response.json();
         
-        // Transform API response to map format
-        const goalsWithCount: GoalWithKpiCount[] = result.items.map((goal: Record<string, unknown>) => ({
-          id: goal.id as string,
-          code: goal.code as string,
-          description: goal.description as string,
-          perspectiveId: goal.perspectiveId as string,
-          progress: (goal.progress as number) ?? ((goal.currentValue as number) / (goal.targetValue as number || 1)) * 100,
-          status: mapStatus(goal.status as string),
-          targetValue: goal.targetValue as number,
-          currentValue: goal.currentValue as number,
-          unit: goal.unit as string,
-          parentGoalId: (goal.parentGoalId as string) ?? null,
-          ownerUserId: goal.ownerUserId as string,
-          kpiCount: 3, // TODO: Fetch real KPI count
-          ownerName: 'Responsável', // TODO: Fetch owner name
+        // Transformar nodes para o formato esperado pelo StrategicMap
+        const goalsFromNodes: GoalForMap[] = result.nodes.map((node) => ({
+          id: node.id,
+          code: node.data.code,
+          description: node.data.description,
+          perspectiveId: node.data.perspectiveCode, // Usar o código (FIN, CLI, INT, LRN)
+          progress: node.data.progress,
+          status: mapStatus(node.data.status),
+          targetValue: node.data.targetValue,
+          currentValue: node.data.currentValue,
+          unit: node.data.unit,
+          parentGoalId: findParentFromEdges(node.id, result.edges),
+          kpiCount: 3, // TODO: Buscar contagem real
+          ownerName: 'Responsável',
         }));
 
-        setGoals(goalsWithCount);
+        setGoals(goalsFromNodes);
+        setEdges(result.edges);
       }
     } catch (error) {
-      console.error('Erro ao carregar objetivos:', error);
+      console.error('Erro ao carregar mapa estratégico:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const mapStatus = (status: string): GoalWithKpiCount['status'] => {
-    const statusMap: Record<string, GoalWithKpiCount['status']> = {
+  // Encontrar parentGoalId a partir das edges
+  const findParentFromEdges = (goalId: string, edges: MapEdge[]): string | null => {
+    const edge = edges.find(e => e.target === goalId);
+    return edge?.source ?? null;
+  };
+
+  const mapStatus = (status: string): GoalForMap['status'] => {
+    const statusMap: Record<string, GoalForMap['status']> = {
       'ON_TRACK': 'ON_TRACK',
       'AT_RISK': 'AT_RISK',
       'DELAYED': 'DELAYED',
       'NOT_STARTED': 'NOT_STARTED',
       'COMPLETED': 'COMPLETED',
+      'ACHIEVED': 'COMPLETED',
     };
     return statusMap[status] || 'NOT_STARTED';
   };
@@ -113,12 +163,12 @@ export default function StrategicMapPage() {
     router.push(`/strategic/goals/${goalId}`);
   }, [router]);
 
+  // Filtrar usando perspectiveId que agora é o código (FIN, CLI, INT, LRN)
   const filteredGoals = goals.filter((goal) => {
     if (statusFilter !== 'all' && goal.status !== statusFilter) return false;
     if (perspectiveFilter !== 'all') {
-      // Usar mapeamento explícito ao invés de includes() para evitar matches falsos
-      const expectedPerspective = PERSPECTIVE_FILTER_MAP[perspectiveFilter as PerspectiveFilterKey];
-      if (expectedPerspective && goal.perspectiveId !== expectedPerspective) {
+      // Comparação direta com o código da perspectiva
+      if (goal.perspectiveId !== perspectiveFilter) {
         return false;
       }
     }
@@ -157,7 +207,7 @@ export default function StrategicMapPage() {
             <Flex className="gap-3">
               <RippleButton 
                 variant="outline" 
-                onClick={fetchGoals}
+                onClick={fetchMapData}
                 disabled={loading}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -207,10 +257,10 @@ export default function StrategicMapPage() {
                   placeholder="Perspectiva"
                 >
                   <SelectItem value="all">Todas Perspectivas</SelectItem>
-                  <SelectItem value="financ">Financeira</SelectItem>
-                  <SelectItem value="client">Cliente</SelectItem>
-                  <SelectItem value="process">Processos</SelectItem>
-                  <SelectItem value="learn">Aprendizado</SelectItem>
+                  <SelectItem value="FIN">Financeira</SelectItem>
+                  <SelectItem value="CLI">Cliente</SelectItem>
+                  <SelectItem value="INT">Processos</SelectItem>
+                  <SelectItem value="LRN">Aprendizado</SelectItem>
                 </Select>
               </Flex>
             </Flex>
