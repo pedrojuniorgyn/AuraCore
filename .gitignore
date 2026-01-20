@@ -82,3 +82,17 @@ test-*.mjs
 
 # E7.11 Test environment (create .env.test locally from .env.test.example)
 .env.test
+
+# ===== Knowledge Base Data =====
+# Manter apenas os arquivos de exemplo commitados
+# Dados adicionais de legislação podem conter informações sensíveis
+
+# Ignorar arquivos de dados gerados
+data/knowledge/**/*.json
+data/knowledge/**/*.jsonl
+data/knowledge/**/*.csv
+
+# Manter estrutura e exemplos de legislação
+!data/knowledge/legislation/
+!data/knowledge/legislation/**/*.md
+!data/knowledge/legislation/**/*.txt
