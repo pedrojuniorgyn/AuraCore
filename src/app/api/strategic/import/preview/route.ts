@@ -46,12 +46,34 @@ export async function POST(request: Request) {
 
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: 'array' });
+
+    // FIX Bug 2: Verificar se há sheets no arquivo
+    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      return NextResponse.json({ 
+        error: 'O arquivo não contém nenhuma planilha válida' 
+      }, { status: 400 });
+    }
+
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
+    
+    // FIX: Verificar se a sheet existe
+    if (!sheet) {
+      return NextResponse.json({ 
+        error: 'A planilha está vazia ou corrompida' 
+      }, { status: 400 });
+    }
+
     const data = XLSX.utils.sheet_to_json<ParsedRow>(sheet, { defval: null });
 
-    if (!data.length) {
-      return NextResponse.json({ error: 'File is empty or has no data rows' }, { status: 400 });
+    // FIX: Verificar se há dados na planilha
+    if (!data || data.length === 0) {
+      return NextResponse.json({
+        headers: [],
+        rows: [],
+        totalRows: 0,
+        errors: ['A planilha não contém dados'],
+      });
     }
 
     const headers = Object.keys(data[0]);

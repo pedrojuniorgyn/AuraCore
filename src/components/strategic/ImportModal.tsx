@@ -29,14 +29,17 @@ interface RequiredField {
   label: string;
 }
 
+export type ImportEntityType = 'kpi' | 'action-plan' | 'pdca' | 'goal' | 'swot';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (data: ParsedRow[], mapping: Record<string, string>) => Promise<void>;
+  entityType: ImportEntityType;
+  onImport: (data: ParsedRow[], mapping: Record<string, string>, entityType: ImportEntityType) => Promise<void>;
   requiredFields: RequiredField[];
 }
 
-export function ImportModal({ isOpen, onClose, onImport, requiredFields }: Props) {
+export function ImportModal({ isOpen, onClose, entityType, onImport, requiredFields }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
@@ -99,7 +102,8 @@ export function ImportModal({ isOpen, onClose, onImport, requiredFields }: Props
 
     setIsImporting(true);
     try {
-      await onImport(preview.rows, mapping);
+      // FIX Bug 3: Passar entityType para o callback
+      await onImport(preview.rows, mapping, entityType);
       setIsComplete(true);
       setTimeout(() => {
         setIsComplete(false);
