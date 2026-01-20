@@ -135,6 +135,11 @@ export default function SwotMatrixPage() {
   };
 
   const handleItemClick = useCallback((item: SwotItem) => {
+    // Validar ID antes de navegar
+    if (!item.id) {
+      console.error('Item SWOT sem ID válido:', item);
+      return;
+    }
     // Navegar para página de edição do item SWOT
     router.push(`/strategic/swot/${item.id}`);
   }, [router]);

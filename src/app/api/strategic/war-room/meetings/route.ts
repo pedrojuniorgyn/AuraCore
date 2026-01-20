@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Buscar nomes dos facilitadores
-    const facilitatorIds = [...new Set(items.map(m => m.facilitatorUserId).filter(Boolean))];
-    const facilitatorNames: Record<string, string> = {};
+    const facilitatorIds = [...new Set(items.map(m => m.facilitatorUserId).filter(Boolean))] as string[];
+    const facilitatorNames: Record<string, string | null> = {};
     
     if (facilitatorIds.length > 0) {
       const facilitators = await db
@@ -69,9 +69,21 @@ export async function GET(request: NextRequest) {
         .from(users)
         .where(inArray(users.id, facilitatorIds));
       
+      // Inicializar todos os IDs com null
+      for (const userId of facilitatorIds) {
+        facilitatorNames[userId] = null;
+      }
+      
+      // Preencher com nomes encontrados
       for (const f of facilitators) {
-        if (f.name) {
-          facilitatorNames[f.id] = f.name;
+        facilitatorNames[f.id] = f.name ?? null;
+      }
+      
+      // Log de warning para IDs sem user record (DATA_CONSISTENCY)
+      const foundIds = new Set(facilitators.map(f => f.id));
+      for (const userId of facilitatorIds) {
+        if (!foundIds.has(userId)) {
+          console.warn(`[DATA_CONSISTENCY] Facilitator ID ${userId} não encontrado na tabela users`);
         }
       }
     }

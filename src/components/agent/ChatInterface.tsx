@@ -9,7 +9,7 @@
  * @see E-Agent-Fase6
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Mic, MicOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,10 @@ export function ChatInterface({ sessionId, onSessionCreated }: ChatInterfaceProp
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const recordingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Limite máximo de gravação em segundos
+  const MAX_RECORDING_SECONDS = 30;
 
   const {
     messages,
@@ -60,17 +64,39 @@ export function ChatInterface({ sessionId, onSessionCreated }: ChatInterfaceProp
     }
   };
 
-  const toggleRecording = () => {
+  // Cleanup do timeout de gravação no unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Usar função updater para evitar dependência em isRecording
+  // Isso torna o callback estável (não recria em cada mudança de estado)
+  const toggleRecording = useCallback(() => {
     // Voice recording - feature em desenvolvimento
     // Quando implementado, usará Web Audio API + Whisper para transcrição
-    if (isRecording) {
-      setIsRecording(false);
-    } else {
-      setIsRecording(true);
-      // Simular gravação por enquanto - feedback visual ativo
-      setTimeout(() => setIsRecording(false), 3000);
-    }
-  };
+    setIsRecording(prev => {
+      if (prev) {
+        // Estava gravando, parar
+        if (recordingTimeoutRef.current) {
+          clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+        return false;
+      } else {
+        // Não estava gravando, iniciar
+        // Limitar tempo máximo de gravação com cleanup adequado
+        recordingTimeoutRef.current = setTimeout(() => {
+          setIsRecording(false);
+          recordingTimeoutRef.current = null;
+        }, MAX_RECORDING_SECONDS * 1000);
+        return true;
+      }
+    });
+  }, []); // ✅ Sem dependências - callback estável
 
   return (
     <div className="flex flex-col h-full">

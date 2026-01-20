@@ -306,4 +306,57 @@ export class ActionPlan extends AggregateRoot<string> {
     this.touch();
     return Result.ok(undefined);
   }
+
+  /**
+   * Atualiza o status do plano de ação
+   * Valida transições permitidas
+   */
+  updateStatus(newStatus: ActionPlanStatus): Result<void, string> {
+    const currentStatus = this.props.status;
+    
+    // Validar transições permitidas
+    const allowedTransitions: Record<ActionPlanStatus, ActionPlanStatus[]> = {
+      'DRAFT': ['PENDING', 'CANCELLED'],
+      'PENDING': ['IN_PROGRESS', 'BLOCKED', 'CANCELLED'],
+      'IN_PROGRESS': ['COMPLETED', 'BLOCKED', 'CANCELLED', 'PENDING'],
+      'BLOCKED': ['IN_PROGRESS', 'CANCELLED', 'PENDING'],
+      'COMPLETED': [], // Status final, não permite transição
+      'CANCELLED': [], // Status final, não permite transição
+    };
+
+    if (currentStatus === newStatus) {
+      return Result.ok(undefined); // Mesmo status, nada a fazer
+    }
+
+    const allowed = allowedTransitions[currentStatus];
+    if (!allowed.includes(newStatus)) {
+      return Result.fail(
+        `Transição de status não permitida: ${currentStatus} → ${newStatus}`
+      );
+    }
+
+    (this.props as { status: ActionPlanStatus }).status = newStatus;
+    
+    // Se completou, ajustar progresso
+    if (newStatus === 'COMPLETED') {
+      (this.props as { completionPercent: number }).completionPercent = 100;
+    }
+    
+    this.touch();
+    
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'ACTION_PLAN_STATUS_CHANGED',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'ActionPlan',
+      payload: { 
+        planCode: this.code,
+        previousStatus: currentStatus,
+        newStatus,
+      },
+    });
+    
+    return Result.ok(undefined);
+  }
 }

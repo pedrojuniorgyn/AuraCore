@@ -11,9 +11,12 @@ Extrai:
 """
 
 import re
+import asyncio
+import atexit
 from typing import Optional, List
 from dataclasses import dataclass, field
 from decimal import Decimal
+from concurrent.futures import ThreadPoolExecutor
 
 from src.core.observability import get_logger
 from src.services.document_processing.docling_processor import (
@@ -23,6 +26,23 @@ from src.services.document_processing.docling_processor import (
 )
 
 logger = get_logger(__name__)
+
+# Module-level executor singleton com cleanup automático
+_executor: Optional[ThreadPoolExecutor] = None
+
+
+def _get_executor() -> ThreadPoolExecutor:
+    """
+    Retorna executor singleton com cleanup registrado.
+    
+    Usa atexit para garantir shutdown graceful do executor
+    quando o processo Python termina.
+    """
+    global _executor
+    if _executor is None:
+        _executor = ThreadPoolExecutor(max_workers=4)
+        atexit.register(_executor.shutdown, wait=False)
+    return _executor
 
 
 @dataclass
@@ -154,8 +174,14 @@ class DanfeExtractor:
                 error=doc_result.error
             )
         
-        # Extrair dados
-        return self._extract_data(doc_result)
+        # Extrair dados em thread separada para não bloquear event loop
+        # _extract_data é CPU-bound (regex), então usamos executor
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            _get_executor(),
+            self._extract_data,
+            doc_result
+        )
     
     async def extract_from_bytes(
         self,
@@ -180,7 +206,13 @@ class DanfeExtractor:
                 error=doc_result.error
             )
         
-        return self._extract_data(doc_result)
+        # Extrair dados em thread separada para não bloquear event loop
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            _get_executor(),
+            self._extract_data,
+            doc_result
+        )
     
     def _extract_data(self, doc_result: ProcessedDocument) -> DanfeExtractionResult:
         """Extrai dados do documento processado."""

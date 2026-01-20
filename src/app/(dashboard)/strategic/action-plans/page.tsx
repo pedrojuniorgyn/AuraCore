@@ -157,7 +157,7 @@ export default function ActionPlansPage() {
       console.error('Erro ao atualizar status:', error);
       throw error;
     }
-  }, []);
+  }, [fetchActionPlans]);
 
   const handleCardClick = useCallback((planId: string) => {
     router.push(`/strategic/action-plans/${planId}`);

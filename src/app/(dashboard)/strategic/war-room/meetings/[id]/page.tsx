@@ -132,8 +132,9 @@ export default function MeetingDetailPage({
         const found = data.items.find((m: { id: string }) => m.id === id);
         if (found) {
           // Simular dados completos até API de detalhe estar disponível
-          setMeeting({
+          const meetingDetail: MeetingDetail = {
             ...found,
+            facilitatorName: found.facilitatorName ?? null, // Explicitamente tratar null
             participants: [],
             agendaItems: [
               { id: '1', title: 'Abertura e contextualização', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 1 },
@@ -143,7 +144,8 @@ export default function MeetingDetailPage({
               { id: '5', title: 'Encerramento e próximos passos', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 5 },
             ],
             decisions: [],
-          });
+          };
+          setMeeting(meetingDetail);
         } else {
           router.push('/strategic/war-room/meetings');
         }

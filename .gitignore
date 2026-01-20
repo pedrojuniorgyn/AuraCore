@@ -96,3 +96,6 @@ data/knowledge/**/*.csv
 !data/knowledge/legislation/
 !data/knowledge/legislation/**/*.md
 !data/knowledge/legislation/**/*.txt
+
+# Generated reports (auto-generated, should not be committed)
+frontend-analysis-report-*.md

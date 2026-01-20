@@ -60,7 +60,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const documentType = (formData.get('documentType') as string) || 'auto';
-    const validateSefaz = formData.get('validateSefaz') === 'true';
+    // validateSefaz: default true (consistente com backend Python)
+    const validateSefazParam = formData.get('validateSefaz');
+    const validateSefaz = validateSefazParam === null 
+      ? true  // Default true (igual ao backend)
+      : validateSefazParam === 'true';
     const createRecord = formData.get('createRecord') === 'true';
 
     if (!file) {
@@ -91,13 +95,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString('base64');
 
-    // 4. Chamar Fiscal Agent via tool endpoint
+    // 4. Validar branch_id (NUNCA usar organizationId como fallback - tipos diferentes!)
+    if (!session.user.defaultBranchId) {
+      return NextResponse.json(
+        { error: 'Branch não configurado para o usuário. Configure um branch padrão nas configurações.' },
+        { status: 400 }
+      );
+    }
+
+    // 5. Chamar Fiscal Agent via tool endpoint
     const response = await fetch(`${AGENTS_API_URL}/api/v1/tools/fiscal/document_importer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         organization_id: session.user.organizationId,
-        branch_id: session.user.defaultBranchId || session.user.organizationId,
+        branch_id: session.user.defaultBranchId,
         document_type: documentType,
         file_base64: base64,
         validate_sefaz: validateSefaz,
