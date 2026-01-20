@@ -1,8 +1,14 @@
 /**
  * ✅ OPÇÃO A - BLOCO 4: CTe PROCESSOR
- * 
+ *
  * Processa CTes importados da Sefaz (externos - Multicte/bsoft)
  * Identifica CTes emitidos por terceiros usando o certificado da empresa
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

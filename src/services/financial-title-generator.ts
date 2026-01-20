@@ -1,3 +1,16 @@
+/**
+ * 💰 FINANCIAL TITLE GENERATOR SERVICE
+ *
+ * Serviço para gerar automaticamente títulos financeiros (Contas a Pagar/Receber)
+ * baseado em documentos fiscais classificados.
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/financial/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
+ */
+
 import { db, getFirstRowOrThrow, getDbRows, type DbExecuteResult } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
@@ -6,13 +19,6 @@ import {
   accountsPayable,
   accountsReceivable,
 } from "@/lib/db/schema";
-
-/**
- * 💰 FINANCIAL TITLE GENERATOR SERVICE
- * 
- * Serviço para gerar automaticamente títulos financeiros (Contas a Pagar/Receber)
- * baseado em documentos fiscais classificados.
- */
 
 export interface TitleGenerationResult {
   success: boolean;

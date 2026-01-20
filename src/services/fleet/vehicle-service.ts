@@ -1,7 +1,13 @@
 /**
  * 🚛 VEHICLE SERVICE
- * 
+ *
  * Lógica de negócio para veículos com automação de Centro de Custo
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/tms/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

@@ -1,8 +1,15 @@
 /**
  * 🏦 BTG PACTUAL - SERVICE DE PAGAMENTOS
- * 
+ *
  * Gerencia pagamentos via Pix, TED e DOC
  * Documentação: https://developers.empresas.btgpactual.com/reference/post_v1-payments-pix
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/integrations/`
+ * Use IBtgClient via DI Container.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { btgPost, btgGet } from "./btg-client";

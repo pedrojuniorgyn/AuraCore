@@ -1,12 +1,18 @@
 /**
  * NFE CLASSIFIER SERVICE
  * OPÇÃO A - Bloco 1
- * 
+ *
  * Classifica NFes automaticamente baseado no papel da empresa:
  * - PURCHASE: Somos o destinatário (NFe de compra - diesel, peças, etc)
  * - CARGO: Somos o transportador (NFe do cliente para transporte)
  * - RETURN: Somos o remetente (NFe de devolução)
  * - OTHER: Outros casos
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 export type NFeType = "PURCHASE" | "CARGO" | "RETURN" | "OTHER";

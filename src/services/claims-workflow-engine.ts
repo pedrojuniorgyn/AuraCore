@@ -1,6 +1,12 @@
 /**
  * Claims Workflow Engine
  * Motor de workflow para gestão de sinistros
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade será migrada para o módulo DDD correspondente.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

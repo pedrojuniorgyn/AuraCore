@@ -1,12 +1,18 @@
 /**
  * 🔍 TAX CREDIT ENGINE
  * Motor de Crédito Fiscal PIS/COFINS (Regime Não-Cumulativo)
- * 
+ *
  * Calcula automaticamente créditos tributários sobre:
  * - Diesel (4.1.1.01.001)
  * - Fretes Subcontratados (4.1.2.01.001)
  * - Pedágios (4.1.1.04.001)
  * - Depreciação (parcelas mensais de ativos)
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

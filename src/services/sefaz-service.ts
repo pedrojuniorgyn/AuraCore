@@ -1,20 +1,26 @@
+/**
+ * 🤖 SEFAZ SERVICE - Comunicação com Webservices da Receita Federal
+ *
+ * Serviços implementados:
+ * - DistribuicaoDFe: Download de NFes destinadas à empresa (Ambiente Nacional)
+ *
+ * Tecnologias:
+ * - SOAP/XML (Envelope padrão Sefaz)
+ * - Certificado Digital A1 (mTLS)
+ * - HTTPS com autenticação de cliente
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
+ */
+
 import https from "https";
 import axios from "axios";
 import { db } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
-
-/**
- * 🤖 SEFAZ SERVICE - Comunicação com Webservices da Receita Federal
- * 
- * Serviços implementados:
- * - DistribuicaoDFe: Download de NFes destinadas à empresa (Ambiente Nacional)
- * 
- * Tecnologias:
- * - SOAP/XML (Envelope padrão Sefaz)
- * - Certificado Digital A1 (mTLS)
- * - HTTPS com autenticação de cliente
- */
 
 /**
  * URLs dos Webservices Sefaz (Ambiente Nacional - AN)

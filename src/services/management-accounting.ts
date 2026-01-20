@@ -1,12 +1,18 @@
 /**
  * 📊 MANAGEMENT ACCOUNTING SERVICE
  * Serviço de Contabilidade Gerencial
- * 
+ *
  * Funcionalidades:
  * - Sincronização PCC → PCG
  * - Alocação de custos indiretos
  * - Cálculo DRE Gerencial
  * - Rateio por Km/Receita
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/strategic/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

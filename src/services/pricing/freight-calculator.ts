@@ -1,11 +1,17 @@
 /**
  * 🧮 FREIGHT CALCULATOR SERVICE
- * 
+ *
  * Serviço de cálculo automático de frete com suporte a:
  * - Peso Real vs Cubado (300kg/m³)
  * - Faixas de peso progressivas
  * - Componentes extras (Ad Valorem, GRIS, Despacho, etc.)
  * - Tabelas específicas por cliente ou gerais
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/tms/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

@@ -1,11 +1,17 @@
-import { XMLParser } from "fast-xml-parser";
-import crypto from "crypto";
-
 /**
  * 🚚 CTe PARSER
- * 
+ *
  * Extrai informações de um XML de CTe (Conhecimento de Transporte Eletrônico)
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
+
+import { XMLParser } from "fast-xml-parser";
+import crypto from "crypto";
 
 const parser = new XMLParser({
   ignoreAttributes: false,

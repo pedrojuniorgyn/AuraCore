@@ -1,13 +1,20 @@
 /**
  * 🧠 CLASSIFICADOR PCG x NCM
- * 
+ *
  * Serviço de Inteligência Fiscal que vincula Plano Gerencial (PCG) com NCM.
  * Permite sugestão inteligente de NCMs e aplicação automática de flags fiscais.
- * 
+ *
  * Uso:
  * - Dropdown de NCM em formulários (baseado na conta gerencial selecionada)
  * - Auto-preenchimento de flags fiscais (Monofásico, ST, etc.)
  * - Classificação automática de itens na importação de NFe
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ * Use os Use Cases correspondentes via DI Container.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

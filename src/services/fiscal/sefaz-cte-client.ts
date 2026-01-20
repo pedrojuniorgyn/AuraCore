@@ -1,3 +1,12 @@
+/**
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ * Use ISefazClient via DI Container.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
+ */
+
 import * as soap from "soap";
 import { DOMParser, XMLSerializer } from "xmldom";
 

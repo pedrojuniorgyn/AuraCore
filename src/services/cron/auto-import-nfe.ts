@@ -1,8 +1,14 @@
 /**
  * 🤖 SERVIÇO DE IMPORTAÇÃO AUTOMÁTICA DE NFes
- * 
+ *
  * Roda a cada 1 hora e importa automaticamente NFes da Sefaz
  * para todas as filiais que têm auto-import habilitado
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import cron from "node-cron";

@@ -1,9 +1,15 @@
-import { pool, ensureConnection } from "@/lib/db";
-
 /**
  * Cron Job: Verificar Planos de Manutenção Vencidos
  * Executa diariamente para criar alertas de manutenção
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade será migrada para o módulo DDD: `src/modules/tms/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
+
+import { pool, ensureConnection } from "@/lib/db";
 export async function checkMaintenanceAlerts() {
   try {
     console.log("🔧 [CRON] Verificando planos de manutenção...");

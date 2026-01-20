@@ -1,3 +1,14 @@
+/**
+ * Serviço para autorização de CTe na Sefaz
+ * Orquestra: Assinatura → Envio → Armazenamento
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
+ */
+
 import { createXmlSignerFromDb } from "./xml-signer";
 import { SefazCTeClient, CTeAutorizacaoResponse } from "./sefaz-cte-client";
 import { db } from "@/lib/db";
@@ -7,11 +18,6 @@ import { eq, and } from "drizzle-orm";
 export interface CTeAuthorizationResult extends CTeAutorizacaoResponse {
   cteId?: number;
 }
-
-/**
- * Serviço para autorização de CTe na Sefaz
- * Orquestra: Assinatura → Envio → Armazenamento
- */
 export class CTeAuthorizationService {
   /**
    * Autorizar CTe na Sefaz

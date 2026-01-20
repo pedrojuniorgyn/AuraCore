@@ -1,7 +1,13 @@
 /**
  * 💰 PAYMENT ENGINE SERVICE
- * 
+ *
  * Cálculo automático de juros, multa, IOF e tarifas bancárias
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/financial/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 export interface PaymentCalculation {

@@ -1,18 +1,24 @@
-import { XMLParser } from "fast-xml-parser";
-import crypto from "crypto";
-
 /**
  * 🧾 NFE PARSER SERVICE
- * 
+ *
  * Serviço para extrair dados estruturados de XMLs de NFe (Nota Fiscal Eletrônica).
- * 
+ *
  * Funcionalidades:
  * - Parse de XML NFe (modelo 55)
  * - Extração de dados do emitente (fornecedor)
  * - Extração de dados dos produtos
  * - Validação de chave de acesso
  * - Cálculo de hash do XML
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
+
+import { XMLParser } from "fast-xml-parser";
+import crypto from "crypto";
 
 // Configuração do parser XML
 const parser = new XMLParser({

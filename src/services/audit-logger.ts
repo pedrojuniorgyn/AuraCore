@@ -1,11 +1,17 @@
-import { db } from "@/lib/db";
-import { sql } from "drizzle-orm";
-
 /**
  * 📝 AUDIT LOGGER SERVICE
- * 
+ *
  * Registra automaticamente alterações em entidades críticas para auditoria
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade será migrada para o módulo DDD correspondente.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
+
+import { db } from "@/lib/db";
+import { sql } from "drizzle-orm";
 
 export interface AuditLogEntry {
   entityType: "CHART_ACCOUNT" | "FINANCIAL_CATEGORY" | "COST_CENTER";

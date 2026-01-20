@@ -1,11 +1,17 @@
-import { SignedXml } from "xml-crypto";
-import { DOMParser } from "xmldom";
-import * as forge from "node-forge";
-
 /**
  * Serviço para assinatura digital de XMLs (NFe, CTe, etc)
  * Utiliza certificado A1 (PFX)
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
+
+import { SignedXml } from "xml-crypto";
+import { DOMParser } from "xmldom";
+import * as forge from "node-forge";
 export class XmlSigner {
   private pfxBuffer: Buffer;
   private password: string;

@@ -1,8 +1,15 @@
 /**
  * 🏦 BTG Pactual - DDA Service
- * 
+ *
  * Integração com API de Débito Direto Autorizado (DDA)
  * Busca boletos emitidos contra a empresa
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/integrations/`
+ * Use os adapters correspondentes via DI Container.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import https from "https";

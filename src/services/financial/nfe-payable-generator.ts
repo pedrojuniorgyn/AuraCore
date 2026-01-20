@@ -1,8 +1,14 @@
 /**
  * 💰 GERADOR DE CONTAS A PAGAR A PARTIR DE NFe
- * 
+ *
  * Usa classificação automática por NCM (Opção C - Agrupado)
  * Cria N contas a pagar (1 por categoria) + detalhamento de itens
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/financial/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
 
 import { db } from "@/lib/db";

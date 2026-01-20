@@ -1,11 +1,17 @@
+/**
+ * Gerador de PDF para Faturas Consolidadas (Billing)
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/financial/`
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
+ */
+
 import PDFDocument from "pdfkit";
 import { db } from "@/lib/db";
 import { billingInvoices, billingItems, businessPartners, cteHeader } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-
-/**
- * Gerador de PDF para Faturas Consolidadas (Billing)
- */
 export class BillingPDFGenerator {
   /**
    * Gerar PDF da fatura

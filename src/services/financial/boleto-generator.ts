@@ -1,9 +1,16 @@
-import axios from "axios";
-
 /**
  * Serviço para geração de boletos via Banco Inter API
  * Documentação: https://developers.inter.co/docs/
+ *
+ * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
+ * A funcionalidade foi migrada para o módulo DDD: `src/modules/integrations/`
+ * Use IBtgClient via DI Container.
+ *
+ * @see E7 DDD Migration
+ * @since 2026-01-20
  */
+
+import axios from "axios";
 
 export interface BoletoData {
   customerId: number;
