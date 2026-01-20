@@ -51,8 +51,9 @@ export async function POST(
       return NextResponse.json({ error: "Documento sem XML para reclassificar" }, { status: 400 });
     }
 
-    // Parse XML novamente
-    const { parseNFeXML } = await import("@/services/nfe-parser");
+    // Parse XML novamente usando Domain Service
+    const { NfeXmlParser } = await import("@/modules/fiscal/domain/services");
+    const { Result } = await import("@/shared/domain");
     const { classifyNFe, getFiscalStatusFromClassification } = await import("@/services/fiscal-classification-service");
 
     // Buscar branch
@@ -71,8 +72,14 @@ export async function POST(
       return NextResponse.json({ error: "CNPJ da filial não encontrado" }, { status: 400 });
     }
 
-    // Parse NFe
-    const parsedNFe = await parseNFeXML(document.xmlContent);
+    // Parse NFe usando Domain Service
+    const parseResult = NfeXmlParser.parse(document.xmlContent);
+    
+    if (Result.isFail(parseResult)) {
+      return NextResponse.json({ error: `Erro ao parsear NFe: ${parseResult.error}` }, { status: 400 });
+    }
+    
+    const parsedNFe = parseResult.value;
 
     // Reclassificar
     const newClassification = classifyNFe(parsedNFe, branchCNPJ);

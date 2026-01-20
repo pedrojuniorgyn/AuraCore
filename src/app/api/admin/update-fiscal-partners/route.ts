@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
 import { db, getDbRows } from "@/lib/db";
-import { parseNFeXML } from "@/services/nfe-parser";
+import { NfeXmlParser } from "@/modules/fiscal/domain/services";
+import { Result } from "@/shared/domain";
 
 /**
  * 🔄 Atualizar nomes de parceiros em fiscal_documents
@@ -40,7 +41,15 @@ export async function GET() {
       try {
         if (!doc.xml_content) continue;
         
-        const parsed = await parseNFeXML(doc.xml_content);
+        // Usar NfeXmlParser (Domain Service) ao invés do serviço legado
+        const parseResult = NfeXmlParser.parse(doc.xml_content);
+        
+        if (Result.isFail(parseResult)) {
+          console.log(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${parseResult.error}`);
+          continue;
+        }
+        
+        const parsed = parseResult.value;
         
         await db.execute(rawSql`
           UPDATE fiscal_documents

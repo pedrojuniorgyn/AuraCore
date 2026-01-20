@@ -23,7 +23,7 @@ import { eq, and, isNull, desc } from "drizzle-orm";
 import { Result } from "@/shared/domain";
 import { FiscalDocumentError } from "@/modules/fiscal/domain/errors/FiscalDocumentError";
 import type { DocumentImporter } from "@/modules/fiscal/domain/services/SefazDocumentProcessor";
-import { parseNFeXML } from "@/services/nfe-parser";
+import { NfeXmlParser } from "@/modules/fiscal/domain/services";
 import { parseCTeXML } from "@/services/fiscal/cte-parser";
 import { classifyNFe, getFiscalStatusFromClassification } from "@/services/fiscal-classification-service";
 import { batchGetNCMCategorization } from "@/services/ncm-categorization-service";
@@ -50,8 +50,14 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         return Result.fail(new FiscalDocumentError(`UserId inválido: ${this.userId}`));
       }
 
-      // Parse do XML da NFe
-      const parsedNFe = await parseNFeXML(xmlContent);
+      // Parse do XML da NFe usando Domain Service
+      const parseResult = NfeXmlParser.parse(xmlContent);
+      
+      if (Result.isFail(parseResult)) {
+        return Result.fail(new FiscalDocumentError(`Erro ao parsear NFe: ${parseResult.error}`));
+      }
+      
+      const parsedNFe = parseResult.value;
 
       // Verifica duplicata na tabela fiscal_documents
       const [existingDoc] = await db

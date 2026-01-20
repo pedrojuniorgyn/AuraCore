@@ -15,3 +15,7 @@ export * from './danfe';
 
 // DACTe Parser (E-Agent-Fase-D3)
 export * from './dacte';
+
+// NFe XML Parser (E8.3a)
+export { NfeXmlParser } from './NfeXmlParser';
+export type { ParsedNFe } from './NfeXmlParser';
