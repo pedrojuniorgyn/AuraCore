@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
-import { listBTGDDAs } from "@/services/btg/btg-dda";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
  * GET /api/btg/dda
- * Listar DDAs autorizados
+ * Listar DDAs autorizados (do banco local)
+ * 
+ * E8 Fase 1.2: Removido import unused de btg-dda
+ * Nota: Esta rota lista DDAs do banco local, não chama API BTG diretamente.
+ * Para sincronizar DDAs do BTG, use POST /api/btg/dda/sync
  */
 export async function GET() {
   try {

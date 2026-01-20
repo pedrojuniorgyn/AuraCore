@@ -1,10 +1,12 @@
 /**
  * API: Vincular DDA a uma Conta a Pagar existente
  * POST /api/financial/dda/[id]/link
+ * 
+ * E8 Fase 1.3: Migrado para usar factory DDD
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { BtgDdaService } from "@/services/banking/btg-dda-service";
+import { createDdaSyncService } from "@/modules/financial/infrastructure/services/DdaSyncService";
 
 export async function POST(
   request: NextRequest,
@@ -23,7 +25,8 @@ export async function POST(
     }
 
     // === VINCULAR ===
-    const ddaService = new BtgDdaService(organizationId, bankAccountId);
+    // E8 Fase 1.3: Usando factory DDD
+    const ddaService = createDdaSyncService(organizationId, bankAccountId);
     await ddaService.linkDdaToPayable(Number(id), payableId);
 
     return NextResponse.json({

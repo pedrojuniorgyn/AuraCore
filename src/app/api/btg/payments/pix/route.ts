@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
-import { createBTGPixPayment } from "@/services/btg/btg-payments";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -9,6 +11,8 @@ export const runtime = "nodejs";
 /**
  * POST /api/btg/payments/pix
  * Realizar pagamento via Pix BTG
+ * 
+ * E8 Fase 1.2: Migrado para usar IBtgClient via DI
  */
 export async function POST(request: NextRequest) {
   try {
@@ -34,8 +38,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Realizar pagamento via BTG
-    const btgPayment = await createBTGPixPayment({
+    // Realizar pagamento via BTG usando DI
+    const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
+    const btgPayment = await btgClient.createPixPayment({
       beneficiaryName,
       beneficiaryDocument,
       pixKey,

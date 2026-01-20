@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { btgHealthCheck } from "@/services/btg/btg-client";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -7,16 +9,18 @@ export const runtime = "nodejs";
 /**
  * GET /api/btg/health
  * Verifica se a API BTG está acessível e autenticação está funcionando
+ * 
+ * E8 Fase 1.2: Migrado para usar IBtgClient via DI
  */
 export async function GET() {
   try {
-    const isHealthy = await btgHealthCheck();
+    const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
+    const healthStatus = await btgClient.healthCheck();
     
     return NextResponse.json({
-      success: isHealthy,
-      message: isHealthy 
-        ? "✅ BTG API está acessível e autenticação funcionando" 
-        : "❌ BTG API não está acessível",
+      success: healthStatus.healthy,
+      message: healthStatus.message,
+      checkedAt: healthStatus.checkedAt,
       environment: process.env.BTG_ENVIRONMENT,
       apiUrl: process.env.BTG_API_BASE_URL,
     });

@@ -1,10 +1,12 @@
 /**
  * API: Sincronizar DDA (Buscar boletos do banco)
  * POST /api/financial/dda/sync
+ * 
+ * E8 Fase 1.3: Migrado para usar factory DDD
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { BtgDdaService } from "@/services/banking/btg-dda-service";
+import { createDdaSyncService } from "@/modules/financial/infrastructure/services/DdaSyncService";
 import { getTenantContext } from "@/lib/auth/context";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 
@@ -95,8 +97,9 @@ export async function POST(request: NextRequest) {
     }
 
     // === EXECUTAR SINCRONIZAÇÃO ===
+    // E8 Fase 1.3: Usando factory DDD
     // Segurança: organizationId vem da sessão (tenant context), nunca do body.
-    const ddaService = new BtgDdaService(ctx.organizationId, bankAccountId);
+    const ddaService = createDdaSyncService(ctx.organizationId, bankAccountId);
     try {
       const imported = await ddaService.syncDdaInbox();
 

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
-import { listBTGDDAs, listBTGDDADebits } from "@/services/btg/btg-dda";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -9,6 +11,8 @@ export const runtime = "nodejs";
 /**
  * POST /api/btg/dda/sync
  * Sincronizar DDAs e débitos do BTG
+ * 
+ * E8 Fase 1.2: Migrado para usar IBtgClient via DI
  */
 export async function POST() {
   try {
@@ -32,8 +36,9 @@ export async function POST() {
 
     console.log("🔄 Sincronizando DDAs do BTG...", { companyId: btgCompanyId });
 
-    // 1. Buscar DDAs do BTG
-    const btgDDAs = await listBTGDDAs(btgCompanyId);
+    // 1. Buscar DDAs do BTG usando DI
+    const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
+    const btgDDAs = await btgClient.listDdaAuthorized(btgCompanyId);
 
     await ensureConnection();
 
@@ -67,8 +72,10 @@ export async function POST() {
         ddaCount++;
       }
 
-      // 3. Buscar débitos deste DDA
-      const debits = await listBTGDDADebits(btgCompanyId, dda.id, {
+      // 3. Buscar débitos deste DDA usando DI
+      const debits = await btgClient.listDdaDebits({
+        companyId: btgCompanyId,
+        ddaId: dda.id,
         startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split("T")[0], // Últimos 90 dias

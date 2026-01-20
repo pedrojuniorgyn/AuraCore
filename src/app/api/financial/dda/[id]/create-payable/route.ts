@@ -1,10 +1,12 @@
 /**
  * API: Criar Conta a Pagar a partir de DDA
  * POST /api/financial/dda/[id]/create-payable
+ * 
+ * E8 Fase 1.3: Migrado para usar factory DDD
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { BtgDdaService } from "@/services/banking/btg-dda-service";
+import { createDdaSyncService } from "@/modules/financial/infrastructure/services/DdaSyncService";
 
 export async function POST(
   request: NextRequest,
@@ -16,7 +18,8 @@ export async function POST(
     const { organizationId, bankAccountId } = body;
 
     // === CRIAR CONTA A PAGAR ===
-    const ddaService = new BtgDdaService(organizationId, bankAccountId);
+    // E8 Fase 1.3: Usando factory DDD
+    const ddaService = createDdaSyncService(organizationId, bankAccountId);
     const payableId = await ddaService.createPayableFromDda(Number(id));
 
     return NextResponse.json({
