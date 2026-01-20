@@ -1,0 +1,74 @@
+{
+  "general": {
+    "welcome": "Welcome to AuraCore! How can I help?",
+    "goodbye": "Goodbye! Have a great day.",
+    "error_generic": "An unexpected error occurred. Please try again.",
+    "not_found": "Resource not found.",
+    "unauthorized": "Unauthorized access.",
+    "forbidden": "Access denied.",
+    "validation_error": "Validation error: {details}"
+  },
+  "agent": {
+    "thinking": "Analyzing your request...",
+    "processing": "Processing...",
+    "error": "Could not process your request.",
+    "unknown_intent": "I didn't understand your request. Can you rephrase?",
+    "clarification_needed": "I need more information: {question}",
+    "task_completed": "Task completed successfully!"
+  },
+  "fiscal": {
+    "nfe_validated": "NFe validated successfully. Key: {chave}",
+    "nfe_invalid": "Invalid NFe: {motivo}",
+    "cte_validated": "CTe validated successfully. Key: {chave}",
+    "cte_invalid": "Invalid CTe: {motivo}",
+    "tax_calculated": "Taxes calculated: {total}",
+    "icms_rate": "ICMS rate from {uf_origem} to {uf_destino}: {rate}",
+    "pis_cofins_rate": "PIS: {pis} | COFINS: {cofins}",
+    "sped_generated": "SPED {tipo} generated successfully.",
+    "sped_error": "SPED generation error: {erro}"
+  },
+  "financial": {
+    "payment_due": "Payment of {valor} due on {data}",
+    "payment_received": "Payment of {valor} received.",
+    "invoice_created": "Invoice {numero} created.",
+    "balance_updated": "Balance updated: {saldo}",
+    "insufficient_funds": "Insufficient funds."
+  },
+  "tms": {
+    "shipment_created": "Shipment {codigo} created.",
+    "shipment_dispatched": "Shipment {codigo} dispatched.",
+    "shipment_delivered": "Shipment {codigo} delivered.",
+    "route_optimized": "Route optimized: {economia} savings.",
+    "driver_assigned": "Driver {nome} assigned to shipment."
+  },
+  "voice": {
+    "transcription_ready": "Transcription ready.",
+    "synthesis_ready": "Audio generated.",
+    "no_speech": "No speech detected in audio.",
+    "audio_too_short": "Audio too short for processing.",
+    "processing_error": "Voice processing error."
+  },
+  "rag": {
+    "no_results": "I couldn't find information about this in the legislation.",
+    "sources_found": "Found {count} relevant sources.",
+    "legislation_context": "Based on current legislation:"
+  },
+  "task": {
+    "queued": "Task queued. ID: {task_id}",
+    "running": "Task running...",
+    "completed": "Task completed.",
+    "failed": "Task failed: {error}",
+    "cancelled": "Task cancelled."
+  },
+  "webhook": {
+    "delivered": "Webhook delivered successfully.",
+    "failed": "Webhook delivery failed.",
+    "retry": "Retrying... ({attempt}/{max})"
+  },
+  "document": {
+    "imported": "Document {tipo} imported successfully.",
+    "processed": "Document processed. Confidence: {confidence}%",
+    "invalid": "Invalid document: {motivo}",
+    "ocr_failed": "Document recognition failed."
+  }
+}

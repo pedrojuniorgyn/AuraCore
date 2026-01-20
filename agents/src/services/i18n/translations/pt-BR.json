@@ -1,0 +1,74 @@
+{
+  "general": {
+    "welcome": "Bem-vindo ao AuraCore! Como posso ajudar?",
+    "goodbye": "Até logo! Tenha um ótimo dia.",
+    "error_generic": "Ocorreu um erro inesperado. Tente novamente.",
+    "not_found": "Recurso não encontrado.",
+    "unauthorized": "Acesso não autorizado.",
+    "forbidden": "Acesso negado.",
+    "validation_error": "Erro de validação: {details}"
+  },
+  "agent": {
+    "thinking": "Analisando sua solicitação...",
+    "processing": "Processando...",
+    "error": "Não foi possível processar sua solicitação.",
+    "unknown_intent": "Não entendi sua solicitação. Pode reformular?",
+    "clarification_needed": "Preciso de mais informações: {question}",
+    "task_completed": "Tarefa concluída com sucesso!"
+  },
+  "fiscal": {
+    "nfe_validated": "NFe validada com sucesso. Chave: {chave}",
+    "nfe_invalid": "NFe inválida: {motivo}",
+    "cte_validated": "CTe validado com sucesso. Chave: {chave}",
+    "cte_invalid": "CTe inválido: {motivo}",
+    "tax_calculated": "Impostos calculados: {total}",
+    "icms_rate": "Alíquota ICMS de {uf_origem} para {uf_destino}: {rate}",
+    "pis_cofins_rate": "PIS: {pis} | COFINS: {cofins}",
+    "sped_generated": "SPED {tipo} gerado com sucesso.",
+    "sped_error": "Erro na geração do SPED: {erro}"
+  },
+  "financial": {
+    "payment_due": "Pagamento de {valor} vence em {data}",
+    "payment_received": "Pagamento de {valor} recebido.",
+    "invoice_created": "Fatura {numero} criada.",
+    "balance_updated": "Saldo atualizado: {saldo}",
+    "insufficient_funds": "Saldo insuficiente."
+  },
+  "tms": {
+    "shipment_created": "Embarque {codigo} criado.",
+    "shipment_dispatched": "Embarque {codigo} despachado.",
+    "shipment_delivered": "Embarque {codigo} entregue.",
+    "route_optimized": "Rota otimizada: {economia} de economia.",
+    "driver_assigned": "Motorista {nome} atribuído ao embarque."
+  },
+  "voice": {
+    "transcription_ready": "Transcrição pronta.",
+    "synthesis_ready": "Áudio gerado.",
+    "no_speech": "Nenhuma fala detectada no áudio.",
+    "audio_too_short": "Áudio muito curto para processamento.",
+    "processing_error": "Erro no processamento de voz."
+  },
+  "rag": {
+    "no_results": "Não encontrei informações sobre isso na legislação.",
+    "sources_found": "Encontrei {count} fontes relevantes.",
+    "legislation_context": "Baseado na legislação vigente:"
+  },
+  "task": {
+    "queued": "Tarefa enfileirada. ID: {task_id}",
+    "running": "Tarefa em execução...",
+    "completed": "Tarefa concluída.",
+    "failed": "Tarefa falhou: {error}",
+    "cancelled": "Tarefa cancelada."
+  },
+  "webhook": {
+    "delivered": "Webhook entregue com sucesso.",
+    "failed": "Falha na entrega do webhook.",
+    "retry": "Tentando novamente... ({attempt}/{max})"
+  },
+  "document": {
+    "imported": "Documento {tipo} importado com sucesso.",
+    "processed": "Documento processado. Confiança: {confidence}%",
+    "invalid": "Documento inválido: {motivo}",
+    "ocr_failed": "Falha no reconhecimento do documento."
+  }
+}
