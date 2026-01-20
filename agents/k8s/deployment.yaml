@@ -100,11 +100,15 @@ spec:
               mountPath: /tmp
             - name: cache
               mountPath: /app/.cache
+            - name: data
+              mountPath: /app/data
       
       volumes:
         - name: tmp
           emptyDir: {}
         - name: cache
+          emptyDir: {}
+        - name: data
           emptyDir: {}
       
       affinity:
