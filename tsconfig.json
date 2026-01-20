@@ -44,6 +44,8 @@
     "mcp-server",
     ".next/types/validator.ts",
     "tests/integration/wms/**/*.test.ts",
-    "tests/helpers/integration-db.ts"
+    "tests/helpers/integration-db.ts",
+    "e2e/**/*",
+    "playwright.config.ts"
   ]
 }

@@ -27,7 +27,14 @@
     "docker:test:migrate": "docker-compose -f docker-compose.test.yml run --rm migrations",
     "db:migrate:test": "drizzle-kit push",
     "test:integration:docker": "npm run docker:test:up && sleep 30 && npm run docker:test:init-db && npm run docker:test:migrate && (npm run test:integration; TEST_EXIT=$?; npm run docker:test:down; exit $TEST_EXIT)",
-    "test:all": "npm run test:unit && npm run test:integration:docker"
+    "test:all": "npm run test:unit && npm run test:integration:docker",
+    "test:playwright": "playwright test",
+    "test:playwright:ui": "playwright test --ui",
+    "test:playwright:headed": "playwright test --headed",
+    "test:playwright:debug": "playwright test --debug",
+    "test:playwright:strategic": "playwright test e2e/strategic/",
+    "test:playwright:mobile": "playwright test e2e/strategic/mobile.spec.ts",
+    "test:playwright:report": "playwright show-report"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
