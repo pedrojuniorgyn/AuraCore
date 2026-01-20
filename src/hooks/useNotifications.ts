@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
+export type NotificationType = "SUCCESS" | "ERROR" | "WARNING" | "INFO" | "CRITICAL" | "ACHIEVEMENT";
+
 export interface Notification {
   id: number;
-  type: "SUCCESS" | "ERROR" | "WARNING" | "INFO";
+  type: NotificationType;
   event: string;
   title: string;
   message: string | null;
@@ -19,6 +21,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [toastNotification, setToastNotification] = useState<Notification | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!session?.user) return;
@@ -102,6 +105,40 @@ export function useNotifications() {
     }
   }, []);
 
+  const dismiss = useCallback(async (notificationId: number) => {
+    try {
+      // Atualizar localmente (otimista)
+      setNotifications((prev) => {
+        const notification = prev.find((n) => n.id === notificationId);
+        if (notification && notification.isRead === 0) {
+          setUnreadCount((count) => Math.max(0, count - 1));
+        }
+        return prev.filter((n) => n.id !== notificationId);
+      });
+      
+      // TODO: Implementar endpoint DELETE /api/notifications/:id se necessário
+      await fetch(`/api/notifications/${notificationId}`, { method: "DELETE" });
+    } catch (error) {
+      console.error("Error dismissing notification:", error);
+    }
+  }, []);
+
+  const clearAll = useCallback(async () => {
+    try {
+      setNotifications([]);
+      setUnreadCount(0);
+      
+      // TODO: Implementar endpoint DELETE /api/notifications se necessário
+      await fetch("/api/notifications", { method: "DELETE" });
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  }, []);
+
+  const closeToast = useCallback(() => {
+    setToastNotification(null);
+  }, []);
+
   // Auto-refresh a cada 30 segundos
   useEffect(() => {
     if (session?.user) {
@@ -117,12 +154,26 @@ export function useNotifications() {
     }
   }, [session, fetchNotifications, fetchUnreadCount]);
 
+  // Mostrar toast para notificações críticas não lidas
+  useEffect(() => {
+    const critical = notifications.find(
+      (n) => (n.type === "CRITICAL" || n.type === "ERROR") && n.isRead === 0
+    );
+    if (critical && !toastNotification) {
+      setToastNotification(critical);
+    }
+  }, [notifications, toastNotification]);
+
   return {
     notifications,
     unreadCount,
     loading,
+    toastNotification,
     markAsRead,
     markAllAsRead,
+    dismiss,
+    clearAll,
+    closeToast,
     refresh: fetchNotifications,
   };
 }

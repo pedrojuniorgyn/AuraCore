@@ -1,9 +1,12 @@
 /**
  * Layout do módulo Strategic
  * 
- * Inclui o chatbot Aurora AI flutuante em todas as páginas do módulo.
+ * Inclui:
+ * - Chatbot Aurora AI flutuante
+ * - Toasts para notificações críticas em tempo real
  */
 import { AuraChat } from '@/components/strategic/AuraChat';
+import { NotificationToastProvider } from '@/components/notifications/notification-toast-provider';
 
 interface StrategicLayoutProps {
   children: React.ReactNode;
@@ -14,6 +17,7 @@ export default function StrategicLayout({ children }: StrategicLayoutProps) {
     <>
       {children}
       <AuraChat />
+      <NotificationToastProvider />
     </>
   );
 }
