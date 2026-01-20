@@ -22,6 +22,7 @@ from src.api import webhooks as webhooks_api
 from src.api import tasks as tasks_api
 from src.api import locales as locales_api
 from src.api import auth as auth_api
+from src.api import integrations as integrations_api
 from src.core.orchestrator import get_orchestrator
 from src.services.webhooks import get_webhook_service
 from src.services.tasks import get_task_queue, TaskWorker
@@ -106,6 +107,10 @@ TAGS_METADATA = [
     {
         "name": "Auth",
         "description": "Autenticação e autorização (API Keys, JWT)",
+    },
+    {
+        "name": "Integrations",
+        "description": "Hub de integrações (Slack, Teams, Email, Webhooks)",
     },
 ]
 
@@ -236,6 +241,7 @@ app.include_router(tasks_api.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(observability_api.router, tags=["Observability"])
 app.include_router(locales_api.router, prefix="/api/locales", tags=["Locales"])
 app.include_router(auth_api.router, prefix="/v1", tags=["Auth"])
+app.include_router(integrations_api.router, prefix="/v1", tags=["Integrations"])
 
 
 # ===== CUSTOM DOCS =====
