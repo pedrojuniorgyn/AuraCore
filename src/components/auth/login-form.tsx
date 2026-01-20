@@ -120,9 +120,13 @@ export function LoginForm() {
               <Label htmlFor="password" className="text-zinc-300">
                 Senha
               </Label>
-              <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300">
+              <button 
+                type="button"
+                onClick={() => alert('Funcionalidade em desenvolvimento. Entre em contato com o suporte.')}
+                className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline"
+              >
                 Esqueceu?
-              </a>
+              </button>
             </div>
             <Input
               id="password"

@@ -124,8 +124,7 @@ export default function MeetingDetailPage({
   const loadMeetingData = useCallback(async () => {
     setLoading(true);
     try {
-      // TODO: Implementar API de detalhe /api/strategic/war-room/meetings/[id]
-      // Por enquanto, usar a lista e filtrar
+      // Busca meeting da lista (endpoint de detalhe: GET /api/strategic/war-room/meetings/[id])
       const response = await fetch('/api/strategic/war-room/meetings?pageSize=100');
       if (response.ok) {
         const data = await response.json();

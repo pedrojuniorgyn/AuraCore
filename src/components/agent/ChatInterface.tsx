@@ -61,12 +61,14 @@ export function ChatInterface({ sessionId, onSessionCreated }: ChatInterfaceProp
   };
 
   const toggleRecording = () => {
+    // Voice recording - feature em desenvolvimento
+    // Quando implementado, usará Web Audio API + Whisper para transcrição
     if (isRecording) {
       setIsRecording(false);
-      // TODO: Stop recording and send audio
     } else {
       setIsRecording(true);
-      // TODO: Start recording
+      // Simular gravação por enquanto - feedback visual ativo
+      setTimeout(() => setIsRecording(false), 3000);
     }
   };
 

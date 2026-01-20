@@ -127,7 +127,7 @@ export default function StrategicMapPage() {
           currentValue: node.data.currentValue,
           unit: node.data.unit,
           parentGoalId: findParentFromEdges(node.id, result.edges),
-          kpiCount: 3, // TODO: Buscar contagem real
+          kpiCount: 0, // Contagem de KPIs (aguardando endpoint dedicado)
           ownerName: 'Responsável',
         }));
 

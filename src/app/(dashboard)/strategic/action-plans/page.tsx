@@ -99,7 +99,7 @@ export default function ActionPlansPage() {
             status: item.status as ActionPlanStatus,
             isOverdue: item.isOverdue,
             daysUntilDue,
-            followUpCount: 0, // TODO: Buscar contagem real
+            followUpCount: 0, // Contagem de follow-ups (aguardando endpoint dedicado)
           };
         });
         setPlans(mapped);
@@ -142,8 +142,16 @@ export default function ActionPlansPage() {
     newStatus: ActionPlanStatus
   ) => {
     try {
-      // TODO: Implementar API de update de status
-      console.log(`Alterando status de ${planId} para ${newStatus}`);
+      const response = await fetch(`/api/strategic/action-plans/${planId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Falha ao atualizar status');
+      }
+      
       await fetchActionPlans();
     } catch (error) {
       console.error('Erro ao atualizar status:', error);

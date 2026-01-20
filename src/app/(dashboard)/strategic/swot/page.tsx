@@ -135,9 +135,9 @@ export default function SwotMatrixPage() {
   };
 
   const handleItemClick = useCallback((item: SwotItem) => {
-    // TODO: Abrir modal de edição
-    console.log('Item clicked:', item);
-  }, []);
+    // Navegar para página de edição do item SWOT
+    router.push(`/strategic/swot/${item.id}`);
+  }, [router]);
 
   // Agrupar items por quadrante
   const groupedItems = items.reduce((acc, item) => {
