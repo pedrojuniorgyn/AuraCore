@@ -1,9 +1,12 @@
 """Health check endpoints."""
 
-from fastapi import APIRouter
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException
 import httpx
 
 from src.config import get_settings
+from src.core.health import get_full_health_status
 
 router = APIRouter()
 
@@ -11,70 +14,53 @@ router = APIRouter()
 @router.get("")
 async def health_check():
     """
-    Verifica saúde do serviço de agentes.
+    Health check básico.
     
-    Retorna status dos componentes:
-    - agents: Serviço de agentes
-    - knowledge_base: ChromaDB
-    - auracore_api: API do AuraCore
+    Retorna status simplificado para probes rápidos.
     """
-    
-    settings = get_settings()
-    
-    checks = {
-        "status": "healthy",
+    return {
+        "status": "ok",
         "service": "auracore-agents",
-        "version": "1.0.0",
-        "components": {
-            "agents": "ok",
-            "knowledge_base": "unknown",
-            "auracore_api": "unknown",
-        },
+        "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@router.get("/full")
+async def full_health_check():
+    """
+    Health check completo com verificação de dependências.
     
-    # Verificar ChromaDB
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(
-                f"{settings.chroma_url}/api/v1/heartbeat",
-            )
-            checks["components"]["knowledge_base"] = (
-                "ok" if response.status_code == 200 else "error"
-            )
-    except Exception as e:
-        checks["components"]["knowledge_base"] = f"error: {str(e)[:50]}"
-    
-    # Verificar AuraCore API
-    try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(
-                f"{settings.auracore_api_url}/api/health",
-            )
-            checks["components"]["auracore_api"] = (
-                "ok" if response.status_code == 200 else "error"
-            )
-    except Exception as e:
-        checks["components"]["auracore_api"] = f"error: {str(e)[:50]}"
-    
-    # Determinar status geral
-    component_statuses = list(checks["components"].values())
-    if all(s == "ok" for s in component_statuses):
-        checks["status"] = "healthy"
-    elif checks["components"]["agents"] == "ok":
-        checks["status"] = "degraded"
-    else:
-        checks["status"] = "unhealthy"
-    
-    return checks
+    Verifica:
+    - API (sempre OK se chegou aqui)
+    - ChromaDB (vector store)
+    - LLM Provider (Anthropic)
+    - AuraCore API (backend)
+    - Memory Store (SQLite)
+    """
+    return await get_full_health_status()
 
 
 @router.get("/ready")
 async def readiness_check():
-    """Verifica se o serviço está pronto para receber requisições."""
-    return {"ready": True}
+    """
+    Readiness check para Kubernetes/Coolify.
+    
+    Retorna 200 apenas se todos os serviços críticos estão OK.
+    Retorna 503 se o serviço não está pronto para receber tráfego.
+    """
+    health = await get_full_health_status()
+    
+    if health["status"] == "unhealthy":
+        raise HTTPException(status_code=503, detail=health)
+    
+    return health
 
 
 @router.get("/live")
 async def liveness_check():
-    """Verifica se o serviço está vivo."""
-    return {"live": True}
+    """
+    Liveness check para Kubernetes/Coolify.
+    
+    Apenas verifica se o processo está respondendo.
+    """
+    return {"live": True, "timestamp": datetime.utcnow().isoformat()}

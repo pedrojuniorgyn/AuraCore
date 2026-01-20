@@ -1,84 +1,134 @@
 # =============================================================================
 # AURACORE AGENTS - DOCKER COMPOSE PARA COOLIFY
 # =============================================================================
-# Este arquivo é específico para deploy no Coolify
-# Não usar para desenvolvimento local (use docker-compose.yml)
+# Este arquivo é específico para deploy no Coolify.
+# Não usar para desenvolvimento local (use docker-compose.yml).
+#
+# Serviços:
+# - agents: Agno FastAPI (Python)
+# - chromadb: Vector store para RAG
 # =============================================================================
 
 version: '3.8'
 
 services:
+  # =========================================================================
+  # AGNO AGENTS (FastAPI)
+  # =========================================================================
   agents:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: auracore-agents
-    ports:
-      - "8080:8080"
-    environment:
-      # Coolify injeta estas variáveis do painel de configuração
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      
-      # AuraCore API - usar nome do container web no Coolify
-      - AURACORE_API_URL=${AURACORE_API_URL:-http://web:3000}
-      - AURACORE_API_TIMEOUT=${AURACORE_API_TIMEOUT:-30}
-      
-      # ChromaDB - verificar nome do container no Coolify
-      - CHROMA_HOST=${CHROMA_HOST:-chromadb}
-      - CHROMA_PORT=${CHROMA_PORT:-8000}
-      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-auracore_knowledge}
-      
-      # Logging
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - LOG_FORMAT=json
-      
-      # Memory
-      - MEMORY_DB_PATH=/app/data/memory
-      
-      # Rate Limiting
-      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
-      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
-      
-      # Feature Flags
-      - ENABLE_GUARDRAILS=${ENABLE_GUARDRAILS:-true}
-      - ENABLE_OBSERVABILITY=${ENABLE_OBSERVABILITY:-true}
-      - ENABLE_MEMORY=${ENABLE_MEMORY:-true}
-      
-    volumes:
-      - agents-memory:/app/data/memory
-      - agents-logs:/app/data/logs
-      
-    networks:
-      - auracore_default
-      
     restart: unless-stopped
     
+    environment:
+      # ----- Core Settings -----
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+      DEBUG: ${DEBUG:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      
+      # ----- LLM Provider -----
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-claude-sonnet-4-20250514}
+      
+      # ----- AuraCore API -----
+      # Em Coolify, 'web' é o nome do serviço Next.js principal
+      AURACORE_API_URL: ${AURACORE_API_URL:-http://web:3000}
+      AURACORE_API_TIMEOUT: ${AURACORE_API_TIMEOUT:-30}
+      
+      # ----- MCP Server -----
+      MCP_SERVER_URL: ${MCP_SERVER_URL:-http://web:3100}
+      
+      # ----- ChromaDB -----
+      CHROMA_HOST: ${CHROMA_HOST:-chromadb}
+      CHROMA_PORT: ${CHROMA_PORT:-8000}
+      CHROMA_URL: ${CHROMA_URL:-http://chromadb:8000}
+      
+      # ----- Memory Store -----
+      MEMORY_DB_PATH: ${MEMORY_DB_PATH:-/data/memory.db}
+      
+      # ----- Security -----
+      ENABLE_GUARDRAILS: ${ENABLE_GUARDRAILS:-true}
+      
+      # ----- Observability -----
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-auracore-agents}
+      
+    volumes:
+      # Persistir memória de longo prazo
+      - agents_data:/data
+      
+    expose:
+      - "8080"
+      
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
-      start_period: 15s
       retries: 3
-    
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    
+      start_period: 30s
+      
+    networks:
+      - auracore
+      
+    depends_on:
+      chromadb:
+        condition: service_healthy
+        
     labels:
       - "coolify.managed=true"
-      - "coolify.service=auracore-agents"
+      - "coolify.service=agents"
 
+  # =========================================================================
+  # CHROMADB (Vector Store)
+  # =========================================================================
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: auracore-chromadb
+    restart: unless-stopped
+    
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+      
+    volumes:
+      - chromadb_data:/chroma/chroma
+      
+    expose:
+      - "8000"
+      
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      
+    networks:
+      - auracore
+      
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service=chromadb"
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
 volumes:
-  agents-memory:
-    name: auracore-agents-memory
-  agents-logs:
-    name: auracore-agents-logs
+  agents_data:
+    driver: local
+  chromadb_data:
+    driver: local
 
+# =============================================================================
+# NETWORKS
+# =============================================================================
 networks:
-  auracore_default:
+  auracore:
     external: true
+    # Conecta à rede existente do AuraCore (web + sql)
+    # Se a rede não existir, o Coolify irá criar automaticamente
