@@ -8,6 +8,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Card, 
   Title, 
@@ -24,7 +25,10 @@ import {
   Target,
   Flame,
   Plus,
-  TrendingUp,
+  Star,
+  Edit2,
+  Trash2,
+  Download,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
@@ -108,6 +112,22 @@ const QUADRANT_STYLES = {
   },
 } as const;
 
+// Componente de estrelas para mostrar impacto
+function ImpactStars({ value }: { value: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          size={12}
+          className={`transition-colors ${n <= value ? 'text-yellow-400' : 'text-white/20'}`}
+          fill={n <= value ? 'currentColor' : 'none'}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function SwotMatrixPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -156,13 +176,19 @@ export default function SwotMatrixPage() {
     groupedItems[key as SwotQuadrant]?.sort((a, b) => b.priorityScore - a.priorityScore);
   });
 
-  const renderQuadrant = (quadrant: SwotQuadrant) => {
+  const renderQuadrant = (quadrant: SwotQuadrant, index: number) => {
     const style = QUADRANT_STYLES[quadrant];
     const quadrantItems = groupedItems[quadrant] || [];
     const Icon = style.icon;
 
     return (
-      <div className={`rounded-lg border-2 ${style.border} ${style.bg} overflow-hidden`}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: index * 0.1 }}
+        className={`rounded-2xl border-2 ${style.border} ${style.bg} overflow-hidden 
+          backdrop-blur-sm hover:shadow-lg transition-shadow`}
+      >
         {/* Header */}
         <div className={`px-4 py-3 ${style.headerBg}`}>
           <Flex alignItems="center" className="gap-2">
@@ -171,75 +197,104 @@ export default function SwotMatrixPage() {
               <Title className="text-white text-sm">{style.label}</Title>
               <Text className="text-white/70 text-xs">{style.subtitle}</Text>
             </div>
-            <Badge color="gray" className="ml-auto">
+            <span className="ml-auto text-2xl font-bold text-white/40">
               {quadrantItems.length}
-            </Badge>
+            </span>
           </Flex>
         </div>
 
         {/* Items */}
-        <div className="p-3 space-y-2 min-h-[200px] max-h-[400px] overflow-y-auto">
-          {quadrantItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleItemClick(item)}
-              className={`
-                p-3 rounded-lg border cursor-pointer
-                transition-all duration-200 hover:scale-[1.02]
-                ${style.itemBg} ${style.itemBorder}
-              `}
-            >
-              <Flex justifyContent="between" alignItems="start" className="gap-2">
-                <Text className="text-white font-medium text-sm line-clamp-2">
-                  {item.title}
-                </Text>
-                <span className={`text-xs px-2 py-1 rounded ${style.badgeBg} ${style.text} whitespace-nowrap`}>
-                  {item.priorityScore.toFixed(1)}
-                </span>
-              </Flex>
-              {item.description && (
-                <Text className="text-gray-400 text-xs mt-1 line-clamp-2">
-                  {item.description}
-                </Text>
-              )}
-              <Flex className="gap-2 mt-2">
-                <Text className="text-gray-500 text-xs">
-                  Impacto: {item.impactScore}
-                </Text>
-                {(quadrant === 'OPPORTUNITY' || quadrant === 'THREAT') && (
-                  <Text className="text-gray-500 text-xs">
-                    Probabilidade: {item.probabilityScore}
+        <div className="p-3 space-y-2 min-h-[200px] max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700">
+          <AnimatePresence mode="popLayout">
+            {quadrantItems.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => handleItemClick(item)}
+                className={`
+                  group p-3 rounded-xl border cursor-pointer
+                  transition-all duration-200 hover:scale-[1.02] hover:bg-white/5
+                  ${style.itemBg} ${style.itemBorder}
+                `}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <Text className="text-white font-medium text-sm line-clamp-2 flex-1">
+                    {item.title}
+                  </Text>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}
+                      className="p-1 hover:bg-white/10 rounded"
+                    >
+                      <Edit2 className="w-3 h-3 text-white/50" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); /* TODO: delete */ }}
+                      className="p-1 hover:bg-white/10 rounded"
+                    >
+                      <Trash2 className="w-3 h-3 text-red-400/70" />
+                    </button>
+                  </div>
+                </div>
+                {item.description && (
+                  <Text className="text-gray-400 text-xs mt-1 line-clamp-2">
+                    {item.description}
                   </Text>
                 )}
-              </Flex>
-            </div>
-          ))}
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <ImpactStars value={item.impactScore} />
+                  </span>
+                  {(quadrant === 'OPPORTUNITY' || quadrant === 'THREAT') && (
+                    <span className={`px-2 py-0.5 rounded-full ${style.badgeBg} ${style.text}`}>
+                      {Math.round(item.probabilityScore * 20)}%
+                    </span>
+                  )}
+                  <span className={`ml-auto px-2 py-0.5 rounded-full ${style.badgeBg} ${style.text}`}>
+                    {item.priorityScore.toFixed(1)}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
           {quadrantItems.length === 0 && (
-            <div className="flex items-center justify-center h-32 text-gray-500">
-              <Text className="text-sm">Nenhum item cadastrado</Text>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center h-32 text-gray-500"
+            >
+              <Icon className="w-8 h-8 mb-2 opacity-30" />
+              <Text className="text-sm">Nenhum item</Text>
+            </motion.div>
           )}
 
           {/* Add Button */}
           <RippleButton
             variant="ghost"
-            className={`w-full border border-dashed ${style.border} ${style.text} ${style.hoverBg}`}
+            className={`w-full border border-dashed ${style.border} ${style.text} ${style.hoverBg} rounded-xl`}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Adicionar {style.label.slice(0, -1)}
+            Adicionar
           </RippleButton>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6 space-y-6">
         {/* Header */}
         <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
             <div>
               <Flex alignItems="center" className="gap-3 mb-2">
                 <RippleButton 
@@ -265,8 +320,12 @@ export default function SwotMatrixPage() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </RippleButton>
+              <RippleButton variant="default">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </RippleButton>
             </Flex>
-          </Flex>
+          </motion.div>
         </FadeIn>
 
         {/* Summary Cards */}
@@ -318,12 +377,22 @@ export default function SwotMatrixPage() {
 
         {/* SWOT Matrix */}
         <FadeIn delay={0.2}>
-          <Card className="bg-gray-900/50 border-gray-800 p-4">
+          <Card className="bg-gray-900/50 border-gray-800 p-4 backdrop-blur-sm">
             <div className="mb-4">
               <Title className="text-white">Matriz SWOT</Title>
               <Text className="text-gray-400">
                 Clique em um item para ver detalhes ou editar
               </Text>
+            </div>
+
+            {/* Labels */}
+            <div className="grid grid-cols-2 gap-4 mb-2">
+              <div className="text-center text-sm text-emerald-400/70 font-medium">
+                ✨ POSITIVO
+              </div>
+              <div className="text-center text-sm text-red-400/70 font-medium">
+                ⚠️ NEGATIVO
+              </div>
             </div>
 
             {loading ? (
@@ -335,13 +404,13 @@ export default function SwotMatrixPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Interno */}
-                {renderQuadrant('STRENGTH')}
-                {renderQuadrant('WEAKNESS')}
+                {/* Row 1: Positivos */}
+                {renderQuadrant('STRENGTH', 0)}
+                {renderQuadrant('OPPORTUNITY', 1)}
                 
-                {/* Externo */}
-                {renderQuadrant('OPPORTUNITY')}
-                {renderQuadrant('THREAT')}
+                {/* Row 2: Negativos */}
+                {renderQuadrant('WEAKNESS', 2)}
+                {renderQuadrant('THREAT', 3)}
               </div>
             )}
           </Card>
