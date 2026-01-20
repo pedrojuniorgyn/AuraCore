@@ -1,7 +1,7 @@
 # agents/Dockerfile.dev
 # Imagem para desenvolvimento com hot-reload
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # Variáveis de ambiente
 ENV PYTHONDONTWRITEBYTECODE=1 \

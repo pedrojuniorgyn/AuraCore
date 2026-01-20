@@ -4,7 +4,7 @@
 # Imagem com Docling e dependências de OCR para processamento de documentos
 # =============================================================================
 
-FROM python:3.11-slim as builder
+FROM python:3.14-slim as builder
 
 WORKDIR /app
 
@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # =============================================================================
 # Imagem final
 # =============================================================================
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
