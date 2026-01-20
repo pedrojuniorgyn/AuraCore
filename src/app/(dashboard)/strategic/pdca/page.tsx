@@ -8,6 +8,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { 
   Card, 
   Title, 
@@ -24,6 +25,8 @@ import {
   Clock,
   Layers,
   Plus,
+  RotateCcw,
+  Info,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
@@ -136,10 +139,14 @@ export default function PdcaKanbanPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6 space-y-6">
         {/* Header */}
         <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
             <div>
               <Flex alignItems="center" className="gap-3 mb-2">
                 <RippleButton 
@@ -148,22 +155,16 @@ export default function PdcaKanbanPage() {
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </RippleButton>
-                <GradientText className="text-4xl font-bold">
-                  PDCA Kanban
-                </GradientText>
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <RotateCcw className="text-purple-400" />
+                  Ciclos PDCA
+                </h1>
               </Flex>
               <Text className="text-gray-400 ml-12">
-                Gerencie planos de ação por ciclo PDCA (Plan → Do → Check → Act)
+                Arraste os cards para avançar nas fases do ciclo (Plan → Do → Check → Act)
               </Text>
             </div>
             <Flex className="gap-3">
-              <RippleButton 
-                variant="outline" 
-                onClick={() => router.push('/strategic/action-plans/new')}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Plano
-              </RippleButton>
               <RippleButton 
                 variant="outline" 
                 onClick={fetchKanbanData}
@@ -172,8 +173,15 @@ export default function PdcaKanbanPage() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </RippleButton>
+              <RippleButton 
+                variant="default" 
+                onClick={() => router.push('/strategic/action-plans/new')}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Plano
+              </RippleButton>
             </Flex>
-          </Flex>
+          </motion.div>
         </FadeIn>
 
         {/* Stats Cards */}
@@ -293,35 +301,24 @@ export default function PdcaKanbanPage() {
           </Card>
         </FadeIn>
 
-        {/* Legend */}
+        {/* Transition Rules Info */}
         <FadeIn delay={0.3}>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <Title className="text-white text-sm mb-3">Regras de Transição PDCA</Title>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-blue-400">PLAN</span>
-                <span className="text-gray-500">→</span>
-                <span className="text-amber-400">DO</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-amber-400">DO</span>
-                <span className="text-gray-500">→</span>
-                <span className="text-purple-400">CHECK</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-purple-400">CHECK</span>
-                <span className="text-gray-500">→</span>
-                <span className="text-emerald-400">ACT</span>
-                <span className="text-gray-500">ou</span>
-                <span className="text-amber-400">DO</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400">ACT</span>
-                <span className="text-gray-500">→</span>
-                <span className="text-gray-400">(final)</span>
-              </div>
-            </div>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm"
+          >
+            <p className="text-blue-300 text-sm flex items-center gap-2 flex-wrap">
+              <Info size={16} />
+              <strong>Regras de Transição:</strong>
+              <span className="flex items-center gap-1">
+                <span className="text-blue-400">PLAN</span>→<span className="text-amber-400">DO</span>→
+                <span className="text-purple-400">CHECK</span>→<span className="text-emerald-400">ACT</span>
+              </span>
+              <span className="text-blue-200/70">|</span>
+              <span>Do CHECK pode voltar para DO se necessário retrabalho.</span>
+            </p>
+          </motion.div>
         </FadeIn>
       </div>
     </PageTransition>

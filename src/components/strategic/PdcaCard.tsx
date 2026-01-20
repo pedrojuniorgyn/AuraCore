@@ -5,14 +5,15 @@
  * 
  * @module components/strategic
  */
+import { motion } from 'framer-motion';
 import { 
   Clock, 
   User, 
   AlertTriangle, 
   CheckCircle,
   ArrowRight,
+  GripVertical,
 } from 'lucide-react';
-import { ProgressBar } from '@tremor/react';
 
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 type PdcaPhase = 'PLAN' | 'DO' | 'CHECK' | 'ACT';
@@ -75,47 +76,64 @@ export function PdcaCard({
 }: PdcaCardProps) {
   const priorityStyle = PRIORITY_STYLES[priority] || PRIORITY_STYLES.MEDIUM;
 
-  // Cor da barra de progresso
-  const getProgressColor = (): 'emerald' | 'amber' | 'red' | 'blue' => {
-    if (completionPercent >= 100) return 'emerald';
-    if (isOverdue) return 'red';
-    if (completionPercent >= 70) return 'blue';
-    if (completionPercent >= 40) return 'amber';
-    return 'blue';
+  // Gradiente da barra de progresso
+  const getProgressGradient = (): string => {
+    if (completionPercent >= 100) return 'from-emerald-500 to-green-400';
+    if (isOverdue) return 'from-red-500 to-rose-400';
+    if (completionPercent >= 70) return 'from-blue-500 to-cyan-400';
+    if (completionPercent >= 40) return 'from-amber-500 to-yellow-400';
+    return 'from-blue-500 to-cyan-400';
   };
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: isDragging ? 1 : 1.02 }}
       onClick={onClick}
       className={`
-        p-3 bg-gray-800 rounded-lg border cursor-pointer 
-        transition-all duration-200 hover:bg-gray-750 hover:shadow-lg
-        ${isDragging ? 'shadow-xl rotate-2 scale-105 ring-2 ring-purple-500' : ''}
-        ${isOverdue ? 'border-l-4 border-l-red-500 border-gray-700' : 'border-gray-700'}
+        p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer 
+        backdrop-blur-sm transition-all duration-200 
+        hover:bg-white/10 hover:border-white/20 hover:shadow-lg
+        ${isDragging ? 'shadow-xl shadow-purple-500/20 rotate-2 scale-105 ring-2 ring-purple-500' : ''}
+        ${isOverdue ? 'border-l-4 border-l-red-500' : ''}
       `}
     >
-      {/* Header: Código + Prioridade */}
-      <div className="flex justify-between items-start mb-2">
-        <span className="font-semibold text-sm text-white">
+      {/* Header: Código + Prioridade + Grip */}
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs font-mono text-white/50 bg-white/10 px-2 py-0.5 rounded">
           {code}
         </span>
-        <span className={`text-xs px-2 py-0.5 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
-          {PRIORITY_LABELS[priority]}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs px-2 py-0.5 rounded ${priorityStyle.bg} ${priorityStyle.text}`}>
+            {PRIORITY_LABELS[priority]}
+          </span>
+          <GripVertical className="w-4 h-4 text-white/30" />
+        </div>
       </div>
 
       {/* Descrição (What) */}
-      <p className="text-sm text-gray-300 line-clamp-2 mb-3">
+      <p className="text-sm text-white font-medium line-clamp-2 mb-3">
         {what}
       </p>
 
-      {/* Info: Responsável + Data */}
-      <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
-        <span className="flex items-center gap-1">
+      {/* Barra de progresso animada */}
+      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-3">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${completionPercent}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className={`h-full rounded-full bg-gradient-to-r ${getProgressGradient()}`}
+        />
+      </div>
+
+      {/* Footer: Responsável + Data + Progresso */}
+      <div className="flex justify-between items-center text-xs">
+        <span className="flex items-center gap-1 text-white/50">
           <User className="w-3 h-3" />
-          {who}
+          <span className="truncate max-w-[80px]">{who}</span>
         </span>
-        <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-400 font-semibold' : ''}`}>
+        <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-400 font-semibold' : 'text-white/50'}`}>
           {isOverdue ? (
             <>
               <AlertTriangle className="w-3 h-3" />
@@ -129,34 +147,27 @@ export function PdcaCard({
           ) : (
             <>
               <Clock className="w-3 h-3" />
-              {daysUntilDue}d restantes
+              {daysUntilDue}d
             </>
           )}
         </span>
-      </div>
-
-      {/* Barra de progresso */}
-      <div className="space-y-1">
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-gray-500">Progresso</span>
-          <span className="text-xs text-gray-400 font-medium">{completionPercent}%</span>
-        </div>
-        <ProgressBar 
-          value={completionPercent} 
-          color={getProgressColor()}
-          className="h-1.5"
-        />
+        <span className="font-bold text-white/70">{completionPercent}%</span>
       </div>
 
       {/* Indicador de conclusão */}
       {completionPercent >= 100 && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-3 flex items-center justify-center gap-1 text-xs text-emerald-400 
+            bg-emerald-500/10 rounded-lg py-1.5"
+        >
           <CheckCircle className="w-3 h-3" />
           Pronto para avançar
           <ArrowRight className="w-3 h-3" />
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

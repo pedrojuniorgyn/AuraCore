@@ -7,12 +7,14 @@
  * @module components/strategic
  */
 import { useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import {
   DragDropContext,
   Droppable,
   Draggable,
   type DropResult,
 } from '@hello-pangea/dnd';
+import { toast } from 'sonner';
 import { PdcaCard, type Priority } from './PdcaCard';
 
 type PdcaPhase = 'PLAN' | 'DO' | 'CHECK' | 'ACT';
@@ -110,8 +112,12 @@ export function PdcaKanban({
     // Validar transição
     if (!VALID_TRANSITIONS[sourcePhase]?.includes(destPhase)) {
       // Transição inválida - mostrar feedback visual
-      const transitionKey = `${sourcePhase}->${destPhase}`;
-      console.warn(`Transição inválida: ${transitionKey}`);
+      const allowed = VALID_TRANSITIONS[sourcePhase];
+      toast.error(`Transição não permitida: ${sourcePhase} → ${destPhase}`, {
+        description: allowed.length > 0 
+          ? `De ${sourcePhase} só pode ir para: ${allowed.join(', ')}` 
+          : `${sourcePhase} é a fase final`,
+      });
       return;
     }
 
@@ -152,24 +158,27 @@ export function PdcaKanban({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {localColumns.map((column) => {
+      <div className="grid grid-cols-4 gap-4">
+        {localColumns.map((column, index) => {
           const style = PDCA_PHASE_STYLES[column.id];
           
           return (
-            <div
+            <motion.div
               key={column.id}
-              className="flex-shrink-0 w-80"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="flex flex-col"
             >
               {/* Header da coluna */}
               <div
-                className={`px-4 py-3 rounded-t-lg font-semibold text-white flex items-center justify-between ${style.headerBg}`}
+                className={`px-4 py-3 rounded-t-xl font-semibold text-white flex items-center justify-between ${style.headerBg}`}
               >
                 <span className="flex items-center gap-2">
-                  <span>{style.icon}</span>
+                  <span className="text-lg">{style.icon}</span>
                   <span>{column.title}</span>
                 </span>
-                <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
+                <span className="text-2xl font-bold text-white/40">
                   {column.items.length}
                 </span>
               </div>
@@ -181,41 +190,44 @@ export function PdcaKanban({
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={`
-                      min-h-[400px] p-2 rounded-b-lg border-2 border-t-0 transition-colors
+                      flex-1 min-h-[400px] p-3 rounded-b-xl border-2 border-t-0 transition-all
                       ${snapshot.isDraggingOver 
-                        ? style.dropzoneActive 
-                        : `${style.dropzoneBg} border-gray-700`
+                        ? `${style.dropzoneActive} ring-2 ring-purple-500/50` 
+                        : `${style.dropzoneBg} border-white/10`
                       }
                     `}
                   >
-                    {column.items.map((card, index) => (
-                      <Draggable
-                        key={card.id}
-                        draggableId={card.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`mb-2 ${movingCard === card.id ? 'opacity-50' : ''}`}
-                          >
-                            <PdcaCard
-                              {...card}
-                              onClick={() => onCardClick?.(card.id)}
-                              isDragging={snapshot.isDragging}
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
+                    <div className="space-y-3">
+                      {column.items.map((card, cardIndex) => (
+                        <Draggable
+                          key={card.id}
+                          draggableId={card.id}
+                          index={cardIndex}
+                        >
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`${movingCard === card.id ? 'opacity-50' : ''}`}
+                            >
+                              <PdcaCard
+                                {...card}
+                                onClick={() => onCardClick?.(card.id)}
+                                isDragging={snapshot.isDragging}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                    </div>
                     {provided.placeholder}
 
                     {/* Empty state */}
                     {column.items.length === 0 && !snapshot.isDraggingOver && (
-                      <div className="flex items-center justify-center h-32 text-gray-500 text-sm">
-                        Nenhum plano nesta fase
+                      <div className="flex flex-col items-center justify-center h-32 text-white/30">
+                        <span className="text-3xl mb-2">{style.icon}</span>
+                        <span className="text-sm">Nenhum plano</span>
                       </div>
                     )}
                   </div>
@@ -223,16 +235,14 @@ export function PdcaKanban({
               </Droppable>
 
               {/* Indicador de transições válidas */}
-              <div className="mt-2 text-xs text-gray-500 text-center">
+              <div className="mt-2 text-xs text-white/40 text-center">
                 {VALID_TRANSITIONS[column.id].length > 0 ? (
-                  <span>
-                    Pode mover para: {VALID_TRANSITIONS[column.id].join(', ')}
-                  </span>
+                  <span>→ {VALID_TRANSITIONS[column.id].join(', ')}</span>
                 ) : (
-                  <span className="text-emerald-500">Fase final</span>
+                  <span className="text-emerald-400">✓ Fase final</span>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
