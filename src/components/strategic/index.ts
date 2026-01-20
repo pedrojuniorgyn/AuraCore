@@ -37,3 +37,10 @@ export { DashboardWidget } from './DashboardWidget';
 export { DashboardGrid, type WidgetConfig, type DashboardData } from './DashboardGrid';
 export { WidgetPicker, widgetOptions, type WidgetType } from './WidgetPicker';
 export * from './widgets';
+
+// Relatórios Automáticos
+export { ReportCard, type Report } from './ReportCard';
+export { ReportBuilder, type ReportConfig, type ReportType } from './ReportBuilder';
+export { ReportScheduler, type ScheduleConfig, type Frequency } from './ReportScheduler';
+export { ReportPreview } from './ReportPreview';
+export { ReportHistory } from './ReportHistory';
