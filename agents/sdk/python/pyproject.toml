@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "auracore"
+version = "1.0.0"
+description = "AuraCore Python SDK - ERP Agents API Client"
+authors = ["AuraCore Team <dev@auracore.com.br>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/pedrojuniorgyn/AuraCore"
+repository = "https://github.com/pedrojuniorgyn/AuraCore"
+documentation = "https://docs.auracore.com.br"
+keywords = ["auracore", "erp", "agents", "ai", "fiscal", "brazil"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+httpx = "^0.27.0"
+click = "^8.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.0"
+pytest-httpx = "^0.30.0"
+
+[tool.poetry.scripts]
+auracore = "auracore.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
