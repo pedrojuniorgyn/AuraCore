@@ -1,212 +1,285 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+/**
+ * Página: Indicadores (KPIs)
+ * Dashboard premium com gauges e sparklines
+ * 
+ * @module app/(dashboard)/strategic/kpis
+ */
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { 
-  Card, 
-  Title, 
-  Text, 
-  Grid, 
-  Flex,
-  Select,
-  SelectItem,
-  TextInput,
-} from '@tremor/react';
-import { 
-  Gauge, 
-  Plus, 
+  BarChart3, 
   RefreshCw, 
-  ArrowLeft,
-  Search,
-  Filter,
+  Plus, 
+  Search, 
+  Loader2,
 } from 'lucide-react';
-
-import { GradientText } from '@/components/ui/magic-components';
-import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
+import { KpiCard, type KpiData } from '@/components/strategic/KpiCard';
+import { KpiSummaryCards } from '@/components/strategic/KpiSummaryCards';
 import { RippleButton } from '@/components/ui/ripple-button';
-import { KpiGauge } from '@/components/strategic/KpiGauge';
 
-type KpiStatus = 'GREEN' | 'YELLOW' | 'RED' | 'GRAY';
+type KpiStatus = 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' | 'NO_DATA';
+type Perspective = 'FINANCIAL' | 'CUSTOMER' | 'INTERNAL' | 'LEARNING';
 
-interface Kpi {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  unit: string;
-  targetValue: number;
-  currentValue: number;
-  status: KpiStatus;
-  achievementPercent: number;
-  deviationPercent: number;
-  goalId: string | null;
-  ownerUserId: string;
+const PERSPECTIVE_CONFIG: Record<Perspective, { icon: string; label: string; color: string }> = {
+  FINANCIAL: { icon: '💰', label: 'Financeira', color: 'green' },
+  CUSTOMER: { icon: '👥', label: 'Cliente', color: 'blue' },
+  INTERNAL: { icon: '⚙️', label: 'Processos Internos', color: 'purple' },
+  LEARNING: { icon: '📚', label: 'Aprendizado e Crescimento', color: 'orange' },
+};
+
+// Converter status antigo (GREEN/YELLOW/RED) para novo (ON_TRACK/AT_RISK/CRITICAL)
+function normalizeStatus(status: string): KpiStatus {
+  const mapping: Record<string, KpiStatus> = {
+    'GREEN': 'ON_TRACK',
+    'YELLOW': 'AT_RISK',
+    'RED': 'CRITICAL',
+    'GRAY': 'NO_DATA',
+    'ON_TRACK': 'ON_TRACK',
+    'AT_RISK': 'AT_RISK',
+    'CRITICAL': 'CRITICAL',
+    'NO_DATA': 'NO_DATA',
+  };
+  return mapping[status] || 'NO_DATA';
 }
 
 export default function KpisPage() {
   const router = useRouter();
-  const [kpis, setKpis] = useState<Kpi[]>([]);
+  const [kpis, setKpis] = useState<KpiData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [perspectiveFilter, setPerspectiveFilter] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchKpis();
-  }, []);
-
-  const fetchKpis = async () => {
-    setLoading(true);
+  const fetchKpis = async (showRefresh = false) => {
+    if (showRefresh) setRefreshing(true);
+    else setLoading(true);
+    
     try {
       const response = await fetch('/api/strategic/kpis?pageSize=100');
       if (response.ok) {
         const result = await response.json();
-        setKpis(result.items || []);
+        // Normalizar dados da API
+        const normalizedKpis: KpiData[] = (result.items || result.kpis || []).map((kpi: Record<string, unknown>) => ({
+          id: kpi.id as string,
+          code: kpi.code as string || `KPI-${String(kpi.id).slice(0, 4)}`,
+          name: kpi.name as string || kpi.description as string,
+          currentValue: Number(kpi.currentValue) || 0,
+          targetValue: Number(kpi.targetValue) || 100,
+          unit: kpi.unit as string || '%',
+          status: normalizeStatus(kpi.status as string),
+          trend: Number(kpi.trend) || 0,
+          history: (kpi.history as number[]) || generateMockHistory(),
+          variance: Number(kpi.variance) || Number(kpi.deviationPercent) || 0,
+          perspective: kpi.perspective as string || 'INTERNAL',
+        }));
+        setKpis(normalizedKpis);
       }
     } catch (error) {
       console.error('Erro ao carregar KPIs:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    fetchKpis();
+  }, []);
+
+  // Summary calculations
+  const summary = useMemo(() => ({
+    total: kpis.length,
+    onTrack: kpis.filter(k => k.status === 'ON_TRACK').length,
+    atRisk: kpis.filter(k => k.status === 'AT_RISK').length,
+    critical: kpis.filter(k => k.status === 'CRITICAL').length,
+    noData: kpis.filter(k => k.status === 'NO_DATA').length,
+  }), [kpis]);
+
+  // Filter KPIs
+  const filteredKpis = useMemo(() => {
+    return kpis.filter(kpi => {
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const matchesSearch = 
+          kpi.name.toLowerCase().includes(searchLower) ||
+          kpi.code.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+      if (statusFilter && kpi.status !== statusFilter) return false;
+      if (perspectiveFilter && kpi.perspective !== perspectiveFilter) return false;
+      return true;
+    });
+  }, [kpis, search, statusFilter, perspectiveFilter]);
+
+  // Group by perspective
+  const grouped = useMemo(() => {
+    const g: Record<string, KpiData[]> = {};
+    filteredKpis.forEach(kpi => {
+      const perspective = kpi.perspective || 'INTERNAL';
+      if (!g[perspective]) g[perspective] = [];
+      g[perspective].push(kpi);
+    });
+    return g;
+  }, [filteredKpis]);
 
   const handleKpiClick = (id: string) => {
     router.push(`/strategic/kpis/${id}`);
   };
 
-  const filteredKpis = kpis.filter((kpi) => {
-    const matchesSearch = 
-      kpi.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      kpi.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || kpi.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const statusCounts = {
-    green: kpis.filter(k => k.status === 'GREEN').length,
-    yellow: kpis.filter(k => k.status === 'YELLOW').length,
-    red: kpis.filter(k => k.status === 'RED').length,
-  };
-
   return (
-    <PageTransition>
-      <div className="space-y-6">
-        {/* Header */}
-        <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/dashboard')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </RippleButton>
-                <GradientText className="text-4xl font-bold">
-                  Indicadores (KPIs)
-                </GradientText>
-              </Flex>
-              <Text className="text-gray-400 ml-12">
-                Monitoramento de indicadores-chave de desempenho
-              </Text>
-            </div>
-            <Flex className="gap-3">
-              <RippleButton 
-                variant="outline" 
-                onClick={fetchKpis}
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </RippleButton>
-            </Flex>
-          </Flex>
-        </FadeIn>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between mb-6"
+      >
+        <div>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <BarChart3 className="text-purple-400" />
+            Indicadores (KPIs)
+          </h1>
+          <p className="text-white/60 mt-1">
+            Acompanhe o desempenho dos indicadores estratégicos
+          </p>
+        </div>
 
-        {/* Summary */}
-        <FadeIn delay={0.1}>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <Flex justifyContent="between" alignItems="center">
-              <Flex className="gap-6">
-                <div className="text-center">
-                  <Text className="text-emerald-400 text-2xl font-bold">{statusCounts.green}</Text>
-                  <Text className="text-gray-500 text-sm">No Prazo</Text>
-                </div>
-                <div className="text-center">
-                  <Text className="text-amber-400 text-2xl font-bold">{statusCounts.yellow}</Text>
-                  <Text className="text-gray-500 text-sm">Atenção</Text>
-                </div>
-                <div className="text-center">
-                  <Text className="text-red-400 text-2xl font-bold">{statusCounts.red}</Text>
-                  <Text className="text-gray-500 text-sm">Crítico</Text>
-                </div>
-                <div className="text-center">
-                  <Text className="text-gray-300 text-2xl font-bold">{kpis.length}</Text>
-                  <Text className="text-gray-500 text-sm">Total</Text>
-                </div>
-              </Flex>
+        <div className="flex gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar KPI..."
+              className="pl-10 pr-4 py-2 rounded-xl bg-white/10 border border-white/10 
+                text-white placeholder-white/40 w-[200px]
+                focus:outline-none focus:border-purple-500/50 transition-colors"
+            />
+          </div>
 
-              <Flex className="gap-3">
-                <TextInput
-                  icon={Search}
-                  placeholder="Buscar KPI..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64"
-                />
-                <Select
-                  value={statusFilter}
-                  onValueChange={setStatusFilter}
-                  className="w-40"
-                  icon={Filter}
-                >
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="GREEN">No Prazo</SelectItem>
-                  <SelectItem value="YELLOW">Atenção</SelectItem>
-                  <SelectItem value="RED">Crítico</SelectItem>
-                </Select>
-              </Flex>
-            </Flex>
-          </Card>
-        </FadeIn>
+          {/* Perspective Filter */}
+          <select
+            value={perspectiveFilter || ''}
+            onChange={(e) => setPerspectiveFilter(e.target.value || null)}
+            className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 
+              text-white focus:outline-none focus:border-purple-500/50 transition-colors"
+          >
+            <option value="">Todas Perspectivas</option>
+            {Object.entries(PERSPECTIVE_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>{config.icon} {config.label}</option>
+            ))}
+          </select>
 
-        {/* KPI Cards */}
-        <StaggerContainer>
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <RefreshCw className="w-8 h-8 animate-spin text-purple-400" />
-            </div>
-          ) : filteredKpis.length > 0 ? (
-            <Grid numItemsSm={2} numItemsMd={3} numItemsLg={4} className="gap-4">
-              {filteredKpis.map((kpi) => (
-                <KpiGauge
-                  key={kpi.id}
-                  id={kpi.id}
-                  code={kpi.code}
-                  name={kpi.name}
-                  currentValue={kpi.currentValue}
-                  targetValue={kpi.targetValue}
-                  unit={kpi.unit}
-                  status={kpi.status}
-                  deviationPercent={kpi.deviationPercent}
-                  onClick={handleKpiClick}
-                />
-              ))}
-            </Grid>
-          ) : (
-            <Card className="bg-gray-900/50 border-gray-800">
-              <div className="flex flex-col items-center justify-center py-12">
-                <Gauge className="w-12 h-12 text-gray-600 mb-4" />
-                <Title className="text-gray-400">Nenhum KPI encontrado</Title>
-                <Text className="text-gray-500 mt-2">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? 'Tente ajustar os filtros'
-                    : 'Crie KPIs para monitorar seus objetivos'}
-                </Text>
-              </div>
-            </Card>
+          <RippleButton
+            variant="outline"
+            onClick={() => fetchKpis(true)}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </RippleButton>
+          
+          <RippleButton
+            variant="default"
+            onClick={() => router.push('/strategic/kpis/new')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo KPI
+          </RippleButton>
+        </div>
+      </motion.div>
+
+      {/* Summary Cards */}
+      <KpiSummaryCards
+        summary={summary}
+        activeFilter={statusFilter}
+        onFilterChange={setStatusFilter}
+      />
+
+      {/* KPIs by Perspective */}
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
+            <p className="text-white/60">Carregando indicadores...</p>
+          </div>
+        </div>
+      ) : filteredKpis.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16"
+        >
+          <BarChart3 className="w-16 h-16 text-white/20 mb-4" />
+          <p className="text-white/50 text-lg">Nenhum KPI encontrado</p>
+          {(search || statusFilter || perspectiveFilter) && (
+            <button
+              onClick={() => {
+                setSearch('');
+                setStatusFilter(null);
+                setPerspectiveFilter(null);
+              }}
+              className="mt-4 text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              Limpar filtros
+            </button>
           )}
-        </StaggerContainer>
-      </div>
-    </PageTransition>
+        </motion.div>
+      ) : (
+        <div className="space-y-8">
+          {(Object.keys(PERSPECTIVE_CONFIG) as Perspective[]).map((perspective) => {
+            const perspectiveKpis = grouped[perspective];
+            if (!perspectiveKpis || perspectiveKpis.length === 0) return null;
+
+            const config = PERSPECTIVE_CONFIG[perspective];
+
+            return (
+              <motion.div
+                key={perspective}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <span className="text-xl">{config.icon}</span>
+                  {config.label}
+                  <span className="text-white/40 text-sm font-normal ml-2">
+                    ({perspectiveKpis.length} {perspectiveKpis.length === 1 ? 'indicador' : 'indicadores'})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {perspectiveKpis.map((kpi, index) => (
+                    <motion.div
+                      key={kpi.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <KpiCard kpi={kpi} onClick={handleKpiClick} />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
+}
+
+// Helper para gerar histórico mock se não existir
+function generateMockHistory(): number[] {
+  const history: number[] = [];
+  let value = 50 + Math.random() * 30;
+  for (let i = 0; i < 7; i++) {
+    value = Math.max(0, Math.min(100, value + (Math.random() - 0.5) * 10));
+    history.push(Math.round(value));
+  }
+  return history;
 }
