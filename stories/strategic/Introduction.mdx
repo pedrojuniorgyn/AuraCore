@@ -1,0 +1,76 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Strategic/Introduction" />
+
+# 🎯 AuraCore Strategic Module
+
+Bem-vindo à documentação visual do módulo Strategic do AuraCore ERP.
+
+## Visão Geral
+
+O módulo Strategic oferece ferramentas completas para gestão estratégica empresarial:
+
+- **Dashboard Customizável** - Widgets drag-and-drop
+- **KPIs** - Indicadores com Balanced Scorecard
+- **Planos de Ação** - Metodologia 5W2H
+- **PDCA** - Ciclos de melhoria contínua
+- **Aurora AI** - Insights inteligentes
+
+## Navegação
+
+### Widgets
+
+Componentes individuais do dashboard:
+
+- **HealthScoreWidget** - Score de saúde estratégica
+- **AlertsWidget** - Alertas críticos
+- **KpiSummaryWidget** - Resumo por perspectiva BSC
+- **AuroraInsightWidget** - Insights de IA
+
+### Componentes
+
+- **DashboardWidget** - Container de widget
+- **VirtualizedKpiList** - Lista virtualizada de KPIs
+
+## Design System
+
+### Cores
+
+O módulo usa um tema escuro com destaque em roxo:
+
+- **Background:** `#0f0d1a` (slate-900)
+- **Accent:** `#a855f7` (purple-500)
+- **Success:** `#22c55e` (green-500)
+- **Warning:** `#eab308` (yellow-500)
+- **Error:** `#ef4444` (red-500)
+
+### Efeitos
+
+- **Glass Effect:** `bg-white/5 backdrop-blur-xl border border-white/10`
+- **Glow:** `shadow-lg shadow-purple-500/20`
+- **Gradient:** `bg-gradient-to-br from-purple-500/20 to-blue-500/20`
+
+## Como Usar
+
+### Instalação
+
+```bash
+# Instalar Storybook (já configurado)
+npm install
+
+# Rodar Storybook
+npm run storybook
+```
+
+### Importando Componentes
+
+```tsx
+import { HealthScoreWidget } from '@/components/strategic/widgets';
+import { VirtualizedKpiList } from '@/components/strategic/VirtualizedKpiList';
+```
+
+## Links
+
+- [Documentação Técnica](/docs/strategic/README.md)
+- [Arquitetura](/docs/strategic/architecture.md)
+- [API Reference](/docs/strategic/api-reference.md)
