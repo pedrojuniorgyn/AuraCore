@@ -18,6 +18,7 @@ from src.tools.fiscal.query_legislation import QueryLegislationTool
 from src.tools.fiscal.simulate_tax import SimulateTaxTool
 from src.tools.fiscal.check_nfe import CheckNFeTool
 from src.tools.fiscal.document_importer import DocumentImporterTool
+from src.tools.fiscal.legislation_rag import LegislationRAGTool
 
 
 class FiscalAgent(BaseAuracoreAgent):
@@ -63,6 +64,7 @@ class FiscalAgent(BaseAuracoreAgent):
             SimulateTaxTool(),
             CheckNFeTool(),
             DocumentImporterTool(),
+            LegislationRAGTool(),  # RAG local para legislação
         ]
         
         super().__init__(
@@ -83,6 +85,7 @@ class FiscalAgent(BaseAuracoreAgent):
             "Validação de CTe antes de autorização",
             "Verificação de NFes vinculadas",
             "Consulta à legislação fiscal (Lei Kandir, IN RFB)",
+            "Consulta RAG local de legislação (ChromaDB)",
             "Simulação de carga tributária (atual vs Reforma 2026)",
             "Orientação sobre CFOP e CST",
             "Alertas sobre obrigações acessórias",

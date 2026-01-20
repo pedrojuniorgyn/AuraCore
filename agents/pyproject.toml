@@ -52,6 +52,9 @@ dependencies = [
     # Audio Processing
     "pydub>=0.25.1",
     "soundfile>=0.12.1",
+    
+    # RAG / Knowledge Base - Embeddings
+    "openai>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -61,6 +64,11 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.1.0",
     "mypy>=1.8.0",
+]
+
+# Para usar embeddings locais ao invés de OpenAI
+local-embeddings = [
+    "sentence-transformers>=2.2.0",
 ]
 
 [build-system]

@@ -6,6 +6,7 @@ from src.tools.fiscal.query_legislation import QueryLegislationTool
 from src.tools.fiscal.simulate_tax import SimulateTaxTool
 from src.tools.fiscal.check_nfe import CheckNFeTool
 from src.tools.fiscal.document_importer import DocumentImporterTool
+from src.tools.fiscal.legislation_rag import LegislationRAGTool
 
 __all__ = [
     "CalculateICMSTool",
@@ -14,4 +15,5 @@ __all__ = [
     "SimulateTaxTool",
     "CheckNFeTool",
     "DocumentImporterTool",
+    "LegislationRAGTool",
 ]
