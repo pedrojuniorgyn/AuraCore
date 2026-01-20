@@ -144,6 +144,7 @@ async def list_integrations(
     
     integrations = await hub.list_integrations(
         org_id=auth["organization_id"],
+        branch_id=auth["branch_id"],  # CRÍTICO: Multi-tenancy
         type=integration_type
     )
     
