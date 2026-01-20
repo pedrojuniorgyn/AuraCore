@@ -13,6 +13,9 @@ import { GenerateAgendaUseCase } from '@/modules/strategic/application/queries/G
 import { WarRoomMeeting, type MeetingType, type MeetingStatus } from '@/modules/strategic/domain/entities/WarRoomMeeting';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IWarRoomMeetingRepository } from '@/modules/strategic/domain/ports/output/IWarRoomMeetingRepository';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema';
+import { eq, inArray } from 'drizzle-orm';
 
 const createMeetingSchema = z.object({
   strategyId: z.string().uuid().optional(),
@@ -56,6 +59,23 @@ export async function GET(request: NextRequest) {
       pageSize,
     });
 
+    // Buscar nomes dos facilitadores
+    const facilitatorIds = [...new Set(items.map(m => m.facilitatorUserId).filter(Boolean))];
+    const facilitatorNames: Record<string, string> = {};
+    
+    if (facilitatorIds.length > 0) {
+      const facilitators = await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(inArray(users.id, facilitatorIds));
+      
+      for (const f of facilitators) {
+        if (f.name) {
+          facilitatorNames[f.id] = f.name;
+        }
+      }
+    }
+
     return NextResponse.json({
       items: items.map((meeting) => ({
         id: meeting.id,
@@ -74,6 +94,7 @@ export async function GET(request: NextRequest) {
         status: meeting.status,
         isOverdue: meeting.isOverdue,
         facilitatorUserId: meeting.facilitatorUserId,
+        facilitatorName: meeting.facilitatorUserId ? facilitatorNames[meeting.facilitatorUserId] ?? null : null,
         createdBy: meeting.createdBy,
         createdAt: meeting.createdAt.toISOString(),
       })),

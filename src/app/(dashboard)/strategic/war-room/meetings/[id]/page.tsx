@@ -75,6 +75,7 @@ interface MeetingDetail {
   status: MeetingStatus;
   isOverdue: boolean;
   facilitatorUserId: string;
+  facilitatorName?: string | null;
   createdBy: string;
   createdAt: string;
 }
@@ -281,7 +282,7 @@ export default function MeetingDetailPage({
                       <div>
                         <Text className="text-gray-400 text-xs">Facilitador</Text>
                         <Text className="text-white">
-                          {meeting.facilitatorUserId ? `ID: ${meeting.facilitatorUserId.slice(0, 8)}...` : 'Não definido'}
+                          {meeting.facilitatorName || (meeting.facilitatorUserId ? 'Responsável definido' : 'Não definido')}
                         </Text>
                       </div>
                     </Flex>
