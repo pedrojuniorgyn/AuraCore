@@ -25,7 +25,9 @@ from src.api import auth as auth_api
 from src.api import integrations as integrations_api
 from src.api import push as push_api
 from src.api import analytics as analytics_api
+from src.api import audit as audit_api
 from src.services.analytics import get_analytics_service
+from src.middleware.audit import AuditContextMiddleware
 from src.core.orchestrator import get_orchestrator
 from src.services.webhooks import get_webhook_service
 from src.services.tasks import get_task_queue, TaskWorker
@@ -122,6 +124,10 @@ TAGS_METADATA = [
     {
         "name": "Analytics",
         "description": "Analytics e usage tracking (métricas de negócio)",
+    },
+    {
+        "name": "Audit",
+        "description": "Audit logging e compliance (LGPD, SPED)",
     },
 ]
 
@@ -230,6 +236,9 @@ app = FastAPI(
 # Locale Detection (ANTES do CORS para processar primeiro)
 app.add_middleware(LocaleMiddleware)
 
+# Audit Context (captura IP, User-Agent para auditoria)
+app.add_middleware(AuditContextMiddleware)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -261,6 +270,7 @@ app.include_router(auth_api.router, prefix="/v1", tags=["Auth"])
 app.include_router(integrations_api.router, prefix="/v1", tags=["Integrations"])
 app.include_router(push_api.router, prefix="/v1", tags=["Push Notifications"])
 app.include_router(analytics_api.router, prefix="/v1", tags=["Analytics"])
+app.include_router(audit_api.router, prefix="/v1", tags=["Audit"])
 
 
 # ===== CUSTOM DOCS =====
