@@ -2,12 +2,19 @@
  * API Route para chat com streaming (SSE).
  *
  * POST /api/agents/chat/stream
+ * 
+ * @since E8 Fase 4 - Migrado para IAgentsGateway via DI
  */
 
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { getAgentsService } from "@/services/agents/agentsService";
-import type { AgentContext, ChatRequest } from "@/types/agents";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { 
+  IAgentsGateway,
+  AgentContext,
+  ChatRequest,
+} from "@/modules/integrations/domain/ports/output/IAgentsGateway";
 
 export async function POST(request: NextRequest) {
   // 1. Autenticação
@@ -35,19 +42,19 @@ export async function POST(request: NextRequest) {
     userId: user.id,
     organizationId: user.organizationId,
     branchId: user.defaultBranchId || user.organizationId,
-    sessionId: crypto.randomUUID(),
+    sessionId: globalThis.crypto.randomUUID(),
     roles: user.role ? [user.role] : ["user"],
     permissions: [],
   };
 
-  // 4. Criar stream
+  // 4. Criar stream via Gateway DI
   const encoder = new TextEncoder();
-  const agentsService = getAgentsService();
+  const agentsGateway = container.resolve<IAgentsGateway>(TOKENS.AgentsGateway);
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of agentsService.chatStream(
+        for await (const chunk of agentsGateway.chatStream(
           chatRequest,
           context
         )) {

@@ -2,9 +2,17 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
-import { shouldRequireCiot } from "@/services/validators/ciot-validator";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
+
+/**
+ * Verifica se motorista requer CIOT (terceiros/agregados)
+ * 
+ * TODO (E9): Migrar para Domain Service src/modules/tms/domain/services/CiotValidator.ts
+ */
+function shouldRequireCiot(driverType: string): boolean {
+  return ["THIRD_PARTY", "AGGREGATE"].includes(driverType);
+}
 
 /**
  * GET /api/tms/trips

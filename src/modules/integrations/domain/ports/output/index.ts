@@ -9,4 +9,5 @@ export * from './IBankingGateway';
 export * from './IBtgClient';
 export * from './INotificationService';
 export * from './IBankStatementParser';
+export * from './IAgentsGateway';
 

@@ -2,11 +2,16 @@
  * API Route para listar agentes disponíveis.
  *
  * GET /api/agents
+ * 
+ * @since E8 Fase 4 - Migrado para IAgentsGateway via DI
  */
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getAgentsService } from "@/services/agents/agentsService";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IAgentsGateway } from "@/modules/integrations/domain/ports/output/IAgentsGateway";
+import { Result } from "@/shared/domain";
 
 export async function GET() {
   try {
@@ -16,11 +21,20 @@ export async function GET() {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    // 2. Listar agentes
-    const agentsService = getAgentsService();
-    const agents = await agentsService.listAgents();
+    // 2. Resolver gateway via DI
+    const agentsGateway = container.resolve<IAgentsGateway>(TOKENS.AgentsGateway);
+    
+    // 3. Listar agentes
+    const result = await agentsGateway.listAgents();
 
-    return NextResponse.json(agents);
+    if (Result.isFail(result)) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(result.value);
   } catch (error) {
     console.error("Erro ao listar agentes:", error);
     return NextResponse.json(

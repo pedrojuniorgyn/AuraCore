@@ -2,12 +2,20 @@
  * API Route para chat com agentes.
  *
  * POST /api/agents/chat
+ * 
+ * @since E8 Fase 4 - Migrado para IAgentsGateway via DI
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getAgentsService } from "@/services/agents/agentsService";
-import type { AgentContext, ChatRequest } from "@/types/agents";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { 
+  IAgentsGateway,
+  AgentContext,
+  ChatRequest,
+} from "@/modules/integrations/domain/ports/output/IAgentsGateway";
+import { Result } from "@/shared/domain";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,16 +47,23 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       organizationId: user.organizationId,
       branchId: user.defaultBranchId || user.organizationId,
-      sessionId: crypto.randomUUID(),
+      sessionId: globalThis.crypto.randomUUID(),
       roles: user.role ? [user.role] : ["user"],
       permissions: [],
     };
 
-    // 4. Chamar serviço
-    const agentsService = getAgentsService();
-    const response = await agentsService.chat(chatRequest, context);
+    // 4. Resolver gateway e chamar
+    const agentsGateway = container.resolve<IAgentsGateway>(TOKENS.AgentsGateway);
+    const result = await agentsGateway.chat(chatRequest, context);
 
-    return NextResponse.json(response);
+    if (Result.isFail(result)) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json(result.value);
   } catch (error) {
     console.error("Erro no chat:", error);
     return NextResponse.json(

@@ -23,6 +23,7 @@ import type { ISefazGateway } from '../../domain/ports/output/ISefazGateway';
 import type { IBankingGateway } from '../../domain/ports/output/IBankingGateway';
 import type { INotificationService } from '../../domain/ports/output/INotificationService';
 import type { IBankStatementParser } from '../../domain/ports/output/IBankStatementParser';
+import type { IAgentsGateway } from '../../domain/ports/output/IAgentsGateway';
 
 // Adapters - Real
 import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
@@ -31,6 +32,7 @@ import { BtgBankingAdapter } from '../adapters/banking/BtgBankingAdapter';
 import { BtgLegacyClientAdapter } from '../adapters/banking/BtgLegacyClientAdapter';
 import { NodemailerAdapter } from '../adapters/notification/NodemailerAdapter';
 import { OfxParserAdapter } from '../adapters/ofx/OfxParserAdapter';
+import { AgentsAdapter } from '../adapters/AgentsAdapter';
 
 // Ports - Legacy Clients
 import type { ISefazClient } from '../../domain/ports/output/ISefazClient';
@@ -166,6 +168,15 @@ export function initializeIntegrationsModule(): void {
     );
     console.log('✅ OFX_PARSER: Using OfxParserAdapter (full implementation)');
   }
+
+  // === Agents Gateway ===
+  // ✅ COMPLETE (4/4 methods): Full HTTP client for Python agents API
+  // Always use real adapter (no mock needed - fails gracefully if service unavailable)
+  container.registerSingleton<IAgentsGateway>(
+    TOKENS.AgentsGateway,
+    AgentsAdapter
+  );
+  console.log('✅ AGENTS: Using AgentsAdapter');
 
   initialized = true;
   console.log(`✅ IntegrationsModule initialized (useMocks: ${useMocks})`);
