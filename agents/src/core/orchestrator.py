@@ -23,6 +23,7 @@ from src.agents.tms import TMSAgent
 from src.agents.crm import CRMAgent
 from src.agents.accounting import AccountingAgent
 from src.agents.fleet import FleetAgent
+from src.agents.strategic import StrategicAgent
 
 
 class AgentOrchestrator:
@@ -85,8 +86,12 @@ class AgentOrchestrator:
         except Exception as e:
             logger.error("Failed to initialize Fleet Agent", error=str(e))
         
-        # TODO: FASE 7 - Adicionar outros agentes
-        # self.agents[AgentType.STRATEGIC] = StrategicAgent()
+        # FASE 7: Strategic Agent
+        try:
+            self.agents[AgentType.STRATEGIC] = StrategicAgent()
+            logger.info("Strategic Agent initialized")
+        except Exception as e:
+            logger.error("Failed to initialize Strategic Agent", error=str(e))
         
         logger.info(
             "Agents initialization complete",

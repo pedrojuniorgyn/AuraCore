@@ -5,5 +5,6 @@ from src.tools import tms
 from src.tools import crm
 from src.tools import accounting
 from src.tools import fleet
+from src.tools import strategic
 
-__all__ = ["fiscal", "financial", "tms", "crm", "accounting", "fleet"]
+__all__ = ["fiscal", "financial", "tms", "crm", "accounting", "fleet", "strategic"]

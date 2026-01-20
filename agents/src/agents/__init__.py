@@ -6,8 +6,14 @@ from src.agents.tms import TMSAgent
 from src.agents.crm import CRMAgent
 from src.agents.accounting import AccountingAgent
 from src.agents.fleet import FleetAgent
+from src.agents.strategic import StrategicAgent
 
-__all__ = ["FiscalAgent", "FinancialAgent", "TMSAgent", "CRMAgent", "AccountingAgent", "FleetAgent"]
-
-# TODO: Adicionar nas próximas fases
-# from src.agents.strategic import StrategicAgent
+__all__ = [
+    "FiscalAgent",
+    "FinancialAgent",
+    "TMSAgent",
+    "CRMAgent",
+    "AccountingAgent",
+    "FleetAgent",
+    "StrategicAgent",
+]
