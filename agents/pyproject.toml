@@ -26,6 +26,9 @@ dependencies = [
     # Database
     "chromadb>=0.4.22",
     
+    # Cache
+    "redis>=5.0.0",
+    
     # Observability
     "opentelemetry-api>=1.22.0",
     "opentelemetry-sdk>=1.22.0",
