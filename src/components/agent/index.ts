@@ -10,3 +10,4 @@
 export { ChatInterface } from './ChatInterface';
 export { ChatMessage } from './ChatMessage';
 export { SessionList } from './SessionList';
+export { VoiceChat } from './VoiceChat';
