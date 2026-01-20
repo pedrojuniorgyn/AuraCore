@@ -1,3 +1,38 @@
+/**
+ * ⚠️ DEPRECATED - accounting-engine.ts
+ *
+ * Este arquivo está DEPRECADO desde E7-Onda F (Migração DDD).
+ *
+ * USE A ESTRUTURA DDD EM SEU LUGAR:
+ *
+ * - GenerateJournalEntryUseCase: @/modules/accounting/application/use-cases/GenerateJournalEntryUseCase
+ * - ReverseJournalEntryUseCase: @/modules/accounting/application/use-cases/ReverseJournalEntryUseCase
+ * - FiscalAccountingIntegration: @/modules/fiscal/application/services/FiscalAccountingIntegration
+ * - CreateJournalEntryUseCase: @/modules/accounting/application/use-cases/CreateJournalEntryUseCase
+ * - PostJournalEntryUseCase: @/modules/accounting/application/use-cases/PostJournalEntryUseCase
+ *
+ * COMO MIGRAR:
+ *
+ * ```typescript
+ * // ❌ ANTES (deprecated)
+ * import { generateJournalEntry } from '@/services/accounting-engine';
+ * const result = await generateJournalEntry(documentId, userId);
+ *
+ * // ✅ DEPOIS (DDD)
+ * import { container } from '@/shared/infrastructure/di/container';
+ * import { TOKENS } from '@/shared/infrastructure/di/tokens';
+ * const fiscalAccountingRepo = container.resolve<IFiscalAccountingRepository>(TOKENS.FiscalAccountingRepository);
+ * // Ou use FiscalAccountingIntegration para documentos fiscais autorizados
+ * ```
+ *
+ * Este arquivo será REMOVIDO em versão futura.
+ *
+ * @deprecated Use módulo Accounting DDD em src/modules/accounting/
+ * @see GenerateJournalEntryUseCase
+ * @see ReverseJournalEntryUseCase
+ * @see FiscalAccountingIntegration
+ */
+
 import { db, getFirstRowOrThrow, getDbRows, type DbExecuteResult } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
@@ -9,7 +44,10 @@ import {
 
 /**
  * 📊 ACCOUNTING ENGINE SERVICE
- * 
+ *
+ * @deprecated Este arquivo está deprecado. Use módulo Accounting DDD.
+ * @see src/modules/accounting/
+ *
  * Engine contábil para geração automática de lançamentos contábeis (partidas dobradas)
  */
 
@@ -55,11 +93,16 @@ interface FiscalDocumentItemRow {
 
 /**
  * Gera lançamento contábil a partir de documento fiscal
+ *
+ * @deprecated Use GenerateJournalEntryUseCase ou FiscalAccountingIntegration
+ * @see GenerateJournalEntryUseCase em @/modules/accounting/application/use-cases/
+ * @see FiscalAccountingIntegration em @/modules/fiscal/application/services/
  */
 export async function generateJournalEntry(
   fiscalDocumentId: number,
   userId: string
 ): Promise<JournalEntryResult> {
+  console.warn('⚠️ DEPRECATED: generateJournalEntry() - Use GenerateJournalEntryUseCase ou FiscalAccountingIntegration');
   try {
     // 1. Buscar documento
     const [document] = await db
@@ -270,11 +313,15 @@ export async function generateJournalEntry(
 
 /**
  * Reverte lançamento contábil
+ *
+ * @deprecated Use ReverseJournalEntryUseCase
+ * @see ReverseJournalEntryUseCase em @/modules/accounting/application/use-cases/
  */
 export async function reverseJournalEntry(
   journalEntryId: number,
   userId: string
 ): Promise<JournalEntryResult> {
+  console.warn('⚠️ DEPRECATED: reverseJournalEntry() - Use ReverseJournalEntryUseCase');
   try {
     // 1. Buscar lançamento
     const entryResult = await db.execute(sql`
