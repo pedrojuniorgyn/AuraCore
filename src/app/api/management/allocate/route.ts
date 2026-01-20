@@ -1,6 +1,16 @@
+/**
+ * API: Alocar Custos Indiretos
+ * POST /api/management/allocate
+ * 
+ * @since E9 Fase 1 - Migrado para IManagementAccountingGateway via DI
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { allocateIndirectCosts } from "@/services/management-accounting";
+import { container } from "@/shared/infrastructure/di/container";
+import { ACCOUNTING_TOKENS } from "@/modules/accounting/infrastructure/di/AccountingModule";
+import type { IManagementAccountingGateway } from "@/modules/accounting/domain/ports/output/IManagementAccountingGateway";
+import { Result } from "@/shared/domain";
 
 /**
  * POST /api/management/allocate
@@ -28,14 +38,27 @@ export async function POST(req: Request) {
     console.log(`📊 Alocando custos indiretos para ${period}...`);
 
     const organizationId = BigInt(session.user.organizationId);
-    const result = await allocateIndirectCosts(period, organizationId);
+
+    // Resolver gateway via DI
+    const managementAccounting = container.resolve<IManagementAccountingGateway>(
+      ACCOUNTING_TOKENS.ManagementAccountingGateway
+    );
+
+    const result = await managementAccounting.allocateIndirectCosts({
+      period,
+      organizationId,
+    });
+
+    if (Result.isFail(result)) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      message: `${result.allocated} alocações realizadas`,
+      message: `${result.value.allocated} alocações realizadas`,
       data: {
-        allocatedCount: result.allocated,
-        totalAmount: result.totalAmount,
+        allocatedCount: result.value.allocated,
+        totalAmount: result.value.totalAmount,
         period,
       },
     });
@@ -45,34 +68,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

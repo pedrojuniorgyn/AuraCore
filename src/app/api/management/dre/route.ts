@@ -1,6 +1,16 @@
+/**
+ * API: DRE Gerencial
+ * GET /api/management/dre
+ * 
+ * @since E9 Fase 1 - Migrado para IManagementAccountingGateway via DI
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { calculateManagementDRE } from "@/services/management-accounting";
+import { container } from "@/shared/infrastructure/di/container";
+import { ACCOUNTING_TOKENS } from "@/modules/accounting/infrastructure/di/AccountingModule";
+import type { IManagementAccountingGateway } from "@/modules/accounting/domain/ports/output/IManagementAccountingGateway";
+import { Result } from "@/shared/domain";
 
 /**
  * GET /api/management/dre?period=2024-12&branchId=1&serviceType=FTL
@@ -20,16 +30,25 @@ export async function GET(req: Request) {
 
     const organizationId = BigInt(session.user.organizationId);
 
-    const dreData = await calculateManagementDRE(
+    // Resolver gateway via DI
+    const managementAccounting = container.resolve<IManagementAccountingGateway>(
+      ACCOUNTING_TOKENS.ManagementAccountingGateway
+    );
+
+    const result = await managementAccounting.calculateDRE({
       period,
       organizationId,
-      branchId ? parseInt(branchId) : undefined,
-      serviceType || undefined
-    );
+      branchId: branchId ? parseInt(branchId) : undefined,
+      serviceType: serviceType || undefined,
+    });
+
+    if (Result.isFail(result)) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      data: dreData,
+      data: result.value,
       metadata: {
         period,
         branchId,
@@ -43,34 +62,3 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

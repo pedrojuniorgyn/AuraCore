@@ -8,6 +8,10 @@ import { DrizzleTripRepository } from '../persistence/repositories/DrizzleTripRe
 import { DrizzleDriverRepository } from '../persistence/repositories/DrizzleDriverRepository';
 import { DrizzleVehicleRepository } from '../persistence/repositories/DrizzleVehicleRepository';
 
+// Gateways/Adapters (E9 Fase 1)
+import { FreightCalculatorAdapter } from '../adapters/FreightCalculatorAdapter';
+import type { IFreightCalculatorGateway } from '../../domain/ports/output/IFreightCalculatorGateway';
+
 // Commands
 import { CreateTripCommand } from '../../application/commands/CreateTripCommand';
 import { CompleteTripCommand } from '../../application/commands/CompleteTripCommand';
@@ -16,6 +20,14 @@ import { CancelTripCommand } from '../../application/commands/CancelTripCommand'
 // Queries
 import { GetTripByIdQuery } from '../../application/queries/GetTripByIdQuery';
 import { ListTripsQuery } from '../../application/queries/ListTripsQuery';
+
+// Tokens
+export const TMS_TOKENS = {
+  TripRepository: Symbol.for('ITripRepository'),
+  DriverRepository: Symbol.for('IDriverRepository'),
+  VehicleRepository: Symbol.for('IVehicleRepository'),
+  FreightCalculatorGateway: Symbol.for('IFreightCalculatorGateway'),
+};
 
 let isRegistered = false;
 
@@ -27,6 +39,12 @@ export function registerTmsModule(): void {
   container.registerSingleton('IDriverRepository', DrizzleDriverRepository);
   container.registerSingleton('IVehicleRepository', DrizzleVehicleRepository);
 
+  // Gateways (E9 Fase 1)
+  container.registerSingleton<IFreightCalculatorGateway>(
+    TMS_TOKENS.FreightCalculatorGateway,
+    FreightCalculatorAdapter
+  );
+
   // Commands
   container.registerSingleton(CreateTripCommand);
   container.registerSingleton(CompleteTripCommand);
@@ -37,7 +55,7 @@ export function registerTmsModule(): void {
   container.registerSingleton(ListTripsQuery);
 
   isRegistered = true;
-  console.log('[TMS Module] DI configured - 3 repos + 3 commands + 2 queries');
+  console.log('[TMS Module] DI configured - 3 repos + 1 gateway + 3 commands + 2 queries');
 }
 
 export function initializeTmsModule(): void {

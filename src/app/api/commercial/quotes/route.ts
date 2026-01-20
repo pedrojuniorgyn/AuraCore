@@ -1,8 +1,14 @@
+/**
+ * @since E9 Fase 1 - Migrado para IFreightCalculatorGateway via DI
+ */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { freightQuotes } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
-import { calculateFreight } from "@/services/pricing/freight-calculator";
+import { container } from "@/shared/infrastructure/di/container";
+import { TMS_TOKENS } from "@/modules/tms/infrastructure/di/TmsModule";
+import type { IFreightCalculatorGateway } from "@/modules/tms/domain/ports/output/IFreightCalculatorGateway";
+import { Result } from "@/shared/domain";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
 import { insertWithReturningId } from "@/lib/db/query-helpers";
 
@@ -128,8 +134,14 @@ export async function POST(req: Request) {
 
     if (autoCalculate) {
       try {
-        const calculation = await calculateFreight({
+        // Resolver gateway via DI
+        const freightCalculator = container.resolve<IFreightCalculatorGateway>(
+          TMS_TOKENS.FreightCalculatorGateway
+        );
+
+        const calculationResult = await freightCalculator.calculate({
           organizationId,
+          branchId,
           customerId,
           realWeight: parseFloat(weightKg),
           volume: volumeM3 ? parseFloat(volumeM3) : undefined,
@@ -139,8 +151,11 @@ export async function POST(req: Request) {
           transportType: transportType || "LTL_FRACIONADO",
         });
 
-        calculatedPrice = calculation.total.toString();
-        priceBreakdown = JSON.stringify(calculation);
+        if (!Result.isFail(calculationResult)) {
+          const calculation = calculationResult.value;
+          calculatedPrice = calculation.total.toString();
+          priceBreakdown = JSON.stringify(calculation);
+        }
       } catch (calcError: unknown) {
         const msg = calcError instanceof Error ? calcError.message : String(calcError);
         console.warn("⚠️ Erro ao calcular frete:", msg);

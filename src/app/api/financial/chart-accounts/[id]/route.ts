@@ -2,13 +2,74 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
-import { logChartAccountChange } from "@/services/audit-logger";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 // Interface para queries de contagem SQL
 interface CountResult {
   count: number;
+}
+
+// ============================================================================
+// AUDIT LOGGER (inline)
+// TODO (E9.2): Migrar para src/modules/accounting/domain/services/AuditLogger.ts
+// ============================================================================
+
+interface AuditLogEntry {
+  entityType: "CHART_ACCOUNT" | "FINANCIAL_CATEGORY" | "COST_CENTER";
+  entityId: number;
+  operation: "INSERT" | "UPDATE" | "DELETE";
+  oldData?: Record<string, unknown>;
+  newData?: Record<string, unknown>;
+  changedBy: string;
+  reason?: string;
+  ipAddress?: string;
+}
+
+/**
+ * Registra auditoria de Plano de Contas
+ */
+async function logChartAccountChange(data: AuditLogEntry): Promise<void> {
+  try {
+    await db.execute(sql`
+      INSERT INTO chart_accounts_audit (
+        chart_account_id,
+        operation,
+        old_code,
+        old_name,
+        old_type,
+        old_status,
+        old_category,
+        new_code,
+        new_name,
+        new_type,
+        new_status,
+        new_category,
+        changed_by,
+        reason,
+        ip_address
+      ) VALUES (
+        ${data.entityId},
+        ${data.operation},
+        ${data.oldData?.code || null},
+        ${data.oldData?.name || null},
+        ${data.oldData?.type || null},
+        ${data.oldData?.status || null},
+        ${data.oldData?.category || null},
+        ${data.newData?.code || null},
+        ${data.newData?.name || null},
+        ${data.newData?.type || null},
+        ${data.newData?.status || null},
+        ${data.newData?.category || null},
+        ${data.changedBy},
+        ${data.reason || null},
+        ${data.ipAddress || null}
+      )
+    `);
+  } catch (error) {
+    console.error("❌ Erro ao registrar auditoria de Chart Account:", error);
+    // Não interrompe a operação principal
+  }
 }
 
 /**

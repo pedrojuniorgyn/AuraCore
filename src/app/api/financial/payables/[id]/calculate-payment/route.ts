@@ -3,12 +3,96 @@ import { db } from "@/lib/db";
 import { accountsPayable } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq, and, isNull } from "drizzle-orm";
-import { calculatePayment } from "@/services/payment-engine";
+
+// ============================================================================
+// DOMAIN SERVICE (inline)
+// TODO (E9.2): Migrar para src/modules/financial/domain/services/PaymentCalculator.ts
+// ============================================================================
+
+interface PaymentCalculation {
+  originalAmount: number;
+  dueDate: Date;
+  paymentDate: Date;
+  interestRate?: number; // % ao dia (padrão: 0.033% = 1% ao mês)
+  fineRate?: number; // % fixo (padrão: 2%)
+  iofRate?: number; // % fixo (padrão: 0.0038% ao dia)
+  bankFee?: number; // Tarifa fixa
+}
+
+interface PaymentResult {
+  originalAmount: number;
+  interestAmount: number;
+  fineAmount: number;
+  iofAmount: number;
+  bankFeeAmount: number;
+  totalAmount: number;
+  daysLate: number;
+}
+
+/**
+ * Calcula juros, multa e IOF automaticamente
+ * Lógica pura (Domain Service candidate)
+ */
+function calculatePayment(params: PaymentCalculation): PaymentResult {
+  const {
+    originalAmount,
+    dueDate,
+    paymentDate,
+    interestRate = 0.033, // 1% ao mês = 0.033% ao dia
+    fineRate = 2.0, // 2% de multa
+    iofRate = 0.0038, // 0.0038% ao dia
+    bankFee = 0,
+  } = params;
+
+  // Calcular dias de atraso
+  const daysLate = Math.max(
+    0,
+    Math.floor((paymentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+  );
+
+  // Se não está atrasado, retornar valores zerados
+  if (daysLate === 0) {
+    return {
+      originalAmount,
+      interestAmount: 0,
+      fineAmount: 0,
+      iofAmount: 0,
+      bankFeeAmount: bankFee,
+      totalAmount: originalAmount + bankFee,
+      daysLate: 0,
+    };
+  }
+
+  // Calcular encargos
+  const interestAmount = originalAmount * (interestRate / 100) * daysLate;
+  const fineAmount = originalAmount * (fineRate / 100);
+  const iofAmount = originalAmount * (iofRate / 100) * daysLate;
+  const bankFeeAmount = bankFee;
+
+  const totalAmount = 
+    originalAmount + interestAmount + fineAmount + iofAmount + bankFeeAmount;
+
+  return {
+    originalAmount: Math.round(originalAmount * 100) / 100,
+    interestAmount: Math.round(interestAmount * 100) / 100,
+    fineAmount: Math.round(fineAmount * 100) / 100,
+    iofAmount: Math.round(iofAmount * 100) / 100,
+    bankFeeAmount: Math.round(bankFeeAmount * 100) / 100,
+    totalAmount: Math.round(totalAmount * 100) / 100,
+    daysLate,
+  };
+}
+
+// ============================================================================
+// API ROUTE
+// ============================================================================
 
 /**
  * 🧮 GET /api/financial/payables/:id/calculate-payment
  * 
  * Calcula juros, multa, IOF automaticamente para baixa
+ * 
+ * @since E9 Fase 1 - calculatePayment inlineado (Domain Service candidate)
  */
 export async function GET(
   request: NextRequest,
@@ -65,34 +149,3 @@ export async function GET(
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

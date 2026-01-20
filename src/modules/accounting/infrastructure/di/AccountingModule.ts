@@ -9,6 +9,15 @@ import { ReverseJournalEntryUseCase } from '../../application/use-cases/ReverseJ
 import { ListJournalEntriesUseCase } from '../../application/use-cases/ListJournalEntriesUseCase';
 import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJournalEntryByIdUseCase';
 
+// Gateways (E9 Fase 1)
+import { ManagementAccountingAdapter } from '../adapters/ManagementAccountingAdapter';
+import type { IManagementAccountingGateway } from '../../domain/ports/output/IManagementAccountingGateway';
+
+// Tokens locais (E9 Fase 1)
+export const ACCOUNTING_TOKENS = {
+  ManagementAccountingGateway: Symbol.for('IManagementAccountingGateway'),
+};
+
 /**
  * Registra todas as dependências do módulo Accounting
  *
@@ -64,4 +73,12 @@ export function registerAccountingModule(): void {
     TOKENS.GetJournalEntryByIdUseCase,
     GetJournalEntryByIdUseCase
   );
+
+  // Gateway de Contabilidade Gerencial (E9 Fase 1)
+  container.registerSingleton<IManagementAccountingGateway>(
+    ACCOUNTING_TOKENS.ManagementAccountingGateway,
+    ManagementAccountingAdapter
+  );
+
+  console.log('[Accounting Module] DI registrado: 2 repos + 6 use cases + 1 gateway');
 }

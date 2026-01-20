@@ -1,10 +1,15 @@
 /**
  * API: Calcular/Simular Frete
  * POST /api/commercial/calculate
+ * 
+ * @since E9 Fase 1 - Migrado para IFreightCalculatorGateway via DI
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { calculateFreight } from "@/services/pricing/freight-calculator";
+import { container } from "@/shared/infrastructure/di/container";
+import { TMS_TOKENS } from "@/modules/tms/infrastructure/di/TmsModule";
+import type { IFreightCalculatorGateway } from "@/modules/tms/domain/ports/output/IFreightCalculatorGateway";
+import { Result } from "@/shared/domain";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +17,7 @@ export async function POST(request: NextRequest) {
     
     const {
       organizationId = 1,
+      branchId = 1,
       customerId,
       realWeight,
       volume,
@@ -36,9 +42,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calcular frete
-    const result = await calculateFreight({
+    // Resolver gateway via DI
+    const freightCalculator = container.resolve<IFreightCalculatorGateway>(
+      TMS_TOKENS.FreightCalculatorGateway
+    );
+
+    // Calcular frete via Gateway
+    const result = await freightCalculator.calculate({
       organizationId,
+      branchId,
       customerId,
       realWeight: Number(realWeight),
       volume: volume ? Number(volume) : undefined,
@@ -48,7 +60,7 @@ export async function POST(request: NextRequest) {
       transportType,
     });
 
-    if (!result.success) {
+    if (Result.isFail(result)) {
       return NextResponse.json(
         { error: result.error },
         { status: 404 }
@@ -57,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      calculation: result,
+      calculation: result.value,
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -68,37 +80,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

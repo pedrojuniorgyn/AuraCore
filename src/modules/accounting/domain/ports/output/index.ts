@@ -5,3 +5,11 @@ export type {
   PaginatedResult,
 } from './IJournalEntryRepository';
 
+export type {
+  IManagementAccountingGateway,
+  DRECalculationParams,
+  DREResult,
+  AllocationParams,
+  AllocationResult,
+} from './IManagementAccountingGateway';
+
