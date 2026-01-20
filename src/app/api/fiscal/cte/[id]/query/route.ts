@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
-import { cteHeader } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { cteAuthorizationService } from "@/services/fiscal/cte-authorization-service";
+import { cteHeader, fiscalSettings } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { ISefazGateway } from "@/modules/integrations/domain/ports/output/ISefazGateway";
+import { Result } from "@/shared/domain";
 
 /**
  * GET /api/fiscal/cte/:id/query
  * Consulta status de um CTe na Sefaz
+ * 
+ * @since E8 Fase 2.4 - Migrado para DI
  */
 export async function GET(
   request: NextRequest,
@@ -24,7 +29,7 @@ export async function GET(
       );
     }
 
-    // Buscar CTe
+    // 1. Buscar CTe
     const [cte] = await db
       .select()
       .from(cteHeader)
@@ -45,11 +50,38 @@ export async function GET(
     }
 
     try {
-    const resolvedParams = await params;
-      // Extrair UF da chave
-      const uf = cte.cteKey.substring(0, 2);
+      // 2. Buscar ambiente
+      const [settings] = await db
+        .select()
+        .from(fiscalSettings)
+        .where(
+          and(
+            eq(fiscalSettings.organizationId, ctx.organizationId),
+            eq(fiscalSettings.branchId, ctx.branchId ?? 0)
+          )
+        );
 
-      const resultado = await cteAuthorizationService.consultarCTe(cte.cteKey, uf);
+      const environment = settings?.cteEnvironment === "production" ? "production" : "homologation";
+
+      // 3. Consultar via ISefazGateway (DI)
+      const sefazGateway = container.resolve<ISefazGateway>(TOKENS.SefazGateway);
+      
+      const queryResult = await sefazGateway.queryCteStatus({
+        cteKey: cte.cteKey,
+        environment,
+      });
+
+      if (Result.isFail(queryResult)) {
+        return NextResponse.json(
+          { 
+            success: false,
+            error: queryResult.error 
+          },
+          { status: 500 }
+        );
+      }
+
+      const resultado = queryResult.value;
 
       return NextResponse.json({
         success: true,
@@ -57,12 +89,15 @@ export async function GET(
           cteId,
           chave: cte.cteKey,
           statusSefaz: resultado.status,
-          motivo: resultado.motivo,
+          protocolNumber: resultado.protocolNumber,
+          authorizationDate: resultado.authorizationDate,
+          motivo: resultado.message,
           statusLocal: cte.status,
         },
       });
     } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("❌ Erro ao consultar CTe:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
@@ -70,19 +105,3 @@ export async function GET(
     }
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
