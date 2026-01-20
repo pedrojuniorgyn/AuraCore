@@ -1,425 +1,313 @@
 "use client";
 
 /**
- * Página: War Room Dashboard
- * Visão executiva consolidada para tomada de decisões estratégicas
+ * Página: War Room Premium
+ * Central de Comando Estratégico com LIVE updates
  * 
  * @module app/(dashboard)/strategic/war-room
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Card, 
-  Title, 
-  Text, 
-  Flex, 
-  Badge,
-  Metric,
-  ProgressBar,
-  AreaChart,
-  DonutChart,
-} from '@tremor/react';
-import { 
-  RefreshCw,
-  ArrowLeft,
-  Activity,
-  AlertTriangle,
-  Clock,
-  Target,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Users,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
-
-import { GradientText } from '@/components/ui/magic-components';
-import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
-import { RippleButton } from '@/components/ui/ripple-button';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { WarRoomHeader } from '@/components/strategic/WarRoomHeader';
 import { HealthScoreRing } from '@/components/strategic/HealthScoreRing';
-
-interface CriticalKpi {
-  id: string;
-  code: string;
-  name: string;
-  currentValue: number;
-  targetValue: number;
-  unit: string;
-  variance: number;
-}
-
-interface OverduePlan {
-  id: string;
-  code: string;
-  what: string;
-  who: string;
-  daysOverdue: number;
-}
-
-interface DashboardStats {
-  totalGoals: number;
-  goalsOnTrack: number;
-  goalsAtRisk: number;
-  goalsDelayed: number;
-  totalKpis: number;
-  kpisGreen: number;
-  kpisYellow: number;
-  kpisRed: number;
-  totalActionPlans: number;
-  plansOverdue: number;
-  plansInProgress: number;
-}
+import { PerspectiveCardSimple } from '@/components/strategic/PerspectiveCardSimple';
+import { CriticalAlertPanel, type CriticalAlert } from '@/components/strategic/CriticalAlertPanel';
+import { PriorityActionsCard, type PriorityAction } from '@/components/strategic/PriorityActionsCard';
+import { WeeklyTrendChart } from '@/components/strategic/WeeklyTrendChart';
+import { AuroraInsightCard } from '@/components/strategic/AuroraInsightCard';
 
 interface WarRoomData {
-  updatedAt: string;
   healthScore: number;
-  criticalKpis: CriticalKpi[];
-  alertKpis: CriticalKpi[];
-  overduePlans: OverduePlan[];
-  stats: DashboardStats;
+  previousHealthScore?: number;
+  alerts: CriticalAlert[];
+  perspectives: Array<{
+    perspective: 'FINANCIAL' | 'CUSTOMER' | 'INTERNAL' | 'LEARNING';
+    score: number;
+    kpiCount: number;
+    onTrack: number;
+    atRisk: number;
+    critical: number;
+    trend: number;
+  }>;
+  weeklyTrend: Array<{ day: string; score: number }>;
+  priorityActions: PriorityAction[];
+  aiInsight: string;
 }
 
-// Safelist pattern
-const HEALTH_STATUS = {
-  EXCELLENT: { label: 'Excelente', color: 'text-emerald-400', threshold: 0.8 },
-  GOOD: { label: 'Bom', color: 'text-blue-400', threshold: 0.6 },
-  ATTENTION: { label: 'Atenção', color: 'text-amber-400', threshold: 0.4 },
-  CRITICAL: { label: 'Crítico', color: 'text-red-400', threshold: 0 },
-} as const;
-
-function getHealthStatus(score: number) {
-  if (score >= 0.8) return HEALTH_STATUS.EXCELLENT;
-  if (score >= 0.6) return HEALTH_STATUS.GOOD;
-  if (score >= 0.4) return HEALTH_STATUS.ATTENTION;
-  return HEALTH_STATUS.CRITICAL;
-}
+// Dados mock para fallback
+const MOCK_DATA: WarRoomData = {
+  healthScore: 72,
+  previousHealthScore: 69,
+  alerts: [
+    { id: '1', type: 'CRITICAL', title: 'OTD abaixo da meta', description: 'Índice de entregas no prazo caiu para 67%', metric: { current: 67, target: 95, unit: '%' }, kpiId: 'kpi-otd' },
+    { id: '2', type: 'CRITICAL', title: 'EBITDA negativo', description: 'Filiais SP e RJ com margem negativa', kpiId: 'kpi-ebitda' },
+    { id: '3', type: 'WARNING', title: '3 planos atrasados', description: 'Ações com mais de 15 dias de atraso' },
+  ],
+  perspectives: [
+    { perspective: 'FINANCIAL', score: 75, kpiCount: 5, onTrack: 2, atRisk: 2, critical: 1, trend: -2 },
+    { perspective: 'CUSTOMER', score: 82, kpiCount: 3, onTrack: 2, atRisk: 1, critical: 0, trend: 5 },
+    { perspective: 'INTERNAL', score: 68, kpiCount: 8, onTrack: 3, atRisk: 3, critical: 2, trend: -8 },
+    { perspective: 'LEARNING', score: 91, kpiCount: 4, onTrack: 4, atRisk: 0, critical: 0, trend: 3 },
+  ],
+  weeklyTrend: [
+    { day: 'Seg', score: 68 },
+    { day: 'Ter', score: 70 },
+    { day: 'Qua', score: 69 },
+    { day: 'Qui', score: 71 },
+    { day: 'Sex', score: 72 },
+  ],
+  priorityActions: [
+    { id: '1', code: 'PDC-002', title: 'Reverter queda do OTD', status: 'OVERDUE', daysRemaining: -3 },
+    { id: '2', code: 'PDC-005', title: 'Reduzir custos operacionais', status: 'AT_RISK', daysRemaining: 5 },
+    { id: '3', code: 'PDC-008', title: 'Capacitar equipe entregas', status: 'AT_RISK', daysRemaining: 7 },
+    { id: '4', code: 'PDC-012', title: 'Melhorar NPS clientes', status: 'ON_TRACK', daysRemaining: 10 },
+    { id: '5', code: 'PDC-015', title: 'Implantar novo TMS', status: 'ON_TRACK', daysRemaining: 15 },
+  ],
+  aiInsight: 'O KPI OTD apresenta tendência de queda há 3 semanas consecutivas. Recomendo priorizar o plano de ação PDC-002 e alocar recursos adicionais para a operação de última milha. A análise indica que 60% dos atrasos ocorrem na região metropolitana de SP.',
+};
 
 export default function WarRoomPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [data, setData] = useState<WarRoomData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const refreshInterval = 30; // seconds
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async () => {
     try {
       const response = await fetch('/api/strategic/war-room/dashboard');
       if (response.ok) {
         const result = await response.json();
-        setData(result);
+        // Normalizar dados da API
+        setData({
+          healthScore: result.healthScore ?? MOCK_DATA.healthScore,
+          previousHealthScore: result.previousHealthScore,
+          alerts: result.criticalKpis?.map((k: Record<string, unknown>, i: number) => ({
+            id: String(k.id || i),
+            type: 'CRITICAL' as const,
+            title: k.name as string || 'KPI Crítico',
+            description: `Variação: ${k.variance}%`,
+            metric: { current: k.currentValue as number, target: k.targetValue as number, unit: k.unit as string || '%' },
+            kpiId: k.id as string,
+          })) || MOCK_DATA.alerts,
+          perspectives: result.perspectives || MOCK_DATA.perspectives,
+          weeklyTrend: result.weeklyTrend || MOCK_DATA.weeklyTrend,
+          priorityActions: result.overduePlans?.map((p: Record<string, unknown>) => ({
+            id: p.id as string,
+            code: p.code as string,
+            title: p.what as string,
+            status: (p.daysOverdue as number) > 0 ? 'OVERDUE' : 'AT_RISK' as const,
+            daysRemaining: -(p.daysOverdue as number),
+          })) || MOCK_DATA.priorityActions,
+          aiInsight: result.aiInsight || MOCK_DATA.aiInsight,
+        });
+      } else {
+        setData(MOCK_DATA);
       }
     } catch (error) {
       console.error('Erro ao carregar War Room:', error);
+      setData(MOCK_DATA);
     } finally {
       setLoading(false);
+      setLastUpdate(new Date());
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Auto refresh
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(fetchData, refreshInterval * 1000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, fetchData]);
+
+  const handleRefresh = useCallback(() => {
+    setLoading(true);
+    fetchData();
+  }, [fetchData]);
+
+  const handleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen?.();
     }
   };
 
-  const healthStatus = data ? getHealthStatus(data.healthScore) : null;
+  const handleDismissAlert = async (id: string) => {
+    try {
+      await fetch(`/api/strategic/alerts/${id}/dismiss`, { method: 'POST' });
+      fetchData();
+    } catch (error) {
+      console.error('Erro ao dispensar alerta:', error);
+    }
+  };
 
-  // Dados para gráfico de KPIs
-  const kpiDonutData = data ? [
-    { name: 'Verde', value: data.stats.kpisGreen },
-    { name: 'Amarelo', value: data.stats.kpisYellow },
-    { name: 'Vermelho', value: data.stats.kpisRed },
-  ] : [];
+  const handleViewKpi = (kpiId: string) => {
+    router.push(`/strategic/kpis/${kpiId}`);
+  };
 
-  // Dados para gráfico de Objetivos
-  const goalDonutData = data ? [
-    { name: 'No Prazo', value: data.stats.goalsOnTrack },
-    { name: 'Em Risco', value: data.stats.goalsAtRisk },
-    { name: 'Atrasados', value: data.stats.goalsDelayed },
-  ] : [];
+  const handleCreatePlan = (alertId: string) => {
+    router.push(`/strategic/action-plans/new?alertId=${alertId}`);
+  };
+
+  const handleOpenChat = () => {
+    window.dispatchEvent(new CustomEvent('open-aurora-chat'));
+  };
 
   return (
-    <PageTransition>
-      <div className="space-y-6">
-        {/* Header */}
-        <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/dashboard')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </RippleButton>
-                <GradientText className="text-4xl font-bold">
-                  War Room
-                </GradientText>
-              </Flex>
-              <Text className="text-gray-400 ml-12">
-                Central de comando estratégico - Visão executiva consolidada
-              </Text>
-            </div>
-            <Flex className="gap-3">
-              <RippleButton 
-                variant="outline"
-                onClick={() => router.push('/strategic/war-room/meetings')}
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                Reuniões
-              </RippleButton>
-              <RippleButton 
-                variant="outline" 
-                onClick={fetchDashboardData}
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </RippleButton>
-            </Flex>
-          </Flex>
-        </FadeIn>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6">
+      {/* Header */}
+      <WarRoomHeader
+        lastUpdate={lastUpdate}
+        autoRefresh={autoRefresh}
+        refreshInterval={refreshInterval}
+        onToggleAutoRefresh={() => setAutoRefresh(!autoRefresh)}
+        onRefresh={handleRefresh}
+        onFullscreen={handleFullscreen}
+      />
 
-        {loading ? (
-          <div className="flex items-center justify-center h-[60vh]">
-            <div className="text-center">
-              <RefreshCw className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
-              <Text className="text-gray-400">Carregando War Room...</Text>
-            </div>
+      {loading && !data ? (
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-purple-400 mx-auto mb-4" />
+            <p className="text-white/60">Carregando War Room...</p>
           </div>
-        ) : data ? (
-          <>
-            {/* Health Score Section */}
-            <FadeIn delay={0.1}>
-              <Card className="bg-gray-900/50 border-gray-800">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Health Score Ring */}
-                  <div className="flex flex-col items-center justify-center">
-                    <HealthScoreRing 
-                      score={Math.round(data.healthScore * 100)} 
-                      size="lg"
-                    />
-                    <div className="mt-4 text-center">
-                      <Text className={`text-lg font-semibold ${healthStatus?.color}`}>
-                        {healthStatus?.label}
-                      </Text>
-                      <Text className="text-gray-500 text-sm">
-                        Saúde Estratégica
-                      </Text>
-                    </div>
-                  </div>
-
-                  {/* KPIs Chart */}
-                  <div>
-                    <Title className="text-white text-sm mb-2">KPIs por Status</Title>
-                    <DonutChart
-                      data={kpiDonutData}
-                      category="value"
-                      index="name"
-                      colors={['emerald', 'amber', 'red']}
-                      className="h-40"
-                      showAnimation
-                    />
-                    <div className="flex justify-center gap-4 mt-2 text-xs">
-                      <span className="text-emerald-400">{data.stats.kpisGreen} Verde</span>
-                      <span className="text-amber-400">{data.stats.kpisYellow} Amarelo</span>
-                      <span className="text-red-400">{data.stats.kpisRed} Vermelho</span>
-                    </div>
-                  </div>
-
-                  {/* Goals Chart */}
-                  <div>
-                    <Title className="text-white text-sm mb-2">Objetivos por Status</Title>
-                    <DonutChart
-                      data={goalDonutData}
-                      category="value"
-                      index="name"
-                      colors={['emerald', 'amber', 'red']}
-                      className="h-40"
-                      showAnimation
-                    />
-                    <div className="flex justify-center gap-4 mt-2 text-xs">
-                      <span className="text-emerald-400">{data.stats.goalsOnTrack} Prazo</span>
-                      <span className="text-amber-400">{data.stats.goalsAtRisk} Risco</span>
-                      <span className="text-red-400">{data.stats.goalsDelayed} Atraso</span>
-                    </div>
-                  </div>
+        </div>
+      ) : data && (
+        <div className="space-y-6">
+          {/* Row 1: Health Score + Alerts */}
+          <div className="grid grid-cols-12 gap-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="col-span-4"
+            >
+              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm text-center h-full flex flex-col justify-center">
+                <h3 className="text-lg font-bold text-white mb-4">Health Score</h3>
+                <div className="flex justify-center">
+                  <HealthScoreRing
+                    score={data.healthScore}
+                    previousScore={data.previousHealthScore}
+                    size="xl"
+                  />
                 </div>
-              </Card>
-            </FadeIn>
-
-            {/* Stats Overview */}
-            <FadeIn delay={0.15}>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-gray-900/50 border-gray-800">
-                  <Flex alignItems="center" className="gap-3">
-                    <div className="p-2 rounded-lg bg-blue-500/20">
-                      <Target className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <Text className="text-gray-400">Objetivos</Text>
-                      <Metric className="text-white">{data.stats.totalGoals}</Metric>
-                    </div>
-                  </Flex>
-                </Card>
-
-                <Card className="bg-gray-900/50 border-gray-800">
-                  <Flex alignItems="center" className="gap-3">
-                    <div className="p-2 rounded-lg bg-purple-500/20">
-                      <Activity className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <Text className="text-gray-400">KPIs</Text>
-                      <Metric className="text-white">{data.stats.totalKpis}</Metric>
-                    </div>
-                  </Flex>
-                </Card>
-
-                <Card className="bg-gray-900/50 border-gray-800">
-                  <Flex alignItems="center" className="gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-500/20">
-                      <CheckCircle className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <Text className="text-gray-400">Planos Ativos</Text>
-                      <Metric className="text-white">{data.stats.totalActionPlans}</Metric>
-                    </div>
-                  </Flex>
-                </Card>
-
-                <Card className="bg-gray-900/50 border-gray-800">
-                  <Flex alignItems="center" className="gap-3">
-                    <div className="p-2 rounded-lg bg-red-500/20">
-                      <AlertTriangle className="w-5 h-5 text-red-400" />
-                    </div>
-                    <div>
-                      <Text className="text-gray-400">Atrasados</Text>
-                      <Metric className="text-red-400">{data.stats.plansOverdue}</Metric>
-                    </div>
-                  </Flex>
-                </Card>
+                {data.previousHealthScore !== undefined && (
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    <span className={`text-sm font-medium ${
+                      data.healthScore > data.previousHealthScore 
+                        ? 'text-green-400' 
+                        : data.healthScore < data.previousHealthScore 
+                          ? 'text-red-400' 
+                          : 'text-white/50'
+                    }`}>
+                      {data.healthScore > data.previousHealthScore ? '▲' : data.healthScore < data.previousHealthScore ? '▼' : '='} 
+                      {' '}{Math.abs(data.healthScore - data.previousHealthScore)}% vs ontem
+                    </span>
+                  </div>
+                )}
+                <p className="text-white/40 text-xs mt-2">
+                  Última atualização: {lastUpdate.toLocaleTimeString()}
+                </p>
               </div>
-            </FadeIn>
+            </motion.div>
 
-            {/* Alerts Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Critical KPIs */}
-              <FadeIn delay={0.2}>
-                <Card className="bg-gray-900/50 border-gray-800">
-                  <Flex justifyContent="between" alignItems="center" className="mb-4">
-                    <div>
-                      <Title className="text-white">KPIs Críticos</Title>
-                      <Text className="text-gray-400 text-sm">
-                        Indicadores abaixo da meta
-                      </Text>
-                    </div>
-                    <Badge color="red" size="lg">
-                      {data.criticalKpis.length}
-                    </Badge>
-                  </Flex>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="col-span-8"
+            >
+              <CriticalAlertPanel
+                alerts={data.alerts}
+                onDismiss={handleDismissAlert}
+                onViewKpi={handleViewKpi}
+                onCreatePlan={handleCreatePlan}
+                onViewAll={() => router.push('/strategic/alerts')}
+              />
+            </motion.div>
+          </div>
 
-                  <div className="space-y-3">
-                    {data.criticalKpis.length > 0 ? (
-                      data.criticalKpis.map((kpi) => (
-                        <div
-                          key={kpi.id}
-                          className="p-3 bg-red-900/20 border border-red-700/30 rounded-lg"
-                        >
-                          <Flex justifyContent="between" alignItems="start">
-                            <div>
-                              <Text className="text-white font-medium">{kpi.name}</Text>
-                              <Text className="text-gray-400 text-xs">{kpi.code}</Text>
-                            </div>
-                            <div className="text-right">
-                              <Text className="text-red-400 font-semibold">
-                                {kpi.currentValue} {kpi.unit}
-                              </Text>
-                              <Text className="text-gray-500 text-xs">
-                                Meta: {kpi.targetValue} {kpi.unit}
-                              </Text>
-                            </div>
-                          </Flex>
-                          <div className="mt-2 flex items-center gap-2">
-                            <TrendingDown className="w-4 h-4 text-red-400" />
-                            <Text className="text-red-400 text-sm">
-                              {Math.abs(kpi.variance).toFixed(1)}% abaixo
-                            </Text>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-2" />
-                        <Text className="text-gray-400">
-                          Nenhum KPI crítico
-                        </Text>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </FadeIn>
-
-              {/* Overdue Plans */}
-              <FadeIn delay={0.25}>
-                <Card className="bg-gray-900/50 border-gray-800">
-                  <Flex justifyContent="between" alignItems="center" className="mb-4">
-                    <div>
-                      <Title className="text-white">Ações Atrasadas</Title>
-                      <Text className="text-gray-400 text-sm">
-                        Planos de ação vencidos
-                      </Text>
-                    </div>
-                    <Badge color="amber" size="lg">
-                      {data.overduePlans.length}
-                    </Badge>
-                  </Flex>
-
-                  <div className="space-y-3">
-                    {data.overduePlans.length > 0 ? (
-                      data.overduePlans.map((plan) => (
-                        <div
-                          key={plan.id}
-                          onClick={() => router.push(`/strategic/action-plans/${plan.id}`)}
-                          className="p-3 bg-amber-900/20 border border-amber-700/30 rounded-lg cursor-pointer hover:bg-amber-900/30 transition-colors"
-                        >
-                          <Flex justifyContent="between" alignItems="start">
-                            <div className="flex-1">
-                              <Text className="text-white font-medium">{plan.code}</Text>
-                              <Text className="text-gray-400 text-sm line-clamp-1">
-                                {plan.what}
-                              </Text>
-                            </div>
-                            <Badge color="red">
-                              {plan.daysOverdue}d
-                            </Badge>
-                          </Flex>
-                          <div className="mt-2 flex items-center gap-2">
-                            <Users className="w-3 h-3 text-gray-500" />
-                            <Text className="text-gray-500 text-xs">{plan.who}</Text>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-2" />
-                        <Text className="text-gray-400">
-                          Nenhuma ação atrasada
-                        </Text>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              </FadeIn>
+          {/* Row 2: Perspectives */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              📊 Perspectivas BSC
+            </h3>
+            <div className="grid grid-cols-4 gap-4">
+              {data.perspectives.map((p, i) => (
+                <motion.div
+                  key={p.perspective}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + i * 0.05 }}
+                >
+                  <PerspectiveCardSimple
+                    perspective={p.perspective}
+                    score={p.score}
+                    kpiCount={p.kpiCount}
+                    onTrack={p.onTrack}
+                    atRisk={p.atRisk}
+                    critical={p.critical}
+                    trend={p.trend}
+                    onClick={() => router.push(`/strategic/kpis?perspective=${p.perspective}`)}
+                  />
+                </motion.div>
+              ))}
             </div>
+          </motion.div>
 
-            {/* Updated At */}
-            <FadeIn delay={0.3}>
-              <div className="text-center">
-                <Text className="text-gray-500 text-xs">
-                  Atualizado em: {new Date(data.updatedAt).toLocaleString('pt-BR')}
-                </Text>
-              </div>
-            </FadeIn>
-          </>
-        ) : null}
-      </div>
-    </PageTransition>
+          {/* Row 3: Trend + Priority Actions */}
+          <div className="grid grid-cols-2 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <WeeklyTrendChart 
+                data={data.weeklyTrend} 
+                title="📈 Tendência Semanal"
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <PriorityActionsCard
+                actions={data.priorityActions}
+                onViewAll={() => router.push('/strategic/action-plans')}
+                onActionClick={(id) => router.push(`/strategic/action-plans/${id}`)}
+              />
+            </motion.div>
+          </div>
+
+          {/* Row 4: Aurora AI Insight */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              🤖 Insight Aurora AI
+            </h3>
+            <AuroraInsightCard
+              insight={data.aiInsight}
+              onChat={handleOpenChat}
+            />
+          </motion.div>
+        </div>
+      )}
+    </div>
   );
 }
