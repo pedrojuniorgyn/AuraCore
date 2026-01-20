@@ -146,10 +146,8 @@ export default function IntegrationsPage() {
     }
   };
 
-  const handleTestIntegration = async (id: string) => {
-    const integration = integrations.find(i => i.id === id);
-    if (!integration) return;
-
+  // CALLBACK-001: Handler que recebe integração diretamente
+  const handleTestIntegration = async (integration: IntegrationWithLogs) => {
     toast.loading('Testando conexão...', { id: 'test-connection' });
     
     const result = await handleTest({
@@ -206,24 +204,19 @@ export default function IntegrationsPage() {
             🟢 Integrações Ativas
           </h2>
           <div className="space-y-4">
-            {/* FIX Bug 1: Renderizar activeIntegrations, não integrations */}
             {activeIntegrations.map((integration) => (
               <IntegrationCard
                 key={integration.id}
                 integration={integration}
-                onConfigure={(id) => {
-                  const int = integrations.find(i => i.id === id);
-                  if (int) {
-                    setEditingIntegration(int);
-                    setSetupType(int.type);
-                  }
+                onConfigure={() => {
+                  // CALLBACK-001: Usar item do map diretamente
+                  setEditingIntegration(integration);
+                  setSetupType(integration.type);
                 }}
-                onTest={handleTestIntegration}
-                onLogs={(id) => {
-                  const int = integrations.find(i => i.id === id);
-                  if (int) {
-                    setLogsIntegration(int);
-                  }
+                onTest={() => handleTestIntegration(integration)}
+                onLogs={() => {
+                  // CALLBACK-001: Usar item do map diretamente
+                  setLogsIntegration(integration);
                 }}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
