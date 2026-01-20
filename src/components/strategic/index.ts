@@ -26,3 +26,8 @@ export { PdcaCard, type PdcaCardProps, type Priority, type PdcaPhase } from './P
 export { PdcaKanban, type PdcaKanbanProps, type KanbanColumn, type KanbanCard } from './PdcaKanban';
 export { ActionPlanCard, type ActionPlanCardProps, type ActionPlanStatus } from './ActionPlanCard';
 export { ActionPlanKanban, type ActionPlanKanbanProps, type StatusColumn, type ActionPlanItem } from './ActionPlanKanban';
+
+// Templates de Planos de Ação
+export { TemplateCard, type Template } from './TemplateCard';
+export { TemplatePreview, type TemplateDetail, type TemplateStructure } from './TemplatePreview';
+export { TemplateEditor, type TemplateData } from './TemplateEditor';
