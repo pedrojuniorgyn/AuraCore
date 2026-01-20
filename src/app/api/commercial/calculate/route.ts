@@ -3,6 +3,7 @@
  * POST /api/commercial/calculate
  * 
  * @since E9 Fase 1 - Migrado para IFreightCalculatorGateway via DI
+ * @since E9 Bug Fix - Adicionada validação de tenant (SECURITY)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -10,14 +11,16 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TMS_TOKENS } from "@/modules/tms/infrastructure/di/TmsModule";
 import type { IFreightCalculatorGateway } from "@/modules/tms/domain/ports/output/IFreightCalculatorGateway";
 import { Result } from "@/shared/domain";
+import { getTenantContext } from "@/lib/auth/context";
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Validar tenant antes de qualquer operação
+    const ctx = await getTenantContext();
+    
     const body = await request.json();
     
     const {
-      organizationId = 1,
-      branchId = 1,
       customerId,
       realWeight,
       volume,
@@ -26,6 +29,10 @@ export async function POST(request: NextRequest) {
       destinationState,
       transportType = "LTL_FRACIONADO",
     } = body;
+    
+    // Usar IDs do usuário autenticado (NUNCA do body)
+    const organizationId = ctx.organizationId;
+    const branchId = ctx.branchId ?? 1;
 
     // Validações
     if (!realWeight || realWeight <= 0) {
