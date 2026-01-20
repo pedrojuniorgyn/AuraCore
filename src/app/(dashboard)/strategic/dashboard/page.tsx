@@ -14,6 +14,10 @@ export default function DashboardPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [containerWidth, setContainerWidth] = useState(1200);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // FIX Bug 3: Refs para proteção de unmount em callbacks manuais
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const {
     widgets,
@@ -29,87 +33,73 @@ export default function DashboardPage() {
     saveLayout,
   } = useDashboardLayout();
 
-  // Fetch dashboard data with manual refresh support
+  // FIX Bug 3: fetchData com proteção de cleanup para uso em callbacks
   const fetchData = useCallback(async () => {
+    // Cancelar request anterior se existir
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Criar novo AbortController
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       setIsLoadingData(true);
-      const response = await fetch('/api/strategic/dashboard/data');
-      if (response.ok) {
+      const response = await fetch('/api/strategic/dashboard/data', {
+        signal: controller.signal,
+      });
+      
+      // FIX Bug 3: Só atualizar se ainda montado
+      if (response.ok && isMountedRef.current) {
         const result = await response.json();
         setData(result);
       }
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
+      // Ignorar erro de abort (navegação intencional)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      if (isMountedRef.current) {
+        console.error('Failed to fetch dashboard data:', error);
+      }
     } finally {
-      setIsLoadingData(false);
+      if (isMountedRef.current) {
+        setIsLoadingData(false);
+      }
     }
   }, []);
 
-  // FIX Bug 4: Initial fetch with cleanup para evitar memory leak
+  // FIX Bug 3 + 4: Initial fetch + cleanup unificado
   useEffect(() => {
-    const controller = new AbortController();
-    let isMounted = true;
-
-    const loadInitialData = async () => {
-      try {
-        const response = await fetch('/api/strategic/dashboard/data', {
-          signal: controller.signal,
-        });
-        if (response.ok && isMounted) {
-          const result = await response.json();
-          setData(result);
-        }
-      } catch (error) {
-        // Ignorar erro de abort
-        if (error instanceof Error && error.name === 'AbortError') {
-          return;
-        }
-        if (isMounted) {
-          console.error('Failed to fetch dashboard data:', error);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingData(false);
-        }
-      }
-    };
-
-    loadInitialData();
+    isMountedRef.current = true;
+    
+    // Fetch inicial
+    fetchData();
 
     // Cleanup function
     return () => {
-      isMounted = false;
-      controller.abort();
+      isMountedRef.current = false;
+      // Cancelar request pendente
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
-  }, []);
+  }, [fetchData]);
 
-  // FIX Bug 4: Auto-refresh with cleanup
+  // Auto-refresh with cleanup
   useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/strategic/dashboard/data', {
-          signal: controller.signal,
-        });
-        if (response.ok && isMounted) {
-          const result = await response.json();
-          setData(result);
-        }
-      } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error('Auto-refresh error:', error);
-        }
+    const interval = setInterval(() => {
+      // Só faz refresh se montado
+      if (isMountedRef.current) {
+        fetchData();
       }
     }, 30000);
 
     return () => {
-      isMounted = false;
-      controller.abort();
       clearInterval(interval);
     };
-  }, []);
+  }, [fetchData]);
 
   // Handle container resize
   useEffect(() => {

@@ -206,7 +206,8 @@ export default function IntegrationsPage() {
             🟢 Integrações Ativas
           </h2>
           <div className="space-y-4">
-            {integrations.map((integration) => (
+            {/* FIX Bug 1: Renderizar activeIntegrations, não integrations */}
+            {activeIntegrations.map((integration) => (
               <IntegrationCard
                 key={integration.id}
                 integration={integration}
