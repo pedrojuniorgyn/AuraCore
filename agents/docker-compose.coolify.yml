@@ -18,7 +18,7 @@ services:
   agents:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.docling  # Usar Dockerfile com Docling/OCR
     container_name: auracore-agents
     restart: unless-stopped
     
@@ -50,6 +50,10 @@ services:
       # ----- Memory Store -----
       MEMORY_DB_PATH: ${MEMORY_DB_PATH:-/data/memory.db}
       
+      # ----- Docling / OCR -----
+      DOCLING_CACHE_DIR: ${DOCLING_CACHE_DIR:-/data/docling_cache}
+      TESSERACT_CMD: /usr/bin/tesseract
+      
       # ----- Security -----
       ENABLE_GUARDRAILS: ${ENABLE_GUARDRAILS:-true}
       
@@ -60,6 +64,8 @@ services:
     volumes:
       # Persistir memória de longo prazo
       - agents_data:/data
+      # Cache de modelos Docling
+      - docling_cache:/data/docling_cache
       
     expose:
       - "8080"
@@ -122,6 +128,8 @@ volumes:
   agents_data:
     driver: local
   chromadb_data:
+    driver: local
+  docling_cache:
     driver: local
 
 # =============================================================================

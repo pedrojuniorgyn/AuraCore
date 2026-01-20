@@ -36,6 +36,14 @@ dependencies = [
     # Utils
     "python-dotenv>=1.0.0",
     "tenacity>=8.2.0",
+    
+    # Document Processing - Docling (IBM)
+    "docling>=2.0.0",
+    "docling-core>=2.0.0",
+    
+    # PDF Processing
+    "pypdf>=4.0.0",
+    "pillow>=10.0.0",
 ]
 
 [project.optional-dependencies]

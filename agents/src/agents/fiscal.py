@@ -17,6 +17,7 @@ from src.tools.fiscal.validate_cte import ValidateCTeTool
 from src.tools.fiscal.query_legislation import QueryLegislationTool
 from src.tools.fiscal.simulate_tax import SimulateTaxTool
 from src.tools.fiscal.check_nfe import CheckNFeTool
+from src.tools.fiscal.document_importer import DocumentImporterTool
 
 
 class FiscalAgent(BaseAuracoreAgent):
@@ -40,6 +41,7 @@ class FiscalAgent(BaseAuracoreAgent):
             "SEMPRE use a ferramenta 'query_legislation' para consultar a base de conhecimento antes de responder sobre legislação.",
             "Para cálculos de ICMS, SEMPRE use a ferramenta 'calculate_icms' - nunca calcule manualmente.",
             "Ao validar documentos fiscais, use 'validate_cte' ou 'check_nfe' conforme o caso.",
+            "Para importar documentos fiscais de PDF (DANFe, DACTe), use 'document_importer' com Docling.",
             
             # Precisão e fundamentação
             "Cite SEMPRE a base legal das suas respostas (Lei, Artigo, IN, Convênio).",
@@ -60,6 +62,7 @@ class FiscalAgent(BaseAuracoreAgent):
             QueryLegislationTool(),
             SimulateTaxTool(),
             CheckNFeTool(),
+            DocumentImporterTool(),
         ]
         
         super().__init__(
@@ -84,4 +87,5 @@ class FiscalAgent(BaseAuracoreAgent):
             "Orientação sobre CFOP e CST",
             "Alertas sobre obrigações acessórias",
             "Análise de benefícios fiscais",
+            "Importação de documentos fiscais de PDF (DANFe, DACTe)",
         ]

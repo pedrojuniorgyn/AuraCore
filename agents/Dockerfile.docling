@@ -1,0 +1,79 @@
+# =============================================================================
+# AURACORE AGENTS - DOCKERFILE COM DOCLING
+# =============================================================================
+# Imagem com Docling e dependências de OCR para processamento de documentos
+# =============================================================================
+
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Dependências do sistema para OCR e PDF
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-por \
+    libtesseract-dev \
+    ghostscript \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar arquivos de dependências
+COPY pyproject.toml .
+
+# Instalar dependências
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
+
+# =============================================================================
+# Imagem final
+# =============================================================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instalar runtime dependencies incluindo OCR
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-por \
+    ghostscript \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 agentuser
+
+# Copiar dependências instaladas
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copiar código fonte
+COPY src/ ./src/
+
+# Criar diretórios de dados
+RUN mkdir -p /app/data/memory /app/data/logs /app/data/docling_cache && \
+    chown -R agentuser:agentuser /app
+
+# Trocar para usuário não-root
+USER agentuser
+
+# Variáveis de ambiente
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DOCLING_CACHE_DIR=/app/data/docling_cache
+ENV TESSERACT_CMD=/usr/bin/tesseract
+
+# Expor porta
+EXPOSE 8080
+
+# Health check com start period maior para carregar modelos
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Comando de inicialização
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
