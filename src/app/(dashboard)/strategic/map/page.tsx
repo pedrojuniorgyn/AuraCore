@@ -44,6 +44,16 @@ interface GoalWithKpiCount extends Goal {
   ownerName?: string;
 }
 
+// Mapeamento explícito de filtros para perspectivas
+const PERSPECTIVE_FILTER_MAP = {
+  financ: 'FINANCIAL',
+  client: 'CUSTOMER',
+  process: 'INTERNAL_PROCESS',
+  learn: 'LEARNING_GROWTH',
+} as const;
+
+type PerspectiveFilterKey = keyof typeof PERSPECTIVE_FILTER_MAP;
+
 export default function StrategicMapPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -105,7 +115,13 @@ export default function StrategicMapPage() {
 
   const filteredGoals = goals.filter((goal) => {
     if (statusFilter !== 'all' && goal.status !== statusFilter) return false;
-    if (perspectiveFilter !== 'all' && !goal.perspectiveId.includes(perspectiveFilter)) return false;
+    if (perspectiveFilter !== 'all') {
+      // Usar mapeamento explícito ao invés de includes() para evitar matches falsos
+      const expectedPerspective = PERSPECTIVE_FILTER_MAP[perspectiveFilter as PerspectiveFilterKey];
+      if (expectedPerspective && goal.perspectiveId !== expectedPerspective) {
+        return false;
+      }
+    }
     return true;
   });
 

@@ -16,11 +16,37 @@ interface KpiGaugeProps {
   onClick?: (id: string) => void;
 }
 
-const statusColors: Record<KpiStatus, string> = {
-  GREEN: 'emerald',
-  YELLOW: 'amber',
-  RED: 'red',
-  GRAY: 'gray',
+// Tailwind safelist pattern - classes completas para PurgeCSS/JIT
+const statusClasses: Record<KpiStatus, {
+  tremorColor: 'emerald' | 'amber' | 'red' | 'gray';
+  progressText: string;
+  badgeBg: string;
+  badgeText: string;
+}> = {
+  GREEN: {
+    tremorColor: 'emerald',
+    progressText: 'text-emerald-400',
+    badgeBg: 'bg-emerald-500/20',
+    badgeText: 'text-emerald-400',
+  },
+  YELLOW: {
+    tremorColor: 'amber',
+    progressText: 'text-amber-400',
+    badgeBg: 'bg-amber-500/20',
+    badgeText: 'text-amber-400',
+  },
+  RED: {
+    tremorColor: 'red',
+    progressText: 'text-red-400',
+    badgeBg: 'bg-red-500/20',
+    badgeText: 'text-red-400',
+  },
+  GRAY: {
+    tremorColor: 'gray',
+    progressText: 'text-gray-400',
+    badgeBg: 'bg-gray-500/20',
+    badgeText: 'text-gray-400',
+  },
 };
 
 const statusLabels: Record<KpiStatus, string> = {
@@ -55,7 +81,7 @@ export function KpiGauge({
   deviationPercent,
   onClick,
 }: KpiGaugeProps) {
-  const color = statusColors[status];
+  const classes = statusClasses[status];
   const progress = targetValue !== 0 ? (currentValue / targetValue) * 100 : 0;
   const deltaType = getDeltaType(deviationPercent);
 
@@ -72,10 +98,10 @@ export function KpiGauge({
         <ProgressCircle
           value={Math.min(progress, 100)}
           size="md"
-          color={color}
+          color={classes.tremorColor}
           showAnimation={true}
         >
-          <span className={`text-xs font-semibold text-${color}-400`}>
+          <span className={`text-xs font-semibold ${classes.progressText}`}>
             {Math.round(progress)}%
           </span>
         </ProgressCircle>
@@ -97,7 +123,7 @@ export function KpiGauge({
       </Flex>
 
       <Flex className="mt-3" justifyContent="between" alignItems="center">
-        <span className={`text-xs px-2 py-1 rounded-full bg-${color}-500/20 text-${color}-400`}>
+        <span className={`text-xs px-2 py-1 rounded-full ${classes.badgeBg} ${classes.badgeText}`}>
           {statusLabels[status]}
         </span>
         {deviationPercent !== undefined && (

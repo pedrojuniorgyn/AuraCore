@@ -31,30 +31,41 @@ interface BscPerspectiveCardProps {
   previousProgress?: number;
 }
 
+// Tailwind safelist pattern - classes completas para PurgeCSS/JIT detectar
 const perspectiveConfig: Record<PerspectiveType, { 
   icon: LucideIcon; 
-  color: string; 
+  tremorColor: 'emerald' | 'blue' | 'amber' | 'purple';
   bgGradient: string;
+  iconBg: string;
+  iconText: string;
 }> = {
   FINANCIAL: {
     icon: DollarSign,
-    color: 'emerald',
+    tremorColor: 'emerald',
     bgGradient: 'from-emerald-500/20 to-green-500/20',
+    iconBg: 'bg-emerald-500/30',
+    iconText: 'text-emerald-400',
   },
   CUSTOMER: {
     icon: Users,
-    color: 'blue',
+    tremorColor: 'blue',
     bgGradient: 'from-blue-500/20 to-cyan-500/20',
+    iconBg: 'bg-blue-500/30',
+    iconText: 'text-blue-400',
   },
   INTERNAL_PROCESS: {
     icon: Cog,
-    color: 'amber',
+    tremorColor: 'amber',
     bgGradient: 'from-amber-500/20 to-orange-500/20',
+    iconBg: 'bg-amber-500/30',
+    iconText: 'text-amber-400',
   },
   LEARNING_GROWTH: {
     icon: GraduationCap,
-    color: 'purple',
+    tremorColor: 'purple',
     bgGradient: 'from-purple-500/20 to-pink-500/20',
+    iconBg: 'bg-purple-500/30',
+    iconText: 'text-purple-400',
   },
 };
 
@@ -89,20 +100,11 @@ export function BscPerspectiveCard({
     ? `${(avgProgress - previousProgress).toFixed(1)}%` 
     : undefined;
 
-  // Map color string to valid Tremor color
-  const colorMap: Record<string, 'emerald' | 'blue' | 'amber' | 'purple'> = {
-    'emerald': 'emerald',
-    'blue': 'blue',
-    'amber': 'amber',
-    'purple': 'purple',
-  };
-  const decorationColor = colorMap[config.color] || 'purple';
-
   return (
     <Card 
       className={`bg-gradient-to-br ${config.bgGradient} border-0 shadow-lg hover:shadow-xl transition-shadow`}
       decoration="left"
-      decorationColor={decorationColor}
+      decorationColor={config.tremorColor}
     >
       <Flex justifyContent="between" alignItems="start">
         <div>
@@ -111,8 +113,8 @@ export function BscPerspectiveCard({
           </Text>
           <Title className="mt-1 text-white">{title}</Title>
         </div>
-        <div className={`p-2 rounded-lg bg-${config.color}-500/30`}>
-          <Icon className={`w-6 h-6 text-${config.color}-400`} />
+        <div className={`p-2 rounded-lg ${config.iconBg}`}>
+          <Icon className={`w-6 h-6 ${config.iconText}`} />
         </div>
       </Flex>
 
@@ -131,7 +133,7 @@ export function BscPerspectiveCard({
 
       <ProgressBar 
         value={avgProgress} 
-        color={decorationColor} 
+        color={config.tremorColor} 
         className="mt-3"
       />
 

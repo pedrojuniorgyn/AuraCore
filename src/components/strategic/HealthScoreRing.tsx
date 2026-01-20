@@ -12,7 +12,37 @@ interface HealthScoreRingProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-function getScoreColor(score: number): string {
+// Tailwind safelist pattern - classes completas para PurgeCSS/JIT
+type ScoreColorKey = 'emerald' | 'amber' | 'orange' | 'red';
+
+const scoreColorClasses: Record<ScoreColorKey, {
+  tremorColor: 'emerald' | 'amber' | 'orange' | 'red';
+  iconText: string;
+  scoreText: string;
+}> = {
+  emerald: {
+    tremorColor: 'emerald',
+    iconText: 'text-emerald-400',
+    scoreText: 'text-emerald-400',
+  },
+  amber: {
+    tremorColor: 'amber',
+    iconText: 'text-amber-400',
+    scoreText: 'text-amber-400',
+  },
+  orange: {
+    tremorColor: 'orange',
+    iconText: 'text-orange-400',
+    scoreText: 'text-orange-400',
+  },
+  red: {
+    tremorColor: 'red',
+    iconText: 'text-red-400',
+    scoreText: 'text-red-400',
+  },
+};
+
+function getScoreColorKey(score: number): ScoreColorKey {
   if (score >= 80) return 'emerald';
   if (score >= 60) return 'amber';
   if (score >= 40) return 'orange';
@@ -50,7 +80,8 @@ export function HealthScoreRing({
   label = 'Saúde Estratégica',
   size = 'lg',
 }: HealthScoreRingProps) {
-  const color = getScoreColor(score);
+  const colorKey = getScoreColorKey(score);
+  const colorClasses = scoreColorClasses[colorKey];
   const scoreLabel = getScoreLabel(score);
   const trend = getTrend(score, previousScore);
   const delta = previousScore !== undefined ? score - previousScore : 0;
@@ -71,18 +102,18 @@ export function HealthScoreRing({
           </Text>
           <Title className="mt-1 text-white">{scoreLabel}</Title>
         </div>
-        <Activity className={`w-6 h-6 text-${color}-400`} />
+        <Activity className={`w-6 h-6 ${colorClasses.iconText}`} />
       </Flex>
 
       <Flex justifyContent="center" className="mt-6">
         <ProgressCircle
           value={score}
           size={sizeMap[size]}
-          color={color}
+          color={colorClasses.tremorColor}
           showAnimation={true}
         >
           <div className="text-center">
-            <span className={`text-3xl font-bold text-${color}-400`}>
+            <span className={`text-3xl font-bold ${colorClasses.scoreText}`}>
               {Math.round(score)}
             </span>
             <span className="text-gray-500 text-sm">%</span>
