@@ -25,6 +25,10 @@ class RiskLevel(str, Enum):
     CRITICAL = "critical" # Operações fiscais, pagamentos
 
 
+# Alias para compatibilidade com tools
+GuardrailLevel = RiskLevel
+
+
 @dataclass
 class Guardrail:
     """Define um guardrail para uma operação."""

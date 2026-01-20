@@ -14,6 +14,11 @@ from src.config import get_settings
 
 logger = structlog.get_logger()
 
+
+def get_logger(name: str = __name__) -> structlog.BoundLogger:
+    """Retorna um logger estruturado para o módulo especificado."""
+    return structlog.get_logger(name)
+
 # =============================================================================
 # MÉTRICAS PROMETHEUS
 # =============================================================================
