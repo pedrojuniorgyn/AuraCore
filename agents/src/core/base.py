@@ -31,6 +31,7 @@ class AgentType(str, Enum):
     FLEET = "fleet"
     ACCOUNTING = "accounting"
     STRATEGIC = "strategic"
+    QA = "qa"
 
 
 @dataclass

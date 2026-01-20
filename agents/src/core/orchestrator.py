@@ -24,6 +24,7 @@ from src.agents.crm import CRMAgent
 from src.agents.accounting import AccountingAgent
 from src.agents.fleet import FleetAgent
 from src.agents.strategic import StrategicAgent
+from src.agents.qa import QAAgent
 
 
 class AgentOrchestrator:
@@ -92,6 +93,13 @@ class AgentOrchestrator:
             logger.info("Strategic Agent initialized")
         except Exception as e:
             logger.error("Failed to initialize Strategic Agent", error=str(e))
+        
+        # FASE 8: QA Agent
+        try:
+            self.agents[AgentType.QA] = QAAgent()
+            logger.info("QA Agent initialized")
+        except Exception as e:
+            logger.error("Failed to initialize QA Agent", error=str(e))
         
         logger.info(
             "Agents initialization complete",
@@ -211,6 +219,11 @@ class AgentOrchestrator:
             AgentType.STRATEGIC: [
                 "bsc", "pdca", "meta", "kpi", "estratégia", "indicador",
                 "war room", "5w2h", "follow-up", "objetivo", "swot",
+            ],
+            AgentType.QA: [
+                "qa", "qualidade", "teste", "bug", "frontend", "análise",
+                "auditoria", "botão", "handler", "onclick", "componente",
+                "relatório", "issue", "verificar", "scanner",
             ],
         }
         
