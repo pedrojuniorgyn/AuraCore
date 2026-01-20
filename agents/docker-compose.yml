@@ -1,0 +1,72 @@
+# =============================================================================
+# AURACORE AGENTS - DOCKER COMPOSE
+# =============================================================================
+# Para desenvolvimento local e testes
+# Em produção, usar docker-compose.coolify.yml
+# =============================================================================
+
+version: '3.8'
+
+services:
+  agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auracore-agents
+    ports:
+      - "8080:8080"
+    environment:
+      # API Keys (usar .env em produção)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      
+      # AuraCore API
+      - AURACORE_API_URL=http://web:3000
+      - AURACORE_API_TIMEOUT=30
+      
+      # ChromaDB (Knowledge Module)
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMA_COLLECTION=auracore_knowledge
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      
+      # Memory
+      - MEMORY_DB_PATH=/app/data/memory
+      
+      # Rate Limiting
+      - RATE_LIMIT_REQUESTS=100
+      - RATE_LIMIT_WINDOW=60
+      
+    volumes:
+      # Persistir memória dos agentes
+      - agents-memory:/app/data/memory
+      # Logs para debug
+      - agents-logs:/app/data/logs
+      
+    depends_on:
+      chromadb:
+        condition: service_healthy
+        
+    networks:
+      - auracore-network
+      
+    restart: unless-stopped
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  agents-memory:
+  agents-logs:
+
+networks:
+  auracore-network:
+    external: true

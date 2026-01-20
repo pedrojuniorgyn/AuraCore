@@ -1,0 +1,84 @@
+# =============================================================================
+# AURACORE AGENTS - DOCKER COMPOSE PARA COOLIFY
+# =============================================================================
+# Este arquivo é específico para deploy no Coolify
+# Não usar para desenvolvimento local (use docker-compose.yml)
+# =============================================================================
+
+version: '3.8'
+
+services:
+  agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auracore-agents
+    ports:
+      - "8080:8080"
+    environment:
+      # Coolify injeta estas variáveis do painel de configuração
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      
+      # AuraCore API - usar nome do container web no Coolify
+      - AURACORE_API_URL=${AURACORE_API_URL:-http://web:3000}
+      - AURACORE_API_TIMEOUT=${AURACORE_API_TIMEOUT:-30}
+      
+      # ChromaDB - verificar nome do container no Coolify
+      - CHROMA_HOST=${CHROMA_HOST:-chromadb}
+      - CHROMA_PORT=${CHROMA_PORT:-8000}
+      - CHROMA_COLLECTION=${CHROMA_COLLECTION:-auracore_knowledge}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=json
+      
+      # Memory
+      - MEMORY_DB_PATH=/app/data/memory
+      
+      # Rate Limiting
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
+      
+      # Feature Flags
+      - ENABLE_GUARDRAILS=${ENABLE_GUARDRAILS:-true}
+      - ENABLE_OBSERVABILITY=${ENABLE_OBSERVABILITY:-true}
+      - ENABLE_MEMORY=${ENABLE_MEMORY:-true}
+      
+    volumes:
+      - agents-memory:/app/data/memory
+      - agents-logs:/app/data/logs
+      
+    networks:
+      - auracore_default
+      
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service=auracore-agents"
+
+volumes:
+  agents-memory:
+    name: auracore-agents-memory
+  agents-logs:
+    name: auracore-agents-logs
+
+networks:
+  auracore_default:
+    external: true
