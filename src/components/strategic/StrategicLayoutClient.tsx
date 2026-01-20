@@ -7,6 +7,11 @@ import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { AuraChat } from './AuraChat';
 import { NotificationToastProvider } from '@/components/notifications/notification-toast-provider';
 
+// Onboarding Components
+import { WelcomeModal } from './WelcomeModal';
+import { OnboardingTour } from './OnboardingTour';
+import { OnboardingChecklist } from './OnboardingChecklist';
+
 interface Props {
   children: ReactNode;
   user?: { name: string; email: string; avatar?: string };
@@ -44,6 +49,11 @@ export function StrategicLayoutClient({ children, user, notificationCount = 0 }:
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* Onboarding Components */}
+      <WelcomeModal />
+      <OnboardingTour />
+      <OnboardingChecklist />
     </>
   );
 }

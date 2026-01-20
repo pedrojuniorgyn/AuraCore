@@ -205,8 +205,18 @@ export function DashboardGrid({
           // FIX Bug 3: Usar fallback para tipos desconhecidos
           const config = widgetTitles[widget.type] || defaultWidgetConfig;
           
+          // Mapear tipos de widget para data-tour (para onboarding tour)
+          const tourTargets: Partial<Record<WidgetType, string>> = {
+            'health-score': 'health-score',
+            'alerts': 'alerts',
+            'kpi-summary': 'kpi-summary',
+            'actions': 'actions',
+            'aurora-insight': 'aurora-insight',
+          };
+          const dataTour = tourTargets[widget.type];
+          
           return (
-            <div key={widget.i}>
+            <div key={widget.i} data-tour={dataTour}>
               <DashboardWidget
                 id={widget.i}
                 title={config.title}

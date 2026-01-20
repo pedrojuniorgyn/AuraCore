@@ -200,6 +200,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => setIsEditing(true)}
+                data-tour="customize"
                 className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 
                   text-white flex items-center gap-2 hover:bg-white/20 transition-colors text-sm"
               >
