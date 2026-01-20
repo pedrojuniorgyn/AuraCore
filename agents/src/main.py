@@ -1,13 +1,16 @@
 """
-Entry point do servidor de agentes AuraCore.
+AuraCore Agents API - FastAPI Application
 
-Inicializa FastAPI com todas as rotas e middlewares.
+Entry point do servidor de agentes AuraCore.
+Inicializa FastAPI com todas as rotas, middlewares e documentação OpenAPI.
 """
 
 import structlog
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.openapi.utils import get_openapi
 from prometheus_client import make_asgi_app
 
 from src.config import get_settings
@@ -15,10 +18,83 @@ from src.api.routes import chat, agents, health
 from src.api import voice as voice_api
 from src.api import knowledge as knowledge_api
 from src.api import observability as observability_api
+from src.api import webhooks as webhooks_api
 from src.core.orchestrator import get_orchestrator
+from src.services.webhooks import get_webhook_service
 
 
-# Configurar logging estruturado
+# ===== METADATA OPENAPI =====
+
+API_TITLE = "AuraCore Agents API"
+API_VERSION = "1.0.0"
+API_DESCRIPTION = """
+## 🚀 AuraCore Agents API
+
+API de agentes de IA especializados para ERP logístico brasileiro.
+
+### 🤖 Agentes Disponíveis
+
+| Agente | Descrição |
+|--------|-----------|
+| **Fiscal** | ICMS, PIS/COFINS, NFe, CTe, SPED |
+| **Financial** | Contas a pagar/receber, fluxo de caixa |
+| **TMS** | Gestão de transporte, rotas, entregas |
+| **CRM** | Clientes, leads, oportunidades |
+| **Accounting** | Lançamentos contábeis, balancetes |
+| **Fleet** | Veículos, manutenção, combustível |
+| **Strategic** | BSC, PDCA, 5W2H, War Room |
+| **QA** | Qualidade de código, testes |
+
+### 🔧 Features
+
+- **Voice Interface**: STT + TTS com Google Cloud
+- **RAG**: Consulta de legislação fiscal
+- **Document Processing**: DANFe e DACTe via Docling
+- **Webhooks**: Notificações em tempo real
+
+### 🔐 Autenticação
+
+Todas as rotas requerem header `X-API-Key`.
+
+```bash
+curl -H "X-API-Key: sua-api-key" https://api.auracore.com.br/v1/agents/chat
+```
+"""
+
+TAGS_METADATA = [
+    {
+        "name": "Health",
+        "description": "Health checks e status do serviço",
+    },
+    {
+        "name": "Agents",
+        "description": "Listagem e informações dos agentes",
+    },
+    {
+        "name": "Chat",
+        "description": "Interação com agentes de IA",
+    },
+    {
+        "name": "Voice",
+        "description": "Interface de voz (STT/TTS)",
+    },
+    {
+        "name": "Knowledge",
+        "description": "RAG e knowledge base",
+    },
+    {
+        "name": "Webhooks",
+        "description": "Configuração de webhooks",
+    },
+    {
+        "name": "Observability",
+        "description": "Métricas e monitoramento",
+    },
+]
+
+
+# ===== LOGGING =====
+
 def configure_logging() -> None:
     """Configura logging estruturado."""
     settings = get_settings()
@@ -49,6 +125,8 @@ configure_logging()
 logger = structlog.get_logger()
 
 
+# ===== LIFESPAN =====
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Gerencia ciclo de vida da aplicação."""
@@ -57,7 +135,7 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info(
         "Starting AuraCore Agents",
-        version="1.0.0",
+        version=API_VERSION,
         auracore_url=settings.auracore_api_url,
         chroma_url=settings.chroma_url,
         guardrails_enabled=settings.enable_guardrails,
@@ -71,37 +149,43 @@ async def lifespan(app: FastAPI):
         agents=list(orchestrator.agents.keys()),
     )
     
+    # Iniciar webhook delivery worker
+    webhook_service = get_webhook_service()
+    await webhook_service.start()
+    logger.info("Webhook service started")
+    
     yield
     
     # Shutdown
+    await webhook_service.stop()
     logger.info("Shutting down AuraCore Agents")
 
 
-# Criar app FastAPI
+# ===== FASTAPI APP =====
+
 app = FastAPI(
-    title="AuraCore Agents API",
-    description="""
-    API de Agentes AI para o AuraCore ERP.
-    
-    ## Agentes Disponíveis
-    
-    - **Fiscal Agent**: Especialista em legislação fiscal brasileira
-    - **Financial Agent**: Gestão financeira e fluxo de caixa
-    - **TMS Agent**: Operações de transporte
-    - **CRM Agent**: Vendas e relacionamento
-    - **Fleet Agent**: Gestão de frota
-    - **Accounting Agent**: Contabilidade
-    - **Strategic Agent**: Gestão estratégica (BSC, PDCA)
-    
-    ## Autenticação
-    
-    Todas as requisições devem passar pelo Gateway do AuraCore,
-    que adiciona o contexto de autenticação (org_id, user_id, role).
-    """,
-    version="1.0.0",
+    title=API_TITLE,
+    version=API_VERSION,
+    description=API_DESCRIPTION,
+    openapi_tags=TAGS_METADATA,
+    docs_url=None,  # Customizado abaixo
+    redoc_url=None,  # Customizado abaixo
+    openapi_url="/openapi.json",
+    servers=[
+        {"url": "https://api.auracore.com.br", "description": "Production"},
+        {"url": "https://staging-api.auracore.com.br", "description": "Staging"},
+        {"url": "http://localhost:8000", "description": "Development"},
+    ],
+    contact={
+        "name": "AuraCore Support",
+        "email": "suporte@auracore.com.br",
+        "url": "https://auracore.com.br",
+    },
+    license_info={
+        "name": "Proprietary",
+        "url": "https://auracore.com.br/license",
+    },
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
 )
 
 # CORS
@@ -127,7 +211,67 @@ app.include_router(agents.router, prefix="/agents", tags=["Agents"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 app.include_router(voice_api.router, prefix="/api/voice", tags=["Voice"])
 app.include_router(knowledge_api.router, prefix="/api/knowledge", tags=["Knowledge"])
+app.include_router(webhooks_api.router, prefix="/api/webhooks", tags=["Webhooks"])
 app.include_router(observability_api.router, tags=["Observability"])
+
+
+# ===== CUSTOM DOCS =====
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Swagger UI customizado."""
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title=f"{API_TITLE} - Swagger UI",
+        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+        swagger_favicon_url="https://auracore.com.br/favicon.ico",
+    )
+
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html():
+    """ReDoc customizado."""
+    return get_redoc_html(
+        openapi_url="/openapi.json",
+        title=f"{API_TITLE} - ReDoc",
+        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js",
+    )
+
+
+# ===== CUSTOM OPENAPI SCHEMA =====
+
+def custom_openapi():
+    """Gera schema OpenAPI customizado com security."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=API_TITLE,
+        version=API_VERSION,
+        description=API_DESCRIPTION,
+        routes=app.routes,
+        tags=TAGS_METADATA,
+    )
+    
+    # Adicionar security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API Key para autenticação"
+        }
+    }
+    
+    # Aplicar security globalmente
+    openapi_schema["security"] = [{"ApiKeyAuth": []}]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 
 @app.get("/", include_in_schema=False)
@@ -135,7 +279,9 @@ async def root():
     """Redireciona para documentação."""
     return {
         "service": "AuraCore Agents",
-        "version": "1.0.0",
+        "version": API_VERSION,
         "docs": "/docs",
+        "redoc": "/redoc",
+        "openapi": "/openapi.json",
         "health": "/health",
     }
