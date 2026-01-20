@@ -1,72 +1,113 @@
 # =============================================================================
 # AURACORE AGENTS - DOCKER COMPOSE
 # =============================================================================
-# Para desenvolvimento local e testes
-# Em produção, usar docker-compose.coolify.yml
+# Ambiente local/staging completo
+# Version: 2.0.0
 # =============================================================================
 
-version: '3.8'
+version: "3.9"
 
 services:
+  # ============================================
+  # AuraCore Agents API
+  # ============================================
   agents:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: auracore-agents
+    restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8000}:8000"
     environment:
-      # API Keys (usar .env em produção)
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=json
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      
-      # AuraCore API
       - AURACORE_API_URL=http://web:3000
       - AURACORE_API_TIMEOUT=30
-      
-      # ChromaDB (Knowledge Module)
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000
-      - CHROMA_COLLECTION=auracore_knowledge
-      
-      # Logging
-      - LOG_LEVEL=INFO
-      - LOG_FORMAT=json
-      
-      # Memory
       - MEMORY_DB_PATH=/app/data/memory
-      
-      # Rate Limiting
       - RATE_LIMIT_REQUESTS=100
       - RATE_LIMIT_WINDOW=60
-      
     volumes:
-      # Persistir memória dos agentes
-      - agents-memory:/app/data/memory
-      # Logs para debug
-      - agents-logs:/app/data/logs
-      
+      - agents-data:/app/data
     depends_on:
-      chromadb:
+      redis:
         condition: service_healthy
-        
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - auracore-network
-      
-    restart: unless-stopped
-    
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
+          cpus: "2"
+          memory: 4G
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: "0.5"
+          memory: 1G
 
-volumes:
-  agents-memory:
-  agents-logs:
+  # ============================================
+  # Redis (Cache + Task Queue)
+  # ============================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: auracore-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - auracore-network
+
+  # ============================================
+  # ARQ Worker (Background Tasks)
+  # ============================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auracore-worker
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - agents-data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["python", "-m", "arq", "src.services.tasks.WorkerSettings"]
+    networks:
+      - auracore-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2G
 
 networks:
   auracore-network:
-    external: true
+    driver: bridge
+
+volumes:
+  agents-data:
+  redis-data:

@@ -1,0 +1,8 @@
+# agents/k8s/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: auracore
+  labels:
+    app.kubernetes.io/name: auracore
+    app.kubernetes.io/part-of: auracore-erp

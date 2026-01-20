@@ -1,0 +1,11 @@
+# agents/k8s/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auracore-agents
+  namespace: auracore
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: auracore-agents

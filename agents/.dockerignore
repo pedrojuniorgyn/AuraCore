@@ -1,0 +1,55 @@
+# agents/.dockerignore
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Docs
+docs/_build/
+
+# Local
+.env
+.env.local
+*.log
+
+# Cache
+.cache/
+.mypy_cache/
+.ruff_cache/
+
+# SDK (não incluir na imagem principal)
+sdk/
+
+# Misc
+Makefile
+docker-compose*.yml
+k8s/
+scripts/

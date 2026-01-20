@@ -2,11 +2,16 @@
 # AURACORE AGENTS - DOCKERFILE
 # =============================================================================
 # Multi-stage build para imagem otimizada
+# Version: 2.0.0
 # =============================================================================
 
-FROM python:3.11-slim as builder
+# ============================================
+# Stage 1: Builder
+# ============================================
+FROM python:3.12-slim as builder
 
-WORKDIR /app
+# Variáveis de build
+ARG POETRY_VERSION=1.7.1
 
 # Instalar dependências de build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,51 +19,78 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar arquivos de dependências
-COPY pyproject.toml .
+# Instalar Poetry
+RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
 
-# Instalar dependências
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
-
-# =============================================================================
-# Imagem final
-# =============================================================================
-FROM python:3.11-slim
+# Configurar Poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
 
 WORKDIR /app
 
-# Instalar apenas runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd -m -u 1000 agentuser
+# Copiar arquivos de dependências
+COPY pyproject.toml poetry.lock* ./
 
-# Copiar dependências instaladas
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Instalar dependências (sem dev)
+RUN --mount=type=cache,target=/tmp/poetry_cache \
+    poetry install --without dev --no-root || \
+    pip install --no-cache-dir -e .
 
-# Copiar código fonte
-COPY src/ ./src/
+# ============================================
+# Stage 2: Runtime
+# ============================================
+FROM python:3.12-slim as runtime
 
-# Criar diretórios de dados
-RUN mkdir -p /app/data/memory /app/data/logs && \
-    chown -R agentuser:agentuser /app
-
-# Trocar para usuário não-root
-USER agentuser
+# Labels
+LABEL org.opencontainers.image.title="AuraCore Agents" \
+      org.opencontainers.image.description="AI Agents for Brazilian ERP" \
+      org.opencontainers.image.version="2.0.0" \
+      org.opencontainers.image.vendor="AuraCore" \
+      org.opencontainers.image.source="https://github.com/pedrojuniorgyn/AuraCore"
 
 # Variáveis de ambiente
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    PYTHONPATH=/app \
+    PATH="/app/.venv/bin:$PATH" \
+    APP_HOME=/app
 
-# Expor porta
-EXPOSE 8080
+# Criar usuário não-root
+RUN groupadd --gid 1000 auracore && \
+    useradd --uid 1000 --gid auracore --shell /bin/bash --create-home auracore
+
+# Instalar dependências de runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR ${APP_HOME}
+
+# Copiar virtualenv do builder (se existir) ou site-packages
+COPY --from=builder /app/.venv ./.venv
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copiar código da aplicação
+COPY --chown=auracore:auracore src/ ./src/
+COPY --chown=auracore:auracore tests/ ./tests/
+
+# Criar diretórios de dados
+RUN mkdir -p /app/data/memory /app/data/logs /app/.cache && \
+    chown -R auracore:auracore /app
+
+# Mudar para usuário não-root
+USER auracore
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Porta
+EXPOSE 8000
 
 # Comando de inicialização
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

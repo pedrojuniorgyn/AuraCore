@@ -1,0 +1,14 @@
+# agents/k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auracore-agents-config
+  namespace: auracore
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "WARNING"
+  LOG_FORMAT: "json"
+  API_PORT: "8000"
+  METRICS_PORT: "9000"
+  WORKERS: "4"
+  MAX_CONNECTIONS: "100"
