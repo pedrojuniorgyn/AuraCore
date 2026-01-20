@@ -1,0 +1,52 @@
+/**
+ * API: GET /api/admin/retention/policies
+ * 
+ * Lista políticas de retenção de dados.
+ * 
+ * Permissão: admin.retention
+ * 
+ * @example
+ * GET /api/admin/retention/policies
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "data": [
+ *     {
+ *       "id": "...",
+ *       "policyName": "slow_logs",
+ *       "tableName": "request_logs",
+ *       "retentionDays": 30,
+ *       ...
+ *     }
+ *   ]
+ * }
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { withPermission } from '@/lib/auth/api-guard';
+import { retentionService } from '@/shared/infrastructure/retention';
+
+export async function GET(request: NextRequest) {
+  return withPermission(request, 'admin.retention', async () => {
+    try {
+      const policies = await retentionService.listPolicies();
+
+      return NextResponse.json({
+        success: true,
+        data: policies,
+        total: policies.length,
+      });
+    } catch (error) {
+      console.error('[Retention Policies] Erro ao listar:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Falha ao listar políticas',
+          message: error instanceof Error ? error.message : 'Erro desconhecido',
+        },
+        { status: 500 }
+      );
+    }
+  });
+}

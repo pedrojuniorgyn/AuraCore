@@ -1,13 +1,13 @@
 services:
   sql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: 'mcr.microsoft.com/mssql/server:2022-latest'
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Developer"
-      MSSQL_SA_PASSWORD: "${DB_PASSWORD:-__MISSING_DB_PASSWORD__}"
+      ACCEPT_EULA: 'Y'
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: '${DB_PASSWORD:-__MISSING_DB_PASSWORD__}'
     command:
       - bash
-      - -lc
+      - '-lc'
       - |
         if [ "$$MSSQL_SA_PASSWORD" = "__MISSING_DB_PASSWORD__" ]; then
           echo "❌ DB_PASSWORD ausente no runtime. Ajuste as env vars no Coolify."
@@ -20,17 +20,35 @@ services:
         fi
         exec /opt/mssql/bin/sqlservr
     volumes:
-      - sql_data:/var/opt/mssql
+      - 'sql_data:/var/opt/mssql'
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "bash -lc 'cat < /dev/null > /dev/tcp/127.0.0.1/1433'"
-        ]
+        - CMD-SHELL
+        - "bash -lc 'cat < /dev/null > /dev/tcp/127.0.0.1/1433'"
       interval: 10s
       timeout: 5s
       retries: 60
       start_period: 90s
+    restart: unless-stopped
+    networks:
+      - auracore
+
+  chromadb:
+    image: 'chromadb/chroma:0.4.22'
+    environment:
+      IS_PERSISTENT: 'TRUE'
+      PERSIST_DIRECTORY: '/chroma/chroma'
+      ANONYMIZED_TELEMETRY: 'FALSE'
+    volumes:
+      - 'chromadb_data:/chroma/chroma'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'curl -f http://localhost:8000/api/v1/heartbeat || exit 1'
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
     networks:
       - auracore
@@ -42,37 +60,52 @@ services:
     depends_on:
       sql:
         condition: service_healthy
+      chromadb:
+        condition: service_healthy
     environment:
-      # Permite override no Coolify; por padrão usa o serviço "sql" do compose
-      DB_HOST: "${DB_HOST:-sql}"
-      DB_PORT: "${DB_PORT:-1433}"
-      DB_USER: "${DB_USER:-sa}"
-      DB_PASSWORD: "${DB_PASSWORD:-__MISSING_DB_PASSWORD__}"
-      DB_NAME: "${DB_NAME:-AuraCore}"
-
-      NODE_ENV: "${NODE_ENV:-production}"
-      APP_URL: "${APP_URL}"
-      NEXTAUTH_URL: "${NEXTAUTH_URL:-${APP_URL}}"
-      AUTH_URL: "${AUTH_URL:-${APP_URL}}"
-
-      AUTH_SECRET: "${AUTH_SECRET}"
-      AUTH_TRUST_HOST: "${AUTH_TRUST_HOST:-true}"
-
-      AUTH_GOOGLE_ID: "${AUTH_GOOGLE_ID}"
-      AUTH_GOOGLE_SECRET: "${AUTH_GOOGLE_SECRET}"
-      AUTH_GOOGLE_ALLOWED_DOMAINS: "${AUTH_GOOGLE_ALLOWED_DOMAINS}"
-
-      ENABLE_CRON: "${ENABLE_CRON:-false}"
-      DB_ENCRYPT: "${DB_ENCRYPT:-false}"
-      DB_TRUST_CERT: "${DB_TRUST_CERT:-true}"
+      # ===== DATABASE =====
+      DB_HOST: '${DB_HOST:-sql}'
+      DB_PORT: '${DB_PORT:-1433}'
+      DB_USER: '${DB_USER:-sa}'
+      DB_PASSWORD: '${DB_PASSWORD:-__MISSING_DB_PASSWORD__}'
+      DB_NAME: '${DB_NAME:-AuraCore}'
+      DB_ENCRYPT: '${DB_ENCRYPT:-false}'
+      DB_TRUST_CERT: '${DB_TRUST_CERT:-true}'
+      
+      # ===== APP & AUTH =====
+      NODE_ENV: '${NODE_ENV:-production}'
+      APP_URL: '${APP_URL}'
+      NEXTAUTH_URL: '${NEXTAUTH_URL:-${APP_URL}}'
+      AUTH_URL: '${AUTH_URL:-${APP_URL}}'
+      AUTH_SECRET: '${AUTH_SECRET}'
+      AUTH_TRUST_HOST: '${AUTH_TRUST_HOST:-true}'
+      AUTH_GOOGLE_ID: '${AUTH_GOOGLE_ID}'
+      AUTH_GOOGLE_SECRET: '${AUTH_GOOGLE_SECRET}'
+      AUTH_GOOGLE_ALLOWED_DOMAINS: '${AUTH_GOOGLE_ALLOWED_DOMAINS}'
+      
+      # ===== CRON =====
+      ENABLE_CRON: '${ENABLE_CRON:-false}'
+      
+      # ===== EMBEDDING SERVICE (Phase D.1/D.4) =====
+      GOOGLE_AI_API_KEY: '${GOOGLE_AI_API_KEY}'
+      GEMINI_EMBEDDING_MODEL: '${GEMINI_EMBEDDING_MODEL:-embedding-004}'
+      OPENAI_API_KEY: '${OPENAI_API_KEY}'
+      EMBEDDING_FALLBACK_ENABLED: '${EMBEDDING_FALLBACK_ENABLED:-true}'
+      
+      # ===== VECTOR STORE - CHROMADB (Phase D.2) =====
+      VECTOR_STORE_TYPE: '${VECTOR_STORE_TYPE:-chroma}'
+      CHROMA_HOST: 'chromadb'
+      CHROMA_PORT: '8000'
+      CHROMA_COLLECTION: '${CHROMA_COLLECTION:-auracore_knowledge}'
+      
+      # ===== MCP KNOWLEDGE (Phase D.3) =====
+      MCP_KNOWLEDGE_ENABLED: '${MCP_KNOWLEDGE_ENABLED:-true}'
     expose:
-      - "3000"
+      - '3000'
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "node -e \"fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
-        ]
+        - CMD-SHELL
+        - 'node -e "fetch(''http://localhost:3000/api/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"'
       interval: 10s
       timeout: 5s
       retries: 30
@@ -83,6 +116,7 @@ services:
 
 volumes:
   sql_data:
+  chromadb_data:
 
 networks:
   auracore:
