@@ -1,22 +1,40 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SefazGatewayAdapter } from '../../infrastructure/adapters/sefaz/SefazGatewayAdapter';
+import type { ISefazClient } from '../../domain/ports/output/ISefazClient';
 import { Result } from '@/shared/domain';
 
-// Mock sefaz-client to avoid certificate loading
-vi.mock('@/services/fiscal/sefaz-client', () => ({
-  sendCteToSefaz: vi.fn().mockResolvedValue({
+// Mock do ISefazClient
+const mockSefazClient: ISefazClient = {
+  sendCteForAuthorization: vi.fn().mockResolvedValue({
     success: true,
     protocolNumber: 'MOCK-PROTOCOL-123',
     authorizationDate: new Date('2024-12-31T10:00:00Z'),
     cteKey: '35240100000000000000570010000000011000000019',
   }),
-}));
+  sendMdfeForAuthorization: vi.fn().mockResolvedValue({
+    success: true,
+    protocolNumber: 'MOCK-MDFE-123',
+    authorizationDate: new Date('2024-12-31T10:00:00Z'),
+    mdfeKey: '35240100000000000000580010000000011000000010',
+  }),
+  checkServiceStatus: vi.fn().mockResolvedValue({
+    online: true,
+    message: 'Service online',
+    responseTime: 100,
+  }),
+  getDefaultCertificateConfig: vi.fn().mockReturnValue({
+    pfxPath: '/path/to/cert.pfx',
+    password: 'password',
+    organization: 'Test Org',
+  }),
+};
 
 describe('SefazGatewayAdapter Integration', () => {
   let adapter: SefazGatewayAdapter;
 
   beforeEach(() => {
-    adapter = new SefazGatewayAdapter();
+    // Injetar mock do ISefazClient via construtor
+    adapter = new SefazGatewayAdapter(mockSefazClient);
     vi.clearAllMocks();
   });
 

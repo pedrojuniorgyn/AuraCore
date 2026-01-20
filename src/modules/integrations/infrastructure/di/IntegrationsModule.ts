@@ -26,9 +26,15 @@ import type { IBankStatementParser } from '../../domain/ports/output/IBankStatem
 
 // Adapters - Real
 import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
+import { SefazLegacyClientAdapter } from '../adapters/sefaz/SefazLegacyClientAdapter';
 import { BtgBankingAdapter } from '../adapters/banking/BtgBankingAdapter';
+import { BtgLegacyClientAdapter } from '../adapters/banking/BtgLegacyClientAdapter';
 import { NodemailerAdapter } from '../adapters/notification/NodemailerAdapter';
 import { OfxParserAdapter } from '../adapters/ofx/OfxParserAdapter';
+
+// Ports - Legacy Clients
+import type { ISefazClient } from '../../domain/ports/output/ISefazClient';
+import type { IBtgClient } from '../../domain/ports/output/IBtgClient';
 
 // Adapters - Mocks
 import { MockSefazGateway } from '../adapters/sefaz/MockSefazGateway';
@@ -75,6 +81,14 @@ export function initializeIntegrationsModule(): void {
     );
   }
 
+  // === SEFAZ Client (Legacy Wrapper) ===
+  // E7-Onda A: Registrar adapter que wrapa serviço legado
+  // Sempre registrar o client pois é dependência do SefazGatewayAdapter
+  container.registerSingleton<ISefazClient>(
+    TOKENS.SefazClient,
+    SefazLegacyClientAdapter
+  );
+
   // === SEFAZ Gateway ===
   // ⚠️ PARTIAL (1/7 methods): Only authorizeCte is functional
   // Default to mock to prevent production failures on unimplemented methods
@@ -92,6 +106,14 @@ export function initializeIntegrationsModule(): void {
     );
     console.warn('⚠️ SEFAZ: Using SefazGatewayAdapter (6/7 methods will fail! Only authorizeCte works)');
   }
+
+  // === BTG Client (Legacy Wrapper) ===
+  // E7-Onda A: Registrar adapter que wrapa serviços legados BTG
+  // Sempre registrar o client pois é dependência do BtgBankingAdapter
+  container.registerSingleton<IBtgClient>(
+    TOKENS.BtgClient,
+    BtgLegacyClientAdapter
+  );
 
   // === Banking Gateway ===
   // ⚠️ PARTIAL (6/11 methods): Boletos/Pix work, payment/dda/balance are stub

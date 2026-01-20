@@ -1,4 +1,5 @@
-import { injectable } from '@/shared/infrastructure/di/container';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { Result } from '@/shared/domain';
 import type {
   ISefazGateway,
@@ -10,21 +11,20 @@ import type {
   ManifestNfeRequest,
   AuthorizeMdfeResponse,
 } from '../../../domain/ports/output/ISefazGateway';
-
-// Importar serviço SEFAZ existente
-import { sendCteToSefaz, type SefazConfig } from '@/services/fiscal/sefaz-client';
+import type { ISefazClient } from '../../../domain/ports/output/ISefazClient';
 
 /**
  * SefazGatewayAdapter - Implementação real da comunicação com SEFAZ
- * 
+ *
  * E7.9 Integrações - Semana 2
- * 
- * Delega para src/services/fiscal/sefaz-client.ts que já possui:
- * - Endpoints por UF
- * - Assinatura XML com certificado digital
- * - SOAP envelope
- * - Tratamento de erros
- * 
+ * E7-Onda A: Refatorado para usar ISefazClient via DI
+ *
+ * Delega para ISefazClient (implementado por SefazLegacyClientAdapter) que:
+ * - Gerencia endpoints por UF
+ * - Gerencia assinatura XML com certificado digital
+ * - Monta SOAP envelope
+ * - Trata erros
+ *
  * ⚠️ STATUS: Implementação parcial
  * - authorizeCte: ✅ Implementado
  * - cancelCte: ⚠️ TODO (requires SEFAZ client extension)
@@ -33,24 +33,28 @@ import { sendCteToSefaz, type SefazConfig } from '@/services/fiscal/sefaz-client
  * - manifestNfe: ⚠️ TODO
  * - authorizeMdfe: ⚠️ TODO
  * - closeMdfe: ⚠️ TODO
- * 
+ *
  * NOTA: Métodos não implementados retornam error descritivo ao invés de mock.
  */
 @injectable()
 export class SefazGatewayAdapter implements ISefazGateway {
+  constructor(
+    @inject(TOKENS.SefazClient)
+    private readonly sefazClient: ISefazClient
+  ) {}
+
   // ========== CTe Methods ==========
 
   async authorizeCte(request: AuthorizeCteRequest): Promise<Result<AuthorizeCteResponse, string>> {
     try {
-      // Mapear para formato do sefaz-client
-      const sefazConfig: SefazConfig = {
-        environment: request.environment,
-        uf: request.uf,
-        // certificado é obtido automaticamente via getDefaultCertificateConfig()
-      };
-
-      // Chamar serviço SEFAZ
-      const response = await sendCteToSefaz(request.cteXml, sefazConfig);
+      // Chamar cliente SEFAZ via DI
+      const response = await this.sefazClient.sendCteForAuthorization(
+        request.cteXml,
+        {
+          environment: request.environment,
+          uf: request.uf,
+        }
+      );
 
       // Mapear resposta
       return Result.ok({

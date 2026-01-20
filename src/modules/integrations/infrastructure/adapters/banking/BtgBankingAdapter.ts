@@ -1,4 +1,5 @@
-import { injectable } from '@/shared/infrastructure/di/container';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 import { BankSlip } from '../../../domain/value-objects/BankSlip';
@@ -13,35 +14,30 @@ import type {
   PaymentResponse,
   DdaDebit,
 } from '../../../domain/ports/output/IBankingGateway';
-
-// Importar serviços BTG existentes
-import { 
-  generateBTGBoleto, 
-  getBTGBoletoStatus, 
-  cancelBTGBoleto,
-  type BoletoResponse as BtgBoletoResponse 
-} from '@/services/btg/btg-boleto';
-import { 
-  createBTGPixCharge, 
-  getBTGPixCharge, 
-  cancelBTGPixCharge,
-  type PixChargeResponse as BtgPixChargeResponse 
-} from '@/services/btg/btg-pix';
-import { getBTGAccessToken } from '@/services/btg/btg-auth';
+import type {
+  IBtgClient,
+  BtgBoletoResponse as BtgBoletoResponseType,
+  BtgPixChargeResponse as BtgPixChargeResponseType,
+} from '../../../domain/ports/output/IBtgClient';
 
 /**
  * BtgBankingAdapter - Implementação real de operações bancárias
- * 
+ *
  * E7.9 Integrações - Semana 2
- * 
- * Delega para os serviços BTG Pactual existentes:
- * - btg-boleto.ts (Boletos)
- * - btg-pix.ts (Pix)
- * - btg-payments.ts (Pagamentos)
- * - btg-dda.ts (DDA)
+ * E7-Onda A: Refatorado para usar IBtgClient via DI
+ *
+ * Delega para IBtgClient (implementado por BtgLegacyClientAdapter) que:
+ * - Gerencia autenticação OAuth2
+ * - Gerencia operações de boleto
+ * - Gerencia operações de Pix
  */
 @injectable()
 export class BtgBankingAdapter implements IBankingGateway {
+  constructor(
+    @inject(TOKENS.BtgClient)
+    private readonly btgClient: IBtgClient
+  ) {}
+
   async createBankSlip(request: CreateBankSlipRequest): Promise<Result<BankSlipResponse, string>> {
     try {
       // Garantir autenticação
@@ -56,8 +52,8 @@ export class BtgBankingAdapter implements IBankingGateway {
         descricao: request.description,
       };
 
-      // Chamar serviço BTG
-      const response: BtgBoletoResponse = await generateBTGBoleto(boletoRequest);
+      // Chamar cliente BTG via DI
+      const response: BtgBoletoResponseType = await this.btgClient.generateBoleto(boletoRequest);
 
       // Mapear resposta para Value Object
       const amountResult = Money.create(response.valor, 'BRL');
@@ -83,7 +79,7 @@ export class BtgBankingAdapter implements IBankingGateway {
   async cancelBankSlip(slipId: string): Promise<Result<void, string>> {
     try {
       await this.ensureAuthenticated();
-      await cancelBTGBoleto(slipId);
+      await this.btgClient.cancelBoleto(slipId);
       return Result.ok(undefined);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
@@ -94,7 +90,7 @@ export class BtgBankingAdapter implements IBankingGateway {
   async queryBankSlipStatus(slipId: string): Promise<Result<BankSlipResponse, string>> {
     try {
       await this.ensureAuthenticated();
-      const response: BtgBoletoResponse = await getBTGBoletoStatus(slipId);
+      const response: BtgBoletoResponseType = await this.btgClient.getBoletoStatus(slipId);
 
       const amountResult = Money.create(response.valor, 'BRL');
       if (!Result.isOk(amountResult)) {
@@ -130,8 +126,8 @@ export class BtgBankingAdapter implements IBankingGateway {
         descricao: request.description,
       };
 
-      // Chamar serviço BTG
-      const response: BtgPixChargeResponse = await createBTGPixCharge(pixRequest);
+      // Chamar cliente BTG via DI
+      const response: BtgPixChargeResponseType = await this.btgClient.createPixCharge(pixRequest);
 
       // Calcular expiração
       const expiresAt = new Date();
@@ -160,7 +156,7 @@ export class BtgBankingAdapter implements IBankingGateway {
   async queryPixChargeStatus(txId: string): Promise<Result<PixChargeResponse, string>> {
     try {
       await this.ensureAuthenticated();
-      const response: BtgPixChargeResponse = await getBTGPixCharge(txId);
+      const response: BtgPixChargeResponseType = await this.btgClient.getPixChargeStatus(txId);
 
       const amountResult = Money.create(response.valor, 'BRL');
       if (!Result.isOk(amountResult)) {
@@ -210,8 +206,8 @@ export class BtgBankingAdapter implements IBankingGateway {
 
   private async ensureAuthenticated(): Promise<void> {
     // Garante que o token OAuth2 está válido
-    // btg-auth.ts já gerencia cache e refresh automático
-    await getBTGAccessToken();
+    // BtgClient já gerencia cache e refresh automático
+    await this.btgClient.getAccessToken();
   }
 
   private mapBoletoStatus(btgStatus: string): 'PENDING' | 'PAID' | 'CANCELLED' | 'EXPIRED' {

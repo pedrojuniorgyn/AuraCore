@@ -4,7 +4,9 @@
  */
 
 export * from './ISefazGateway';
+export * from './ISefazClient';
 export * from './IBankingGateway';
+export * from './IBtgClient';
 export * from './INotificationService';
 export * from './IBankStatementParser';
 

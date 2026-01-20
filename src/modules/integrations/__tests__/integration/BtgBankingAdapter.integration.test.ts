@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BtgBankingAdapter } from '../../infrastructure/adapters/banking/BtgBankingAdapter';
+import type { IBtgClient } from '../../domain/ports/output/IBtgClient';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain/value-objects/Money';
 
-// Mock dos serviços BTG
-vi.mock('@/services/btg/btg-auth', () => ({
-  getBTGAccessToken: vi.fn().mockResolvedValue('mock-token-123'),
-}));
-
-vi.mock('@/services/btg/btg-boleto', () => ({
-  generateBTGBoleto: vi.fn().mockResolvedValue({
+// Mock do IBtgClient
+const mockBtgClient: IBtgClient = {
+  getAccessToken: vi.fn().mockResolvedValue('mock-token-123'),
+  invalidateToken: vi.fn(),
+  isTokenValid: vi.fn().mockReturnValue(true),
+  generateBoleto: vi.fn().mockResolvedValue({
     id: 'BOL-123',
     nosso_numero: '123456',
     linha_digitavel: '12345.67890',
@@ -19,7 +19,7 @@ vi.mock('@/services/btg/btg-boleto', () => ({
     vencimento: '2024-12-31',
     status: 'PENDING',
   }),
-  getBTGBoletoStatus: vi.fn().mockResolvedValue({
+  getBoletoStatus: vi.fn().mockResolvedValue({
     id: 'BOL-123',
     nosso_numero: '123456',
     linha_digitavel: '12345.67890',
@@ -29,11 +29,8 @@ vi.mock('@/services/btg/btg-boleto', () => ({
     vencimento: '2024-12-31',
     status: 'PAID',
   }),
-  cancelBTGBoleto: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('@/services/btg/btg-pix', () => ({
-  createBTGPixCharge: vi.fn().mockResolvedValue({
+  cancelBoleto: vi.fn().mockResolvedValue(undefined),
+  createPixCharge: vi.fn().mockResolvedValue({
     txid: 'PIX-123',
     location: 'pix.btg.com/123',
     qrCode: 'qr-code-data',
@@ -42,23 +39,24 @@ vi.mock('@/services/btg/btg-pix', () => ({
     status: 'ACTIVE',
     expiracao: '1800',
   }),
-  getBTGPixCharge: vi.fn().mockResolvedValue({
+  getPixChargeStatus: vi.fn().mockResolvedValue({
     txid: 'PIX-123',
-    status: 'COMPLETED',
-    valor: 50,
-    valor_pago: 50,
-    data_pagamento: '2024-12-31T10:00:00Z',
+    location: 'pix.btg.com/123',
     qrCode: 'qr-code-data',
-    expiracao: new Date(Date.now() + 1800000).toISOString(), // 30 minutos no futuro
+    qrCodeImage: '',
+    valor: 50,
+    status: 'COMPLETED',
+    expiracao: new Date(Date.now() + 1800000).toISOString(),
   }),
-  cancelBTGPixCharge: vi.fn().mockResolvedValue(undefined),
-}));
+  cancelPixCharge: vi.fn().mockResolvedValue(undefined),
+};
 
 describe('BtgBankingAdapter Integration', () => {
   let adapter: BtgBankingAdapter;
 
   beforeEach(() => {
-    adapter = new BtgBankingAdapter();
+    // Injetar mock do IBtgClient via construtor
+    adapter = new BtgBankingAdapter(mockBtgClient);
     vi.clearAllMocks();
   });
 
@@ -93,8 +91,7 @@ describe('BtgBankingAdapter Integration', () => {
 
     it('should handle BTG API errors gracefully', async () => {
       // GIVEN - Forçar erro no mock
-      const { generateBTGBoleto } = await import('@/services/btg/btg-boleto');
-      vi.mocked(generateBTGBoleto).mockRejectedValueOnce(new Error('BTG API Error'));
+      vi.mocked(mockBtgClient.generateBoleto).mockRejectedValueOnce(new Error('BTG API Error'));
 
       const amountResult = Money.create(100, 'BRL');
       expect(Result.isOk(amountResult)).toBe(true);

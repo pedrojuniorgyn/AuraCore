@@ -5,12 +5,19 @@ import {
   datetime2, 
   nvarchar,
   char,
-  mssqlTable
+  mssqlTable,
+  index,
 } from 'drizzle-orm/mssql-core';
 import { sql } from 'drizzle-orm';
 
 /**
  * Schema Drizzle para journal_entries
+ *
+ * REGRAS APLICADAS:
+ * - SCHEMA-003: Índice composto (organizationId, branchId)
+ * - SCHEMA-004: Índices para filtros frequentes
+ * - SCHEMA-005: createdAt, updatedAt obrigatórios
+ * - SCHEMA-006: Soft delete com deletedAt
  */
 export const journalEntriesTable = mssqlTable('journal_entries', {
   id: char('id', { length: 36 }).primaryKey(),
@@ -46,7 +53,15 @@ export const journalEntriesTable = mssqlTable('journal_entries', {
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
-});
+}, (table) => ([
+  // SCHEMA-003: Índice composto multi-tenancy
+  index('idx_journal_entries_tenant').on(table.organizationId, table.branchId),
+  // SCHEMA-004: Índices para filtros frequentes
+  index('idx_journal_entries_date').on(table.organizationId, table.branchId, table.entryDate),
+  index('idx_journal_entries_period').on(table.organizationId, table.branchId, table.periodYear, table.periodMonth),
+  index('idx_journal_entries_status').on(table.organizationId, table.branchId, table.status),
+  index('idx_journal_entries_source').on(table.sourceId),
+]));
 
 /**
  * Schema para journal_entry_lines
@@ -67,7 +82,12 @@ export const journalEntryLinesTable = mssqlTable('journal_entry_lines', {
   businessPartnerId: int('business_partner_id'),
   
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
-});
+}, (table) => ([
+  // Índice para FK - busca de linhas por lançamento
+  index('idx_journal_entry_lines_entry').on(table.journalEntryId),
+  // Índice para busca por conta contábil
+  index('idx_journal_entry_lines_account').on(table.accountId),
+]));
 
 // Types inferidos
 export type JournalEntryRow = typeof journalEntriesTable.$inferSelect;

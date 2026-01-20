@@ -17,7 +17,9 @@ import type {
   StatusResult,
 } from '../../../domain/ports/output/ISefazService';
 import type { FiscalDocument } from '../../../domain/entities/FiscalDocument';
-import { signXml, getDefaultCertificateConfig } from '@/services/fiscal/certificate-manager';
+
+// TODO: E7.11 - Implementar ICertificateManager interface e adapter
+// quando assinatura XML for necessária (atualmente usando mock mode)
 
 /**
  * Configuração do ambiente SEFAZ

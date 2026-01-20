@@ -75,7 +75,9 @@ export const TOKENS = {
 
   // Integrations Module - E7.9 Semana 1
   SefazGateway: Symbol('SefazGateway'),
+  SefazClient: Symbol('SefazClient'),
   BankingGateway: Symbol('BankingGateway'),
+  BtgClient: Symbol('BtgClient'),
   NotificationService: Symbol('NotificationService'),
   BankStatementParser: Symbol('BankStatementParser'),
 
