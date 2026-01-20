@@ -1,0 +1,57 @@
+{
+  "epic": "E9",
+  "corrections": [
+    {
+      "id": "LC-375756",
+      "date": "2026-01-20",
+      "epic": "E9",
+      "error": "Bug E9-002: Commercial calculate endpoint usava organizationId=1 e branchId=1 como defaults hardcoded, permitindo acesso sem autenticação",
+      "correction": "Adicionado getTenantContext() para validar autenticação. IDs agora vêm do usuário autenticado, NUNCA do body",
+      "files_affected": [
+        "src/app/api/commercial/calculate/route.ts"
+      ],
+      "pattern_created": "tenant-security",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-378597",
+      "date": "2026-01-20",
+      "epic": "E9",
+      "error": "Bug E9-003: Query após insert em proposals/route.ts filtrava apenas por id, sem organizationId, permitindo acesso cross-tenant",
+      "correction": "Adicionado import de 'and' e filtro organizationId na query: and(eq(id), eq(organizationId))",
+      "files_affected": [
+        "src/app/api/comercial/proposals/route.ts"
+      ],
+      "pattern_created": "tenant-security",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-084086",
+      "date": "2026-01-20",
+      "epic": "E9",
+      "error": "Bug LC-381234: readOnlyRootFilesystem no Kubernetes deployment sem volume para /app/data, causaria falha de escrita em runtime",
+      "correction": "Adicionado volume emptyDir para /app/data nos volumeMounts e volumes do deployment.yaml",
+      "files_affected": [
+        "agents/k8s/deployment.yaml"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-284838",
+      "date": "2026-01-20",
+      "epic": "E9",
+      "error": "Bug CI-001: Build do Dockerfile dos agents falhava com 'OSError: Readme file does not exist: README.md' porque o pyproject.toml declara readme=\"README.md\" mas o Dockerfile só copiava pyproject.toml antes do pip install, não incluindo o README.md necessário pelo hatchling",
+      "correction": "Corrigido Dockerfile para copiar README.md junto com pyproject.toml antes do pip install. Também corrigido: versão Python (3.12→3.11 para compatibilidade), removido Poetry (projeto usa hatchling), corrigido casing de AS para padrão (as→AS), removido COPY de .venv inexistente",
+      "files_affected": [
+        "agents/Dockerfile"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

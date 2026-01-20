@@ -2,16 +2,15 @@
 # AURACORE AGENTS - DOCKERFILE
 # =============================================================================
 # Multi-stage build para imagem otimizada
-# Version: 2.0.0
+# Version: 2.1.0
 # =============================================================================
 
 # ============================================
 # Stage 1: Builder
 # ============================================
-FROM python:3.12-slim as builder
+FROM python:3.11-slim AS builder
 
-# Variáveis de build
-ARG POETRY_VERSION=1.7.1
+WORKDIR /app
 
 # Instalar dependências de build
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,34 +18,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Poetry
-RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
+# Copiar arquivos necessários para o build
+# IMPORTANTE: README.md é obrigatório pelo pyproject.toml (hatchling)
+COPY pyproject.toml README.md ./
 
-# Configurar Poetry
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+# Criar diretório src vazio para evitar erros de build
+RUN mkdir -p src
 
-WORKDIR /app
-
-# Copiar arquivos de dependências
-COPY pyproject.toml poetry.lock* ./
-
-# Instalar dependências (sem dev)
-RUN --mount=type=cache,target=/tmp/poetry_cache \
-    poetry install --without dev --no-root || \
-    pip install --no-cache-dir -e .
+# Instalar dependências
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
 
 # ============================================
 # Stage 2: Runtime
 # ============================================
-FROM python:3.12-slim as runtime
+FROM python:3.11-slim AS runtime
 
 # Labels
 LABEL org.opencontainers.image.title="AuraCore Agents" \
       org.opencontainers.image.description="AI Agents for Brazilian ERP" \
-      org.opencontainers.image.version="2.0.0" \
+      org.opencontainers.image.version="2.1.0" \
       org.opencontainers.image.vendor="AuraCore" \
       org.opencontainers.image.source="https://github.com/pedrojuniorgyn/AuraCore"
 
@@ -55,7 +46,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
     PYTHONPATH=/app \
-    PATH="/app/.venv/bin:$PATH" \
     APP_HOME=/app
 
 # Criar usuário não-root
@@ -69,9 +59,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR ${APP_HOME}
 
-# Copiar virtualenv do builder (se existir) ou site-packages
-COPY --from=builder /app/.venv ./.venv
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+# Copiar site-packages do builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copiar código da aplicação
