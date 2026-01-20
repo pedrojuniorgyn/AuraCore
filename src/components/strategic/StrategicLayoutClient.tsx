@@ -7,7 +7,8 @@ import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { AuraChat } from './AuraChat';
 import { NotificationToastProvider } from '@/components/notifications/notification-toast-provider';
 
-// Onboarding Components
+// Onboarding Components - FIX Bug 2: Provider único para todos os componentes
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { WelcomeModal } from './WelcomeModal';
 import { OnboardingTour } from './OnboardingTour';
 import { OnboardingChecklist } from './OnboardingChecklist';
@@ -26,7 +27,8 @@ interface Props {
  */
 export function StrategicLayoutClient({ children, user, notificationCount = 0 }: Props) {
   return (
-    <>
+    // FIX Bug 2: OnboardingProvider envolve todos os componentes de onboarding
+    <OnboardingProvider>
       {/* Mobile Header - visível apenas em mobile (< md) */}
       <MobileHeader 
         user={user}
@@ -50,10 +52,10 @@ export function StrategicLayoutClient({ children, user, notificationCount = 0 }:
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
 
-      {/* Onboarding Components */}
+      {/* Onboarding Components - todos dentro do mesmo Provider */}
       <WelcomeModal />
       <OnboardingTour />
       <OnboardingChecklist />
-    </>
+    </OnboardingProvider>
   );
 }
