@@ -1,0 +1,189 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [{"expr": "auracore_knowledge_base_documents", "legendFormat": "Total", "refId": "A"}],
+      "title": "Documentos na KB",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [{"expr": "sum(increase(auracore_rag_queries_total[24h]))", "legendFormat": "Total", "refId": "A"}],
+      "title": "Queries RAG (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 2}]
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["mean"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [{"expr": "histogram_quantile(0.95, rate(auracore_rag_duration_seconds_bucket[5m]))", "legendFormat": "P95", "refId": "A"}],
+      "title": "Latência RAG P95",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "targets": [{"expr": "sum(increase(auracore_document_imports_total[24h]))", "legendFormat": "Total", "refId": "A"}],
+      "title": "Imports (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "pointSize": 5, "showPoints": "never"},
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "id": 5,
+      "options": {
+        "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [{"expr": "sum(rate(auracore_rag_queries_total[5m])) by (status)", "legendFormat": "{{status}}", "refId": "A"}],
+      "title": "Queries RAG por Status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "pointSize": 5, "showPoints": "never"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "id": 6,
+      "options": {
+        "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [{"expr": "sum(rate(auracore_document_imports_total[5m])) by (doc_type)", "legendFormat": "{{doc_type}}", "refId": "A"}],
+      "title": "Imports por Tipo de Documento",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "pointSize": 5, "showPoints": "never"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "id": 7,
+      "options": {
+        "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [{"expr": "sum(rate(auracore_rag_queries_total[5m])) by (filter_type)", "legendFormat": "{{filter_type}}", "refId": "A"}],
+      "title": "Queries por Tipo de Filtro",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "pointSize": 5, "showPoints": "never"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "id": 8,
+      "options": {
+        "legend": {"displayMode": "table", "placement": "bottom", "showLegend": true, "calcs": ["mean", "max"]},
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [{"expr": "sum(rate(auracore_document_chunks_total[5m])) by (doc_type)", "legendFormat": "{{doc_type}}", "refId": "A"}],
+      "title": "Chunks Indexados por Tipo",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["auracore", "rag", "knowledge"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AuraCore - RAG & Knowledge Base",
+  "uid": "auracore-rag",
+  "version": 1,
+  "weekStart": ""
+}

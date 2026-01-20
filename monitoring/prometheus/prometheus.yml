@@ -1,0 +1,50 @@
+# monitoring/prometheus/prometheus.yml
+# Configuração do Prometheus para AuraCore
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # AuraCore Agents API (Python/FastAPI)
+  - job_name: 'auracore-agents'
+    metrics_path: '/observability/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'auracore-agents'
+
+  # AuraCore Agents - Prometheus native endpoint
+  - job_name: 'auracore-agents-metrics'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'auracore-agents-native'
+
+  # AuraCore Frontend (Next.js) - se expuser métricas
+  # - job_name: 'auracore-frontend'
+  #   metrics_path: '/api/metrics'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:3000']
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: instance
+  #       replacement: 'auracore-frontend'

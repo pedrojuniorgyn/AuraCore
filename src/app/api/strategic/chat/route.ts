@@ -15,34 +15,50 @@ import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKP
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
-// Google Generative AI - usando import dinâmico para evitar erro se não configurado
-// Bug 4 Fix: Cache both success AND failure states
-type AIState = 
-  | { status: 'uninitialized' }
-  | { status: 'initialized'; client: { getGenerativeModel: (config: { model: string }) => { generateContent: (prompt: string) => Promise<{ response: { text: () => string } }> } } }
-  | { status: 'failed' };
+// Google Generative AI - cache com retry após falha
+// Fix: Cache de sucesso permanente, mas falha permite retry após intervalo
 
-let aiState: AIState = { status: 'uninitialized' };
+interface AIModel {
+  generateContent: (prompt: string) => Promise<{ response: { text: () => string } }>;
+}
 
-async function initializeAI(): Promise<AIState> {
-  if (aiState.status !== 'uninitialized') {
-    return aiState;
+let cachedModel: AIModel | null = null;
+let lastFailedAttempt = 0;
+const RETRY_INTERVAL_MS = 60000; // Retry a cada 1 minuto após falha
+
+async function getAIModel(): Promise<AIModel | null> {
+  // Se já tem modelo cacheado (sucesso), retorna
+  if (cachedModel) {
+    return cachedModel;
   }
   
-  if (!process.env.GOOGLE_AI_API_KEY) {
-    aiState = { status: 'failed' };
-    return aiState;
+  const now = Date.now();
+  
+  // Se falhou recentemente, não tenta de novo ainda
+  if (lastFailedAttempt > 0 && (now - lastFailedAttempt) < RETRY_INTERVAL_MS) {
+    return null;
   }
   
+  // Verificar se API key existe
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) {
+    lastFailedAttempt = now;
+    console.warn('[AuraChat] GOOGLE_AI_API_KEY não configurada');
+    return null;
+  }
+  
+  // Tentar inicializar
   try {
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const client = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    aiState = { status: 'initialized', client };
-    return aiState;
-  } catch {
-    console.warn('Google AI não configurado');
-    aiState = { status: 'failed' };
-    return aiState;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    cachedModel = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    lastFailedAttempt = 0; // Reset on success
+    console.log('[AuraChat] Google AI inicializado com sucesso');
+    return cachedModel;
+  } catch (error) {
+    lastFailedAttempt = now;
+    console.error('[AuraChat] Erro ao inicializar Gemini:', error);
+    return null;
   }
 }
 
@@ -236,12 +252,12 @@ export async function POST(request: Request) {
     // Detectar ações sugeridas
     const actions = detectActions(message);
 
-    // Bug 4 Fix: Usar estado cacheado da IA
-    const currentAIState = await initializeAI();
-
+    // Tentar usar AI (com retry automático após falha)
+    const model = await getAIModel();
     let responseText: string;
+    let aiEnabled = false;
 
-    if (currentAIState.status === 'initialized') {
+    if (model) {
       try {
         const systemPrompt = `Você é a Aurora AI, assistente de gestão estratégica do AuraCore ERP.
 
@@ -265,15 +281,15 @@ PERGUNTA DO USUÁRIO: ${message}
 
 Responda de forma profissional e útil:`;
 
-        const model = currentAIState.client.getGenerativeModel({ model: 'gemini-pro' });
         const result = await model.generateContent(systemPrompt);
         responseText = result.response.text();
+        aiEnabled = true;
       } catch (aiError) {
-        console.error('AI generation error:', aiError);
+        console.error('[AuraChat] AI generation error:', aiError);
         responseText = generateFallbackResponse(message, context);
       }
     } else {
-      // Fallback sem IA (status = 'failed' ou 'uninitialized')
+      // Fallback sem IA
       responseText = generateFallbackResponse(message, context);
     }
 
@@ -283,7 +299,8 @@ Responda de forma profissional e útil:`;
       context: {
         healthScore: context.healthScore,
         criticalKpis: context.criticalKpis,
-      }
+      },
+      _meta: { aiEnabled }
     });
 
   } catch (error: unknown) {

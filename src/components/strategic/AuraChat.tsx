@@ -26,18 +26,49 @@ function generateMessageId(prefix: string): string {
   return `${prefix}-${Date.now()}-${messageIdCounter}`;
 }
 
-// Bug 2 Fix: Type guard para validar resposta da API
+// Type guard para validar resposta da API com validação completa
 interface ChatApiResponse {
-  response?: string;
+  response: string;
   actions?: ChatAction[];
   context?: {
     healthScore?: number;
     criticalKpis?: number;
   };
+  _meta?: {
+    aiEnabled?: boolean;
+  };
 }
 
 function isValidChatResponse(data: unknown): data is ChatApiResponse {
-  return typeof data === 'object' && data !== null;
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  // Verificar propriedade obrigatória 'response'
+  if (typeof obj.response !== 'string') {
+    return false;
+  }
+  
+  // Verificar actions se existir
+  if (obj.actions !== undefined) {
+    if (!Array.isArray(obj.actions)) {
+      return false;
+    }
+    // Validar cada action
+    for (const action of obj.actions) {
+      if (typeof action !== 'object' || action === null) {
+        return false;
+      }
+      const actionObj = action as Record<string, unknown>;
+      if (typeof actionObj.label !== 'string' || typeof actionObj.href !== 'string') {
+        return false;
+      }
+    }
+  }
+  
+  return true;
 }
 
 const SUGGESTIONS = [
@@ -110,9 +141,9 @@ export function AuraChat() {
       const assistantMessage: Message = {
         id: generateMessageId('assistant'),
         role: 'assistant',
-        content: data.response ?? 'Desculpe, não consegui processar sua pergunta.',
+        content: data.response, // Garantido pelo type guard
         timestamp: new Date(),
-        actions: Array.isArray(data.actions) ? data.actions : undefined,
+        actions: data.actions, // Já validado pelo type guard
       };
 
       setMessages(prev => [...prev, assistantMessage]);

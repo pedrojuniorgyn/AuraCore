@@ -1,0 +1,143 @@
+# monitoring/prometheus/alerts.yml
+# Regras de alerta para AuraCore
+groups:
+  - name: auracore_agents_alerts
+    rules:
+      # Alta latência de agentes
+      - alert: HighAgentLatency
+        expr: histogram_quantile(0.95, rate(auracore_agent_latency_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Alta latência no agente {{ $labels.agent_name }}"
+          description: "P95 latência > 5s por 2 minutos. Valor atual: {{ $value | printf \"%.2f\" }}s"
+
+      # Taxa de erro alta
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(auracore_agent_requests_total{status="error"}[5m])) 
+          / sum(rate(auracore_agent_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Taxa de erro > 10%"
+          description: "Mais de 10% das requests estão falhando. Valor atual: {{ $value | printf \"%.2f\" }}%"
+
+      # Tool com erro
+      - alert: ToolHighErrorRate
+        expr: |
+          sum(rate(auracore_tool_calls_total{status="error"}[5m])) by (tool_name)
+          / sum(rate(auracore_tool_calls_total[5m])) by (tool_name) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Tool {{ $labels.tool_name }} com alta taxa de erro"
+          description: "Mais de 20% das chamadas da tool estão falhando"
+
+  - name: auracore_voice_alerts
+    rules:
+      # Voice processing lento
+      - alert: SlowVoiceProcessing
+        expr: histogram_quantile(0.95, rate(auracore_voice_duration_seconds_bucket{operation="process"}[5m])) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "Processamento de voz lento"
+          description: "P95 > 10s para processamento completo de voz. Valor: {{ $value | printf \"%.2f\" }}s"
+
+      # Transcrição falhando
+      - alert: VoiceTranscriptionErrors
+        expr: |
+          sum(rate(auracore_voice_operations_total{operation="transcribe", status="error"}[5m]))
+          / sum(rate(auracore_voice_operations_total{operation="transcribe"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: voice
+        annotations:
+          summary: "Alta taxa de erro em transcrições"
+          description: "Mais de 10% das transcrições falhando"
+
+  - name: auracore_rag_alerts
+    rules:
+      # RAG sem resultados
+      - alert: RAGNoResults
+        expr: |
+          sum(rate(auracore_rag_queries_total{status="empty"}[10m])) 
+          / sum(rate(auracore_rag_queries_total[10m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          team: knowledge
+        annotations:
+          summary: "RAG retornando vazio"
+          description: "Mais de 50% das queries RAG sem resultados"
+
+      # Knowledge base vazia
+      - alert: EmptyKnowledgeBase
+        expr: auracore_knowledge_base_documents < 10
+        for: 5m
+        labels:
+          severity: critical
+          team: knowledge
+        annotations:
+          summary: "Knowledge base com poucos documentos"
+          description: "Menos de 10 documentos indexados. Atual: {{ $value }}"
+
+      # RAG lento
+      - alert: SlowRAGQueries
+        expr: histogram_quantile(0.95, rate(auracore_rag_duration_seconds_bucket[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: knowledge
+        annotations:
+          summary: "Queries RAG lentas"
+          description: "P95 > 3s para queries RAG. Valor: {{ $value | printf \"%.2f\" }}s"
+
+  - name: auracore_document_alerts
+    rules:
+      # Import de documentos falhando
+      - alert: DocumentImportErrors
+        expr: |
+          sum(rate(auracore_document_imports_total{status="error"}[10m])) 
+          / sum(rate(auracore_document_imports_total[10m])) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          team: fiscal
+        annotations:
+          summary: "Alta taxa de erro em imports"
+          description: "Mais de 30% dos imports de documentos falhando"
+
+  - name: auracore_infrastructure_alerts
+    rules:
+      # Serviço down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infra
+        annotations:
+          summary: "Serviço {{ $labels.job }} está down"
+          description: "O serviço não está respondendo há mais de 1 minuto"
+
+      # Prometheus scrape failing
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Target {{ $labels.instance }} não está sendo coletado"
+          description: "Prometheus não consegue coletar métricas do target"

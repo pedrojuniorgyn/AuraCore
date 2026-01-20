@@ -1,0 +1,215 @@
+# 📊 AuraCore Monitoring Stack
+
+Stack de monitoramento para o AuraCore com Prometheus, Grafana e Alertmanager.
+
+## Visão Geral
+
+| Componente | Porta | Descrição |
+|------------|-------|-----------|
+| Prometheus | 9090 | Coleta e armazenamento de métricas |
+| Grafana | 3001 | Visualização e dashboards |
+| Alertmanager | 9093 | Gerenciamento de alertas |
+
+## Início Rápido
+
+```bash
+# Iniciar stack
+./start.sh
+
+# Parar stack
+./stop.sh
+```
+
+## URLs
+
+| Serviço | URL | Credenciais |
+|---------|-----|-------------|
+| Grafana | http://localhost:3001 | admin / auracore2026 |
+| Prometheus | http://localhost:9090 | - |
+| Alertmanager | http://localhost:9093 | - |
+
+## Dashboards
+
+### AuraCore - Agents Overview
+- Requests totais e por agente
+- Latência P95 por agente
+- Taxa de erro
+- Distribuição de uso por agente
+- Tools mais usadas
+- Status dos serviços
+
+### AuraCore - Voice Interface
+- Transcrições e sínteses (24h)
+- Latência P95 de voz
+- Taxa de erro voice
+- Operações por tipo e status
+- Distribuição por idioma
+
+### AuraCore - RAG & Knowledge Base
+- Documentos na Knowledge Base
+- Queries RAG (24h)
+- Latência RAG P95
+- Imports por tipo de documento
+- Queries por tipo de filtro
+- Chunks indexados
+
+## Métricas Coletadas
+
+### Agentes
+| Métrica | Tipo | Descrição |
+|---------|------|-----------|
+| `auracore_agent_requests_total` | Counter | Total de requests por agente |
+| `auracore_agent_latency_seconds` | Histogram | Latência de resposta |
+| `auracore_tool_calls_total` | Counter | Chamadas de tools |
+| `auracore_tool_duration_seconds` | Histogram | Duração das tools |
+| `auracore_active_sessions` | Gauge | Sessões ativas |
+
+### Voice
+| Métrica | Tipo | Descrição |
+|---------|------|-----------|
+| `auracore_voice_operations_total` | Counter | Operações de voz |
+| `auracore_voice_duration_seconds` | Histogram | Duração das operações |
+
+### RAG
+| Métrica | Tipo | Descrição |
+|---------|------|-----------|
+| `auracore_rag_queries_total` | Counter | Queries RAG |
+| `auracore_rag_duration_seconds` | Histogram | Latência RAG |
+| `auracore_knowledge_base_documents` | Gauge | Docs na KB |
+
+### Documents
+| Métrica | Tipo | Descrição |
+|---------|------|-----------|
+| `auracore_document_imports_total` | Counter | Imports de docs |
+| `auracore_document_chunks_total` | Counter | Chunks indexados |
+
+## Alertas Configurados
+
+| Alerta | Condição | Severidade |
+|--------|----------|------------|
+| HighAgentLatency | P95 > 5s por 2min | warning |
+| HighErrorRate | Erro > 10% por 5min | critical |
+| ToolHighErrorRate | Tool erro > 20% por 5min | warning |
+| SlowVoiceProcessing | Voice P95 > 10s por 2min | warning |
+| VoiceTranscriptionErrors | STT erro > 10% por 5min | warning |
+| RAGNoResults | > 50% vazio por 10min | warning |
+| SlowRAGQueries | RAG P95 > 3s por 5min | warning |
+| EmptyKnowledgeBase | < 10 docs por 5min | critical |
+| DocumentImportErrors | Import erro > 30% por 10min | warning |
+| ServiceDown | up == 0 por 1min | critical |
+
+## Configuração
+
+### Variáveis de Ambiente
+
+```bash
+# Criar arquivo .env (opcional)
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=sua_senha_segura
+GRAFANA_ROOT_URL=http://seu-dominio:3001
+```
+
+### Adicionar Novo Target
+
+Edite `prometheus/prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'novo-servico'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host:porta']
+```
+
+Depois reinicie o Prometheus:
+
+```bash
+docker restart auracore_prometheus
+```
+
+### Adicionar Novo Dashboard
+
+1. Crie arquivo JSON em `grafana/dashboards/`
+2. Aguarde 30 segundos (auto-reload)
+3. Ou reinicie Grafana: `docker restart auracore_grafana`
+
+### Adicionar Novo Alerta
+
+1. Edite `prometheus/alerts.yml`
+2. Reinicie Prometheus ou use reload:
+
+```bash
+curl -X POST http://localhost:9090/-/reload
+```
+
+## Estrutura de Diretórios
+
+```
+monitoring/
+├── docker-compose.yml          # Stack principal
+├── start.sh                    # Script de inicialização
+├── stop.sh                     # Script de parada
+├── README.md                   # Esta documentação
+├── prometheus/
+│   ├── prometheus.yml          # Configuração Prometheus
+│   └── alerts.yml              # Regras de alerta
+├── alertmanager/
+│   └── alertmanager.yml        # Configuração alertas
+└── grafana/
+    ├── provisioning/
+    │   ├── datasources/
+    │   │   └── datasources.yml # Datasource Prometheus
+    │   └── dashboards/
+    │       └── dashboards.yml  # Config auto-provisioning
+    └── dashboards/
+        ├── agents-overview.json
+        ├── voice-interface.json
+        └── rag-knowledge.json
+```
+
+## Troubleshooting
+
+### Prometheus não coleta métricas
+
+```bash
+# Verificar targets
+curl http://localhost:9090/api/v1/targets
+
+# Ver status no UI
+# http://localhost:9090/targets
+```
+
+### Grafana não mostra dados
+
+1. Verifique se Prometheus está UP: http://localhost:9090
+2. Verifique datasource: Grafana > Configuration > Data Sources
+3. Teste query no Explore: `up{job="auracore-agents"}`
+
+### Container não inicia
+
+```bash
+# Ver logs
+docker logs auracore_prometheus
+docker logs auracore_grafana
+docker logs auracore_alertmanager
+
+# Verificar volumes
+docker volume ls | grep auracore
+```
+
+### Resetar dados
+
+```bash
+# Parar e remover volumes
+./stop.sh
+docker volume rm monitoring_prometheus_data monitoring_grafana_data monitoring_alertmanager_data
+
+# Reiniciar
+./start.sh
+```
+
+## Referências
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Alertmanager Documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
