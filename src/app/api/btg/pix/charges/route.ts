@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
-import { createBTGPixCharge } from "@/services/btg/btg-pix";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -69,8 +71,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar cobrança via BTG
-    const btgPix = await createBTGPixCharge({
+    // Criar cobrança via BTG usando DI
+    const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
+    const btgPix = await btgClient.createPixCharge({
       valor,
       chavePix,
       payerName,

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
-import { generateBTGBoleto } from "@/services/btg/btg-boleto";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -71,8 +73,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Gerar boleto via BTG
-    const btgBoleto = await generateBTGBoleto({
+    // Gerar boleto via BTG usando DI
+    const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
+    const btgBoleto = await btgClient.generateBoleto({
       payerName,
       payerDocument,
       payerEmail,
