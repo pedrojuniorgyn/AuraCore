@@ -1,0 +1,1 @@
+export { GetDocumentByIdQuery } from './GetDocumentByIdQuery';
