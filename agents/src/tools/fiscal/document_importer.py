@@ -13,7 +13,11 @@ from typing import Any, Optional
 
 from src.core.guardrails import GuardrailLevel
 from src.core.observability import get_logger
-from src.services.document_processing import DanfeExtractor, get_docling_processor
+from src.services.document_processing import (
+    DanfeExtractor,
+    DacteExtractor,
+    get_docling_processor,
+)
 
 logger = get_logger(__name__)
 
@@ -53,6 +57,7 @@ class DocumentImporterTool:
     def __init__(self):
         self.processor = get_docling_processor()
         self.danfe_extractor = DanfeExtractor(self.processor)
+        self.dacte_extractor = DacteExtractor(self.processor)
     
     async def run(
         self,
@@ -208,11 +213,77 @@ class DocumentImporterTool:
                     }
             
             elif document_type == "dacte":
-                return {
-                    "success": False,
-                    "errors": ["Extrator de DACTe em desenvolvimento"],
-                    "message": "Use document_type='danfe' por enquanto"
-                }
+                # Extrair DACTe
+                if file_content:
+                    result = await self.dacte_extractor.extract_from_bytes(file_content, filename)
+                elif file_path:
+                    result = await self.dacte_extractor.extract_from_file(file_path)
+                else:
+                    return {
+                        "success": False,
+                        "errors": ["Nenhum conteúdo de arquivo fornecido"],
+                        "message": "Forneça file_path ou file_base64"
+                    }
+                
+                if not result.success:
+                    return {
+                        "success": False,
+                        "errors": [result.error or "Erro na extração"],
+                        "message": "Falha ao extrair dados do DACTe"
+                    }
+                
+                data = result.data
+                if data:
+                    warnings.extend(data.warnings)
+                    
+                    # Formatar output para DACTe/CTe
+                    extracted = {
+                        "document_type": "CTE",
+                        "access_key": data.chave_acesso,
+                        "number": data.numero,
+                        "series": data.serie,
+                        "issue_date": data.data_emissao,
+                        "cfop": data.cfop,
+                        "modal": data.modal,
+                        "issuer_document": data.emitente.cnpj if data.emitente else None,
+                        "issuer_name": data.emitente.razao_social if data.emitente else None,
+                        "sender_document": data.remetente.documento if data.remetente else None,
+                        "sender_name": data.remetente.nome if data.remetente else None,
+                        "recipient_document": data.destinatario.documento if data.destinatario else None,
+                        "recipient_name": data.destinatario.nome if data.destinatario else None,
+                        "cargo_value": float(data.carga.valor_carga) if data.carga else None,
+                        "cargo_weight": float(data.carga.peso_bruto) if data.carga else None,
+                        "total_value": float(data.valor_total_servico),
+                        "icms_value": float(data.valor_icms),
+                        "linked_nfes": data.nfes_vinculadas[:10],  # Limitar a 10
+                        "linked_nfes_count": len(data.nfes_vinculadas),
+                        "vehicle_plate": data.veiculo.placa if data.veiculo else None,
+                        "route_start_uf": data.uf_inicio,
+                        "route_end_uf": data.uf_fim,
+                        "confidence_score": data.confidence_score,
+                        "warnings": data.warnings
+                    }
+                    
+                    # Validar na SEFAZ (simulado)
+                    sefaz_valid = None
+                    sefaz_status = None
+                    
+                    if validate_sefaz and data.chave_acesso:
+                        sefaz_valid = True
+                        sefaz_status = "Autorizada (simulado)"
+                        warnings.append("Validação SEFAZ simulada - integração real pendente")
+                    
+                    chave_preview = data.chave_acesso[:20] + "..." if data.chave_acesso else "N/A"
+                    
+                    return {
+                        "success": True,
+                        "extracted_data": extracted,
+                        "created_record_id": None,
+                        "sefaz_valid": sefaz_valid,
+                        "sefaz_status": sefaz_status,
+                        "warnings": warnings,
+                        "message": f"DACTe extraído. Chave: {chave_preview} Confiança: {data.confidence_score:.0%}"
+                    }
             
             else:
                 return {
