@@ -41,8 +41,8 @@ export function usePermissions() {
   }, [session, status]);
 
   const hasPermission = (permissionCode: string): boolean => {
-    // Admin sempre tem tudo (temporário - melhorar depois)
-    if (permissions.includes("*") || permissions.includes("admin.*")) {
+    // ✅ Super-permissão: wildcard "*" ou "admin.full" significa acesso total
+    if (permissions.includes("*") || permissions.includes("admin.full")) {
       return true;
     }
     return permissions.includes(permissionCode);
