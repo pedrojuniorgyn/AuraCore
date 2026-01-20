@@ -122,11 +122,33 @@ src/modules/strategic/
 | WMS | Leitura | Acuracidade, Giro, Ocupação |
 | Fiscal | Leitura (futuro) | Compliance SPED |
 
-## Documentação Relacionada
+## 📊 Status Atual (20/01/2026)
 
+| Aspecto | Status | Observação |
+|---------|--------|------------|
+| **Backend (DTOs/Contratos)** | ✅ 80% | 387 testes passando |
+| **Frontend (UI)** | ❌ 30% | Layouts quebrados, botões não funcionais |
+| **APIs (Routes)** | ⚠️ 50% | Parcialmente implementado |
+| **Integrações** | ❌ 20% | Dados hardcoded ou inexistentes |
+
+**Veredicto:** O módulo Strategic tem uma base sólida de DTOs e validações, mas a camada de apresentação (Frontend) está severamente comprometida.
+
+> 📋 Para detalhes completos, veja [SCREENS_STATUS.md](./SCREENS_STATUS.md)
+
+---
+
+## 📚 Documentação
+
+### Status e Planejamento
+- [SCREENS_STATUS.md](./SCREENS_STATUS.md) - **Status detalhado de cada tela**
+- [ROADMAP.md](./ROADMAP.md) - **Plano de correção em 8 semanas**
+- [BENCHMARKS.md](./BENCHMARKS.md) - **Comparativo SAP/STRATWs/AuraCore**
+- [PROMPTS/](./PROMPTS/) - **Prompts para implementação**
+
+### Técnica
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Arquitetura detalhada
 - [API.md](./API.md) - Referência de API
-- [SCREENS.md](./SCREENS.md) - Documentação de telas
+- [SCREENS.md](./SCREENS.md) - Documentação de telas (especificação)
 - [TESTS.md](./TESTS.md) - Estratégia de testes
 
 ## ADRs Relacionados
