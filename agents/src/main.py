@@ -19,8 +19,10 @@ from src.api import voice as voice_api
 from src.api import knowledge as knowledge_api
 from src.api import observability as observability_api
 from src.api import webhooks as webhooks_api
+from src.api import tasks as tasks_api
 from src.core.orchestrator import get_orchestrator
 from src.services.webhooks import get_webhook_service
+from src.services.tasks import get_task_queue, TaskWorker
 
 
 # ===== METADATA OPENAPI =====
@@ -85,6 +87,10 @@ TAGS_METADATA = [
     {
         "name": "Webhooks",
         "description": "Configuração de webhooks",
+    },
+    {
+        "name": "Tasks",
+        "description": "Task queue e jobs assíncronos",
     },
     {
         "name": "Observability",
@@ -212,6 +218,7 @@ app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 app.include_router(voice_api.router, prefix="/api/voice", tags=["Voice"])
 app.include_router(knowledge_api.router, prefix="/api/knowledge", tags=["Knowledge"])
 app.include_router(webhooks_api.router, prefix="/api/webhooks", tags=["Webhooks"])
+app.include_router(tasks_api.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(observability_api.router, tags=["Observability"])
 
 
