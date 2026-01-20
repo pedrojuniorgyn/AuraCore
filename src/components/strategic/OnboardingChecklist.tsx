@@ -8,8 +8,16 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Circle, ChevronUp, ChevronDown, X, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { 
+  CheckCircle2, 
+  Circle, 
+  ChevronUp, 
+  ChevronDown, 
+  X, 
+  Sparkles,
+  ExternalLink,
+  Play,
+} from 'lucide-react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 
 interface ChecklistItem {
@@ -57,7 +65,9 @@ export function OnboardingChecklist() {
     checklistProgress, 
     hideChecklist, 
     isHydrated,
-    isTourCompleted,
+    isTourActive,
+    isFirstVisit,
+    startTour,
   } = useOnboarding();
   
   const [isExpanded, setIsExpanded] = useState(true);
@@ -71,11 +81,16 @@ export function OnboardingChecklist() {
   const completedCount = items.filter(item => item.completed).length;
   const progress = Math.round((completedCount / items.length) * 100);
 
-  // Não mostrar até hidratar, se não visível, ou se completou tudo
-  if (!isHydrated || !isChecklistVisible || progress === 100) return null;
-
-  // Só mostrar após tour completo ou após primeira visita
-  if (!isTourCompleted && completedCount === 0) return null;
+  // FIX: Condição de visibilidade corrigida
+  // Não mostrar se:
+  // 1. Não hidratou ainda (SSR)
+  // 2. Usuário fechou manualmente (isChecklistVisible = false)
+  // 3. Todos os itens foram completados (progress = 100)
+  // 4. Tour está ativo (não sobrepor)
+  // 5. Welcome modal está visível (isFirstVisit = true)
+  if (!isHydrated || !isChecklistVisible || progress === 100 || isTourActive || isFirstVisit) {
+    return null;
+  }
 
   return (
     <motion.div
@@ -135,41 +150,56 @@ export function OnboardingChecklist() {
               className="overflow-hidden"
             >
               <div className="px-4 py-2 space-y-2 max-h-64 overflow-y-auto">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-start gap-3 p-2 rounded-xl transition-all
-                      ${item.completed 
-                        ? 'bg-green-500/10' 
-                        : item.link 
-                          ? 'hover:bg-white/5 cursor-pointer' 
-                          : ''
-                      }`}
-                  >
-                    {item.completed ? (
-                      <CheckCircle2 size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
-                    ) : (
-                      <Circle size={20} className="text-white/30 mt-0.5 flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      {item.link && !item.completed ? (
-                        <Link 
-                          href={item.link}
-                          className="text-sm font-medium text-white hover:text-purple-400 transition-colors"
-                        >
-                          {item.title}
-                        </Link>
+                {items.map((item) => {
+                  const isTourItem = item.id === 'complete-tour';
+                  const isClickable = !item.completed && (item.link || isTourItem);
+                  
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex items-start gap-3 p-2 rounded-xl transition-all
+                        ${item.completed 
+                          ? 'bg-green-500/10' 
+                          : isClickable
+                            ? 'hover:bg-white/5 cursor-pointer' 
+                            : ''
+                        }`}
+                      onClick={() => {
+                        if (item.completed) return;
+                        // Se é o item do tour, iniciar tour
+                        if (isTourItem) {
+                          startTour();
+                          return;
+                        }
+                        // Se tem link, navegar
+                        if (item.link) {
+                          window.location.href = item.link;
+                        }
+                      }}
+                    >
+                      {item.completed ? (
+                        <CheckCircle2 size={20} className="text-green-400 mt-0.5 flex-shrink-0" />
                       ) : (
+                        <Circle size={20} className="text-white/30 mt-0.5 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium ${
                           item.completed ? 'text-green-400 line-through' : 'text-white'
                         }`}>
                           {item.title}
                         </p>
+                        <p className="text-white/40 text-xs truncate">{item.description}</p>
+                      </div>
+                      {/* Ícone de ação */}
+                      {!item.completed && isTourItem && (
+                        <Play size={14} className="text-purple-400 mt-1 flex-shrink-0" />
                       )}
-                      <p className="text-white/40 text-xs truncate">{item.description}</p>
+                      {!item.completed && item.link && (
+                        <ExternalLink size={14} className="text-white/30 mt-1 flex-shrink-0" />
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
