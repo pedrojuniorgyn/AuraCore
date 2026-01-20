@@ -52,10 +52,11 @@ interface SwotSummary {
   threats: { count: number; avgScore: number };
 }
 
-// Safelist pattern - classes explícitas
+// Safelist pattern - classes explícitas (incluindo hover)
 const QUADRANT_STYLES = {
   STRENGTH: {
     bg: 'bg-emerald-900/20',
+    hoverBg: 'hover:bg-emerald-900/30',
     border: 'border-emerald-500/30',
     headerBg: 'bg-emerald-600',
     itemBg: 'bg-emerald-800/30',
@@ -68,6 +69,7 @@ const QUADRANT_STYLES = {
   },
   WEAKNESS: {
     bg: 'bg-red-900/20',
+    hoverBg: 'hover:bg-red-900/30',
     border: 'border-red-500/30',
     headerBg: 'bg-red-600',
     itemBg: 'bg-red-800/30',
@@ -80,6 +82,7 @@ const QUADRANT_STYLES = {
   },
   OPPORTUNITY: {
     bg: 'bg-blue-900/20',
+    hoverBg: 'hover:bg-blue-900/30',
     border: 'border-blue-500/30',
     headerBg: 'bg-blue-600',
     itemBg: 'bg-blue-800/30',
@@ -92,6 +95,7 @@ const QUADRANT_STYLES = {
   },
   THREAT: {
     bg: 'bg-amber-900/20',
+    hoverBg: 'hover:bg-amber-900/30',
     border: 'border-amber-500/30',
     headerBg: 'bg-amber-600',
     itemBg: 'bg-amber-800/30',
@@ -215,7 +219,7 @@ export default function SwotMatrixPage() {
           {/* Add Button */}
           <RippleButton
             variant="ghost"
-            className={`w-full border border-dashed ${style.border} ${style.text} hover:${style.bg}`}
+            className={`w-full border border-dashed ${style.border} ${style.text} ${style.hoverBg}`}
           >
             <Plus className="w-4 h-4 mr-2" />
             Adicionar {style.label.slice(0, -1)}
