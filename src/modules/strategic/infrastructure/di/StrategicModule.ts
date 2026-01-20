@@ -16,6 +16,7 @@ import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIde
 import { DrizzleActionPlanFollowUpRepository } from '../persistence/repositories/DrizzleActionPlanFollowUpRepository';
 import { DrizzleSwotRepository } from '../persistence/repositories/DrizzleSwotRepository';
 import { DrizzleWarRoomMeetingRepository } from '../persistence/repositories/DrizzleWarRoomMeetingRepository';
+import { DrizzleUserDashboardLayoutRepository } from '../persistence/repositories/DrizzleUserDashboardLayoutRepository';
 
 // Use Cases - Commands
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
@@ -75,6 +76,10 @@ export function registerStrategicModule(): void {
   
   container.register(STRATEGIC_TOKENS.WarRoomMeetingRepository, {
     useClass: DrizzleWarRoomMeetingRepository,
+  });
+  
+  container.register(STRATEGIC_TOKENS.UserDashboardLayoutRepository, {
+    useClass: DrizzleUserDashboardLayoutRepository,
   });
   
   // Use Cases - Commands (Fase F2)
@@ -164,5 +169,5 @@ export function registerStrategicModule(): void {
     useClass: GetWarRoomDashboardQuery,
   });
   
-  console.log('[Strategic Module] DI registrado: 8 repositories + 18 use cases + 2 integrations');
+  console.log('[Strategic Module] DI registrado: 9 repositories + 18 use cases + 2 integrations');
 }

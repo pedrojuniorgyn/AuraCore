@@ -29,3 +29,4 @@ export * from './swot-analysis.schema';
 export * from './war-room-meeting.schema';
 export * from './idea-box.schema';
 export * from './standard-procedure.schema';
+export * from './user-dashboard-layout.schema';

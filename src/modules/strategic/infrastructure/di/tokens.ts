@@ -13,6 +13,7 @@ export const STRATEGIC_TOKENS = {
   ActionPlanFollowUpRepository: Symbol.for('IActionPlanFollowUpRepository'),
   WarRoomMeetingRepository: Symbol.for('IWarRoomMeetingRepository'),
   SwotAnalysisRepository: Symbol.for('ISwotAnalysisRepository'),
+  UserDashboardLayoutRepository: Symbol.for('IUserDashboardLayoutRepository'),
   
   // Use Cases - Commands
   CreateStrategyUseCase: Symbol.for('ICreateStrategyUseCase'),

@@ -12,3 +12,4 @@ export type { IKPIRepository, KPIFilter } from './IKPIRepository';
 export type { IStandardProcedureRepository, StandardProcedureFilter } from './IStandardProcedureRepository';
 export type { ISwotAnalysisRepository, SwotAnalysisFilter } from './ISwotAnalysisRepository';
 export type { IWarRoomMeetingRepository, WarRoomMeetingFilter } from './IWarRoomMeetingRepository';
+export type { IUserDashboardLayoutRepository, DashboardLayoutItem } from './IUserDashboardLayoutRepository';

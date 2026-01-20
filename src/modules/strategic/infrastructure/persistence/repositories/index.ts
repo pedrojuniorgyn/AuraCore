@@ -11,3 +11,4 @@ export { DrizzleIdeaBoxRepository } from './DrizzleIdeaBoxRepository';
 export { DrizzleActionPlanFollowUpRepository } from './DrizzleActionPlanFollowUpRepository';
 export { DrizzleSwotRepository } from './DrizzleSwotRepository';
 export { DrizzleWarRoomMeetingRepository } from './DrizzleWarRoomMeetingRepository';
+export { DrizzleUserDashboardLayoutRepository } from './DrizzleUserDashboardLayoutRepository';
