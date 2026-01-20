@@ -39,10 +39,14 @@ export default function ReportsPage() {
   const scheduledReports = reports.filter(r => r.frequency !== 'manual' && r.isActive);
 
   const handleSave = async (config: ReportConfig & { generateNow?: boolean }) => {
-    const method = editingReport ? 'PUT' : 'POST';
-    const url = editingReport 
+    const isEditing = !!editingReport;
+    const method = isEditing ? 'PUT' : 'POST';
+    const url = isEditing 
       ? `/api/strategic/reports/${editingReport.id}` 
       : '/api/strategic/reports';
+
+    // FIX Bug 6: Capturar o ID ANTES de qualquer operação que possa limpar editingReport
+    const existingReportId = editingReport?.id;
 
     try {
       const response = await fetch(url, {
@@ -57,12 +61,16 @@ export default function ReportsPage() {
 
       const result = await response.json();
       
+      // FIX Bug 6: Usar o ID da resposta OU o ID existente (capturado antes)
+      const reportId = result.id || existingReportId;
+      
       await fetchReports();
-      toast.success(editingReport ? 'Relatório atualizado' : 'Relatório criado');
+      toast.success(isEditing ? 'Relatório atualizado' : 'Relatório criado');
 
-      if (config.generateNow) {
+      // FIX Bug 6: Validar ID antes de chamar generate
+      if (config.generateNow && reportId) {
         toast.info('Gerando relatório...');
-        const generateResponse = await fetch(`/api/strategic/reports/${result.id || editingReport?.id}/generate`, {
+        const generateResponse = await fetch(`/api/strategic/reports/${reportId}/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config),
@@ -73,6 +81,8 @@ export default function ReportsPage() {
         } else {
           toast.error('Erro ao gerar relatório');
         }
+      } else if (config.generateNow && !reportId) {
+        toast.error('ID do relatório inválido para geração');
       }
     } catch (error) {
       console.error('Error saving report:', error);
@@ -82,6 +92,12 @@ export default function ReportsPage() {
   };
 
   const handleGenerate = async (id: string) => {
+    // FIX Bug 6: Validar ID antes de chamar API
+    if (!id || id === 'undefined') {
+      toast.error('ID do relatório inválido');
+      return;
+    }
+
     toast.info('Gerando relatório...');
     try {
       const response = await fetch(`/api/strategic/reports/${id}/generate`, { method: 'POST' });
@@ -89,7 +105,8 @@ export default function ReportsPage() {
         toast.success('Relatório gerado!');
         await fetchReports();
       } else {
-        toast.error('Erro ao gerar relatório');
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || 'Erro ao gerar relatório');
       }
     } catch (error) {
       console.error('Error generating report:', error);

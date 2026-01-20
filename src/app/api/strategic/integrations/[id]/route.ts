@@ -17,15 +17,21 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { id } = await params;
 
     // TODO: Fetch from database
-    // For now, return mock data
+    console.log('Fetching integration:', id);
+
     return NextResponse.json({
       id,
-      name: 'Relatório Executivo',
-      type: 'executive',
-      // ... other fields
+      type: 'slack',
+      name: 'Slack',
+      config: {
+        webhookUrl: 'https://hooks.slack.com/services/...',
+        channel: '#estrategia',
+        events: ['kpi.critical'],
+      },
+      isActive: true,
     });
   } catch (error) {
-    console.error('Error fetching report:', error);
+    console.error('Error fetching integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -38,25 +44,14 @@ export async function PUT(request: Request, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    
-    // FIX Bug 6: Validar que ID não é undefined
-    if (!id || id === 'undefined') {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
-    }
-
     const config = await request.json();
 
     // TODO: Update in database
-    console.log('Updating report:', id, config);
+    console.log('Updating integration:', id, config);
 
-    // FIX Bug 6: SEMPRE retornar o ID no response
-    return NextResponse.json({ 
-      success: true, 
-      id, // Garantir que ID está presente
-      message: 'Relatório atualizado com sucesso' 
-    });
+    return NextResponse.json({ success: true, id });
   } catch (error) {
-    console.error('Error updating report:', error);
+    console.error('Error updating integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -71,11 +66,11 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     const { id } = await params;
 
     // TODO: Delete from database
-    console.log('Deleting report:', id);
+    console.log('Deleting integration:', id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting report:', error);
+    console.error('Error deleting integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

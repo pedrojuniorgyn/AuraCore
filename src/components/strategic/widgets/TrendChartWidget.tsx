@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Minus } from 'lucide-react';
 
 interface TrendPoint {
   day: string;
@@ -14,8 +15,22 @@ interface Props {
 }
 
 export function TrendChartWidget({ data, currentValue = 0, targetValue = 80 }: Props) {
-  const maxValue = Math.max(...data.map(d => d.value), targetValue, 100);
-  const minValue = Math.min(...data.map(d => d.value), 0);
+  // FIX Bug 1 & 2: Validar dados antes de processar
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-white/40">
+        <div className="text-center">
+          <Minus size={24} className="mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Sem dados de tendência</p>
+        </div>
+      </div>
+    );
+  }
+
+  // FIX Bug 1: Garantir que temos valores válidos antes de Math.max/min
+  const values = data.map(d => d.value);
+  const maxValue = Math.max(...values, targetValue, 100);
+  const minValue = Math.min(...values, 0);
   const range = maxValue - minValue || 1;
   
   // Calculate points for SVG path
@@ -25,18 +40,26 @@ export function TrendChartWidget({ data, currentValue = 0, targetValue = 80 }: P
   const chartWidth = width - padding * 2;
   const chartHeight = height - padding * 2;
   
+  // FIX Bug 2: Tratar caso de data.length === 1 (evitar divisão por zero)
   const points = data.map((point, index) => {
-    const x = padding + (index / (data.length - 1 || 1)) * chartWidth;
+    // Se apenas 1 ponto, centralizar no gráfico
+    const xRatio = data.length === 1 ? 0.5 : index / (data.length - 1);
+    const x = padding + xRatio * chartWidth;
     const y = height - padding - ((point.value - minValue) / range) * chartHeight;
     return { x, y, value: point.value, day: point.day };
   });
   
+  // FIX Bug 2: Verificar points antes de criar paths
   const pathD = points.length > 0
     ? `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`
     : '';
   
-  const areaD = points.length > 0
-    ? `${pathD} L ${points[points.length - 1].x},${height - padding} L ${padding},${height - padding} Z`
+  // FIX Bug 2: Verificar se temos pontos suficientes antes de acessar índices
+  const lastPoint = points[points.length - 1];
+  const firstPoint = points[0];
+  
+  const areaD = points.length > 0 && lastPoint && firstPoint
+    ? `${pathD} L ${lastPoint.x},${height - padding} L ${firstPoint.x},${height - padding} Z`
     : '';
 
   // Target line Y position
@@ -100,8 +123,8 @@ export function TrendChartWidget({ data, currentValue = 0, targetValue = 80 }: P
             strokeDasharray="4 4"
           />
 
-          {/* Area fill */}
-          {points.length > 1 && (
+          {/* Area fill - só renderiza se tiver mais de 1 ponto */}
+          {points.length > 1 && areaD && (
             <motion.path
               d={areaD}
               fill="url(#areaGradient)"
@@ -111,8 +134,8 @@ export function TrendChartWidget({ data, currentValue = 0, targetValue = 80 }: P
             />
           )}
 
-          {/* Line */}
-          {points.length > 1 && (
+          {/* Line - só renderiza se tiver mais de 1 ponto */}
+          {points.length > 1 && pathD && (
             <motion.path
               d={pathD}
               fill="none"

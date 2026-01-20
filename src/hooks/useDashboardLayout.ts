@@ -39,25 +39,43 @@ export function useDashboardLayout() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load from API
+  // Load from API with cleanup
   useEffect(() => {
+    const controller = new AbortController();
+    let isMounted = true;
+
     const loadLayout = async () => {
       try {
-        const response = await fetch('/api/strategic/dashboard/layout');
-        if (response.ok) {
+        const response = await fetch('/api/strategic/dashboard/layout', {
+          signal: controller.signal,
+        });
+        if (response.ok && isMounted) {
           const data = await response.json();
           if (data.layout?.length > 0) {
             setWidgets(data.layout);
           }
         }
       } catch (error) {
-        console.error('Failed to load dashboard layout:', error);
+        // Ignorar erro de abort
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        if (isMounted) {
+          console.error('Failed to load dashboard layout:', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadLayout();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
 
   // Save to API
@@ -78,7 +96,7 @@ export function useDashboardLayout() {
     }
   }, [widgets]);
 
-  const handleLayoutChange = useCallback((layout: LayoutItem[]) => {
+  const handleLayoutChange = useCallback((layout: readonly LayoutItem[]) => {
     setWidgets(prev => 
       prev.map(widget => {
         const newPos = layout.find(l => l.i === widget.i);
@@ -96,16 +114,26 @@ export function useDashboardLayout() {
     );
   }, []);
 
+  // FIX Bug 5: Calcular Y baseado no widget mais baixo existente (não usar Infinity)
   const addWidget = useCallback((type: WidgetType, defaultSize: { w: number; h: number }) => {
-    const newWidget: WidgetConfig = {
-      i: `w${Date.now()}`,
-      type,
-      x: 0,
-      y: Infinity, // Will be placed at the bottom
-      w: defaultSize.w,
-      h: defaultSize.h,
-    };
-    setWidgets(prev => [...prev, newWidget]);
+    setWidgets(prev => {
+      // Calcular a posição Y máxima atual
+      const maxY = prev.reduce((max, widget) => {
+        const widgetBottom = widget.y + widget.h;
+        return widgetBottom > max ? widgetBottom : max;
+      }, 0);
+
+      const newWidget: WidgetConfig = {
+        i: `w${Date.now()}`,
+        type,
+        x: 0,
+        y: maxY, // Posiciona abaixo do último widget
+        w: defaultSize.w,
+        h: defaultSize.h,
+      };
+
+      return [...prev, newWidget];
+    });
   }, []);
 
   const removeWidget = useCallback((id: string) => {

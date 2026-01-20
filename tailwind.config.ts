@@ -60,6 +60,16 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      // Safe area para iOS (notch, home indicator)
+      spacing: {
+        'safe': 'env(safe-area-inset-bottom)',
+      },
+      padding: {
+        'safe': 'env(safe-area-inset-bottom)',
+      },
+      height: {
+        'safe': 'env(safe-area-inset-bottom)',
+      },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",

@@ -1,12 +1,9 @@
 'use client';
 
-import { useMemo, ReactNode, CSSProperties } from 'react';
+import { useMemo, ReactNode, CSSProperties, ComponentType } from 'react';
+import dynamic from 'next/dynamic';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-
-// Dynamic import to avoid TypeScript issues
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const ReactGridLayout = require('react-grid-layout');
 
 interface LayoutItem {
   i: string;
@@ -20,6 +17,7 @@ interface LayoutItem {
   maxH?: number;
 }
 
+// Props do componente GridLayout
 interface GridLayoutProps {
   className?: string;
   layout: LayoutItem[];
@@ -29,7 +27,7 @@ interface GridLayoutProps {
   isDraggable: boolean;
   isResizable: boolean;
   draggableHandle?: string;
-  onLayoutChange: (layout: LayoutItem[]) => void;
+  onLayoutChange: (layout: readonly LayoutItem[]) => void;
   margin?: [number, number];
   containerPadding?: [number, number];
   compactType?: 'vertical' | 'horizontal' | null;
@@ -37,6 +35,22 @@ interface GridLayoutProps {
   children: ReactNode;
   style?: CSSProperties;
 }
+
+// FIX Bug 1: Dynamic import to avoid SSR issues in Next.js 15
+ 
+const ReactGridLayout = dynamic<GridLayoutProps>(
+  () => import('react-grid-layout').then(mod => mod.default || mod) as Promise<ComponentType<GridLayoutProps>>,
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="grid grid-cols-3 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="h-48 rounded-2xl bg-white/5 animate-pulse" />
+        ))}
+      </div>
+    ),
+  }
+);
 import { DashboardWidget } from './DashboardWidget';
 import { WidgetType } from './WidgetPicker';
 import { 
@@ -76,7 +90,7 @@ interface Props {
   widgets: WidgetConfig[];
   data: DashboardData | null;
   isEditing: boolean;
-  onLayoutChange: (layout: LayoutItem[]) => void;
+  onLayoutChange: (layout: readonly LayoutItem[]) => void;
   onRemoveWidget: (id: string) => void;
   containerWidth?: number;
 }
@@ -91,6 +105,9 @@ const widgetTitles: Record<WidgetType, { title: string; icon: string }> = {
   'achievements': { title: 'Conquistas', icon: '🏆' },
   'pdca-active': { title: 'Ciclos PDCA', icon: '🔄' },
 };
+
+// FIX Bug 3: Fallback para tipos de widget desconhecidos
+const defaultWidgetConfig = { title: 'Widget', icon: '📦' };
 
 export function DashboardGrid({ 
   widgets, 
@@ -185,7 +202,8 @@ export function DashboardGrid({
         preventCollision={false}
       >
         {widgets.map((widget) => {
-          const config = widgetTitles[widget.type];
+          // FIX Bug 3: Usar fallback para tipos desconhecidos
+          const config = widgetTitles[widget.type] || defaultWidgetConfig;
           
           return (
             <div key={widget.i}>

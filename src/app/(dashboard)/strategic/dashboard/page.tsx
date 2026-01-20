@@ -29,9 +29,10 @@ export default function DashboardPage() {
     saveLayout,
   } = useDashboardLayout();
 
-  // Fetch dashboard data
+  // Fetch dashboard data with manual refresh support
   const fetchData = useCallback(async () => {
     try {
+      setIsLoadingData(true);
       const response = await fetch('/api/strategic/dashboard/data');
       if (response.ok) {
         const result = await response.json();
@@ -44,12 +45,71 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Initial fetch and auto-refresh
+  // FIX Bug 4: Initial fetch with cleanup para evitar memory leak
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    const controller = new AbortController();
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      try {
+        const response = await fetch('/api/strategic/dashboard/data', {
+          signal: controller.signal,
+        });
+        if (response.ok && isMounted) {
+          const result = await response.json();
+          setData(result);
+        }
+      } catch (error) {
+        // Ignorar erro de abort
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        if (isMounted) {
+          console.error('Failed to fetch dashboard data:', error);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingData(false);
+        }
+      }
+    };
+
+    loadInitialData();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  // FIX Bug 4: Auto-refresh with cleanup
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/strategic/dashboard/data', {
+          signal: controller.signal,
+        });
+        if (response.ok && isMounted) {
+          const result = await response.json();
+          setData(result);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Auto-refresh error:', error);
+        }
+      }
+    }, 30000);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearInterval(interval);
+    };
+  }, []);
 
   // Handle container resize
   useEffect(() => {

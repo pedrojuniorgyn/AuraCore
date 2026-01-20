@@ -44,3 +44,19 @@ export { ReportBuilder, type ReportConfig, type ReportType } from './ReportBuild
 export { ReportScheduler, type ScheduleConfig, type Frequency } from './ReportScheduler';
 export { ReportPreview } from './ReportPreview';
 export { ReportHistory } from './ReportHistory';
+
+// Integrações (Slack, Teams, Webhooks)
+export { IntegrationCard, type Integration, type IntegrationType } from './IntegrationCard';
+export { IntegrationSetup, type IntegrationConfig } from './IntegrationSetup';
+export { IntegrationLogs, type LogEntry } from './IntegrationLogs';
+
+// Mobile Responsive & PWA
+export { MobileNav } from './MobileNav';
+export { MobileHeader } from './MobileHeader';
+export { BottomSheet } from './BottomSheet';
+export { PullToRefresh } from './PullToRefresh';
+export { SwipeableCard } from './SwipeableCard';
+export { PWAInstallPrompt } from './PWAInstallPrompt';
+
+// Layout Client Wrapper
+export { StrategicLayoutClient } from './StrategicLayoutClient';

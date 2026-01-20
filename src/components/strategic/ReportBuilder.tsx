@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Save, Send, Loader2 } from 'lucide-react';
 import { ReportScheduler, type Frequency, type ScheduleConfig } from './ReportScheduler';
 import { ReportPreview } from './ReportPreview';
+import { toast } from 'sonner';
 
 export type ReportType = 'executive' | 'bsc' | 'actions' | 'kpis' | 'custom';
 
@@ -46,60 +47,110 @@ const availableSections = [
   { key: 'achievements', label: 'Conquistas do Período', default: false },
 ];
 
+// Default config factory
+const getDefaultConfig = (initial?: Partial<ReportConfig>): ReportConfig => ({
+  name: initial?.name || '',
+  type: initial?.type || 'executive',
+  sections: initial?.sections || availableSections.filter(s => s.default).map(s => s.key),
+  frequency: initial?.frequency || 'weekly',
+  dayOfWeek: initial?.dayOfWeek ?? 1,
+  dayOfMonth: initial?.dayOfMonth ?? 1,
+  time: initial?.time || '08:00',
+  recipients: initial?.recipients || [],
+  includePdf: initial?.includePdf ?? true,
+  sendCopy: initial?.sendCopy ?? true,
+});
+
 export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props) {
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
-  const [config, setConfig] = useState<ReportConfig>({
-    name: initialConfig?.name || '',
-    type: initialConfig?.type || 'executive',
-    sections: initialConfig?.sections || availableSections.filter(s => s.default).map(s => s.key),
-    frequency: initialConfig?.frequency || 'weekly',
-    dayOfWeek: initialConfig?.dayOfWeek ?? 1,
-    dayOfMonth: initialConfig?.dayOfMonth ?? 1,
-    time: initialConfig?.time || '08:00',
-    recipients: initialConfig?.recipients || [],
-    includePdf: initialConfig?.includePdf ?? true,
-    sendCopy: initialConfig?.sendCopy ?? true,
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [config, setConfig] = useState<ReportConfig>(() => getDefaultConfig(initialConfig));
 
-  const updateConfig = <K extends keyof ReportConfig>(field: K, value: ReportConfig[K]) => {
+  // FIX Bug 2: Sincronizar config quando modal abre ou initialConfig muda
+  useEffect(() => {
+    if (isOpen) {
+      // Reset para valores iniciais quando modal abre
+      setConfig(getDefaultConfig(initialConfig));
+      setStep(1);
+      setError(null);
+    }
+  }, [isOpen, initialConfig]);
+
+  const updateConfig = useCallback(<K extends keyof ReportConfig>(field: K, value: ReportConfig[K]) => {
     setConfig(prev => ({ ...prev, [field]: value }));
-  };
+    setError(null); // Limpar erro ao editar
+  }, []);
 
-  const toggleSection = (key: string) => {
+  const toggleSection = useCallback((key: string) => {
     setConfig(prev => ({
       ...prev,
       sections: prev.sections.includes(key)
         ? prev.sections.filter(s => s !== key)
         : [...prev.sections, key],
     }));
-  };
+  }, []);
 
-  const handleSchedulerChange = (updates: Partial<ScheduleConfig>) => {
+  const handleSchedulerChange = useCallback((updates: Partial<ScheduleConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const handleSave = async (generateNow = false) => {
+  // FIX Bug 3: try-catch-finally completo com tratamento de erro
+  const handleSave = useCallback(async (generateNow = false) => {
+    // Validação antes de salvar
+    if (!config.name.trim()) {
+      setError('Nome do relatório é obrigatório');
+      setStep(1);
+      return;
+    }
+
+    if (config.sections.length === 0) {
+      setError('Selecione pelo menos uma seção');
+      setStep(1);
+      return;
+    }
+
+    if (config.frequency !== 'manual' && config.recipients.length === 0) {
+      setError('Adicione pelo menos um destinatário para agendamento automático');
+      setStep(2);
+      return;
+    }
+
     setIsSaving(true);
+    setError(null);
+    
     try {
       await onSave({ ...config, generateNow });
+      
+      // Sucesso - fechar modal e resetar
       onClose();
       setStep(1);
+      
+    } catch (err) {
+      // FIX Bug 3: Capturar e exibir erro
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao salvar relatório';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      
+      // Não fechar modal em caso de erro - usuário pode corrigir
+      
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [config, onSave, onClose]);
 
-  const canProceed = () => {
+  const canProceed = useCallback(() => {
     if (step === 1) return config.name.trim() && config.type && config.sections.length > 0;
     if (step === 2) return config.frequency === 'manual' || config.recipients.length > 0;
     return true;
-  };
+  }, [step, config]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
+    if (isSaving) return; // Não fechar enquanto salva
     onClose();
     setStep(1);
-  };
+    setError(null);
+  }, [isSaving, onClose]);
 
   return (
     <AnimatePresence>
@@ -132,7 +183,11 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                       Etapa {step} de 3: {step === 1 ? 'Configuração' : step === 2 ? 'Agendamento' : 'Preview'}
                     </p>
                   </div>
-                  <button onClick={handleClose} className="p-2 rounded-lg hover:bg-white/10 text-white/50">
+                  <button 
+                    onClick={handleClose} 
+                    disabled={isSaving}
+                    className="p-2 rounded-lg hover:bg-white/10 text-white/50 disabled:opacity-50"
+                  >
                     <X size={20} />
                   </button>
                 </div>
@@ -150,6 +205,24 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                 </div>
               </div>
 
+              {/* Error Banner */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mx-6 mt-4 p-3 rounded-xl bg-red-500/20 border border-red-500/30 
+                    text-red-400 text-sm flex items-center justify-between"
+                >
+                  <span>{error}</span>
+                  <button 
+                    onClick={() => setError(null)}
+                    className="p-1 hover:bg-red-500/20 rounded"
+                  >
+                    <X size={14} />
+                  </button>
+                </motion.div>
+              )}
+
               {/* Content */}
               <div className="p-6">
                 {/* Step 1: Configuration */}
@@ -163,8 +236,10 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                         value={config.name}
                         onChange={(e) => updateConfig('name', e.target.value)}
                         placeholder="Ex: Relatório Executivo Semanal"
+                        disabled={isSaving}
                         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 
-                          text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50"
+                          text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50
+                          disabled:opacity-50"
                       />
                     </div>
 
@@ -176,7 +251,8 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                           <button
                             key={type}
                             onClick={() => updateConfig('type', type as ReportType)}
-                            className={`p-4 rounded-xl border text-center transition-all
+                            disabled={isSaving}
+                            className={`p-4 rounded-xl border text-center transition-all disabled:opacity-50
                               ${config.type === type
                                 ? 'bg-purple-500/20 border-purple-500/50'
                                 : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -198,7 +274,9 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                           <button
                             key={key}
                             onClick={() => toggleSection(key)}
+                            disabled={isSaving}
                             className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3
+                              disabled:opacity-50
                               ${config.sections.includes(key)
                                 ? 'bg-purple-500/20 border-purple-500/50'
                                 : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -244,8 +322,10 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                   {step > 1 && (
                     <button
                       onClick={() => setStep(step - 1)}
+                      disabled={isSaving}
                       className="px-4 py-2 rounded-xl bg-white/10 text-white 
-                        hover:bg-white/20 flex items-center gap-2 transition-colors"
+                        hover:bg-white/20 flex items-center gap-2 transition-colors
+                        disabled:opacity-50"
                     >
                       <ChevronLeft size={16} /> Voltar
                     </button>
@@ -255,7 +335,9 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                 <div className="flex gap-3">
                   <button
                     onClick={handleClose}
-                    className="px-4 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
+                    disabled={isSaving}
+                    className="px-4 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 
+                      transition-colors disabled:opacity-50"
                   >
                     Cancelar
                   </button>
@@ -263,7 +345,7 @@ export function ReportBuilder({ isOpen, onClose, onSave, initialConfig }: Props)
                   {step < 3 ? (
                     <button
                       onClick={() => setStep(step + 1)}
-                      disabled={!canProceed()}
+                      disabled={!canProceed() || isSaving}
                       className="px-4 py-2 rounded-xl bg-purple-500 text-white 
                         hover:bg-purple-600 flex items-center gap-2 disabled:opacity-50 transition-colors"
                     >

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getTenantContext } from "@/lib/auth/context";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { IDownloadNfesUseCase } from "@/modules/fiscal/domain/ports/input/IDownloadNfesUseCase";
+import { Result } from "@/shared/domain";
 
 /**
- * 🔧 FORÇA EXECUÇÃO MANUAL DA IMPORTAÇÃO AUTOMÁTICA
+ * 🔧 FORÇA EXECUÇÃO MANUAL DA IMPORTAÇÃO DE NFes
  * 
  * Útil para:
  * - Testes
@@ -9,33 +14,58 @@ import { NextRequest, NextResponse } from "next/server";
  * - Forçar importação sem aguardar cron
  * 
  * Uso:
- * curl -X POST http://localhost:3000/api/admin/force-auto-import
+ * curl -X POST http://localhost:3000/api/admin/force-auto-import?branchId=1
  * 
- * @since E8 Fase 2.5 - Migração parcial documentada
- * 
- * TODO (E8 Fase 3): Migrar auto-import-nfe para Use Case DDD:
- *   1. Criar ImportNfesAutomaticallyUseCase
- *   2. Injetar ISefazGateway via DI
- *   3. Remover dependência de @/services/cron/
+ * @since E8 Fase 3 - Migrado para Use Case DDD
+ *   - DownloadNfesUseCase via DI
+ *   - Elimina dependência de @/services/cron/
  */
 export async function POST(request: NextRequest) {
   try {
-    console.log("🔧 [FORCE] Iniciando importação manual forçada...");
-    console.log("━".repeat(80));
-
-    // Legacy: Import dinâmico do serviço cron
-    // Este serviço internamente usa SefazService legacy
-    const { runManualImport } = await import("@/services/cron/auto-import-nfe");
+    const ctx = await getTenantContext();
     
-    await runManualImport();
+    const branchIdParam = request.nextUrl.searchParams.get("branchId");
+    const branchId = branchIdParam ? parseInt(branchIdParam) : ctx.defaultBranchId || 1;
+
+    console.log("🔧 [FORCE] Iniciando importação manual forçada...");
+    console.log(`   Branch: ${branchId}, Organization: ${ctx.organizationId}`);
+    console.log("━".repeat(80));
+
+    // Resolver Use Case via DI
+    const downloadNfesUseCase = container.resolve<IDownloadNfesUseCase>(
+      TOKENS.DownloadNfesUseCase
+    );
+
+    // Executar Use Case
+    const result = await downloadNfesUseCase.execute({
+      organizationId: ctx.organizationId,
+      branchId,
+      userId: ctx.userId,
+    });
 
     console.log("━".repeat(80));
-    console.log("✅ [FORCE] Importação manual concluída!");
+
+    if (Result.isFail(result)) {
+      console.log(`⚠️ [FORCE] Importação retornou erro: ${result.error}`);
+      return NextResponse.json({
+        success: false,
+        error: result.error,
+        hint: "Verifique se o certificado digital está configurado corretamente.",
+      }, { status: 400 });
+    }
+
+    const output = result.value;
+    console.log(`✅ [FORCE] Importação concluída: ${output.message}`);
 
     return NextResponse.json({
       success: true,
-      message: "Importação automática executada com sucesso!",
-      note: "Verifique os logs acima para detalhes da importação.",
+      message: output.message,
+      data: {
+        totalDocuments: output.totalDocuments,
+        maxNsu: output.maxNsu,
+        processing: output.processing,
+      },
+      note: "Verifique os logs do terminal para detalhes.",
     });
 
   } catch (error: unknown) {
@@ -55,15 +85,19 @@ export async function POST(request: NextRequest) {
 /**
  * GET - Mostra instruções de uso
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     endpoint: "/api/admin/force-auto-import",
     method: "POST",
-    description: "Força execução manual da importação automática de NFes",
+    description: "Força execução manual da importação de NFes via SEFAZ",
     usage: {
-      curl: "curl -X POST http://localhost:3000/api/admin/force-auto-import",
-      browser: "POST http://localhost:3000/api/admin/force-auto-import",
+      curl: "curl -X POST http://localhost:3000/api/admin/force-auto-import?branchId=1",
+      browser: "POST http://localhost:3000/api/admin/force-auto-import?branchId=1",
     },
-    note: "A importação será executada imediatamente, sem aguardar o cron job.",
+    parameters: {
+      branchId: "ID da filial (opcional, usa padrão se não informado)",
+    },
+    note: "A importação será executada imediatamente usando DownloadNfesUseCase.",
+    since: "E8 Fase 3 - Use Case DDD",
   });
 }

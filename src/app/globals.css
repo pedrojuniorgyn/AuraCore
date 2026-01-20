@@ -219,3 +219,67 @@ nextjs-portal,
     background-position: 100% 50%;
   }
 }
+
+/* ============================================
+   MOBILE RESPONSIVE & PWA STYLES
+   ============================================ */
+
+/* Safe area para iOS (notch, home indicator) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.h-safe {
+  height: env(safe-area-inset-bottom, 0px);
+}
+
+/* Touch highlight para elementos interativos mobile */
+@media (hover: none) {
+  .touch-highlight {
+    -webkit-tap-highlight-color: rgba(124, 58, 237, 0.2);
+  }
+}
+
+/* Smooth scrolling mobile */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch pan for swipe gestures */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+/* Prevent text selection on mobile UI elements */
+.select-none-mobile {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  /* Remove browser UI chrome padding */
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+}

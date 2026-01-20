@@ -1,8 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, MessageCircle, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
 import Link from 'next/link';
 
 interface Props {
@@ -18,10 +18,15 @@ const defaultInsights = [
   "O Health Score geral está em 72%. Para atingir a meta de 80%, foque na perspectiva de Processos Internos.",
 ];
 
+// Selecionar insight default fora do componente (estável)
+const randomIndex = Math.floor(Math.random() * defaultInsights.length);
+
 export function AuroraInsightWidget({ insight, isLoading = false, onRefresh }: Props) {
-  const [currentInsight] = useState(() => 
-    insight || defaultInsights[Math.floor(Math.random() * defaultInsights.length)]
-  );
+  // Usar insight prop se existir, ou um default estável
+  const [fallbackInsight] = useState(() => defaultInsights[randomIndex]);
+  
+  // Renderizar o insight prop se existir, senão o fallback
+  const displayInsight = insight || fallbackInsight;
 
   return (
     <div className="h-full flex flex-col">
@@ -65,7 +70,7 @@ export function AuroraInsightWidget({ insight, isLoading = false, onRefresh }: P
           </div>
         ) : (
           <p className="text-white/80 text-sm leading-relaxed line-clamp-4">
-            💡 {currentInsight}
+            {displayInsight}
           </p>
         )}
       </motion.div>

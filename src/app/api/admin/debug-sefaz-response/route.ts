@@ -1,76 +1,121 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// Legacy: createSefazService ainda busca certificado/NSU do banco
-// TODO (E8 Fase 3): Criar QueryNfeStatusUseCase que orquestre:
-//   1. Buscar configuração (certificado, NSU) do banco
-//   2. Chamar ISefazGateway.queryDistribuicaoDFe()
-import { createSefazService } from "@/services/sefaz-service";
+import { getTenantContext } from "@/lib/auth/context";
+import { ensureConnection } from "@/lib/db";
+import { container } from "@/shared/infrastructure/di/container";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
+import type { ISefazGateway } from "@/modules/integrations/domain/ports/output/ISefazGateway";
+import { Result } from "@/shared/domain";
+import { db } from "@/lib/db";
+import { branches, organizations } from "@/lib/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 
 /**
- * POST /api/admin/debug-sefaz-response
- * 
- * 🔍 DEBUG: Ver resposta completa da SEFAZ com parsing
+ * GET /api/admin/debug-sefaz-response?branchId=1
+ * Retorna resposta XML da Sefaz para debug
  * 
  * ⚠️ ADMIN ONLY: Rota de debug para desenvolvimento
  * 
- * @since E8 Fase 2.5 - Migração parcial documentada
+ * @since E8 Fase 3 - Migrado para ISefazGateway via DI
  */
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
+    const ctx = await getTenantContext();
+    
+    const branchIdParam = request.nextUrl.searchParams.get("branchId");
+    const branchId = branchIdParam ? parseInt(branchIdParam) : 1;
 
-    const body = await request.json();
-    const branchId = body.branch_id || 1;
-    const organizationId = body.organization_id || 1;
+    console.log(`🔍 Debug Sefaz Response para branch ${branchId}`);
 
-    console.log("🔍 Consultando SEFAZ em modo DEBUG...");
+    // Buscar dados da filial
+    const [branch] = await db
+      .select({
+        name: branches.name,
+        state: branches.state,
+      })
+      .from(branches)
+      .where(
+        and(
+          eq(branches.id, branchId),
+          eq(branches.organizationId, ctx.organizationId),
+          isNull(branches.deletedAt)
+        )
+      );
 
-    // Legacy: Cria instância do serviço (busca certificado do banco)
-    const sefazService = createSefazService(branchId, organizationId);
-    const result = await sefazService.getDistribuicaoDFe();
+    if (!branch) {
+      return NextResponse.json(
+        { error: `Filial ${branchId} não encontrada` },
+        { status: 404 }
+      );
+    }
 
-    // Parse da resposta para extrair status
-    const cStatMatch = result.xml.match(/<cStat>(\d+)<\/cStat>/);
-    const xMotivoMatch = result.xml.match(/<xMotivo>(.*?)<\/xMotivo>/);
-    const ultNSUMatch = result.xml.match(/<ultNSU>(\d+)<\/ultNSU>/);
-    const maxNSUMatch = result.xml.match(/<maxNSU>(\d+)<\/maxNSU>/);
+    // Buscar CNPJ da organização
+    const [org] = await db
+      .select({ document: organizations.document })
+      .from(organizations)
+      .where(eq(organizations.id, ctx.organizationId));
 
-    const debug = {
-      success: result.success,
-      totalDocuments: result.totalDocuments,
-      maxNsu: result.maxNsu,
-      responseSize: result.xml.length,
-      
-      // Parse manual
-      parsed: {
-        cStat: cStatMatch ? cStatMatch[1] : null,
-        xMotivo: xMotivoMatch ? xMotivoMatch[1] : null,
-        ultNSU: ultNSUMatch ? ultNSUMatch[1] : null,
-        maxNSU: maxNSUMatch ? maxNSUMatch[1] : null,
+    const cnpj = org?.document?.replace(/\D/g, '') || '';
+
+    // Resolver Gateway via DI
+    const sefazGateway = container.resolve<ISefazGateway>(TOKENS.SefazGateway);
+    
+    // Consultar SEFAZ
+    const result = await sefazGateway.queryDistribuicaoDFe({
+      cnpj,
+      lastNsu: 0,
+      environment: 'production',
+    });
+
+    if (Result.isFail(result)) {
+      // Retornar erro como XML para debug
+      const errorXml = `<?xml version="1.0" encoding="UTF-8"?>
+<debugError>
+  <success>false</success>
+  <error>${result.error}</error>
+  <branchId>${branchId}</branchId>
+  <branchName>${branch.name}</branchName>
+</debugError>`;
+
+      return new NextResponse(errorXml, {
+        status: 500,
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+        },
+      });
+    }
+
+    const documents = result.value;
+    
+    // Montar XML de resposta para debug
+    const xmlDebug = `<?xml version="1.0" encoding="UTF-8"?>
+<debugSefazResponse>
+  <totalDocuments>${documents.length}</totalDocuments>
+  <branchId>${branchId}</branchId>
+  <branchName>${branch.name}</branchName>
+  <organizationId>${ctx.organizationId}</organizationId>
+  <documents>
+    ${documents.slice(0, 10).map((doc, i) => `
+    <document index="${i}">
+      <nsu>${doc.nsu}</nsu>
+      <nfeKey>${doc.nfeKey}</nfeKey>
+      <schema>${doc.schema}</schema>
+      <hasXml>${doc.xml ? 'true' : 'false'}</hasXml>
+    </document>`).join('')}
+  </documents>
+</debugSefazResponse>`;
+
+    return new NextResponse(xmlDebug, {
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        "X-Total-Documents": documents.length.toString(),
       },
-      
-      // XML completo (para análise)
-      xmlResponse: result.xml,
-      
-      // Códigos de status da SEFAZ
-      statusExplanation: {
-        "137": "Nenhum documento localizado",
-        "138": "Documento localizado",
-        "656": "Consumo Indevido",
-        "other": "Ver xMotivo para detalhes"
-      }
-    };
-
-    return NextResponse.json(debug, { status: 200 });
-
+    });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ Erro no debug Sefaz Response:", error);
     return NextResponse.json(
-      {
-        error: errorMessage,
-        stack: (error instanceof Error ? error.stack : undefined),
-      },
+      { error: errorMessage },
       { status: 500 }
     );
   }
