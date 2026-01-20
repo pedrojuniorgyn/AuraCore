@@ -293,7 +293,16 @@ class DurationTracker:
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        duration_ms = (time.perf_counter() - self._start_time) * 1000
+        # Verificar se _start_time foi inicializado
+        if self._start_time is None:
+            # Fallback: usar 0 como duração se __aenter__ não foi chamado
+            duration_ms = 0.0
+            logger.warning(
+                "duration_tracker_start_time_none",
+                event_type=self._event_type.value
+            )
+        else:
+            duration_ms = (time.perf_counter() - self._start_time) * 1000
         
         success = exc_type is None
         error_message = str(exc_val) if exc_val else None
