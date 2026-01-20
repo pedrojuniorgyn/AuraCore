@@ -1,0 +1,115 @@
+# .github/dependabot.yml
+# Automated dependency updates
+version: 2
+
+updates:
+  # ═══════════════════════════════════════════════════════════
+  # Frontend (npm)
+  # ═══════════════════════════════════════════════════════════
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      next-ecosystem:
+        patterns:
+          - "next*"
+          - "react*"
+          - "@next/*"
+      refine-ecosystem:
+        patterns:
+          - "@refinedev/*"
+      ui-components:
+        patterns:
+          - "@radix-ui/*"
+          - "lucide-react"
+          - "tailwind*"
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "vitest*"
+          - "typescript"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ═══════════════════════════════════════════════════════════
+  # Agents (pip)
+  # ═══════════════════════════════════════════════════════════
+  - package-ecosystem: "pip"
+    directory: "/agents"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "agents"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      ai-providers:
+        patterns:
+          - "anthropic*"
+          - "openai*"
+          - "langchain*"
+          - "agno*"
+      google-cloud:
+        patterns:
+          - "google-cloud-*"
+          - "google-generativeai*"
+      testing:
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "mypy"
+
+  # ═══════════════════════════════════════════════════════════
+  # GitHub Actions
+  # ═══════════════════════════════════════════════════════════
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci(deps)"
+
+  # ═══════════════════════════════════════════════════════════
+  # Docker
+  # ═══════════════════════════════════════════════════════════
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
+
+  - package-ecosystem: "docker"
+    directory: "/agents"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "agents"
+    commit-message:
+      prefix: "chore(docker)"

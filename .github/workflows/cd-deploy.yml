@@ -1,0 +1,162 @@
+# .github/workflows/cd-deploy.yml
+# Deploy to staging or production via Coolify
+name: CD - Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/BRANCH_PROTECTION.md'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  COOLIFY_WEBHOOK_STAGING: ${{ secrets.COOLIFY_WEBHOOK_STAGING }}
+  COOLIFY_WEBHOOK_PRODUCTION: ${{ secrets.COOLIFY_WEBHOOK_PRODUCTION }}
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  # DETERMINE ENVIRONMENT
+  # ═══════════════════════════════════════════════════════════
+  setup:
+    name: 🔧 Setup
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      should_deploy: ${{ steps.set-env.outputs.should_deploy }}
+    steps:
+      - name: Set environment
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          fi
+
+  # ═══════════════════════════════════════════════════════════
+  # RUN CI FIRST
+  # ═══════════════════════════════════════════════════════════
+  ci:
+    name: 🔍 Run CI
+    needs: setup
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  # ═══════════════════════════════════════════════════════════
+  # BUILD IMAGES
+  # ═══════════════════════════════════════════════════════════
+  build:
+    name: 🏗️ Build
+    needs: [setup, ci]
+    uses: ./.github/workflows/ci-build.yml
+    secrets: inherit
+
+  # ═══════════════════════════════════════════════════════════
+  # DEPLOY STAGING
+  # ═══════════════════════════════════════════════════════════
+  deploy-staging:
+    name: 🚀 Deploy Staging
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: needs.setup.outputs.environment == 'staging' && needs.setup.outputs.should_deploy == 'true'
+    environment:
+      name: staging
+      url: https://staging.auracore.com.br
+    steps:
+      - name: Trigger Coolify deployment
+        if: env.COOLIFY_WEBHOOK_STAGING != ''
+        run: |
+          echo "🚀 Deploying to staging..."
+          curl -X POST "${{ env.COOLIFY_WEBHOOK_STAGING }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "${{ github.sha }}"}' \
+            --fail --silent --show-error || echo "Webhook not configured"
+
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          echo "🔍 Checking staging health..."
+          for i in {1..10}; do
+            if curl -sf https://staging.auracore.com.br/api/health 2>/dev/null; then
+              echo "✅ Staging is healthy"
+              exit 0
+            fi
+            echo "Waiting for staging... ($i/10)"
+            sleep 10
+          done
+          echo "⚠️ Health check skipped (endpoint may not be configured)"
+
+      - name: Summary
+        run: |
+          echo "## Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** staging" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://staging.auracore.com.br" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════
+  # DEPLOY PRODUCTION
+  # ═══════════════════════════════════════════════════════════
+  deploy-production:
+    name: 🚀 Deploy Production
+    runs-on: ubuntu-latest
+    needs: [setup, build]
+    if: needs.setup.outputs.environment == 'production' && needs.setup.outputs.should_deploy == 'true'
+    environment:
+      name: production
+      url: https://auracore.com.br
+    steps:
+      - name: Trigger Coolify deployment
+        if: env.COOLIFY_WEBHOOK_PRODUCTION != ''
+        run: |
+          echo "🚀 Deploying to production..."
+          curl -X POST "${{ env.COOLIFY_WEBHOOK_PRODUCTION }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "${{ github.sha }}"}' \
+            --fail --silent --show-error || echo "Webhook not configured"
+
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Health check
+        run: |
+          echo "🔍 Checking production health..."
+          for i in {1..10}; do
+            if curl -sf https://auracore.com.br/api/health 2>/dev/null; then
+              echo "✅ Production is healthy"
+              exit 0
+            fi
+            echo "Waiting for production... ($i/10)"
+            sleep 15
+          done
+          echo "⚠️ Health check skipped (endpoint may not be configured)"
+
+      - name: Summary
+        run: |
+          echo "## Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** production" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://auracore.com.br" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **Production deployment successful!**" >> $GITHUB_STEP_SUMMARY

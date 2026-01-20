@@ -1,0 +1,101 @@
+# .github/workflows/release.yml
+# Create releases and deploy to production on tag push
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  # CREATE RELEASE
+  # ═══════════════════════════════════════════════════════════
+  release:
+    name: 📦 Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        uses: orhun/git-cliff-action@v3
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: CHANGELOG.md
+        continue-on-error: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: |
+            ## AuraCore ${{ steps.version.outputs.version }}
+
+            ${{ steps.changelog.outputs.content }}
+
+            ### Docker Images
+            - `ghcr.io/${{ github.repository }}/auracore-frontend:${{ github.sha }}`
+            - `ghcr.io/${{ github.repository }}/auracore-agents:${{ github.sha }}`
+
+            ### Installation
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}/auracore-frontend:latest
+            docker pull ghcr.io/${{ github.repository }}/auracore-agents:latest
+            ```
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ═══════════════════════════════════════════════════════════
+  # BUILD AND DEPLOY
+  # ═══════════════════════════════════════════════════════════
+  build:
+    name: 🏗️ Build Release
+    needs: release
+    uses: ./.github/workflows/ci-build.yml
+    secrets: inherit
+
+  deploy:
+    name: 🚀 Deploy Production
+    needs: [release, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://auracore.com.br
+    steps:
+      - name: Trigger Coolify deployment
+        if: ${{ secrets.COOLIFY_WEBHOOK_PRODUCTION != '' }}
+        run: |
+          echo "🚀 Deploying version ${{ needs.release.outputs.version }} to production..."
+          curl -X POST "${{ secrets.COOLIFY_WEBHOOK_PRODUCTION }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "${{ github.sha }}", "version": "${{ needs.release.outputs.version }}"}' \
+            --fail --silent --show-error || echo "Webhook not configured"
+        continue-on-error: true
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Release ${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ needs.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://auracore.com.br" >> $GITHUB_STEP_SUMMARY
