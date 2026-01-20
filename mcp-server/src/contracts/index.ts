@@ -35,6 +35,11 @@ import mapperPattern from './mapper-pattern.json' with { type: 'json' };
 import validatorPattern from './validator-pattern.json' with { type: 'json' };
 import schemaPattern from './schema-pattern.json' with { type: 'json' };
 
+// Security & Quality Contracts (E9 - Prevenção de Bugs)
+import tenantSecurity from './tenant-security.json' with { type: 'json' };
+import csvExport from './csv-export.json' with { type: 'json' };
+import callbackArrayConsistency from './callback-array-consistency.json' with { type: 'json' };
+
 export const contracts = {
   // Process & Quality (consultar ANTES de codificar)
   'verify-before-code': verifyBeforeCode,
@@ -65,6 +70,11 @@ export const contracts = {
   'mapper-pattern': mapperPattern,
   'validator-pattern': validatorPattern,
   'schema-pattern': schemaPattern,
+  
+  // Security & Quality (E9 - Bug Prevention)
+  'tenant-security': tenantSecurity,
+  'csv-export': csvExport,
+  'callback-array-consistency': callbackArrayConsistency,
 } as const;
 
 export type ContractId = keyof typeof contracts;

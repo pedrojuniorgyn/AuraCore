@@ -57,11 +57,16 @@ async function getRelevantContracts(filePath: string, content: string): Promise<
   // API routes
   if (lowerPath.includes('/api/') || lowerPath.includes('/route.ts')) {
     contracts.push('api-contract');
+    // E9: Tenant Security para TODAS as rotas API (exceto auth/health/public)
+    if (!lowerPath.includes('/auth/') && !lowerPath.includes('/health/') && !lowerPath.includes('/public/')) {
+      contracts.push('tenant-security');
+    }
   }
   
   // Multi-tenancy (qualquer arquivo que mencione organizationId ou branchId)
   if (lowerContent.includes('organizationid') || lowerContent.includes('branchid')) {
     contracts.push('multi-tenancy');
+    contracts.push('tenant-security');
   }
   
   // Database operations (menciona transacao, db, prisma)
@@ -74,7 +79,18 @@ async function getRelevantContracts(filePath: string, content: string): Promise<
     contracts.push('input-validation');
   }
   
-  return contracts;
+  // E9: CSV Export routes
+  if (lowerPath.includes('/export/') || lowerContent.includes('text/csv') || lowerContent.includes('csv-')) {
+    contracts.push('csv-export');
+  }
+  
+  // E9: React components com .map()
+  if ((lowerPath.includes('/components/') || lowerPath.includes('.tsx')) && lowerContent.includes('.map(')) {
+    contracts.push('callback-array-consistency');
+  }
+  
+  // Remover duplicatas
+  return [...new Set(contracts)];
 }
 
 /**

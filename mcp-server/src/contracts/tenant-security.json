@@ -1,0 +1,107 @@
+{
+  "id": "tenant-security",
+  "version": "1.0.0",
+  "name": "Segurança Multi-Tenant",
+  "description": "Regras obrigatórias para validação de tenant em APIs",
+  "category": "security",
+  "severity": "CRITICAL",
+  "created_at": "2026-01-20",
+  "updated_at": "2026-01-20",
+  "rules": [
+    {
+      "id": "TENANT-001",
+      "name": "Proibido defaults hardcoded de IDs",
+      "severity": "CRITICAL",
+      "description": "NUNCA usar organizationId = 1 ou branchId = 1 como default em destructuring do body",
+      "pattern_to_detect": "\\{.*organizationId\\s*=\\s*1|\\{.*branchId\\s*=\\s*1",
+      "fix": "Usar contexto do usuário autenticado via getTenantContext() ou session.user",
+      "example_bad": "const { organizationId = 1, branchId = 1 } = body;",
+      "example_good": "const session = await auth();\nconst organizationId = session.user.organizationId;\nconst branchId = session.user.defaultBranchId || 1;",
+      "files_affected": ["src/app/api/**/*.ts"],
+      "auto_check": true
+    },
+    {
+      "id": "TENANT-002",
+      "name": "Rotas de dados devem ter autenticação",
+      "severity": "CRITICAL",
+      "description": "Rotas POST/PUT/DELETE que manipulam dados DEVEM validar sessão antes de qualquer operação",
+      "pattern_to_detect": "export async function (POST|PUT|DELETE|PATCH)",
+      "required_pattern": "auth\\(\\)|getServerSession|getTenantContext|withAuth|withPermission",
+      "fix": "Adicionar validação de sessão no início da rota",
+      "example_good": "const session = await auth();\nif (!session?.user?.organizationId) {\n  return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });\n}",
+      "files_affected": ["src/app/api/**/*.ts"],
+      "auto_check": true,
+      "exceptions": [
+        "src/app/api/auth/**/*.ts",
+        "src/app/api/health/**/*.ts",
+        "src/app/api/public/**/*.ts"
+      ]
+    },
+    {
+      "id": "TENANT-003",
+      "name": "Validar acesso a filiais diferentes",
+      "severity": "HIGH",
+      "description": "Se branchId vier do body e for diferente do usuário, validar se tem acesso",
+      "fix": "Usar hasAccessToBranch() ou verificar em userBranches antes de operar",
+      "example_good": "if (body.branchId !== session.user.defaultBranchId) {\n  const hasAccess = await hasAccessToBranch(session.user.id, body.branchId);\n  if (!hasAccess) return NextResponse.json({ error: 'Sem acesso' }, { status: 403 });\n}",
+      "files_affected": ["src/app/api/**/*.ts"],
+      "auto_check": false
+    },
+    {
+      "id": "TENANT-004",
+      "name": "Queries DEVEM filtrar por organizationId + branchId",
+      "severity": "CRITICAL",
+      "description": "TODA query de dados em repositórios e rotas DEVE incluir filtro de tenant",
+      "pattern_to_detect": "\\.from\\(.*\\)\\.select",
+      "required_pattern": "organizationId|branchId",
+      "fix": "Adicionar .where(and(eq(table.organizationId, orgId), eq(table.branchId, branchId)))",
+      "example_good": "await db.select().from(table).where(\n  and(\n    eq(table.organizationId, ctx.organizationId),\n    eq(table.branchId, ctx.branchId),\n    isNull(table.deletedAt)\n  )\n);",
+      "files_affected": [
+        "src/modules/**/repositories/*.ts",
+        "src/modules/**/persistence/*.ts",
+        "src/app/api/**/*.ts"
+      ],
+      "auto_check": true
+    }
+  ],
+  "verification_commands": [
+    {
+      "name": "check_hardcoded_org_id",
+      "command": "grep -rn 'organizationId.*=.*1[^0-9]' src/app/api/ --include='*.ts' | grep -v 'branchId || 1' | grep -v '// E9'",
+      "expected": "0 results ou apenas casos legítimos"
+    },
+    {
+      "name": "check_auth_in_post_routes",
+      "command": "find src/app/api -name 'route.ts' -exec grep -L 'auth()\\|getServerSession\\|getTenantContext\\|withAuth\\|withPermission' {} \\;",
+      "expected": "Apenas rotas públicas (auth, health, public)"
+    }
+  ],
+  "exceptions": [
+    "src/app/api/auth/**/*.ts",
+    "src/app/api/health/**/*.ts",
+    "src/app/api/public/**/*.ts",
+    "src/app/api/webhooks/**/*.ts"
+  ],
+  "references": [
+    {
+      "type": "bug",
+      "id": "E9-002",
+      "date": "2026-01-20",
+      "description": "Commercial calculate endpoint usava organizationId = 1 como default"
+    },
+    {
+      "type": "adr",
+      "id": "ADR-0003",
+      "description": "Multi-tenancy obrigatório em todas as operações"
+    }
+  ],
+  "lessons_learned": [
+    {
+      "id": "LC-TENANT-001",
+      "date": "2026-01-20",
+      "error": "Destructuring com default = 1 permite acesso cross-tenant",
+      "correction": "SEMPRE usar sessão autenticada para obter IDs de tenant",
+      "must_not_repeat": true
+    }
+  ]
+}

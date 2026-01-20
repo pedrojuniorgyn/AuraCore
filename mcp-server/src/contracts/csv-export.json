@@ -1,0 +1,98 @@
+{
+  "id": "csv-export",
+  "version": "1.0.0",
+  "name": "Padrões de Exportação CSV",
+  "description": "Regras para consistência entre UI e exports CSV",
+  "category": "data-consistency",
+  "severity": "MEDIUM",
+  "created_at": "2026-01-20",
+  "updated_at": "2026-01-20",
+  "rules": [
+    {
+      "id": "CSV-001",
+      "name": "Filtros do frontend devem ser aplicados no export",
+      "severity": "MEDIUM",
+      "description": "Todo parâmetro de filtro enviado pelo frontend DEVE ser lido e aplicado no backend export",
+      "fix": "Verificar paridade entre params enviados (page.tsx) e lidos (export/route.ts)",
+      "verification": "Comparar searchParams enviados vs searchParams.get() no backend",
+      "example_bad": "// Frontend envia dateFrom/dateTo via fetch\n// Backend: não lê dateFrom/dateTo = export ignora filtros",
+      "example_good": "// Frontend envia\nconst params = new URLSearchParams({ dateFrom, dateTo, status });\n\n// Backend DEVE ler TODOS\nconst dateFrom = searchParams.get('dateFrom');\nconst dateTo = searchParams.get('dateTo');\nconst status = searchParams.get('status');",
+      "files_affected": ["src/app/api/**/export/route.ts"],
+      "auto_check": false
+    },
+    {
+      "id": "CSV-002",
+      "name": "Objetos devem ser serializados corretamente",
+      "severity": "MEDIUM",
+      "description": "NUNCA usar template string direta para objetos em CSV. Usar formatValueForCsv()",
+      "pattern_to_detect": "\\$\\{[^}]*Value\\}|\\$\\{[^}]*\\.value\\}",
+      "fix": "Usar função formatValueForCsv() que detecta objetos e usa JSON.stringify",
+      "example_bad": "const csv = `${log.oldValue},${log.newValue}`; // Output: [object Object]",
+      "example_good": "const csv = `${formatValueForCsv(log.oldValue)},${formatValueForCsv(log.newValue)}`;"
+    },
+    {
+      "id": "CSV-003",
+      "name": "Formatação consistente entre UI e Export",
+      "severity": "LOW",
+      "description": "Export deve usar mesma lógica de formatação da UI para garantir consistência",
+      "fix": "Extrair função formatValue para módulo compartilhado ou replicar lógica no export",
+      "example": "Se UI usa ChangesDiff.formatValue() para formatar datas/números, export deve usar mesma função"
+    },
+    {
+      "id": "CSV-004",
+      "name": "Escapar valores para CSV",
+      "severity": "MEDIUM",
+      "description": "Valores com vírgulas, aspas ou quebras de linha devem ser escapados",
+      "fix": "Usar função escapeCSV() em todos os campos",
+      "example_good": "function escapeCSV(str: string): string {\n  if (!str) return '';\n  if (str.includes(',') || str.includes('\"') || str.includes('\\n')) {\n    return `\"${str.replace(/\"/g, '\"\"')}\"`;\n  }\n  return str;\n}"
+    },
+    {
+      "id": "CSV-005",
+      "name": "Incluir BOM para UTF-8",
+      "severity": "LOW",
+      "description": "CSV com caracteres especiais (acentos) deve incluir BOM UTF-8",
+      "fix": "Adicionar '\\uFEFF' no início do conteúdo CSV",
+      "example_good": "const csvContent = '\\uFEFF' + header + '\\n' + rows.join('\\n');"
+    }
+  ],
+  "template_functions": {
+    "formatValueForCsv": {
+      "description": "Formata qualquer valor para CSV de forma segura",
+      "code": "function formatValueForCsv(value: unknown): string {\n  if (value === null || value === undefined) return '';\n  if (typeof value === 'boolean') return value ? 'true' : 'false';\n  if (value instanceof Date) return value.toISOString();\n  if (typeof value === 'object') {\n    try {\n      return JSON.stringify(value, null, 0).replace(/\"/g, '\"\"');\n    } catch {\n      return '[Complex Object]';\n    }\n  }\n  return String(value);\n}"
+    },
+    "escapeCSV": {
+      "description": "Escapa string para CSV",
+      "code": "function escapeCSV(str: string | null | undefined): string {\n  if (!str) return '';\n  const s = String(str);\n  if (s.includes(',') || s.includes('\"') || s.includes('\\n') || s.includes('\\r')) {\n    return `\"${s.replace(/\"/g, '\"\"')}\"`;\n  }\n  return s;\n}"
+    }
+  },
+  "references": [
+    {
+      "type": "bug",
+      "id": "E8-001",
+      "date": "2026-01-20",
+      "description": "CSV export de audit logs ignorava filtros dateFrom/dateTo enviados pelo frontend"
+    },
+    {
+      "type": "bug",
+      "id": "E8-002",
+      "date": "2026-01-20",
+      "description": "CSV formatava objetos oldValue/newValue como [object Object]"
+    }
+  ],
+  "lessons_learned": [
+    {
+      "id": "LC-CSV-001",
+      "date": "2026-01-20",
+      "error": "Backend não lia todos os filtros enviados pelo frontend",
+      "correction": "Verificar paridade frontend/backend em TODA rota de export",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-CSV-002",
+      "date": "2026-01-20",
+      "error": "Template string ${objeto} gera [object Object]",
+      "correction": "SEMPRE usar formatValueForCsv() para valores que podem ser objetos",
+      "must_not_repeat": true
+    }
+  ]
+}

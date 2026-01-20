@@ -1,0 +1,83 @@
+{
+  "id": "callback-array-consistency",
+  "version": "1.0.0",
+  "name": "Consistência de Callbacks em Maps",
+  "description": "Callbacks em .map() devem usar o item do map, não buscar em outro array",
+  "category": "react-patterns",
+  "severity": "MEDIUM",
+  "created_at": "2026-01-20",
+  "updated_at": "2026-01-20",
+  "rules": [
+    {
+      "id": "CALLBACK-001",
+      "name": "Usar item do map diretamente no callback",
+      "severity": "MEDIUM",
+      "description": "Callbacks em .map() devem usar o item iterado diretamente, não buscar em outro array",
+      "pattern_to_detect": "\\.map\\([^)]*\\)[^}]*\\.find\\(",
+      "fix": "Passar o item do map diretamente para o handler ao invés de buscar em outro array",
+      "example_bad": "{filteredItems.map((item) => (\n  <Card\n    onClick={() => {\n      const found = allItems.find(i => i.id === item.id); // ❌ Busca em outro array\n      handleClick(found);\n    }}\n  />\n))}",
+      "example_good": "{filteredItems.map((item) => (\n  <Card\n    onClick={() => handleClick(item)} // ✅ Usa item diretamente\n  />\n))}",
+      "files_affected": ["src/components/**/*.tsx", "src/app/**/*.tsx"],
+      "auto_check": false,
+      "manual_review_required": true
+    },
+    {
+      "id": "CALLBACK-002",
+      "name": "Se precisar buscar, usar o mesmo array",
+      "severity": "LOW",
+      "description": "Se realmente precisar buscar por algum motivo, usar o MESMO array do map",
+      "fix": "Garantir que array do find() é o mesmo do map()",
+      "example_bad": "{filteredItems.map((item) => (\n  // ❌ Busca em allItems mas itera sobre filteredItems\n  <Card onClick={() => allItems.find(i => i.id === item.id)} />\n))}",
+      "example_good": "{filteredItems.map((item) => (\n  // ✅ Se REALMENTE precisar buscar, usa mesmo array\n  <Card onClick={() => filteredItems.find(i => i.id === item.id)} />\n))}",
+      "files_affected": ["src/components/**/*.tsx"],
+      "auto_check": false
+    },
+    {
+      "id": "CALLBACK-003",
+      "name": "Evitar closures que capturam índice incorreto",
+      "severity": "MEDIUM",
+      "description": "Callbacks não devem depender de variáveis externas que podem mudar",
+      "fix": "Usar o item diretamente ou memoizar callbacks se necessário",
+      "example_bad": "const items = [...];\nitems.map((item, index) => (\n  <Button onClick={() => handleClick(items[index])} /> // ❌ items pode mudar\n))",
+      "example_good": "items.map((item) => (\n  <Button onClick={() => handleClick(item)} /> // ✅ item é estável\n))",
+      "files_affected": ["src/components/**/*.tsx"],
+      "auto_check": false
+    },
+    {
+      "id": "CALLBACK-004",
+      "name": "Verificar arrays derivados em componentes",
+      "severity": "LOW",
+      "description": "Quando usar useMemo para filtrar/transformar arrays, garantir que callbacks usam o array correto",
+      "fix": "Callbacks devem referenciar o mesmo array que está sendo mapeado",
+      "example": "const filtered = useMemo(() => items.filter(...), [items]);\n// Callbacks em filtered.map() devem usar 'filtered', não 'items'"
+    }
+  ],
+  "detection_hints": [
+    "Procurar por .map() seguido de .find() no mesmo componente",
+    "Verificar se há múltiplos arrays (filteredX, allX, activeX) no mesmo componente",
+    "Analisar callbacks onClick/onChange em componentes que mapeiam listas filtradas"
+  ],
+  "references": [
+    {
+      "type": "bug",
+      "id": "E9-001",
+      "date": "2026-01-20",
+      "description": "IntegrationCard callbacks buscavam em array 'integrations' mas map era sobre 'activeIntegrations'"
+    }
+  ],
+  "lessons_learned": [
+    {
+      "id": "LC-CALLBACK-001",
+      "date": "2026-01-20",
+      "error": "Callback buscava em array diferente do que estava sendo mapeado",
+      "correction": "SEMPRE usar o item do map diretamente, nunca buscar em outro array",
+      "must_not_repeat": true
+    }
+  ],
+  "code_review_checklist": [
+    "Em componentes com múltiplos arrays, verificar qual é usado no .map()",
+    "Verificar se callbacks onClick/onChange usam o item do map diretamente",
+    "Se houver .find() dentro de callback de .map(), questionar se é necessário",
+    "Preferir passar item diretamente: onClick={() => handleClick(item)}"
+  ]
+}
