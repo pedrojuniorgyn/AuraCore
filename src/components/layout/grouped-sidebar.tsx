@@ -189,6 +189,21 @@ const sidebarGroups: SidebarGroup[] = [
     ],
   },
   {
+    title: "Gestão Estratégica",
+    icon: Target,
+    color: "text-rose-400",
+    items: [
+      { title: "Dashboard Estratégico", href: "/strategic/dashboard", icon: LayoutDashboard, color: "text-rose-400" },
+      { title: "Mapa Estratégico (BSC)", href: "/strategic/map", icon: Grid3x3, color: "text-purple-400" },
+      { title: "Objetivos", href: "/strategic/goals", icon: Target, color: "text-green-400" },
+      { title: "KPIs", href: "/strategic/kpis", icon: TrendingUp, color: "text-blue-400" },
+      { title: "PDCA", href: "/strategic/pdca", icon: Activity, color: "text-amber-400" },
+      { title: "Planos de Ação (5W2H)", href: "/strategic/action-plans", icon: ClipboardList, color: "text-cyan-400" },
+      { title: "Análise SWOT", href: "/strategic/swot", icon: Grid3x3, color: "text-indigo-400" },
+      { title: "War Room", href: "/strategic/war-room", icon: Radio, color: "text-red-400" },
+    ],
+  },
+  {
     title: "Operacional",
     icon: Activity,
     color: "text-rose-400",

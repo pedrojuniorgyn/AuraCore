@@ -146,6 +146,23 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    title: "Gestão Estratégica",
+    icon: Target,
+    color: "text-rose-400",
+    gradientFrom: "from-rose-500/20",
+    gradientTo: "to-pink-500/20",
+    items: [
+      { title: "Dashboard Estratégico", href: "/strategic/dashboard", icon: LayoutDashboard },
+      { title: "Mapa Estratégico (BSC)", href: "/strategic/map", icon: Layers },
+      { title: "Objetivos", href: "/strategic/goals", icon: Target },
+      { title: "KPIs", href: "/strategic/kpis", icon: TrendingUp },
+      { title: "PDCA", href: "/strategic/pdca", icon: ClipboardList },
+      { title: "Planos de Ação (5W2H)", href: "/strategic/action-plans", icon: ClipboardList },
+      { title: "Análise SWOT", href: "/strategic/swot", icon: Scale },
+      { title: "War Room", href: "/strategic/war-room", icon: AlertCircle },
+    ],
+  },
+  {
     title: "Frota & Logística",
     icon: Truck,
     color: "text-amber-400",
