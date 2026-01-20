@@ -1,41 +1,23 @@
 /**
- * Health check do serviço de agentes.
+ * API Route para verificar health dos agentes.
+ *
+ * GET /api/agents/health
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { getAgentsService } from "@/services/agents/agentsService";
 
-const AGENTS_API_URL = process.env.AGENTS_API_URL || 'http://agents:8080';
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const agentsService = getAgentsService();
+    const health = await agentsService.checkHealth();
 
-    const response = await fetch(`${AGENTS_API_URL}/health`, {
-      method: 'GET',
-      signal: controller.signal,
-    });
+    const statusCode = health.status === "healthy" ? 200 : 503;
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          status: 'unhealthy',
-          error: 'Serviço de agentes não disponível',
-        },
-        { status: 503 }
-      );
-    }
-
-    const health = await response.json();
-    return NextResponse.json(health);
-  } catch (error) {
+    return NextResponse.json(health, { status: statusCode });
+  } catch {
     return NextResponse.json(
-      {
-        status: 'unhealthy',
-        error: 'Não foi possível conectar ao serviço de agentes',
-      },
+      { status: "unhealthy", error: "Agentes não disponíveis" },
       { status: 503 }
     );
   }

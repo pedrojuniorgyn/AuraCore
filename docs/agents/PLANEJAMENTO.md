@@ -858,7 +858,7 @@ class ObservabilityMiddleware:
 │                                                                             │
 │  ROI MENSAL: R$ 50.000 - R$ 2.660 = R$ 47.340                             │
 │  PAYBACK: R$ 41.000 / R$ 47.340 = 0.87 meses (~26 dias)                   │
-│  ROI ANUAL: (R$ 47.340 × 12) / R$ 41.000 = 1.385% 🚀                      │
+│  ROI ANUAL: (R$ 47.340 × 12) / R$ 41.000 = 13,85x (1.385% ao ano) 🚀      │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -2863,7 +2863,7 @@ Este planejamento representa a **implementação mais completa e profissional** 
 ✅ **Observabilidade**: Logging estruturado, métricas Prometheus, tracing  
 ✅ **Testes robustos**: Unit, Integration, Quality evaluation  
 ✅ **Integração completa**: Knowledge Module, MCP Server, APIs existentes  
-✅ **Custos detalhados**: Por agente, com ROI comprovado (1.385% anual)  
+✅ **Custos detalhados**: Por agente, com ROI comprovado (13,85x ao ano)  
 ✅ **Prompts prontos**: Código real, pronto para executar  
 
 **Próximo passo recomendado:** Executar PROMPT 1.1 para começar o setup.

@@ -1,81 +1,58 @@
 /**
- * Gateway para o serviço de agentes Agno.
+ * API Route para chat com agentes.
  *
- * Faz proxy das requisições para o servidor Python,
- * adicionando contexto de autenticação e organização.
+ * POST /api/agents/chat
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getTenantContext } from '@/lib/auth/context';
-
-const AGENTS_API_URL = process.env.AGENTS_API_URL || 'http://agents:8080';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { getAgentsService } from "@/services/agents/agentsService";
+import type { AgentContext, ChatRequest } from "@/types/agents";
 
 export async function POST(request: NextRequest) {
   try {
-    // Obter contexto do usuário
-    const context = await getTenantContext();
+    // 1. Autenticação
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
 
-    // Parse do body
+    // 2. Parse do body
     const body = await request.json();
+    const chatRequest: ChatRequest = {
+      message: body.message,
+      conversationId: body.conversationId,
+      agentHint: body.agentHint,
+    };
 
-    // Validar mensagem
-    if (!body.message || typeof body.message !== 'string') {
+    if (!chatRequest.message?.trim()) {
       return NextResponse.json(
-        { error: 'Mensagem é obrigatória' },
+        { error: "Mensagem é obrigatória" },
         { status: 400 }
       );
     }
 
-    // Adicionar contexto do usuário
-    const enrichedBody = {
-      ...body,
-      user_id: context.userId,
-      org_id: context.organizationId,
-      branch_id: context.branchId,
-      role: context.role || 'user',
+    // 3. Construir contexto
+    const user = session.user;
+
+    const context: AgentContext = {
+      userId: user.id,
+      organizationId: user.organizationId,
+      branchId: user.defaultBranchId || user.organizationId,
+      sessionId: crypto.randomUUID(),
+      roles: user.role ? [user.role] : ["user"],
+      permissions: [],
     };
 
-    // Fazer request para o serviço de agentes
-    const response = await fetch(`${AGENTS_API_URL}/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(enrichedBody),
-    });
+    // 4. Chamar serviço
+    const agentsService = getAgentsService();
+    const response = await agentsService.chat(chatRequest, context);
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('[Agents Gateway] Error from agents service:', error);
-      return NextResponse.json(
-        { error: `Erro no serviço de agentes: ${response.status}` },
-        { status: response.status }
-      );
-    }
-
-    // Verificar se é streaming
-    if (body.stream) {
-      const stream = response.body;
-      return new NextResponse(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        },
-      });
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(response);
   } catch (error) {
-    // Verificar se é erro de autenticação (NextResponse lançado)
-    if (error instanceof NextResponse) {
-      return error;
-    }
-    
-    console.error('[Agents Gateway] Error:', error);
+    console.error("Erro no chat:", error);
     return NextResponse.json(
-      { error: 'Erro interno no gateway de agentes' },
+      { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }

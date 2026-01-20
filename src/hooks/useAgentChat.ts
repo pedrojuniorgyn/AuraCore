@@ -1,205 +1,174 @@
-'use client';
-
 /**
- * useAgentChat Hook
- *
- * React hook for managing agent chat state and interactions.
- * Handles sending messages, loading sessions, and voice messages.
- *
- * @module hooks
- * @see E-Agent-Fase6
+ * Hook para comunicação com agentes IA.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import type { ChatMessage } from '@/agent/persistence';
+"use client";
+
+import { useState, useCallback, useRef } from "react";
+import type { ChatMessage } from "@/types/agents";
 
 interface UseAgentChatOptions {
-  sessionId?: string;
-  onSessionCreated?: (sessionId: string) => void;
+  streaming?: boolean;
+  onError?: (error: Error) => void;
 }
 
 interface UseAgentChatReturn {
   messages: ChatMessage[];
   isLoading: boolean;
-  error: string | null;
-  currentSessionId: string | null;
-  sendMessage: (content: string) => Promise<void>;
-  sendVoiceMessage: (audioBlob: Blob) => Promise<void>;
-  clearError: () => void;
+  error: Error | null;
+  sendMessage: (message: string, agentHint?: string) => Promise<void>;
+  clearMessages: () => void;
+  stopGeneration: () => void;
 }
 
-export function useAgentChat({
-  sessionId,
-  onSessionCreated,
-}: UseAgentChatOptions = {}): UseAgentChatReturn {
+export function useAgentChat(
+  options: UseAgentChatOptions = {}
+): UseAgentChatReturn {
+  const { streaming = true, onError } = options;
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(
-    sessionId ?? null
-  );
-
-  // Memoizar loadSession com useCallback para evitar stale closures
-  const loadSession = useCallback(async (id: string) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/agent/sessions/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data.messages);
-        setCurrentSessionId(id);
-      } else {
-        setError('Failed to load session');
-      }
-    } catch (err) {
-      console.error('Failed to load session:', err);
-      setError('Failed to load session');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []); // Deps vazias pois só usa setters que são estáveis
-
-  // Load messages when session changes
-  useEffect(() => {
-    if (sessionId) {
-      loadSession(sessionId);
-    }
-  }, [sessionId, loadSession]); // loadSession incluída nas dependências
+  const [error, setError] = useState<Error | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      setIsLoading(true);
-      setError(null);
+    async (message: string, agentHint?: string) => {
+      if (!message.trim()) return;
 
-      // Add user message optimistically
+      // Adicionar mensagem do usuário
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
-        sessionId: currentSessionId ?? '',
-        role: 'user',
-        content,
-        createdAt: new Date(),
+        role: "user",
+        content: message,
+        timestamp: new Date(),
       };
       setMessages((prev) => [...prev, userMessage]);
-
-      try {
-        const response = await fetch('/api/agent/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: content,
-            sessionId: currentSessionId,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to send message');
-        }
-
-        const data = await response.json();
-
-        // Update session ID if new session was created
-        if (!currentSessionId && data.sessionId) {
-          setCurrentSessionId(data.sessionId);
-          onSessionCreated?.(data.sessionId);
-        }
-
-        // Add assistant message
-        const assistantMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          sessionId: data.sessionId ?? currentSessionId ?? '',
-          role: 'assistant',
-          content: data.response,
-          toolsUsed: data.toolsUsed,
-          createdAt: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        // Remove optimistic message on error
-        setMessages((prev) => prev.slice(0, -1));
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [currentSessionId, onSessionCreated]
-  );
-
-  const sendVoiceMessage = useCallback(
-    async (audioBlob: Blob) => {
       setIsLoading(true);
       setError(null);
 
-      try {
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-        if (currentSessionId) {
-          formData.append('sessionId', currentSessionId);
-        }
+      // Criar placeholder para resposta
+      const assistantMessageId = crypto.randomUUID();
+      const assistantMessage: ChatMessage = {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
 
-        const response = await fetch('/api/agent/voice/conversation', {
-          method: 'POST',
-          body: formData,
+      try {
+        abortControllerRef.current = new AbortController();
+
+        const endpoint = streaming
+          ? "/api/agents/chat/stream"
+          : "/api/agents/chat";
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            conversationId: conversationIdRef.current,
+            agentHint,
+          }),
+          signal: abortControllerRef.current.signal,
         });
 
         if (!response.ok) {
-          throw new Error('Failed to process voice message');
+          throw new Error(`Erro: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        if (streaming && response.body) {
+          // Processar stream
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let fullContent = "";
 
-        // Add both messages
-        const userMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          sessionId: data.sessionId ?? currentSessionId ?? '',
-          role: 'user',
-          content: data.userTranscript,
-          createdAt: new Date(),
-        };
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-        const assistantMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          sessionId: data.sessionId ?? currentSessionId ?? '',
-          role: 'assistant',
-          content: data.agentResponse,
-          toolsUsed: data.toolsUsed,
-          createdAt: new Date(),
-        };
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
 
-        setMessages((prev) => [...prev, userMessage, assistantMessage]);
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                if (data === "[DONE]") continue;
 
-        // Update session ID if new
-        if (!currentSessionId && data.sessionId) {
-          setCurrentSessionId(data.sessionId);
-          onSessionCreated?.(data.sessionId);
-        }
-
-        // Play audio response if available
-        if (data.audioResponseBase64) {
-          const audio = new Audio(
-            `data:audio/mpeg;base64,${data.audioResponseBase64}`
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.type === "text" && parsed.content) {
+                    fullContent += parsed.content;
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === assistantMessageId
+                          ? { ...m, content: fullContent }
+                          : m
+                      )
+                    );
+                  }
+                } catch {
+                  // Chunk pode ser texto puro
+                  fullContent += data;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMessageId
+                        ? { ...m, content: fullContent }
+                        : m
+                    )
+                  );
+                }
+              }
+            }
+          }
+        } else {
+          // Resposta não-streaming
+          const data = await response.json();
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMessageId
+                ? { ...m, content: data.message.content }
+                : m
+            )
           );
-          audio.play().catch(console.error);
+          conversationIdRef.current = data.conversationId;
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        if ((err as Error).name === "AbortError") {
+          // Geração cancelada
+          return;
+        }
+        const error = err as Error;
+        setError(error);
+        onError?.(error);
+
+        // Remover mensagem vazia do assistente em caso de erro
+        setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));
       } finally {
         setIsLoading(false);
+        abortControllerRef.current = null;
       }
     },
-    [currentSessionId, onSessionCreated]
+    [streaming, onError]
   );
 
-  const clearError = useCallback(() => {
-    setError(null);
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+    conversationIdRef.current = null;
+  }, []);
+
+  const stopGeneration = useCallback(() => {
+    abortControllerRef.current?.abort();
   }, []);
 
   return {
     messages,
     isLoading,
     error,
-    currentSessionId,
     sendMessage,
-    sendVoiceMessage,
-    clearError,
+    clearMessages,
+    stopGeneration,
   };
 }

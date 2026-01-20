@@ -1,44 +1,30 @@
 /**
- * Lista agentes disponíveis.
+ * API Route para listar agentes disponíveis.
+ *
+ * GET /api/agents
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getTenantContext } from '@/lib/auth/context';
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { getAgentsService } from "@/services/agents/agentsService";
 
-const AGENTS_API_URL = process.env.AGENTS_API_URL || 'http://agents:8080';
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Verificar autenticação
-    await getTenantContext();
-    
-    const response = await fetch(`${AGENTS_API_URL}/agents`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Cache por 5 minutos
-      next: { revalidate: 300 },
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: 'Erro ao listar agentes' },
-        { status: response.status }
-      );
+    // 1. Autenticação
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const agents = await response.json();
+    // 2. Listar agentes
+    const agentsService = getAgentsService();
+    const agents = await agentsService.listAgents();
+
     return NextResponse.json(agents);
   } catch (error) {
-    // Verificar se é erro de autenticação (NextResponse lançado)
-    if (error instanceof NextResponse) {
-      return error;
-    }
-    
-    console.error('[Agents Gateway] Error listing agents:', error);
+    console.error("Erro ao listar agentes:", error);
     return NextResponse.json(
-      { error: 'Erro interno' },
+      { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }
