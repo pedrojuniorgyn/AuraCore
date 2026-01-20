@@ -1,0 +1,77 @@
+{
+  "contract_id": "react-cleanup-001",
+  "name": "Effect Cleanup for Async Operations",
+  "version": "1.0.0",
+  "category": "react-hooks",
+  "priority": "critical",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - ASYNC-01, ASYNC-02, ASYNC-04",
+  
+  "description": "Todo useEffect que faz fetch DEVE ter AbortController + isMounted flag para prevenir memory leaks e state updates em componentes desmontados.",
+  
+  "problem": {
+    "symptoms": [
+      "Warning: Can't perform a React state update on an unmounted component",
+      "Memory leaks em SPAs com navegação rápida",
+      "State updates erráticos após navegação"
+    ],
+    "root_cause": "Fetch requests continuam após componente desmontar, tentando atualizar state inexistente"
+  },
+
+  "detection": {
+    "grep_pattern": "useEffect.*fetch.*setState",
+    "missing_elements": ["AbortController", "isMounted", "signal"],
+    "files_to_check": ["**/page.tsx", "**/use*.ts", "**/use*.tsx"]
+  },
+
+  "solution": {
+    "template": "useEffect(() => {\n  const controller = new AbortController();\n  let isMounted = true;\n\n  const load = async () => {\n    try {\n      const response = await fetch(url, { signal: controller.signal });\n      const data = await response.json();\n      if (isMounted) setState(data);\n    } catch (error) {\n      if (error instanceof Error && error.name !== 'AbortError' && isMounted) {\n        console.error(error);\n      }\n    }\n  };\n\n  load();\n\n  return () => {\n    isMounted = false;\n    controller.abort();\n  };\n}, [deps]);",
+    
+    "key_elements": [
+      "AbortController para cancelar requests pendentes",
+      "isMounted flag (let, não const) para verificar antes de setState",
+      "Cleanup function que seta isMounted = false E chama abort()",
+      "Try-catch que ignora AbortError (navegação intencional)",
+      "Verificação isMounted antes de qualquer setState"
+    ],
+    
+    "checklist": [
+      "[ ] AbortController criado no início do effect",
+      "[ ] signal passado para fetch",
+      "[ ] isMounted = true no início",
+      "[ ] Verificação if (isMounted) antes de setState",
+      "[ ] AbortError ignorado no catch",
+      "[ ] Cleanup retorna isMounted = false + abort()"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "code": "useEffect(() => {\n  fetch('/api/data')\n    .then(r => r.json())\n    .then(setData);\n}, []);",
+      "issues": ["Sem cleanup", "Sem AbortController", "setState após unmount"]
+    },
+    "correct": {
+      "code": "useEffect(() => {\n  const controller = new AbortController();\n  let isMounted = true;\n\n  fetch('/api/data', { signal: controller.signal })\n    .then(r => r.json())\n    .then(data => { if (isMounted) setData(data); })\n    .catch(e => { if (e.name !== 'AbortError') console.error(e); });\n\n  return () => { isMounted = false; controller.abort(); };\n}, []);",
+      "benefits": ["Request cancelado no unmount", "Sem memory leak", "Sem warnings React"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["ASYNC-01", "ASYNC-02", "ASYNC-04"],
+    "files_affected": [
+      "src/app/(dashboard)/strategic/dashboard/page.tsx",
+      "src/hooks/useDashboardLayout.ts",
+      "src/app/(dashboard)/strategic/integrations/page.tsx"
+    ],
+    "contracts": ["react-callback-001"]
+  },
+
+  "testing": {
+    "manual": [
+      "1. Abrir página com fetch",
+      "2. Navegar para outra página rapidamente (antes do fetch completar)",
+      "3. Verificar console: não deve ter warnings de unmounted component"
+    ],
+    "automated": "grep -rn 'useEffect.*fetch' src/ --include='*.tsx' | grep -v 'AbortController'"
+  }
+}

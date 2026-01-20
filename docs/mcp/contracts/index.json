@@ -1,0 +1,123 @@
+{
+  "catalog_id": "strategic-module-contracts",
+  "name": "Contratos MCP - Módulo Strategic",
+  "version": "1.0.0",
+  "created_at": "2026-01-20",
+  "updated_at": "2026-01-20",
+  "source": "Correções do Módulo Strategic (PROMPTS 16-19 + FIX)",
+  
+  "summary": {
+    "total_contracts": 7,
+    "total_bugs_prevented": 15,
+    "categories": 5,
+    "priority_breakdown": {
+      "critical": 3,
+      "high": 3,
+      "medium": 1
+    }
+  },
+
+  "contracts": {
+    "critical": [
+      {
+        "id": "react-cleanup-001",
+        "name": "Effect Cleanup for Async Operations",
+        "category": "react-hooks",
+        "bugs_fixed": ["ASYNC-01", "ASYNC-02", "ASYNC-04"]
+      },
+      {
+        "id": "data-array-001",
+        "name": "Empty Array Guard",
+        "category": "data-validation",
+        "bugs_fixed": ["DATA-01", "DATA-02"]
+      },
+      {
+        "id": "api-response-001",
+        "name": "Consistent ID in Response",
+        "category": "api",
+        "bugs_fixed": ["API-01", "API-02"]
+      }
+    ],
+    "high": [
+      {
+        "id": "react-callback-001",
+        "name": "Callback Unmount Protection",
+        "category": "react-hooks",
+        "bugs_fixed": ["ASYNC-03"]
+      },
+      {
+        "id": "react-prop-sync-001",
+        "name": "Prop-State Synchronization",
+        "category": "react-state",
+        "bugs_fixed": ["STATE-01"]
+      },
+      {
+        "id": "nextjs-ssc-001",
+        "name": "Server/Client Component Separation",
+        "category": "nextjs",
+        "bugs_fixed": ["ARCH-01"]
+      }
+    ],
+    "medium": [
+      {
+        "id": "react-instance-001",
+        "name": "Instance-Stable Random Values",
+        "category": "react-state",
+        "bugs_fixed": ["STATE-02", "STATE-03"]
+      }
+    ]
+  },
+
+  "categories": {
+    "react-hooks": {
+      "description": "Padrões para uso correto de React Hooks (useEffect, useCallback)",
+      "contracts": ["react-cleanup-001", "react-callback-001"]
+    },
+    "react-state": {
+      "description": "Padrões para gerenciamento de state em componentes React",
+      "contracts": ["react-instance-001", "react-prop-sync-001"]
+    },
+    "data-validation": {
+      "description": "Padrões para validação de dados antes de operações",
+      "contracts": ["data-array-001"]
+    },
+    "nextjs": {
+      "description": "Padrões específicos para Next.js App Router",
+      "contracts": ["nextjs-ssc-001"]
+    },
+    "api": {
+      "description": "Padrões para APIs REST e responses",
+      "contracts": ["api-response-001"]
+    }
+  },
+
+  "files_covered": [
+    "src/app/(dashboard)/strategic/dashboard/page.tsx",
+    "src/hooks/useDashboardLayout.ts",
+    "src/app/(dashboard)/strategic/integrations/page.tsx",
+    "src/components/strategic/widgets/AuroraInsightWidget.tsx",
+    "src/components/strategic/ReportBuilder.tsx",
+    "src/components/strategic/widgets/TrendChartWidget.tsx",
+    "src/app/(dashboard)/strategic/layout.tsx",
+    "src/components/strategic/StrategicLayoutClient.tsx",
+    "src/app/(dashboard)/strategic/reports/page.tsx",
+    "src/app/api/strategic/reports/[id]/route.ts"
+  ],
+
+  "usage": {
+    "get_contract": "Tool: get_contract | Args: { \"contract_id\": \"react-cleanup-001\" }",
+    "search_patterns": "Tool: search_patterns | Args: { \"query\": \"useEffect fetch cleanup\" }",
+    "validate_code": "Tool: validate_code | Args: { \"code\": \"...\", \"contract_ids\": [\"react-cleanup-001\"] }"
+  },
+
+  "maintenance": {
+    "review_frequency": "Após cada sprint com correções de bugs",
+    "update_process": [
+      "1. Identificar padrão recorrente em correções",
+      "2. Documentar problema, sintomas, solução",
+      "3. Criar contrato JSON com exemplos",
+      "4. Adicionar ao catálogo",
+      "5. Testar detecção automatizada"
+    ]
+  }
+}

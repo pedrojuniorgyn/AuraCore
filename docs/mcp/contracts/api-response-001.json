@@ -1,0 +1,80 @@
+{
+  "contract_id": "api-response-001",
+  "name": "Consistent ID in Response",
+  "version": "1.0.0",
+  "category": "api",
+  "priority": "critical",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - API-01, API-02",
+  
+  "description": "APIs de PUT/POST DEVEM sempre retornar o ID do recurso criado/atualizado na response. Cliente DEVE capturar ID antes de limpar state para ter fallback.",
+  
+  "problem": {
+    "symptoms": [
+      "ID undefined ao tentar usar recurso após criar/atualizar",
+      "Erro 'undefined' em URL de API subsequente",
+      "Recurso criado mas cliente não sabe qual ID usar",
+      "Race condition entre limpar state e usar ID"
+    ],
+    "root_cause": "API não retorna ID; cliente limpa state antes de capturar ID existente"
+  },
+
+  "detection": {
+    "grep_pattern": "NextResponse\\.json\\(\\{.*success",
+    "missing_elements": ["id"],
+    "files_to_check": ["**/route.ts", "src/app/api/**/*.ts"]
+  },
+
+  "solution": {
+    "template": "// ===== API Route =====\nexport async function PUT(\n  request: Request,\n  { params }: { params: Promise<{ id: string }> }\n) {\n  const { id } = await params;\n  \n  // Validar ID antes de processar\n  if (!id || id === 'undefined') {\n    return NextResponse.json(\n      { error: 'ID inválido' },\n      { status: 400 }\n    );\n  }\n\n  const body = await request.json();\n  \n  // ... update logic ...\n  \n  // SEMPRE retornar ID na response\n  return NextResponse.json({\n    success: true,\n    id, // ← OBRIGATÓRIO\n    message: 'Recurso atualizado com sucesso',\n    data: updatedResource,\n  });\n}\n\n// ===== Cliente =====\nconst handleSave = async (config: Config) => {\n  const isEditing = !!editingItem;\n  const method = isEditing ? 'PUT' : 'POST';\n  const url = isEditing\n    ? `/api/resource/${editingItem.id}`\n    : '/api/resource';\n\n  // CAPTURAR ID ANTES de limpar state\n  const existingId = editingItem?.id;\n\n  const response = await fetch(url, {\n    method,\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify(config),\n  });\n\n  const result = await response.json();\n  \n  // Usar ID da response OU fallback do state\n  const resourceId = result.id || existingId;\n  \n  // AGORA pode limpar state\n  setEditingItem(null);\n  \n  // Usar resourceId para operações subsequentes\n  if (config.generateNow && resourceId) {\n    await fetch(`/api/resource/${resourceId}/generate`, { method: 'POST' });\n  }\n};",
+    
+    "key_elements": [
+      "API SEMPRE retorna id na response JSON",
+      "API valida id do param antes de processar",
+      "Cliente captura existingId ANTES de limpar state",
+      "Cliente usa result.id || existingId como fallback",
+      "Limpar state SÓ DEPOIS de capturar ID"
+    ],
+    
+    "checklist": [
+      "[ ] API valida id !== 'undefined' antes de processar",
+      "[ ] API retorna { success, id, ... } na response",
+      "[ ] Cliente captura existingId ANTES de setEditingItem(null)",
+      "[ ] Cliente usa result.id || existingId",
+      "[ ] Operações subsequentes usam resourceId validado"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "api": "return NextResponse.json({ success: true });",
+      "client": "const result = await response.json();\nsetEditingItem(null);\nawait fetch(`/api/${result.id}/generate`); // undefined!",
+      "issues": ["API não retorna ID", "State limpo antes de capturar", "ID undefined"]
+    },
+    "correct": {
+      "api": "return NextResponse.json({ success: true, id });",
+      "client": "const existingId = editingItem?.id;\nconst result = await response.json();\nconst resourceId = result.id || existingId;\nsetEditingItem(null);\nawait fetch(`/api/${resourceId}/generate`);",
+      "benefits": ["ID sempre disponível", "Fallback seguro", "Sem undefined em URL"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["API-01", "API-02"],
+    "files_affected": [
+      "src/app/api/strategic/reports/[id]/route.ts",
+      "src/app/(dashboard)/strategic/reports/page.tsx"
+    ],
+    "contracts": []
+  },
+
+  "testing": {
+    "manual": [
+      "1. Criar novo recurso via POST",
+      "2. Verificar response inclui id",
+      "3. Editar recurso existente via PUT",
+      "4. Verificar response inclui id",
+      "5. Marcar 'gerar agora' e verificar que chamada subsequente funciona"
+    ],
+    "automated": "grep -rn 'NextResponse.json.*success' src/app/api --include='*.ts' | xargs -I {} grep -L 'id' {}"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "contract_id": "data-array-001",
+  "name": "Empty Array Guard",
+  "version": "1.0.0",
+  "category": "data-validation",
+  "priority": "critical",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - DATA-01, DATA-02",
+  
+  "description": "Math.max/min com spread DEVEM validar que array não está vazio. Math.max(...[]) retorna -Infinity, Math.min(...[]) retorna Infinity, causando cálculos incorretos, NaN em divisões, e crashes de UI.",
+  
+  "problem": {
+    "symptoms": [
+      "NaN exibido em gráficos",
+      "Divisão por zero em cálculos de ratio/percentual",
+      "Gráficos com valores infinitos ou negativos incorretos",
+      "Crash: Cannot read property of undefined"
+    ],
+    "root_cause": "Math.max(...[]) = -Infinity; usar em divisão ou cálculo gera NaN"
+  },
+
+  "detection": {
+    "grep_pattern": "Math\\.(max|min)\\(\\.\\.\\..*\\)",
+    "missing_elements": ["length > 0", "length === 0", "?.length", "|| []"],
+    "files_to_check": ["**/*Chart*.tsx", "**/*Widget.tsx", "**/components/*.tsx"]
+  },
+
+  "solution": {
+    "template": "// Validação antes de processar\nif (!data || data.length === 0) {\n  return (\n    <div className=\"flex items-center justify-center h-full text-white/40\">\n      <p>Sem dados disponíveis</p>\n    </div>\n  );\n}\n\n// Agora seguro: array tem pelo menos 1 elemento\nconst values = data.map(d => d.value);\nconst maxValue = Math.max(...values);\nconst minValue = Math.min(...values);\n\n// Proteção extra: range pode ser 0 se todos valores iguais\nconst range = maxValue - minValue || 1;\n\n// Proteção para divisão\nconst ratio = maxValue !== 0 ? (value / maxValue) : 0;\n\n// Proteção para array com 1 elemento (evita divisão por 0)\nconst xRatio = data.length === 1 ? 0.5 : index / (data.length - 1);",
+    
+    "key_elements": [
+      "Early return se array vazio/undefined",
+      "Componente de estado vazio amigável",
+      "Fallback range = ... || 1 (evita divisão por 0)",
+      "Verificação maxValue !== 0 antes de divisão",
+      "Tratamento especial para array com 1 elemento"
+    ],
+    
+    "checklist": [
+      "[ ] Verificar !data || data.length === 0 antes de processar",
+      "[ ] Retornar componente de estado vazio",
+      "[ ] Usar || 1 para range/denominadores",
+      "[ ] Verificar !== 0 antes de divisões",
+      "[ ] Tratar caso length === 1 (evita /0 em length-1)"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "code": "const max = Math.max(...data.map(d => d.value));\nconst normalized = value / max; // NaN se data vazio\nconst x = index / (data.length - 1); // NaN se length === 1",
+      "issues": ["Math.max([]) = -Infinity", "Divisão por 0", "NaN propagado"]
+    },
+    "correct": {
+      "code": "if (!data?.length) return <EmptyState />;\n\nconst values = data.map(d => d.value);\nconst max = Math.max(...values);\nconst normalized = max !== 0 ? value / max : 0;\nconst x = data.length === 1 ? 0.5 : index / (data.length - 1);",
+      "benefits": ["Sem NaN", "UI amigável para estado vazio", "Cálculos corretos"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["DATA-01", "DATA-02"],
+    "files_affected": ["src/components/strategic/widgets/TrendChartWidget.tsx"],
+    "contracts": []
+  },
+
+  "testing": {
+    "manual": [
+      "1. Renderizar componente com data=[]",
+      "2. Verificar que mostra estado vazio, não NaN/crash",
+      "3. Renderizar com data=[{value: 5}] (1 elemento)",
+      "4. Verificar que renderiza corretamente"
+    ],
+    "automated": "grep -rn 'Math.max.*\\.\\.\\.\\|Math.min.*\\.\\.\\.' src/ --include='*.tsx' | xargs -I {} grep -L 'length.*0\\|?.length' {}"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "contract_id": "react-callback-001",
+  "name": "Callback Unmount Protection",
+  "version": "1.0.0",
+  "category": "react-hooks",
+  "priority": "high",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - ASYNC-03",
+  
+  "description": "Callbacks que fazem fetch (onClick, onRefresh) DEVEM usar isMountedRef para prevenir setState após unmount. Diferente de useEffect, callbacks são invocados manualmente e precisam de refs.",
+  
+  "problem": {
+    "symptoms": [
+      "Warning: Can't perform a React state update on an unmounted component",
+      "Botões de refresh causam memory leak",
+      "State updates após navegação quando usuário clicou em refresh"
+    ],
+    "root_cause": "Callbacks manuais (onClick) não têm cleanup automático como useEffect"
+  },
+
+  "detection": {
+    "grep_pattern": "useCallback.*fetch.*setState",
+    "missing_elements": ["isMountedRef", "useRef", "abortControllerRef"],
+    "files_to_check": ["**/page.tsx", "**/*Widget.tsx"]
+  },
+
+  "solution": {
+    "template": "// Refs no topo do componente\nconst isMountedRef = useRef(true);\nconst abortControllerRef = useRef<AbortController | null>(null);\n\n// Cleanup no mount/unmount\nuseEffect(() => {\n  isMountedRef.current = true;\n  return () => {\n    isMountedRef.current = false;\n    abortControllerRef.current?.abort();\n  };\n}, []);\n\n// Callback protegido\nconst fetchData = useCallback(async () => {\n  // Cancelar request anterior\n  abortControllerRef.current?.abort();\n  abortControllerRef.current = new AbortController();\n  \n  try {\n    setIsLoading(true);\n    const res = await fetch(url, { signal: abortControllerRef.current.signal });\n    const data = await res.json();\n    \n    // Só atualiza se montado\n    if (isMountedRef.current) {\n      setData(data);\n    }\n  } catch (error) {\n    if (error instanceof Error && error.name !== 'AbortError' && isMountedRef.current) {\n      console.error(error);\n    }\n  } finally {\n    if (isMountedRef.current) {\n      setIsLoading(false);\n    }\n  }\n}, []);",
+    
+    "key_elements": [
+      "isMountedRef com useRef(true) - persiste entre renders",
+      "abortControllerRef para cancelar request anterior",
+      "useEffect separado para gerenciar lifecycle das refs",
+      "Verificação isMountedRef.current antes de QUALQUER setState",
+      "Cancelamento de request anterior antes de novo fetch"
+    ],
+    
+    "checklist": [
+      "[ ] isMountedRef = useRef(true) declarado",
+      "[ ] abortControllerRef declarado",
+      "[ ] useEffect com cleanup para refs",
+      "[ ] Cancelamento do request anterior no início do callback",
+      "[ ] Verificação isMountedRef.current antes de setState",
+      "[ ] Finally block também verifica isMountedRef"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "code": "const handleRefresh = async () => {\n  setIsLoading(true);\n  const data = await fetch('/api').then(r => r.json());\n  setData(data);\n  setIsLoading(false);\n};",
+      "issues": ["Sem proteção de unmount", "Sem cancelamento", "Memory leak potencial"]
+    },
+    "correct": {
+      "code": "const handleRefresh = useCallback(async () => {\n  abortControllerRef.current?.abort();\n  abortControllerRef.current = new AbortController();\n  \n  try {\n    setIsLoading(true);\n    const data = await fetch('/api', { signal: abortControllerRef.current.signal }).then(r => r.json());\n    if (isMountedRef.current) setData(data);\n  } finally {\n    if (isMountedRef.current) setIsLoading(false);\n  }\n}, []);",
+      "benefits": ["Protegido contra unmount", "Request anterior cancelado", "Sem memory leak"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["ASYNC-03"],
+    "files_affected": ["src/app/(dashboard)/strategic/dashboard/page.tsx"],
+    "contracts": ["react-cleanup-001"]
+  },
+
+  "testing": {
+    "manual": [
+      "1. Abrir página com botão de refresh",
+      "2. Clicar no refresh",
+      "3. Navegar para outra página imediatamente",
+      "4. Verificar console: não deve ter warnings"
+    ],
+    "automated": "grep -rn 'useCallback.*fetch' src/ --include='*.tsx' | grep -v 'isMountedRef'"
+  }
+}

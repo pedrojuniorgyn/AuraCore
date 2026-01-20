@@ -1,0 +1,71 @@
+{
+  "contract_id": "react-instance-001",
+  "name": "Instance-Stable Random Values",
+  "version": "1.0.0",
+  "category": "react-state",
+  "priority": "medium",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - STATE-02, STATE-03",
+  
+  "description": "Valores aleatórios por instância de componente DEVEM usar useId() + hash function. NUNCA usar Math.random() no nível do módulo (todas instâncias iguais) ou durante render (viola react-hooks/purity).",
+  
+  "problem": {
+    "symptoms": [
+      "Todas instâncias do componente mostram mesmo valor 'aleatório'",
+      "ESLint error: Cannot call impure function during render",
+      "Valores mudam inesperadamente em re-renders"
+    ],
+    "root_cause": "Math.random() no module level é executado uma vez; durante render viola regras de pureza do React"
+  },
+
+  "detection": {
+    "grep_pattern": "Math\\.random\\(\\)",
+    "context_check": ["fora de função", "dentro de render", "useState initializer com Math.random"],
+    "files_to_check": ["**/*Widget.tsx", "**/components/*.tsx"]
+  },
+
+  "solution": {
+    "template": "// Hash function determinística (fora do componente)\nfunction hashStringToIndex(str: string, max: number): number {\n  let hash = 0;\n  for (let i = 0; i < str.length; i++) {\n    const char = str.charCodeAt(i);\n    hash = ((hash << 5) - hash) + char;\n    hash = hash & hash; // Convert to 32bit integer\n  }\n  return Math.abs(hash) % max;\n}\n\n// Dentro do componente\nexport function Component() {\n  // useId gera ID único e estável por instância (React 18+)\n  const instanceId = useId();\n  \n  // Índice baseado no ID - estável e único por instância\n  const [value] = useState(() => {\n    const index = hashStringToIndex(instanceId, items.length);\n    return items[index];\n  });\n}",
+    
+    "key_elements": [
+      "useId() do React 18+ para identificador único por instância",
+      "Hash function determinística (mesmo input = mesmo output)",
+      "useState com initializer function (lazy initialization)",
+      "NUNCA Math.random() no module level ou render body"
+    ],
+    
+    "checklist": [
+      "[ ] Remover qualquer Math.random() no nível do módulo",
+      "[ ] Usar useId() para identificador de instância",
+      "[ ] Implementar hash function determinística",
+      "[ ] useState com initializer function (() => ...)",
+      "[ ] Para refresh: usar timestamp ou incremento, não Math.random()"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "code": "// Module level - todas instâncias iguais!\nconst randomIndex = Math.floor(Math.random() * items.length);\n\nfunction Component() {\n  const [item] = useState(items[randomIndex]);\n}",
+      "issues": ["Todas instâncias mostram mesmo item", "randomIndex calculado uma vez"]
+    },
+    "correct": {
+      "code": "function hashToIndex(str: string, max: number): number {\n  let hash = 0;\n  for (let i = 0; i < str.length; i++) {\n    hash = ((hash << 5) - hash) + str.charCodeAt(i);\n  }\n  return Math.abs(hash) % max;\n}\n\nfunction Component() {\n  const id = useId();\n  const [item] = useState(() => items[hashToIndex(id, items.length)]);\n}",
+      "benefits": ["Cada instância tem valor único", "Valor estável entre re-renders", "Passa no ESLint"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["STATE-02", "STATE-03"],
+    "files_affected": ["src/components/strategic/widgets/AuroraInsightWidget.tsx"],
+    "contracts": []
+  },
+
+  "testing": {
+    "manual": [
+      "1. Renderizar múltiplas instâncias do componente",
+      "2. Verificar que cada uma mostra valor diferente",
+      "3. Verificar que re-render não muda o valor"
+    ],
+    "automated": "grep -rn 'Math.random()' src/components --include='*.tsx' | grep -v 'onClick\\|handleRefresh'"
+  }
+}

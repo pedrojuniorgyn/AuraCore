@@ -1,0 +1,75 @@
+{
+  "contract_id": "nextjs-ssc-001",
+  "name": "Server/Client Component Separation",
+  "version": "1.0.0",
+  "category": "nextjs",
+  "priority": "high",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - ARCH-01",
+  
+  "description": "Layouts no Next.js App Router DEVEM ser Server Components para evitar hydration mismatch. Lógica client-side (hooks, event handlers) deve estar em componente wrapper separado.",
+  
+  "problem": {
+    "symptoms": [
+      "Hydration mismatch warnings no console",
+      "Conteúdo 'pisca' ao carregar página",
+      "Diferença entre SSR e client render",
+      "useEffect/useState em layout causa inconsistência"
+    ],
+    "root_cause": "Layouts com 'use client' são renderizados no cliente primeiro, causando diferença com HTML do servidor"
+  },
+
+  "detection": {
+    "grep_pattern": "'use client'",
+    "files_to_check": ["**/layout.tsx", "app/**/layout.tsx"],
+    "context_check": ["arquivos de layout com 'use client'"]
+  },
+
+  "solution": {
+    "template": "// src/app/(dashboard)/module/layout.tsx (Server Component - SEM 'use client')\nimport { auth } from '@/lib/auth';\nimport { LayoutClient } from '@/components/module/LayoutClient';\n\ninterface LayoutProps {\n  children: React.ReactNode;\n}\n\n// async function - pode buscar dados no servidor\nexport default async function Layout({ children }: LayoutProps) {\n  // Buscar dados no servidor (sem fetch no cliente)\n  const session = await auth();\n  \n  const user = session?.user ? {\n    name: session.user.name || 'Usuário',\n    email: session.user.email || '',\n  } : undefined;\n\n  return (\n    <div className=\"min-h-screen bg-slate-900\">\n      {/* Wrapper client-side para interatividade */}\n      <LayoutClient user={user}>\n        {children}\n      </LayoutClient>\n    </div>\n  );\n}\n\n// src/components/module/LayoutClient.tsx\n'use client';\n\nimport { ReactNode } from 'react';\nimport { MobileNav } from './MobileNav';\nimport { MobileHeader } from './MobileHeader';\n\ninterface Props {\n  children: ReactNode;\n  user?: { name: string; email: string };\n}\n\nexport function LayoutClient({ children, user }: Props) {\n  // Aqui pode usar hooks, event handlers, etc.\n  return (\n    <>\n      <MobileHeader user={user} />\n      <main>{children}</main>\n      <MobileNav />\n    </>\n  );\n}",
+    
+    "key_elements": [
+      "Layout.tsx é Server Component (SEM 'use client')",
+      "Layout pode ser async e buscar dados no servidor",
+      "Dados passados como props para Client Component",
+      "LayoutClient.tsx tem 'use client' e toda interatividade",
+      "Hooks e handlers isolados no Client Component"
+    ],
+    
+    "checklist": [
+      "[ ] Layout.tsx NÃO tem 'use client'",
+      "[ ] Layout pode ser async function",
+      "[ ] Dados buscados no servidor (auth, db)",
+      "[ ] LayoutClient.tsx criado com 'use client'",
+      "[ ] Props passadas de Server para Client",
+      "[ ] Hooks/handlers só no Client Component"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "code": "// layout.tsx\n'use client';\n\nexport default function Layout({ children }) {\n  const [isOpen, setIsOpen] = useState(false);\n  \n  return (\n    <div>\n      <button onClick={() => setIsOpen(true)}>Menu</button>\n      {children}\n    </div>\n  );\n}",
+      "issues": ["Hydration mismatch", "Não pode usar async/await", "Dados buscados no cliente"]
+    },
+    "correct": {
+      "code": "// layout.tsx (Server)\nexport default async function Layout({ children }) {\n  const session = await auth();\n  return <LayoutClient user={session?.user}>{children}</LayoutClient>;\n}\n\n// LayoutClient.tsx (Client)\n'use client';\nexport function LayoutClient({ children, user }) {\n  const [isOpen, setIsOpen] = useState(false);\n  return <div>{children}</div>;\n}",
+      "benefits": ["Sem hydration mismatch", "Dados do servidor", "Interatividade isolada"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["ARCH-01"],
+    "files_affected": ["src/app/(dashboard)/strategic/layout.tsx"],
+    "contracts": []
+  },
+
+  "testing": {
+    "manual": [
+      "1. Abrir DevTools > Console",
+      "2. Navegar para página com layout",
+      "3. Verificar: não deve ter warnings de hydration mismatch",
+      "4. Verificar: conteúdo não 'pisca' ao carregar"
+    ],
+    "automated": "grep -rn \"'use client'\" src/app --include='layout.tsx'"
+  }
+}

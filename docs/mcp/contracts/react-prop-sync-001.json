@@ -1,0 +1,73 @@
+{
+  "contract_id": "react-prop-sync-001",
+  "name": "Prop-State Synchronization",
+  "version": "1.0.0",
+  "category": "react-state",
+  "priority": "high",
+  "created_at": "2026-01-20",
+  "source": "Strategic Module Corrections - STATE-01",
+  
+  "description": "Quando state é derivado de prop que pode mudar (ex: initialConfig em modal, editingItem em form), DEVE usar useEffect para sincronizar o state quando a prop mudar.",
+  
+  "problem": {
+    "symptoms": [
+      "Modal mostra dados do item anterior quando edita outro",
+      "Formulário não atualiza quando props mudam",
+      "State fica 'stale' após fechar/reabrir modal"
+    ],
+    "root_cause": "useState(initialProp) só usa o valor inicial no primeiro render; mudanças na prop são ignoradas"
+  },
+
+  "detection": {
+    "grep_pattern": "useState\\(.*props\\.|useState\\(.*initialConfig|useState\\(.*editing",
+    "context_check": ["Modal", "Form", "Editor", "Dialog"],
+    "missing_elements": ["useEffect", "isOpen"],
+    "files_to_check": ["**/Modal*.tsx", "**/*Builder.tsx", "**/*Form.tsx"]
+  },
+
+  "solution": {
+    "template": "interface Props {\n  isOpen: boolean;\n  initialConfig?: Config;\n  onClose: () => void;\n}\n\nfunction Modal({ isOpen, initialConfig, onClose }: Props) {\n  // State inicial com factory function\n  const [config, setConfig] = useState<Config>(() => ({\n    ...defaultConfig,\n    ...initialConfig,\n  }));\n  const [step, setStep] = useState(1);\n  const [error, setError] = useState<string | null>(null);\n\n  // Sincronizar quando modal abre OU initialConfig muda\n  useEffect(() => {\n    if (isOpen) {\n      setConfig({\n        ...defaultConfig,\n        ...initialConfig,\n      });\n      setStep(1); // Reset estados auxiliares\n      setError(null);\n    }\n  }, [isOpen, initialConfig]);\n\n  // ...\n}",
+    
+    "key_elements": [
+      "useState com initializer function para valor inicial",
+      "useEffect que sincroniza quando isOpen OU prop muda",
+      "Reset de estados auxiliares (step, error) no sync",
+      "Dependencies incluem isOpen e a prop que pode mudar"
+    ],
+    
+    "checklist": [
+      "[ ] useState com factory function (() => ...)",
+      "[ ] useEffect para sincronizar state com prop",
+      "[ ] Verificar isOpen antes de sincronizar (evita sync desnecessário)",
+      "[ ] Reset de estados auxiliares no sync",
+      "[ ] Dependencies corretas no useEffect"
+    ]
+  },
+
+  "examples": {
+    "wrong": {
+      "code": "function EditModal({ editingItem }) {\n  const [formData, setFormData] = useState(editingItem || {});\n  // editingItem muda, mas formData fica com valor antigo!\n}",
+      "issues": ["State nunca atualiza", "Mostra dados do item anterior"]
+    },
+    "correct": {
+      "code": "function EditModal({ isOpen, editingItem }) {\n  const [formData, setFormData] = useState(editingItem || {});\n\n  useEffect(() => {\n    if (isOpen) {\n      setFormData(editingItem || {});\n    }\n  }, [isOpen, editingItem]);\n}",
+      "benefits": ["State sincronizado com prop", "Modal sempre mostra dados corretos"]
+    }
+  },
+
+  "related": {
+    "bugs_fixed": ["STATE-01"],
+    "files_affected": ["src/components/strategic/ReportBuilder.tsx"],
+    "contracts": []
+  },
+
+  "testing": {
+    "manual": [
+      "1. Abrir modal para editar item A",
+      "2. Fechar modal",
+      "3. Abrir modal para editar item B",
+      "4. Verificar que mostra dados do item B, não A"
+    ],
+    "automated": "grep -rn 'useState.*initial' src/components --include='*.tsx' | xargs -I {} grep -L 'useEffect.*isOpen' {}"
+  }
+}
