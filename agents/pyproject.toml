@@ -62,6 +62,9 @@ dependencies = [
     # Auth
     "PyJWT>=2.8.0",
     "passlib[bcrypt]>=1.7.4",
+    
+    # PWA / Push Notifications
+    "pywebpush>=1.14.0",
 ]
 
 [project.optional-dependencies]
