@@ -10,35 +10,76 @@ import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { GenerateAgendaUseCase } from '@/modules/strategic/application/queries/GenerateAgendaUseCase';
+import { WarRoomMeeting, type MeetingType, type MeetingStatus } from '@/modules/strategic/domain/entities/WarRoomMeeting';
+import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
+import type { IWarRoomMeetingRepository } from '@/modules/strategic/domain/ports/output/IWarRoomMeetingRepository';
 
 const createMeetingSchema = z.object({
+  strategyId: z.string().uuid().optional(),
   meetingType: z.enum(['BOARD', 'DIRECTOR', 'MANAGER', 'TACTICAL', 'EMERGENCY']),
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   scheduledAt: z.string().transform((s) => new Date(s)),
   expectedDuration: z.number().min(15).max(480).optional().default(60),
   participants: z.array(z.string().uuid()).optional(),
+  facilitatorUserId: z.string().uuid().optional(),
   generateAgenda: z.boolean().optional().default(true),
 });
 
 // GET /api/strategic/war-room/meetings
 export async function GET(request: NextRequest) {
   try {
-    await getTenantContext(); // Validates auth
+    const context = await getTenantContext();
     const { searchParams } = new URL(request.url);
 
-    const meetingType = searchParams.get('meetingType') ?? undefined;
-    const status = searchParams.get('status') ?? undefined;
+    const meetingType = (searchParams.get('meetingType') ?? undefined) as MeetingType | undefined;
+    const status = (searchParams.get('status') ?? undefined) as MeetingStatus | undefined;
     const fromDate = searchParams.get('fromDate');
     const toDate = searchParams.get('toDate');
+    const strategyId = searchParams.get('strategyId') ?? undefined;
+    const page = parseInt(searchParams.get('page') ?? '1', 10);
+    const pageSize = parseInt(searchParams.get('pageSize') ?? '20', 10);
 
-    // TODO: Implementar busca via repository
-    // Por agora, retornar mock
+    const repository = container.resolve<IWarRoomMeetingRepository>(
+      STRATEGIC_TOKENS.WarRoomMeetingRepository
+    );
+
+    const { items, total } = await repository.findMany({
+      organizationId: context.organizationId,
+      branchId: context.branchId,
+      strategyId,
+      meetingType,
+      status,
+      scheduledFrom: fromDate ? new Date(fromDate) : undefined,
+      scheduledTo: toDate ? new Date(toDate) : undefined,
+      page,
+      pageSize,
+    });
+
     return NextResponse.json({
-      items: [],
-      total: 0,
-      filters: { meetingType, status, fromDate, toDate },
-      message: 'Implementação pendente - DrizzleWarRoomMeetingRepository',
+      items: items.map((meeting) => ({
+        id: meeting.id,
+        strategyId: meeting.strategyId,
+        meetingType: meeting.meetingType,
+        title: meeting.title,
+        description: meeting.description,
+        scheduledAt: meeting.scheduledAt.toISOString(),
+        expectedDuration: meeting.expectedDuration,
+        startedAt: meeting.startedAt?.toISOString() ?? null,
+        endedAt: meeting.endedAt?.toISOString() ?? null,
+        actualDuration: meeting.actualDuration,
+        participantsCount: meeting.participants.length,
+        agendaItemsCount: meeting.agendaItems.length,
+        decisionsCount: meeting.decisions.length,
+        status: meeting.status,
+        isOverdue: meeting.isOverdue,
+        facilitatorUserId: meeting.facilitatorUserId,
+        createdBy: meeting.createdBy,
+        createdAt: meeting.createdAt.toISOString(),
+      })),
+      total,
+      page,
+      pageSize,
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
@@ -64,8 +105,28 @@ export async function POST(request: NextRequest) {
 
     const { generateAgenda, meetingType, scheduledAt, ...meetingData } = validation.data;
 
-    // 1. Gerar pauta automática se solicitado
-    let agendaItems: unknown[] = [];
+    // 1. Criar entidade
+    const meetingResult = WarRoomMeeting.create({
+      organizationId: context.organizationId,
+      branchId: context.branchId,
+      strategyId: meetingData.strategyId,
+      meetingType,
+      title: meetingData.title,
+      description: meetingData.description,
+      scheduledAt,
+      expectedDuration: meetingData.expectedDuration,
+      participants: meetingData.participants,
+      facilitatorUserId: meetingData.facilitatorUserId ?? context.userId,
+      createdBy: context.userId,
+    });
+
+    if (Result.isFail(meetingResult)) {
+      return NextResponse.json({ error: meetingResult.error }, { status: 400 });
+    }
+
+    const meeting = meetingResult.value;
+
+    // 2. Gerar pauta automática se solicitado
     if (generateAgenda && ['BOARD', 'DIRECTOR', 'MANAGER'].includes(meetingType)) {
       const agendaUseCase = container.resolve(GenerateAgendaUseCase);
       const agendaResult = await agendaUseCase.execute(
@@ -77,27 +138,33 @@ export async function POST(request: NextRequest) {
       );
 
       if (Result.isOk(agendaResult)) {
-        agendaItems = agendaResult.value.items;
+        for (const item of agendaResult.value.items) {
+          meeting.addAgendaItem({
+            title: item.title,
+            presenter: item.presenter,
+            duration: item.duration,
+          });
+        }
       }
     }
 
-    // 2. Criar reunião
-    const meetingId = globalThis.crypto.randomUUID();
+    // 3. Persistir
+    const repository = container.resolve<IWarRoomMeetingRepository>(
+      STRATEGIC_TOKENS.WarRoomMeetingRepository
+    );
+    await repository.save(meeting);
 
-    // TODO: Persistir via repository
-    // Por agora, retornar dados criados
     return NextResponse.json(
       {
-        id: meetingId,
-        meetingType,
-        scheduledAt: scheduledAt.toISOString(),
-        ...meetingData,
-        agendaItems,
-        status: 'SCHEDULED',
-        organizationId: context.organizationId,
-        branchId: context.branchId,
-        createdBy: context.userId,
-        message: 'Reunião criada (persistência pendente)',
+        id: meeting.id,
+        meetingType: meeting.meetingType,
+        title: meeting.title,
+        scheduledAt: meeting.scheduledAt.toISOString(),
+        expectedDuration: meeting.expectedDuration,
+        agendaItems: meeting.agendaItems,
+        status: meeting.status,
+        facilitatorUserId: meeting.facilitatorUserId,
+        createdBy: meeting.createdBy,
       },
       { status: 201 }
     );
