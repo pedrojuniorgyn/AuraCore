@@ -20,6 +20,7 @@ logger = structlog.get_logger()
 from src.agents.fiscal import FiscalAgent
 from src.agents.financial import FinancialAgent
 from src.agents.tms import TMSAgent
+from src.agents.crm import CRMAgent
 
 
 class AgentOrchestrator:
@@ -61,8 +62,14 @@ class AgentOrchestrator:
         except Exception as e:
             logger.error("Failed to initialize TMS Agent", error=str(e))
         
-        # TODO: FASE 4 - Adicionar outros agentes
-        # self.agents[AgentType.CRM] = CRMAgent()
+        # FASE 4: CRM Agent
+        try:
+            self.agents[AgentType.CRM] = CRMAgent()
+            logger.info("CRM Agent initialized")
+        except Exception as e:
+            logger.error("Failed to initialize CRM Agent", error=str(e))
+        
+        # TODO: FASE 5 - Adicionar outros agentes
         # self.agents[AgentType.FLEET] = FleetAgent()
         # self.agents[AgentType.ACCOUNTING] = AccountingAgent()
         # self.agents[AgentType.STRATEGIC] = StrategicAgent()
