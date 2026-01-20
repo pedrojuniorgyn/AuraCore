@@ -150,9 +150,17 @@ async def wait_for_task(task_id: str, timeout: int = 60):
     Args:
         task_id: ID da task
         timeout: Tempo máximo de espera em segundos
+        
+    Returns:
+        200: Task completou (sucesso ou falha)
+        404: Task não encontrada
     """
     queue = get_task_queue()
     result = await queue.wait_for(task_id, timeout=timeout)
+    
+    # Task não existe
+    if result is None:
+        raise HTTPException(404, f"Task {task_id} não encontrada")
     
     return TaskStatusResponse(
         task_id=result.task_id,

@@ -115,7 +115,9 @@ class TaskQueue:
         
         self._pool: Optional[Any] = None
         self._cache = get_cache()
-        self._local_queue: asyncio.Queue = asyncio.Queue()
+        # Lazy initialization para evitar RuntimeError em Python 3.11+
+        # asyncio.Queue() requer event loop ativo
+        self._local_queue: Optional[asyncio.Queue] = None
         self._use_local = not ARQ_AVAILABLE
         
         logger.info(
@@ -123,6 +125,12 @@ class TaskQueue:
             use_arq=ARQ_AVAILABLE,
             redis_host=redis_host
         )
+    
+    def _get_local_queue(self) -> asyncio.Queue:
+        """Lazy initialization de asyncio.Queue (requer event loop ativo)."""
+        if self._local_queue is None:
+            self._local_queue = asyncio.Queue()
+        return self._local_queue
     
     async def _get_pool(self) -> Any:
         """Obtém pool de conexão ARQ."""
@@ -217,7 +225,7 @@ class TaskQueue:
                 await self._cache.set_json(f"task:{task_id}", task_data, ttl=86400)
         else:
             # Fallback local (para desenvolvimento)
-            await self._local_queue.put((task_id, task_name, kwargs, config))
+            await self._get_local_queue().put((task_id, task_name, kwargs, config))
             task_data["status"] = TaskStatus.QUEUED.value
             await self._cache.set_json(f"task:{task_id}", task_data, ttl=86400)
             logger.info("task_enqueued_local", task_id=task_id, task_name=task_name)
@@ -268,7 +276,7 @@ class TaskQueue:
     ):
         """Helper para enfileiramento atrasado local."""
         await asyncio.sleep(delay)
-        await self._local_queue.put((task_id, task_name, kwargs, config))
+        await self._get_local_queue().put((task_id, task_name, kwargs, config))
     
     # ===== STATUS =====
     
@@ -294,8 +302,19 @@ class TaskQueue:
         task_id: str,
         timeout: int = 60,
         poll_interval: float = 0.5
-    ) -> TaskResult:
-        """Aguarda conclusão de uma task."""
+    ) -> Optional[TaskResult]:
+        """
+        Aguarda conclusão de uma task.
+        
+        Returns:
+            TaskResult se task existe (completa, falha ou timeout)
+            None se task não existe
+        """
+        # Verificar se task existe antes de esperar
+        initial_status = await self.get_status(task_id)
+        if initial_status is None:
+            return None  # Task não existe - API retornará 404
+        
         start = datetime.utcnow()
         
         while (datetime.utcnow() - start).total_seconds() < timeout:
@@ -310,11 +329,11 @@ class TaskQueue:
             
             await asyncio.sleep(poll_interval)
         
-        # Timeout
+        # Timeout - task existe mas não completou a tempo
         return TaskResult(
             task_id=task_id,
             status=TaskStatus.FAILED,
-            error="Task timeout"
+            error="Task execution timed out"
         )
     
     # ===== CANCELAMENTO =====
@@ -355,7 +374,7 @@ class TaskQueue:
         
         return {
             "backend": "local",
-            "pending": self._local_queue.qsize()
+            "pending": self._get_local_queue().qsize() if self._local_queue else 0
         }
     
     async def health_check(self) -> dict:

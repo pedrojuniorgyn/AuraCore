@@ -52,9 +52,9 @@ class TaskWorker:
         
         while self._running:
             try:
-                # Pegar task da fila local
+                # Pegar task da fila local (usa lazy init)
                 task_id, task_name, kwargs, config = await asyncio.wait_for(
-                    queue._local_queue.get(),
+                    queue._get_local_queue().get(),
                     timeout=1.0
                 )
                 
@@ -101,7 +101,7 @@ class TaskWorker:
                 else:
                     logger.error("task_not_found", task_name=task_name)
                 
-                queue._local_queue.task_done()
+                queue._get_local_queue().task_done()
                 
             except asyncio.TimeoutError:
                 continue

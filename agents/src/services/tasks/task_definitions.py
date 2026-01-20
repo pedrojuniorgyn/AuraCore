@@ -174,10 +174,32 @@ async def deliver_webhook_task(
         from src.services.webhooks import WebhookEvent, WebhookDelivery
         from src.services.webhooks.webhook_events import EventType
         
+        # Validar tipo de evento antes de criar enum
+        event_type_str = event_data.get("type")
+        if not event_type_str:
+            logger.error(
+                "task_deliver_webhook_invalid_event",
+                task_id=_task_id,
+                error="Event type is required",
+                event_data=event_data
+            )
+            raise ValueError("Event type is required for webhook delivery")
+        
+        try:
+            event_type = EventType(event_type_str)
+        except ValueError as e:
+            logger.error(
+                "task_deliver_webhook_invalid_event_type",
+                task_id=_task_id,
+                event_type=event_type_str,
+                error=str(e)
+            )
+            raise ValueError(f"Invalid event type: {event_type_str}")
+        
         # Reconstruir evento
         event = WebhookEvent(
             id=event_data.get("id"),
-            type=EventType(event_data.get("type")),
+            type=event_type,
             data=event_data.get("data", {}),
             metadata=event_data.get("metadata", {}),
             organization_id=event_data.get("organization_id"),
