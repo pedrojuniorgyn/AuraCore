@@ -6,9 +6,9 @@
  * 
  * @module app/(dashboard)/strategic/achievements
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Medal, Grid, Loader2 } from 'lucide-react';
+import { Trophy, Medal, Grid, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { PlayerProfile, type Player } from '@/components/strategic/PlayerProfile';
 import { AchievementBadge, type Badge } from '@/components/strategic/AchievementBadge';
 import { Leaderboard, type RankPlayer } from '@/components/strategic/Leaderboard';
@@ -25,24 +25,35 @@ interface AchievementsData {
 export default function AchievementsPage() {
   const [data, setData] = useState<AchievementsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'mine' | 'all'>('mine');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/strategic/achievements');
-        if (response.ok) {
-          const result = await response.json();
-          setData(result);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar conquistas:', error);
-      } finally {
-        setLoading(false);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/strategic/achievements');
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Erro desconhecido');
+        setError(`Erro ao carregar conquistas: ${response.status} - ${errorText}`);
+        return;
       }
-    };
-    fetchData();
+      
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      console.error('Erro ao carregar conquistas:', err);
+      setError(err instanceof Error ? err.message : 'Erro de conexão');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const displayBadges = view === 'mine' ? data?.unlockedBadges : data?.allBadges;
 
@@ -99,7 +110,33 @@ export default function AchievementsPage() {
             <p className="text-white/60">Carregando conquistas...</p>
           </div>
         </div>
-      ) : data && (
+      ) : error ? (
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center max-w-md">
+            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">Erro ao carregar</h2>
+            <p className="text-white/60 mb-6">{error}</p>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={fetchData}
+              className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-xl 
+                flex items-center gap-2 mx-auto transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Tentar novamente
+            </motion.button>
+          </div>
+        </div>
+      ) : !data ? (
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <Trophy className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">Nenhum dado encontrado</h2>
+            <p className="text-white/60">Não foi possível carregar as conquistas.</p>
+          </div>
+        </div>
+      ) : (
         <div className="space-y-8">
           {/* Player Profile */}
           <motion.div
