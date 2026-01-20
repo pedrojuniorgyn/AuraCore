@@ -188,7 +188,7 @@ export function StrategicMap({ goals, onGoalClick }: StrategicMapProps) {
   }, [onGoalClick]);
 
   return (
-    <div className="w-full h-[700px] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
+    <div className="w-full h-[700px] bg-gradient-to-br from-gray-900 via-gray-900 to-purple-900/20 rounded-xl overflow-hidden border border-white/10">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -206,8 +206,12 @@ export function StrategicMap({ goals, onGoalClick }: StrategicMapProps) {
           animated: true,
         }}
       >
-        <Background color="#374151" gap={20} />
-        <Controls className="bg-gray-800 border-gray-700 rounded-lg" />
+        <Background color="#ffffff10" gap={20} size={1} />
+        <Controls 
+          className="!bg-white/10 !border-white/10 !rounded-xl !backdrop-blur-sm
+            [&>button]:!bg-white/10 [&>button]:!border-white/10 
+            [&>button]:!text-white [&>button:hover]:!bg-white/20" 
+        />
         <MiniMap 
           nodeColor={(node) => {
             const data = node.data as { status?: string };
@@ -219,21 +223,24 @@ export function StrategicMap({ goals, onGoalClick }: StrategicMapProps) {
               default: return '#6b7280';
             }
           }}
-          className="bg-gray-800 border-gray-700 rounded-lg"
+          maskColor="rgba(0, 0, 0, 0.8)"
+          className="!bg-gray-800/80 !border-white/10 !rounded-xl !backdrop-blur-sm"
+          style={{ width: 150, height: 100 }}
         />
 
-        {/* Perspective Labels */}
+        {/* Perspective Labels Premium */}
         <Panel position="top-left" className="space-y-2">
           {Object.entries(perspectiveConfig).map(([key, config]) => {
             const Icon = config.icon;
             return (
               <div 
                 key={key}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/80 rounded-lg border border-gray-700"
+                className="flex items-center gap-2 px-3 py-2 bg-white/5 backdrop-blur-sm 
+                  rounded-lg border border-white/10 hover:bg-white/10 transition-colors"
                 style={{ borderLeftColor: config.color, borderLeftWidth: 3 }}
               >
                 <Icon className="w-4 h-4" style={{ color: config.color }} />
-                <span className="text-sm text-white">{config.label}</span>
+                <span className="text-sm text-white font-medium">{config.label}</span>
               </div>
             );
           })}

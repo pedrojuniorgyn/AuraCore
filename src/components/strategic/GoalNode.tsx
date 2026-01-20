@@ -2,7 +2,8 @@
 
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
-import { Target, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Target, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle } from 'lucide-react';
 
 type GoalStatus = 'ON_TRACK' | 'AT_RISK' | 'DELAYED' | 'NOT_STARTED' | 'COMPLETED';
 
@@ -23,36 +24,56 @@ const statusConfig: Record<GoalStatus, {
   borderColor: string; 
   textColor: string;
   label: string;
+  glow: string;
+  gradientFrom: string;
+  gradientTo: string;
+  pulse?: boolean;
 }> = {
   ON_TRACK: {
     bgColor: 'bg-emerald-900/50',
-    borderColor: 'border-emerald-500',
+    borderColor: 'border-emerald-500/60',
     textColor: 'text-emerald-400',
     label: 'No Prazo',
+    glow: 'shadow-emerald-500/20',
+    gradientFrom: 'from-emerald-500',
+    gradientTo: 'to-green-400',
   },
   AT_RISK: {
     bgColor: 'bg-amber-900/50',
-    borderColor: 'border-amber-500',
+    borderColor: 'border-amber-500/60',
     textColor: 'text-amber-400',
     label: 'Em Risco',
+    glow: 'shadow-amber-500/20',
+    gradientFrom: 'from-amber-500',
+    gradientTo: 'to-yellow-400',
   },
   DELAYED: {
     bgColor: 'bg-red-900/50',
-    borderColor: 'border-red-500',
+    borderColor: 'border-red-500/60',
     textColor: 'text-red-400',
     label: 'Atrasado',
+    glow: 'shadow-red-500/20',
+    gradientFrom: 'from-red-500',
+    gradientTo: 'to-rose-400',
+    pulse: true,
   },
   NOT_STARTED: {
     bgColor: 'bg-gray-800/50',
-    borderColor: 'border-gray-600',
+    borderColor: 'border-gray-600/60',
     textColor: 'text-gray-400',
     label: 'Não Iniciado',
+    glow: 'shadow-gray-500/10',
+    gradientFrom: 'from-gray-500',
+    gradientTo: 'to-gray-400',
   },
   COMPLETED: {
     bgColor: 'bg-blue-900/50',
-    borderColor: 'border-blue-500',
+    borderColor: 'border-blue-500/60',
     textColor: 'text-blue-400',
     label: 'Concluído',
+    glow: 'shadow-blue-500/20',
+    gradientFrom: 'from-blue-500',
+    gradientTo: 'to-cyan-400',
   },
 };
 
@@ -66,36 +87,43 @@ function GoalNodeComponent({ data, selected }: NodeProps<GoalNodeData>) {
   const config = statusConfig[data.status];
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.03, y: -2 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       className={`
-        min-w-[200px] max-w-[280px] rounded-lg border-2 p-3 shadow-lg 
-        transition-all duration-200
+        min-w-[200px] max-w-[280px] rounded-xl border-2 p-3 
+        backdrop-blur-xl cursor-pointer
         ${config.bgColor} ${config.borderColor}
-        ${selected ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-gray-900' : ''}
-        hover:shadow-xl hover:scale-[1.02]
+        ${selected ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-gray-900 shadow-lg shadow-purple-500/30' : ''}
+        ${config.pulse ? 'animate-pulse' : ''}
+        hover:shadow-xl ${config.glow}
       `}
     >
-      {/* Handles para conexões */}
+      {/* Handles estilizados */}
       <Handle
         type="target"
         position={Position.Top}
-        className="w-3 h-3 bg-purple-500 border-2 border-gray-900"
+        className="!w-3 !h-3 !bg-purple-500 !border-2 !border-purple-300"
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="w-3 h-3 bg-purple-500 border-2 border-gray-900"
+        className="!w-3 !h-3 !bg-purple-500 !border-2 !border-purple-300"
       />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Target className={`w-4 h-4 ${config.textColor}`} />
-          <span className="text-xs font-mono text-gray-400">{data.code}</span>
+          <span className="text-xs font-mono text-white/50 bg-white/10 px-2 py-0.5 rounded">
+            {data.code}
+          </span>
         </div>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor} border ${config.borderColor}`}>
-          {config.label}
-        </span>
+        <div className="flex items-center gap-1">
+          <ProgressTrend progress={data.progress} />
+          <Target className={`w-4 h-4 ${config.textColor}`} />
+        </div>
       </div>
 
       {/* Description */}
@@ -103,25 +131,18 @@ function GoalNodeComponent({ data, selected }: NodeProps<GoalNodeData>) {
         {data.description}
       </p>
 
-      {/* Progress Bar */}
+      {/* Progress Bar animado com gradiente */}
       <div className="mt-3">
         <div className="flex items-center justify-between text-xs mb-1">
           <span className="text-gray-400">Progresso</span>
-          <div className="flex items-center gap-1">
-            <ProgressTrend progress={data.progress} />
-            <span className={config.textColor}>{data.progress.toFixed(0)}%</span>
-          </div>
+          <span className={`font-bold ${config.textColor}`}>{data.progress.toFixed(0)}%</span>
         </div>
-        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div 
-            className={`h-full transition-all duration-500 ${
-              data.status === 'ON_TRACK' ? 'bg-emerald-500' :
-              data.status === 'AT_RISK' ? 'bg-amber-500' :
-              data.status === 'DELAYED' ? 'bg-red-500' :
-              data.status === 'COMPLETED' ? 'bg-blue-500' :
-              'bg-gray-500'
-            }`}
-            style={{ width: `${Math.min(data.progress, 100)}%` }}
+        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(data.progress, 100)}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+            className={`h-full rounded-full bg-gradient-to-r ${config.gradientFrom} ${config.gradientTo}`}
           />
         </div>
       </div>
@@ -130,7 +151,7 @@ function GoalNodeComponent({ data, selected }: NodeProps<GoalNodeData>) {
       <div className="mt-3 flex items-center justify-between text-xs">
         <div>
           <span className="text-gray-500">Atual: </span>
-          <span className="text-white">{data.currentValue} {data.unit}</span>
+          <span className="text-white font-medium">{data.currentValue} {data.unit}</span>
         </div>
         <div>
           <span className="text-gray-500">Meta: </span>
@@ -139,7 +160,7 @@ function GoalNodeComponent({ data, selected }: NodeProps<GoalNodeData>) {
       </div>
 
       {/* Footer */}
-      <div className="mt-3 pt-2 border-t border-gray-700 flex items-center justify-between text-xs">
+      <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-xs">
         <span className="text-gray-500">
           {data.kpiCount} KPI{data.kpiCount !== 1 ? 's' : ''}
         </span>
@@ -149,7 +170,7 @@ function GoalNodeComponent({ data, selected }: NodeProps<GoalNodeData>) {
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

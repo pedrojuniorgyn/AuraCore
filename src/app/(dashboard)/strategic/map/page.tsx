@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { 
   Card, 
   Title, 
@@ -18,6 +19,8 @@ import {
   Download,
   ZoomIn,
   ArrowLeft,
+  Plus,
+  Info,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
@@ -184,10 +187,14 @@ export default function StrategicMapPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6 space-y-6">
         {/* Header */}
         <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
             <div>
               <Flex alignItems="center" className="gap-3 mb-2">
                 <RippleButton 
@@ -196,12 +203,13 @@ export default function StrategicMapPage() {
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </RippleButton>
-                <GradientText className="text-4xl font-bold">
+                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <Map className="text-purple-400" />
                   Mapa Estratégico
-                </GradientText>
+                </h1>
               </Flex>
               <Text className="text-gray-400 ml-12">
-                Visualização interativa dos objetivos BSC
+                Visualização das relações causa-efeito BSC
               </Text>
             </div>
             <Flex className="gap-3">
@@ -213,8 +221,15 @@ export default function StrategicMapPage() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </RippleButton>
+              <RippleButton 
+                variant="default"
+                onClick={() => router.push('/strategic/goals/new')}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Objetivo
+              </RippleButton>
             </Flex>
-          </Flex>
+          </motion.div>
         </FadeIn>
 
         {/* Status Summary */}
@@ -319,33 +334,42 @@ export default function StrategicMapPage() {
           </Card>
         </FadeIn>
 
-        {/* Legend */}
+        {/* Legend Premium */}
         <FadeIn delay={0.3}>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <Title className="text-white text-sm mb-3">Legenda</Title>
-            <Flex className="gap-6">
-              <Flex className="gap-2" alignItems="center">
-                <div className="w-4 h-4 rounded bg-emerald-500" />
-                <Text className="text-gray-400 text-sm">No Prazo (80%+)</Text>
-              </Flex>
-              <Flex className="gap-2" alignItems="center">
-                <div className="w-4 h-4 rounded bg-amber-500" />
-                <Text className="text-gray-400 text-sm">Em Risco (50-79%)</Text>
-              </Flex>
-              <Flex className="gap-2" alignItems="center">
-                <div className="w-4 h-4 rounded bg-red-500" />
-                <Text className="text-gray-400 text-sm">Atrasado (&lt;50%)</Text>
-              </Flex>
-              <Flex className="gap-2" alignItems="center">
-                <div className="w-4 h-4 rounded bg-blue-500" />
-                <Text className="text-gray-400 text-sm">Concluído</Text>
-              </Flex>
-              <Flex className="gap-2" alignItems="center">
-                <div className="w-4 h-4 rounded bg-gray-500" />
-                <Text className="text-gray-400 text-sm">Não Iniciado</Text>
-              </Flex>
-            </Flex>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm
+              flex items-center gap-8 flex-wrap"
+          >
+            <span className="text-white/60 flex items-center gap-2">
+              <Info size={16} /> Legenda:
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-emerald-500" /> 
+              <span className="text-white/70 text-sm">No Prazo (≥80%)</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-amber-500" /> 
+              <span className="text-white/70 text-sm">Em Risco (50-79%)</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-500" /> 
+              <span className="text-white/70 text-sm">Atrasado (&lt;50%)</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-blue-500" /> 
+              <span className="text-white/70 text-sm">Concluído</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-gray-500" /> 
+              <span className="text-white/70 text-sm">Não Iniciado</span>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="w-8 h-0.5 bg-purple-500" /> 
+              <span className="text-white/70 text-sm">Relação causa-efeito</span>
+            </span>
+          </motion.div>
         </FadeIn>
       </div>
     </PageTransition>
