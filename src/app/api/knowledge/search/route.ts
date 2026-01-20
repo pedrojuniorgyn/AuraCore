@@ -196,11 +196,21 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
     );
   }
 
+  // Extrair legislation_types do query parameter (formato: ?legislation_types=ICMS,PIS_COFINS)
+  const legislationTypesParam = searchParams.get('legislation_types');
+  const legislationTypes = legislationTypesParam
+    ? legislationTypesParam
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : undefined;
+
   // Criar request fake para reutilizar POST
   const fakeBody = JSON.stringify({
     query,
     top_k: parseInt(searchParams.get('top_k') ?? '5', 10),
     min_score: parseFloat(searchParams.get('min_score') ?? '0.5'),
+    legislation_types: legislationTypes,
   });
 
   const fakeRequest = new NextRequest(request.url, {
@@ -317,7 +327,8 @@ function formatResults(queryResult: ChromaQueryResult, input: SearchInput): Sear
       // Filtrar por legislation_types se especificado
       if (input.legislation_types && input.legislation_types.length > 0) {
         const docType = metadata.legislationType as string | undefined;
-        if (docType && !input.legislation_types.includes(docType)) {
+        // Se não tem tipo OU tipo não está na lista, excluir
+        if (!docType || !input.legislation_types.includes(docType)) {
           continue;
         }
       }
