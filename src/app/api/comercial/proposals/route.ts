@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { commercialProposals } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET() {
@@ -91,7 +91,12 @@ export async function POST(request: Request) {
     const [proposal] = await db
       .select()
       .from(commercialProposals)
-      .where(eq(commercialProposals.id, Number(proposalId)));
+      .where(
+        and(
+          eq(commercialProposals.id, Number(proposalId)),
+          eq(commercialProposals.organizationId, ctx.organizationId)
+        )
+      );
 
     if (!proposal) {
       return NextResponse.json(
