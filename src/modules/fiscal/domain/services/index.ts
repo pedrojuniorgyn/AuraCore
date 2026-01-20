@@ -19,3 +19,18 @@ export * from './dacte';
 // NFe XML Parser (E8.3a)
 export { NfeXmlParser } from './NfeXmlParser';
 export type { ParsedNFe } from './NfeXmlParser';
+
+// CTe Builder Service (E8 Fase 2.1)
+export { CteBuilderService } from './CteBuilderService';
+export type {
+  CteBuilderInput,
+  CteXmlResult,
+  CteEmitente,
+  CteRemetente,
+  CteDestinatario,
+  CteEndereco,
+  CteIcms,
+  CteCarga,
+  CteDocumentoVinculado,
+  CteSeguro,
+} from './CteBuilderService';
