@@ -15,7 +15,7 @@
  * 100% failure rate when unimplemented methods are called.
  */
 
-import { container } from '@/shared/infrastructure/di/container';
+import { container } from 'tsyringe';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 
 // Ports

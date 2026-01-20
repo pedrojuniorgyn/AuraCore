@@ -37,29 +37,13 @@ import {
   type StatusColumn, 
   type ActionPlanItem 
 } from '@/components/strategic/ActionPlanKanban';
+import type { ActionPlanStatus } from '@/components/strategic/ActionPlanCard';
 
-type ActionPlanStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED' | 'CANCELLED';
-
-interface ActionPlanApiItem {
-  id: string;
-  code: string;
-  what: string;
-  why: string;
-  whereLocation: string;
-  whenStart: string;
-  whenEnd: string;
-  who: string;
-  whoUserId: string;
-  how: string;
-  howMuchAmount?: number | null;
-  howMuchCurrency?: string | null;
-  pdcaCycle: string;
-  completionPercent: number;
-  priority: string;
-  status: string;
-  isOverdue: boolean;
-  goalId?: string | null;
-}
+// Tipos compartilhados (Single Source of Truth)
+import type { 
+  ActionPlanApiItem, 
+  ActionPlansApiResponse,
+} from '@/types/strategic';
 
 export default function ActionPlansPage() {
   const router = useRouter();
@@ -68,40 +52,42 @@ export default function ActionPlansPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [pdcaFilter, setPdcaFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchActionPlans();
-  }, []);
-
-  const fetchActionPlans = async () => {
+  // fetchActionPlans é estável (sem dependencies que mudam)
+  // Isso garante que handleStatusChange também seja estável
+  const fetchActionPlans = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/strategic/action-plans?pageSize=200');
       if (response.ok) {
-        const data = await response.json();
-        const mapped: ActionPlanItem[] = data.items.map((item: ActionPlanApiItem) => {
-          const daysUntilDue = Math.ceil(
-            (new Date(item.whenEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-          );
-          return {
-            id: item.id,
-            code: item.code,
-            what: item.what,
-            who: item.who,
-            whereLocation: item.whereLocation,
-            whenStart: item.whenStart,
-            whenEnd: item.whenEnd,
-            how: item.how,
-            howMuchAmount: item.howMuchAmount,
-            howMuchCurrency: item.howMuchCurrency,
-            pdcaCycle: item.pdcaCycle as ActionPlanItem['pdcaCycle'],
-            completionPercent: item.completionPercent,
-            priority: item.priority as ActionPlanItem['priority'],
-            status: item.status as ActionPlanStatus,
-            isOverdue: item.isOverdue,
-            daysUntilDue,
-            followUpCount: 0, // Contagem de follow-ups (aguardando endpoint dedicado)
-          };
-        });
+        const data: ActionPlansApiResponse = await response.json();
+        // Filtrar DRAFT (não exibido no Kanban) e mapear para ActionPlanItem
+        const kanbanStatuses: ActionPlanStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'CANCELLED'];
+        const mapped: ActionPlanItem[] = data.items
+          .filter((item) => kanbanStatuses.includes(item.status as ActionPlanStatus))
+          .map((item: ActionPlanApiItem) => {
+            const daysUntilDue = Math.ceil(
+              (new Date(item.whenEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            );
+            return {
+              id: item.id,
+              code: item.code,
+              what: item.what,
+              who: item.who,
+              whereLocation: item.whereLocation,
+              whenStart: item.whenStart,
+              whenEnd: item.whenEnd,
+              how: item.how,
+              howMuchAmount: item.howMuchAmount,
+              howMuchCurrency: item.howMuchCurrency,
+              pdcaCycle: item.pdcaCycle as ActionPlanItem['pdcaCycle'],
+              completionPercent: item.completionPercent,
+              priority: item.priority as ActionPlanItem['priority'],
+              status: item.status as ActionPlanStatus, // Garantido pelo filter acima
+              isOverdue: item.isOverdue,
+              daysUntilDue,
+              followUpCount: 0, // Contagem de follow-ups (aguardando endpoint dedicado)
+            };
+          });
         setPlans(mapped);
       }
     } catch (error) {
@@ -109,7 +95,11 @@ export default function ActionPlansPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // ✅ Estável - sem dependencies
+
+  useEffect(() => {
+    fetchActionPlans();
+  }, [fetchActionPlans]);
 
   // Filtrar planos
   const filteredPlans = plans.filter(plan => {
@@ -137,6 +127,7 @@ export default function ActionPlansPage() {
     },
   ];
 
+  // handleStatusChange depende apenas de fetchActionPlans (estável)
   const handleStatusChange = useCallback(async (
     planId: string,
     newStatus: ActionPlanStatus
@@ -157,7 +148,7 @@ export default function ActionPlansPage() {
       console.error('Erro ao atualizar status:', error);
       throw error;
     }
-  }, [fetchActionPlans]);
+  }, [fetchActionPlans]); // ✅ fetchActionPlans é estável, então isso também é
 
   const handleCardClick = useCallback((planId: string) => {
     router.push(`/strategic/action-plans/${planId}`);

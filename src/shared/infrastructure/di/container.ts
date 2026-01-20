@@ -23,6 +23,9 @@ import { registerKnowledgeModule } from '@/modules/knowledge/infrastructure/di/K
 // Contracts Module (E-Agent-Fase-D5)
 import { registerContractsModule } from '@/modules/contracts/infrastructure/di/ContractsModule';
 
+// Integrations Module (E7.9 + E8)
+import { initializeIntegrationsModule } from '@/modules/integrations/infrastructure/di/IntegrationsModule';
+
 // Bank Statement Import (E-Agent-Fase-D6)
 import { ImportBankStatementUseCase, type IBankTransactionRepository } from '@/modules/financial/application/commands/import-bank-statement';
 import type { BankTransaction } from '@/modules/financial/domain/types';
@@ -89,6 +92,12 @@ class StubBankTransactionRepository implements IBankTransactionRepository {
 
 container.register(TOKENS.BankTransactionRepository, { useClass: StubBankTransactionRepository });
 container.register(TOKENS.ImportBankStatementUseCase, { useClass: ImportBankStatementUseCase });
+
+// ============================================================================
+// INTEGRATIONS MODULE (E7.9 + E8)
+// ============================================================================
+
+initializeIntegrationsModule();
 
 // ============================================================================
 // STRATEGIC MODULE (E10)

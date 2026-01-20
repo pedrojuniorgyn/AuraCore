@@ -22,11 +22,9 @@ import {
   Calendar,
   Users,
   Clock,
-  MapPin,
   CheckCircle,
   Circle,
   PlayCircle,
-  PauseCircle,
   MessageSquare,
   Plus,
   User,
@@ -37,48 +35,13 @@ import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
 
-type MeetingStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-type MeetingType = 'BOARD' | 'DIRECTOR' | 'MANAGER' | 'TACTICAL' | 'EMERGENCY';
-
-interface AgendaItem {
-  id: string;
-  title: string;
-  presenter?: string;
-  duration: number;
-  isCompleted: boolean;
-  order: number;
-}
-
-interface Decision {
-  id: string;
-  description: string;
-  responsibleUserId: string;
-  responsibleName?: string;
-  deadline?: string;
-  status: string;
-}
-
-interface MeetingDetail {
-  id: string;
-  strategyId?: string;
-  meetingType: MeetingType;
-  title: string;
-  description?: string;
-  scheduledAt: string;
-  expectedDuration: number;
-  startedAt?: string;
-  endedAt?: string;
-  actualDuration?: number;
-  participants: string[];
-  agendaItems: AgendaItem[];
-  decisions: Decision[];
-  status: MeetingStatus;
-  isOverdue: boolean;
-  facilitatorUserId: string;
-  facilitatorName?: string | null;
-  createdBy: string;
-  createdAt: string;
-}
+// Tipos compartilhados (Single Source of Truth)
+import type { 
+  MeetingListItem, 
+  MeetingDetail, 
+  MeetingType,
+  MeetingsApiResponse,
+} from '@/types/strategic';
 
 // Safelist pattern
 const STATUS_STYLES = {
@@ -128,13 +91,14 @@ export default function MeetingDetailPage({
       // Busca meeting da lista (endpoint de detalhe: GET /api/strategic/war-room/meetings/[id])
       const response = await fetch('/api/strategic/war-room/meetings?pageSize=100');
       if (response.ok) {
-        const data = await response.json();
-        const found = data.items.find((m: { id: string }) => m.id === id);
+        const data: MeetingsApiResponse = await response.json();
+        const found: MeetingListItem | undefined = data.items.find((m) => m.id === id);
         if (found) {
-          // Simular dados completos até API de detalhe estar disponível
+          // Construir MeetingDetail a partir de MeetingListItem
+          // found já tem facilitatorName (vem da API via lookup)
           const meetingDetail: MeetingDetail = {
             ...found,
-            facilitatorName: found.facilitatorName ?? null, // Explicitamente tratar null
+            // Campos adicionais para detalhe (mock até API de detalhe estar disponível)
             participants: [],
             agendaItems: [
               { id: '1', title: 'Abertura e contextualização', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 1 },
