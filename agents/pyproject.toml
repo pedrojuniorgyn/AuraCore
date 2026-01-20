@@ -58,6 +58,10 @@ dependencies = [
     
     # RAG / Knowledge Base - Embeddings
     "openai>=1.0.0",
+    
+    # Auth
+    "PyJWT>=2.8.0",
+    "passlib[bcrypt]>=1.7.4",
 ]
 
 [project.optional-dependencies]

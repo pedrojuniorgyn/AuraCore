@@ -21,6 +21,7 @@ from src.api import observability as observability_api
 from src.api import webhooks as webhooks_api
 from src.api import tasks as tasks_api
 from src.api import locales as locales_api
+from src.api import auth as auth_api
 from src.core.orchestrator import get_orchestrator
 from src.services.webhooks import get_webhook_service
 from src.services.tasks import get_task_queue, TaskWorker
@@ -101,6 +102,10 @@ TAGS_METADATA = [
     {
         "name": "Locales",
         "description": "Internacionalização (i18n)",
+    },
+    {
+        "name": "Auth",
+        "description": "Autenticação e autorização (API Keys, JWT)",
     },
 ]
 
@@ -230,6 +235,7 @@ app.include_router(webhooks_api.router, prefix="/api/webhooks", tags=["Webhooks"
 app.include_router(tasks_api.router, prefix="/api/tasks", tags=["Tasks"])
 app.include_router(observability_api.router, tags=["Observability"])
 app.include_router(locales_api.router, prefix="/api/locales", tags=["Locales"])
+app.include_router(auth_api.router, prefix="/v1", tags=["Auth"])
 
 
 # ===== CUSTOM DOCS =====
@@ -271,18 +277,24 @@ def custom_openapi():
         tags=TAGS_METADATA,
     )
     
-    # Adicionar security scheme
+    # Adicionar security schemes
     openapi_schema["components"]["securitySchemes"] = {
         "ApiKeyAuth": {
             "type": "apiKey",
             "in": "header",
             "name": "X-API-Key",
             "description": "API Key para autenticação"
+        },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT Token para autenticação"
         }
     }
     
-    # Aplicar security globalmente
-    openapi_schema["security"] = [{"ApiKeyAuth": []}]
+    # Aplicar security globalmente (API Key OU Bearer)
+    openapi_schema["security"] = [{"ApiKeyAuth": []}, {"BearerAuth": []}]
     
     app.openapi_schema = openapi_schema
     return app.openapi_schema
