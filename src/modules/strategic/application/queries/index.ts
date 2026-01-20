@@ -8,3 +8,4 @@ export { GetStrategyQuery, type GetStrategyInput, type StrategyDTO, type GoalDTO
 export { ListGoalsQuery, type ListGoalsInput, type GoalListItemDTO, type ListGoalsOutput, type IListGoalsUseCase } from './ListGoalsQuery';
 export { GetKpiHistoryQuery, type GetKpiHistoryInput, type KpiHistoryPointDTO, type KpiHistoryOutput, type IGetKpiHistoryUseCase } from './GetKpiHistoryQuery';
 export { GetWarRoomDashboardQuery, type GetWarRoomDashboardInput, type WarRoomDashboardOutput, type IGetWarRoomDashboardUseCase } from './GetWarRoomDashboardQuery';
+export { GetDashboardDataQuery, type GetDashboardDataInput, type DashboardDataOutput, type IGetDashboardDataUseCase } from './GetDashboardDataQuery';

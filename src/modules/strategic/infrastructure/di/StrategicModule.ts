@@ -37,6 +37,7 @@ import { GetStrategyQuery } from '../../application/queries/GetStrategyQuery';
 import { ListGoalsQuery } from '../../application/queries/ListGoalsQuery';
 import { GetKpiHistoryQuery } from '../../application/queries/GetKpiHistoryQuery';
 import { GetWarRoomDashboardQuery } from '../../application/queries/GetWarRoomDashboardQuery';
+import { GetDashboardDataQuery } from '../../application/queries/GetDashboardDataQuery';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -137,6 +138,11 @@ export function registerStrategicModule(): void {
     useClass: CreateSwotItemCommand,
   });
   
+  // Use Cases - Queries (Dashboard)
+  container.register(STRATEGIC_TOKENS.GetDashboardDataUseCase, {
+    useClass: GetDashboardDataQuery,
+  });
+  
   // Use Cases - Queries (Fase F7 - War Room)
   container.register(STRATEGIC_TOKENS.GenerateAgendaUseCase, {
     useClass: GenerateAgendaUseCase,
@@ -158,5 +164,5 @@ export function registerStrategicModule(): void {
     useClass: GetWarRoomDashboardQuery,
   });
   
-  console.log('[Strategic Module] DI registrado: 8 repositories + 17 use cases + 2 integrations');
+  console.log('[Strategic Module] DI registrado: 8 repositories + 18 use cases + 2 integrations');
 }

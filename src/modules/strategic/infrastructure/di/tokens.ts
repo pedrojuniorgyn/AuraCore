@@ -35,6 +35,7 @@ export const STRATEGIC_TOKENS = {
   CreateSwotItemUseCase: Symbol.for('ICreateSwotItemUseCase'),
   
   // Use Cases - Queries
+  GetDashboardDataUseCase: Symbol.for('IGetDashboardDataUseCase'),
   GetStrategyUseCase: Symbol.for('IGetStrategyUseCase'),
   ListGoalsUseCase: Symbol.for('IListGoalsUseCase'),
   GetBSCDashboardUseCase: Symbol.for('IGetBSCDashboardUseCase'),
