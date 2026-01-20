@@ -32,6 +32,7 @@ export const STRATEGIC_TOKENS = {
   ConvertIdeaUseCase: Symbol.for('IConvertIdeaUseCase'),
   ScheduleMeetingUseCase: Symbol.for('IScheduleMeetingUseCase'),
   RecordDecisionUseCase: Symbol.for('IRecordDecisionUseCase'),
+  CreateSwotItemUseCase: Symbol.for('ICreateSwotItemUseCase'),
   
   // Use Cases - Queries
   GetStrategyUseCase: Symbol.for('IGetStrategyUseCase'),
@@ -43,6 +44,7 @@ export const STRATEGIC_TOKENS = {
   ListIdeasUseCase: Symbol.for('IListIdeasUseCase'),
   GetWarRoomDashboardUseCase: Symbol.for('IGetWarRoomDashboardUseCase'),
   GenerateAgendaUseCase: Symbol.for('IGenerateAgendaUseCase'),
+  GetKpiHistoryUseCase: Symbol.for('IGetKpiHistoryUseCase'),
   
   // Domain Services
   GoalCascadeService: Symbol.for('IGoalCascadeService'),

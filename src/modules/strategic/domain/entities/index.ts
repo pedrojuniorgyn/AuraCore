@@ -13,3 +13,5 @@ export { StandardProcedure, type StandardProcedureStatus } from './StandardProce
 export { ControlItem, type ControlItemStatus, type MeasurementFrequency } from './ControlItem';
 export { VerificationItem, type VerificationItemStatus, type VerificationFrequency } from './VerificationItem';
 export { Anomaly, type AnomalyStatus, type AnomalySeverity, type AnomalySource } from './Anomaly';
+export { SwotItem, type SwotQuadrant, type SwotStatus, type SwotCategory } from './SwotItem';
+export { WarRoomMeeting, type MeetingType, type MeetingStatus } from './WarRoomMeeting';

@@ -14,3 +14,4 @@ export { SyncKPIValuesUseCase, type SyncKPIResult, type SyncKPIValuesOutput, typ
 export { CreateActionPlanUseCase, type CreateActionPlanInput, type CreateActionPlanOutput, type ICreateActionPlanUseCase } from './CreateActionPlanUseCase';
 export { AdvancePDCACycleUseCase, type AdvancePDCACycleInput, type AdvancePDCACycleOutput, type IAdvancePDCACycleUseCase } from './AdvancePDCACycleUseCase';
 export { ExecuteFollowUpUseCase, type ExecuteFollowUpInput, type ExecuteFollowUpOutput, type IExecuteFollowUpUseCase } from './ExecuteFollowUpUseCase';
+export { CreateSwotItemCommand, type CreateSwotItemInput, type CreateSwotItemOutput, type ICreateSwotItemUseCase } from './CreateSwotItemCommand';

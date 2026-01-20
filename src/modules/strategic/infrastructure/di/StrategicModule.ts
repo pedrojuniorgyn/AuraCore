@@ -14,6 +14,8 @@ import { DrizzleActionPlanRepository } from '../persistence/repositories/Drizzle
 import { DrizzleKPIRepository } from '../persistence/repositories/DrizzleKPIRepository';
 import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIdeaBoxRepository';
 import { DrizzleActionPlanFollowUpRepository } from '../persistence/repositories/DrizzleActionPlanFollowUpRepository';
+import { DrizzleSwotRepository } from '../persistence/repositories/DrizzleSwotRepository';
+import { DrizzleWarRoomMeetingRepository } from '../persistence/repositories/DrizzleWarRoomMeetingRepository';
 
 // Use Cases - Commands
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
@@ -27,9 +29,14 @@ import { SyncKPIValuesUseCase } from '../../application/commands/SyncKPIValuesUs
 import { CreateActionPlanUseCase } from '../../application/commands/CreateActionPlanUseCase';
 import { AdvancePDCACycleUseCase } from '../../application/commands/AdvancePDCACycleUseCase';
 import { ExecuteFollowUpUseCase } from '../../application/commands/ExecuteFollowUpUseCase';
+import { CreateSwotItemCommand } from '../../application/commands/CreateSwotItemCommand';
 
 // Use Cases - Queries
 import { GenerateAgendaUseCase } from '../../application/queries/GenerateAgendaUseCase';
+import { GetStrategyQuery } from '../../application/queries/GetStrategyQuery';
+import { ListGoalsQuery } from '../../application/queries/ListGoalsQuery';
+import { GetKpiHistoryQuery } from '../../application/queries/GetKpiHistoryQuery';
+import { GetWarRoomDashboardQuery } from '../../application/queries/GetWarRoomDashboardQuery';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -59,6 +66,14 @@ export function registerStrategicModule(): void {
   
   container.register(STRATEGIC_TOKENS.ActionPlanFollowUpRepository, {
     useClass: DrizzleActionPlanFollowUpRepository,
+  });
+  
+  container.register(STRATEGIC_TOKENS.SwotAnalysisRepository, {
+    useClass: DrizzleSwotRepository,
+  });
+  
+  container.register(STRATEGIC_TOKENS.WarRoomMeetingRepository, {
+    useClass: DrizzleWarRoomMeetingRepository,
   });
   
   // Use Cases - Commands (Fase F2)
@@ -118,14 +133,30 @@ export function registerStrategicModule(): void {
     useClass: ExecuteFollowUpUseCase,
   });
   
+  container.register(STRATEGIC_TOKENS.CreateSwotItemUseCase, {
+    useClass: CreateSwotItemCommand,
+  });
+  
   // Use Cases - Queries (Fase F7 - War Room)
   container.register(STRATEGIC_TOKENS.GenerateAgendaUseCase, {
     useClass: GenerateAgendaUseCase,
   });
   
-  // NOTA: Demais repositories serão registrados nas próximas fases
-  // - WarRoomMeetingRepository
-  // - SwotAnalysisRepository
+  container.register(STRATEGIC_TOKENS.GetStrategyUseCase, {
+    useClass: GetStrategyQuery,
+  });
   
-  console.log('[Strategic Module] DI registrado: 6 repositories + 12 use cases + 2 integrations');
+  container.register(STRATEGIC_TOKENS.ListGoalsUseCase, {
+    useClass: ListGoalsQuery,
+  });
+  
+  container.register(STRATEGIC_TOKENS.GetKpiHistoryUseCase, {
+    useClass: GetKpiHistoryQuery,
+  });
+  
+  container.register(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, {
+    useClass: GetWarRoomDashboardQuery,
+  });
+  
+  console.log('[Strategic Module] DI registrado: 8 repositories + 17 use cases + 2 integrations');
 }

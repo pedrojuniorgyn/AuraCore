@@ -10,3 +10,5 @@ export type { IActionPlanFollowUpRepository, FollowUpFilter } from './IActionPla
 export type { IIdeaBoxRepository, IdeaBoxFilter } from './IIdeaBoxRepository';
 export type { IKPIRepository, KPIFilter } from './IKPIRepository';
 export type { IStandardProcedureRepository, StandardProcedureFilter } from './IStandardProcedureRepository';
+export type { ISwotAnalysisRepository, SwotAnalysisFilter } from './ISwotAnalysisRepository';
+export type { IWarRoomMeetingRepository, WarRoomMeetingFilter } from './IWarRoomMeetingRepository';

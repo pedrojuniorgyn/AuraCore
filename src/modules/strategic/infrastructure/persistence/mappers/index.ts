@@ -10,3 +10,5 @@ export { ActionPlanFollowUpMapper } from './ActionPlanFollowUpMapper';
 export { IdeaBoxMapper } from './IdeaBoxMapper';
 export { KPIMapper } from './KPIMapper';
 export { StandardProcedureMapper } from './StandardProcedureMapper';
+export { SwotMapper } from './SwotMapper';
+export { WarRoomMeetingMapper } from './WarRoomMeetingMapper';
