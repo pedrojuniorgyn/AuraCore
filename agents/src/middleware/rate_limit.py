@@ -101,7 +101,24 @@ class RateLimiter:
         key: str,
         window_size: int
     ) -> None:
-        """Registra request na janela."""
+        """Registra request usando operação atômica quando possível."""
+        # Verificar se estamos usando Redis diretamente
+        if hasattr(cache, '_use_local') and not cache._use_local:
+            try:
+                # Redis: usar INCR atômico para evitar race condition
+                client = await cache._get_client()
+                full_key = cache._make_key(key)
+                
+                pipe = client.pipeline()
+                pipe.incr(full_key)
+                pipe.expire(full_key, window_size)
+                await pipe.execute()
+                return
+            except Exception as e:
+                logger.error("rate_limit_atomic_incr_error", error=str(e))
+                # Fallback para método não-atômico
+        
+        # Fallback local (não-atômico, aceito em dev/fallback)
         count_str = await cache.get(key)
         count = int(count_str) if count_str else 0
         await cache.set(key, str(count + 1), ttl=window_size)

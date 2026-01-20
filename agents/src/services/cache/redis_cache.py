@@ -253,15 +253,18 @@ class RedisCache:
         full_pattern = self._make_key(pattern)
         
         if self._use_local:
-            # Local cache: delete all matching keys
+            # Local cache: usar full_pattern para consistência com Redis
             count = 0
+            # Usar full_pattern (com prefixo) para match correto
+            match_str = full_pattern.replace("*", "")
             keys_to_delete = [
-                k for k in self._local_cache._cache.keys() 
-                if pattern.replace("*", "") in k
+                k for k in list(self._local_cache._cache.keys())
+                if match_str in k
             ]
-            for k in keys_to_delete:
-                del self._local_cache._cache[k]
+            for key in keys_to_delete:
+                del self._local_cache._cache[key]
                 count += 1
+            logger.info("cache_delete_pattern_local", pattern=pattern, count=count)
             return count
         
         try:
