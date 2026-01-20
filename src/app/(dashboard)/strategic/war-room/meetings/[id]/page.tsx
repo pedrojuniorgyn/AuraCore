@@ -6,7 +6,7 @@
  * 
  * @module app/(dashboard)/strategic/war-room/meetings/[id]
  */
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Card, 
@@ -121,47 +121,46 @@ export default function MeetingDetailPage({
   const [loading, setLoading] = useState(true);
   const [meeting, setMeeting] = useState<MeetingDetail | null>(null);
 
-  useEffect(() => {
-    const loadMeeting = async () => {
-      setLoading(true);
-      try {
-        // TODO: Implementar API de detalhe
-        // Por enquanto, usar a lista e filtrar
-        const response = await fetch('/api/strategic/war-room/meetings?pageSize=100');
-        if (response.ok) {
-          const data = await response.json();
-          const found = data.items.find((m: { id: string }) => m.id === id);
-          if (found) {
-            // Simular dados completos
-            setMeeting({
-              ...found,
-              participants: [],
-              agendaItems: [
-                { id: '1', title: 'Abertura e contextualização', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 1 },
-                { id: '2', title: 'Revisão de KPIs críticos', presenter: 'Analista', duration: 30, isCompleted: false, order: 2 },
-                { id: '3', title: 'Status dos ciclos PDCA', presenter: 'Gerente', duration: 20, isCompleted: false, order: 3 },
-                { id: '4', title: 'Planos de ação atrasados', presenter: 'Coordenador', duration: 20, isCompleted: false, order: 4 },
-                { id: '5', title: 'Encerramento e próximos passos', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 5 },
-              ],
-              decisions: [],
-            });
-          } else {
-            router.push('/strategic/war-room/meetings');
-          }
+  const loadMeetingData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // TODO: Implementar API de detalhe /api/strategic/war-room/meetings/[id]
+      // Por enquanto, usar a lista e filtrar
+      const response = await fetch('/api/strategic/war-room/meetings?pageSize=100');
+      if (response.ok) {
+        const data = await response.json();
+        const found = data.items.find((m: { id: string }) => m.id === id);
+        if (found) {
+          // Simular dados completos até API de detalhe estar disponível
+          setMeeting({
+            ...found,
+            participants: [],
+            agendaItems: [
+              { id: '1', title: 'Abertura e contextualização', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 1 },
+              { id: '2', title: 'Revisão de KPIs críticos', presenter: 'Analista', duration: 30, isCompleted: false, order: 2 },
+              { id: '3', title: 'Status dos ciclos PDCA', presenter: 'Gerente', duration: 20, isCompleted: false, order: 3 },
+              { id: '4', title: 'Planos de ação atrasados', presenter: 'Coordenador', duration: 20, isCompleted: false, order: 4 },
+              { id: '5', title: 'Encerramento e próximos passos', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 5 },
+            ],
+            decisions: [],
+          });
+        } else {
+          router.push('/strategic/war-room/meetings');
         }
-      } catch (error) {
-        console.error('Erro ao carregar reunião:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-    loadMeeting();
+    } catch (error) {
+      console.error('Erro ao carregar reunião:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [id, router]);
 
-  const refreshMeeting = async () => {
-    setLoading(true);
-    // Recarregar
-    setLoading(false);
+  useEffect(() => {
+    loadMeetingData();
+  }, [loadMeetingData]);
+
+  const refreshMeeting = () => {
+    loadMeetingData();
   };
 
   if (loading) {
@@ -282,7 +281,9 @@ export default function MeetingDetailPage({
                       <User className="w-5 h-5 text-purple-400" />
                       <div>
                         <Text className="text-gray-400 text-xs">Facilitador</Text>
-                        <Text className="text-white">Facilitador</Text>
+                        <Text className="text-white">
+                          {meeting.facilitatorUserId ? `ID: ${meeting.facilitatorUserId.slice(0, 8)}...` : 'Não definido'}
+                        </Text>
                       </div>
                     </Flex>
 

@@ -149,7 +149,6 @@ export default function MeetingsPage() {
 
     return (
       <div
-        key={meeting.id}
         onClick={() => router.push(`/strategic/war-room/meetings/${meeting.id}`)}
         className="p-4 bg-gray-800 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-750 hover:border-gray-600 transition-all"
       >
@@ -297,7 +296,9 @@ export default function MeetingsPage() {
                     <Badge color="purple">{inProgressMeetings.length}</Badge>
                   </Flex>
                   <div className="space-y-3">
-                    {inProgressMeetings.map(renderMeetingCard)}
+                    {inProgressMeetings.map((m) => (
+                      <div key={m.id}>{renderMeetingCard(m)}</div>
+                    ))}
                   </div>
                 </Card>
               </FadeIn>
@@ -313,7 +314,9 @@ export default function MeetingsPage() {
                 </Flex>
                 {upcomingMeetings.length > 0 ? (
                   <div className="space-y-3">
-                    {upcomingMeetings.map(renderMeetingCard)}
+                    {upcomingMeetings.map((m) => (
+                      <div key={m.id}>{renderMeetingCard(m)}</div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
@@ -336,7 +339,9 @@ export default function MeetingsPage() {
                     <Badge color="gray">{pastMeetings.length}</Badge>
                   </Flex>
                   <div className="space-y-3">
-                    {pastMeetings.slice(0, 10).map(renderMeetingCard)}
+                    {pastMeetings.slice(0, 10).map((m) => (
+                      <div key={m.id}>{renderMeetingCard(m)}</div>
+                    ))}
                   </div>
                   {pastMeetings.length > 10 && (
                     <Text className="text-gray-500 text-center mt-4">
