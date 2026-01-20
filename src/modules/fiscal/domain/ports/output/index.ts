@@ -59,3 +59,6 @@ export type {
 export * from './IEmbedder';
 export * from './IVectorStore';
 export * from './IAnswerGenerator';
+
+// ===== DACTE GENERATOR (E8 Fase 2.3) =====
+export type { IDacteGenerator } from './IDacteGenerator';

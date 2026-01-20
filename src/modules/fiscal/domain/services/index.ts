@@ -34,3 +34,27 @@ export type {
   CteDocumentoVinculado,
   CteSeguro,
 } from './CteBuilderService';
+
+// DACTE Generator Service (E8 Fase 2.3)
+export { DacteGeneratorService } from './DacteGeneratorService';
+export type {
+  DacteInput,
+  DacteData,
+  DacteEmitente,
+  DacteEndereco,
+  DacteParticipante,
+  DacteIcms,
+  DacteDocumentoOriginario,
+  DacteComponenteValor,
+  DacteHeader,
+  DacteBarcodeData,
+  DacteEmitenteSection,
+  DacteParticipanteSection,
+  DactePercursoSection,
+  DacteComponentesSection,
+  DacteImpostosSection,
+  DacteCargaSection,
+  DacteDocumentosSection,
+  DacteObservacoesSection,
+  DacteFooter,
+} from './DacteGeneratorService';

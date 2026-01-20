@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 
 export type NotificationType = "SUCCESS" | "ERROR" | "WARNING" | "INFO" | "CRITICAL" | "ACHIEVEMENT";
@@ -22,6 +22,9 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [toastNotification, setToastNotification] = useState<Notification | null>(null);
+  
+  // FIX: Rastrear notificações já mostradas como toast para evitar loop infinito
+  const toastedIdsRef = useRef<Set<number>>(new Set());
 
   const fetchNotifications = useCallback(async () => {
     if (!session?.user) return;
@@ -99,6 +102,8 @@ export function useNotifications() {
           }))
         );
         setUnreadCount(0);
+        // FIX: Limpar toasted IDs ao marcar todas como lidas
+        toastedIdsRef.current.clear();
       }
     } catch (error) {
       console.error("Error marking all as read:", error);
@@ -116,6 +121,9 @@ export function useNotifications() {
         return prev.filter((n) => n.id !== notificationId);
       });
       
+      // FIX: Remover do Set quando dismissada
+      toastedIdsRef.current.delete(notificationId);
+      
       // TODO: Implementar endpoint DELETE /api/notifications/:id se necessário
       await fetch(`/api/notifications/${notificationId}`, { method: "DELETE" });
     } catch (error) {
@@ -127,6 +135,9 @@ export function useNotifications() {
     try {
       setNotifications([]);
       setUnreadCount(0);
+      
+      // FIX: Limpar todos os toasted IDs
+      toastedIdsRef.current.clear();
       
       // TODO: Implementar endpoint DELETE /api/notifications se necessário
       await fetch("/api/notifications", { method: "DELETE" });
@@ -154,15 +165,30 @@ export function useNotifications() {
     }
   }, [session, fetchNotifications, fetchUnreadCount]);
 
-  // Mostrar toast para notificações críticas não lidas
+  // FIX: Mostrar toast apenas para notificações NOVAS que ainda não foram toasted
   useEffect(() => {
     const critical = notifications.find(
-      (n) => (n.type === "CRITICAL" || n.type === "ERROR") && n.isRead === 0
+      (n) => 
+        (n.type === "CRITICAL" || n.type === "ERROR") && 
+        n.isRead === 0 && 
+        !toastedIdsRef.current.has(n.id)
     );
-    if (critical && !toastNotification) {
+    
+    if (critical) {
+      toastedIdsRef.current.add(critical.id);
       setToastNotification(critical);
     }
-  }, [notifications, toastNotification]);
+  }, [notifications]);
+
+  // FIX: Limpar toasted IDs quando notificações são removidas
+  useEffect(() => {
+    const currentIds = new Set(notifications.map((n) => n.id));
+    toastedIdsRef.current.forEach((id) => {
+      if (!currentIds.has(id)) {
+        toastedIdsRef.current.delete(id);
+      }
+    });
+  }, [notifications]);
 
   return {
     notifications,
