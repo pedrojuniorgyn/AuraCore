@@ -8,18 +8,17 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Card, 
-  Title, 
   Text, 
+  Title,
   Flex, 
-  Metric,
   Select,
   SelectItem,
 } from '@tremor/react';
+import { RefreshCw } from 'lucide-react';
 import { 
-  RefreshCw,
-  ArrowLeft,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -27,11 +26,14 @@ import {
   Plus,
   Filter,
   Layers,
+  Download,
+  TrendingUp,
 } from 'lucide-react';
 
-import { GradientText } from '@/components/ui/magic-components';
-import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
+import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 import { 
   ActionPlanKanban, 
   type StatusColumn, 
@@ -165,117 +167,97 @@ export default function ActionPlansPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="space-y-6 p-2">
         {/* Header */}
-        <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/dashboard')}
+        <PageHeader
+          icon="📋"
+          title="Planos de Ação 5W2H"
+          description="Gerencie planos de ação com metodologia 5W2H"
+          recordCount={stats.total}
+          showBack
+          onRefresh={fetchActionPlans}
+          isLoading={loading}
+          actions={
+            <>
+              <Link href="/strategic/pdca">
+                <RippleButton
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <Layers className="w-4 h-4 mr-2" />
+                  Ver por PDCA
                 </RippleButton>
-                <GradientText className="text-4xl font-bold">
-                  Planos de Ação 5W2H
-                </GradientText>
-              </Flex>
-              <Text className="text-gray-400 ml-12">
-                Gerencie planos de ação com metodologia 5W2H
-              </Text>
-            </div>
-            <Flex className="gap-3">
-              <RippleButton 
-                variant="outline"
-                onClick={() => router.push('/strategic/pdca')}
+              </Link>
+              <RippleButton
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
               >
-                <Layers className="w-4 h-4 mr-2" />
-                Ver por PDCA
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </RippleButton>
-              <RippleButton 
-                variant="outline" 
-                onClick={() => router.push('/strategic/action-plans/new')}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Plano
-              </RippleButton>
-              <RippleButton 
-                variant="outline" 
-                onClick={fetchActionPlans}
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </RippleButton>
-            </Flex>
-          </Flex>
-        </FadeIn>
+              <Link href="/strategic/action-plans/new">
+                <RippleButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Plano
+                </RippleButton>
+              </Link>
+            </>
+          }
+        />
 
-        {/* Stats Cards */}
-        <FadeIn delay={0.1}>
+        {/* Stats Cards - Enterprise Pattern */}
+        <StaggerContainer>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <ClipboardList className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Total</Text>
-                  <Metric className="text-white">{stats.total}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-gray-500/20">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Pendentes</Text>
-                  <Metric className="text-gray-300">{stats.pending}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <RefreshCw className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Em Andamento</Text>
-                  <Metric className="text-blue-400">{stats.inProgress}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/20">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Concluídos</Text>
-                  <Metric className="text-emerald-400">{stats.completed}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-red-500/20">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Atrasados</Text>
-                  <Metric className="text-red-400">{stats.overdue}</Metric>
-                </div>
-              </Flex>
-            </Card>
+            <EnterpriseMetricCard
+              icon={<ClipboardList className="h-6 w-6 text-purple-400" />}
+              badge="Total"
+              title="Total de Planos"
+              value={stats.total}
+              subtitle="planos cadastrados"
+              variant="purple"
+              delay={0.2}
+            />
+            <EnterpriseMetricCard
+              icon={<Clock className="h-6 w-6 text-gray-400" />}
+              badge="Pendente"
+              badgeEmoji="⏳"
+              title="Pendentes"
+              value={stats.pending}
+              subtitle="aguardando início"
+              variant="blue"
+              delay={0.3}
+            />
+            <EnterpriseMetricCard
+              icon={<TrendingUp className="h-6 w-6 text-blue-400" />}
+              badge="Ativo"
+              badgeEmoji="🔄"
+              title="Em Andamento"
+              value={stats.inProgress}
+              subtitle="em execução"
+              variant="blue"
+              delay={0.4}
+            />
+            <EnterpriseMetricCard
+              icon={<CheckCircle className="h-6 w-6 text-green-400" />}
+              badge="Concluído"
+              badgeEmoji="✅"
+              title="Concluídos"
+              value={stats.completed}
+              subtitle="finalizados"
+              variant="green"
+              delay={0.5}
+            />
+            <EnterpriseMetricCard
+              icon={<AlertTriangle className="h-6 w-6 text-red-400" />}
+              badge="Atrasado"
+              badgeEmoji="❌"
+              title="Atrasados"
+              value={stats.overdue}
+              subtitle="ação urgente"
+              variant="red"
+              delay={0.6}
+              isUrgent={stats.overdue > 0}
+            />
           </div>
-        </FadeIn>
+        </StaggerContainer>
 
         {/* Filters */}
         <FadeIn delay={0.15}>

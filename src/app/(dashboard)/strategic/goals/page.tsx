@@ -1,20 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AllEnterpriseModule } from 'ag-grid-enterprise';
 
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-import { Card, Title, Text, Flex, Badge } from '@tremor/react';
-import { Target, Plus, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Target, Plus, Download, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
-import { GradientText } from '@/components/ui/magic-components';
-import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
+import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -84,11 +85,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchGoals();
-  }, []);
-
-  const fetchGoals = async () => {
+  const fetchGoals = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/strategic/goals?pageSize=100');
@@ -101,7 +98,20 @@ export default function GoalsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
+
+  // Summary calculations
+  const summary = useMemo(() => ({
+    total: goals.length,
+    onTrack: goals.filter(g => g.status === 'ON_TRACK').length,
+    atRisk: goals.filter(g => g.status === 'AT_RISK').length,
+    delayed: goals.filter(g => g.status === 'DELAYED').length,
+    completed: goals.filter(g => g.status === 'COMPLETED').length,
+  }), [goals]);
 
   const columnDefs: ColDef<Goal>[] = [
     { 
@@ -168,42 +178,97 @@ export default function GoalsPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="space-y-6 p-2">
         {/* Header */}
-        <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/dashboard')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </RippleButton>
-                <GradientText className="text-4xl font-bold">
-                  Objetivos Estratégicos
-                </GradientText>
-              </Flex>
-              <Text className="text-gray-400 ml-12">
-                Gestão de metas e objetivos do BSC
-              </Text>
-            </div>
-            <Flex className="gap-3">
-              <RippleButton 
-                variant="outline" 
-                onClick={fetchGoals}
-                disabled={loading}
+        <PageHeader
+          icon="🎯"
+          title="Objetivos Estratégicos"
+          description="Gestão de metas e objetivos do BSC"
+          recordCount={goals.length}
+          showBack
+          onRefresh={fetchGoals}
+          isLoading={loading}
+          actions={
+            <>
+              <RippleButton
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </RippleButton>
-              <RippleButton onClick={() => router.push('/strategic/map')}>
-                <Target className="w-4 h-4 mr-2" />
-                Ver Mapa
-              </RippleButton>
-            </Flex>
-          </Flex>
-        </FadeIn>
+              <Link href="/strategic/map">
+                <RippleButton
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
+                >
+                  <Target className="w-4 h-4 mr-2" />
+                  Ver Mapa
+                </RippleButton>
+              </Link>
+              <Link href="/strategic/goals/new">
+                <RippleButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Objetivo
+                </RippleButton>
+              </Link>
+            </>
+          }
+        />
+
+        {/* Summary Cards */}
+        <StaggerContainer>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <EnterpriseMetricCard
+              icon={<Target className="h-6 w-6 text-purple-400" />}
+              badge="Total"
+              title="Total de Objetivos"
+              value={summary.total}
+              subtitle="objetivos cadastrados"
+              variant="purple"
+              delay={0.2}
+            />
+            <EnterpriseMetricCard
+              icon={<CheckCircle2 className="h-6 w-6 text-green-400" />}
+              badge="No Prazo"
+              badgeEmoji="✅"
+              title="No Prazo"
+              value={summary.onTrack}
+              subtitle="dentro da meta"
+              variant="green"
+              delay={0.3}
+            />
+            <EnterpriseMetricCard
+              icon={<Clock className="h-6 w-6 text-amber-400" />}
+              badge="Em Risco"
+              badgeEmoji="⚠️"
+              title="Em Risco"
+              value={summary.atRisk}
+              subtitle="necessitam atenção"
+              variant="yellow"
+              delay={0.4}
+            />
+            <EnterpriseMetricCard
+              icon={<AlertTriangle className="h-6 w-6 text-red-400" />}
+              badge="Atrasado"
+              badgeEmoji="❌"
+              title="Atrasados"
+              value={summary.delayed}
+              subtitle="ação imediata"
+              variant="red"
+              delay={0.5}
+              isUrgent={summary.delayed > 0}
+            />
+            <EnterpriseMetricCard
+              icon={<TrendingUp className="h-6 w-6 text-blue-400" />}
+              badge="Concluído"
+              badgeEmoji="🏆"
+              title="Concluídos"
+              value={summary.completed}
+              subtitle="objetivos alcançados"
+              variant="blue"
+              delay={0.6}
+            />
+          </div>
+        </StaggerContainer>
 
         {/* Grid */}
         <FadeIn delay={0.1}>

@@ -6,19 +6,27 @@
  * 
  * @module app/(dashboard)/strategic/kpis
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { 
   BarChart3, 
-  RefreshCw, 
   Plus, 
   Search, 
   Loader2,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  HelpCircle,
+  Download,
 } from 'lucide-react';
 import { KpiCard, type KpiData } from '@/components/strategic/KpiCard';
-import { KpiSummaryCards } from '@/components/strategic/KpiSummaryCards';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StaggerContainer } from '@/components/ui/animated-wrappers';
 
 type KpiStatus = 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' | 'NO_DATA';
 type Perspective = 'FINANCIAL' | 'CUSTOMER' | 'INTERNAL' | 'LEARNING';
@@ -54,7 +62,7 @@ export default function KpisPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [perspectiveFilter, setPerspectiveFilter] = useState<string | null>(null);
 
-  const fetchKpis = async (showRefresh = false) => {
+  const fetchKpis = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     else setLoading(true);
     
@@ -84,11 +92,11 @@ export default function KpisPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchKpis();
-  }, []);
+  }, [fetchKpis]);
 
   // Summary calculations
   const summary = useMemo(() => ({
@@ -131,76 +139,120 @@ export default function KpisPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6">
+    <div className="min-h-screen -m-6 p-8 space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
-      >
-        <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <BarChart3 className="text-purple-400" />
-            Indicadores (KPIs)
-          </h1>
-          <p className="text-white/60 mt-1">
-            Acompanhe o desempenho dos indicadores estratégicos
-          </p>
-        </div>
+      <PageHeader
+        icon="📊"
+        title="Indicadores (KPIs)"
+        description="Acompanhe o desempenho dos indicadores estratégicos"
+        recordCount={kpis.length}
+        onRefresh={() => fetchKpis(true)}
+        isLoading={refreshing}
+        actions={
+          <>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar KPI..."
+                className="pl-10 pr-4 py-2 rounded-xl bg-white/10 border border-white/10 
+                  text-white placeholder-white/40 w-[200px]
+                  focus:outline-none focus:border-purple-500/50 transition-colors"
+              />
+            </div>
 
-        <div className="flex gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar KPI..."
-              className="pl-10 pr-4 py-2 rounded-xl bg-white/10 border border-white/10 
-                text-white placeholder-white/40 w-[200px]
-                focus:outline-none focus:border-purple-500/50 transition-colors"
-            />
-          </div>
+            {/* Perspective Filter */}
+            <select
+              value={perspectiveFilter || ''}
+              onChange={(e) => setPerspectiveFilter(e.target.value || null)}
+              className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 
+                text-white focus:outline-none focus:border-purple-500/50 transition-colors"
+            >
+              <option value="">Todas Perspectivas</option>
+              {Object.entries(PERSPECTIVE_CONFIG).map(([key, config]) => (
+                <option key={key} value={key}>{config.icon} {config.label}</option>
+              ))}
+            </select>
 
-          {/* Perspective Filter */}
-          <select
-            value={perspectiveFilter || ''}
-            onChange={(e) => setPerspectiveFilter(e.target.value || null)}
-            className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 
-              text-white focus:outline-none focus:border-purple-500/50 transition-colors"
-          >
-            <option value="">Todas Perspectivas</option>
-            {Object.entries(PERSPECTIVE_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>{config.icon} {config.label}</option>
-            ))}
-          </select>
-
-          <RippleButton
-            variant="outline"
-            onClick={() => fetchKpis(true)}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Atualizar
-          </RippleButton>
-          
-          <RippleButton
-            variant="default"
-            onClick={() => router.push('/strategic/kpis/new')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo KPI
-          </RippleButton>
-        </div>
-      </motion.div>
-
-      {/* Summary Cards */}
-      <KpiSummaryCards
-        summary={summary}
-        activeFilter={statusFilter}
-        onFilterChange={setStatusFilter}
+            <RippleButton
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </RippleButton>
+            
+            <Link href="/strategic/kpis/new">
+              <RippleButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo KPI
+              </RippleButton>
+            </Link>
+          </>
+        }
       />
+
+      {/* Summary Cards - Padrão Enterprise */}
+      <StaggerContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <EnterpriseMetricCard
+            icon={<BarChart3 className="h-6 w-6 text-purple-400" />}
+            badge="Total"
+            title="Total de KPIs"
+            value={summary.total}
+            subtitle="indicadores cadastrados"
+            variant="purple"
+            delay={0.2}
+            onClick={() => setStatusFilter(null)}
+          />
+          <EnterpriseMetricCard
+            icon={<CheckCircle2 className="h-6 w-6 text-green-400" />}
+            badge="No Prazo"
+            badgeEmoji="✅"
+            title="No Prazo"
+            value={summary.onTrack}
+            subtitle={`${Math.round((summary.onTrack / Math.max(summary.total, 1)) * 100)}% do total`}
+            variant="green"
+            delay={0.3}
+            onClick={() => setStatusFilter(statusFilter === 'ON_TRACK' ? null : 'ON_TRACK')}
+          />
+          <EnterpriseMetricCard
+            icon={<Clock className="h-6 w-6 text-amber-400" />}
+            badge="Em Risco"
+            badgeEmoji="⚠️"
+            title="Em Risco"
+            value={summary.atRisk}
+            subtitle="necessitam atenção"
+            variant="yellow"
+            delay={0.4}
+            onClick={() => setStatusFilter(statusFilter === 'AT_RISK' ? null : 'AT_RISK')}
+          />
+          <EnterpriseMetricCard
+            icon={<AlertTriangle className="h-6 w-6 text-red-400" />}
+            badge="Crítico"
+            badgeEmoji="❌"
+            title="Críticos"
+            value={summary.critical}
+            subtitle="ação imediata"
+            variant="red"
+            delay={0.5}
+            isUrgent={summary.critical > 0}
+            onClick={() => setStatusFilter(statusFilter === 'CRITICAL' ? null : 'CRITICAL')}
+          />
+          <EnterpriseMetricCard
+            icon={<HelpCircle className="h-6 w-6 text-gray-400" />}
+            badge="Sem Dados"
+            title="Sem Dados"
+            value={summary.noData}
+            subtitle="aguardando medição"
+            variant="blue"
+            delay={0.6}
+            onClick={() => setStatusFilter(statusFilter === 'NO_DATA' ? null : 'NO_DATA')}
+          />
+        </div>
+      </StaggerContainer>
 
       {/* KPIs by Perspective */}
       {loading ? (
@@ -214,21 +266,31 @@ export default function KpisPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-16"
         >
-          <BarChart3 className="w-16 h-16 text-white/20 mb-4" />
-          <p className="text-white/50 text-lg">Nenhum KPI encontrado</p>
+          <EmptyState
+            icon={<BarChart3 className="w-8 h-8 text-white/30" />}
+            title="Nenhum KPI encontrado"
+            description={
+              (search || statusFilter || perspectiveFilter)
+                ? "Tente ajustar os filtros de busca"
+                : "Crie seu primeiro indicador para começar"
+            }
+            actionLabel={(search || statusFilter || perspectiveFilter) ? undefined : "Criar KPI"}
+            actionHref="/strategic/kpis/new"
+          />
           {(search || statusFilter || perspectiveFilter) && (
-            <button
-              onClick={() => {
-                setSearch('');
-                setStatusFilter(null);
-                setPerspectiveFilter(null);
-              }}
-              className="mt-4 text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              Limpar filtros
-            </button>
+            <div className="text-center mt-4">
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter(null);
+                  setPerspectiveFilter(null);
+                }}
+                className="text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Limpar filtros
+              </button>
+            </div>
           )}
         </motion.div>
       ) : (

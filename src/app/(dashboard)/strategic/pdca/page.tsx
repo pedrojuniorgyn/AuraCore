@@ -8,30 +8,30 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
-  Card, 
-  Title, 
-  Text, 
+  Card,
+  Title,
+  Text,
   Flex, 
   Badge,
-  Metric,
 } from '@tremor/react';
 import { 
-  RefreshCw,
-  ArrowLeft,
   AlertTriangle,
   CheckCircle,
   Clock,
   Layers,
   Plus,
-  RotateCcw,
+  Download,
+  RefreshCw,
   Info,
 } from 'lucide-react';
 
-import { GradientText } from '@/components/ui/magic-components';
-import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
+import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 import { PdcaKanban, type KanbanColumn, type PdcaPhase } from '@/components/strategic/PdcaKanban';
 
 interface KanbanApiResponse {
@@ -139,103 +139,87 @@ export default function PdcaKanbanPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6 space-y-6">
+      <div className="min-h-screen -m-6 p-8 space-y-6">
         {/* Header */}
-        <FadeIn>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/dashboard')}
+        <PageHeader
+          icon="🔄"
+          title="Ciclos PDCA"
+          description="Arraste os cards para avançar nas fases do ciclo (Plan → Do → Check → Act)"
+          recordCount={stats.total}
+          showBack
+          onRefresh={fetchKanbanData}
+          isLoading={loading}
+          actions={
+            <>
+              <Link href="/strategic/action-plans">
+                <RippleButton
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <Layers className="w-4 h-4 mr-2" />
+                  Ver por Status
                 </RippleButton>
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                  <RotateCcw className="text-purple-400" />
-                  Ciclos PDCA
-                </h1>
-              </Flex>
-              <Text className="text-gray-400 ml-12">
-                Arraste os cards para avançar nas fases do ciclo (Plan → Do → Check → Act)
-              </Text>
-            </div>
-            <Flex className="gap-3">
-              <RippleButton 
-                variant="outline" 
-                onClick={fetchKanbanData}
-                disabled={loading}
+              </Link>
+              <RippleButton
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </RippleButton>
-              <RippleButton 
-                variant="default" 
-                onClick={() => router.push('/strategic/action-plans/new')}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Plano
-              </RippleButton>
-            </Flex>
-          </motion.div>
-        </FadeIn>
+              <Link href="/strategic/action-plans/new">
+                <RippleButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Plano
+                </RippleButton>
+              </Link>
+            </>
+          }
+        />
 
-        {/* Stats Cards */}
-        <FadeIn delay={0.1}>
+        {/* Stats Cards - Enterprise Pattern */}
+        <StaggerContainer>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/20">
-                  <Layers className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Total Ativos</Text>
-                  <Metric className="text-white">{stats.total}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-red-500/20">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Atrasados</Text>
-                  <Metric className="text-red-400">{stats.overdue}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/20">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Concluídos (Mês)</Text>
-                  <Metric className="text-emerald-400">{stats.completedThisMonth}</Metric>
-                </div>
-              </Flex>
-            </Card>
-
-            <Card className="bg-gray-900/50 border-gray-800">
-              <Flex alignItems="center" className="gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/20">
-                  <Clock className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <Text className="text-gray-400">Em CHECK</Text>
-                  <Metric className="text-purple-400">{phaseStats.CHECK || 0}</Metric>
-                </div>
-              </Flex>
-            </Card>
+            <EnterpriseMetricCard
+              icon={<Layers className="h-6 w-6 text-purple-400" />}
+              badge="Total"
+              title="Total Ativos"
+              value={stats.total}
+              subtitle="planos em ciclo"
+              variant="purple"
+              delay={0.2}
+            />
+            <EnterpriseMetricCard
+              icon={<AlertTriangle className="h-6 w-6 text-red-400" />}
+              badge="Atrasado"
+              badgeEmoji="❌"
+              title="Atrasados"
+              value={stats.overdue}
+              subtitle="ação urgente"
+              variant="red"
+              delay={0.3}
+              isUrgent={stats.overdue > 0}
+            />
+            <EnterpriseMetricCard
+              icon={<CheckCircle className="h-6 w-6 text-green-400" />}
+              badge="Concluído"
+              badgeEmoji="✅"
+              title="Concluídos (Mês)"
+              value={stats.completedThisMonth}
+              subtitle="finalizados"
+              variant="green"
+              delay={0.4}
+            />
+            <EnterpriseMetricCard
+              icon={<Clock className="h-6 w-6 text-blue-400" />}
+              badge="CHECK"
+              badgeEmoji="🔍"
+              title="Em CHECK"
+              value={phaseStats.CHECK || 0}
+              subtitle="fase de verificação"
+              variant="blue"
+              delay={0.5}
+            />
           </div>
-        </FadeIn>
+        </StaggerContainer>
 
         {/* Phase Summary */}
         <FadeIn delay={0.15}>
