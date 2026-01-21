@@ -26,10 +26,7 @@ import {
   classifyNFe,
   getFiscalStatusFromClassification
 } from "./fiscal-classification-service";
-import { 
-  extractCargoInfo, 
-  estimateDeliveryDeadline 
-} from "./fiscal/nfe-classifier";
+// extractCargoInfo e estimateDeliveryDeadline foram removidos (não usados) - nfe-classifier.ts deletado em E10.1
 import {
   batchGetNCMCategorization
 } from "./ncm-categorization-service";
