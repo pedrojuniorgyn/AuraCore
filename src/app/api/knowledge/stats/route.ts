@@ -115,10 +115,7 @@ export async function GET(): Promise<NextResponse<StatsResponse>> {
 
     stats.vectorStore.totalDocuments = totalDocuments;
   } catch (error: unknown) {
-    // Propagar erros de auth (getTenantContext throws Response)
-    if (error instanceof Response) {
-      return error as unknown as NextResponse;
-    }
+    // Handler não chama getTenantContext - apenas tratar erro normalmente
     stats.vectorStore.status = 'error';
     stats.vectorStore.error = error instanceof Error ? error.message : String(error);
     return NextResponse.json(stats, { status: 503 });

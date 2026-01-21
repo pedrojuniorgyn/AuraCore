@@ -129,10 +129,7 @@ async function checkChromaDB(): Promise<ServiceStatus> {
       url: chromaUrl,
     };
   } catch (error: unknown) {
-    // Propagar erros de auth (getTenantContext throws Response)
-    if (error instanceof Response) {
-      return error as unknown as ServiceStatus;
-    }
+    // Health check functions NÃO usam API-ERR-001 - retornar ServiceStatus error
     const message = error instanceof Error ? error.message : String(error);
     return {
       status: 'error',
@@ -169,10 +166,7 @@ async function checkGeminiEmbedding(): Promise<ServiceStatus> {
       dimension: response.embedding.values.length,
     };
   } catch (error: unknown) {
-    // Propagar erros de auth (getTenantContext throws Response)
-    if (error instanceof Response) {
-      return error as unknown as ServiceStatus;
-    }
+    // Health check functions NÃO usam API-ERR-001 - retornar ServiceStatus error
     const message = error instanceof Error ? error.message : String(error);
     return {
       status: 'error',
@@ -209,10 +203,7 @@ async function checkOpenAIEmbedding(): Promise<ServiceStatus> {
       tokensUsed: response.usage?.total_tokens,
     };
   } catch (error: unknown) {
-    // Propagar erros de auth (getTenantContext throws Response)
-    if (error instanceof Response) {
-      return error as unknown as ServiceStatus;
-    }
+    // Health check functions NÃO usam API-ERR-001 - retornar ServiceStatus error
     const message = error instanceof Error ? error.message : String(error);
     return {
       status: 'error',
