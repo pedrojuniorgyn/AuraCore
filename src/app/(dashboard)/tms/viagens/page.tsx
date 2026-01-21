@@ -25,6 +25,7 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Truck, MapPin, CheckCircle, Clock, XCircle, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import { TmsAIWidget } from "@/components/tms";
 
 interface Trip {
   id: number;
@@ -178,6 +179,7 @@ export default function TripsPage() {
 
 
   return (
+    <>
     <PageTransition>
       <GridPattern />
 
@@ -397,8 +399,9 @@ export default function TripsPage() {
         </DialogContent>
       </Dialog>
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente de Viagens */}
+    <TmsAIWidget screen="viagens" />
+  </>
   );
 }
-
-
-

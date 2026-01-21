@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useTenant } from "@/contexts/tenant-context";
+import { TmsAIWidget } from "@/components/tms";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, ICellRendererParams } from "ag-grid-community";
 import { auraTheme } from "@/lib/ag-grid/theme";
@@ -316,6 +317,7 @@ export default function CargoRepositoryPage() {
   const columnDefs = allColumnDefs.filter(col => visibleColumns[col.colId]);
 
   return (
+    <>
     <PageTransition>
       <div className="relative flex-1 space-y-4 p-8 pt-6">
         <GridPattern className="opacity-30" />
@@ -543,7 +545,9 @@ export default function CargoRepositoryPage() {
         </FadeIn>
       </div>
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente de Cargas */}
+    <TmsAIWidget screen="repositorio-cargas" defaultMinimized={true} />
+  </>
   );
 }
-
-

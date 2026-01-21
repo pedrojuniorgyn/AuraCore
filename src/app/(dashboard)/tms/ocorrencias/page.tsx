@@ -10,6 +10,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { AlertTriangle, AlertCircle, CheckCircle, FileText, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { TmsAIWidget } from "@/components/tms";
 import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
 
@@ -96,6 +97,7 @@ export default function OccurrencesPage() {
   }, [occurrences]);
 
   return (
+    <>
     <PageTransition>
       <div className="h-full flex flex-col p-6 space-y-6">
         {/* Header */}
@@ -235,6 +237,9 @@ export default function OccurrencesPage() {
         </FadeIn>
       </div>
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente de Ocorrências */}
+    <TmsAIWidget screen="ocorrencias" defaultMinimized={true} />
+  </>
   );
 }
-

@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
+import { TmsAIWidget } from "@/components/tms";
 
 interface Trip {
   id: number;
@@ -182,8 +183,9 @@ export default function TorreControlePage() {
           </Card>
         ))}
       </div>
+
+      {/* AI Insight Widget - Assistente Torre de Controle */}
+      <TmsAIWidget screen="torre-controle" defaultMinimized={true} />
     </div>
   );
 }
-
-

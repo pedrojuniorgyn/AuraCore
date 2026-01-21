@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Clock, Truck } from "lucide-react";
+import { TmsAIWidget } from "@/components/tms";
 
 interface DashboardKPIs {
   tripsInProgress: number;
@@ -108,8 +109,9 @@ export default function CockpitPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Insight Widget - Assistente TMS */}
+      <TmsAIWidget screen="cockpit" />
     </div>
   );
 }
-
-
