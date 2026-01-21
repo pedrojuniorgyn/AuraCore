@@ -131,8 +131,7 @@ async function checkChromaDB(): Promise<ServiceStatus> {
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return error as any as ServiceStatus;
+      return error as unknown as ServiceStatus;
     }
     const message = error instanceof Error ? error.message : String(error);
     return {
@@ -172,8 +171,7 @@ async function checkGeminiEmbedding(): Promise<ServiceStatus> {
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return error as any as ServiceStatus;
+      return error as unknown as ServiceStatus;
     }
     const message = error instanceof Error ? error.message : String(error);
     return {
@@ -213,8 +211,7 @@ async function checkOpenAIEmbedding(): Promise<ServiceStatus> {
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return error as any as ServiceStatus;
+      return error as unknown as ServiceStatus;
     }
     const message = error instanceof Error ? error.message : String(error);
     return {
