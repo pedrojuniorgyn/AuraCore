@@ -3282,3 +3282,4 @@ export const notifications = mssqlTable("notifications", {
 export * from "./schema/accounting";
 
 // 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑
+export * from '@/modules/strategic/infrastructure/persistence/schemas';
