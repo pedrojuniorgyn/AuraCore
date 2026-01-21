@@ -21,6 +21,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
 import { Building2, CheckCircle, XCircle, MapPin } from "lucide-react";
+import { AdminAIWidget } from "@/components/admin";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -187,7 +188,8 @@ export default function BranchesPage() {
   }, []);
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="relative flex flex-col gap-6 p-6">
         {/* Background Pattern */}
         <GridPattern className="opacity-30" />
@@ -363,6 +365,10 @@ export default function BranchesPage() {
           </div>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <AdminAIWidget screen="filiais" />
+    </>
   );
 }

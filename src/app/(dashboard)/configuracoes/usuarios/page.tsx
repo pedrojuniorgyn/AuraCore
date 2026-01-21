@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { UserPlus, Shield, Edit, Trash2, KeyRound } from "lucide-react";
+import { AdminAIWidget } from "@/components/admin";
 import {
   Dialog,
   DialogContent,
@@ -696,8 +697,9 @@ export default function UsersManagementPage() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* AI Assistant Widget */}
+      <AdminAIWidget screen="usuarios" />
     </div>
   );
 }
-
-

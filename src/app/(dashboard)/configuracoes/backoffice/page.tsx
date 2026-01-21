@@ -10,6 +10,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { Building2, Wrench, Fuel, Droplets, Briefcase, Users, Plus, Download, Settings, FileDown } from "lucide-react";
+import { AdminAIWidget } from "@/components/admin";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -183,7 +184,8 @@ export default function BackofficePage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="p-8 space-y-8">
         {/* Header */}
         <FadeIn>
@@ -368,7 +370,10 @@ export default function BackofficePage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <AdminAIWidget screen="backoffice" />
+    </>
   );
 }
-

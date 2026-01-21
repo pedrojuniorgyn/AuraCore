@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AdminAIWidget } from "@/components/admin";
 
 function getAuditAppUrl(): string {
   const raw = process.env.AUDIT_APP_URL ?? process.env.NEXT_PUBLIC_AUDIT_APP_URL ?? "";
@@ -27,7 +28,9 @@ export default function AuditoriaPage() {
           Voltar para Configurações
         </Link>
       </div>
+      
+      {/* AI Assistant Widget */}
+      <AdminAIWidget screen="auditoria" defaultMinimized={true} />
     </div>
   );
 }
-
