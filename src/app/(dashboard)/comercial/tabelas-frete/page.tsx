@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GridPattern } from "@/components/ui/animated-background";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { CommercialAIWidget } from "@/components/commercial";
 import { Plus, Edit, Trash2, Table2, Route as RouteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
@@ -281,7 +282,8 @@ export default function FreightTablesPage() {
   };
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <GridPattern />
 
       <FadeIn delay={0.1}>
@@ -670,9 +672,10 @@ export default function FreightTablesPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <CommercialAIWidget screen="price-tables" defaultMinimized={true} />
+    </>
   );
 }
-
-
-

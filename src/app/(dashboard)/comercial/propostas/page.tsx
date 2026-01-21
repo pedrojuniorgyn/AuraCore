@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus } from "lucide-react";
+import { CommercialAIWidget } from "@/components/commercial";
 
 interface Proposal {
   id: number;
@@ -40,7 +41,8 @@ export default function PropostasPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <>
+      <div className="p-6 space-y-6">
       <div className="flex justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent animate-gradient">
@@ -79,8 +81,10 @@ export default function PropostasPage() {
           </Card>
         ))}
       </div>
-    </div>
+      </div>
+      
+      {/* AI Assistant Widget - FORA do conteúdo principal (FIXED-001) */}
+      <CommercialAIWidget screen="proposals" />
+    </>
   );
 }
-
-

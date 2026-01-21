@@ -3,10 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { CommercialAIWidget } from "@/components/commercial";
 
 export default function CRMPage() {
   return (
-    <div className="p-6 space-y-6">
+    <>
+      <div className="p-6 space-y-6">
       <div className="flex justify-between">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent animate-gradient">
@@ -33,8 +35,11 @@ export default function CRMPage() {
           </Card>
         ))}
       </div>
-    </div>
+      </div>
+      
+      {/* AI Assistant Widget - FORA do conteúdo principal (FIXED-001) */}
+      <CommercialAIWidget screen="crm" />
+    </>
   );
 }
-
 

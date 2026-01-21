@@ -16,6 +16,7 @@ import { FileText, CheckCircle, XCircle, Clock, Edit, Trash2 } from "lucide-reac
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
+import { CommercialAIWidget } from "@/components/commercial";
 
 interface Quote {
   id: number;
@@ -215,7 +216,8 @@ export default function QuotesPage() {
   };
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <GridPattern />
 
       <FadeIn delay={0.1}>
@@ -352,9 +354,10 @@ export default function QuotesPage() {
           </div>
         </div>
       </FadeIn>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <CommercialAIWidget screen="quotes" />
+    </>
   );
 }
-
-
-

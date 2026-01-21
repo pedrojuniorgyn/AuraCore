@@ -4,10 +4,12 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { FreightSimulator } from "@/components/commercial/freight-simulator";
+import { CommercialAIWidget } from "@/components/commercial";
 
 export default function FreightSimulatorPage() {
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="flex-1 space-y-6 p-8 pt-6 relative">
         {/* Background Pattern */}
         <GridPattern className="opacity-30" />
@@ -31,9 +33,10 @@ export default function FreightSimulatorPage() {
           <FreightSimulator />
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <CommercialAIWidget screen="simulator" />
+    </>
   );
 }
-
-
-
