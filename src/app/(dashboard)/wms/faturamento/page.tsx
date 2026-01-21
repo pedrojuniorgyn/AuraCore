@@ -13,6 +13,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 import { Package, ArrowDownToLine, ArrowUpFromLine, Zap, DollarSign, CheckCircle, FileText, Send, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { WmsAIWidget } from "@/components/wms";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -281,8 +282,9 @@ export default function WMSFaturamentoPage() {
   ];
 
   return (
-    <PageTransition>
-      <div className="p-8 space-y-8">
+    <>
+      <PageTransition>
+        <div className="p-8 space-y-8">
         <FadeIn>
           <div className="flex items-center justify-between">
             <div>
@@ -445,8 +447,12 @@ export default function WMSFaturamentoPage() {
             </div>
           </GlassmorphismCard>
         </FadeIn>
-      </div>
-    </PageTransition>
+        </div>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente de Faturamento */}
+      <WmsAIWidget screen="faturamento" />
+    </>
   );
 }
 

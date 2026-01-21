@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
+import { WmsAIWidget } from "@/components/wms";
 
 interface Location {
   location: {
@@ -75,8 +76,9 @@ export default function WmsEnderecosPage() {
           </Card>
         ))}
       </div>
+
+      {/* AI Insight Widget - Assistente de Endereços */}
+      <WmsAIWidget screen="enderecos" defaultMinimized={true} />
     </div>
   );
 }
-
-

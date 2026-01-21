@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Plus, PackageSearch, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { WmsAIWidget } from "@/components/wms";
 
 interface InventoryCount {
   id: number;
@@ -323,7 +324,9 @@ export default function InventoryPage() {
           ))
         )}
       </div>
+
+      {/* AI Insight Widget - Assistente de Inventário */}
+      <WmsAIWidget screen="inventario" defaultMinimized={true} />
     </div>
   );
 }
-
