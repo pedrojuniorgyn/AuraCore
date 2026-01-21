@@ -27,20 +27,20 @@ export default function EntityHistoryPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const loadHistory = async () => {
+      setIsLoading(true);
+      try {
+        const data = await auditService.getEntityHistory(entityType as AuditEntityType, entityId);
+        setHistory(data);
+      } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     loadHistory();
   }, [entityType, entityId]);
-
-  const loadHistory = async () => {
-    setIsLoading(true);
-    try {
-      const data = await auditService.getEntityHistory(entityType as AuditEntityType, entityId);
-      setHistory(data);
-    } catch (error) {
-      console.error('Erro ao carregar histórico:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCompare = async (fromVersion: number, toVersion: number) => {
     try {

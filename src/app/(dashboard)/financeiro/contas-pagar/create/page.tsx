@@ -52,10 +52,7 @@ export default function CreatePayablePage() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+    const loadData = async () => {
     try {
       // Carregar fornecedores
       const partnersRes = await fetch("/api/business-partners?type=SUPPLIER");
@@ -86,6 +83,9 @@ export default function CreatePayablePage() {
       });
     }
   };
+
+    loadData();
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

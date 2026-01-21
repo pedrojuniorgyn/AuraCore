@@ -47,24 +47,24 @@ export default function GestaoPCGPage() {
   });
 
   useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch('/api/management/chart-accounts');
+        const result = await response.json();
+        
+        if (result.success) {
+          setAccounts(result.data);
+          calculateStats(result.data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar contas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAccounts();
   }, []);
-
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch('/api/management/chart-accounts');
-      const result = await response.json();
-      
-      if (result.success) {
-        setAccounts(result.data);
-        calculateStats(result.data);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar contas:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const calculateStats = (data: ChartAccount[]) => {
     setStats({

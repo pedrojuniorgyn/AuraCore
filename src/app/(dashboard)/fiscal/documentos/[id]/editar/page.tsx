@@ -67,68 +67,66 @@ export default function EditarDocumentoPage() {
   });
 
   useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        const [docRes, itemsRes] = await Promise.all([
+          fetch(`/api/fiscal/documents/${documentId}`),
+          fetch(`/api/fiscal/documents/${documentId}/items`),
+        ]);
+        
+        if (docRes.ok) {
+          const data = await docRes.json();
+          setDocument(data.document);
+          setFormData({
+            fiscalClassification: data.document.fiscalClassification || "",
+            fiscalStatus: data.document.fiscalStatus || "",
+            accountingStatus: data.document.accountingStatus || "",
+            financialStatus: data.document.financialStatus || "",
+            notes: data.document.notes || "",
+          });
+        }
+        
+        if (itemsRes.ok) {
+          const itemsData = await itemsRes.json();
+          setItems(itemsData);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar documento:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchMasterData = async () => {
+      try {
+        const [catRes, coaRes, ccRes] = await Promise.all([
+          fetch("/api/financial/categories"),
+          fetch("/api/fiscal/chart-of-accounts"),
+          fetch("/api/financial/cost-centers"),
+        ]);
+
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          const catArray = catData.data || catData;
+          setCategories(Array.isArray(catArray) ? catArray : []);
+        }
+        if (coaRes.ok) {
+          const coaData = await coaRes.json();
+          setChartAccounts(Array.isArray(coaData) ? coaData : []);
+        }
+        if (ccRes.ok) {
+          const ccData = await ccRes.json();
+          const ccArray = ccData.data?.flat || ccData.flat || ccData.data || ccData;
+          setCostCenters(Array.isArray(ccArray) ? ccArray : []);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados mestres:", error);
+      }
+    };
+
     fetchDocument();
     fetchMasterData();
   }, [documentId]);
-
-  const fetchDocument = async () => {
-    try {
-      const [docRes, itemsRes] = await Promise.all([
-        fetch(`/api/fiscal/documents/${documentId}`),
-        fetch(`/api/fiscal/documents/${documentId}/items`),
-      ]);
-      
-      if (docRes.ok) {
-        const data = await docRes.json();
-        setDocument(data.document);
-        setFormData({
-          fiscalClassification: data.document.fiscalClassification || "",
-          fiscalStatus: data.document.fiscalStatus || "",
-          accountingStatus: data.document.accountingStatus || "",
-          financialStatus: data.document.financialStatus || "",
-          notes: data.document.notes || "",
-        });
-      }
-      
-      if (itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        setItems(itemsData);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar documento:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMasterData = async () => {
-    try {
-      const [catRes, coaRes, ccRes] = await Promise.all([
-        fetch("/api/financial/categories"),
-        fetch("/api/fiscal/chart-of-accounts"),
-        fetch("/api/financial/cost-centers"),
-      ]);
-
-      if (catRes.ok) {
-        const catData = await catRes.json();
-        // API retorna { data: [...] } ou array direto
-        const catArray = catData.data || catData;
-        setCategories(Array.isArray(catArray) ? catArray : []);
-      }
-      if (coaRes.ok) {
-        const coaData = await coaRes.json();
-        setChartAccounts(Array.isArray(coaData) ? coaData : []);
-      }
-      if (ccRes.ok) {
-        const ccData = await ccRes.json();
-        // API retorna { data: { flat: [...], tree: [...] } }
-        const ccArray = ccData.data?.flat || ccData.flat || ccData.data || ccData;
-        setCostCenters(Array.isArray(ccArray) ? ccArray : []);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar dados mestres:", error);
-    }
-  };
 
   const handleSave = async () => {
     try {

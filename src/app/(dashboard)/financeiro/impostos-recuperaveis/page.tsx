@@ -32,7 +32,7 @@ export default function TaxCreditsPage() {
   useEffect(() => {
     fetch("/api/financial/tax-credits").then(r => r.json()).then(d => {
       setCredits(d.data || []);
-      setKpis(d.kpis || kpis);
+      setKpis(prev => d.kpis || prev);
     });
   }, []);
 

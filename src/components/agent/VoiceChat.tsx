@@ -73,60 +73,25 @@ export function VoiceChat({
     };
   }, []);
 
-  const startRecording = useCallback(async () => {
-    setError(null);
-
+  const playAudio = useCallback((base64Audio: string) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 48000,
-        },
+      const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
+      audioRef.current = audio;
+
+      audio.onplay = () => setIsPlaying(true);
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => setIsPlaying(false);
+
+      audio.play().catch((err) => {
+        console.error('Erro ao reproduzir áudio:', err);
+        setIsPlaying(false);
       });
-
-      streamRef.current = stream;
-
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
-      });
-
-      mediaRecorderRef.current = recorder;
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        await processAudio(blob);
-
-        // Parar stream
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-          streamRef.current = null;
-        }
-      };
-
-      recorder.start();
-      setIsRecording(true);
     } catch (err) {
-      console.error('Erro ao acessar microfone:', err);
-      setError('Não foi possível acessar o microfone. Verifique as permissões.');
+      console.error('Erro ao criar áudio:', err);
     }
   }, []);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  }, [isRecording]);
-
-  const processAudio = async (blob: Blob) => {
+  const processAudio = useCallback(async (blob: Blob) => {
     setIsProcessing(true);
     setTranscription('');
     setResponse('');
@@ -173,25 +138,60 @@ export function VoiceChat({
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [isMuted, onTranscription, onResponse, autoPlayAudio, playAudio]);
 
-  const playAudio = (base64Audio: string) => {
+  const startRecording = useCallback(async () => {
+    setError(null);
+
     try {
-      const audio = new Audio(`data:audio/mpeg;base64,${base64Audio}`);
-      audioRef.current = audio;
-
-      audio.onplay = () => setIsPlaying(true);
-      audio.onended = () => setIsPlaying(false);
-      audio.onerror = () => setIsPlaying(false);
-
-      audio.play().catch((err) => {
-        console.error('Erro ao reproduzir áudio:', err);
-        setIsPlaying(false);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 48000,
+        },
       });
+
+      streamRef.current = stream;
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+      });
+
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        await processAudio(blob);
+
+        // Parar stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+      };
+
+      recorder.start();
+      setIsRecording(true);
     } catch (err) {
-      console.error('Erro ao criar áudio:', err);
+      console.error('Erro ao acessar microfone:', err);
+      setError('Não foi possível acessar o microfone. Verifique as permissões.');
     }
-  };
+  }, [processAudio]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {

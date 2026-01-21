@@ -21,17 +21,17 @@ export default function CockpitPage() {
     avgDeliveryTime: 0,
   });
 
-  const loadKPIs = async () => {
-    try {
-      const response = await fetch("/api/tms/cockpit/kpis");
-      const data = await response.json();
-      setKpis(data.data || kpis);
-    } catch (error) {
-      console.error("Erro ao carregar KPIs:", error);
-    }
-  };
-
   useEffect(() => {
+    const loadKPIs = async () => {
+      try {
+        const response = await fetch("/api/tms/cockpit/kpis");
+        const data = await response.json();
+        setKpis(prev => data.data || prev);
+      } catch (error) {
+        console.error("Erro ao carregar KPIs:", error);
+      }
+    };
+
     // Usar setTimeout para evitar setState síncrono em effect
     const timeoutId = setTimeout(() => {
       loadKPIs();

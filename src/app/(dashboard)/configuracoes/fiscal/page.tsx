@@ -31,29 +31,29 @@ export default function FiscalConfigPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const loadSettings = async () => {
+      if (!currentBranch?.id) return;
+      
+      setLoading(true);
+      try {
+        const res = await fetch("/api/fiscal/settings", {
+          headers: { "x-branch-id": currentBranch.id.toString() },
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data.data);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Erro ao carregar configurações");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadSettings();
   }, [currentBranch]);
-
-  const loadSettings = async () => {
-    if (!currentBranch?.id) return;
-    
-    setLoading(true);
-    try {
-      const res = await fetch("/api/fiscal/settings", {
-        headers: { "x-branch-id": currentBranch.id.toString() },
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setSettings(data.data);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao carregar configurações");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSave = async () => {
     setSaving(true);

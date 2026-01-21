@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, PackageSearch, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -40,11 +40,7 @@ export default function InventoryPage() {
     notes: "",
   });
 
-  useEffect(() => {
-    fetchCounts();
-  }, []);
-
-  const fetchCounts = async () => {
+  const fetchCounts = useCallback(async () => {
     try {
       const res = await fetch("/api/wms/inventory/counts");
       const data = await res.json();
@@ -61,7 +57,11 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

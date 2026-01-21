@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,16 +37,8 @@ export default function CertificadoDigitalPage() {
     details?: string;
   } | null>(null);
 
-  // Carregar certificado existente ao abrir a página
-  useEffect(() => {
-    if (currentBranch?.id) {
-      loadExistingCertificate();
-    } else {
-      setIsLoading(false);
-    }
-  }, [currentBranch?.id]);
-
-  const loadExistingCertificate = async () => {
+  // Função para carregar/recarregar certificado
+  const loadCertificate = useCallback(async () => {
     if (!currentBranch?.id) {
       setIsLoading(false);
       return;
@@ -58,31 +50,37 @@ export default function CertificadoDigitalPage() {
       
       if (response.ok) {
         const result = await response.json();
-        const branch = result.data || result; // API retorna { data: branch }
+        const branch = result.data || result;
         
-        // Se tiver certificado, extrair informações
         if (branch.certificatePfx && branch.certificateExpiry) {
           setCertificateInfo({
             valid: new Date(branch.certificateExpiry) > new Date(),
-            subject: branch.name, // CN da filial
+            subject: branch.name,
             validFrom: new Date(branch.createdAt).toLocaleDateString('pt-BR'),
             validTo: new Date(branch.certificateExpiry).toLocaleDateString('pt-BR'),
             issuer: "Certificadora (AC)",
-            serialNumber: "********", // Oculto por segurança
+            serialNumber: "********",
             branchName: branch.name,
           });
         } else {
-          // Limpar se não tiver certificado
           setCertificateInfo(null);
         }
       }
     } catch (error) {
       console.error("Erro ao carregar certificado:", error);
-      toast.error("Erro ao carregar informações do certificado");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentBranch?.id]);
+
+  // Carregar certificado existente ao abrir a página
+  useEffect(() => {
+    if (currentBranch?.id) {
+      loadCertificate();
+    } else {
+      setIsLoading(false);
+    }
+  }, [currentBranch?.id, loadCertificate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,7 +125,7 @@ export default function CertificadoDigitalPage() {
         setCertificateFile(null);
         
         // Recarregar informações do certificado
-        await loadExistingCertificate();
+        await loadCertificate();
       } else {
         toast.error(data.error || "Erro ao carregar certificado");
       }

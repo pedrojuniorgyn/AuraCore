@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, AlertCircle, Calendar, Gauge, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,11 +44,7 @@ export default function MaintenancePlansPage() {
     }
   };
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
-
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     try {
       const res = await fetch("/api/fleet/maintenance-plans");
       const data = await res.json();
@@ -65,7 +61,11 @@ export default function MaintenancePlansPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({

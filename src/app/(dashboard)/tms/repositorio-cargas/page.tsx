@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Package, MapPin, Calendar, TrendingUp, AlertCircle, Truck, Settings, RotateCcw, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -128,8 +128,7 @@ export default function CargoRepositoryPage() {
     toast.success("Colunas restauradas para o padrão!");
   };
 
-  // Fetch cargos
-  const fetchCargos = async () => {
+  const fetchCargos = useCallback(async () => {
     if (!currentBranch?.id) return;
     
     setIsLoading(true);
@@ -155,11 +154,11 @@ export default function CargoRepositoryPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, currentBranch]);
 
   useEffect(() => {
     fetchCargos();
-  }, [statusFilter, currentBranch]);
+  }, [fetchCargos]);
 
   // AG Grid Columns - com IDs para gerenciamento
   const allColumnDefs: Array<ColDef<ICargo> & { colId: string }> = [

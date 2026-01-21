@@ -52,10 +52,7 @@ export default function CreateReceivablePage() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+    const loadData = async () => {
     try {
       // Carregar clientes
       const partnersRes = await fetch("/api/business-partners?type=CLIENT");
@@ -86,6 +83,9 @@ export default function CreateReceivablePage() {
       });
     }
   };
+
+    loadData();
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

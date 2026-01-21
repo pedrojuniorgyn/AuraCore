@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
@@ -43,11 +43,7 @@ export default function DDAPage() {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadDebits();
-  }, []);
-
-  const loadDebits = async () => {
+  const loadDebits = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/btg/dda/debits");
@@ -56,7 +52,6 @@ export default function DDAPage() {
       if (data.success) {
         setDebits(data.debits);
         
-        // Calcular estatísticas
         const pending = data.debits.filter((d: DDADebit) => d.status === "PENDING").length;
         const total = data.debits.length;
         const totalAmount = data.debits
@@ -75,7 +70,11 @@ export default function DDAPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadDebits();
+  }, [loadDebits]);
 
   const syncDDA = async () => {
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Wrench, AlertTriangle, CheckCircle, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -73,11 +73,7 @@ export default function WorkOrdersPage() {
     }
   };
 
-  useEffect(() => {
-    fetchWorkOrders();
-  }, [statusFilter]);
-
-  const fetchWorkOrders = async () => {
+  const fetchWorkOrders = useCallback(async () => {
     try {
       const url =
         statusFilter === "all"
@@ -99,7 +95,11 @@ export default function WorkOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, toast]);
+
+  useEffect(() => {
+    fetchWorkOrders();
+  }, [fetchWorkOrders]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {

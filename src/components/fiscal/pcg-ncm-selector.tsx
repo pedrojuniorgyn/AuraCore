@@ -90,11 +90,41 @@ export function PcgNcmSelector({
 
   // 1. Carrega lista de PCGs ao montar
   useEffect(() => {
+    const loadPcgs = async () => {
+      setLoadingPcgs(true);
+      try {
+        const res = await fetch("/api/pcg-ncm-rules?list_pcgs=true");
+        const data = await res.json();
+        if (data.success) {
+          setPcgOptions(data.data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar PCGs:", error);
+      } finally {
+        setLoadingPcgs(false);
+      }
+    };
+
     loadPcgs();
   }, []);
 
   // 2. Quando PCG muda, carrega NCMs sugeridos
   useEffect(() => {
+    const loadNcmsByPcg = async (id: number) => {
+      setLoadingNcms(true);
+      try {
+        const res = await fetch(`/api/pcg-ncm-rules?pcg_id=${id}`);
+        const data = await res.json();
+        if (data.success) {
+          setNcmOptions(data.data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar NCMs:", error);
+      } finally {
+        setLoadingNcms(false);
+      }
+    };
+
     if (pcgId) {
       loadNcmsByPcg(pcgId);
     } else {
@@ -105,62 +135,31 @@ export function PcgNcmSelector({
 
   // 3. Quando NCM muda (manualmente), carrega flags
   useEffect(() => {
+    const loadFiscalFlags = async (code: string) => {
+      setLoadingFlags(true);
+      try {
+        const res = await fetch(`/api/pcg-ncm-rules/fiscal-flags?ncm_code=${code}`);
+        const data = await res.json();
+        
+        if (data.success && data.data) {
+          setSelectedFlags(data.data.flags);
+          onChange(pcgId, code, data.data.flags);
+        } else {
+          setSelectedFlags(null);
+          onChange(pcgId, code, null);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar flags fiscais:", error);
+        setSelectedFlags(null);
+      } finally {
+        setLoadingFlags(false);
+      }
+    };
+
     if (ncmCode && ncmCode.length === 8) {
       loadFiscalFlags(ncmCode);
     }
-  }, [ncmCode]);
-
-  async function loadPcgs() {
-    setLoadingPcgs(true);
-    try {
-      const res = await fetch("/api/pcg-ncm-rules?list_pcgs=true");
-      const data = await res.json();
-      if (data.success) {
-        setPcgOptions(data.data);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar PCGs:", error);
-    } finally {
-      setLoadingPcgs(false);
-    }
-  }
-
-  async function loadNcmsByPcg(pcgId: number) {
-    setLoadingNcms(true);
-    try {
-      const res = await fetch(`/api/pcg-ncm-rules?pcg_id=${pcgId}`);
-      const data = await res.json();
-      if (data.success) {
-        setNcmOptions(data.data);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar NCMs:", error);
-    } finally {
-      setLoadingNcms(false);
-    }
-  }
-
-  async function loadFiscalFlags(ncmCode: string) {
-    setLoadingFlags(true);
-    try {
-      const res = await fetch(`/api/pcg-ncm-rules/fiscal-flags?ncm_code=${ncmCode}`);
-      const data = await res.json();
-      
-      if (data.success && data.data) {
-        setSelectedFlags(data.data.flags);
-        onChange(pcgId, ncmCode, data.data.flags);
-      } else {
-        // NCM não encontrado
-        setSelectedFlags(null);
-        onChange(pcgId, ncmCode, null);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar flags fiscais:", error);
-      setSelectedFlags(null);
-    } finally {
-      setLoadingFlags(false);
-    }
-  }
+  }, [ncmCode, pcgId, onChange]);
 
   function handlePcgChange(value: string) {
     const newPcgId = value === "none" ? undefined : parseInt(value);

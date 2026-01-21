@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ export default function DreDashboardPage() {
   const [dreData, setDreData] = useState<DreData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchDre = async () => {
+  const fetchDre = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -52,10 +52,8 @@ export default function DreDashboardPage() {
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Usar dados reais da API
         setDreData(result.data);
       } else {
-        // Sem dados para o período - mostrar zerado
         setDreData(null);
       }
     } catch (error) {
@@ -65,11 +63,11 @@ export default function DreDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchDre();
-  }, []);
+  }, [fetchDre]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {

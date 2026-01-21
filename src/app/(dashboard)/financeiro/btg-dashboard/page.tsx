@@ -35,10 +35,7 @@ export default function BTGDashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
+    const loadDashboard = async () => {
     try {
       // Testar conexão BTG
       const healthRes = await fetch("/api/btg/health");
@@ -65,6 +62,9 @@ export default function BTGDashboardPage() {
       setLoading(false);
     }
   };
+
+    loadDashboard();
+  }, [toast]);
 
   if (loading) {
     return (

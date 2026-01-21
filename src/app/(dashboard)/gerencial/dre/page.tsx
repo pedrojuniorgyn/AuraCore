@@ -48,25 +48,25 @@ export default function DREGerencialPage() {
   });
 
   useEffect(() => {
+    const fetchDREData = async () => {
+      try {
+        const period = new Date().toISOString().slice(0, 7);
+        const response = await fetch(`/api/management/dre?period=${period}`);
+        const result = await response.json();
+        
+        if (result.success) {
+          setDreData(result.data);
+          calculateKPIs(result.data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar DRE:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDREData();
   }, []);
-
-  const fetchDREData = async () => {
-    try {
-      const period = new Date().toISOString().slice(0, 7);
-      const response = await fetch(`/api/management/dre?period=${period}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        setDreData(result.data);
-        calculateKPIs(result.data);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar DRE:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const calculateKPIs = (data: DREItem[]) => {
     const revenue = data.filter(d => d.accountCode.startsWith('3.1')).reduce((sum, d) => sum + d.currentMonth, 0);

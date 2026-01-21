@@ -45,27 +45,27 @@ export function DocumentDetailModal({ documentId, isOpen, onClose }: DocumentDet
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const fetchDocumentDetails = async () => {
+      if (!documentId) return;
+
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/fiscal/documents/${documentId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDocument(data.document);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar detalhes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOpen && documentId) {
       fetchDocumentDetails();
     }
   }, [isOpen, documentId]);
-
-  const fetchDocumentDetails = async () => {
-    if (!documentId) return;
-
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/fiscal/documents/${documentId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setDocument(data.document);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar detalhes:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!isOpen) return null;
 
