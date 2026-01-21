@@ -1,12 +1,14 @@
 /**
  * ⚙️ SETUP DE CRON JOBS
- * 
+ *
  * Inicializa todos os cron jobs do sistema
+ *
+ * E10 Phase 2: Migrado de src/services/cron/ para módulos DDD
  */
 
-import { startAutoImportCron } from "@/services/cron/auto-import-nfe";
-import cron from "node-cron";
-import { runMaintenanceAlertsJob } from "@/services/cron/check-maintenance-alerts";
+import cron from 'node-cron';
+import { AutoImportNfeJob } from '@/modules/integrations/infrastructure/jobs';
+import { CheckMaintenanceAlertsJob } from '@/modules/fleet/infrastructure/jobs';
 
 let initialized = false;
 
@@ -32,17 +34,21 @@ export function initializeCronJobs() {
     return;
   }
 
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     // Apenas no servidor
-    console.log("🤖 Inicializando Cron Jobs...");
-    
+    console.log('🤖 Inicializando Cron Jobs...');
+
     // Job 1: Importação automática de NFes (a cada 1 hora)
-    startAutoImportCron();
-    
+    // E10: Migrado para módulo DDD integrations/infrastructure/jobs
+    const autoImportJob = new AutoImportNfeJob();
+    autoImportJob.start();
+
     // Job 2: Verificação de Planos de Manutenção (diariamente às 8h)
-    cron.schedule("0 8 * * *", async () => {
-      console.log("🕐 [CRON] Executando verificação de manutenções preventivas...");
-      await runMaintenanceAlertsJob();
+    // E10: Migrado para módulo DDD fleet/infrastructure/jobs
+    const maintenanceJob = new CheckMaintenanceAlertsJob();
+    cron.schedule('0 8 * * *', async () => {
+      console.log('🕐 [CRON] Executando verificação de manutenções preventivas...');
+      await maintenanceJob.execute();
     });
 
     // Job 3: Document Pipeline (fila de jobs) — a cada minuto
