@@ -13,6 +13,7 @@ import { Modal } from "@/components/ui/modal";
 import { FileUpload } from "@/components/ui/file-upload";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, FileText } from "lucide-react";
+import { OperationalAIWidget } from "@/components/operational";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -219,7 +220,8 @@ export default function SinistrosPage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="p-8 space-y-8">
         <FadeIn>
           <div className="flex items-center justify-between">
@@ -381,7 +383,10 @@ export default function SinistrosPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <OperationalAIWidget screen="sinistros" />
+    </>
   );
 }
-

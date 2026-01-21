@@ -15,6 +15,7 @@ import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animat
 import { currencyFormatter, dateFormatter } from "@/components/ag-grid/renderers/aurora-renderers";
 import { FileSpreadsheet, TrendingUp, TrendingDown, Target, AlertTriangle } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
+import { OperationalAIWidget } from "@/components/operational";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -112,7 +113,8 @@ export default function MargemCtePage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="space-y-6">
         <FadeIn>
           <GradientText className="text-4xl font-bold mb-2">Análise de Margem por CTe</GradientText>
@@ -198,8 +200,10 @@ export default function MargemCtePage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <OperationalAIWidget screen="margem-cte" />
+    </>
   );
 }
-
-
