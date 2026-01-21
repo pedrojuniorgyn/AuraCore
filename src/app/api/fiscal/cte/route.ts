@@ -38,6 +38,10 @@ export async function GET(req: Request) {
       data: ctes,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar CTes:", error);
     return NextResponse.json(
@@ -111,6 +115,10 @@ export async function POST(req: NextRequest) {
         data: result.value,
       });
     } catch (error: unknown) {
+      // Propagar erros de auth (getTenantContext throws Response)
+      if (error instanceof Response) {
+        return error;
+      }
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Erro ao criar CTe:", error);
       return NextResponse.json(

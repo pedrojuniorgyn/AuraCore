@@ -63,6 +63,10 @@ export async function GET(): Promise<NextResponse> {
       },
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error as NextResponse;
+    }
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     console.error('[GET /api/fiscal/legislation/documents] Erro:', message);
 

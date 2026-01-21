@@ -99,6 +99,10 @@ export async function POST(
       downloadUrl,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao fazer upload do PDF:", error);
     return NextResponse.json(

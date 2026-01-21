@@ -63,6 +63,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: settings });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
@@ -176,6 +180,10 @@ export async function PUT(request: NextRequest) {
       message: "Configurações fiscais atualizadas com sucesso!" 
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro ao atualizar fiscal settings:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
