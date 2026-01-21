@@ -6,6 +6,8 @@
  *
  * @description Executa diariamente às 8h, verificando planos de manutenção
  * e criando alertas para manutenções próximas.
+ *
+ * E10.2.1: Corrigido SQL Injection - todas as queries agora usam parâmetros
  */
 
 import { injectable } from 'tsyringe';
@@ -37,11 +39,13 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
     };
 
     try {
-      console.log('🔧 [CheckMaintenanceAlertsJob] Verificando planos de manutenção...');
+      console.log(
+        '🔧 [CheckMaintenanceAlertsJob] Verificando planos de manutenção...'
+      );
 
       await ensureConnection();
 
-      // Buscar todos os veículos ativos
+      // Buscar todos os veículos ativos (query sem parâmetros externos - segura)
       const vehiclesResult = await pool.request().query(`
         SELECT 
           v.id,
@@ -56,16 +60,22 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
 
       const vehicles = vehiclesResult.recordset;
       result.vehiclesChecked = vehicles.length;
-      console.log(`📊 [CheckMaintenanceAlertsJob] Encontrados ${vehicles.length} veículos ativos`);
+      console.log(
+        `📊 [CheckMaintenanceAlertsJob] Encontrados ${vehicles.length} veículos ativos`
+      );
 
       // Para cada veículo, verificar planos aplicáveis
       for (const vehicle of vehicles) {
-        // Buscar planos de manutenção (específicos do modelo ou genéricos)
-        const plansResult = await pool.request().query(`
+        // ✅ SEGURO: Query parametrizada para planos de manutenção
+        const plansRequest = pool.request();
+        plansRequest.input('organizationId', vehicle.organization_id);
+        plansRequest.input('vehicleModel', vehicle.model);
+
+        const plansResult = await plansRequest.query(`
           SELECT * FROM vehicle_maintenance_plans
-          WHERE organization_id = ${vehicle.organization_id}
+          WHERE organization_id = @organizationId
           AND is_active = 'S'
-          AND (vehicle_model = '${vehicle.model}' OR vehicle_model IS NULL)
+          AND (vehicle_model = @vehicleModel OR vehicle_model IS NULL)
         `);
 
         const plans = plansResult.recordset;
@@ -73,14 +83,18 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
         for (const plan of plans) {
           let shouldAlert = false;
           let alertMessage = '';
-          let nextServiceOdometer = null;
-          let nextServiceDate = null;
+          let nextServiceOdometer: number | null = null;
+          let nextServiceDate: string | null = null;
 
-          // Verificar se já existe alerta ativo
-          const existingAlertResult = await pool.request().query(`
+          // ✅ SEGURO: Query parametrizada para verificar alerta existente
+          const existingAlertRequest = pool.request();
+          existingAlertRequest.input('vehicleId', vehicle.id);
+          existingAlertRequest.input('planId', plan.id);
+
+          const existingAlertResult = await existingAlertRequest.query(`
             SELECT * FROM maintenance_alerts
-            WHERE vehicle_id = ${vehicle.id}
-            AND maintenance_plan_id = ${plan.id}
+            WHERE vehicle_id = @vehicleId
+            AND maintenance_plan_id = @planId
             AND status = 'ACTIVE'
           `);
 
@@ -91,11 +105,14 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
           // Verificar trigger por KM
           if (plan.trigger_type === 'MILEAGE' || plan.trigger_type === 'BOTH') {
             if (plan.mileage_interval && vehicle.odometer) {
-              // Buscar última manutenção deste tipo
-              const lastServiceResult = await pool.request().query(`
+              // ✅ SEGURO: Query parametrizada para última manutenção
+              const lastServiceRequest = pool.request();
+              lastServiceRequest.input('vehicleId', vehicle.id);
+
+              const lastServiceResult = await lastServiceRequest.query(`
                 SELECT TOP 1 odometer
                 FROM maintenance_work_orders
-                WHERE vehicle_id = ${vehicle.id}
+                WHERE vehicle_id = @vehicleId
                 AND wo_type = 'PREVENTIVE'
                 AND status = 'COMPLETED'
                 ORDER BY completed_at DESC
@@ -107,11 +124,16 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
                   : 0;
 
               nextServiceOdometer = lastServiceOdometer + plan.mileage_interval;
-              const kmRemaining = nextServiceOdometer - vehicle.odometer;
+              const kmRemaining = (nextServiceOdometer ?? 0) - vehicle.odometer;
 
               if (kmRemaining <= (plan.advance_warning_km || 0)) {
                 shouldAlert = true;
-                alertMessage = `Manutenção "${plan.service_name}" próxima: faltam ${kmRemaining} km`;
+                // Sanitizar nome do serviço para evitar injection em logs
+                const sanitizedServiceName = String(plan.service_name).replace(
+                  /['"]/g,
+                  ''
+                );
+                alertMessage = `Manutenção "${sanitizedServiceName}" próxima: faltam ${kmRemaining} km`;
               }
             }
           }
@@ -119,11 +141,14 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
           // Verificar trigger por tempo
           if (plan.trigger_type === 'TIME' || plan.trigger_type === 'BOTH') {
             if (plan.time_interval_months) {
-              // Buscar última manutenção deste tipo
-              const lastServiceResult = await pool.request().query(`
+              // ✅ SEGURO: Query parametrizada para última manutenção
+              const lastServiceRequest = pool.request();
+              lastServiceRequest.input('vehicleId', vehicle.id);
+
+              const lastServiceResult = await lastServiceRequest.query(`
                 SELECT TOP 1 completed_at
                 FROM maintenance_work_orders
-                WHERE vehicle_id = ${vehicle.id}
+                WHERE vehicle_id = @vehicleId
                 AND wo_type = 'PREVENTIVE'
                 AND status = 'COMPLETED'
                 ORDER BY completed_at DESC
@@ -151,14 +176,30 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
 
               if (daysRemaining <= (plan.advance_warning_days || 0)) {
                 shouldAlert = true;
-                alertMessage = `Manutenção "${plan.service_name}" próxima: faltam ${daysRemaining} dias`;
+                // Sanitizar nome do serviço para evitar injection em logs
+                const sanitizedServiceName = String(plan.service_name).replace(
+                  /['"]/g,
+                  ''
+                );
+                alertMessage = `Manutenção "${sanitizedServiceName}" próxima: faltam ${daysRemaining} dias`;
               }
             }
           }
 
           // Criar alerta se necessário
           if (shouldAlert) {
-            await pool.request().query(`
+            // ✅ SEGURO: INSERT parametrizado
+            const insertRequest = pool.request();
+            insertRequest.input('organizationId', vehicle.organization_id);
+            insertRequest.input('vehicleId', vehicle.id);
+            insertRequest.input('planId', plan.id);
+            insertRequest.input('alertType', plan.trigger_type);
+            insertRequest.input('alertMessage', alertMessage);
+            insertRequest.input('currentOdometer', vehicle.odometer || null);
+            insertRequest.input('nextServiceOdometer', nextServiceOdometer);
+            insertRequest.input('nextServiceDate', nextServiceDate);
+
+            await insertRequest.query(`
               INSERT INTO maintenance_alerts (
                 organization_id, vehicle_id, maintenance_plan_id,
                 alert_type, alert_message,
@@ -166,17 +207,19 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
                 current_check_date, next_service_date,
                 status, created_at
               ) VALUES (
-                ${vehicle.organization_id}, ${vehicle.id}, ${plan.id},
-                '${plan.trigger_type}', '${alertMessage}',
-                ${vehicle.odometer || 'NULL'}, ${nextServiceOdometer || 'NULL'},
-                GETDATE(), ${nextServiceDate ? `'${nextServiceDate}'` : 'NULL'},
+                @organizationId, @vehicleId, @planId,
+                @alertType, @alertMessage,
+                @currentOdometer, @nextServiceOdometer,
+                GETDATE(), @nextServiceDate,
                 'ACTIVE', GETDATE()
               )
             `);
 
             result.alertsCreated++;
+            // Sanitizar plate para log
+            const sanitizedPlate = String(vehicle.plate).replace(/['"]/g, '');
             console.log(
-              `⚠️  [CheckMaintenanceAlertsJob] Alerta criado: ${vehicle.plate} - ${alertMessage}`
+              `⚠️  [CheckMaintenanceAlertsJob] Alerta criado: ${sanitizedPlate} - ${alertMessage}`
             );
           }
         }

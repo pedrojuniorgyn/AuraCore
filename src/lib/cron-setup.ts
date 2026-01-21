@@ -18,19 +18,25 @@ export function initializeCronJobs() {
     return;
   }
 
+  // E10.2.1 FIX: Setar flag IMEDIATAMENTE após verificação para prevenir
+  // chamadas concorrentes/duplicadas durante early returns
+  initialized = true;
+
   /**
    * ✅ Next.js: não iniciar CRON durante o build.
    * Durante `next build`, alguns módulos podem ser importados para análise/pré-render.
    * Se iniciarmos CRON aqui, criamos side-effects e podemos quebrar o build.
    */
   const phase = process.env.NEXT_PHASE;
-  if (phase === "phase-production-build") {
+  if (phase === 'phase-production-build') {
+    console.log('[CRON] Skipping setup during build phase');
     return;
   }
 
   // ✅ Em homologação/produção, só inicia se explicitamente habilitado
   // (evita rodar durante `next build`/pré-render e evitar efeitos colaterais)
-  if (process.env.ENABLE_CRON !== "true") {
+  if (process.env.ENABLE_CRON !== 'true') {
+    console.log('[CRON] Cron jobs disabled (ENABLE_CRON !== true)');
     return;
   }
 
@@ -64,9 +70,8 @@ export function initializeCronJobs() {
         console.error("❌ [CRON] Falha ao processar document jobs:", errorMsg);
       }
     });
-    
-    initialized = true;
-    console.log("✅ Cron Jobs inicializados!");
+
+    console.log('✅ Cron Jobs inicializados!');
     console.log("  - Importação NFe: a cada hora configurada");
     console.log("  - Alertas Manutenção: diariamente às 8h");
     console.log("  - Document Jobs: a cada 1 minuto");
