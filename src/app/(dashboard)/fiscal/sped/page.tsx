@@ -126,7 +126,7 @@ export default function CentralSpedPage() {
       {/* Widget de Legislação */}
 
       {/* Widget de Insights - usando wrapper padronizado */}
-      <FiscalAIWidget screen="sped" />
+      <FiscalAIWidget screen="sped" position="inline" />
     </div>
   </>
   );

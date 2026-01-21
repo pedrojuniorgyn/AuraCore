@@ -540,7 +540,7 @@ export default function FiscalDocumentsPage() {
       {/* Widget de Legislação */}
 
       {/* Widget de Insights - usando wrapper padronizado */}
-      <FiscalAIWidget screen="documentos" />
+      <FiscalAIWidget screen="documentos" position="inline" />
     </div>
   </>
   );

@@ -407,7 +407,7 @@ export default function CtePage() {
         {/* Widget de Legislação */}
 
         {/* Widget de Insights - usando wrapper padronizado */}
-        <FiscalAIWidget screen="cte" />
+        <FiscalAIWidget screen="cte" position="inline" />
       </div>
     </>
   );
