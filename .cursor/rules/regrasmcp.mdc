@@ -734,6 +734,57 @@ Se QUALQUER verificação falhar, corrigir antes de commit.
 
 ---
 
+## 🔴 DEBUG ERROS 500 - CHECKLIST OBRIGATÓRIO (DEBUG-500-001 a DEBUG-500-005)
+
+> **Lição aprendida:** 80% dos erros 500 em módulos são por SCHEMA NÃO EXPORTADO
+> **Referência:** Incidente HOTFIX-STRATEGIC-500 (21/01/2026, commit 6f3e2cdb)
+
+| Regra | Verificação | Comando | Probabilidade |
+|-------|-------------|---------|---------------|
+| DEBUG-500-001 | Schema exportado? | `grep "modules/{modulo}" src/lib/db/schema.ts` | 80% |
+| DEBUG-500-002 | DI registrado? | `grep "{Modulo}Module" src/shared/infrastructure/di/container.ts` | 10% |
+| DEBUG-500-003 | Tabela existe? | `ls drizzle/migrations/*{modulo}*` | 5% |
+| DEBUG-500-004 | Env correto? | `grep "DATABASE" .env.local` | 3% |
+| DEBUG-500-005 | Bug na rota? | `cat src/app/api/{modulo}/route.ts` | 2% |
+
+### Ordem Obrigatória de Debug
+
+```
+1. Schema exports    ← COMEÇAR AQUI (causa mais comum)
+2. DI registration
+3. Database tables
+4. Environment vars
+5. Route handlers    ← NUNCA começar aqui
+```
+
+### Script Rápido de Diagnóstico
+
+```bash
+MODULE="{modulo}"
+echo "=== DIAGNÓSTICO ERRO 500 ==="
+echo "1. Schema exports:"
+grep -n "modules/$MODULE" src/lib/db/schema.ts || echo "❌ SCHEMA NÃO EXPORTADO"
+echo ""
+echo "2. DI container:"
+grep -in "${MODULE}Module" src/shared/infrastructure/di/container.ts || echo "❌ DI NÃO REGISTRADO"
+echo ""
+echo "3. Migrations:"
+ls drizzle/migrations/*$MODULE* 2>/dev/null || echo "⚠️ Nenhuma migration"
+```
+
+### Sintomas por Causa
+
+| Sintoma | Causa | Ação |
+|---------|-------|------|
+| **TODAS** as rotas do módulo retornam 500 | Schema não exportado | Adicionar export em schema.ts |
+| Use Case não instancia | DI não registrado | Registrar módulo em container.ts |
+| "Invalid object name" | Tabela não existe | Rodar migrations |
+| Uma rota específica retorna 500 | Bug na rota | Debug da rota |
+
+**Contrato completo:** `docs/architecture/contracts/DEBUG_500_CONTRACT.md`
+
+---
+
 ## 📋 FLUXO DE TRABALHO OBRIGATÓRIO
 
 ### Implementação
