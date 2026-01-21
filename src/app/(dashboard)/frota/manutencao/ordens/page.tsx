@@ -9,6 +9,7 @@ import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animat
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { FleetAIWidget } from "@/components/fleet";
 
 interface WorkOrder {
   id: number;
@@ -356,7 +357,9 @@ export default function WorkOrdersPage() {
           ))
         )}
       </div>
+
+      {/* AI Insight Widget - Assistente de Manutenção */}
+      <FleetAIWidget screen="manutencao-ordens" />
     </div>
   );
 }
-

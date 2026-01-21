@@ -29,6 +29,7 @@ import { DriverStatusBadge } from "@/components/fleet/DriverStatusBadge";
 import { format, isPast } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FleetAIWidget } from "@/components/fleet";
 
 // === TYPES ===
 interface IDriver {
@@ -205,7 +206,8 @@ export default function DriversPage() {
 
   // === RENDER ===
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="flex-1 space-y-6 p-8 pt-6 relative">
         {/* Background Pattern */}
         <GridPattern className="opacity-30" />
@@ -386,10 +388,12 @@ export default function DriversPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </PageTransition>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente de Motoristas */}
+      <FleetAIWidget screen="motoristas" defaultMinimized={true} />
+    </>
   );
 }
-
-
 
 

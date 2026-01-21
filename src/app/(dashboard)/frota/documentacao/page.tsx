@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, CellStyle } from "ag-grid-community";
+import { FleetAIWidget } from "@/components/fleet";
 
 export default function FleetDocsPage() {
   const router = useRouter();
@@ -141,7 +142,9 @@ export default function FleetDocsPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* AI Insight Widget - Assistente de Documentos */}
+      <FleetAIWidget screen="documentacao" defaultMinimized={true} />
     </div>
   );
 }
-

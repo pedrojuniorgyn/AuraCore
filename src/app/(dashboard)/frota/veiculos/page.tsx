@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FleetAIWidget } from "@/components/fleet";
 
 // === TYPES ===
 interface IVehicle {
@@ -222,7 +223,8 @@ export default function VehiclesPage() {
 
   // === RENDER ===
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="flex-1 space-y-6 p-8 pt-6 relative">
         {/* Background Pattern */}
         <GridPattern className="opacity-30" />
@@ -418,8 +420,10 @@ export default function VehiclesPage() {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </PageTransition>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente de Veículos */}
+      <FleetAIWidget screen="veiculos" />
+    </>
   );
 }
-
-

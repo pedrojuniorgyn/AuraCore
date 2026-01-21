@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { FleetAIWidget } from "@/components/fleet";
 
 // Evita pré-render em build (dependências usam hooks de URL / CSR bailout)
 export const dynamic = "force-dynamic";
@@ -112,8 +113,9 @@ export default function PneusPage() {
           </Card>
         ))}
       </div>
+
+      {/* AI Insight Widget - Assistente de Pneus */}
+      <FleetAIWidget screen="pneus" defaultMinimized={true} />
     </div>
   );
 }
-
-

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, AlertCircle, Calendar, Gauge, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { FleetAIWidget } from "@/components/fleet";
 
 interface MaintenancePlan {
   id: number;
@@ -386,7 +387,9 @@ export default function MaintenancePlansPage() {
           ))
         )}
       </div>
+
+      {/* AI Insight Widget - Assistente de Planos */}
+      <FleetAIWidget screen="manutencao-planos" defaultMinimized={true} />
     </div>
   );
 }
-
