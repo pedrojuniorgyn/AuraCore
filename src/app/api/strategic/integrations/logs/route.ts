@@ -96,6 +96,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ logs });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/integrations/logs error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

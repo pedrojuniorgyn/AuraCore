@@ -74,6 +74,10 @@ export async function POST(
 
     return NextResponse.json({ success: true, message: 'Ideia rejeitada' });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Erro ao rejeitar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

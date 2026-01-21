@@ -113,6 +113,10 @@ export async function POST(
       currentPhase: nextPhase,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error advancing PDCA phase:', error);
     return NextResponse.json({ error: 'Failed to advance PDCA phase' }, { status: 500 });
   }

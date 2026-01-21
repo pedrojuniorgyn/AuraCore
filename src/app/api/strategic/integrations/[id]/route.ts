@@ -31,6 +31,10 @@ export async function GET(request: Request, { params }: RouteParams) {
       isActive: true,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error fetching integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -51,6 +55,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -70,6 +78,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error deleting integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

@@ -108,6 +108,10 @@ export async function POST(request: Request) {
       errors: errors.slice(0, 50), // Limitar a 50 erros para não sobrecarregar
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/import/preview error:', error);
     return NextResponse.json(
       { error: 'Failed to parse file' },

@@ -68,6 +68,10 @@ export async function POST(
     // In real implementation, update in database
     return NextResponse.json(updatedKR);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating Key Result value:', error);
     return NextResponse.json({ error: 'Failed to update value' }, { status: 500 });
   }

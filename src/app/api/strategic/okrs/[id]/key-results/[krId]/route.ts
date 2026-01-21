@@ -64,6 +64,10 @@ export async function PATCH(
     // In real implementation, update in database
     return NextResponse.json(updatedKR);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating Key Result:', error);
     return NextResponse.json({ error: 'Failed to update Key Result' }, { status: 500 });
   }

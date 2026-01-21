@@ -25,6 +25,10 @@ export async function POST(request: Request, { params }: RouteParams) {
       isActive: true, // This would come from database
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error toggling integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

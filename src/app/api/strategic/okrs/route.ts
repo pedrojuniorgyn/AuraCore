@@ -362,6 +362,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newOKR, { status: 201 });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error creating OKR:', error);
     return NextResponse.json({ error: 'Failed to create OKR' }, { status: 500 });
   }

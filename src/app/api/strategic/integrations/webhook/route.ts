@@ -66,6 +66,10 @@ export async function GET() {
 
     return NextResponse.json({ webhooks });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/integrations/webhook error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -101,6 +105,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(webhook);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/integrations/webhook error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

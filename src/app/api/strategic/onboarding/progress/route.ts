@@ -85,6 +85,10 @@ export async function PUT(request: Request) {
       updates,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating onboarding progress:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

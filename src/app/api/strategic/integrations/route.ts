@@ -81,6 +81,10 @@ export async function GET() {
 
     return NextResponse.json({ integrations });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error fetching integrations:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -120,6 +124,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, id, integration: newIntegration });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error creating integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

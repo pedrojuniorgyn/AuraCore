@@ -72,6 +72,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error processing onboarding action:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

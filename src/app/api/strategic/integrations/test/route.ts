@@ -82,6 +82,10 @@ export async function POST(request: Request) {
         });
     }
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error testing integration:', error);
     return NextResponse.json({ 
       success: false, 

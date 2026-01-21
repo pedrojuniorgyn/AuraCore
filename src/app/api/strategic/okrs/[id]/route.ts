@@ -56,6 +56,10 @@ export async function PATCH(
 
     return NextResponse.json(updatedOKR);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating OKR:', error);
     return NextResponse.json({ error: 'Failed to update OKR' }, { status: 500 });
   }

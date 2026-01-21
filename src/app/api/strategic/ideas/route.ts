@@ -63,6 +63,10 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(ideas.length / pageSize),
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Erro ao listar ideias:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
@@ -136,6 +140,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(created[0], { status: 201 });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Erro ao criar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

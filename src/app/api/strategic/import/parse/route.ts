@@ -120,6 +120,10 @@ export async function POST(request: NextRequest) {
       totalRows: data.length,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/import/parse error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
