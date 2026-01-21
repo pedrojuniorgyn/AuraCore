@@ -52,6 +52,33 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-689836",
+      "date": "2026-01-21",
+      "epic": "E9",
+      "error": "Bug CI-002: hatchling não conseguia encontrar arquivos para build porque faltava configuração [tool.hatch.build.targets.wheel] no pyproject.toml. O projeto usa estrutura src/ mas hatchling procurava por auracore_agents/",
+      "correction": "Adicionado [tool.hatch.build.targets.wheel] com packages = ['src'] e [tool.hatch.build.targets.sdist] com include list no pyproject.toml",
+      "files_affected": [
+        "agents/pyproject.toml"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-692590",
+      "date": "2026-01-21",
+      "epic": "E9",
+      "error": "Bug K8S-001: Volume data usando emptyDir causa perda de dados em restart/scale-down. App armazena SQLite/ChromaDB em /app/data/memory para sessões persistentes, mas Deployment com HPA (3-10 replicas) com emptyDir perde todos os dados quando pods são recriados",
+      "correction": "Adicionado WARNING comentário no deployment.yaml explicando o problema e opções (PVC, StatefulSet, Redis externo). Criado pvc-data.yaml como template opcional para produção",
+      "files_affected": [
+        "agents/k8s/deployment.yaml",
+        "agents/k8s/pvc-data.yaml"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

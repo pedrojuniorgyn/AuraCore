@@ -108,6 +108,15 @@ spec:
           emptyDir: {}
         - name: cache
           emptyDir: {}
+        # WARNING: emptyDir é efêmero - dados são perdidos quando pod reinicia!
+        # Para produção com dados persistentes (SQLite/ChromaDB), use uma das opções:
+        # 1. PersistentVolumeClaim (requer storage class com ReadWriteMany para múltiplas réplicas)
+        # 2. StatefulSet com volumeClaimTemplates (cada pod tem seu próprio volume)
+        # 3. Redis/PostgreSQL externo para sessões (RECOMENDADO para scaling)
+        # Exemplo PVC:
+        # - name: data
+        #   persistentVolumeClaim:
+        #     claimName: auracore-agents-data
         - name: data
           emptyDir: {}
       

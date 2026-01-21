@@ -1,0 +1,33 @@
+# agents/k8s/pvc-data.yaml
+# =============================================================================
+# PersistentVolumeClaim para dados persistentes (ChromaDB, SQLite, memória)
+# =============================================================================
+# IMPORTANTE: Este PVC é OPCIONAL. Use apenas se precisar de persistência real.
+#
+# Para usar:
+# 1. Aplique este arquivo: kubectl apply -f pvc-data.yaml
+# 2. Altere o deployment.yaml:
+#    - name: data
+#      persistentVolumeClaim:
+#        claimName: auracore-agents-data
+#
+# NOTA: Para múltiplas réplicas com ReadWriteOnce, considere usar StatefulSet
+# ou um storage class que suporte ReadWriteMany (ex: NFS, EFS, Azure Files)
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auracore-agents-data
+  namespace: auracore
+  labels:
+    app: auracore-agents
+spec:
+  accessModes:
+    # ReadWriteOnce: Um pod por vez (usar com StatefulSet ou 1 réplica)
+    # ReadWriteMany: Múltiplos pods (requer storage class compatível)
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Descomente e ajuste para seu cluster:
+  # storageClassName: standard
