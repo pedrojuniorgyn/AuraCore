@@ -47,6 +47,10 @@ export async function POST(request: NextRequest) {
       status: session.status,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     agentLogger.error('voice', 'API.session.create.error', {
@@ -129,6 +133,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     agentLogger.error('voice', 'API.session.get.error', {
@@ -195,6 +203,10 @@ export async function DELETE(request: NextRequest) {
       message: 'Session ended',
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     agentLogger.error('voice', 'API.session.delete.error', {

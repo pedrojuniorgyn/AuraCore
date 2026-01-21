@@ -69,6 +69,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       messages: messagesResult.value,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error getting session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -126,6 +130,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -159,6 +167,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error deleting session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

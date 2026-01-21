@@ -34,6 +34,10 @@ export async function GET() {
       ddas: result.recordset,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar DDAs:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(

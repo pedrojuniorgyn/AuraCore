@@ -89,6 +89,10 @@ export async function GET(request: NextRequest) {
           const startData = JSON.stringify({ type: 'connected', sessionId });
           controller.enqueue(encoder.encode(`data: ${startData}\n\n`));
         } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
           const errorMessage = error instanceof Error ? error.message : String(error);
           const data = JSON.stringify({ error: errorMessage, type: 'init_error' });
           controller.enqueue(encoder.encode(`data: ${data}\n\n`));
@@ -116,6 +120,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     agentLogger.error('voice', 'API.stream.error', {
@@ -165,6 +173,10 @@ export async function POST(request: NextRequest) {
       bytesReceived: audioData.byteLength,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     agentLogger.error('voice', 'API.stream.chunk_error', {
@@ -207,6 +219,10 @@ export async function DELETE(request: NextRequest) {
       sessionId,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     agentLogger.error('voice', 'API.stream.stop_error', {

@@ -65,6 +65,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result.value);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro no chat:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },

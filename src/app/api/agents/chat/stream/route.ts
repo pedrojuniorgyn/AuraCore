@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
         console.error("Stream error:", error);
         controller.enqueue(
           encoder.encode(`data: {"type":"error","error":"Erro no stream"}\n\n`)

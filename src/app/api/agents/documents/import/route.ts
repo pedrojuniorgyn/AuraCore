@@ -131,6 +131,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     return NextResponse.json(result);
 
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Erro na importação:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

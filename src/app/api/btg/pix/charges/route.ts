@@ -32,6 +32,10 @@ export async function GET() {
       charges: result.recordset,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar Pix BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
@@ -122,6 +126,10 @@ export async function POST(request: NextRequest) {
       btgData: btgPix,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar Pix BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(

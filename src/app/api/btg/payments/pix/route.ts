@@ -96,6 +96,10 @@ export async function POST(request: NextRequest) {
       btgData: btgPayment,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao realizar pagamento Pix BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
