@@ -226,7 +226,8 @@ export default function CostCentersPage() {
   };
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <GridPattern />
 
       <FadeIn delay={0.1}>

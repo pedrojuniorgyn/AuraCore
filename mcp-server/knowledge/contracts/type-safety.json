@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.38",
+  "version": "2.0.39",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -707,6 +707,20 @@
         ".cursor/rules/regrasmcp.mdc"
       ],
       "pattern_created": "FIXED-001: Fixed Positioning Outside Transforms",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-244887",
+      "date": "2026-01-21",
+      "epic": "HOTFIX-STRATEGIC-V2.0",
+      "error": "Erro 500 em /api/notifications causado por JSON.parse sem try/catch quando notif.data continha JSON inválido. Erro 400 em POST /api/strategic/action-plans causado por campo howMuchCurrency ausente no payload do frontend, violando schema Zod que espera string de 3 caracteres.",
+      "correction": "1) Adicionado try/catch em JSON.parse com fallback null e warning log para notificações com JSON inválido. 2) Adicionado howMuchCurrency: 'BRL' como default no payload de criação de action plans.",
+      "files_affected": [
+        "src/app/api/notifications/route.ts",
+        "src/app/(dashboard)/strategic/action-plans/new/page.tsx"
+      ],
+      "pattern_created": "JSON-PARSE-SAFE: Always wrap JSON.parse in try/catch",
       "status": "APPROVED",
       "must_not_repeat": true
     }
