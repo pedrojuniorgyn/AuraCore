@@ -26,6 +26,30 @@ import { registerContractsModule } from '@/modules/contracts/infrastructure/di/C
 // Integrations Module (E7.9 + E8)
 import { initializeIntegrationsModule } from '@/modules/integrations/infrastructure/di/IntegrationsModule';
 
+// Accounting Module (E7.27)
+import { registerAccountingModule } from '@/modules/accounting/infrastructure/di/AccountingModule';
+
+// Commercial Module
+import { registerCommercialModule } from '@/modules/commercial/infrastructure/di/CommercialModule';
+
+// Documents Module
+import { registerDocumentsModule } from '@/modules/documents/infrastructure/di/DocumentsModule';
+
+// Financial Module (E7.22.2 + Onda 7.2)
+import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
+
+// Fiscal Module
+import { registerFiscalModule } from '@/modules/fiscal/infrastructure/di/FiscalModule';
+
+// Fleet Module
+import { registerFleetModule } from '@/modules/fleet/infrastructure/di/FleetModule';
+
+// TMS Module
+import { registerTmsModule } from '@/modules/tms/infrastructure/di/TmsModule';
+
+// WMS Module
+import { registerWmsModule } from '@/modules/wms/infrastructure/di/WmsModule';
+
 // Bank Statement Import (E-Agent-Fase-D6)
 import { ImportBankStatementUseCase, type IBankTransactionRepository } from '@/modules/financial/application/commands/import-bank-statement';
 import type { BankTransaction } from '@/modules/financial/domain/types';
@@ -104,6 +128,21 @@ initializeIntegrationsModule();
 // ============================================================================
 
 registerStrategicModule();
+
+// ============================================================================
+// CORE BUSINESS MODULES (DDD/Hexagonal)
+// ============================================================================
+
+registerAccountingModule();
+registerCommercialModule();
+registerDocumentsModule();
+initializeFinancialModule();
+registerFiscalModule();
+registerFleetModule();
+registerTmsModule();
+registerWmsModule();
+
+console.log('[DI Container] ✅ 8 core modules registered successfully');
 
 // ============================================================================
 // EXPORT

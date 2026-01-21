@@ -757,29 +757,84 @@ Se QUALQUER verificação falhar, corrigir antes de commit.
 5. Route handlers    ← NUNCA começar aqui
 ```
 
-### Script Rápido de Diagnóstico
+### Script Completo de Diagnóstico (5 Passos)
 
 ```bash
-MODULE="{modulo}"
-echo "=== DIAGNÓSTICO ERRO 500 ==="
-echo "1. Schema exports:"
-grep -n "modules/$MODULE" src/lib/db/schema.ts || echo "❌ SCHEMA NÃO EXPORTADO"
+#!/bin/bash
+# Script de diagnóstico para erros 500
+# Uso: ./debug-500.sh {modulo}
+MODULE="${1:-strategic}"
+echo "🔍 === DIAGNÓSTICO ERRO 500 - Módulo: $MODULE ==="
 echo ""
-echo "2. DI container:"
-grep -in "${MODULE}Module" src/shared/infrastructure/di/container.ts || echo "❌ DI NÃO REGISTRADO"
+
+echo "=== 1. SCHEMA EXPORTS (80% dos casos) ==="
+if grep -q "modules/$MODULE" src/lib/db/schema.ts 2>/dev/null; then
+  echo "✅ Schema exportado"
+  grep -n "modules/$MODULE" src/lib/db/schema.ts
+else
+  echo "❌ PROBLEMA: Schema NÃO exportado!"
+  echo "   Adicionar: export * from '@/modules/$MODULE/infrastructure/persistence/schemas';"
+fi
+
 echo ""
-echo "3. Migrations:"
-ls drizzle/migrations/*$MODULE* 2>/dev/null || echo "⚠️ Nenhuma migration"
+echo "=== 2. DI REGISTRATION (10% dos casos) ==="
+if grep -iq "${MODULE}Module" src/shared/infrastructure/di/container.ts 2>/dev/null; then
+  echo "✅ Módulo registrado no DI"
+  grep -in "${MODULE}Module" src/shared/infrastructure/di/container.ts
+else
+  echo "❌ PROBLEMA: Módulo NÃO registrado no DI!"
+  echo "   Verificar: src/shared/infrastructure/di/container.ts"
+fi
+
+echo ""
+echo "=== 3. DATABASE TABLES (5% dos casos) ==="
+MIGRATIONS=$(ls drizzle/migrations/*$MODULE* 2>/dev/null | wc -l)
+if [ "$MIGRATIONS" -gt 0 ]; then
+  echo "✅ Migrations encontradas: $MIGRATIONS arquivo(s)"
+  ls drizzle/migrations/*$MODULE* 2>/dev/null | head -5
+else
+  echo "⚠️ Nenhuma migration específica para '$MODULE'"
+fi
+
+echo ""
+echo "=== 4. ENVIRONMENT VARIABLES (3% dos casos) ==="
+if [ -f ".env.local" ]; then
+  echo "📋 Variáveis de banco:"
+  grep -E "DATABASE|MSSQL|DB_" .env.local 2>/dev/null | head -3 || echo "⚠️ Nenhuma variável encontrada"
+else
+  echo "❌ PROBLEMA: Arquivo .env.local não encontrado!"
+fi
+
+echo ""
+echo "=== 5. ROUTE HANDLERS (2% dos casos) ==="
+ROUTE_PATH="src/app/api/$MODULE"
+if [ -d "$ROUTE_PATH" ]; then
+  ROUTE_COUNT=$(find "$ROUTE_PATH" -name "route.ts" 2>/dev/null | wc -l)
+  echo "✅ Pasta de rotas existe: $ROUTE_COUNT rotas"
+  find "$ROUTE_PATH" -name "route.ts" 2>/dev/null | head -5
+else
+  echo "❌ PROBLEMA: Pasta de rotas não existe: $ROUTE_PATH"
+fi
+
+echo ""
+echo "🏁 Diagnóstico concluído para módulo: $MODULE"
 ```
 
 ### Sintomas por Causa
 
-| Sintoma | Causa | Ação |
-|---------|-------|------|
-| **TODAS** as rotas do módulo retornam 500 | Schema não exportado | Adicionar export em schema.ts |
-| Use Case não instancia | DI não registrado | Registrar módulo em container.ts |
-| "Invalid object name" | Tabela não existe | Rodar migrations |
-| Uma rota específica retorna 500 | Bug na rota | Debug da rota |
+| Sintoma | Causa Provável | Passo | Ação |
+|---------|----------------|-------|------|
+| **TODAS** as rotas do módulo retornam 500 | Schema não exportado | 1 | Adicionar export em schema.ts |
+| `db.query.{table}Table` é `undefined` | Schema não exportado | 1 | Adicionar export em schema.ts |
+| "Dependency not found" | DI não registrado | 2 | Registrar módulo em container.ts |
+| Use Case não instancia | DI não registrado | 2 | Registrar módulo em container.ts |
+| "Invalid object name" | Tabela não existe | 3 | Rodar migrations |
+| Query falha no Drizzle | Tabela não existe | 3 | Verificar banco de dados |
+| **"Connection refused" / "ECONNREFUSED"** | **Variável de ambiente incorreta** | **4** | **Verificar .env.local** |
+| **"Connection timeout" / "ETIMEDOUT"** | **Banco inacessível ou env errado** | **4** | **Verificar DATABASE_URL** |
+| **"Login failed" / "Authentication failed"** | **Credenciais incorretas** | **4** | **Corrigir credenciais no .env** |
+| Erro em UMA rota específica (não todas) | Bug na implementação | 5 | Debug da rota |
+| Stack trace aponta linha específica | Bug no código | 5 | Corrigir código da rota |
 
 **Contrato completo:** `docs/architecture/contracts/DEBUG_500_CONTRACT.md`
 

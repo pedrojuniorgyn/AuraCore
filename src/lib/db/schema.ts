@@ -3281,5 +3281,13 @@ export const notifications = mssqlTable("notifications", {
 // ==========================================
 export * from "./schema/accounting";
 
-// 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑
+// ==========================================
+// DDD MODULES (Domain-Driven Design)
+// ==========================================
 export * from '@/modules/strategic/infrastructure/persistence/schemas';
+export * from '@/modules/documents/infrastructure/persistence/schemas';
+export * from '@/modules/fiscal/infrastructure/persistence/schemas';
+export * from '@/modules/tms/infrastructure/persistence/schemas';
+export * from '@/modules/wms/infrastructure/persistence/schemas';
+
+// 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑
