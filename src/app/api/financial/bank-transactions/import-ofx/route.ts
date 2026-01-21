@@ -101,6 +101,10 @@ export async function POST(request: NextRequest) {
       queued: false,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao importar OFX:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(

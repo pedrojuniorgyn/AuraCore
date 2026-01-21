@@ -43,6 +43,10 @@ export async function GET(req: Request) {
       data: analyticalAccounts,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar contas analíticas:", error);
     return NextResponse.json(
       { error: "Erro ao buscar contas analíticas" },

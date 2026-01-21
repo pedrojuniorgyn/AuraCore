@@ -41,6 +41,10 @@ export async function GET(
       },
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao baixar remessa:", error);
     return NextResponse.json(
       { error: "Falha ao baixar remessa" },

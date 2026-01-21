@@ -47,6 +47,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: remittances });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar remessas:", error);
     return NextResponse.json(
       { error: "Falha ao listar remessas" },

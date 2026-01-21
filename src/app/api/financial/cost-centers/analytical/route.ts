@@ -40,6 +40,10 @@ export async function GET(req: Request) {
       data: analyticalCostCenters,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar centros de custo analíticos:", error);
     return NextResponse.json(
       { error: "Erro ao buscar centros de custo analíticos" },

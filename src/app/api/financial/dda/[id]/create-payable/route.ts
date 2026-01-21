@@ -28,6 +28,10 @@ export async function POST(
       message: "Conta a pagar criada com sucesso",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao criar conta a pagar:", error);
     return NextResponse.json(
