@@ -18,6 +18,7 @@ import { PriorityActionsCard, type PriorityAction } from '@/components/strategic
 import { WeeklyTrendChart } from '@/components/strategic/WeeklyTrendChart';
 import { AuroraInsightCard } from '@/components/strategic/AuroraInsightCard';
 import { AIInsightWidget } from '@/components/ai';
+import { VoiceChatPanel } from '@/components/voice';
 
 interface WarRoomData {
   healthScore: number;
@@ -166,7 +167,9 @@ export default function WarRoomPage() {
           </div>
         </div>
       ) : data && (
-        <div className="space-y-6">
+        <div className="grid grid-cols-12 gap-6">
+          {/* Conteúdo Principal - 9 colunas */}
+          <div className="col-span-12 lg:col-span-9 space-y-6">
           {/* Row 1: Health Score + Alerts */}
           <div className="grid grid-cols-12 gap-6">
             <motion.div
@@ -291,27 +294,52 @@ export default function WarRoomPage() {
               onChat={handleOpenChat}
             />
           </motion.div>
+          </div>
+
+          {/* Sidebar Direita - 3 colunas */}
+          <div className="col-span-12 lg:col-span-3 space-y-4">
+            {/* Voice Chat Panel */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <VoiceChatPanel
+                title="Comando por Voz"
+                agentType="strategic"
+                context={{
+                  module: 'strategic',
+                  screen: 'war-room',
+                }}
+                showHistory={true}
+              />
+            </motion.div>
+
+            {/* AI Insight Widget - Inline na sidebar */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <AIInsightWidget
+                agentType="strategic"
+                context={{
+                  module: 'strategic',
+                  screen: 'war-room',
+                }}
+                suggestedPrompts={[
+                  'Status do War Room',
+                  'Principais bloqueios',
+                  'Próximos passos',
+                ]}
+                title="Insights"
+                position="inline"
+                defaultMinimized={true}
+              />
+            </motion.div>
+          </div>
         </div>
       )}
-
-      {/* AI Insight Widget - War Room */}
-      <AIInsightWidget
-        agentType="strategic"
-        context={{
-          module: 'strategic',
-          screen: 'war-room',
-        }}
-        suggestedPrompts={[
-          'Qual o status atual deste War Room?',
-          'Quais são os principais bloqueios?',
-          'Sugira próximos passos para resolver',
-          'Analise o impacto se não resolvermos hoje',
-          'Quem deve ser envolvido nesta discussão?',
-        ]}
-        title="Assistente War Room"
-        position="bottom-right"
-        defaultMinimized={false}
-      />
     </div>
   );
 }
