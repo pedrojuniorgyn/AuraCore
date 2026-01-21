@@ -10,9 +10,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
-  ThumbsUp, MessageCircle, MoreHorizontal, Edit2, Trash2, 
+  MessageCircle, MoreHorizontal, Edit2, Trash2, 
   Paperclip, Reply 
 } from 'lucide-react';
+import { ReactionPicker } from './comments/ReactionPicker';
+import type { Reaction } from '@/lib/comments/comment-types';
 
 interface Attachment {
   id: string;
@@ -33,6 +35,7 @@ export interface Comment {
   updatedAt?: Date | string;
   likes: number;
   likedByMe: boolean;
+  reactions?: Reaction[];
   attachments?: Attachment[];
   replies?: Comment[];
   parentId?: string;
@@ -42,6 +45,7 @@ interface Props {
   comment: Comment;
   currentUserId: string;
   onLike: (id: string) => void;
+  onReaction?: (commentId: string, emoji: string) => void;
   onReply: (id: string) => void;
   onEdit: (id: string, content: string) => void;
   onDelete: (id: string) => void;
@@ -52,6 +56,7 @@ export function CommentItem({
   comment, 
   currentUserId, 
   onLike, 
+  onReaction,
   onReply, 
   onEdit, 
   onDelete,
@@ -207,17 +212,27 @@ export function CommentItem({
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => onLike(comment.id)}
-            className={`flex items-center gap-1.5 text-xs transition-all
-              ${comment.likedByMe 
-                ? 'text-purple-400' 
-                : 'text-white/40 hover:text-white/70'
-              }`}
-          >
-            <ThumbsUp size={14} className={comment.likedByMe ? 'fill-current' : ''} />
-            {comment.likes > 0 && comment.likes}
-          </button>
+          {/* Reactions (múltiplas) */}
+          {onReaction && comment.reactions ? (
+            <ReactionPicker
+              reactions={comment.reactions}
+              onToggle={(emoji) => onReaction(comment.id, emoji)}
+              compact
+            />
+          ) : (
+            /* Legacy like button */
+            <button
+              onClick={() => onLike(comment.id)}
+              className={`flex items-center gap-1.5 text-xs transition-all
+                ${comment.likedByMe 
+                  ? 'text-purple-400' 
+                  : 'text-white/40 hover:text-white/70'
+                }`}
+            >
+              <span className={comment.likedByMe ? '' : ''}>👍</span>
+              {comment.likes > 0 && comment.likes}
+            </button>
+          )}
 
           {!isReply && (
             <button
@@ -255,6 +270,7 @@ export function CommentItem({
                     comment={reply}
                     currentUserId={currentUserId}
                     onLike={onLike}
+                    onReaction={onReaction}
                     onReply={onReply}
                     onEdit={onEdit}
                     onDelete={onDelete}
