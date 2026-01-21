@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
+import { AccountingAIWidget } from "@/components/accounting";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Edit, Trash2, BookOpen, TrendingUp, TrendingDown, Landmark } from "lucide-react";
@@ -281,7 +282,8 @@ export default function ChartOfAccountsPage() {
   };
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <GridPattern />
 
       <FadeIn delay={0.1}>
@@ -580,9 +582,10 @@ export default function ChartOfAccountsPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </PageTransition>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente Plano de Contas */}
+      <AccountingAIWidget screen="chart-of-accounts" defaultMinimized={true} />
+    </>
   );
 }
-
-
-

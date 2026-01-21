@@ -14,6 +14,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { AccountingAIWidget } from "@/components/accounting";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -318,7 +319,8 @@ export default function CategoriasPage() {
   };
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="p-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -582,6 +584,10 @@ export default function CategoriasPage() {
           </div>
         )}
       </div>
-    </PageTransition>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente de Categorias */}
+      <AccountingAIWidget screen="categories" defaultMinimized={true} />
+    </>
   );
 }

@@ -9,6 +9,7 @@ import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { AccountingAIWidget } from "@/components/accounting";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { Building2, DollarSign, TrendingUp, CheckCircle, Clock, Plus, Eye, RotateCcw } from "lucide-react";
 
@@ -161,7 +162,8 @@ export default function IntercompanyPage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="p-8 space-y-8">
         <FadeIn>
           <div className="flex items-center justify-between">
@@ -364,7 +366,10 @@ export default function IntercompanyPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente Intercompany */}
+      <AccountingAIWidget screen="intercompany" defaultMinimized={true} />
+    </>
   );
 }
-

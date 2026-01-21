@@ -90,6 +90,10 @@ export async function POST(
       reversedAt: output.reversedAt,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao reverter:", error);
     return NextResponse.json(

@@ -25,6 +25,7 @@ import { NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { AccountingAIWidget } from "@/components/accounting";
 import { Plus, Edit, Trash2, FolderTree, Target, TrendingUp } from "lucide-react";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
 import { toast } from "sonner";
@@ -445,9 +446,10 @@ export default function CostCentersPage() {
           </form>
         </DialogContent>
       </Dialog>
-    </PageTransition>
+      </PageTransition>
+
+      {/* AI Insight Widget - Assistente Centros de Custo */}
+      <AccountingAIWidget screen="cost-centers" defaultMinimized={true} />
+    </>
   );
 }
-
-
-

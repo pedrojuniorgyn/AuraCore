@@ -31,6 +31,10 @@ export async function GET() {
       plans: result.recordset,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao listar planos:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
@@ -87,6 +91,10 @@ export async function POST(request: NextRequest) {
       plan: result.recordset[0],
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao criar plano:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(

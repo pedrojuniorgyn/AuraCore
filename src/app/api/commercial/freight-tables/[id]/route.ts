@@ -66,6 +66,10 @@ export async function GET(
       },
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao buscar tabela:", error);
     return NextResponse.json(
       { error: "Falha ao buscar tabela" },
@@ -173,6 +177,10 @@ export async function PUT(
       message: "Tabela atualizada com sucesso!",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao atualizar tabela:", error);
     return NextResponse.json(
@@ -201,6 +209,10 @@ export async function DELETE(
       message: "Tabela excluída com sucesso!",
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro ao excluir tabela:", error);
     return NextResponse.json(
       { error: "Falha ao excluir tabela" },
