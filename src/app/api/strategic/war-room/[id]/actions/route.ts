@@ -99,6 +99,10 @@ export async function POST(
 
     return NextResponse.json(newAction, { status: 201 });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error creating action:', error);
     return NextResponse.json({ error: 'Failed to create action' }, { status: 500 });
   }

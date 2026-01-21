@@ -191,6 +191,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/search error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

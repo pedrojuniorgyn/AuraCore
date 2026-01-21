@@ -81,6 +81,10 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating war room:', error);
     return NextResponse.json({ error: 'Failed to update war room' }, { status: 500 });
   }

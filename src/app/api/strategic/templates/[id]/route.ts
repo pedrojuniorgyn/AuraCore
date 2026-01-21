@@ -31,6 +31,10 @@ export async function GET(request: Request, { params }: RouteParams) {
       template: null, // TODO: retornar template real
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/templates/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -56,6 +60,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('PUT /api/strategic/templates/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -80,6 +88,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('DELETE /api/strategic/templates/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

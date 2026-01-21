@@ -29,6 +29,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('DELETE /api/strategic/users/[id]/roles/[roleId] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

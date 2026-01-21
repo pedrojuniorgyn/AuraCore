@@ -38,6 +38,10 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json(result);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error generating report:', error);
     return NextResponse.json({ 
       error: 'Internal server error',

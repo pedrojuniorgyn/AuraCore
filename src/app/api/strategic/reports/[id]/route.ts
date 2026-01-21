@@ -25,6 +25,10 @@ export async function GET(request: Request, { params }: RouteParams) {
       // ... other fields
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error fetching report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -56,6 +60,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
       message: 'Relatório atualizado com sucesso' 
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -75,6 +83,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error deleting report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

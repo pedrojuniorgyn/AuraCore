@@ -67,6 +67,10 @@ export async function GET() {
 
     return NextResponse.json({ reports });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error fetching reports:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -96,6 +100,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error creating report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

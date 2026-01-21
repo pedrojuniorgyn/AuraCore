@@ -95,6 +95,10 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/templates/[id]/use error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

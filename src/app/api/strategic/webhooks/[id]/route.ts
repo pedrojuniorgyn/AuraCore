@@ -35,6 +35,10 @@ export async function GET(
 
     return NextResponse.json(webhook);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/webhooks/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -71,6 +75,10 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('PATCH /api/strategic/webhooks/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -95,6 +103,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('DELETE /api/strategic/webhooks/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

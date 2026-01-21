@@ -99,6 +99,10 @@ export async function POST(
 
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error adding member:', error);
     return NextResponse.json({ error: 'Failed to add member' }, { status: 500 });
   }

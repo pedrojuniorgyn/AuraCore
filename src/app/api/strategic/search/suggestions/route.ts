@@ -97,6 +97,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(suggestions.slice(0, 8));
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/search/suggestions error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
