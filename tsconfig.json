@@ -46,6 +46,7 @@
     "tests/integration/wms/**/*.test.ts",
     "tests/helpers/integration-db.ts",
     "e2e/**/*",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "stories/**/*"
   ]
 }

@@ -11,7 +11,7 @@
 import React from 'react';
 import { User, Bot, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ChatMessage as ChatMessageType } from '@/agent/persistence';
+import type { ChatMessage as ChatMessageType } from '@/types/agents';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -48,7 +48,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <p className="whitespace-pre-wrap">{message.content}</p>
 
         {/* Tools used */}
-        {message.toolsUsed && message.toolsUsed.length > 0 && (
+        {message.metadata?.toolsUsed && message.metadata.toolsUsed.length > 0 && (
           <div
             className={cn(
               'mt-2 pt-2 border-t',
@@ -57,14 +57,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
           >
             <div className="flex items-center gap-1 text-xs opacity-70">
               <Wrench className="w-3 h-3" />
-              <span>Ferramentas: {message.toolsUsed.join(', ')}</span>
+              <span>Ferramentas: {message.metadata.toolsUsed.join(', ')}</span>
             </div>
           </div>
         )}
 
         {/* Timestamp */}
         <div className="text-xs opacity-50 mt-1">
-          {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
+          {new Date(message.timestamp).toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit',
           })}

@@ -103,7 +103,7 @@ export function ChatInterface({ sessionId, onSessionCreated }: ChatInterfaceProp
       {/* Error banner */}
       {error && (
         <div className="bg-red-50 border-b border-red-200 p-3 flex items-center justify-between">
-          <span className="text-red-700 text-sm">{error}</span>
+          <span className="text-red-700 text-sm">{error.message}</span>
           <Button variant="ghost" size="sm" onClick={clearError}>
             Fechar
           </Button>

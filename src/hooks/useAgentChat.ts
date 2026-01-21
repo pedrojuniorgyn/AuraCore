@@ -9,6 +9,8 @@ import type { ChatMessage } from "@/types/agents";
 
 interface UseAgentChatOptions {
   streaming?: boolean;
+  sessionId?: string;
+  onSessionCreated?: (sessionId: string) => void;
   onError?: (error: Error) => void;
 }
 
@@ -18,19 +20,20 @@ interface UseAgentChatReturn {
   error: Error | null;
   sendMessage: (message: string, agentHint?: string) => Promise<void>;
   clearMessages: () => void;
+  clearError: () => void;
   stopGeneration: () => void;
 }
 
 export function useAgentChat(
   options: UseAgentChatOptions = {}
 ): UseAgentChatReturn {
-  const { streaming = true, onError } = options;
+  const { streaming = true, sessionId, onSessionCreated, onError } = options;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const conversationIdRef = useRef<string | null>(null);
+  const conversationIdRef = useRef<string | null>(sessionId || null);
 
   const sendMessage = useCallback(
     async (message: string, agentHint?: string) => {
@@ -134,6 +137,9 @@ export function useAgentChat(
             )
           );
           conversationIdRef.current = data.conversationId;
+          if (data.conversationId && onSessionCreated) {
+            onSessionCreated(data.conversationId);
+          }
         }
       } catch (err) {
         if ((err as Error).name === "AbortError") {
@@ -151,8 +157,12 @@ export function useAgentChat(
         abortControllerRef.current = null;
       }
     },
-    [streaming, onError]
+    [streaming, onError, onSessionCreated]
   );
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -169,6 +179,7 @@ export function useAgentChat(
     error,
     sendMessage,
     clearMessages,
+    clearError,
     stopGeneration,
   };
 }
