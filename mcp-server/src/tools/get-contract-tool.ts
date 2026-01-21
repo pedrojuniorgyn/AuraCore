@@ -8,10 +8,11 @@ const __dirname = path.dirname(__filename);
 
 interface Contract {
   id: string;
-  title: string;  // CORRECAO: era 'name', JSON usa 'title'
+  name: string;  // JSONs usam 'name', não 'title'
+  title?: string; // Alias opcional para compatibilidade
   category?: string;
   description?: string;
-  rules?: string[];
+  rules?: unknown[];  // Pode ser array de strings ou objetos
   examples?: unknown[];
 }
 
@@ -32,8 +33,9 @@ export async function getContractTool(contractId: string): Promise<Contract> {
     const contract = JSON.parse(content) as Contract;
     
     // Validar schema (LESSON LEARNED #6)
-    if (!contract.id || !contract.title) {
-      throw new Error(`Invalid contract schema in ${safeId}.json`);
+    // JSONs usam 'name', mas alguns podem usar 'title' como alias
+    if (!contract.id || (!contract.name && !contract.title)) {
+      throw new Error(`Invalid contract schema in ${safeId}.json: missing 'id' or 'name'`);
     }
     
     return contract;

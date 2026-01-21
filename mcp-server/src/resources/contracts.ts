@@ -35,8 +35,8 @@ export async function listContracts(): Promise<ContractResource[]> {
         
         return {
           uri: `contract://${contract.id}`,
-          name: contract.title,
-          description: `Contrato arquitetural: ${contract.title}`,
+          name: contract.name || contract.title || contract.id,
+          description: `Contrato arquitetural: ${contract.name || contract.title || contract.id}`,
           // CORRECAO: Consistente com ReadResourceRequestSchema
           mimeType: 'text/plain',
         };
@@ -102,7 +102,7 @@ export async function searchContracts(query: string): Promise<unknown[]> {
       // Busca em campos principais
       const searchableText = [
         contract.id,
-        contract.title,
+        contract.name || contract.title,
         contract.category,
         contract.description,
         contract.content
