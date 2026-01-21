@@ -41,6 +41,10 @@ export async function GET(
     return NextResponse.json({ data: cargo });
     
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error fetching cargo:", error);
     return NextResponse.json(
@@ -103,6 +107,10 @@ export async function PUT(
     });
     
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error updating cargo:", error);
     return NextResponse.json(
@@ -148,6 +156,10 @@ export async function DELETE(
     });
     
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Error deleting cargo:", error);
     return NextResponse.json(

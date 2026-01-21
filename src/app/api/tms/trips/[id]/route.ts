@@ -46,6 +46,10 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: trip });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar viagem:", error);
     return NextResponse.json(
       { error: "Erro ao buscar viagem" },
@@ -166,6 +170,10 @@ export async function PUT(
       data: updated,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar viagem:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar viagem" },
@@ -251,6 +259,10 @@ export async function DELETE(
       message: "Viagem excluída com sucesso",
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir viagem:", error);
     return NextResponse.json(
       { error: "Erro ao excluir viagem" },

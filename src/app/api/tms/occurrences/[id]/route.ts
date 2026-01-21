@@ -45,6 +45,10 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: occurrence });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao buscar ocorrência:", error);
     return NextResponse.json(
       { error: "Erro ao buscar ocorrência" },
@@ -155,6 +159,10 @@ export async function PUT(
       data: updated,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao atualizar ocorrência:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar ocorrência" },
@@ -229,6 +237,10 @@ export async function DELETE(
       message: "Ocorrência excluída com sucesso",
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro ao excluir ocorrência:", error);
     return NextResponse.json(
       { error: "Erro ao excluir ocorrência" },
