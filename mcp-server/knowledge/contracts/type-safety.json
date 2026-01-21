@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.35",
+  "version": "2.0.37",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -657,6 +657,35 @@
         ".cursor/rules/regrasmcp.mdc"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-400838",
+      "date": "2026-01-21",
+      "epic": "QUICK-WIN-4",
+      "error": "API route /api/agents/rag/query catch block não verificava instanceof Response antes de retornar erro 500, causando mascaramento de erros de autenticação (401/400) como Internal Server Error (500). Varredura identificou 200+ arquivos com o mesmo problema.",
+      "correction": "Adicionado verificação 'if (error instanceof Response) return error;' no catch block. Criado contrato API_ERROR_HANDLING_CONTRACT.md com regra API-ERR-001. Criado src/lib/utils/type-guards.ts com utilitários reutilizáveis. Varredura completa documentou 200+ arquivos para correção futura.",
+      "files_affected": [
+        "src/app/api/agents/rag/query/route.ts",
+        "docs/architecture/contracts/API_ERROR_HANDLING_CONTRACT.md"
+      ],
+      "pattern_created": "API-ERR-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-404173",
+      "date": "2026-01-21",
+      "epic": "QUICK-WIN-4",
+      "error": "LegislationWidget usava cast inseguro 'as Record<string, string>' para extrair dados de documentData (tipado como Record<string, unknown>), violando type safety e podendo causar bugs silenciosos em runtime quando valores fossem undefined, number ou outros tipos.",
+      "correction": "Criadas funções type guard safeString() e extractDocumentContext() para validação segura de tipos. Removido cast inseguro. Criado contrato TYPE_GUARD_PATTERNS_CONTRACT.md com regras TYPE-GUARD-001 a 003. Criado src/lib/utils/type-guards.ts com 12 utilitários reutilizáveis (safeString, safeNumber, safeBoolean, safeObject, safeArray, etc). Varredura confirmou 0 casts inseguros restantes.",
+      "files_affected": [
+        "src/components/fiscal/LegislationWidget.tsx",
+        "src/lib/utils/type-guards.ts",
+        "docs/architecture/contracts/TYPE_GUARD_PATTERNS_CONTRACT.md"
+      ],
+      "pattern_created": "TYPE-GUARD-001",
       "status": "APPROVED",
       "must_not_repeat": true
     }

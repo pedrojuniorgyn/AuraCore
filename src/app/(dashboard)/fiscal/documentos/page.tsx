@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DocumentDetailModal } from "@/components/fiscal/document-detail-modal";
+import { LegislationWidget } from "@/components/fiscal";
+import { AIInsightWidget } from "@/components/ai";
 import { toast } from "sonner";
 
 // SSRM Hook
@@ -530,6 +532,34 @@ export default function FiscalDocumentsPage() {
           setSelectedDocumentId(null);
         }}
       />
+
+      {/* Widgets Flutuantes */}
+      <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
+        {/* Widget de Legislação */}
+        <LegislationWidget
+          documentType="nfe"
+          title="Consulta Legislação NFe"
+          defaultExpanded={false}
+        />
+
+        {/* Widget de Insights */}
+        <AIInsightWidget
+          agentType="fiscal"
+          context={{
+            module: 'fiscal',
+            screen: 'nfe-list',
+          }}
+          suggestedPrompts={[
+            'Quais NFes precisam de atenção?',
+            'Resumo das NFes do dia',
+            'Existe algum erro de validação?',
+            'Status das manifestações pendentes',
+          ]}
+          title="Assistente Fiscal"
+          position="inline"
+          defaultMinimized={true}
+        />
+      </div>
     </PageTransition>
   );
 }
