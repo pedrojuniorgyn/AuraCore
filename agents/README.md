@@ -1,60 +1,145 @@
-# AuraCore Agents
+# 🤖 AuraCore Agents
 
-Sistema de agentes AI para automação do AuraCore ERP, construído com o framework Agno.
+[![CI](https://github.com/pedrojuniorgyn/AuraCore/actions/workflows/ci.yml/badge.svg)](https://github.com/pedrojuniorgyn/AuraCore/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://python.org)
 
-## Quick Start
+Sistema de Agentes IA para ERP Logístico Brasileiro com suporte a:
+- 🧮 **Fiscal** - Cálculos de ICMS, PIS, COFINS, SPED
+- 💰 **Financial** - Gestão de títulos e pagamentos
+- 📊 **Accounting** - Contabilização automática
+- 🚚 **TMS** - Gestão de transporte
+- 📦 **WMS** - Gestão de armazém
+- 👥 **CRM** - Relacionamento com clientes
+- 🚗 **Fleet** - Gestão de frota
+- 📈 **Strategic** - Gestão estratégica (BSC, PDCA)
+
+## 🚀 Quick Start
+
+### Usando Docker
 
 ```bash
-# Configurar variáveis de ambiente
-cp .env.example .env
-# Editar .env com sua ANTHROPIC_API_KEY
+# Clone o repositório
+git clone https://github.com/pedrojuniorgyn/AuraCore.git
+cd AuraCore/agents
 
-# Iniciar com Docker
+# Configure variáveis de ambiente
+cp .env.example .env
+# Edite .env com suas credenciais
+
+# Inicie os serviços
 docker-compose up -d
 
-# Ou executar localmente
-pip install -e .
-uvicorn src.main:app --reload --port 8080
+# Verifique o status
+curl http://localhost:8000/health
 ```
 
-## Documentação
+### Usando Python SDK
 
-- [Documentação Completa](../docs/agents/README.md)
-- [Fiscal Agent](../docs/agents/FISCAL_AGENT.md)
-- [Guardrails](../docs/agents/GUARDRAILS.md)
-- [Planejamento](../docs/agents/PLANEJAMENTO.md)
-
-## Estrutura
-
-```
-agents/
-├── src/
-│   ├── agents/           # Agentes especializados
-│   │   └── fiscal.py     # Fiscal Agent
-│   ├── api/              # Rotas FastAPI
-│   │   └── routes/
-│   ├── core/             # Core do sistema
-│   │   ├── base.py       # Base do agente
-│   │   ├── orchestrator.py
-│   │   ├── guardrails.py
-│   │   └── observability.py
-│   └── tools/            # Tools por módulo
-│       └── fiscal/       # 5 tools fiscais
-├── tests/
-├── data/
-├── pyproject.toml
-├── Dockerfile
-└── docker-compose.yml
+```bash
+pip install auracore
 ```
 
-## API
+```python
+from auracore import AuraCore
 
-| Endpoint | Método | Descrição |
-|----------|--------|-----------|
-| `/health` | GET | Health check |
-| `/agents` | GET | Lista agentes |
-| `/chat` | POST | Envia mensagem |
+client = AuraCore(api_key="ac_live_xxx")
 
-## Licença
+# Chat com agente fiscal
+response = client.agents.chat_sync(
+    agent="fiscal",
+    message="Calcule o ICMS para venda de SP para RJ, valor R$ 1.000"
+)
+print(response.message)
+```
 
-Proprietary - AuraCore Team
+### Usando CLI
+
+```bash
+export AURACORE_API_KEY=ac_live_xxx
+
+# Chat com agente
+auracore chat send fiscal "Qual a alíquota de ICMS para SP?"
+
+# Transcrição de áudio
+auracore voice transcribe audio.wav
+
+# Query RAG
+auracore rag query "legislação PIS/COFINS"
+```
+
+## 📖 Documentação
+
+| Documento | Descrição |
+|-----------|-----------|
+| [API Reference](docs/api/README.md) | Documentação completa da API |
+| [SDK Python](docs/sdk/python.md) | Guia do SDK Python |
+| [Deployment](docs/deployment/README.md) | Guias de deploy |
+| [Architecture](docs/architecture/README.md) | Arquitetura do sistema |
+| [Contributing](CONTRIBUTING.md) | Guia para contribuidores |
+
+## 🏗️ Arquitetura
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      API Gateway                            │
+│                   (FastAPI + Auth)                          │
+└─────────────────────────────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+        ▼                   ▼                   ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│    Agents     │   │     Voice     │   │      RAG      │
+│   (8 tipos)   │   │  (STT + TTS)  │   │ (Legislação)  │
+└───────────────┘   └───────────────┘   └───────────────┘
+        │                   │                   │
+        └───────────────────┼───────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Infrastructure                           │
+│         Redis │ Prometheus │ Grafana │ ARQ Worker           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 🛠️ Stack Tecnológica
+
+| Componente | Tecnologia |
+|------------|------------|
+| **API** | FastAPI, Python 3.11 |
+| **LLM** | Claude (Anthropic) |
+| **Cache** | Redis |
+| **Tasks** | ARQ |
+| **Monitoring** | Prometheus, Grafana |
+| **Deploy** | Docker, Kubernetes |
+
+## 📊 Métricas
+
+- **8 Agentes** especializados
+- **32+ Tools** implementados
+- **130+ Testes** (unit, e2e, integration)
+- **6 Leis** indexadas no RAG
+- **15+ Webhooks** eventos
+
+## 🔒 Segurança
+
+- Autenticação via API Key e JWT
+- RBAC com 8 roles e 20+ permissions
+- Audit logging (LGPD compliant)
+- Rate limiting configurável
+- TLS em todas as comunicações
+
+## 📄 Licença
+
+MIT License - veja [LICENSE](LICENSE) para detalhes.
+
+## 🤝 Contribuindo
+
+Veja [CONTRIBUTING.md](CONTRIBUTING.md) para guias de contribuição.
+
+## 📞 Suporte
+
+- 📧 Email: support@auracore.com.br
+- 📖 Docs: https://docs.auracore.com.br
+- 🐛 Issues: https://github.com/pedrojuniorgyn/AuraCore/issues
