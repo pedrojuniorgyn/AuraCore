@@ -35,22 +35,34 @@ export async function GET(request: NextRequest) {
       limit
     );
 
-    // Parse JSON data
-    const parsed = resultsArray.map((notif) => ({
-      id: notif.id,
-      organizationId: notif.organizationId,
-      branchId: notif.branchId,
-      userId: notif.userId,
-      type: notif.type,
-      event: notif.event,
-      title: notif.title,
-      message: notif.message,
-      data: notif.data ? JSON.parse(String(notif.data)) : null,
-      actionUrl: notif.actionUrl,
-      isRead: notif.isRead,
-      readAt: notif.readAt,
-      createdAt: notif.createdAt,
-    }));
+    // Parse JSON data with safe fallback
+    const parsed = resultsArray.map((notif) => {
+      let parsedData = null;
+      if (notif.data) {
+        try {
+          parsedData = JSON.parse(String(notif.data));
+        } catch (error) {
+          console.warn(`Invalid JSON in notification ${notif.id}:`, error);
+          parsedData = null;
+        }
+      }
+
+      return {
+        id: notif.id,
+        organizationId: notif.organizationId,
+        branchId: notif.branchId,
+        userId: notif.userId,
+        type: notif.type,
+        event: notif.event,
+        title: notif.title,
+        message: notif.message,
+        data: parsedData,
+        actionUrl: notif.actionUrl,
+        isRead: notif.isRead,
+        readAt: notif.readAt,
+        createdAt: notif.createdAt,
+      };
+    });
 
     return NextResponse.json(parsed);
   } catch (error: unknown) {

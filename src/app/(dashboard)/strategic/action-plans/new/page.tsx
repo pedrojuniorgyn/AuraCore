@@ -59,6 +59,7 @@ export default function NewActionPlanPage() {
         whoUserId: whoId,
         how: formData.how,
         howMuchAmount: formData.howMuch,
+        howMuchCurrency: 'BRL', // Default currency
         priority: formData.priority,
         goalId: formData.linkedObjective, // API espera goalId, form tem linkedObjective
       }),
