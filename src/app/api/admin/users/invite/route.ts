@@ -176,6 +176,10 @@ export async function POST(request: NextRequest) {
         data: { userId, email, roleId, branchIds, loginUrl },
       });
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Error inviting user:", error);
       return NextResponse.json(

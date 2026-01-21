@@ -161,6 +161,10 @@ export async function POST() {
 
     return NextResponse.json(report, { status: 200 });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ [TEST] Erro no teste:", error);
     return NextResponse.json(

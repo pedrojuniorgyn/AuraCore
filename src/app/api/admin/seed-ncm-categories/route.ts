@@ -155,6 +155,10 @@ export async function POST(request: NextRequest) {
 
         created++;
       } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
   const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`❌ Erro ao criar NCM ${item.ncm}:`, errorMessage);
       }
@@ -169,6 +173,10 @@ export async function POST(request: NextRequest) {
       total: ncmCategories.length,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro no seed:", error);
     return NextResponse.json(

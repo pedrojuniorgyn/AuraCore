@@ -154,6 +154,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 
       return NextResponse.json({ success: true });
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("❌ Error updating user access:", error);
       return NextResponse.json(

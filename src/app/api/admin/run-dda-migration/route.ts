@@ -122,6 +122,10 @@ export async function POST() {
       tables: ["financial_dda_inbox", "btg_dda_authorized", "btg_dda_debits"],
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("❌ Erro na Migração DDA BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(

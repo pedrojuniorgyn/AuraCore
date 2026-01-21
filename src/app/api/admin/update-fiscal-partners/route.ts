@@ -62,6 +62,10 @@ export async function GET() {
         updated++;
         console.log(`  ✅ NFe ${doc.id}: ${parsed.issuer.name} (${parsed.issuer.cnpj})`);
       } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
         console.log(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${error}`);
       }
     }
@@ -75,6 +79,10 @@ export async function GET() {
       total: updated,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao atualizar parceiros:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });

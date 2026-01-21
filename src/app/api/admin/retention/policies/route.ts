@@ -38,6 +38,10 @@ export async function GET(request: NextRequest) {
         total: policies.length,
       });
     } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
       console.error('[Retention Policies] Erro ao listar:', error);
       return NextResponse.json(
         {
