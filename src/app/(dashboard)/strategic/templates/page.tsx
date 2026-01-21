@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { FileTemplate, ArrowLeft } from 'lucide-react';
+import { FileText, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { TemplateGallery } from '@/components/strategic/templates/TemplateGallery';
 
@@ -24,7 +24,7 @@ function TemplatesPageInner() {
             <ArrowLeft size={20} />
           </Link>
           <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-            <FileTemplate className="text-purple-400" size={24} />
+            <FileText className="text-purple-400" size={24} />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white">Templates</h1>
