@@ -80,7 +80,7 @@ export default function IdeasPage() {
   
   const [newIdea, setNewIdea] = useState({
     title: '',
-    content: '',
+    description: '',
     sourceType: 'SUGGESTION',
     importance: 'MEDIUM',
     department: '',
@@ -130,7 +130,7 @@ export default function IdeasPage() {
 
       toast.success('Ideia submetida com sucesso!');
       setIsModalOpen(false);
-      setNewIdea({ title: '', content: '', sourceType: 'SUGGESTION', importance: 'MEDIUM', department: '' });
+      setNewIdea({ title: '', description: '', sourceType: 'SUGGESTION', importance: 'MEDIUM', department: '' });
       fetchIdeas();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao submeter ideia');
@@ -458,8 +458,8 @@ export default function IdeasPage() {
               <div>
                 <label className="block text-white/70 text-sm mb-2">Descrição</label>
                 <Textarea
-                  value={newIdea.content}
-                  onChange={(e) => setNewIdea({ ...newIdea, content: e.target.value })}
+                  value={newIdea.description}
+                  onChange={(e) => setNewIdea({ ...newIdea, description: e.target.value })}
                   placeholder="Descreva sua ideia em detalhes..."
                   className="bg-white/5 border-white/10 min-h-[100px]"
                 />

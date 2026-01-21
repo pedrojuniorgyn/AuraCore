@@ -16,9 +16,9 @@ import { z } from 'zod';
 // Schema de validação para criação
 const CreateIdeaSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório').max(200),
-  content: z.string().max(2000).optional().default(''),
+  description: z.string().max(2000).optional().default(''), // Campo correto do schema
   sourceType: z.enum(['MANUAL', 'MEETING', 'AGENT', 'SWOT', 'CUSTOMER_FEEDBACK', 'SUGGESTION', 'COMPLAINT', 'OBSERVATION', 'BENCHMARK', 'AUDIT', 'CLIENT_FEEDBACK']).default('MANUAL'),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
+  importance: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
   department: z.string().max(100).optional(),
 });
 
@@ -117,10 +117,10 @@ export async function POST(request: NextRequest) {
       organizationId: ctx.organizationId,
       branchId: ctx.branchId,
       title: data.title.trim(),
-      description: data.content?.trim() || '', // Schema usa 'description', não 'content'
+      description: data.description?.trim() || '',
       sourceType: data.sourceType,
       urgency: 'MEDIUM',
-      importance: 'MEDIUM',
+      importance: data.importance,
       status: 'SUBMITTED',
       department: data.department?.trim() || null,
       submittedBy: ctx.userId,
