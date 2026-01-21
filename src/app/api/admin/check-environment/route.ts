@@ -59,6 +59,10 @@ export async function GET() {
 
     return NextResponse.json(report);
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });

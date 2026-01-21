@@ -92,6 +92,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao verificar documentos deletados:", error);
     return NextResponse.json(

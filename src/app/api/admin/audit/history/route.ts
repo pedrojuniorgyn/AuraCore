@@ -102,6 +102,10 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
       console.error('[Audit History] Erro:', error);
       return NextResponse.json(
         {

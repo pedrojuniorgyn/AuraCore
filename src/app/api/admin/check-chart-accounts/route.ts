@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
       sample: accounts,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao verificar plano de contas:", error);
     return NextResponse.json(

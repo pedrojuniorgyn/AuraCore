@@ -106,6 +106,10 @@ export async function GET(request: NextRequest) {
       note: "Esta é uma rota de debug. Use /api/sefaz/download-nfes para importação real.",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro no debug Sefaz:", error);
     return NextResponse.json(

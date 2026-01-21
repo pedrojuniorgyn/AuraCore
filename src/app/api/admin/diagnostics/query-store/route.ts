@@ -285,6 +285,10 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json(result);
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
       console.error('[Query Store Diagnostics] Error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return NextResponse.json(
@@ -369,6 +373,10 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
       console.error('[Query Store Enable/Disable] Error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return NextResponse.json(

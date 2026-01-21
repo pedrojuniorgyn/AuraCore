@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_payable");
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_payable");
@@ -36,6 +40,10 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ Coluna fiscal_document_id adicionada em accounts_receivable");
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ Coluna fiscal_document_id já existe em accounts_receivable");
@@ -53,6 +61,10 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_payable");
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
   const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_payable");
@@ -69,6 +81,10 @@ export async function POST(request: NextRequest) {
       `);
       console.log("✅ FK adicionada em accounts_receivable");
     } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
   const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes("already an object")) {
         console.log("⚠️ FK já existe em accounts_receivable");
@@ -82,6 +98,10 @@ export async function POST(request: NextRequest) {
       message: "Colunas fiscal_document_id adicionadas com sucesso",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao adicionar colunas:", error);
     return NextResponse.json(

@@ -159,6 +159,10 @@ export async function GET() {
       message: "Colunas *_by do módulo contábil compatibilizadas para NVARCHAR(255) (quando aplicável).",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage, stack: (error instanceof Error ? error.stack : undefined) },
