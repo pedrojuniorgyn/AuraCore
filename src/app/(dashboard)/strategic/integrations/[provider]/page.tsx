@@ -18,6 +18,7 @@ import type {
   Webhook,
 } from '@/lib/integrations/integration-types';
 import { PROVIDER_INFO } from '@/lib/integrations/integration-types';
+import { IntegrationsAIWidget } from '@/components/integrations';
 
 export default function ProviderPage() {
   const params = useParams();
@@ -128,6 +129,7 @@ export default function ProviderPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 p-8">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
@@ -359,5 +361,9 @@ export default function ProviderPage() {
         </div>
       )}
     </div>
+    
+    {/* AI Assistant Widget */}
+    <IntegrationsAIWidget screen="provider" />
+  </>
   );
 }

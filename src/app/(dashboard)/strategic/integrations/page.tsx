@@ -7,6 +7,7 @@ import { IntegrationCard, type Integration, type IntegrationType } from '@/compo
 import { IntegrationSetup, type IntegrationConfig } from '@/components/strategic/IntegrationSetup';
 import { IntegrationLogs, type LogEntry } from '@/components/strategic/IntegrationLogs';
 import { toast } from 'sonner';
+import { IntegrationsAIWidget } from '@/components/integrations';
 
 interface IntegrationWithLogs extends Integration {
   logs?: LogEntry[];
@@ -179,7 +180,8 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 p-8">
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 p-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -305,6 +307,10 @@ export default function IntegrationsPage() {
           toast.success('Reenviado com sucesso!');
         }}
       />
-    </div>
+      </div>
+      
+      {/* AI Assistant Widget */}
+      <IntegrationsAIWidget screen="main" />
+    </>
   );
 }
