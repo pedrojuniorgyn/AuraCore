@@ -12,6 +12,11 @@ export type AgentType =
   | 'fleet' 
   | 'strategic' 
   | 'qa'
+  | 'admin'
+  | 'hr'
+  | 'integrations'
+  | 'operational'
+  | 'wms'
   | 'auto'; // Auto-detecta baseado no contexto
 
 export type InsightPriority = 'low' | 'medium' | 'high' | 'critical';

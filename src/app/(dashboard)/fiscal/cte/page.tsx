@@ -13,7 +13,7 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Download, RefreshCw } from "lucide-react";
-import { LegislationWidget, FiscalAIWidget } from "@/components/fiscal";
+import { FiscalAIWidget } from "@/components/fiscal";
 import { toast } from "sonner";
 
 // SSRM Hook
@@ -405,11 +405,6 @@ export default function CtePage() {
     {/* Widgets Flutuantes */}
     <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
         {/* Widget de Legislação */}
-        <LegislationWidget
-          documentType="cte"
-          title="Consulta Legislação CTe"
-          defaultExpanded={false}
-        />
 
         {/* Widget de Insights - usando wrapper padronizado */}
         <FiscalAIWidget screen="cte" />

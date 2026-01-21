@@ -7,7 +7,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { Badge } from "@/components/ui/badge";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { FileText, FileSpreadsheet, BookOpen, Download, Calendar } from "lucide-react";
-import { LegislationWidget, FiscalAIWidget } from "@/components/fiscal";
+import { FiscalAIWidget } from "@/components/fiscal";
 
 export default function CentralSpedPage() {
   const [generating, setGenerating] = useState(false);
@@ -124,11 +124,6 @@ export default function CentralSpedPage() {
     {/* Widgets Flutuantes */}
     <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
       {/* Widget de Legislação */}
-      <LegislationWidget
-        documentType="sped"
-        title="Consulta Legislação SPED"
-        defaultExpanded={false}
-      />
 
       {/* Widget de Insights - usando wrapper padronizado */}
       <FiscalAIWidget screen="sped" />

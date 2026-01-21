@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DocumentDetailModal } from "@/components/fiscal/document-detail-modal";
-import { LegislationWidget, FiscalAIWidget } from "@/components/fiscal";
+import { FiscalAIWidget } from "@/components/fiscal";
 import { toast } from "sonner";
 
 // SSRM Hook
@@ -538,11 +538,6 @@ export default function FiscalDocumentsPage() {
     {/* Widgets Flutuantes */}
     <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
       {/* Widget de Legislação */}
-      <LegislationWidget
-        documentType="nfe"
-        title="Consulta Legislação NFe"
-        defaultExpanded={false}
-      />
 
       {/* Widget de Insights - usando wrapper padronizado */}
       <FiscalAIWidget screen="documentos" />

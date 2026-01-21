@@ -72,7 +72,7 @@ interface ChromaQueryResult {
 // HANDLER: POST
 // ============================================================================
 
-export async function POST(request: NextRequest): Promise<NextResponse<SearchResponse>> {
+export async function POST(request: NextRequest): Promise<NextResponse<SearchResponse> | Response> {
   const startTime = Date.now();
 
   try {
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
     const chromaPort = process.env.CHROMA_PORT;
 
     if (!chromaHost || !chromaPort) {
-      return NextResponse.json(
+      return NextResponse.json<SearchResponse>(
         {
           success: false,
           error: 'ChromaDB não configurado. Defina CHROMA_HOST e CHROMA_PORT.',
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
     // Verificar se tem API key para embeddings
     const googleApiKey = process.env.GOOGLE_AI_API_KEY;
     if (!googleApiKey) {
-      return NextResponse.json(
+      return NextResponse.json<SearchResponse>(
         {
           success: false,
           error: 'GOOGLE_AI_API_KEY não configurada.',
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
     // 1. Gerar embedding da query
     const queryEmbedding = await generateQueryEmbedding(input.query, googleApiKey);
     if (!queryEmbedding) {
-      return NextResponse.json(
+      return NextResponse.json<SearchResponse>(
         {
           success: false,
           error: 'Falha ao gerar embedding da query.',
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
 
     if (!collection) {
       // Collection não existe ainda - retornar vazio
-      return NextResponse.json({
+      return NextResponse.json<SearchResponse>({
         success: true,
         data: {
           results: [],
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
     const queryResult = await queryCollection(chromaUrl, collection.id, queryEmbedding, input.top_k);
 
     if (!queryResult) {
-      return NextResponse.json(
+      return NextResponse.json<SearchResponse>(
         {
           success: false,
           error: 'Erro na busca ChromaDB.',
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
     // 4. Formatar resultados
     const results = formatResults(queryResult, input);
 
-    return NextResponse.json({
+    return NextResponse.json<SearchResponse>({
       success: true,
       data: {
         results,
@@ -165,17 +165,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      return error as unknown as NextResponse;
+      return error;
     }
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      return NextResponse.json<SearchResponse>(
         { success: false, error: 'Validação falhou', details: error.issues },
         { status: 400 }
       );
     }
 
     console.error('[Knowledge Search] Error:', error);
-    return NextResponse.json(
+    return NextResponse.json<SearchResponse>(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
     );
@@ -186,12 +186,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
 // HANDLER: GET (para teste rápido via browser)
 // ============================================================================
 
-export async function GET(request: NextRequest): Promise<NextResponse<SearchResponse>> {
+export async function GET(request: NextRequest): Promise<NextResponse<SearchResponse> | Response> {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
 
   if (!query) {
-    return NextResponse.json(
+    return NextResponse.json<SearchResponse>(
       {
         success: false,
         error: 'Parâmetro "q" é obrigatório. Ex: /api/knowledge/search?q=icms',
