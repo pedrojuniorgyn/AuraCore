@@ -68,6 +68,7 @@ export default function CertificadoDigitalPage() {
       }
     } catch (error) {
       console.error("Erro ao carregar certificado:", error);
+      toast.error("Erro ao carregar certificado");
     } finally {
       setIsLoading(false);
     }

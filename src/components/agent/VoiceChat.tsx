@@ -60,6 +60,19 @@ export function VoiceChat({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Refs para callbacks de props (evitar recriação de callbacks dependentes)
+  const onTranscriptionRef = useRef(onTranscription);
+  const onResponseRef = useRef(onResponse);
+
+  // Manter refs atualizadas
+  useEffect(() => {
+    onTranscriptionRef.current = onTranscription;
+  }, [onTranscription]);
+
+  useEffect(() => {
+    onResponseRef.current = onResponse;
+  }, [onResponse]);
+
   // Cleanup ao desmontar
   useEffect(() => {
     return () => {
@@ -124,9 +137,9 @@ export function VoiceChat({
       setResponse(data.agent_response);
       setAgentUsed(data.agent_used);
 
-      // Callbacks
-      onTranscription?.(data.transcribed_text);
-      onResponse?.(data.agent_response, data.agent_used);
+      // Callbacks (usando refs para evitar recrear o callback)
+      onTranscriptionRef.current?.(data.transcribed_text);
+      onResponseRef.current?.(data.agent_response, data.agent_used);
 
       // Reproduzir áudio
       if (data.audio_response && autoPlayAudio && !isMuted) {
@@ -138,7 +151,7 @@ export function VoiceChat({
     } finally {
       setIsProcessing(false);
     }
-  }, [isMuted, onTranscription, onResponse, autoPlayAudio, playAudio]);
+  }, [isMuted, autoPlayAudio, playAudio]);
 
   const startRecording = useCallback(async () => {
     setError(null);

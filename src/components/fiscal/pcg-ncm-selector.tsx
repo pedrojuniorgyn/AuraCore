@@ -23,7 +23,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -88,6 +88,12 @@ export function PcgNcmSelector({
   const [loadingNcms, setLoadingNcms] = useState(false);
   const [loadingFlags, setLoadingFlags] = useState(false);
 
+  // Ref para onChange (evitar recriação do effect quando onChange muda)
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   // 1. Carrega lista de PCGs ao montar
   useEffect(() => {
     const loadPcgs = async () => {
@@ -143,10 +149,10 @@ export function PcgNcmSelector({
         
         if (data.success && data.data) {
           setSelectedFlags(data.data.flags);
-          onChange(pcgId, code, data.data.flags);
+          onChangeRef.current(pcgId, code, data.data.flags);
         } else {
           setSelectedFlags(null);
-          onChange(pcgId, code, null);
+          onChangeRef.current(pcgId, code, null);
         }
       } catch (error) {
         console.error("Erro ao carregar flags fiscais:", error);
@@ -159,7 +165,7 @@ export function PcgNcmSelector({
     if (ncmCode && ncmCode.length === 8) {
       loadFiscalFlags(ncmCode);
     }
-  }, [ncmCode, pcgId, onChange]);
+  }, [ncmCode, pcgId]);
 
   function handlePcgChange(value: string) {
     const newPcgId = value === "none" ? undefined : parseInt(value);

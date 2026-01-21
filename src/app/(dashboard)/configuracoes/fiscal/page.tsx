@@ -53,7 +53,7 @@ export default function FiscalConfigPage() {
     };
 
     loadSettings();
-  }, [currentBranch]);
+  }, [currentBranch?.id]);
 
   const handleSave = async () => {
     setSaving(true);

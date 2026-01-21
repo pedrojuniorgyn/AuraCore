@@ -154,7 +154,7 @@ export default function CargoRepositoryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, currentBranch]);
+  }, [statusFilter, currentBranch?.id]);
 
   useEffect(() => {
     fetchCargos();
