@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.39",
+  "version": "2.0.43",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -721,6 +721,143 @@
         "src/app/(dashboard)/strategic/action-plans/new/page.tsx"
       ],
       "pattern_created": "JSON-PARSE-SAFE: Always wrap JSON.parse in try/catch",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-908606",
+      "date": "2026-01-21",
+      "epic": "HOTFIX-WARROOM-STREAM-V1.0",
+      "error": "API-ERR-001 aplicado incorretamente dentro de callback setInterval. O return dentro de callback não retorna do handler HTTP, é código morto. getTenantContext() não era usado no arquivo, apenas mencionado em comentário.",
+      "correction": "Removido if (error instanceof Response) return error de callback setInterval. Padrão API-ERR-001 só deve ser usado em handlers de rota que chamam getTenantContext(), NUNCA em callbacks (setInterval, setTimeout, event handlers).",
+      "files_affected": [
+        "src/app/api/strategic/war-room/stream/route.ts"
+      ],
+      "pattern_created": "API-ERR-001-CALLBACK: Never use API-ERR-001 in callbacks",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-283380",
+      "date": "2026-01-21",
+      "epic": "SMP-API-ERR-001",
+      "error": "254+ API routes mascaram erros de autenticação (401/400) como Internal Server Errors (500). getTenantContext() e funções similares lançam NextResponse em falhas de auth, mas catch blocks não verificam instanceof Response antes de retornar 500.",
+      "correction": "Implementado padrão API-ERR-001 em 100% das rotas API: adicionado 'if (error instanceof Response) return error;' em todos os catch blocks que podem receber erros de getTenantContext(). Correções de tipo TypeScript com casts apropriados (as any as TargetType) para funções com return types explícitos. ESLint @typescript-eslint/no-explicit-any desabilitado em linhas específicas onde necessário. Total: 254+ rotas corrigidas em 34+ módulos através de 15 commits em processo SMP sistemático (SMP-MAP, SMP-CAT, SMP-EXEC, SMP-VERIFY, SMP-REGISTER).",
+      "evolution_note": "PATTERN EVOLUTION (Jan 2026): Este padrão API-ERR-001 v1 (com type casts) foi posteriormente evoluído para versão enterprise-grade v2 (union types, sem casts) em LC-946383. A evolução remove antipatterns (type assertions) e aplica TypeScript best practices. Ver Epic E11 para migração sistemática das 254+ rotas de v1 para v2.",
+      "pattern_version": "v1 - with type casts (deprecated in favor of v2)",
+      "superseded_by": "LC-946383 (API-ERR-001 v2)",
+      "files_affected": [
+        "src/app/api/fiscal/**/*.ts",
+        "src/app/api/financial/**/*.ts",
+        "src/app/api/strategic/**/*.ts",
+        "src/app/api/wms/**/*.ts",
+        "src/app/api/tms/**/*.ts",
+        "src/app/api/accounting/**/*.ts",
+        "src/app/api/commercial/**/*.ts",
+        "src/app/api/fleet/**/*.ts",
+        "src/app/api/admin/**/*.ts",
+        "src/app/api/btg/**/*.ts",
+        "src/app/api/agent/**/*.ts",
+        "src/app/api/agents/**/*.ts",
+        "src/app/api/health/**/*.ts",
+        "src/app/api/notifications/**/*.ts",
+        "src/app/api/products/**/*.ts",
+        "src/app/api/seed/**/*.ts",
+        "src/app/api/auth/**/*.ts",
+        "src/app/api/contracts/**/*.ts",
+        "src/app/api/sefaz/**/*.ts",
+        "src/app/api/intercompany/**/*.ts",
+        "src/app/api/sped/**/*.ts",
+        "src/app/api/management/**/*.ts",
+        "src/app/api/tax/**/*.ts",
+        "src/app/api/backoffice/**/*.ts",
+        "src/app/api/ciap/**/*.ts",
+        "src/app/api/dashboard/**/*.ts",
+        "src/app/api/comercial/**/*.ts",
+        "src/app/api/knowledge/**/*.ts",
+        "src/app/api/hr/**/*.ts",
+        "src/app/api/esg/**/*.ts",
+        "src/app/api/cost-centers/**/*.ts",
+        "src/app/api/pcg-ncm-rules/**/*.ts",
+        "src/app/api/reports/**/*.ts",
+        "src/app/api/claims/**/*.ts"
+      ],
+      "pattern_created": "API-ERR-001: Response Propagation in Catch Blocks",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-946383",
+      "date": "2026-01-21",
+      "epic": "FASE-0-EMERGENCY-RECOVERY",
+      "error": "API route knowledge/search/route.ts usava padrão API-ERR-001 v1 com type cast 'as unknown as NextResponse', violando TypeScript best practices enterprise-grade. Cast forçava compatibilidade entre Response e NextResponse, escondendo incompatibilidade de tipos e criando false type safety. Além disso, funções helper tinham código morto (instanceof Response) pois não chamam getTenantContext().",
+      "correction": "EVOLUÍDO padrão API-ERR-001 para versão enterprise-grade v2: (1) Tipo de retorno mudado de Promise<NextResponse> para union type Promise<NextResponse<SearchResponse> | Response>, (2) Type cast removido: 'return error;' sem 'as NextResponse', (3) Generic <SearchResponse> adicionado em todos NextResponse.json para preservar type safety. Removido código morto de helpers. Segue TypeScript Handbook (avoid type assertions), Google TypeScript Style Guide, e FAANG engineering standards. Este é o NOVO padrão que será aplicado sistematicamente em todas as 254+ rotas no Epic E11.",
+      "pattern_evolution": {
+        "from_version": "API-ERR-001 v1 (LC-283380)",
+        "to_version": "API-ERR-001 v2 (enterprise-grade)",
+        "key_changes": [
+          "Return type: Promise<NextResponse> → Promise<NextResponse<T> | Response>",
+          "Cast removed: 'as NextResponse' → direct return",
+          "Generic preserved: NextResponse.json<T>",
+          "Zero type assertions (antipattern eliminated)"
+        ],
+        "reason": "Type casts are antipattern that hide type incompatibilities. Union types express actual return possibilities and enable TypeScript to enforce correct usage.",
+        "epic_e11_scope": "Systematic migration of remaining 251+ routes from v1 to v2"
+      },
+      "files_affected": [
+        "src/app/api/knowledge/search/route.ts",
+        "src/app/api/health/embeddings/route.ts",
+        "src/app/api/knowledge/stats/route.ts"
+      ],
+      "pattern_created": "API-ERR-001-SCOPE",
+      "pattern_version": "v2 - union types, zero casts (enterprise-grade)",
+      "supersedes": "LC-283380 (API-ERR-001 v1)",
+      "references": [
+        "LC-283380 - Original API-ERR-001 v1 application to 254+ routes",
+        "Epic E11 - Systematic migration v1→v2 (planned)",
+        "TypeScript Handbook - Avoid type assertions",
+        "Google TypeScript Style Guide - Prefer union types",
+        "ADR-0016 - Union Types for API Routes (to be created in E11)"
+      ],
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-EPIC-E11",
+      "date": "2026-01-21",
+      "epic": "E11-TYPE-SAFETY-REFACTOR",
+      "scope": "Migração sistemática de 254+ rotas API do padrão API-ERR-001 v1 (com type casts) para v2 (union types enterprise-grade)",
+      "status": "PLANNED",
+      "priority": "HIGH",
+      "error": "254+ rotas API ainda usam padrão API-ERR-001 v1 com type casts 'as NextResponse', violando TypeScript best practices e criando false type safety. Padrão v1 foi necessário historicamente mas agora existe solução enterprise-grade (v2) que deve ser aplicada sistematicamente.",
+      "correction": "PLANEJADO: Refatorar todas as rotas API que usam API-ERR-001 v1 para versão v2: (1) Criar helpers centralizados (apiSuccess, apiError, handleApiError) em src/shared/types/api-response.ts, (2) Script de migração automatizada para ~230 rotas simples, (3) Migração manual para ~24 rotas complexas, (4) Atualizar documentação MCP com padrão v2, (5) Criar ADR-0016 formalizando union types como padrão oficial. Estimativa: 20h (2.5 dias). Ver docs/epics/E11-TYPE-SAFETY-REFACTOR.md para detalhes completos.",
+      "files_affected": [
+        "src/app/api/**/route.ts (254+ arquivos)",
+        "src/shared/types/api-response.ts (novo - helpers)",
+        "scripts/migrate-api-routes-to-union-types.ts (novo - automação)",
+        "docs/architecture/decisions/ADR-0016-union-types-api-routes.md (novo)",
+        ".cursor/rules/regrasmcp.mdc (atualizado com padrão v2)"
+      ],
+      "pattern_version": "v2 - union types, zero casts (enterprise-grade)",
+      "references": [
+        "LC-283380 - API-ERR-001 v1 original (254+ rotas)",
+        "LC-946383 - Primeiro exemplo de v2 (knowledge/search)",
+        "TypeScript Handbook - Union Types",
+        "Google TypeScript Style Guide",
+        "Microsoft TypeScript Coding Guidelines"
+      ],
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-322693",
+      "date": "2026-01-21",
+      "epic": "FASE-0-EMERGENCY-RECOVERY",
+      "error": "Documentação MCP tinha contradição aparente entre LC-283380 (aplicou API-ERR-001 em 100% das rotas) e LC-946383 (removeu de 3 rotas). Faltava esclarecimento de que LC-946383 é EVOLUÇÃO do padrão (v1→v2), não reversão. Isso causava confusão sobre se o padrão estava sendo aplicado ou removido.",
+      "correction": "Adicionado campo 'evolution_note' em LC-283380 explicando que é v1 e foi evoluído para v2 em LC-946383. Criada/atualizada entrada LC-946383 com detalhes completos da evolução enterprise-grade (union types, sem casts). Criada entrada LC-EPIC-E11 documentando migração planejada das 251+ rotas restantes. Esclarecido que não há contradição: v1 (com casts) evoluiu para v2 (union types) seguindo TypeScript best practices (Handbook, Google Style Guide, FAANG standards).",
+      "files_affected": [
+        "mcp-server/knowledge/contracts/type-safety.json"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

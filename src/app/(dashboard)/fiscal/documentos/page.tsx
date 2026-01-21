@@ -535,13 +535,8 @@ export default function FiscalDocumentsPage() {
 
     </PageTransition>
 
-    {/* Widgets Flutuantes */}
-    <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
-      {/* Widget de Legislação */}
-
-      {/* Widget de Insights - usando wrapper padronizado */}
-      <FiscalAIWidget screen="documentos" position="inline" />
-    </div>
+    {/* Widget de Insights - posicionamento interno gerenciado pelo componente */}
+    <FiscalAIWidget screen="documentos" position="bottom-right" />
   </>
   );
 }

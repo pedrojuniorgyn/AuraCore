@@ -121,13 +121,8 @@ export default function CentralSpedPage() {
       </div>
     </PageTransition>
 
-    {/* Widgets Flutuantes */}
-    <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
-      {/* Widget de Legislação */}
-
-      {/* Widget de Insights - usando wrapper padronizado */}
-      <FiscalAIWidget screen="sped" position="inline" />
-    </div>
+    {/* Widget de Insights - posicionamento interno gerenciado pelo componente */}
+    <FiscalAIWidget screen="sped" position="bottom-right" />
   </>
   );
 }
