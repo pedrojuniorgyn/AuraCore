@@ -106,31 +106,41 @@ export default function StrategicMapPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [perspectiveFilter, setPerspectiveFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchMapData();
-  }, []);
+  const fetchMapData = useCallback(async () => {
+    const findParentFromEdges = (goalId: string, edgesParam: MapEdge[]): string | null => {
+      const edge = edgesParam.find(e => e.target === goalId);
+      return edge?.source ?? null;
+    };
 
-  const fetchMapData = async () => {
+    const mapStatus = (status: string): GoalForMap['status'] => {
+      const statusMap: Record<string, GoalForMap['status']> = {
+        'ON_TRACK': 'ON_TRACK',
+        'AT_RISK': 'AT_RISK',
+        'DELAYED': 'DELAYED',
+        'NOT_STARTED': 'NOT_STARTED',
+        'COMPLETED': 'COMPLETED',
+      };
+      return statusMap[status] || 'NOT_STARTED';
+    };
+
     setLoading(true);
     try {
-      // Usar a API /api/strategic/map que já retorna perspectiveCode
       const response = await fetch('/api/strategic/map');
       if (response.ok) {
         const result: MapApiResponse = await response.json();
         
-        // Transformar nodes para o formato esperado pelo StrategicMap
         const goalsFromNodes: GoalForMap[] = result.nodes.map((node) => ({
           id: node.id,
           code: node.data.code,
           description: node.data.description,
-          perspectiveId: node.data.perspectiveCode, // Usar o código (FIN, CLI, INT, LRN)
+          perspectiveId: node.data.perspectiveCode,
           progress: node.data.progress,
           status: mapStatus(node.data.status),
           targetValue: node.data.targetValue,
           currentValue: node.data.currentValue,
           unit: node.data.unit,
           parentGoalId: findParentFromEdges(node.id, result.edges),
-          kpiCount: 0, // Contagem de KPIs (aguardando endpoint dedicado)
+          kpiCount: 0,
           ownerName: 'Responsável',
         }));
 
@@ -142,24 +152,21 @@ export default function StrategicMapPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  // Encontrar parentGoalId a partir das edges
-  const findParentFromEdges = (goalId: string, edges: MapEdge[]): string | null => {
-    const edge = edges.find(e => e.target === goalId);
-    return edge?.source ?? null;
-  };
+  useEffect(() => {
+    fetchMapData();
+  }, [fetchMapData]);
 
-  const mapStatus = (status: string): GoalForMap['status'] => {
-    const statusMap: Record<string, GoalForMap['status']> = {
-      'ON_TRACK': 'ON_TRACK',
-      'AT_RISK': 'AT_RISK',
-      'DELAYED': 'DELAYED',
-      'NOT_STARTED': 'NOT_STARTED',
-      'COMPLETED': 'COMPLETED',
-      'ACHIEVED': 'COMPLETED',
+  const getStatusColor = (status: GoalForMap['status']): string => {
+    const colorMap: Record<GoalForMap['status'], string> = {
+      'ON_TRACK': 'text-green-400',
+      'AT_RISK': 'text-yellow-400',
+      'DELAYED': 'text-red-400',
+      'NOT_STARTED': 'text-gray-400',
+      'COMPLETED': 'text-blue-400',
     };
-    return statusMap[status] || 'NOT_STARTED';
+    return colorMap[status] || 'text-gray-400';
   };
 
   const handleGoalClick = useCallback((goalId: string) => {
