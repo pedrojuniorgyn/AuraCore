@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FileText, DollarSign, Mail, CheckCircle, Plus, Download, Send, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { AIInsightWidget } from "@/components/ai";
 
 interface BillingInvoice {
   id: number;
@@ -399,6 +400,25 @@ export default function BillingPage() {
           ))
         )}
       </div>
+
+      {/* AI Insight Widget - Assistente Faturamento */}
+      <AIInsightWidget
+        agentType="financial"
+        context={{
+          module: 'financial',
+          screen: 'billing',
+        }}
+        suggestedPrompts={[
+          'Quais CTes estão prontos para faturar?',
+          'Total faturado este mês',
+          'Clientes com faturamento pendente',
+          'Gerar fatura consolidada do cliente X',
+          'Comparar faturamento mês anterior',
+        ]}
+        title="Assistente Faturamento"
+        position="bottom-right"
+        defaultMinimized={true}
+      />
     </div>
   );
 }

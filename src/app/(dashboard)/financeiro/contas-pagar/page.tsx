@@ -16,6 +16,7 @@ import { Plus, Download, RefreshCw, DollarSign, TrendingUp, AlertCircle, Clock }
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { AIInsightWidget } from "@/components/ai";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -408,6 +409,7 @@ export default function ContasPagarPage() {
   }, []);
 
   return (
+    <>
     <PageTransition>
       <div className="p-8 space-y-6">
         {/* Header */}
@@ -608,5 +610,25 @@ export default function ContasPagarPage() {
         </div>
       </div>
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente Contas a Pagar */}
+    <AIInsightWidget
+      agentType="financial"
+      context={{
+        module: 'financial',
+        screen: 'payables',
+      }}
+      suggestedPrompts={[
+        'Quais contas vencem hoje?',
+        'Total a pagar esta semana',
+        'Fornecedores com maior volume',
+        'Títulos vencidos há mais de 30 dias',
+        'Simule o impacto de pagar tudo hoje',
+      ]}
+      title="Assistente Contas a Pagar"
+      position="bottom-right"
+      defaultMinimized={false}
+    />
+  </>
   );
 }

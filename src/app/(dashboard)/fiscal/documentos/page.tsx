@@ -338,6 +338,7 @@ export default function FiscalDocumentsPage() {
   }, [gridApi, fetchKPIs]);
 
   return (
+    <>
     <PageTransition>
       <div className="p-8 space-y-6">
         {/* Header */}
@@ -533,34 +534,36 @@ export default function FiscalDocumentsPage() {
         }}
       />
 
-      {/* Widgets Flutuantes */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
-        {/* Widget de Legislação */}
-        <LegislationWidget
-          documentType="nfe"
-          title="Consulta Legislação NFe"
-          defaultExpanded={false}
-        />
-
-        {/* Widget de Insights */}
-        <AIInsightWidget
-          agentType="fiscal"
-          context={{
-            module: 'fiscal',
-            screen: 'nfe-list',
-          }}
-          suggestedPrompts={[
-            'Quais NFes precisam de atenção?',
-            'Resumo das NFes do dia',
-            'Existe algum erro de validação?',
-            'Status das manifestações pendentes',
-          ]}
-          title="Assistente Fiscal"
-          position="inline"
-          defaultMinimized={true}
-        />
-      </div>
     </PageTransition>
+
+    {/* Widgets Flutuantes */}
+    <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
+      {/* Widget de Legislação */}
+      <LegislationWidget
+        documentType="nfe"
+        title="Consulta Legislação NFe"
+        defaultExpanded={false}
+      />
+
+      {/* Widget de Insights */}
+      <AIInsightWidget
+        agentType="fiscal"
+        context={{
+          module: 'fiscal',
+          screen: 'nfe-list',
+        }}
+        suggestedPrompts={[
+          'Quais NFes precisam de atenção?',
+          'Resumo das NFes do dia',
+          'Existe algum erro de validação?',
+          'Status das manifestações pendentes',
+        ]}
+        title="Assistente Fiscal"
+        position="inline"
+        defaultMinimized={true}
+      />
+    </div>
+  </>
   );
 }
 

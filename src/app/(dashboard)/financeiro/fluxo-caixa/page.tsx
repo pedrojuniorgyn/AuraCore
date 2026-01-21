@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AIInsightWidget } from "@/components/ai";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -108,8 +109,25 @@ export default function FluxoCaixaPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Insight Widget - Assistente Fluxo de Caixa */}
+      <AIInsightWidget
+        agentType="financial"
+        context={{
+          module: 'financial',
+          screen: 'cashflow',
+        }}
+        suggestedPrompts={[
+          'Qual a projeção de caixa para os próximos 30 dias?',
+          'Teremos saldo negativo em algum momento?',
+          'Qual o melhor dia para pagamentos?',
+          'Analise a sazonalidade do fluxo',
+          'Compare fluxo realizado vs projetado',
+        ]}
+        title="Assistente Fluxo de Caixa"
+        position="bottom-right"
+        defaultMinimized={false}
+      />
     </div>
   );
 }
-
-

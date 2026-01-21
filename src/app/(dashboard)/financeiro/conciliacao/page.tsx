@@ -8,6 +8,7 @@ import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animat
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { AIInsightWidget } from "@/components/ai";
 
 interface BankTransaction {
   id: number;
@@ -140,6 +141,7 @@ export default function BankReconciliationPage() {
   };
 
   return (
+    <>
     <PageTransition>
       <div className="p-8 space-y-6">
         {/* Header */}
@@ -321,6 +323,25 @@ export default function BankReconciliationPage() {
       </div>
       </div>
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente Conciliação */}
+    <AIInsightWidget
+      agentType="financial"
+      context={{
+        module: 'financial',
+        screen: 'reconciliation',
+      }}
+      suggestedPrompts={[
+        'Quais lançamentos não foram conciliados?',
+        'Diferença entre saldo banco e sistema',
+        'Lançamentos duplicados detectados',
+        'Sugerir conciliação automática',
+        'Extrato do banco X dos últimos 7 dias',
+      ]}
+      title="Assistente Conciliação"
+      position="bottom-right"
+      defaultMinimized={true}
+    />
+  </>
   );
 }
-

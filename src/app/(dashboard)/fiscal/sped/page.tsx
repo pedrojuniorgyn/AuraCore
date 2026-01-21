@@ -47,6 +47,7 @@ export default function CentralSpedPage() {
   };
 
   return (
+    <>
     <PageTransition>
       <div className="space-y-6">
         <FadeIn>
@@ -119,35 +120,36 @@ export default function CentralSpedPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-
-      {/* Widgets Flutuantes */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
-        {/* Widget de Legislação */}
-        <LegislationWidget
-          documentType="sped"
-          title="Consulta Legislação SPED"
-          defaultExpanded={false}
-        />
-
-        {/* Widget de Insights */}
-        <AIInsightWidget
-          agentType="fiscal"
-          context={{
-            module: 'fiscal',
-            screen: 'sped',
-          }}
-          suggestedPrompts={[
-            'Status do SPED Fiscal deste mês',
-            'Quais registros estão pendentes?',
-            'Existe inconsistência nos dados?',
-            'Quando vence a entrega?',
-          ]}
-          title="Assistente SPED"
-          position="inline"
-          defaultMinimized={true}
-        />
-      </div>
     </PageTransition>
+
+    {/* Widgets Flutuantes */}
+    <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
+      {/* Widget de Legislação */}
+      <LegislationWidget
+        documentType="sped"
+        title="Consulta Legislação SPED"
+        defaultExpanded={false}
+      />
+
+      {/* Widget de Insights */}
+      <AIInsightWidget
+        agentType="fiscal"
+        context={{
+          module: 'fiscal',
+          screen: 'sped',
+        }}
+        suggestedPrompts={[
+          'Status do SPED Fiscal deste mês',
+          'Quais registros estão pendentes?',
+          'Existe inconsistência nos dados?',
+          'Quando vence a entrega?',
+        ]}
+        title="Assistente SPED"
+        position="inline"
+        defaultMinimized={true}
+      />
+    </div>
+  </>
   );
 }
 

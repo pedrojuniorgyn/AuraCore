@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.37",
+  "version": "2.0.38",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -686,6 +686,27 @@
         "docs/architecture/contracts/TYPE_GUARD_PATTERNS_CONTRACT.md"
       ],
       "pattern_created": "TYPE-GUARD-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-016064",
+      "date": "2026-01-21",
+      "epic": "QUICK-WIN-5",
+      "error": "AIInsightWidget e LegislationWidget com position:fixed foram renderizados DENTRO de PageTransition (que usa CSS transforms via Framer Motion). CSS transforms criam novo containing block, fazendo elementos fixed serem posicionados relativo ao pai transformado ao invés do viewport. Resultado: widgets não ficavam no canto inferior direito da tela, mas sim relativos ao container animado.",
+      "correction": "Movido AIInsightWidget e LegislationWidget para FORA do PageTransition em todas as páginas afetadas. Adicionado Fragment (<></>) para wrapper quando necessário. Criado contrato FIXED_POSITIONING_CONTRACT.md com regra FIXED-001. Atualizado regrasmcp.mdc com nova regra e exemplos. Criado script de verificação para detectar problema automaticamente. Varredura preventiva em todos os módulos (Financial, Fiscal, Strategic).",
+      "files_affected": [
+        "src/app/(dashboard)/financeiro/conciliacao/page.tsx",
+        "src/app/(dashboard)/financeiro/contas-pagar/page.tsx",
+        "src/app/(dashboard)/financeiro/contas-receber/page.tsx",
+        "src/app/(dashboard)/financeiro/dre-dashboard/page.tsx",
+        "src/app/(dashboard)/fiscal/documentos/page.tsx",
+        "src/app/(dashboard)/fiscal/cte/page.tsx",
+        "src/app/(dashboard)/fiscal/sped/page.tsx",
+        "docs/architecture/contracts/FIXED_POSITIONING_CONTRACT.md",
+        ".cursor/rules/regrasmcp.mdc"
+      ],
+      "pattern_created": "FIXED-001: Fixed Positioning Outside Transforms",
       "status": "APPROVED",
       "must_not_repeat": true
     }

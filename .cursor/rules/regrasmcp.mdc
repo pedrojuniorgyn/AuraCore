@@ -644,6 +644,30 @@ function isFiscalDocument(data: unknown): data is FiscalDocument {
 - ❌ NUNCA modificar máquina global para caso específico
 - ✅ SEMPRE usar canTransitionTo(from, to, documentType)
 
+### Fixed Positioning com Transforms (FIXED-001)
+
+- ❌ NUNCA colocar elementos `fixed` dentro de containers com CSS transform
+- ❌ NUNCA colocar AIInsightWidget/LegislationWidget dentro de PageTransition
+- ✅ SEMPRE renderizar fixed elements FORA de motion containers
+
+```tsx
+// ✅ CORRETO
+<>
+  <PageTransition>{/* conteúdo */}</PageTransition>
+  <AIInsightWidget position="bottom-right" />
+</>
+
+// ❌ INCORRETO
+<PageTransition>
+  {/* conteúdo */}
+  <AIInsightWidget position="bottom-right" /> {/* QUEBRADO! */}
+</PageTransition>
+```
+
+**Por que:** CSS transforms criam novo containing block, quebrando position: fixed.  
+**Contrato:** FIXED_POSITIONING_CONTRACT.md  
+**Correção:** LC-QW5-FIXED-001 (21/01/2026)
+
 ---
 
 ## 🛡️ VERIFY-AFTER-TYPE (VAT-001 a VAT-010)

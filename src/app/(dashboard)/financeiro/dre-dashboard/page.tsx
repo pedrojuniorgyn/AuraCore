@@ -19,6 +19,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { NumberCounter } from "@/components/ui/magic-components";
 import { TrendingUp, TrendingDown, DollarSign, Truck, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { AIInsightWidget } from "@/components/ai";
 
 interface DreData {
   revenues: number;
@@ -77,6 +78,7 @@ export default function DreDashboardPage() {
   };
 
   return (
+    <>
     <PageTransition>
       <GridPattern />
 
@@ -353,8 +355,25 @@ export default function DreDashboardPage() {
         </>
       )}
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente Financeiro */}
+    <AIInsightWidget
+      agentType="financial"
+      context={{
+        module: 'financial',
+        screen: 'dre-dashboard',
+      }}
+      suggestedPrompts={[
+        'Qual o saldo do DRE este mês?',
+        'Analise a margem líquida',
+        'Compare com o mês anterior',
+        'Quais custos mais impactam?',
+        'Projeção de resultado do trimestre',
+      ]}
+      title="Assistente DRE"
+      position="bottom-right"
+      defaultMinimized={false}
+    />
+  </>
   );
 }
-
-
-

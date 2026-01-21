@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { AIInsightWidget } from "@/components/ai";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -343,6 +344,7 @@ export default function ContasReceberPage() {
   }, []);
 
   return (
+    <>
     <PageTransition>
       <div className="p-8 space-y-6">
         {/* Header */}
@@ -535,5 +537,25 @@ export default function ContasReceberPage() {
         </FadeIn>
       </div>
     </PageTransition>
+
+    {/* AI Insight Widget - Assistente Contas a Receber */}
+    <AIInsightWidget
+      agentType="financial"
+      context={{
+        module: 'financial',
+        screen: 'receivables',
+      }}
+      suggestedPrompts={[
+        'Quais clientes estão inadimplentes?',
+        'Total a receber esta semana',
+        'Aging de recebíveis (30/60/90 dias)',
+        'Clientes com maior volume em aberto',
+        'Previsão de recebimento do mês',
+      ]}
+      title="Assistente Contas a Receber"
+      position="bottom-right"
+      defaultMinimized={false}
+    />
+  </>
   );
 }

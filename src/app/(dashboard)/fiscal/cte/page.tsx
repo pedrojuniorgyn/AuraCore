@@ -236,6 +236,7 @@ export default function CtePage() {
   };
 
   return (
+    <>
     <PageTransition>
       <GridPattern />
 
@@ -400,8 +401,10 @@ export default function CtePage() {
         </div>
       </FadeIn>
 
-      {/* Widgets Flutuantes */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
+    </PageTransition>
+
+    {/* Widgets Flutuantes */}
+    <div className="fixed bottom-6 right-6 z-50 space-y-4 w-96">
         {/* Widget de Legislação */}
         <LegislationWidget
           documentType="cte"
@@ -427,7 +430,7 @@ export default function CtePage() {
           defaultMinimized={true}
         />
       </div>
-    </PageTransition>
+    </>
   );
 }
 
