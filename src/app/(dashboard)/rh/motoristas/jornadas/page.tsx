@@ -12,6 +12,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 import { AlertTriangle, Clock, DollarSign, Moon, FileDown, Settings, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { HRAIWidget } from "@/components/hr";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -151,7 +152,8 @@ export default function JornadasPage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="p-8 space-y-8">
         <FadeIn>
           <div className="flex items-center justify-between">
@@ -282,7 +284,10 @@ export default function JornadasPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <HRAIWidget screen="jornadas" />
+    </>
   );
 }
-
