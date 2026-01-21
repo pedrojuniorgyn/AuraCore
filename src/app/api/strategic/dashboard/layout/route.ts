@@ -53,6 +53,10 @@ export async function GET() {
       layout: layout.widgets ? JSON.parse(layout.widgets) : [] 
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Erro ao carregar layout:', error);
     // Return empty layout on error (table might not exist)
     return NextResponse.json({ layout: [] });
@@ -141,6 +145,10 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Erro ao salvar layout:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },

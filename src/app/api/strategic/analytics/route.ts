@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Analytics fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch analytics data' },

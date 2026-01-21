@@ -159,6 +159,10 @@ export async function GET(request: NextRequest) {
       hasMore,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/audit error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -196,6 +200,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(log);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/audit error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

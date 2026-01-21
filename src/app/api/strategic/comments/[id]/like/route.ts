@@ -45,6 +45,10 @@ export async function POST(request: Request, { params }: RouteParams) {
       liked: true, // Would return actual state
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/comments/[id]/like error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

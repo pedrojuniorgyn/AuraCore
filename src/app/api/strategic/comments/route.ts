@@ -85,6 +85,10 @@ export async function GET(request: Request) {
       comments: mockComments,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('GET /api/strategic/comments error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -154,6 +158,10 @@ export async function POST(request: Request) {
       id: `comment-${Date.now()}` 
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/comments error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

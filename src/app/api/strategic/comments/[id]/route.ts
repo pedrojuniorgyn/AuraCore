@@ -40,6 +40,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('PATCH /api/strategic/comments/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -66,6 +70,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('DELETE /api/strategic/comments/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

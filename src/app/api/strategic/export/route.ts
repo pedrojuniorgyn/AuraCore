@@ -80,6 +80,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('POST /api/strategic/export error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

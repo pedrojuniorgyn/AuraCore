@@ -88,6 +88,10 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating dashboard:', error);
     return NextResponse.json({ error: 'Failed to update dashboard' }, { status: 500 });
   }

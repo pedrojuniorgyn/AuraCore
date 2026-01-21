@@ -50,6 +50,10 @@ export async function POST(request: NextRequest) {
       eventsReceived: enrichedEvents.length,
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Analytics track error:', error);
     return NextResponse.json({ error: 'Failed to track events' }, { status: 500 });
   }

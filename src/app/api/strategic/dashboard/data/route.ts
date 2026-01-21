@@ -49,6 +49,10 @@ export async function GET() {
 
     return NextResponse.json(result.value);
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error fetching dashboard data:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

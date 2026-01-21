@@ -134,6 +134,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newDashboard, { status: 201 });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error creating dashboard:', error);
     return NextResponse.json({ error: 'Failed to create dashboard' }, { status: 500 });
   }

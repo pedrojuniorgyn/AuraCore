@@ -68,6 +68,10 @@ export async function PUT(
 
     return NextResponse.json({ success: true, widgets: updated.widgets });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error updating widgets:', error);
     return NextResponse.json({ error: 'Failed to update widgets' }, { status: 500 });
   }
@@ -105,6 +109,10 @@ export async function POST(
 
     return NextResponse.json(newWidget, { status: 201 });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error adding widget:', error);
     return NextResponse.json({ error: 'Failed to add widget' }, { status: 500 });
   }

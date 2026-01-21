@@ -26,6 +26,10 @@ export async function POST(
       claimedAt: new Date(),
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('Error claiming achievement:', error);
     return NextResponse.json({ error: 'Failed to claim achievement' }, { status: 500 });
   }
