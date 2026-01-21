@@ -6,11 +6,12 @@
  */
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { DEFAULT_TEMPLATES } from '@/lib/templates/default-templates';
 
 export const dynamic = 'force-dynamic';
 
-// TODO: Migrar para banco de dados real
-const systemTemplates = [
+// Templates legados (serão mesclados com DEFAULT_TEMPLATES)
+const legacyTemplates = [
   {
     id: 't1',
     name: 'Melhoria de OTD',
@@ -211,8 +212,11 @@ export async function GET() {
     // TODO: Buscar templates do usuário do banco
     // const userTemplates = await templateRepository.findByOrganization(orgId, branchId);
 
+    // Mesclar templates padrão do sistema com templates legados
+    const allTemplates = [...DEFAULT_TEMPLATES, ...legacyTemplates];
+
     return NextResponse.json({
-      templates: systemTemplates,
+      templates: allTemplates,
     });
   } catch (error) {
     console.error('GET /api/strategic/templates error:', error);
