@@ -23,6 +23,10 @@ export async function PUT(
       message: "Sinistro atualizado"
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
@@ -48,6 +52,10 @@ export async function DELETE(
       message: "Sinistro excluído"
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,

@@ -163,6 +163,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
       },
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: 'Validação falhou', details: error.issues },
@@ -243,6 +247,10 @@ async function generateQueryEmbedding(query: string, apiKey: string): Promise<nu
 
     return embeddingResponse.embedding.values;
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('[Knowledge Search] Embedding error:', error);
     return null;
   }
@@ -268,6 +276,10 @@ async function getCollection(
     const collections = (await response.json()) as ChromaCollection[];
     return collections.find((c) => c.name === collectionName) ?? null;
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('[Knowledge Search] ChromaDB connection error:', error);
     return null;
   }
@@ -301,6 +313,10 @@ async function queryCollection(
 
     return (await response.json()) as ChromaQueryResult;
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error('[Knowledge Search] ChromaDB query error:', error);
     return null;
   }

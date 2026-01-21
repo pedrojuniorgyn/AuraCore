@@ -89,6 +89,10 @@ export async function POST(req: Request) {
       data: { id: newId },
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao criar CC 3D:", error);
     return NextResponse.json(
@@ -145,6 +149,10 @@ export async function GET(req: Request) {
       data: result.recordset || [],
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar CCs 3D:", error);
     return NextResponse.json(

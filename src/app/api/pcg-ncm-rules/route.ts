@@ -64,6 +64,10 @@ export async function GET(request: NextRequest) {
       total: result.recordset.length,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro ao buscar regras PCG-NCM:", error);
     return NextResponse.json(
@@ -151,6 +155,10 @@ export async function POST(request: NextRequest) {
       message: "Regra criada com sucesso",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro ao criar regra:", error);
     return NextResponse.json(
