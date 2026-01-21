@@ -107,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      return error;
+      return error as NextResponse;
     }
     console.error('Voice chat error:', error);
     const message = error instanceof Error ? error.message : 'Erro interno';

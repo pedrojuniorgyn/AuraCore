@@ -117,7 +117,8 @@ export async function GET(): Promise<NextResponse<StatsResponse>> {
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      return error;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return error as any;
     }
     stats.vectorStore.status = 'error';
     stats.vectorStore.error = error instanceof Error ? error.message : String(error);

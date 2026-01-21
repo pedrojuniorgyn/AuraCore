@@ -133,7 +133,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
   } catch (error) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
-      return error;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return error as any as NextResponse<ImportResponse | { error: string }>;
     }
     console.error('Erro na importação:', error);
     return NextResponse.json(
