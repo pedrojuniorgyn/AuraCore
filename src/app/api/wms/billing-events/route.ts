@@ -30,6 +30,10 @@ export async function GET(request: NextRequest) {
       data: events.recordset || events
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
@@ -61,6 +65,10 @@ export async function POST(request: NextRequest) {
       message: "Evento registrado com sucesso"
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,

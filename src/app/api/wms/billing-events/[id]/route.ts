@@ -26,6 +26,10 @@ export async function PUT(
       message: "Evento atualizado com sucesso"
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
@@ -51,6 +55,10 @@ export async function DELETE(
       message: "Evento excluído com sucesso"
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,
