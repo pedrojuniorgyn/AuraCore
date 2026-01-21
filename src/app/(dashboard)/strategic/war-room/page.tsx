@@ -17,6 +17,7 @@ import { CriticalAlertPanel, type CriticalAlert } from '@/components/strategic/C
 import { PriorityActionsCard, type PriorityAction } from '@/components/strategic/PriorityActionsCard';
 import { WeeklyTrendChart } from '@/components/strategic/WeeklyTrendChart';
 import { AuroraInsightCard } from '@/components/strategic/AuroraInsightCard';
+import { AIInsightWidget } from '@/components/ai';
 
 interface WarRoomData {
   healthScore: number;
@@ -292,6 +293,25 @@ export default function WarRoomPage() {
           </motion.div>
         </div>
       )}
+
+      {/* AI Insight Widget - War Room */}
+      <AIInsightWidget
+        agentType="strategic"
+        context={{
+          module: 'strategic',
+          screen: 'war-room',
+        }}
+        suggestedPrompts={[
+          'Qual o status atual deste War Room?',
+          'Quais são os principais bloqueios?',
+          'Sugira próximos passos para resolver',
+          'Analise o impacto se não resolvermos hoje',
+          'Quem deve ser envolvido nesta discussão?',
+        ]}
+        title="Assistente War Room"
+        position="bottom-right"
+        defaultMinimized={false}
+      />
     </div>
   );
 }

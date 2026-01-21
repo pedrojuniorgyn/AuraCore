@@ -8,6 +8,7 @@ import { DashboardGrid, type DashboardData } from '@/components/strategic/Dashbo
 import { WidgetPicker } from '@/components/strategic/WidgetPicker';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { toast } from 'sonner';
+import { AIInsightWidget } from '@/components/ai';
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -272,6 +273,25 @@ export default function DashboardPage() {
         onClose={() => setShowPicker(false)}
         activeWidgets={activeWidgetTypes}
         onToggleWidget={toggleWidget}
+      />
+
+      {/* AI Insight Widget - Assistente Estratégico */}
+      <AIInsightWidget
+        agentType="strategic"
+        context={{
+          module: 'strategic',
+          screen: 'dashboard',
+        }}
+        suggestedPrompts={[
+          'Qual o status geral dos objetivos estratégicos?',
+          'Quais KPIs estão abaixo da meta?',
+          'Resuma as ações prioritárias desta semana',
+          'Existe algum War Room aberto?',
+          'Analise a performance do último mês',
+        ]}
+        title="Assistente Estratégico"
+        position="bottom-right"
+        defaultMinimized={false}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { useOKRs } from '@/hooks/useOKRs';
 import { OKRTree, OKRCard, OKRForm } from '@/components/strategic/okrs';
 import { LEVEL_LABELS, STATUS_LABELS, PERIOD_PRESETS } from '@/lib/okrs/okr-types';
 import type { OKRLevel, OKRStatus } from '@/lib/okrs/okr-types';
+import { AIInsightWidget } from '@/components/ai';
 
 export default function OKRsPage() {
   const { okrs, tree, isLoading, filters, setFilters, createOKR } = useOKRs();
@@ -247,6 +248,25 @@ export default function OKRsPage() {
             </button>
           </div>
         )}
+
+        {/* AI Insight Widget - OKRs */}
+        <AIInsightWidget
+          agentType="strategic"
+          context={{
+            module: 'strategic',
+            screen: 'okrs',
+          }}
+          suggestedPrompts={[
+            'Qual o progresso dos OKRs deste ciclo?',
+            'Quais Key Results estão em risco?',
+            'Sugira ações para OKRs atrasados',
+            'Quais objetivos têm maior impacto?',
+            'Prepare um resumo para a reunião de OKRs',
+          ]}
+          title="Assistente OKRs"
+          position="bottom-right"
+          defaultMinimized={true}
+        />
       </div>
     </div>
   );
