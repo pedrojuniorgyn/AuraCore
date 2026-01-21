@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ICellRendererParams, ValueFormatterParams, ColDef } from 'ag-grid-community';
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
@@ -60,13 +60,13 @@ export default function WMSFaturamentoPage() {
     } catch (error) { toast.error("Erro ao excluir"); }
   };
 
-  const kpis = useMemo(() => ({
-    storage: 185000,
-    inbound: 95000,
-    outbound: 142000,
-    extras: 38000,
-    total: 460000
-  }), []);
+  const [kpis, setKpis] = useState({
+    storage: 0,
+    inbound: 0,
+    outbound: 0,
+    extras: 0,
+    total: 0
+  });
 
   useEffect(() => {
     loadData();
@@ -74,19 +74,52 @@ export default function WMSFaturamentoPage() {
 
   const loadData = async () => {
     try {
-      const [eventsRes, invoicesRes] = await Promise.all([
+      const [eventsRes, invoicesRes, kpisRes] = await Promise.all([
         fetch('/api/wms/billing-events'),
-        fetch('/api/wms/pre-invoices')
+        fetch('/api/wms/pre-invoices'),
+        fetch('/api/wms/billing-kpis')
       ]);
 
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json();
-        setEvents(eventsData.data || []);
+        const eventsList = eventsData.data || [];
+        setEvents(eventsList);
+        
+        // Calcular KPIs a partir dos eventos se não houver endpoint específico
+        if (eventsList.length > 0) {
+          const storage = eventsList
+            .filter((e: BillingEvent) => e.event_type === 'STORAGE')
+            .reduce((sum: number, e: BillingEvent) => sum + (e.value || 0), 0);
+          const inbound = eventsList
+            .filter((e: BillingEvent) => e.event_type === 'INBOUND')
+            .reduce((sum: number, e: BillingEvent) => sum + (e.value || 0), 0);
+          const outbound = eventsList
+            .filter((e: BillingEvent) => e.event_type === 'OUTBOUND')
+            .reduce((sum: number, e: BillingEvent) => sum + (e.value || 0), 0);
+          const extras = eventsList
+            .filter((e: BillingEvent) => e.event_type === 'EXTRAS')
+            .reduce((sum: number, e: BillingEvent) => sum + (e.value || 0), 0);
+          
+          setKpis({
+            storage,
+            inbound,
+            outbound,
+            extras,
+            total: storage + inbound + outbound + extras
+          });
+        }
       }
 
       if (invoicesRes.ok) {
         const invoicesData = await invoicesRes.json();
         setInvoices(invoicesData.data || []);
+      }
+      
+      if (kpisRes.ok) {
+        const kpisData = await kpisRes.json();
+        if (kpisData.success && kpisData.data) {
+          setKpis(kpisData.data);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);

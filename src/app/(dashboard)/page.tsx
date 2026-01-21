@@ -1,43 +1,72 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, Package, FileText, DollarSign } from "lucide-react";
+import { TrendingUp, Users, Package, FileText, DollarSign, Loader2 } from "lucide-react";
 import { PageTransition, FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter, BentoGrid, BentoGridItem } from "@/components/ui/magic-components";
 import { HoverCard } from "@/components/ui/glassmorphism-card";
 import { DotPattern } from "@/components/ui/animated-background";
 
+interface DashboardStats {
+  receita: number;
+  parceiros: number;
+  produtos: number;
+  nfes: number;
+  contasAberto: number;
+  novosParceiros: number;
+}
+
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch("/api/dashboard/stats");
+        const data = await response.json();
+        if (data.success && data.data) {
+          setStats(data.data);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar estatísticas:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
   const kpis = [
     {
       title: "Receita Total",
-      value: 245231.89,
-      change: "+20.1%",
+      value: stats?.receita ?? 0,
+      change: "+0%",
       icon: DollarSign,
       color: "text-emerald-400",
       bgGradient: "from-emerald-500/20 to-green-500/20",
     },
     {
       title: "Parceiros Ativos",
-      value: 156,
-      change: "+12.5%",
+      value: stats?.parceiros ?? 0,
+      change: "+0%",
       icon: Users,
       color: "text-blue-400",
       bgGradient: "from-blue-500/20 to-cyan-500/20",
     },
     {
       title: "Produtos",
-      value: 1284,
-      change: "+8.3%",
+      value: stats?.produtos ?? 0,
+      change: "+0%",
       icon: Package,
       color: "text-purple-400",
       bgGradient: "from-purple-500/20 to-pink-500/20",
     },
     {
       title: "NFes Processadas",
-      value: 89,
-      change: "+15.7%",
+      value: stats?.nfes ?? 0,
+      change: "+0%",
       icon: FileText,
       color: "text-amber-400",
       bgGradient: "from-amber-500/20 to-orange-500/20",
@@ -127,89 +156,106 @@ export default function DashboardPage() {
               Resumo de Operações
             </h3>
 
-            <BentoGrid>
-              <BentoGridItem
-                title="Vendas do Mês"
-                description="Acompanhamento de receitas"
-                icon="📊"
-                span={2}
-              >
-                <div className="mt-4">
-                  <div className="text-3xl font-bold text-emerald-400">
-                    R${" "}
-                    <NumberCounter
-                      value={245231.89}
-                      decimals={2}
-                      duration={2}
-                    />
-                  </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Meta: R$ 200.000,00 (122.6%)
-                  </p>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+                <span className="ml-2 text-slate-400">Carregando dados...</span>
+              </div>
+            ) : !stats ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="rounded-full bg-slate-800 p-4 mb-4">
+                  <FileText className="h-8 w-8 text-slate-400" />
                 </div>
-              </BentoGridItem>
+                <h3 className="text-lg font-medium text-slate-200">Nenhum dado encontrado</h3>
+                <p className="text-sm text-slate-400 mt-1 max-w-sm">
+                  Cadastre parceiros, produtos e importe NFes para ver os dados aqui.
+                </p>
+              </div>
+            ) : (
+              <BentoGrid>
+                <BentoGridItem
+                  title="Vendas do Mês"
+                  description="Acompanhamento de receitas"
+                  icon="📊"
+                  span={2}
+                >
+                  <div className="mt-4">
+                    <div className="text-3xl font-bold text-emerald-400">
+                      R${" "}
+                      <NumberCounter
+                        value={stats.receita}
+                        decimals={2}
+                        duration={2}
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {stats.receita > 0 ? "Receita acumulada" : "Sem receitas no período"}
+                    </p>
+                  </div>
+                </BentoGridItem>
 
-              <BentoGridItem
-                title="NFes Importadas"
-                description="Últimos 30 dias"
-                icon="📄"
-              >
-                <div className="mt-4">
-                  <div className="text-3xl font-bold text-blue-400">
-                    <NumberCounter value={89} decimals={0} duration={1.5} />
+                <BentoGridItem
+                  title="NFes Importadas"
+                  description="Últimos 30 dias"
+                  icon="📄"
+                >
+                  <div className="mt-4">
+                    <div className="text-3xl font-bold text-blue-400">
+                      <NumberCounter value={stats.nfes} decimals={0} duration={1.5} />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Documentos processados
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    +15 esta semana
-                  </p>
-                </div>
-              </BentoGridItem>
+                </BentoGridItem>
 
-              <BentoGridItem
-                title="Contas a Pagar"
-                description="Pendentes"
-                icon="💰"
-              >
-                <div className="mt-4">
-                  <div className="text-3xl font-bold text-amber-400">
-                    <NumberCounter value={23} decimals={0} duration={1} />
+                <BentoGridItem
+                  title="Contas a Pagar"
+                  description="Pendentes"
+                  icon="💰"
+                >
+                  <div className="mt-4">
+                    <div className="text-3xl font-bold text-amber-400">
+                      <NumberCounter value={stats.contasAberto ?? 0} decimals={0} duration={1} />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Títulos em aberto
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    R$ 45.230,50 em aberto
-                  </p>
-                </div>
-              </BentoGridItem>
+                </BentoGridItem>
 
-              <BentoGridItem
-                title="Novos Parceiros"
-                description="Este mês"
-                icon="👥"
-                span={2}
-              >
-                <div className="mt-4">
-                  <div className="text-3xl font-bold text-purple-400">
-                    <NumberCounter value={12} decimals={0} duration={1} />
+                <BentoGridItem
+                  title="Novos Parceiros"
+                  description="Este mês"
+                  icon="👥"
+                  span={2}
+                >
+                  <div className="mt-4">
+                    <div className="text-3xl font-bold text-purple-400">
+                      <NumberCounter value={stats.novosParceiros ?? 0} decimals={0} duration={1} />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {stats.parceiros} parceiros ativos no total
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    156 parceiros ativos no total
-                  </p>
-                </div>
-              </BentoGridItem>
+                </BentoGridItem>
 
-              <BentoGridItem
-                title="Produtos Cadastrados"
-                description="Catálogo completo"
-                icon="📦"
-              >
-                <div className="mt-4">
-                  <div className="text-3xl font-bold text-cyan-400">
-                    <NumberCounter value={1284} decimals={0} duration={2} />
+                <BentoGridItem
+                  title="Produtos Cadastrados"
+                  description="Catálogo completo"
+                  icon="📦"
+                >
+                  <div className="mt-4">
+                    <div className="text-3xl font-bold text-cyan-400">
+                      <NumberCounter value={stats.produtos} decimals={0} duration={2} />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Total cadastrado
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    +47 novos produtos
-                  </p>
-                </div>
-              </BentoGridItem>
-            </BentoGrid>
+                </BentoGridItem>
+              </BentoGrid>
+            )}
           </div>
         </FadeIn>
       </div>

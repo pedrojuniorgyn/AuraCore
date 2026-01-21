@@ -51,24 +51,17 @@ export default function DreDashboardPage() {
       );
       const result = await response.json();
 
-      if (result.success) {
-        // Simular dados para demonstração
-        const mockData: DreData = {
-          revenues: 150000,
-          operationalCosts: 90000,
-          ownFleetCosts: 45000,
-          thirdPartyCosts: 35000,
-          administrativeCosts: 10000,
-          financialCosts: 5000,
-          grossProfit: 60000,
-          netProfit: 45000,
-          profitMargin: 30,
-        };
-        setDreData(mockData);
+      if (result.success && result.data) {
+        // Usar dados reais da API
+        setDreData(result.data);
+      } else {
+        // Sem dados para o período - mostrar zerado
+        setDreData(null);
       }
     } catch (error) {
       console.error("Erro ao buscar DRE:", error);
       toast.error("Erro ao carregar DRE");
+      setDreData(null);
     } finally {
       setLoading(false);
     }
@@ -156,7 +149,33 @@ export default function DreDashboardPage() {
         </Card>
       </FadeIn>
 
-      {dreData && (
+      {loading && (
+        <FadeIn delay={0.2}>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            <span className="ml-3 text-slate-400">Carregando DRE...</span>
+          </div>
+        </FadeIn>
+      )}
+
+      {!loading && !dreData && (
+        <FadeIn delay={0.2}>
+          <Card className="bg-gradient-to-br from-slate-800 to-slate-900">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="rounded-full bg-slate-700 p-4 mb-4">
+                <DollarSign className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-200">Nenhum dado encontrado</h3>
+              <p className="text-sm text-slate-400 mt-1 max-w-sm">
+                Não há lançamentos contábeis para o período selecionado.
+                Importe documentos fiscais ou crie lançamentos manuais.
+              </p>
+            </CardContent>
+          </Card>
+        </FadeIn>
+      )}
+
+      {!loading && dreData && (
         <>
           {/* KPIs Principais */}
           <FadeIn delay={0.2}>

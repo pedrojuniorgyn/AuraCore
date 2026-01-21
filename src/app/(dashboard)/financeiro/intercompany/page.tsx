@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import type { ValueFormatterParams, ColDef } from "ag-grid-community";
@@ -22,19 +22,26 @@ interface IntercompanyRule {
   status: string;
 }
 
+interface IntercompanyKpis {
+  matrixCosts: number;
+  branchesTotal: number;
+  allocations: number;
+  processed: number;
+  pending: number;
+}
+
 export default function IntercompanyPage() {
   const [rules, setRules] = useState<IntercompanyRule[]>([]);
   const [history, setHistory] = useState<IntercompanyRule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState<IntercompanyKpis>({
+    matrixCosts: 0,
+    branchesTotal: 0,
+    allocations: 0,
+    processed: 0,
+    pending: 0
+  });
   const gridRef = useRef<AgGridReact>(null);
-
-  const kpis = useMemo(() => ({
-    matrixCosts: 285000,
-    branchesTotal: 1200000,
-    allocations: 18,
-    processed: 15,
-    pending: 3
-  }), []);
 
   useEffect(() => {
     loadData();
@@ -42,9 +49,10 @@ export default function IntercompanyPage() {
 
   const loadData = async () => {
     try {
-      const [rulesRes, historyRes] = await Promise.all([
+      const [rulesRes, historyRes, kpisRes] = await Promise.all([
         fetch('/api/intercompany/allocations?type=rules'),
-        fetch('/api/intercompany/allocations')
+        fetch('/api/intercompany/allocations'),
+        fetch('/api/intercompany/kpis')
       ]);
 
       if (rulesRes.ok) {
@@ -55,6 +63,25 @@ export default function IntercompanyPage() {
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         setHistory(historyData.data || []);
+        
+        // Calcular KPIs a partir do histórico se não houver endpoint específico
+        const historyItems = historyData.data || [];
+        const processed = historyItems.filter((h: IntercompanyRule) => h.status === 'POSTED').length;
+        const pending = historyItems.filter((h: IntercompanyRule) => h.status === 'PENDING').length;
+        
+        setKpis(prev => ({
+          ...prev,
+          allocations: historyItems.length,
+          processed,
+          pending
+        }));
+      }
+
+      if (kpisRes.ok) {
+        const kpisData = await kpisRes.json();
+        if (kpisData.success && kpisData.data) {
+          setKpis(kpisData.data);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar intercompany:', error);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import type { ICellRendererParams, ValueFormatterParams } from "ag-grid-community";
@@ -28,10 +28,25 @@ interface CIAPAsset {
   status: string;
 }
 
+interface CIAPKpis {
+  assets: number;
+  totalCredit: number;
+  appropriated: number;
+  pending: number;
+  factor: number;
+}
+
 export default function CIAPPage() {
   const router = useRouter();
   const [assets, setAssets] = useState<CIAPAsset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState<CIAPKpis>({
+    assets: 0,
+    totalCredit: 0,
+    appropriated: 0,
+    pending: 0,
+    factor: 0
+  });
   const gridRef = useRef<AgGridReact>(null);
 
   const handleEdit = (data: { id: number }) => {
@@ -48,24 +63,42 @@ export default function CIAPPage() {
     } catch (error) { toast.error("Erro ao excluir"); }
   };
 
-  const kpis = useMemo(() => ({
-    assets: 28,
-    totalCredit: 2800000,
-    appropriated: 580000,
-    pending: 2220000,
-    factor: 85.2
-  }), []);
-
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/ciap/assets');
-      if (response.ok) {
-        const data = await response.json();
-        setAssets(data.data || []);
+      const [assetsRes, kpisRes] = await Promise.all([
+        fetch('/api/ciap/assets'),
+        fetch('/api/ciap/kpis')
+      ]);
+      
+      if (assetsRes.ok) {
+        const data = await assetsRes.json();
+        const assetsList = data.data || [];
+        setAssets(assetsList);
+        
+        // Calcular KPIs a partir dos ativos se não houver endpoint específico
+        if (assetsList.length > 0) {
+          const totalCredit = assetsList.reduce((sum: number, a: CIAPAsset) => sum + (a.icmsValue || 0), 0);
+          const appropriated = assetsList.reduce((sum: number, a: CIAPAsset) => sum + (a.accumulated || 0), 0);
+          
+          setKpis(prev => ({
+            ...prev,
+            assets: assetsList.length,
+            totalCredit,
+            appropriated,
+            pending: totalCredit - appropriated
+          }));
+        }
+      }
+      
+      if (kpisRes.ok) {
+        const kpisData = await kpisRes.json();
+        if (kpisData.success && kpisData.data) {
+          setKpis(kpisData.data);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar CIAP:', error);
@@ -278,38 +311,55 @@ export default function CIAPPage() {
                   </select>
                 </div>
 
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Receita Total:</span>
-                    <span className="text-white font-bold">R$ 3.850.000</span>
+                {kpis.assets === 0 ? (
+                  <div className="text-center py-6 text-gray-400">
+                    <p>Nenhum ativo CIAP cadastrado.</p>
+                    <p className="text-sm mt-1">Cadastre ativos para calcular apropriações.</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Receita Tributada:</span>
-                    <span className="text-green-400 font-bold">R$ 3.280.000 (85.2%)</span>
+                ) : (
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Total de Crédito ICMS:</span>
+                      <span className="text-white font-bold">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(kpis.totalCredit)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Já Apropriado:</span>
+                      <span className="text-green-400 font-bold">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(kpis.appropriated)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Saldo a Apropriar:</span>
+                      <span className="text-yellow-400 font-bold">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(kpis.pending)}
+                      </span>
+                    </div>
+                    <div className="border-t border-white/10 pt-3 flex justify-between">
+                      <span className="text-gray-400">Fator de Apropriação:</span>
+                      <span className="text-indigo-400 font-bold text-lg">{kpis.factor.toFixed(1)}%</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Receita Isenta:</span>
-                    <span className="text-gray-500">R$ 570.000 (14.8%)</span>
-                  </div>
-                  <div className="border-t border-white/10 pt-3 flex justify-between">
-                    <span className="text-gray-400">Fator de Apropriação:</span>
-                    <span className="text-indigo-400 font-bold text-lg">85.2%</span>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div>
                 <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Parcelas Base (1/48):</span>
-                    <span className="text-white">R$ 68.250</span>
+                    <span className="text-gray-400">Parcela Mensal (1/48):</span>
+                    <span className="text-white">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(kpis.totalCredit / 48)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Valor a Apropriar:</span>
-                    <span className="text-green-400 font-bold text-lg">R$ 58.149</span>
+                    <span className="text-green-400 font-bold text-lg">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((kpis.totalCredit / 48) * (kpis.factor / 100))}
+                    </span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    (85.2% × 68.250)
+                    ({kpis.factor.toFixed(1)}% × parcela mensal)
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import type { ValueFormatterParams, CellClassParams, ColDef } from "ag-grid-community";
@@ -39,19 +39,26 @@ interface SimResult {
   rule?: string;
 }
 
+interface MatrixKpis {
+  rules: number;
+  validations: number;
+  blocks: number;
+  warnings: number;
+  coverage: number;
+}
+
 export default function MatrizTributariaPage() {
   const [rules, setRules] = useState<TaxRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [simResult, setSimResult] = useState<SimResult | null>(null);
+  const [kpis, setKpis] = useState<MatrixKpis>({
+    rules: 0,
+    validations: 0,
+    blocks: 0,
+    warnings: 0,
+    coverage: 0
+  });
   const gridRef = useRef<AgGridReact>(null);
-
-  const kpis = useMemo(() => ({
-    rules: 450,
-    validations: 2850,
-    blocks: 12,
-    warnings: 48,
-    coverage: 98.5
-  }), []);
 
   useEffect(() => {
     loadData();
@@ -59,10 +66,29 @@ export default function MatrizTributariaPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/fiscal/tax-matrix');
-      if (response.ok) {
-        const data = await response.json();
-        setRules(data.data || []);
+      const [rulesRes, kpisRes] = await Promise.all([
+        fetch('/api/fiscal/tax-matrix'),
+        fetch('/api/fiscal/tax-matrix/kpis')
+      ]);
+      
+      if (rulesRes.ok) {
+        const data = await rulesRes.json();
+        const rulesList = data.data || [];
+        setRules(rulesList);
+        
+        // Calcular KPIs a partir das regras
+        setKpis(prev => ({
+          ...prev,
+          rules: rulesList.length,
+          coverage: rulesList.length > 0 ? 100 : 0
+        }));
+      }
+      
+      if (kpisRes.ok) {
+        const kpisData = await kpisRes.json();
+        if (kpisData.success && kpisData.data) {
+          setKpis(kpisData.data);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar matriz:', error);

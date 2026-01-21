@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import type { ColDef, ValueFormatterParams, CellClassParams } from "ag-grid-community";
@@ -34,21 +34,28 @@ interface CostCenter {
   status: string;
 }
 
+interface BackofficeKpis {
+  oficina: number;
+  posto: number;
+  lavaJato: number;
+  comercial: number;
+  admin: number;
+  total: number;
+}
+
 export default function BackofficePage() {
   const [accounts, setAccounts] = useState<BackofficeAccount[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState<BackofficeKpis>({
+    oficina: 0,
+    posto: 0,
+    lavaJato: 0,
+    comercial: 0,
+    admin: 0,
+    total: 0
+  });
   const gridRef = useRef<AgGridReact>(null);
-
-  // KPIs simulados
-  const kpis = useMemo(() => ({
-    oficina: 285000,
-    posto: 450000,
-    lavaJato: 85000,
-    comercial: 320000,
-    admin: 190000,
-    total: 1330000
-  }), []);
 
   useEffect(() => {
     loadData();
@@ -56,19 +63,33 @@ export default function BackofficePage() {
 
   const loadData = async () => {
     try {
-      const [accountsRes, costCentersRes] = await Promise.all([
+      const [accountsRes, costCentersRes, kpisRes] = await Promise.all([
         fetch('/api/backoffice/accounts'),
-        fetch('/api/backoffice/cost-centers')
+        fetch('/api/backoffice/cost-centers'),
+        fetch('/api/backoffice/kpis')
       ]);
 
       if (accountsRes.ok) {
         const accountsData = await accountsRes.json();
-        setAccounts(accountsData.data || []);
+        const accountsList = accountsData.data || [];
+        setAccounts(accountsList);
+        
+        // Calcular total a partir das contas
+        const total = accountsList.reduce((sum: number, a: BackofficeAccount) => 
+          sum + (a.balance_month || 0), 0);
+        setKpis(prev => ({ ...prev, total }));
       }
 
       if (costCentersRes.ok) {
         const ccData = await costCentersRes.json();
         setCostCenters(ccData.data || []);
+      }
+      
+      if (kpisRes.ok) {
+        const kpisData = await kpisRes.json();
+        if (kpisData.success && kpisData.data) {
+          setKpis(kpisData.data);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);

@@ -38,29 +38,38 @@ export default function CreditosFiscaisPage() {
   const fetchCredits = async () => {
     setLoading(true);
     try {
-      // Simulação - ajustar para API real
-      const mockData = [
-        {
-          id: 1,
-          processedDate: new Date().toISOString(),
-          documentNumber: '000123',
-          supplierName: 'Posto BR',
-          accountCode: '4.1.1.01.001',
-          accountName: 'Diesel',
-          purchaseAmount: 10000,
-          pisCredit: 165,
-          cofinsCredit: 760,
-          totalCredit: 925,
-          status: 'SUCCESS'
+      const [creditsRes, statsRes] = await Promise.all([
+        fetch('/api/tax/credits'),
+        fetch('/api/tax/credits/stats')
+      ]);
+      
+      if (creditsRes.ok) {
+        const creditsData = await creditsRes.json();
+        const creditsList = creditsData.data || [];
+        setCredits(creditsList);
+        
+        // Calcular stats a partir dos créditos se não houver endpoint específico
+        if (creditsList.length > 0) {
+          const totalCredit = creditsList.reduce((sum: number, c: Record<string, unknown>) => 
+            sum + ((c.totalCredit as number) || 0), 0);
+          const processed = creditsList.filter((c: Record<string, unknown>) => c.status === 'SUCCESS').length;
+          const pending = creditsList.filter((c: Record<string, unknown>) => c.status === 'PENDING').length;
+          
+          setStats(prev => ({
+            ...prev,
+            currentMonth: totalCredit,
+            processed,
+            pending
+          }));
         }
-      ];
-      setCredits(mockData);
-      setStats({
-        currentMonth: 285000,
-        ytd: 1850000,
-        pending: 42,
-        processed: 156
-      });
+      }
+      
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        if (statsData.success && statsData.data) {
+          setStats(statsData.data);
+        }
+      }
     } catch (error) {
       console.error("Erro:", error);
     } finally {
