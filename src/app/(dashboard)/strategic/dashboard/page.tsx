@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { LayoutDashboard, Plus, Lock, Unlock, RotateCcw, Save, Loader2, RefreshCw } from 'lucide-react';
 import { DashboardGrid, type DashboardData } from '@/components/strategic/DashboardGrid';
 import { WidgetPicker } from '@/components/strategic/WidgetPicker';
@@ -150,6 +151,13 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 sm:gap-3">
+          <Link
+            href="/strategic/dashboard/showcase"
+            className="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 
+              text-purple-300 flex items-center gap-2 hover:from-purple-500/30 hover:to-pink-500/30 transition-all text-sm"
+          >
+            ✨ Visão Premium
+          </Link>
           {isEditing ? (
             <>
               <button

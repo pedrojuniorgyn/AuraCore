@@ -43,20 +43,24 @@ export default function NewActionPlanPage() {
   }, []);
 
   const handleSubmit = async (formData: FiveW2HFormData) => {
+    const whoId = formData.who[0];
+    const whoUser = options?.users.find(u => u.id === whoId);
+    
     const response = await fetch('/api/strategic/action-plans', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         what: formData.what,
         why: formData.why,
-        where: formData.where,
+        whereLocation: formData.where, // API espera whereLocation, form tem where
         whenStart: formData.startDate,
         whenEnd: formData.endDate,
-        who: formData.who[0], // Primeiro responsável como principal
+        who: whoUser ? whoUser.name : 'Responsável',
+        whoUserId: whoId,
         how: formData.how,
-        howMuch: formData.howMuch,
+        howMuchAmount: formData.howMuch,
         priority: formData.priority,
-        strategicGoalId: formData.linkedObjective,
+        goalId: formData.linkedObjective, // API espera goalId, form tem linkedObjective
       }),
     });
 

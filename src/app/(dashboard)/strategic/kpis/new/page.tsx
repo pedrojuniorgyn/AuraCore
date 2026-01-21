@@ -87,13 +87,8 @@ export default function NewKPIPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validações
-    if (!formData.code.trim()) {
-      toast.error('Código é obrigatório');
-      return;
-    }
-    if (!formData.name.trim()) {
-      toast.error('Nome é obrigatório');
+    if (!formData.code.trim() || !formData.name.trim()) {
+      toast.error('Preencha os campos obrigatórios');
       return;
     }
 
@@ -104,18 +99,18 @@ export default function NewKPIPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: formData.code.toUpperCase(),
-          name: formData.name,
-          description: formData.description,
+          code: formData.code.trim().toUpperCase(),
+          name: formData.name.trim(),
+          description: formData.description?.trim(),
           unit: formData.unit,
           frequency: formData.frequency,
-          targetValue: formData.targetValue,
-          minimumValue: formData.minimumValue,
-          stretchValue: formData.stretchValue,
           direction: formData.direction,
+          targetValue: Number(formData.targetValue),
+          criticalThreshold: Number(formData.minimumValue), // Map minimum -> critical
+          baselineValue: Number(formData.stretchValue), // Map stretch -> baseline (temporary mapping)
           goalId: formData.goalId || undefined,
           dataSource: formData.dataSource,
-          formula: formData.formula || undefined,
+          sourceQuery: formData.formula || undefined, // Map formula -> sourceQuery
         }),
       });
 

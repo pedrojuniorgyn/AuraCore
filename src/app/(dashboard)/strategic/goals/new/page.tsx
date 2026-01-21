@@ -96,16 +96,16 @@ export default function NewGoalPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: formData.code.toUpperCase(),
-          description: formData.description,
-          perspectiveCode: formData.perspectiveCode,
+          code: formData.code.trim().toUpperCase(),
+          description: formData.description.trim(),
+          perspectiveCode: formData.perspectiveCode, // API agora aceita code
           cascadeLevel: formData.cascadeLevel,
-          targetValue: formData.targetValue,
+          targetValue: Number(formData.targetValue),
           unit: formData.unit,
           startDate: formData.startDate,
           endDate: formData.endDate,
           strategyId: formData.strategyId || undefined,
-          weight: formData.weight,
+          weight: Number(formData.weight),
         }),
       });
 

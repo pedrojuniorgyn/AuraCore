@@ -97,7 +97,7 @@ export interface CteInutilizationResponse {
  * Port: Cliente SEFAZ de baixo nível
  *
  * REGRAS CRÍTICAS:
- * - Esta interface é implementada por SefazLegacyClientAdapter (produção) e MockSefazClient (testes)
+ * - Esta interface é implementada por SefazClientAdapter (produção) e MockSefazClient (testes)
  * - Todas as operações devem ser idempotentes quando possível
  * - Timeout padrão: 30 segundos
  *

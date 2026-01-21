@@ -29,7 +29,7 @@ const createKPISchema = z.object({
   autoCalculate: z.boolean().optional(),
   sourceModule: z.string().optional(),
   sourceQuery: z.string().optional(),
-  ownerUserId: z.string().uuid(),
+  ownerUserId: z.string().uuid().optional(),
 });
 
 // GET /api/strategic/kpis
@@ -105,8 +105,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const input = {
+      ...validation.data,
+      ownerUserId: validation.data.ownerUserId || context.userId,
+    };
+
     const useCase = container.resolve(CreateKPIUseCase);
-    const result = await useCase.execute(validation.data, context);
+    const result = await useCase.execute(input, context);
 
     if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 400 });

@@ -12,10 +12,15 @@ import { getTenantContext } from '@/lib/auth/context';
 import { CreateStrategicGoalUseCase } from '@/modules/strategic/application/commands/CreateStrategicGoalUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
+import { db } from '@/lib/db';
+import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
+import { eq, and } from 'drizzle-orm';
 
 // Schema de validação
 const createGoalSchema = z.object({
-  perspectiveId: z.string().uuid('perspectiveId deve ser UUID válido'),
+  perspectiveId: z.string().uuid('perspectiveId deve ser UUID válido').optional(),
+  perspectiveCode: z.string().optional(), // Fallback se ID não for informado
+  strategyId: z.string().optional(), // Necessário para resolver perspectiveCode
   parentGoalId: z.string().uuid().optional(),
   code: z.string().min(1, 'Código é obrigatório').max(20),
   description: z.string().min(1, 'Descrição é obrigatória'),
@@ -25,8 +30,8 @@ const createGoalSchema = z.object({
   unit: z.string().min(1).max(20),
   polarity: z.enum(['UP', 'DOWN']).optional(),
   weight: z.number().min(0).max(100),
-  ownerUserId: z.string().uuid(),
-  ownerBranchId: z.number(),
+  ownerUserId: z.string().uuid().optional(),
+  ownerBranchId: z.number().optional(),
   startDate: z.string().transform((s) => new Date(s)),
   dueDate: z.string().transform((s) => new Date(s)),
 });
@@ -112,8 +117,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let { perspectiveId, ownerUserId, ownerBranchId } = validation.data;
+    const { perspectiveCode, strategyId, ...data } = validation.data;
+
+    // Resolver ownerUserId se não informado
+    if (!ownerUserId) {
+      ownerUserId = context.userId;
+    }
+    
+    // Resolver ownerBranchId se não informado
+    if (!ownerBranchId) {
+      ownerBranchId = context.branchId;
+    }
+
+    // Resolver perspectiveId se não informado
+    if (!perspectiveId && perspectiveCode && strategyId) {
+      const perspective = await db
+        .select()
+        .from(bscPerspectiveTable)
+        .where(
+          and(
+            eq(bscPerspectiveTable.strategyId, strategyId),
+            eq(bscPerspectiveTable.code, perspectiveCode)
+          )
+        );
+      
+      if (perspective.length > 0) {
+        perspectiveId = perspective[0].id;
+      } else {
+        return NextResponse.json(
+          { error: `Perspectiva não encontrada para código ${perspectiveCode} e estratégia ${strategyId}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!perspectiveId) {
+      return NextResponse.json(
+        { error: 'perspectiveId é obrigatório ou par perspectiveCode/strategyId' },
+        { status: 400 }
+      );
+    }
+
     const useCase = container.resolve(CreateStrategicGoalUseCase);
-    const result = await useCase.execute(validation.data, context);
+    const result = await useCase.execute({
+      ...data,
+      perspectiveId,
+      ownerUserId,
+      ownerBranchId
+    }, context);
 
     if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 400 });

@@ -1,0 +1,18 @@
+{
+  "epic": "E10.1",
+  "corrections": [
+    {
+      "id": "LC-194349",
+      "date": "2026-01-21",
+      "epic": "E10.1",
+      "error": "Arquivo sefaz-processor.ts importava funções extractCargoInfo e estimateDeliveryDeadline do arquivo nfe-classifier.ts deletado",
+      "correction": "Removida importação não utilizada - as funções eram importadas mas nunca chamadas no código",
+      "files_affected": [
+        "src/services/sefaz-processor.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

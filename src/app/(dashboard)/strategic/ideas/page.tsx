@@ -120,7 +120,13 @@ export default function IdeasPage() {
       const response = await fetch('/api/strategic/ideas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newIdea),
+        body: JSON.stringify({
+          title: newIdea.title.trim(),
+          description: newIdea.description.trim(),
+          sourceType: newIdea.sourceType,
+          importance: newIdea.importance,
+          department: newIdea.department,
+        }),
       });
 
       if (!response.ok) {

@@ -1,0 +1,31 @@
+{
+  "epic": "E10.2.1",
+  "corrections": [
+    {
+      "id": "LC-049769",
+      "date": "2026-01-21",
+      "epic": "E10.2.1",
+      "error": "SQL Injection: Queries SQL usavam string interpolation com dados de veículos e planos (organization_id, vehicle_id, plan_id, model, trigger_type, alertMessage) ao invés de queries parametrizadas",
+      "correction": "Todas as queries agora usam pool.request().input() para parâmetros e @nomeParam na query. Dados usados em logs são sanitizados com .replace(/['\\\"]/g, '')",
+      "files_affected": [
+        "src/modules/fleet/infrastructure/jobs/CheckMaintenanceAlertsJob.ts"
+      ],
+      "pattern_created": "SQL-PARAM-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-052872",
+      "date": "2026-01-21",
+      "epic": "E10.2.1",
+      "error": "Flag initialized só era setada no final do bloco de criação de jobs, permitindo chamadas duplicadas durante early returns (build phase, cron disabled)",
+      "correction": "Flag initialized = true movida para LOGO APÓS a verificação if(initialized), antes dos early returns condicionais. Isso previne chamadas concorrentes/duplicadas",
+      "files_affected": [
+        "src/lib/cron-setup.ts"
+      ],
+      "pattern_created": "INIT-FLAG-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

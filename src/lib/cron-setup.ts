@@ -7,6 +7,7 @@
  */
 
 import cron from 'node-cron';
+import { container } from '@/shared/infrastructure/di/container';
 import { AutoImportNfeJob } from '@/modules/integrations/infrastructure/jobs';
 import { CheckMaintenanceAlertsJob } from '@/modules/fleet/infrastructure/jobs';
 
@@ -46,7 +47,7 @@ export function initializeCronJobs() {
 
     // Job 1: Importação automática de NFes (a cada 1 hora)
     // E10: Migrado para módulo DDD integrations/infrastructure/jobs
-    const autoImportJob = new AutoImportNfeJob();
+    const autoImportJob = container.resolve(AutoImportNfeJob);
     autoImportJob.start();
 
     // Job 2: Verificação de Planos de Manutenção (diariamente às 8h)

@@ -23,6 +23,8 @@ import type {
   NfeDistribuicaoResponse,
   ManifestNfeRequest,
   AuthorizeMdfeResponse,
+  DistribuicaoDFeRequest,
+  DistribuicaoDFeResponse,
 } from '../../../domain/ports/output/ISefazGateway';
 
 @injectable()
@@ -131,6 +133,31 @@ export class MockSefazGateway implements ISefazGateway {
     }
 
     return Result.ok(undefined);
+  }
+
+  /**
+   * E10 Fase 3: Mock do getDistribuicaoDFe
+   */
+  async getDistribuicaoDFe(request: DistribuicaoDFeRequest): Promise<Result<DistribuicaoDFeResponse, string>> {
+    if (this.shouldFail) {
+      return Result.fail(this.failureMessage);
+    }
+
+    // Simular resposta com alguns documentos mock
+    return Result.ok({
+      success: true,
+      xml: `<?xml version="1.0" encoding="UTF-8"?>
+<retDistDFeInt xmlns="http://www.portalfiscal.inf.br/nfe">
+  <cStat>138</cStat>
+  <xMotivo>Documento(s) localizado(s)</xMotivo>
+  <ultNSU>${request.lastNsu}</ultNSU>
+  <maxNSU>${(parseInt(request.lastNsu, 10) + 2).toString().padStart(15, '0')}</maxNSU>
+  <docZip schema="procNFe">MOCK_DOC_1</docZip>
+  <docZip schema="procNFe">MOCK_DOC_2</docZip>
+</retDistDFeInt>`,
+      maxNsu: (parseInt(request.lastNsu, 10) + 2).toString().padStart(15, '0'),
+      totalDocuments: 2,
+    });
   }
 
   async authorizeMdfe(

@@ -31,7 +31,7 @@ import type { IIntercompanyGateway } from '../../domain/ports/output/IIntercompa
 
 // Adapters - Real
 import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
-import { SefazLegacyClientAdapter } from '../adapters/sefaz/SefazLegacyClientAdapter';
+import { SefazClientAdapter } from '../adapters/sefaz/SefazClientAdapter';
 import { BtgBankingAdapter } from '../adapters/banking/BtgBankingAdapter';
 import { BtgLegacyClientAdapter } from '../adapters/banking/BtgLegacyClientAdapter';
 import { NodemailerAdapter } from '../adapters/notification/NodemailerAdapter';
@@ -99,12 +99,12 @@ export function initializeIntegrationsModule(): void {
     );
   }
 
-  // === SEFAZ Client (Legacy Wrapper) ===
-  // E7-Onda A: Registrar adapter que wrapa serviço legado
-  // Sempre registrar o client pois é dependência do SefazGatewayAdapter
+  // === SEFAZ Client ===
+  // E10 Fase 3: Migrado de SefazLegacyClientAdapter para SefazClientAdapter
+  // Toda lógica de sefaz-client.ts e sefaz-cte-client.ts foi internalizada
   container.registerSingleton<ISefazClient>(
     TOKENS.SefazClient,
-    SefazLegacyClientAdapter
+    SefazClientAdapter
   );
 
   // === SEFAZ Gateway ===

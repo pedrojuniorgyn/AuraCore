@@ -83,6 +83,37 @@ export interface QueryNfeRequest {
   environment: 'production' | 'homologation';
 }
 
+/**
+ * E10 Fase 3: Request expandido para distribuição DFe
+ * Inclui certificado e UF para comunicação mTLS
+ */
+export interface DistribuicaoDFeRequest {
+  cnpj: string;
+  lastNsu: string;
+  environment: 'production' | 'homologation';
+  uf: string;
+  certificate: {
+    pfx: Buffer;
+    password: string;
+  };
+}
+
+/**
+ * E10 Fase 3: Response expandido de distribuição DFe
+ */
+export interface DistribuicaoDFeResponse {
+  success: boolean;
+  xml: string;
+  maxNsu: string;
+  totalDocuments: number;
+  error?: {
+    code: string;
+    message: string;
+    nextNsu?: string;
+    waitMinutes?: number;
+  };
+}
+
 export interface NfeDistribuicaoResponse {
   nfeKey: string;
   xml: string;
@@ -154,8 +185,18 @@ export interface ISefazGateway {
   
   /**
    * Consulta distribuição DFe (NFes destinadas)
+   * @deprecated Use getDistribuicaoDFe para nova API com certificado
    */
   queryDistribuicaoDFe(request: QueryNfeRequest): Promise<Result<NfeDistribuicaoResponse[], string>>;
+
+  /**
+   * Baixa NFes da SEFAZ via DistribuicaoDFe
+   * E10 Fase 3: Migrado de sefaz-service.ts
+   * 
+   * @param request Dados para consulta incluindo certificado
+   * @returns Response com XML bruto, NSU e contagem de documentos
+   */
+  getDistribuicaoDFe(request: DistribuicaoDFeRequest): Promise<Result<DistribuicaoDFeResponse, string>>;
   
   /**
    * Registra manifestação de NFe

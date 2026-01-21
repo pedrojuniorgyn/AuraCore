@@ -1,5 +1,7 @@
 import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import https from 'https';
+import axios from 'axios';
 import { Result } from '@/shared/domain';
 import type {
   ISefazGateway,
@@ -15,8 +17,11 @@ import type {
   NfeDistribuicaoResponse,
   ManifestNfeRequest,
   AuthorizeMdfeResponse,
+  DistribuicaoDFeRequest,
+  DistribuicaoDFeResponse,
 } from '../../../domain/ports/output/ISefazGateway';
 import type { ISefazClient } from '../../../domain/ports/output/ISefazClient';
+import { SEFAZ_NFE_DISTRIBUICAO_URLS, UF_TO_IBGE_CODE } from './endpoints';
 
 /**
  * SefazGatewayAdapter - Implementação real da comunicação com SEFAZ
@@ -24,7 +29,7 @@ import type { ISefazClient } from '../../../domain/ports/output/ISefazClient';
  * E7.9 Integrações - Semana 2
  * E7-Onda A: Refatorado para usar ISefazClient via DI
  *
- * Delega para ISefazClient (implementado por SefazLegacyClientAdapter) que:
+ * Delega para ISefazClient (implementado por SefazClientAdapter) que:
  * - Gerencia endpoints por UF
  * - Gerencia assinatura XML com certificado digital
  * - Monta SOAP envelope
@@ -289,6 +294,185 @@ export class SefazGatewayAdapter implements ISefazGateway {
       'SEFAZ_MANIFEST_NOT_IMPLEMENTED: NFe manifestation requires SEFAZ client extension. ' +
       'Implementation needed: manifestNfe(nfeKey, eventType, justification, environment)'
     );
+  }
+
+  /**
+   * Baixa NFes da SEFAZ via DistribuicaoDFe
+   * E10 Fase 3: Migrado de src/services/sefaz-service.ts SefazService.getDistribuicaoDFe()
+   *
+   * @param request Dados para consulta incluindo certificado mTLS
+   * @returns Response com XML bruto, NSU e contagem de documentos
+   */
+  async getDistribuicaoDFe(request: DistribuicaoDFeRequest): Promise<Result<DistribuicaoDFeResponse, string>> {
+    try {
+      console.log('🤖 [SefazGatewayAdapter] Iniciando consulta DistribuicaoDFe na Sefaz...');
+
+      // Criar HTTPS Agent com certificado mTLS
+      const httpsAgent = new https.Agent({
+        pfx: request.certificate.pfx,
+        passphrase: request.certificate.password,
+        rejectUnauthorized: false, // ⚠️ Em produção, validar certificado da Sefaz
+      });
+
+      // Seleciona URL conforme ambiente
+      const url =
+        request.environment === 'production'
+          ? SEFAZ_NFE_DISTRIBUICAO_URLS.PRODUCTION
+          : SEFAZ_NFE_DISTRIBUICAO_URLS.HOMOLOGATION;
+
+      console.log(`📡 URL Sefaz: ${url}`);
+
+      // Monta envelope SOAP
+      const soapEnvelope = this.buildDistribuicaoEnvelope(
+        request.cnpj,
+        request.lastNsu,
+        request.environment,
+        request.uf
+      );
+
+      console.log('📤 Enviando requisição para Sefaz...');
+
+      // Envia requisição SOAP
+      const response = await axios.post(url, soapEnvelope, {
+        httpsAgent,
+        headers: {
+          'Content-Type': 'application/soap+xml; charset=utf-8',
+          SOAPAction: 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe/nfeDistDFeInteresse',
+        },
+        timeout: 30000, // 30 segundos
+      });
+
+      console.log('✅ Resposta recebida da Sefaz');
+      console.log('📄 Tamanho da resposta:', response.data?.length || 0, 'bytes');
+
+      // Extrai o XML da resposta
+      const responseXml = response.data;
+
+      // Parse para extrair status e NSUs
+      const cStatMatch = responseXml.match(/<cStat>(\d+)<\/cStat>/);
+      const xMotivoMatch = responseXml.match(/<xMotivo>(.*?)<\/xMotivo>/);
+      const ultNSUMatch = responseXml.match(/<ultNSU>(\d+)<\/ultNSU>/);
+      const maxNSUMatch = responseXml.match(/<maxNSU>(\d+)<\/maxNSU>/);
+
+      const cStat = cStatMatch ? cStatMatch[1] : null;
+      const xMotivo = xMotivoMatch ? xMotivoMatch[1] : 'Sem motivo';
+      const ultNSU = ultNSUMatch ? ultNSUMatch[1] : request.lastNsu;
+      const maxNSU = maxNSUMatch ? maxNSUMatch[1] : '000000000000000';
+
+      console.log(`📊 Status SEFAZ: ${cStat} - ${xMotivo}`);
+      console.log(`🔢 ultNSU: ${ultNSU} | maxNSU: ${maxNSU}`);
+
+      // Tratamento de erro 656 (Consumo Indevido)
+      if (cStat === '656') {
+        console.log('⚠️ ERRO 656 - Consumo Indevido detectado!');
+        return Result.ok({
+          success: false,
+          xml: responseXml,
+          maxNsu: ultNSU,
+          totalDocuments: 0,
+          error: {
+            code: '656',
+            message: xMotivo,
+            nextNsu: ultNSU,
+            waitMinutes: 60,
+          },
+        });
+      }
+
+      // Status 137: Nenhum documento localizado (normal)
+      if (cStat === '137') {
+        console.log('ℹ️ Nenhum documento novo disponível');
+        return Result.ok({
+          success: true,
+          xml: responseXml,
+          maxNsu: ultNSU,
+          totalDocuments: 0,
+        });
+      }
+
+      // Status 138: Documentos localizados
+      if (cStat !== '138') {
+        console.log(`⚠️ Status inesperado: ${cStat} - ${xMotivo}`);
+        return Result.ok({
+          success: false,
+          xml: responseXml,
+          maxNsu: ultNSU,
+          totalDocuments: 0,
+          error: {
+            code: cStat || 'unknown',
+            message: xMotivo,
+          },
+        });
+      }
+
+      // Conta quantos documentos vieram
+      const docZipMatches = responseXml.match(/<docZip/g);
+      const totalDocuments = docZipMatches ? docZipMatches.length : 0;
+
+      console.log(`📊 Documentos retornados: ${totalDocuments}`);
+      console.log(`🔢 Novo maxNSU: ${maxNSU}`);
+
+      return Result.ok({
+        success: true,
+        xml: responseXml,
+        maxNsu: maxNSU,
+        totalDocuments,
+      });
+    } catch (error: unknown) {
+      let errorMessage = 'Erro desconhecido';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      console.error('❌ Erro ao consultar Sefaz:', errorMessage);
+
+      // Type guard para Axios error
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: unknown } };
+        if (axiosError.response?.data) {
+          console.error('📄 Resposta Sefaz:', axiosError.response.data);
+        }
+      }
+
+      return Result.fail(`Falha ao comunicar com Sefaz: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Monta o Envelope SOAP para DistribuicaoDFe
+   * E10 Fase 3: Migrado de sefaz-service.ts
+   */
+  private buildDistribuicaoEnvelope(
+    cnpj: string,
+    ultNsu: string,
+    environment: 'production' | 'homologation',
+    uf: string
+  ): string {
+    // Garante que o CNPJ tenha 14 dígitos (preenche com zeros à esquerda)
+    const cnpjPadded = cnpj.padStart(14, '0');
+
+    // Garante que o NSU tenha 15 dígitos (preenche com zeros à esquerda)
+    const nsuPadded = ultNsu.padStart(15, '0');
+
+    // Define o tipo de ambiente: 1 = Produção, 2 = Homologação
+    const tpAmb = environment === 'production' ? '1' : '2';
+
+    // Código IBGE da UF
+    const cUFAutor = UF_TO_IBGE_CODE[uf.toUpperCase()] || '91'; // 91 = Ambiente Nacional (fallback)
+
+    // Limpeza rigorosa dos dados
+    const cleanCnpj = cnpjPadded.replace(/\D/g, '');
+    const cleanUf = cUFAutor.toString();
+    const cleanNsu = nsuPadded.toString().padStart(15, '0');
+
+    // XML Interno (COM A TAG distNSU ADICIONADA - OBRIGATÓRIA!)
+    const innerXml = `<distDFeInt xmlns="http://www.portalfiscal.inf.br/nfe" versao="1.01"><tpAmb>${tpAmb}</tpAmb><cUFAutor>${cleanUf}</cUFAutor><CNPJ>${cleanCnpj}</CNPJ><distNSU><ultNSU>${cleanNsu}</ultNSU></distNSU></distDFeInt>`;
+
+    // Envelope SOAP MINIFICADO (SEM QUEBRAS DE LINHA)
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?><soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><nfeDistDFeInteresse xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe"><nfeDadosMsg>${innerXml}</nfeDadosMsg></nfeDistDFeInteresse></soap12:Body></soap12:Envelope>`;
+
+    return soapRequest;
   }
 
   // ========== MDFe Methods ==========
