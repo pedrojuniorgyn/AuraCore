@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Widget, WidgetConfig } from '@/lib/dashboard/dashboard-types';
 
 interface UseWidgetsReturn {
@@ -15,6 +15,14 @@ export function useWidgets(widgets: Widget[]): UseWidgetsReturn {
   const [widgetData, setWidgetData] = useState<Record<string, unknown>>({});
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, Error | null>>({});
+
+  // Usar ref para evitar dependências instáveis no useCallback
+  const widgetsRef = useRef(widgets);
+
+  // Atualizar ref quando widgets mudar
+  useEffect(() => {
+    widgetsRef.current = widgets;
+  }, [widgets]);
 
   const fetchWidgetData = useCallback(async (widget: Widget) => {
     setIsLoading((prev) => ({ ...prev, [widget.id]: true }));
@@ -53,21 +61,39 @@ export function useWidgets(widgets: Widget[]): UseWidgetsReturn {
 
   const refreshWidget = useCallback(
     async (widgetId: string) => {
-      const widget = widgets.find((w) => w.id === widgetId);
+      const widget = widgetsRef.current.find((w) => w.id === widgetId);
       if (widget) {
         await fetchWidgetData(widget);
       }
     },
-    [widgets, fetchWidgetData]
+    [fetchWidgetData]
   );
 
+  // refreshAll usa ref para evitar recriação quando widgets muda
   const refreshAll = useCallback(async () => {
-    await Promise.all(widgets.map((w) => fetchWidgetData(w)));
-  }, [widgets, fetchWidgetData]);
+    const currentWidgets = widgetsRef.current;
+    if (currentWidgets.length === 0) return;
 
+    await Promise.all(currentWidgets.map((w) => fetchWidgetData(w)));
+  }, [fetchWidgetData]);
+
+  // Efeito inicial - executa apenas no mount
   useEffect(() => {
-    refreshAll();
-  }, [widgets.length]);
+    // Verificar se há widgets para carregar
+    if (widgetsRef.current.length > 0) {
+      refreshAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Array vazio = apenas no mount
+
+  // Efeito para recarregar quando widgets.length muda significativamente
+  const prevLengthRef = useRef(widgets.length);
+  useEffect(() => {
+    if (widgets.length !== prevLengthRef.current && widgets.length > 0) {
+      prevLengthRef.current = widgets.length;
+      refreshAll();
+    }
+  }, [widgets.length, refreshAll]);
 
   return {
     widgetData,
