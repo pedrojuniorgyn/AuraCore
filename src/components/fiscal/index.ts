@@ -1,2 +1,1 @@
-// src/components/fiscal/index.ts
-export { LegislationWidget } from './LegislationWidget';
+export { FiscalAIWidget } from './FiscalAIWidget';

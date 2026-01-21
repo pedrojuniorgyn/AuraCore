@@ -34,8 +34,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DocumentDetailModal } from "@/components/fiscal/document-detail-modal";
-import { LegislationWidget } from "@/components/fiscal";
-import { AIInsightWidget } from "@/components/ai";
+import { LegislationWidget, FiscalAIWidget } from "@/components/fiscal";
 import { toast } from "sonner";
 
 // SSRM Hook
@@ -545,23 +544,8 @@ export default function FiscalDocumentsPage() {
         defaultExpanded={false}
       />
 
-      {/* Widget de Insights */}
-      <AIInsightWidget
-        agentType="fiscal"
-        context={{
-          module: 'fiscal',
-          screen: 'nfe-list',
-        }}
-        suggestedPrompts={[
-          'Quais NFes precisam de atenção?',
-          'Resumo das NFes do dia',
-          'Existe algum erro de validação?',
-          'Status das manifestações pendentes',
-        ]}
-        title="Assistente Fiscal"
-        position="inline"
-        defaultMinimized={true}
-      />
+      {/* Widget de Insights - usando wrapper padronizado */}
+      <FiscalAIWidget screen="documentos" />
     </div>
   </>
   );

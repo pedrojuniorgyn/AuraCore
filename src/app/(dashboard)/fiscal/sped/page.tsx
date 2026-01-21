@@ -7,8 +7,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { Badge } from "@/components/ui/badge";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { FileText, FileSpreadsheet, BookOpen, Download, Calendar } from "lucide-react";
-import { LegislationWidget } from "@/components/fiscal";
-import { AIInsightWidget } from "@/components/ai";
+import { LegislationWidget, FiscalAIWidget } from "@/components/fiscal";
 
 export default function CentralSpedPage() {
   const [generating, setGenerating] = useState(false);
@@ -131,23 +130,8 @@ export default function CentralSpedPage() {
         defaultExpanded={false}
       />
 
-      {/* Widget de Insights */}
-      <AIInsightWidget
-        agentType="fiscal"
-        context={{
-          module: 'fiscal',
-          screen: 'sped',
-        }}
-        suggestedPrompts={[
-          'Status do SPED Fiscal deste mês',
-          'Quais registros estão pendentes?',
-          'Existe inconsistência nos dados?',
-          'Quando vence a entrega?',
-        ]}
-        title="Assistente SPED"
-        position="inline"
-        defaultMinimized={true}
-      />
+      {/* Widget de Insights - usando wrapper padronizado */}
+      <FiscalAIWidget screen="sped" />
     </div>
   </>
   );

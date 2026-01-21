@@ -13,6 +13,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 import { Scale, CheckCircle, XCircle, AlertTriangle, Target, Plus, Upload, FileText, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { FiscalAIWidget } from "@/components/fiscal";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -169,7 +170,8 @@ export default function MatrizTributariaPage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="p-8 space-y-8">
         <FadeIn>
           <div className="flex items-center justify-between">
@@ -348,6 +350,10 @@ export default function MatrizTributariaPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <FiscalAIWidget screen="matriz-tributaria" defaultMinimized={true} />
+    </>
   );
 }

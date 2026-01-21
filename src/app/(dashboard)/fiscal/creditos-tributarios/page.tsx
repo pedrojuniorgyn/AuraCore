@@ -15,6 +15,7 @@ import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animat
 import { currencyFormatter, dateFormatter, StatusCellRenderer } from "@/components/ag-grid/renderers/aurora-renderers";
 import { Play, FileSpreadsheet, DollarSign, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
+import { FiscalAIWidget } from "@/components/fiscal";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -110,7 +111,8 @@ export default function CreditosFiscaisPage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="space-y-6">
         <FadeIn>
           <GradientText className="text-4xl font-bold mb-2">Créditos Fiscais PIS/COFINS</GradientText>
@@ -220,8 +222,10 @@ export default function CreditosFiscaisPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
-    </PageTransition>
+      </PageTransition>
+      
+      {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
+      <FiscalAIWidget screen="creditos-tributarios" />
+    </>
   );
 }
-
-

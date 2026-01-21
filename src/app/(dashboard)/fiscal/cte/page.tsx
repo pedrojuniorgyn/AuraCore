@@ -13,8 +13,7 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Download, RefreshCw } from "lucide-react";
-import { LegislationWidget } from "@/components/fiscal";
-import { AIInsightWidget } from "@/components/ai";
+import { LegislationWidget, FiscalAIWidget } from "@/components/fiscal";
 import { toast } from "sonner";
 
 // SSRM Hook
@@ -412,23 +411,8 @@ export default function CtePage() {
           defaultExpanded={false}
         />
 
-        {/* Widget de Insights */}
-        <AIInsightWidget
-          agentType="fiscal"
-          context={{
-            module: 'fiscal',
-            screen: 'cte-list',
-          }}
-          suggestedPrompts={[
-            'Quais CTes precisam de atenção?',
-            'Resumo dos CTes do dia',
-            'Existe algum CTe com problema?',
-            'Status das averbações pendentes',
-          ]}
-          title="Assistente CTe"
-          position="inline"
-          defaultMinimized={true}
-        />
+        {/* Widget de Insights - usando wrapper padronizado */}
+        <FiscalAIWidget screen="cte" />
       </div>
     </>
   );
