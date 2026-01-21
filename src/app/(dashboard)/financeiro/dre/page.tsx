@@ -267,7 +267,7 @@ export default function DREPage() {
                     <div className="flex items-center gap-2">
                       <Percent className="h-5 w-5 text-blue-500" />
                       <span className="text-2xl font-bold text-blue-600">
-                        {(dreData.data as DREConsolidatedData).margin.toFixed(2)}%
+                        {((dreData.data as DREConsolidatedData).margin ?? 0).toFixed(2)}%
                       </span>
                     </div>
                   </CardContent>
@@ -326,12 +326,12 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-bold ${
-                                item.margin >= 0
+                                (item.margin ?? 0) >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {item.margin.toFixed(2)}%
+                              {(item.margin ?? 0).toFixed(2)}%
                             </div>
                           </div>
                         </div>
@@ -401,12 +401,12 @@ export default function DREPage() {
                             </div>
                             <div
                               className={`text-lg font-bold ${
-                                item.margin >= 0
+                                (item.margin ?? 0) >= 0
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {item.margin.toFixed(2)}%
+                              {(item.margin ?? 0).toFixed(2)}%
                             </div>
                           </div>
                         </div>

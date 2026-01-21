@@ -6,9 +6,13 @@
 import type { AgentInfo, AgentType, ChatRequest, ChatResponse } from '../types';
 
 type RequestFn = <T>(method: string, path: string, data?: unknown) => Promise<T>;
+type RequestStreamFn = (method: string, path: string, data?: unknown) => Promise<Response>;
 
 export class AgentsResource {
-  constructor(private readonly request: RequestFn) {}
+  constructor(
+    private readonly request: RequestFn,
+    private readonly requestStream: RequestStreamFn
+  ) {}
 
   /**
    * List available agents
@@ -75,8 +79,8 @@ export class AgentsResource {
   async *chatStream(
     request: ChatRequest
   ): AsyncGenerator<string, void, unknown> {
-    // For streaming, we need the raw response
-    const response = await this.request<Response>('POST', '/v1/agents/chat', {
+    // Use requestStream for raw Response (streaming)
+    const response = await this.requestStream('POST', '/v1/agents/chat', {
       ...request,
       stream: true,
     });

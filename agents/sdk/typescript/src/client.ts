@@ -62,7 +62,9 @@ export class AuraCore {
 
     // Initialize resources
     const requestFn = this.request.bind(this);
-    this.agents = new AgentsResource(requestFn);
+    const requestStreamFn = this.requestStream.bind(this);
+
+    this.agents = new AgentsResource(requestFn, requestStreamFn);
     this.voice = new VoiceResource(requestFn);
     this.rag = new RAGResource(requestFn);
     this.documents = new DocumentsResource(requestFn);
@@ -115,6 +117,66 @@ export class AuraCore {
       }
 
       return JSON.parse(text) as T;
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof AuraCoreError) {
+        throw error;
+      }
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new TimeoutError(
+            `Request timeout after ${this.config.timeout}ms`
+          );
+        }
+        throw new NetworkError(error.message);
+      }
+
+      throw new NetworkError('Unknown error occurred');
+    }
+  }
+
+  /**
+   * Make a streaming API request (returns raw Response)
+   */
+  private async requestStream(
+    method: string,
+    path: string,
+    data?: unknown
+  ): Promise<Response> {
+    const url = `${this.config.baseUrl}${path}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.config.apiKey,
+      'User-Agent': `@auracore/sdk/${SDK_VERSION}`,
+      ...this.config.headers,
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: data ? JSON.stringify(data) : undefined,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = (await response.json().catch(() => ({
+          code: 'unknown_error',
+          message: response.statusText,
+          status: response.status,
+        }))) as APIError;
+
+        throw AuraCoreError.fromAPIError(error);
+      }
+
+      return response;
     } catch (error) {
       clearTimeout(timeoutId);
 

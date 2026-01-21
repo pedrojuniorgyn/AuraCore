@@ -118,13 +118,17 @@ export function NumberCounter({
   suffix = "",
   decimals = 0,
 }: {
-  value: number;
+  value: number | undefined | null;
   duration?: number;
   className?: string;
   prefix?: string;
   suffix?: string;
   decimals?: number;
 }) {
+  // Garantir valor numérico válido (protege contra undefined/null/NaN)
+  const safeValue = value ?? 0;
+  const numericValue = Number.isFinite(safeValue) ? safeValue : 0;
+  
   const [count, setCount] = React.useState(0);
 
   React.useEffect(() => {
@@ -136,24 +140,27 @@ export function NumberCounter({
       const remaining = endTime - now;
 
       if (remaining <= 0) {
-        setCount(value);
+        setCount(numericValue);
         return;
       }
 
       const progress = 1 - remaining / (duration * 1000);
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      setCount(value * easeOutQuart);
+      setCount(numericValue * easeOutQuart);
 
       requestAnimationFrame(updateCount);
     };
 
     updateCount();
-  }, [value, duration]);
+  }, [numericValue, duration]);
+
+  // Garantir que count é um número válido antes de toFixed
+  const displayValue = Number.isFinite(count) ? count : 0;
 
   return (
     <span className={className}>
       {prefix}
-      {count.toFixed(decimals)}
+      {displayValue.toFixed(decimals)}
       {suffix}
     </span>
   );

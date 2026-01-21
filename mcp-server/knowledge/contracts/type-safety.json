@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.29",
+  "version": "2.0.32",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -576,6 +576,47 @@
         "agents/k8s/pvc-data.yaml"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-997538",
+      "date": "2026-01-21",
+      "epic": "E9",
+      "error": "Interface Contract em get-contract-tool.ts validava 'title' como campo obrigatório, mas todos os JSONs de contratos usam 'name'. Causava erro 'Invalid contract schema' ao chamar get_contract para qualquer contrato.",
+      "correction": "1) Alterada interface Contract para usar 'name' como campo principal e 'title' como alias opcional. 2) Alterada validação para aceitar (!contract.name && !contract.title). 3) Corrigidos listContracts() e searchContracts() em contracts.ts para usar fallback name || title || id.",
+      "files_affected": [
+        "mcp-server/src/tools/get-contract-tool.ts",
+        "mcp-server/src/resources/contracts.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-194349",
+      "date": "2026-01-21",
+      "epic": "E10.1",
+      "error": "Arquivo sefaz-processor.ts importava funções extractCargoInfo e estimateDeliveryDeadline do arquivo nfe-classifier.ts deletado",
+      "correction": "Removida importação não utilizada - as funções eram importadas mas nunca chamadas no código",
+      "files_affected": [
+        "src/services/sefaz-processor.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-272090",
+      "date": "2026-01-21",
+      "epic": "E9",
+      "error": "Bug 'Cannot read properties of undefined (reading toFixed)' na página /financeiro/dre-dashboard. O componente NumberCounter em magic-components.tsx chamava value.toFixed(decimals) sem verificar se value era undefined/null/NaN. Quando dados do DRE vinham vazios ou com campos undefined da API, o componente quebrava.",
+      "correction": "1) Alterado type do prop value em NumberCounter para aceitar 'number | undefined | null'. 2) Adicionado safeValue = value ?? 0 e numericValue = Number.isFinite(safeValue) ? safeValue : 0. 3) Alterado useEffect para usar numericValue ao invés de value. 4) Adicionado displayValue = Number.isFinite(count) ? count : 0 antes do toFixed(). 5) Corrigido também dre/page.tsx com (margin ?? 0) em 3 ocorrências preventivamente.",
+      "files_affected": [
+        "src/components/ui/magic-components.tsx",
+        "src/app/(dashboard)/financeiro/dre/page.tsx"
+      ],
+      "pattern_created": "P-SAFE-TOFIX: Always protect toFixed with nullish coalescing",
       "status": "APPROVED",
       "must_not_repeat": true
     }
