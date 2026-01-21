@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
 import type { ValueFormatterParams } from "ag-grid-community";
@@ -27,18 +27,29 @@ interface CarbonEmission {
   vehiclePlate: string;
 }
 
+interface ESGStats {
+  co2: number;
+  trips: number;
+  diesel: number;
+  efficiency: number;
+  offset: number;
+  yearlyEmissions: number;
+  compensated: number;
+}
+
 export default function ESGCarbonoPage() {
   const [emissions, setEmissions] = useState<CarbonEmission[]>([]);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
-
-  const kpis = useMemo(() => ({
-    co2: 285,
-    trips: 2850,
-    diesel: 109615,
-    efficiency: 2.65,
-    offset: 12
-  }), []);
+  const [stats, setStats] = useState<ESGStats>({
+    co2: 0,
+    trips: 0,
+    diesel: 0,
+    efficiency: 0,
+    offset: 0,
+    yearlyEmissions: 0,
+    compensated: 0
+  });
 
   useEffect(() => {
     loadData();
@@ -46,10 +57,38 @@ export default function ESGCarbonoPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/esg/emissions');
-      if (response.ok) {
-        const data = await response.json();
-        setEmissions(data.data || []);
+      const [emissionsRes, statsRes] = await Promise.all([
+        fetch('/api/esg/emissions'),
+        fetch('/api/esg/stats')
+      ]);
+      
+      if (emissionsRes.ok) {
+        const data = await emissionsRes.json();
+        const emissionsList: CarbonEmission[] = data.data || [];
+        setEmissions(emissionsList);
+        
+        // Calcular stats a partir dos dados se não houver endpoint específico
+        if (emissionsList.length > 0) {
+          const totalCo2 = emissionsList.reduce((sum: number, e: CarbonEmission) => sum + (e.co2Kg || 0), 0) / 1000; // kg para ton
+          const totalDiesel = emissionsList.reduce((sum: number, e: CarbonEmission) => sum + (e.fuelLiters || 0), 0);
+          const totalDistance = emissionsList.reduce((sum: number, e: CarbonEmission) => sum + (e.distance || 0), 0);
+          
+          setStats(prev => ({
+            ...prev,
+            co2: totalCo2,
+            trips: emissionsList.length,
+            diesel: totalDiesel,
+            efficiency: totalDistance > 0 && totalDiesel > 0 ? totalDistance / totalDiesel : 0,
+            yearlyEmissions: totalCo2 * 12, // estimativa anual
+          }));
+        }
+      }
+      
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        if (statsData.success && statsData.data) {
+          setStats(statsData.data);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar emissões:', error);
@@ -161,7 +200,7 @@ export default function ESGCarbonoPage() {
                   <span className="text-sm text-gray-400">CO2</span>
                 </div>
                 <div className="text-2xl font-bold text-white">
-                  <NumberCounter value={kpis.co2} decimals={0} /> ton
+                  <NumberCounter value={stats.co2} decimals={0} /> ton
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Mês Atual</div>
               </GlassmorphismCard>
@@ -174,7 +213,7 @@ export default function ESGCarbonoPage() {
                   <span className="text-sm text-gray-400">Viagens</span>
                 </div>
                 <div className="text-2xl font-bold text-white">
-                  <NumberCounter value={kpis.trips} decimals={0} />
+                  <NumberCounter value={stats.trips} decimals={0} />
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Mês Atual</div>
               </GlassmorphismCard>
@@ -187,7 +226,7 @@ export default function ESGCarbonoPage() {
                   <span className="text-sm text-gray-400">Diesel</span>
                 </div>
                 <div className="text-2xl font-bold text-white">
-                  <NumberCounter value={kpis.diesel / 1000} decimals={1} />k L
+                  <NumberCounter value={stats.diesel / 1000} decimals={1} />k L
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Mês Atual</div>
               </GlassmorphismCard>
@@ -200,7 +239,7 @@ export default function ESGCarbonoPage() {
                   <span className="text-sm text-gray-400">Eficiência</span>
                 </div>
                 <div className="text-2xl font-bold text-white">
-                  <NumberCounter value={kpis.efficiency} decimals={2} /> km/l
+                  <NumberCounter value={stats.efficiency} decimals={2} /> km/l
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Média</div>
               </GlassmorphismCard>
@@ -213,7 +252,7 @@ export default function ESGCarbonoPage() {
                   <span className="text-sm text-gray-400">Compensado</span>
                 </div>
                 <div className="text-2xl font-bold text-white">
-                  <NumberCounter value={kpis.offset} decimals={0} /> ton
+                  <NumberCounter value={stats.offset} decimals={0} /> ton
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Offset</div>
               </GlassmorphismCard>
@@ -271,19 +310,22 @@ export default function ESGCarbonoPage() {
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Emissões do Ano:</span>
-                  <span className="text-white font-bold">3.420 toneladas CO2e</span>
+                  <span className="text-white font-bold">{stats.yearlyEmissions.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} toneladas CO2e</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Compensado:</span>
-                  <span className="text-green-400 font-bold">156 toneladas (4.6%)</span>
+                  <span className="text-green-400 font-bold">
+                    {stats.compensated.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} toneladas 
+                    ({stats.yearlyEmissions > 0 ? ((stats.compensated / stats.yearlyEmissions) * 100).toFixed(1) : 0}%)
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Pendente:</span>
-                  <span className="text-orange-400 font-bold">3.264 toneladas</span>
+                  <span className="text-orange-400 font-bold">{(stats.yearlyEmissions - stats.compensated).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} toneladas</span>
                 </div>
                 <div className="border-t border-white/10 pt-4 flex justify-between">
                   <span className="text-gray-400">Equivalente a:</span>
-                  <span className="text-green-400 font-bold text-lg">230.400 árvores</span>
+                  <span className="text-green-400 font-bold text-lg">{((stats.yearlyEmissions - stats.compensated) * 67.4).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} árvores</span>
                 </div>
               </div>
 

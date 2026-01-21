@@ -45,13 +45,22 @@ export default function SinistrosPage() {
     description: ''
   });
 
-  const kpis = useMemo(() => ({
-    open: 8,
-    totalEstimated: 385000,
-    approved: 250000,
-    paid: 180000,
-    franchise: 135000
-  }), []);
+  // Calcular KPIs a partir dos claims carregados
+  const kpis = useMemo(() => {
+    if (claims.length === 0) {
+      return { open: 0, totalEstimated: 0, approved: 0, paid: 0, franchise: 0 };
+    }
+    
+    const open = claims.filter((c: Claim) => c.status === 'OPENED' || c.status === 'UNDER_REVIEW').length;
+    const totalEstimated = claims.reduce((sum: number, c: Claim) => sum + (c.estimatedDamage || 0), 0);
+    const approved = claims.filter((c: Claim) => c.status === 'APPROVED' || c.status === 'PAID')
+      .reduce((sum: number, c: Claim) => sum + (c.finalCost || 0), 0);
+    const paid = claims.filter((c: Claim) => c.status === 'PAID')
+      .reduce((sum: number, c: Claim) => sum + (c.finalCost || 0), 0);
+    const franchise = claims.reduce((sum: number, c: Claim) => sum + (c.deductible || 0), 0);
+    
+    return { open, totalEstimated, approved, paid, franchise };
+  }, [claims]);
 
   useEffect(() => {
     loadData();

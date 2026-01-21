@@ -36,36 +36,20 @@ interface WarRoomData {
   aiInsight: string;
 }
 
-// Dados mock para fallback
-const MOCK_DATA: WarRoomData = {
-  healthScore: 72,
-  previousHealthScore: 69,
-  alerts: [
-    { id: '1', type: 'CRITICAL', title: 'OTD abaixo da meta', description: 'Índice de entregas no prazo caiu para 67%', metric: { current: 67, target: 95, unit: '%' }, kpiId: 'kpi-otd' },
-    { id: '2', type: 'CRITICAL', title: 'EBITDA negativo', description: 'Filiais SP e RJ com margem negativa', kpiId: 'kpi-ebitda' },
-    { id: '3', type: 'WARNING', title: '3 planos atrasados', description: 'Ações com mais de 15 dias de atraso' },
-  ],
+// Empty state para quando não há dados da API (valores zerados)
+const EMPTY_DATA: WarRoomData = {
+  healthScore: 0,
+  previousHealthScore: undefined,
+  alerts: [],
   perspectives: [
-    { perspective: 'FINANCIAL', score: 75, kpiCount: 5, onTrack: 2, atRisk: 2, critical: 1, trend: -2 },
-    { perspective: 'CUSTOMER', score: 82, kpiCount: 3, onTrack: 2, atRisk: 1, critical: 0, trend: 5 },
-    { perspective: 'INTERNAL', score: 68, kpiCount: 8, onTrack: 3, atRisk: 3, critical: 2, trend: -8 },
-    { perspective: 'LEARNING', score: 91, kpiCount: 4, onTrack: 4, atRisk: 0, critical: 0, trend: 3 },
+    { perspective: 'FINANCIAL', score: 0, kpiCount: 0, onTrack: 0, atRisk: 0, critical: 0, trend: 0 },
+    { perspective: 'CUSTOMER', score: 0, kpiCount: 0, onTrack: 0, atRisk: 0, critical: 0, trend: 0 },
+    { perspective: 'INTERNAL', score: 0, kpiCount: 0, onTrack: 0, atRisk: 0, critical: 0, trend: 0 },
+    { perspective: 'LEARNING', score: 0, kpiCount: 0, onTrack: 0, atRisk: 0, critical: 0, trend: 0 },
   ],
-  weeklyTrend: [
-    { day: 'Seg', score: 68 },
-    { day: 'Ter', score: 70 },
-    { day: 'Qua', score: 69 },
-    { day: 'Qui', score: 71 },
-    { day: 'Sex', score: 72 },
-  ],
-  priorityActions: [
-    { id: '1', code: 'PDC-002', title: 'Reverter queda do OTD', status: 'OVERDUE', daysRemaining: -3 },
-    { id: '2', code: 'PDC-005', title: 'Reduzir custos operacionais', status: 'AT_RISK', daysRemaining: 5 },
-    { id: '3', code: 'PDC-008', title: 'Capacitar equipe entregas', status: 'AT_RISK', daysRemaining: 7 },
-    { id: '4', code: 'PDC-012', title: 'Melhorar NPS clientes', status: 'ON_TRACK', daysRemaining: 10 },
-    { id: '5', code: 'PDC-015', title: 'Implantar novo TMS', status: 'ON_TRACK', daysRemaining: 15 },
-  ],
-  aiInsight: 'O KPI OTD apresenta tendência de queda há 3 semanas consecutivas. Recomendo priorizar o plano de ação PDC-002 e alocar recursos adicionais para a operação de última milha. A análise indica que 60% dos atrasos ocorrem na região metropolitana de SP.',
+  weeklyTrend: [],
+  priorityActions: [],
+  aiInsight: 'Nenhum insight disponível. Configure KPIs e planos de ação para receber análises da Aurora AI.',
 };
 
 export default function WarRoomPage() {
@@ -83,7 +67,7 @@ export default function WarRoomPage() {
         const result = await response.json();
         // Normalizar dados da API
         setData({
-          healthScore: result.healthScore ?? MOCK_DATA.healthScore,
+          healthScore: result.healthScore ?? EMPTY_DATA.healthScore,
           previousHealthScore: result.previousHealthScore,
           alerts: result.criticalKpis?.map((k: Record<string, unknown>, i: number) => ({
             id: String(k.id || i),
@@ -92,24 +76,24 @@ export default function WarRoomPage() {
             description: `Variação: ${k.variance}%`,
             metric: { current: k.currentValue as number, target: k.targetValue as number, unit: k.unit as string || '%' },
             kpiId: k.id as string,
-          })) || MOCK_DATA.alerts,
-          perspectives: result.perspectives || MOCK_DATA.perspectives,
-          weeklyTrend: result.weeklyTrend || MOCK_DATA.weeklyTrend,
+          })) || EMPTY_DATA.alerts,
+          perspectives: result.perspectives || EMPTY_DATA.perspectives,
+          weeklyTrend: result.weeklyTrend || EMPTY_DATA.weeklyTrend,
           priorityActions: result.overduePlans?.map((p: Record<string, unknown>) => ({
             id: p.id as string,
             code: p.code as string,
             title: p.what as string,
             status: (p.daysOverdue as number) > 0 ? 'OVERDUE' : 'AT_RISK' as const,
             daysRemaining: -(p.daysOverdue as number),
-          })) || MOCK_DATA.priorityActions,
-          aiInsight: result.aiInsight || MOCK_DATA.aiInsight,
+          })) || EMPTY_DATA.priorityActions,
+          aiInsight: result.aiInsight || EMPTY_DATA.aiInsight,
         });
       } else {
-        setData(MOCK_DATA);
+        setData(EMPTY_DATA);
       }
     } catch (error) {
       console.error('Erro ao carregar War Room:', error);
-      setData(MOCK_DATA);
+      setData(EMPTY_DATA);
     } finally {
       setLoading(false);
       setLastUpdate(new Date());

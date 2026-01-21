@@ -23,12 +23,60 @@ interface CteMargin {
   cteNumber: string;
   issueDate: string;
   marginPercent: number;
+  contributionMargin?: number;
+}
+
+interface MarginStats {
+  avgMargin: number;
+  totalCtes: number;
+  deficitCtes: number;
+  bestMargin: number;
 }
 
 export default function MargemCtePage() {
   const gridRef = useRef<AgGridReact>(null);
   const [ctes, setCtes] = useState<CteMargin[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<MarginStats>({
+    avgMargin: 0,
+    totalCtes: 0,
+    deficitCtes: 0,
+    bestMargin: 0
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const response = await fetch('/api/tms/cte-margins');
+      if (response.ok) {
+        const data = await response.json();
+        const cteList: CteMargin[] = data.data || [];
+        setCtes(cteList);
+        
+        // Calcular stats a partir dos dados carregados
+        if (cteList.length > 0) {
+          const margins = cteList.map((c: CteMargin) => c.marginPercent || 0);
+          const avgMargin = margins.reduce((a: number, b: number) => a + b, 0) / margins.length;
+          const deficitCtes = cteList.filter((c: CteMargin) => (c.contributionMargin || 0) < 0).length;
+          const bestMargin = Math.max(...margins);
+          
+          setStats({
+            avgMargin,
+            totalCtes: cteList.length,
+            deficitCtes,
+            bestMargin
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar margens CTe:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columnDefs = [
     { field: 'cteNumber', headerName: 'CTe', filter: 'agTextColumnFilter', floatingFilter: true, width: 120 },
@@ -77,7 +125,11 @@ export default function MargemCtePage() {
               <div className="flex items-center gap-4">
                 <Target className="w-10 h-10 text-green-400" />
                 <div>
-                  <NumberCounter value={28.5} suffix="%" decimals={1} className="text-3xl font-bold" />
+                  {stats.totalCtes > 0 ? (
+                    <NumberCounter value={stats.avgMargin} suffix="%" decimals={1} className="text-3xl font-bold" />
+                  ) : (
+                    <span className="text-3xl font-bold text-gray-500">N/A</span>
+                  )}
                   <p className="text-gray-400 text-sm">Margem Média</p>
                 </div>
               </div>
@@ -87,17 +139,17 @@ export default function MargemCtePage() {
               <div className="flex items-center gap-4">
                 <FileSpreadsheet className="w-10 h-10 text-blue-400" />
                 <div>
-                  <NumberCounter value={1856} className="text-3xl font-bold" />
+                  <NumberCounter value={stats.totalCtes} className="text-3xl font-bold" />
                   <p className="text-gray-400 text-sm">CTes Analisados</p>
                 </div>
               </div>
             </GlassmorphismCard>
 
-            <GlassmorphismCard className="aurora-red-shadow pulsating hover:scale-105 transition-transform">
+            <GlassmorphismCard className={`hover:scale-105 transition-transform ${stats.deficitCtes > 0 ? 'aurora-red-shadow pulsating' : ''}`}>
               <div className="flex items-center gap-4">
                 <AlertTriangle className="w-10 h-10 text-red-400" />
                 <div>
-                  <NumberCounter value={23} className="text-3xl font-bold" />
+                  <NumberCounter value={stats.deficitCtes} className="text-3xl font-bold" />
                   <p className="text-gray-400 text-sm">CTes Deficitários</p>
                 </div>
               </div>
@@ -107,7 +159,11 @@ export default function MargemCtePage() {
               <div className="flex items-center gap-4">
                 <TrendingUp className="w-10 h-10 text-yellow-400" />
                 <div>
-                  <NumberCounter value={45.8} suffix="%" decimals={1} className="text-3xl font-bold" />
+                  {stats.totalCtes > 0 ? (
+                    <NumberCounter value={stats.bestMargin} suffix="%" decimals={1} className="text-3xl font-bold" />
+                  ) : (
+                    <span className="text-3xl font-bold text-gray-500">N/A</span>
+                  )}
                   <p className="text-gray-400 text-sm">Melhor Margem</p>
                 </div>
               </div>

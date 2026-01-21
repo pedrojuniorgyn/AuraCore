@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, ColDef, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
@@ -34,6 +34,24 @@ export default function GestaoCC3DPage() {
   const [costCenters, setCostCenters] = useState<CostCenter3D[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Calcular stats a partir dos dados carregados
+  const stats = useMemo(() => {
+    if (costCenters.length === 0) {
+      return { totalCCs: 0, branches: 0, serviceTypes: 0, objects: 0 };
+    }
+    
+    const uniqueBranches = new Set(costCenters.map(cc => cc.branch_name));
+    const uniqueServiceTypes = new Set(costCenters.map(cc => cc.service_type));
+    const objectsCount = costCenters.filter(cc => cc.linked_object_id).length;
+    
+    return {
+      totalCCs: costCenters.length,
+      branches: uniqueBranches.size,
+      serviceTypes: uniqueServiceTypes.size,
+      objects: objectsCount
+    };
+  }, [costCenters]);
+
   useEffect(() => {
     fetchCostCenters();
   }, []);
@@ -43,7 +61,7 @@ export default function GestaoCC3DPage() {
       const response = await fetch('/api/cost-centers/3d');
       const result = await response.json();
       if (result.success) {
-        setCostCenters(result.data);
+        setCostCenters(result.data || []);
       }
     } catch (error) {
       console.error("Erro:", error);
@@ -105,7 +123,7 @@ export default function GestaoCC3DPage() {
               <div className="flex items-center gap-4">
                 <Layers className="w-10 h-10 text-purple-400" />
                 <div>
-                  <NumberCounter value={245} className="text-3xl font-bold" />
+                  <NumberCounter value={stats.totalCCs} className="text-3xl font-bold" />
                   <p className="text-gray-400 text-sm">Total CCs 3D</p>
                 </div>
               </div>
@@ -115,7 +133,7 @@ export default function GestaoCC3DPage() {
               <div className="flex items-center gap-4">
                 <Building2 className="w-10 h-10 text-blue-400" />
                 <div>
-                  <NumberCounter value={3} className="text-3xl font-bold" />
+                  <NumberCounter value={stats.branches} className="text-3xl font-bold" />
                   <p className="text-gray-400 text-sm">Filiais (D1)</p>
                 </div>
               </div>
@@ -125,17 +143,17 @@ export default function GestaoCC3DPage() {
               <div className="flex items-center gap-4">
                 <Truck className="w-10 h-10 text-green-400" />
                 <div>
-                  <NumberCounter value={4} className="text-3xl font-bold" />
+                  <NumberCounter value={stats.serviceTypes} className="text-3xl font-bold" />
                   <p className="text-gray-400 text-sm">Tipos Serviço (D2)</p>
                 </div>
               </div>
             </GlassmorphismCard>
 
-            <GlassmorphismCard className="pulsating hover:scale-105 transition-transform">
+            <GlassmorphismCard className={`hover:scale-105 transition-transform ${stats.objects > 0 ? 'pulsating' : ''}`}>
               <div className="flex items-center gap-4">
                 <Target className="w-10 h-10 text-yellow-400" />
                 <div>
-                  <NumberCounter value={1856} className="text-3xl font-bold" />
+                  <NumberCounter value={stats.objects} className="text-3xl font-bold" />
                   <p className="text-gray-400 text-sm">Objetos (D3)</p>
                 </div>
               </div>

@@ -275,49 +275,44 @@ export default function IntercompanyPage() {
         {/* Rateio do Mês */}
         <FadeIn delay={0.7}>
           <GlassmorphismCard className="p-6">
-            <h2 className="text-xl font-bold text-white mb-4">🎯 Rateio do Mês: 12/2024</h2>
+            <h2 className="text-xl font-bold text-white mb-4">🎯 Novo Rateio</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="mb-4">
                   <label className="block text-sm text-gray-400 mb-2">Selecionar Regra</label>
                   <select className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white">
-                    <option value="">Energia Elétrica</option>
-                    <option value="">AWS/Cloud</option>
+                    <option value="">Selecione uma regra...</option>
+                    {rules.map((rule, idx) => (
+                      <option key={idx} value={rule.rule}>{rule.rule}</option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Valor Total:</span>
-                    <span className="text-white font-bold">R$ 45.000,00</span>
+                    <span className="text-gray-400">Regras Cadastradas:</span>
+                    <span className="text-white font-bold">{rules.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Método:</span>
-                    <span className="text-white">Rateio por Percentual</span>
+                    <span className="text-gray-400">Rateios Pendentes:</span>
+                    <span className="text-white">{kpis.pending}</span>
                   </div>
                 </div>
               </div>
 
               <div>
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-2 text-sm">
-                  <div className="font-bold text-white mb-3">Distribuição:</div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">├─ Filial SP1 (40%):</span>
-                    <span className="text-white">R$ 18.000,00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">├─ Filial RJ1 (30%):</span>
-                    <span className="text-white">R$ 13.500,00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">├─ Filial MG1 (20%):</span>
-                    <span className="text-white">R$ 9.000,00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">└─ Filial BA1 (10%):</span>
-                    <span className="text-white">R$ 4.500,00</span>
-                  </div>
+                  <div className="font-bold text-white mb-3">Instruções:</div>
+                  {rules.length === 0 ? (
+                    <p className="text-gray-400">
+                      Nenhuma regra de rateio cadastrada. Clique em &quot;Nova Regra&quot; para configurar as regras de distribuição intercompany.
+                    </p>
+                  ) : (
+                    <p className="text-gray-400">
+                      Selecione uma regra de rateio acima e clique em &quot;Executar Rateio&quot; para distribuir os custos entre as filiais conforme configurado.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-2 mt-4">
@@ -330,7 +325,7 @@ export default function IntercompanyPage() {
                   </button>
                   <ShimmerButton 
                     onClick={handleExecuteAllocation}
-                    disabled={loading}
+                    disabled={loading || rules.length === 0}
                     className="flex-1 flex items-center justify-center gap-2"
                   >
                     <CheckCircle className="w-4 h-4" />

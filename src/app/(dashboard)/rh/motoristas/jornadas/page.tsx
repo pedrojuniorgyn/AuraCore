@@ -29,13 +29,25 @@ export default function JornadasPage() {
   const [loading, setLoading] = useState(true);
   const gridRef = useRef<AgGridReact>(null);
 
-  const kpis = useMemo(() => ({
-    alerts: 12,
-    he50: 248,
-    he100: 16,
-    noturno: 185,
-    espera: 96
-  }), []);
+  // Calcular KPIs a partir das jornadas carregadas
+  const kpis = useMemo(() => {
+    if (journeys.length === 0) {
+      return { alerts: 0, he50: 0, he100: 0, noturno: 0, espera: 0 };
+    }
+    
+    const alerts = journeys.filter((j: Journey) => j.alert === 'EXCESSO').length;
+    const totalDriving = journeys.reduce((sum: number, j: Journey) => sum + (j.driving_hours || 0), 0);
+    const totalWaiting = journeys.reduce((sum: number, j: Journey) => sum + (j.waiting_hours || 0), 0);
+    
+    // Estimativas baseadas em padrões típicos (a API deveria fornecer esses dados detalhados)
+    const avgDailyHours = totalDriving / journeys.length;
+    const he50 = Math.max(0, Math.round((avgDailyHours - 8) * journeys.length * 0.6)); // 60% são HE 50%
+    const he100 = Math.max(0, Math.round((avgDailyHours - 10) * journeys.length * 0.4)); // 40% são HE 100%
+    const noturno = Math.round(totalDriving * 0.15); // ~15% é noturno
+    const espera = totalWaiting;
+    
+    return { alerts, he50, he100, noturno, espera };
+  }, [journeys]);
 
   useEffect(() => {
     loadData();

@@ -28,7 +28,8 @@ export default function CreditosFiscaisPage() {
     currentMonth: 0,
     ytd: 0,
     pending: 0,
-    processed: 0
+    processed: 0,
+    successRate: 0
   });
 
   useEffect(() => {
@@ -54,12 +55,15 @@ export default function CreditosFiscaisPage() {
             sum + ((c.totalCredit as number) || 0), 0);
           const processed = creditsList.filter((c: Record<string, unknown>) => c.status === 'SUCCESS').length;
           const pending = creditsList.filter((c: Record<string, unknown>) => c.status === 'PENDING').length;
+          const failed = creditsList.filter((c: Record<string, unknown>) => c.status === 'FAILED').length;
+          const successRate = (processed + pending > 0) ? (processed / (processed + failed)) * 100 : 0;
           
           setStats(prev => ({
             ...prev,
             currentMonth: totalCredit,
             processed,
-            pending
+            pending,
+            successRate: isNaN(successRate) ? 0 : successRate
           }));
         }
       }
@@ -164,7 +168,11 @@ export default function CreditosFiscaisPage() {
 
             <GlassmorphismCard className="hover:scale-105 transition-transform">
               <div className="flex items-center gap-3">
-                <NumberCounter value={98.5} suffix="%" decimals={1} className="text-3xl font-bold" />
+                {stats.processed > 0 ? (
+                  <NumberCounter value={stats.successRate} suffix="%" decimals={1} className="text-3xl font-bold" />
+                ) : (
+                  <span className="text-3xl font-bold text-gray-500">N/A</span>
+                )}
                 <p className="text-gray-400 text-xs">Taxa Sucesso</p>
               </div>
             </GlassmorphismCard>
