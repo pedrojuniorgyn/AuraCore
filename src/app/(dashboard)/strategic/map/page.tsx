@@ -23,10 +23,12 @@ import {
   Info,
 } from 'lucide-react';
 
-import { GradientText } from '@/components/ui/magic-components';
-import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
+import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { StrategicMap } from '@/components/strategic/StrategicMap';
+import { PageHeader } from '@/components/ui/page-header';
+import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
+import { CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 
 // Tipos que correspondem à resposta da API /api/strategic/map
 interface MapNode {
@@ -196,95 +198,104 @@ export default function StrategicMapPage() {
     <PageTransition>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6 space-y-6">
         {/* Header */}
-        <FadeIn>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/dashboard')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </RippleButton>
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                  <Map className="text-purple-400" />
-                  Mapa Estratégico
-                </h1>
-              </Flex>
-              <Text className="text-gray-400 ml-12">
-                Visualização das relações causa-efeito BSC
-              </Text>
-            </div>
-            <Flex className="gap-3">
-              <RippleButton 
-                variant="outline" 
-                onClick={fetchMapData}
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </RippleButton>
-              <RippleButton 
+        <PageHeader
+          icon="🗺️"
+          title="Mapa Estratégico"
+          description="Visualização das relações causa-efeito BSC"
+          recordCount={goals.length}
+          showBack
+          onRefresh={fetchMapData}
+          isLoading={loading}
+          actions={
+            <>
+              <RippleButton
                 variant="default"
                 onClick={() => router.push('/strategic/goals/new')}
+                className="bg-gradient-to-r from-purple-600 to-pink-600"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Objetivo
               </RippleButton>
-            </Flex>
-          </motion.div>
-        </FadeIn>
+            </>
+          }
+        />
 
-        {/* Status Summary */}
+        {/* Status Summary Cards */}
+        <StaggerContainer>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <EnterpriseMetricCard
+              icon={<CheckCircle2 className="h-6 w-6 text-green-400" />}
+              badge="No Prazo"
+              badgeEmoji="✅"
+              title="No Prazo"
+              value={statusCounts.onTrack}
+              subtitle="≥80% do progresso"
+              variant="green"
+              delay={0.2}
+            />
+            <EnterpriseMetricCard
+              icon={<Clock className="h-6 w-6 text-amber-400" />}
+              badge="Em Risco"
+              badgeEmoji="⚠️"
+              title="Em Risco"
+              value={statusCounts.atRisk}
+              subtitle="50-79% do progresso"
+              variant="yellow"
+              delay={0.3}
+            />
+            <EnterpriseMetricCard
+              icon={<AlertTriangle className="h-6 w-6 text-red-400" />}
+              badge="Atrasado"
+              badgeEmoji="❌"
+              title="Atrasados"
+              value={statusCounts.delayed}
+              subtitle="<50% do progresso"
+              variant="red"
+              delay={0.4}
+              isUrgent={statusCounts.delayed > 0}
+            />
+            <EnterpriseMetricCard
+              icon={<TrendingUp className="h-6 w-6 text-blue-400" />}
+              badge="Concluído"
+              badgeEmoji="🏆"
+              title="Concluídos"
+              value={statusCounts.completed}
+              subtitle="100% alcançado"
+              variant="blue"
+              delay={0.5}
+            />
+          </div>
+        </StaggerContainer>
+
+        {/* Filters */}
         <FadeIn delay={0.1}>
-          <Card className="bg-gray-900/50 border-gray-800">
-            <Flex justifyContent="between" alignItems="center">
-              <Flex className="gap-4">
-                <Badge color="emerald" size="lg">
-                  {statusCounts.onTrack} No Prazo
-                </Badge>
-                <Badge color="amber" size="lg">
-                  {statusCounts.atRisk} Em Risco
-                </Badge>
-                <Badge color="red" size="lg">
-                  {statusCounts.delayed} Atrasados
-                </Badge>
-                <Badge color="blue" size="lg">
-                  {statusCounts.completed} Concluídos
-                </Badge>
-              </Flex>
+          <Card className="bg-gray-900/50 border-gray-800 p-4">
+            <Flex className="gap-3">
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                className="w-40"
+                placeholder="Status"
+              >
+                <SelectItem value="all">Todos Status</SelectItem>
+                <SelectItem value="ON_TRACK">No Prazo</SelectItem>
+                <SelectItem value="AT_RISK">Em Risco</SelectItem>
+                <SelectItem value="DELAYED">Atrasados</SelectItem>
+                <SelectItem value="COMPLETED">Concluídos</SelectItem>
+              </Select>
 
-              <Flex className="gap-3">
-                <Select
-                  value={statusFilter}
-                  onValueChange={setStatusFilter}
-                  className="w-40"
-                  placeholder="Status"
-                >
-                  <SelectItem value="all">Todos Status</SelectItem>
-                  <SelectItem value="ON_TRACK">No Prazo</SelectItem>
-                  <SelectItem value="AT_RISK">Em Risco</SelectItem>
-                  <SelectItem value="DELAYED">Atrasados</SelectItem>
-                  <SelectItem value="COMPLETED">Concluídos</SelectItem>
-                </Select>
-
-                <Select
-                  value={perspectiveFilter}
-                  onValueChange={setPerspectiveFilter}
-                  className="w-48"
-                  placeholder="Perspectiva"
-                >
-                  <SelectItem value="all">Todas Perspectivas</SelectItem>
-                  <SelectItem value="FIN">Financeira</SelectItem>
-                  <SelectItem value="CLI">Cliente</SelectItem>
-                  <SelectItem value="INT">Processos</SelectItem>
-                  <SelectItem value="LRN">Aprendizado</SelectItem>
-                </Select>
-              </Flex>
+              <Select
+                value={perspectiveFilter}
+                onValueChange={setPerspectiveFilter}
+                className="w-48"
+                placeholder="Perspectiva"
+              >
+                <SelectItem value="all">Todas Perspectivas</SelectItem>
+                <SelectItem value="FIN">Financeira</SelectItem>
+                <SelectItem value="CLI">Cliente</SelectItem>
+                <SelectItem value="INT">Processos</SelectItem>
+                <SelectItem value="LRN">Aprendizado</SelectItem>
+              </Select>
             </Flex>
           </Card>
         </FadeIn>
