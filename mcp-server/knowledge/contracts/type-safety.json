@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.34",
+  "version": "2.0.35",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -643,6 +643,20 @@
         "src/lib/cron-setup.ts"
       ],
       "pattern_created": "INIT-FLAG-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-364159",
+      "date": "2026-01-21",
+      "epic": "HOTFIX-STRATEGIC-500",
+      "error": "Agente não seguiu ordem correta de debug para erro 500. Verificou rotas antes de verificar schema exports, causando delay na identificação da causa raiz (schema do módulo Strategic não exportado em src/lib/db/schema.ts). Estatística mostra que 80% dos erros 500 em módulos novos são por schema não exportado, mas não havia checklist documentado.",
+      "correction": "Criado contrato DEBUG_500_CONTRACT.md com checklist obrigatório de 5 passos priorizados por probabilidade: 1) Schema exports (80%), 2) DI registration (10%), 3) Database tables (5%), 4) Environment vars (3%), 5) Route handlers (2%). Atualizado regrasmcp.mdc com regras DEBUG-500-001 a DEBUG-500-005 e script rápido de diagnóstico. Documentado fluxograma de debug e exemplos reais do incidente.",
+      "files_affected": [
+        "docs/architecture/contracts/DEBUG_500_CONTRACT.md",
+        ".cursor/rules/regrasmcp.mdc"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }
