@@ -403,6 +403,10 @@ export async function GET(req: NextRequest) {
       ],
     });
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     console.error("Erro no Seed:", error);
     const message = error instanceof Error ? error.message : String(error);
     const errorObj = error as Record<string, unknown>;

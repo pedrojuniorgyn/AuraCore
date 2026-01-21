@@ -97,6 +97,10 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     // 7. Error Handling
     console.error('Error in POST /api/fiscal/tax-reform/audit:', {
       error: error instanceof Error ? error.message : String(error),

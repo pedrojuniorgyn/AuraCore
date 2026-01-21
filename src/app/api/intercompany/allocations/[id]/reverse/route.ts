@@ -47,6 +47,10 @@ export async function POST(
       message: "Rateio estornado com sucesso"
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       success: false,

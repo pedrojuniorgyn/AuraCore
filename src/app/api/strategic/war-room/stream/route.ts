@@ -34,6 +34,10 @@ export async function GET(request: NextRequest) {
           // sendEvent('alert', { type: 'KPI_CRITICAL', message: '...' });
           // sendEvent('plan_overdue', { planId: '...', code: 'PA-2026-001' });
         } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
           console.error('War room SSE heartbeat error:', error);
           // Se necessário, limpar recursos:
           // clearInterval(interval);

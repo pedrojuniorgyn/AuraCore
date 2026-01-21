@@ -103,6 +103,10 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     // 8. Error Handling
     console.error('Error in GET /api/fiscal/tax-reform/rates:', {
       error: error instanceof Error ? error.message : String(error),

@@ -51,6 +51,10 @@ export async function GET(req: Request) {
       data: result.recordset || [],
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao listar contas gerenciais:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
@@ -138,6 +142,10 @@ export async function POST(req: Request) {
       data: { id: insertedRow?.id },
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao criar conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });

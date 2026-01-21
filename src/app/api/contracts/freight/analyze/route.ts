@@ -115,6 +115,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: result.value,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     // Limpar arquivo em caso de erro
     if (tempFilePath) {
       try {

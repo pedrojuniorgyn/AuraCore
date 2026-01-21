@@ -71,6 +71,10 @@ export async function GET(
       data: row,
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao buscar conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
@@ -116,6 +120,10 @@ export async function PUT(
       message: "Conta atualizada com sucesso!",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao atualizar conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
@@ -150,6 +158,10 @@ export async function DELETE(
       message: "Conta excluída com sucesso!",
     });
   } catch (error: unknown) {
+    // Propagar erros de auth (getTenantContext throws Response)
+    if (error instanceof Response) {
+      return error;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("❌ Erro ao excluir conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
