@@ -13,8 +13,7 @@ import {
   Card, 
   Title, 
   Text, 
-  Flex, 
-  Badge,
+  Flex,
   Metric,
 } from '@tremor/react';
 import { 
@@ -29,11 +28,24 @@ import {
   Edit2,
   Trash2,
   Download,
+  Loader2,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription 
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 type SwotQuadrant = 'STRENGTH' | 'WEAKNESS' | 'OPPORTUNITY' | 'THREAT';
 
@@ -133,10 +145,81 @@ export default function SwotMatrixPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<SwotItem[]>([]);
   const [summary, setSummary] = useState<SwotSummary | null>(null);
+  
+  // Estado para modal de adicionar
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedQuadrant, setSelectedQuadrant] = useState<SwotQuadrant | null>(null);
+  const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemDescription, setNewItemDescription] = useState('');
+  const [newItemImpact, setNewItemImpact] = useState(3);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchSwotData();
   }, []);
+
+  // Handler para abrir modal
+  const handleOpenAddModal = (quadrant: SwotQuadrant) => {
+    setSelectedQuadrant(quadrant);
+    setNewItemTitle('');
+    setNewItemDescription('');
+    setNewItemImpact(3);
+    setIsAddModalOpen(true);
+  };
+
+  // Handler para salvar item
+  const handleSaveItem = async () => {
+    if (!selectedQuadrant || !newItemTitle.trim()) {
+      toast.error('Título é obrigatório');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/strategic/swot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quadrant: selectedQuadrant,
+          title: newItemTitle.trim(),
+          description: newItemDescription.trim(),
+          impactScore: newItemImpact,
+          probabilityScore: selectedQuadrant === 'OPPORTUNITY' || selectedQuadrant === 'THREAT' ? 3 : 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao adicionar item');
+      }
+
+      toast.success('Item adicionado com sucesso!');
+      setIsAddModalOpen(false);
+      fetchSwotData();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao adicionar item');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handler para deletar item
+  const handleDeleteItem = async (item: SwotItem) => {
+    if (!confirm('Tem certeza que deseja excluir este item?')) return;
+
+    try {
+      const response = await fetch(`/api/strategic/swot/${item.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Erro ao excluir item');
+
+      toast.success('Item excluído');
+      fetchSwotData();
+    } catch {
+      toast.error('Erro ao excluir item');
+    }
+  };
 
   const fetchSwotData = async () => {
     setLoading(true);
@@ -232,7 +315,7 @@ export default function SwotMatrixPage() {
                       <Edit2 className="w-3 h-3 text-white/50" />
                     </button>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); /* TODO: delete */ }}
+                      onClick={(e) => { e.stopPropagation(); handleDeleteItem(item); }}
                       className="p-1 hover:bg-white/10 rounded"
                     >
                       <Trash2 className="w-3 h-3 text-red-400/70" />
@@ -275,6 +358,7 @@ export default function SwotMatrixPage() {
           {/* Add Button */}
           <RippleButton
             variant="ghost"
+            onClick={() => handleOpenAddModal(quadrant)}
             className={`w-full border border-dashed ${style.border} ${style.text} ${style.hoverBg} rounded-xl`}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -448,6 +532,103 @@ export default function SwotMatrixPage() {
             </div>
           </Card>
         </FadeIn>
+
+        {/* Modal Adicionar Item */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent className="bg-[#1a1a2e] border-white/10 max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-white">
+                {selectedQuadrant && (
+                  <>
+                    {QUADRANT_STYLES[selectedQuadrant].icon && (
+                      <span className={QUADRANT_STYLES[selectedQuadrant].text}>
+                        {(() => {
+                          const Icon = QUADRANT_STYLES[selectedQuadrant].icon;
+                          return <Icon className="w-5 h-5" />;
+                        })()}
+                      </span>
+                    )}
+                    Adicionar {QUADRANT_STYLES[selectedQuadrant].label.slice(0, -1)}
+                  </>
+                )}
+              </DialogTitle>
+              <DialogDescription className="text-white/60">
+                {selectedQuadrant === 'STRENGTH' && 'Adicione uma força interna da organização'}
+                {selectedQuadrant === 'WEAKNESS' && 'Adicione uma fraqueza interna a ser melhorada'}
+                {selectedQuadrant === 'OPPORTUNITY' && 'Adicione uma oportunidade externa a explorar'}
+                {selectedQuadrant === 'THREAT' && 'Adicione uma ameaça externa a monitorar'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-white/70 text-sm mb-2">Título *</label>
+                <Input
+                  value={newItemTitle}
+                  onChange={(e) => setNewItemTitle(e.target.value)}
+                  placeholder="Ex: Equipe altamente qualificada..."
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-white/70 text-sm mb-2">Descrição</label>
+                <Textarea
+                  value={newItemDescription}
+                  onChange={(e) => setNewItemDescription(e.target.value)}
+                  placeholder="Descreva em mais detalhes..."
+                  className="bg-white/5 border-white/10 min-h-[80px]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-white/70 text-sm mb-2">Impacto (1-5)</label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    value={newItemImpact}
+                    onChange={(e) => setNewItemImpact(Number(e.target.value))}
+                    className="flex-1"
+                  />
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        size={16}
+                        className={`${n <= newItemImpact ? 'text-yellow-400' : 'text-white/20'}`}
+                        fill={n <= newItemImpact ? 'currentColor' : 'none'}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-between text-xs text-white/50 mt-1">
+                  <span>Baixo</span>
+                  <span>Alto</span>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddModalOpen(false)} className="border-white/10">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSaveItem} 
+                disabled={isSubmitting}
+                className={`${selectedQuadrant ? QUADRANT_STYLES[selectedQuadrant].headerBg : 'bg-purple-600'}`}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                ) : (
+                  <Plus size={16} className="mr-2" />
+                )}
+                Adicionar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTransition>
   );

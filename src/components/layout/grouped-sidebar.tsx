@@ -200,6 +200,7 @@ const sidebarGroups: SidebarGroup[] = [
       { title: "PDCA", href: "/strategic/pdca", icon: Activity, color: "text-amber-400" },
       { title: "Planos de Ação (5W2H)", href: "/strategic/action-plans", icon: ClipboardList, color: "text-cyan-400" },
       { title: "Análise SWOT", href: "/strategic/swot", icon: Grid3x3, color: "text-indigo-400" },
+      { title: "Caixa de Ideias", href: "/strategic/ideas", icon: Star, color: "text-yellow-400" },
       { title: "War Room", href: "/strategic/war-room", icon: Radio, color: "text-red-400" },
     ],
   },
