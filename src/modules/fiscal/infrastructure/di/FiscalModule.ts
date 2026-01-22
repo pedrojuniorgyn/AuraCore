@@ -4,6 +4,9 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 // Repository
 import { DrizzleFiscalDocumentRepository } from '../persistence/DrizzleFiscalDocumentRepository';
 
+// SPED Repository (deve estar no topo, antes de ser usado)
+import { DrizzleSpedDataRepository, createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
+
 // Gateways (E9 Fase 2)
 import { TaxCalculatorAdapter } from '../adapters/TaxCalculatorAdapter';
 import type { ITaxCalculatorGateway } from '../../domain/ports/output/ITaxCalculatorGateway';
@@ -46,6 +49,15 @@ import type { ISpedDataRepository } from '../../domain/ports/output/ISpedDataRep
 import { GenerateSpedFiscalUseCase as GenerateSpedFiscalUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedFiscalUseCase';
 import { GenerateSpedEcdUseCase as GenerateSpedEcdUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedEcdUseCase';
 import { GenerateSpedContributionsUseCase as GenerateSpedContributionsUseCaseV2 } from '../../application/use-cases/sped/GenerateSpedContributionsUseCase';
+
+// SPED Generators (para factories deprecated)
+import { SpedFiscalGenerator } from '../../domain/services/SpedFiscalGenerator';
+import { GenerateSpedFiscalUseCase } from '../../application/use-cases/GenerateSpedFiscalUseCase';
+import { SpedEcdGenerator } from '../../domain/services/SpedEcdGenerator';
+import { GenerateSpedEcdUseCase } from '../../application/use-cases/GenerateSpedEcdUseCase';
+import { SpedContributionsGenerator } from '../../domain/services/SpedContributionsGenerator';
+import { GenerateSpedContributionsUseCase } from '../../application/use-cases/GenerateSpedContributionsUseCase';
+import { ConsoleLogger } from '@/shared/infrastructure/logging/ConsoleLogger';
 
 /**
  * Fiscal Module: Dependency Injection Registration
@@ -132,11 +144,6 @@ export function initializeFiscalSpedModule(): void {
  * const useCase = container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase);
  */
 
-import { DrizzleSpedDataRepository, createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
-import { SpedFiscalGenerator } from '../../domain/services/SpedFiscalGenerator';
-import { GenerateSpedFiscalUseCase } from '../../application/use-cases/GenerateSpedFiscalUseCase';
-import { ConsoleLogger } from '@/shared/infrastructure/logging/ConsoleLogger';
-
 /**
  * @deprecated Use container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase)
  * Mantido para retrocompatibilidade. Será removido em v2.0.
@@ -148,9 +155,6 @@ export function createGenerateSpedFiscalUseCase(): GenerateSpedFiscalUseCase {
   return new GenerateSpedFiscalUseCase(generator, logger);
 }
 
-// SPED ECD (Contábil) imports
-import { SpedEcdGenerator } from '../../domain/services/SpedEcdGenerator';
-import { GenerateSpedEcdUseCase } from '../../application/use-cases/GenerateSpedEcdUseCase';
 
 /**
  * @deprecated Use container.resolve<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase)
@@ -162,9 +166,6 @@ export function createGenerateSpedEcdUseCase(): GenerateSpedEcdUseCase {
   return new GenerateSpedEcdUseCase(repository, generator);
 }
 
-// SPED Contributions (PIS/COFINS) imports
-import { SpedContributionsGenerator } from '../../domain/services/SpedContributionsGenerator';
-import { GenerateSpedContributionsUseCase } from '../../application/use-cases/GenerateSpedContributionsUseCase';
 
 /**
  * @deprecated Use container.resolve<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase)
