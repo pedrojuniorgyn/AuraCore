@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.44",
+  "version": "2.0.45",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -873,6 +873,19 @@
         "src/modules/strategic/infrastructure/persistence/repositories/DrizzleWarRoomMeetingRepository.ts"
       ],
       "pattern_created": "P-DB-001: Usar helpers Drizzle (.limit/.offset) via query-helpers.ts",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-816801",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro \"Cannot read properties of undefined (reading 'container')\" na inicialização do módulo Fiscal. Import de DrizzleSpedDataRepository estava posicionado DEPOIS da função initializeFiscalSpedModule() que tenta usar a classe, causando classe undefined ao registrar no DI container. Erro aparecia nos logs como: [Instrumentation] Failed to initialize DDD modules: TypeError.",
+      "correction": "Movido import de DrizzleSpedDataRepository (e outras classes SPED relacionadas) para o TOPO do arquivo FiscalModule.ts, antes de qualquer função que as utilize. Removido imports duplicados que estavam espalhados pelo arquivo. Ordem correta agora: linha 8 (import) → linha 100 (uso). Seguindo princípio de JavaScript: imports devem estar no escopo antes do uso.",
+      "files_affected": [
+        "src/modules/fiscal/infrastructure/di/FiscalModule.ts"
+      ],
+      "pattern_created": "IMPORT-ORDER-001: Imports devem estar no topo do arquivo, antes de qualquer uso",
       "status": "APPROVED",
       "must_not_repeat": true
     }
