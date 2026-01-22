@@ -1,10 +1,5 @@
-/**
- * Módulo DI Strategic
- * Registra dependencies do módulo de gestão estratégica
- * 
- * @module strategic/infrastructure/di
- */
-import { container } from '@/shared/infrastructure/di/container';
+import 'reflect-metadata';
+import { container } from 'tsyringe';
 import { STRATEGIC_TOKENS } from './tokens';
 
 // Repositories
@@ -46,128 +41,49 @@ import { TMSKPIDataSource } from '../integrations/TMSKPIDataSource';
 
 export function registerStrategicModule(): void {
   // Repositories - Fase F1 + F2
-  container.register(STRATEGIC_TOKENS.StrategyRepository, {
-    useClass: DrizzleStrategyRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.StrategicGoalRepository, {
-    useClass: DrizzleStrategicGoalRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.ActionPlanRepository, {
-    useClass: DrizzleActionPlanRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.KPIRepository, {
-    useClass: DrizzleKPIRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.IdeaBoxRepository, {
-    useClass: DrizzleIdeaBoxRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.ActionPlanFollowUpRepository, {
-    useClass: DrizzleActionPlanFollowUpRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.SwotAnalysisRepository, {
-    useClass: DrizzleSwotRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.WarRoomMeetingRepository, {
-    useClass: DrizzleWarRoomMeetingRepository,
-  });
-  
-  container.register(STRATEGIC_TOKENS.UserDashboardLayoutRepository, {
-    useClass: DrizzleUserDashboardLayoutRepository,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.StrategyRepository, DrizzleStrategyRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.StrategicGoalRepository, DrizzleStrategicGoalRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.ActionPlanRepository, DrizzleActionPlanRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.KPIRepository, DrizzleKPIRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.IdeaBoxRepository, DrizzleIdeaBoxRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.ActionPlanFollowUpRepository, DrizzleActionPlanFollowUpRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.SwotAnalysisRepository, DrizzleSwotRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.WarRoomMeetingRepository, DrizzleWarRoomMeetingRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.UserDashboardLayoutRepository, DrizzleUserDashboardLayoutRepository);
   
   // Use Cases - Commands (Fase F2)
-  container.register(STRATEGIC_TOKENS.CreateStrategyUseCase, {
-    useClass: CreateStrategyUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.ActivateStrategyUseCase, {
-    useClass: ActivateStrategyUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.CreateGoalUseCase, {
-    useClass: CreateStrategicGoalUseCase,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.CreateStrategyUseCase, CreateStrategyUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.ActivateStrategyUseCase, ActivateStrategyUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.CreateGoalUseCase, CreateStrategicGoalUseCase);
   
   // Use Cases - Commands (Fase F3)
-  container.register(STRATEGIC_TOKENS.CascadeGoalUseCase, {
-    useClass: CascadeGoalUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.UpdateGoalProgressUseCase, {
-    useClass: UpdateGoalProgressUseCase,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.CascadeGoalUseCase, CascadeGoalUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.UpdateGoalProgressUseCase, UpdateGoalProgressUseCase);
   
   // Use Cases - Commands (Fase F4 - KPIs)
-  container.register(STRATEGIC_TOKENS.CreateKPIUseCase, {
-    useClass: CreateKPIUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.UpdateKPIValueUseCase, {
-    useClass: UpdateKPIValueUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.SyncKPIValuesUseCase, {
-    useClass: SyncKPIValuesUseCase,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.CreateKPIUseCase, CreateKPIUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.UpdateKPIValueUseCase, UpdateKPIValueUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.SyncKPIValuesUseCase, SyncKPIValuesUseCase);
   
   // Integrations (Fase F4)
-  container.register(STRATEGIC_TOKENS.FinancialKPIAdapter, {
-    useClass: FinancialKPIDataSource,
-  });
-  
-  container.register(STRATEGIC_TOKENS.TMSKPIAdapter, {
-    useClass: TMSKPIDataSource,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.FinancialKPIAdapter, FinancialKPIDataSource);
+  container.registerSingleton(STRATEGIC_TOKENS.TMSKPIAdapter, TMSKPIDataSource);
   
   // Use Cases - Commands (Fase F6 - 5W2H + Follow-up 3G)
-  container.register(STRATEGIC_TOKENS.CreateActionPlanUseCase, {
-    useClass: CreateActionPlanUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.AdvancePDCAUseCase, {
-    useClass: AdvancePDCACycleUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.ExecuteFollowUpUseCase, {
-    useClass: ExecuteFollowUpUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.CreateSwotItemUseCase, {
-    useClass: CreateSwotItemCommand,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.CreateActionPlanUseCase, CreateActionPlanUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.AdvancePDCAUseCase, AdvancePDCACycleUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.ExecuteFollowUpUseCase, ExecuteFollowUpUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.CreateSwotItemUseCase, CreateSwotItemCommand);
   
   // Use Cases - Queries (Dashboard)
-  container.register(STRATEGIC_TOKENS.GetDashboardDataUseCase, {
-    useClass: GetDashboardDataQuery,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.GetDashboardDataUseCase, GetDashboardDataQuery);
   
   // Use Cases - Queries (Fase F7 - War Room)
-  container.register(STRATEGIC_TOKENS.GenerateAgendaUseCase, {
-    useClass: GenerateAgendaUseCase,
-  });
-  
-  container.register(STRATEGIC_TOKENS.GetStrategyUseCase, {
-    useClass: GetStrategyQuery,
-  });
-  
-  container.register(STRATEGIC_TOKENS.ListGoalsUseCase, {
-    useClass: ListGoalsQuery,
-  });
-  
-  container.register(STRATEGIC_TOKENS.GetKpiHistoryUseCase, {
-    useClass: GetKpiHistoryQuery,
-  });
-  
-  container.register(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, {
-    useClass: GetWarRoomDashboardQuery,
-  });
+  container.registerSingleton(STRATEGIC_TOKENS.GenerateAgendaUseCase, GenerateAgendaUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.GetStrategyUseCase, GetStrategyQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.ListGoalsUseCase, ListGoalsQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetKpiHistoryUseCase, GetKpiHistoryQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, GetWarRoomDashboardQuery);
   
   console.log('[Strategic Module] DI registrado: 9 repositories + 18 use cases + 2 integrations');
 }
