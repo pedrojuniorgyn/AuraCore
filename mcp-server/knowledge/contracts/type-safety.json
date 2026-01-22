@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.46",
+  "version": "2.0.47",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -899,6 +899,19 @@
         "Dockerfile"
       ],
       "pattern_created": "DOCKER-BUILD-001: Limpar cache do Next.js antes de build em produção",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-252551",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Next.js cache persistente apesar de rm -rf .next. Build com --no-cache e limpeza de .next/ ainda resultava em código antigo sendo executado. Runtime mostrava erros 'e.limit is not a function' mesmo após código-fonte ter sido corrigido no repositório. Next.js 16 possui cache adicional em node_modules/.cache e cache interno de prebundled React que não eram limpos.",
+      "correction": "Expandida limpeza de cache no Dockerfile: 1) Adicionar node_modules/.cache na remoção, 2) Usar variável NEXT_PRIVATE_PREBUNDLED_REACT=next durante build para forçar Next.js a recompilar sem cache interno, 3) Garantir que TODOS os níveis de cache sejam eliminados antes do build.",
+      "files_affected": [
+        "Dockerfile"
+      ],
+      "pattern_created": "DOCKER-BUILD-002: Limpar cache completo Next.js (incluindo node_modules/.cache e React prebundled)",
       "status": "APPROVED",
       "must_not_repeat": true
     }
