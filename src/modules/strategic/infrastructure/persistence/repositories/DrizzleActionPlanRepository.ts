@@ -10,7 +10,7 @@ import { ActionPlan } from '../../../domain/entities/ActionPlan';
 import { ActionPlanMapper } from '../mappers/ActionPlanMapper';
 import { actionPlanTable } from '../schemas/action-plan.schema';
 import { db } from '@/lib/db';
-import { queryPaginated } from '@/lib/db/query-helpers';
+import { queryPaginated, queryFirst } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleActionPlanRepository implements IActionPlanRepository {
@@ -19,25 +19,25 @@ export class DrizzleActionPlanRepository implements IActionPlanRepository {
     const year = new Date().getFullYear();
     const prefix = `PA-${year}-`;
     
-    const result = await db
-      .select({ code: actionPlanTable.code })
-      .from(actionPlanTable)
-      .where(
-        and(
-          eq(actionPlanTable.organizationId, organizationId),
-          eq(actionPlanTable.branchId, branchId),
-          sql`${actionPlanTable.code} LIKE ${prefix + '%'}`
+    const result = await queryFirst<{ code: string }>(
+      db
+        .select({ code: actionPlanTable.code })
+        .from(actionPlanTable)
+        .where(
+          and(
+            eq(actionPlanTable.organizationId, organizationId),
+            eq(actionPlanTable.branchId, branchId),
+            sql`${actionPlanTable.code} LIKE ${prefix + '%'}`
+          )
         )
-      )
-      .orderBy(desc(actionPlanTable.code))
-      .offset(0)
-      .fetch(1);
+        .orderBy(desc(actionPlanTable.code))
+    );
     
-    if (result.length === 0) {
+    if (!result) {
       return `${prefix}0001`;
     }
     
-    const lastCode = result[0].code;
+    const lastCode = result.code;
     const lastNumber = parseInt(lastCode.replace(prefix, ''), 10) || 0;
     const nextNumber = (lastNumber + 1).toString().padStart(4, '0');
     

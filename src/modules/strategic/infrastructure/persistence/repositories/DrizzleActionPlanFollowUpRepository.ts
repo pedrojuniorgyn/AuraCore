@@ -10,7 +10,7 @@ import { ActionPlanFollowUp } from '../../../domain/entities/ActionPlanFollowUp'
 import { ActionPlanFollowUpMapper } from '../mappers/ActionPlanFollowUpMapper';
 import { actionPlanFollowUpTable } from '../schemas/action-plan-follow-up.schema';
 import { db } from '@/lib/db';
-import { queryPaginated } from '@/lib/db/query-helpers';
+import { queryPaginated, queryFirst } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleActionPlanFollowUpRepository implements IActionPlanFollowUpRepository {
@@ -102,17 +102,17 @@ export class DrizzleActionPlanFollowUpRepository implements IActionPlanFollowUpR
   }
 
   async findLastByActionPlanId(actionPlanId: string): Promise<ActionPlanFollowUp | null> {
-    const rows = await db
-      .select()
-      .from(actionPlanFollowUpTable)
-      .where(eq(actionPlanFollowUpTable.actionPlanId, actionPlanId))
-      .orderBy(desc(actionPlanFollowUpTable.followUpNumber))
-      .offset(0)
-      .fetch(1);
+    const row = await queryFirst<typeof actionPlanFollowUpTable.$inferSelect>(
+      db
+        .select()
+        .from(actionPlanFollowUpTable)
+        .where(eq(actionPlanFollowUpTable.actionPlanId, actionPlanId))
+        .orderBy(desc(actionPlanFollowUpTable.followUpNumber))
+    );
 
-    if (rows.length === 0) return null;
+    if (!row) return null;
 
-    const result = ActionPlanFollowUpMapper.toDomain(rows[0]);
+    const result = ActionPlanFollowUpMapper.toDomain(row);
     return Result.isOk(result) ? result.value : null;
   }
 

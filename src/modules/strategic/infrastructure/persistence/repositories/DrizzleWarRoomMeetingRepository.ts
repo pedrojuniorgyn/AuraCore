@@ -13,7 +13,7 @@ import { WarRoomMeeting, type MeetingType, type MeetingStatus } from '../../../d
 import { WarRoomMeetingMapper } from '../mappers/WarRoomMeetingMapper';
 import { warRoomMeetingTable } from '../schemas/war-room-meeting.schema';
 import { db } from '@/lib/db';
-import { queryPaginated } from '@/lib/db/query-helpers';
+import { queryPaginated, queryWithLimit } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
 export class DrizzleWarRoomMeetingRepository implements IWarRoomMeetingRepository {
@@ -135,21 +135,22 @@ export class DrizzleWarRoomMeetingRepository implements IWarRoomMeetingRepositor
   ): Promise<WarRoomMeeting[]> {
     const now = new Date();
     
-    const rows = await db
-      .select()
-      .from(warRoomMeetingTable)
-      .where(
-        and(
-          eq(warRoomMeetingTable.organizationId, organizationId),
-          eq(warRoomMeetingTable.branchId, branchId),
-          eq(warRoomMeetingTable.status, 'SCHEDULED'),
-          gte(warRoomMeetingTable.scheduledAt, now),
-          isNull(warRoomMeetingTable.deletedAt)
+    const rows = await queryWithLimit<typeof warRoomMeetingTable.$inferSelect>(
+      db
+        .select()
+        .from(warRoomMeetingTable)
+        .where(
+          and(
+            eq(warRoomMeetingTable.organizationId, organizationId),
+            eq(warRoomMeetingTable.branchId, branchId),
+            eq(warRoomMeetingTable.status, 'SCHEDULED'),
+            gte(warRoomMeetingTable.scheduledAt, now),
+            isNull(warRoomMeetingTable.deletedAt)
+          )
         )
-      )
-      .orderBy(asc(warRoomMeetingTable.scheduledAt))
-      .offset(0)
-      .fetch(limit);
+        .orderBy(asc(warRoomMeetingTable.scheduledAt)),
+      limit
+    );
 
     return rows
       .map(row => WarRoomMeetingMapper.toDomain(row))
