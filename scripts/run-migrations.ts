@@ -31,10 +31,18 @@ async function runMigrations() {
     console.log(`📊 Tamanho: ${(migrationSQL.length / 1024).toFixed(2)} KB\n`);
 
     // Dividir em statements individuais (separados por GO)
-    const statements = migrationSQL
-      .split(/\nGO\n/gi)
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+    // Se não houver GO, executar o arquivo inteiro como um statement
+    let statements: string[];
+    
+    if (migrationSQL.includes('\nGO\n') || migrationSQL.includes('\ngo\n')) {
+      statements = migrationSQL
+        .split(/\nGO\n/gi)
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !s.startsWith('--'));
+    } else {
+      // Arquivo sem separadores GO - executar inteiro
+      statements = [migrationSQL.trim()];
+    }
 
     console.log(`🔢 Total de statements: ${statements.length}\n`);
 
