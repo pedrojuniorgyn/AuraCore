@@ -28,6 +28,19 @@
       "pattern_created": "IMPORT-ORDER-001: Imports devem estar no topo do arquivo, antes de qualquer uso",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-746092",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Cache do Next.js em produção causando código antigo ser executado mesmo após git clone correto. Erro \"e.limit is not a function\" persistia nos logs apesar de commits de correção terem sido aplicados. Next.js reutilizava chunks JavaScript antigos da pasta .next/ entre builds consecutivos, ignorando mudanças no código-fonte TypeScript.",
+      "correction": "Adicionado comando `RUN rm -rf .next` no Dockerfile (stage builder) ANTES de `npm run build`. Isso força Next.js a recompilar TODOS os chunks JavaScript do zero, eliminando qualquer cache interno. Aumenta tempo de build em ~1min mas garante código sempre sincronizado com repositório.",
+      "files_affected": [
+        "Dockerfile"
+      ],
+      "pattern_created": "DOCKER-BUILD-001: Limpar cache do Next.js antes de build em produção",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }
