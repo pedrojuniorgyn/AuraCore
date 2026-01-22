@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.43",
+  "version": "2.0.44",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -858,6 +858,21 @@
         "mcp-server/knowledge/contracts/type-safety.json"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-170466",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro \"e.limit is not a function\" causado pelo uso do método .fetch() que não existe no Drizzle ORM. 3 repositories no módulo Strategic usavam .fetch(N) ao invés de .limit(N), causando runtime error e erros 500 em 4 rotas API.",
+      "correction": "Substituído .fetch() por helpers do projeto: queryFirst<T>() para buscar 1 resultado e queryWithLimit<T>(query, limit) para buscar N resultados. Helpers já existentes em src/lib/db/query-helpers.ts com type-safety completo e seguindo padrão LC-001 Contract.",
+      "files_affected": [
+        "src/modules/strategic/infrastructure/persistence/repositories/DrizzleActionPlanRepository.ts",
+        "src/modules/strategic/infrastructure/persistence/repositories/DrizzleActionPlanFollowUpRepository.ts",
+        "src/modules/strategic/infrastructure/persistence/repositories/DrizzleWarRoomMeetingRepository.ts"
+      ],
+      "pattern_created": "P-DB-001: Usar helpers Drizzle (.limit/.offset) via query-helpers.ts",
       "status": "APPROVED",
       "must_not_repeat": true
     }
