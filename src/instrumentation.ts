@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 /**
  * Next.js Instrumentation
  * Executa uma vez no runtime do servidor (boot do `next start`).
