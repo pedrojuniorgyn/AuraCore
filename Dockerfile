@@ -13,12 +13,13 @@ COPY . .
 ENV NODE_ENV=production
 # Garante que o código reconheça "fase de build" (Coolify/Next às vezes não setam isso)
 ENV NEXT_PHASE=phase-production-build
-# CRÍTICO: Limpar cache do Next.js ANTES do build para garantir rebuild completo
+# CRÍTICO: Limpar TODOS os caches do Next.js para garantir rebuild completo
 # Isso previne que chunks JavaScript antigos sejam reusados após correções de código
-RUN rm -rf .next
+RUN rm -rf .next node_modules/.cache
 # Coolify às vezes não exibe o erro completo do build.
 # Gravamos o log e imprimimos em caso de falha para diagnóstico.
-RUN npm run build > /tmp/next-build.log 2>&1 || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
+# NEXT_PRIVATE_PREBUNDLED_REACT=next força Next.js a não usar cache interno
+RUN NEXT_PRIVATE_PREBUNDLED_REACT=next npm run build > /tmp/next-build.log 2>&1 || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
