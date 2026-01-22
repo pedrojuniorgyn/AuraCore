@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["mssql", "bcryptjs"],
+  serverExternalPackages: ["mssql", "bcryptjs", "drizzle-orm"],
+  // drizzle-orm adicionado para evitar problemas de minificação/bundling que causam ".limit is not a function"
   // Ou serverComponentsExternalPackages se der erro de tipo, mas Next 15 geralmente unificou ou manteve o antigo.
   // Vou usar serverExternalPackages que é o novo padrão sugerido para Turbopack.
 

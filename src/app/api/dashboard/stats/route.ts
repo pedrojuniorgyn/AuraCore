@@ -32,13 +32,13 @@ export async function GET() {
 
     // Query para buscar estatísticas agregadas
     const statsQuery = `
-      -- Parceiros ativos
+      -- Parceiros ativos (business_partners é o nome correto da tabela)
       SELECT 
-        (SELECT COUNT(*) FROM partners WHERE organization_id = @orgId AND status = 'ACTIVE' AND deleted_at IS NULL) as parceiros,
+        (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND status = 'ACTIVE' AND deleted_at IS NULL) as parceiros,
         (SELECT COUNT(*) FROM products WHERE organization_id = @orgId AND deleted_at IS NULL) as produtos,
         (SELECT COUNT(*) FROM fiscal_documents WHERE organization_id = @orgId AND document_type IN ('NFE', 'NFCE') AND deleted_at IS NULL AND created_at >= DATEADD(day, -30, GETDATE())) as nfes,
         (SELECT COUNT(*) FROM financial_titles WHERE organization_id = @orgId AND status = 'OPEN' AND type = 'PAYABLE' AND deleted_at IS NULL) as contas_aberto,
-        (SELECT COUNT(*) FROM partners WHERE organization_id = @orgId AND status = 'ACTIVE' AND deleted_at IS NULL AND created_at >= DATEADD(month, -1, GETDATE())) as novos_parceiros
+        (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND status = 'ACTIVE' AND deleted_at IS NULL AND created_at >= DATEADD(month, -1, GETDATE())) as novos_parceiros
     `;
 
     // Query para receita do mês
