@@ -1,0 +1,20 @@
+{
+  "epic": "HOTFIX-HELPER-FUNCTIONS-V1.0",
+  "corrections": [
+    {
+      "id": "LC-946383",
+      "date": "2026-01-21",
+      "epic": "HOTFIX-HELPER-FUNCTIONS-V1.0",
+      "error": "API-ERR-001 aplicado incorretamente em 7 funções helper/health-check que retornam tipos de domínio (number[], ChromaCollection, ChromaQueryResult, ServiceStatus) ao invés de NextResponse. O cast 'as unknown as NextResponse/ServiceStatus' causava incompatibilidade de tipos. Além disso, knowledge/stats/route.ts tinha código morto (instanceof Response) pois não chama getTenantContext().",
+      "correction": "Removido bloco 'if (error instanceof Response)' de todas as funções helper e health checks. API-ERR-001 SOMENTE deve ser aplicado em handlers HTTP (GET/POST/PUT/DELETE) que REALMENTE chamam getTenantContext(). Funções helper devem tratar erros conforme seu tipo de retorno (null, throw, ou status object).",
+      "files_affected": [
+        "src/app/api/knowledge/search/route.ts",
+        "src/app/api/health/embeddings/route.ts",
+        "src/app/api/knowledge/stats/route.ts"
+      ],
+      "pattern_created": "API-ERR-001-SCOPE",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "epic": "HOTFIX-WARROOM-STREAM-V1.0",
+  "corrections": [
+    {
+      "id": "LC-908606",
+      "date": "2026-01-21",
+      "epic": "HOTFIX-WARROOM-STREAM-V1.0",
+      "error": "API-ERR-001 aplicado incorretamente dentro de callback setInterval. O return dentro de callback não retorna do handler HTTP, é código morto. getTenantContext() não era usado no arquivo, apenas mencionado em comentário.",
+      "correction": "Removido if (error instanceof Response) return error de callback setInterval. Padrão API-ERR-001 só deve ser usado em handlers de rota que chamam getTenantContext(), NUNCA em callbacks (setInterval, setTimeout, event handlers).",
+      "files_affected": [
+        "src/app/api/strategic/war-room/stream/route.ts"
+      ],
+      "pattern_created": "API-ERR-001-CALLBACK: Never use API-ERR-001 in callbacks",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

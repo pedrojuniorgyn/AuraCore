@@ -1,0 +1,18 @@
+{
+  "epic": "FASE-0-EMERGENCY-RECOVERY",
+  "corrections": [
+    {
+      "id": "LC-322693",
+      "date": "2026-01-21",
+      "epic": "FASE-0-EMERGENCY-RECOVERY",
+      "error": "Documentação MCP tinha contradição aparente entre LC-283380 (aplicou API-ERR-001 em 100% das rotas) e LC-946383 (removeu de 3 rotas). Faltava esclarecimento de que LC-946383 é EVOLUÇÃO do padrão (v1→v2), não reversão. Isso causava confusão sobre se o padrão estava sendo aplicado ou removido.",
+      "correction": "Adicionado campo 'evolution_note' em LC-283380 explicando que é v1 e foi evoluído para v2 em LC-946383. Criada/atualizada entrada LC-946383 com detalhes completos da evolução enterprise-grade (union types, sem casts). Criada entrada LC-EPIC-E11 documentando migração planejada das 251+ rotas restantes. Esclarecido que não há contradição: v1 (com casts) evoluiu para v2 (union types) seguindo TypeScript best practices (Handbook, Google Style Guide, FAANG standards).",
+      "files_affected": [
+        "mcp-server/knowledge/contracts/type-safety.json"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

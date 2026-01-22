@@ -1,0 +1,51 @@
+{
+  "epic": "SMP-API-ERR-001",
+  "corrections": [
+    {
+      "id": "LC-283380",
+      "date": "2026-01-21",
+      "epic": "SMP-API-ERR-001",
+      "error": "254+ API routes mascaram erros de autenticação (401/400) como Internal Server Errors (500). getTenantContext() e funções similares lançam NextResponse em falhas de auth, mas catch blocks não verificam instanceof Response antes de retornar 500.",
+      "correction": "Implementado padrão API-ERR-001 em 100% das rotas API: adicionado 'if (error instanceof Response) return error;' em todos os catch blocks que podem receber erros de getTenantContext(). Correções de tipo TypeScript com casts apropriados (as any as TargetType) para funções com return types explícitos. ESLint @typescript-eslint/no-explicit-any desabilitado em linhas específicas onde necessário. Total: 254+ rotas corrigidas em 34+ módulos através de 15 commits em processo SMP sistemático (SMP-MAP, SMP-CAT, SMP-EXEC, SMP-VERIFY, SMP-REGISTER).",
+      "files_affected": [
+        "src/app/api/fiscal/**/*.ts",
+        "src/app/api/financial/**/*.ts",
+        "src/app/api/strategic/**/*.ts",
+        "src/app/api/wms/**/*.ts",
+        "src/app/api/tms/**/*.ts",
+        "src/app/api/accounting/**/*.ts",
+        "src/app/api/commercial/**/*.ts",
+        "src/app/api/fleet/**/*.ts",
+        "src/app/api/admin/**/*.ts",
+        "src/app/api/btg/**/*.ts",
+        "src/app/api/agent/**/*.ts",
+        "src/app/api/agents/**/*.ts",
+        "src/app/api/health/**/*.ts",
+        "src/app/api/notifications/**/*.ts",
+        "src/app/api/products/**/*.ts",
+        "src/app/api/seed/**/*.ts",
+        "src/app/api/auth/**/*.ts",
+        "src/app/api/contracts/**/*.ts",
+        "src/app/api/sefaz/**/*.ts",
+        "src/app/api/intercompany/**/*.ts",
+        "src/app/api/sped/**/*.ts",
+        "src/app/api/management/**/*.ts",
+        "src/app/api/tax/**/*.ts",
+        "src/app/api/backoffice/**/*.ts",
+        "src/app/api/ciap/**/*.ts",
+        "src/app/api/dashboard/**/*.ts",
+        "src/app/api/comercial/**/*.ts",
+        "src/app/api/knowledge/**/*.ts",
+        "src/app/api/hr/**/*.ts",
+        "src/app/api/esg/**/*.ts",
+        "src/app/api/cost-centers/**/*.ts",
+        "src/app/api/pcg-ncm-rules/**/*.ts",
+        "src/app/api/reports/**/*.ts",
+        "src/app/api/claims/**/*.ts"
+      ],
+      "pattern_created": "API-ERR-001: Response Propagation in Catch Blocks",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
