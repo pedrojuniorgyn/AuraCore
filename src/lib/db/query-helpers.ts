@@ -32,18 +32,41 @@ interface InsertWithReturning<T> {
 }
 
 /**
- * Aplica .limit() com type-safety em queries Drizzle mssql
+ * @deprecated Use inline type assertion instead (BP-SQL-004, LC-303298)
+ * 
+ * **MOTIVO:** Helper adiciona camada de indireção que dificulta debug e pode falhar em runtime
+ * 
+ * **PATTERN CORRETO:**
+ * ```typescript
+ * type Row = typeof table.$inferSelect;
+ * type QueryWithLimit = { limit(n: number): Promise<Row[]> };
+ * const results = await (query as unknown as QueryWithLimit).limit(limit);
+ * ```
+ * 
+ * **Referência:** LC-303298, GAP-SQL-005  
+ * **Data de deprecação:** 23/01/2026  
+ * **Será removido em:** v2.0.0 (após migração de todos arquivos)
  * 
  * @example
+ * // ❌ DEPRECATED - NÃO USAR
  * const users = await queryWithLimit(
  *   db.select().from(users).where(eq(users.id, id)),
  *   1
  * );
+ * 
+ * // ✅ CORRETO - USAR ESTE
+ * const baseQuery = db.select().from(users).where(eq(users.id, id));
+ * type UserRow = typeof users.$inferSelect;
+ * type QueryWithLimit = { limit(n: number): Promise<UserRow[]> };
+ * const users = await (baseQuery as unknown as QueryWithLimit).limit(1);
  */
 export async function queryWithLimit<T>(
   query: unknown,
   limitCount: number
 ): Promise<T[]> {
+  console.warn(
+    'DEPRECATED: queryWithLimit is deprecated. Use inline type assertion instead. See BP-SQL-004 and LC-303298'
+  );
   return (query as unknown as QueryWithLimit<T>).limit(limitCount);
 }
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { queryWithLimit } from "@/lib/db/query-helpers";
 import { bankTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { and, desc, eq, gte, lte, isNull } from "drizzle-orm";
@@ -38,14 +37,20 @@ export async function GET(req: NextRequest) {
       ...(end ? [lte(bankTransactions.transactionDate, end)] : []),
     ];
 
-    const items = await queryWithLimit<typeof bankTransactions.$inferSelect>(
-      db
-        .select()
-        .from(bankTransactions)
-        .where(and(...where))
-        .orderBy(desc(bankTransactions.transactionDate)),
-      parsed.data.limit
-    );
+    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
+    // Antes: queryWithLimit(query, limit) → helper com indireção
+    // Agora: (query as QueryWithLimit).limit() → inline explícito
+    const baseQuery = db
+      .select()
+      .from(bankTransactions)
+      .where(and(...where))
+      .orderBy(desc(bankTransactions.transactionDate));
+    
+    // Type assertion necessária: Drizzle MSSQL beta tem .limit() mas tipagem incompleta
+    type TransactionRow = typeof bankTransactions.$inferSelect;
+    type QueryWithLimit = { limit(n: number): Promise<TransactionRow[]> };
+    
+    const items = await (baseQuery as unknown as QueryWithLimit).limit(parsed.data.limit);
 
     return NextResponse.json({ success: true, data: items });
   } catch (error: unknown) {

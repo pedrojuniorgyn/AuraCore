@@ -1,0 +1,367 @@
+{
+  "contract_id": "best-practices-enterprise",
+  "version": "1.0.0",
+  "created_at": "2026-01-22",
+  "description": "Melhores práticas Enterprise identificadas via auditoria e gaps proibidos",
+  "category": "quality-assurance",
+  
+  "best_practices": {
+    "architecture": [
+      {
+        "id": "BP-ARCH-001",
+        "title": "Arquitetura Híbrida Inteligente",
+        "description": "Usar padrão certo para cada complexidade",
+        "priority": "HIGH",
+        "patterns": [
+          "Vertical Slice (46%) para CRUDs simples",
+          "Functional Core (12%) para cálculos puros",
+          "Hexagonal Lite (7%) para operações médias",
+          "Hexagonal + DDD (35%) para complexidade alta"
+        ]
+      },
+      {
+        "id": "BP-ARCH-002",
+        "title": "Separação de Camadas Clara",
+        "description": "Domain ZERO dependências externas",
+        "priority": "CRITICAL",
+        "validation": "grep -r 'import.*infrastructure' src/modules/*/domain/"
+      },
+      {
+        "id": "BP-ARCH-003",
+        "title": "Result Pattern",
+        "description": "Usar Result<T, E> ao invés de exceptions",
+        "priority": "HIGH",
+        "example": "const result = Money.create(100); if (Result.isFail(result)) { ... }"
+      },
+      {
+        "id": "BP-ARCH-004",
+        "title": "Factory Pattern para Entities",
+        "description": "Usar factory method create() estático",
+        "priority": "HIGH",
+        "example": "static create(props): Result<Entity, string>"
+      },
+      {
+        "id": "BP-ARCH-005",
+        "title": "Strategy Pattern",
+        "description": "Usar Strategy para lógica que muda com contexto",
+        "priority": "MEDIUM",
+        "example": "TaxEngineFactory retorna engine correto por data"
+      },
+      {
+        "id": "BP-ARCH-006",
+        "title": "DI Registration Pattern",
+        "description": "Todo Use Case DEVE ser registrado no DI Container do módulo",
+        "priority": "CRITICAL",
+        "steps": [
+          "Definir token em tokens.ts: Symbol.for('IUseCase')",
+          "Importar Use Case em {Module}Module.ts",
+          "Registrar: container.registerSingleton(TOKEN, UseCase)",
+          "Inicializar módulo em instrumentation.ts"
+        ],
+        "validation": "grep -n 'register.*UseCase' src/modules/*/infrastructure/di/*.ts",
+        "example": "Strategic Module: 18 use cases + 9 repositories + 2 integrations"
+      }
+    ],
+    
+    "typescript": [
+      {
+        "id": "BP-TS-001",
+        "title": "Type Safety Rigorosa",
+        "description": "NUNCA usar 'any', SEMPRE tipar retornos",
+        "priority": "CRITICAL",
+        "validation": "grep -rn 'as any|: any' src/"
+      },
+      {
+        "id": "BP-TS-002",
+        "title": "SOLID Principles",
+        "description": "Aplicar princípios SOLID em toda codebase",
+        "priority": "HIGH",
+        "principles": {
+          "S": "Single Responsibility - Uma classe, uma responsabilidade",
+          "O": "Open/Closed - Extensível via Factory/Strategy",
+          "L": "Liskov Substitution - Interfaces de Repositories",
+          "I": "Interface Segregation - Ports específicos (input/output)",
+          "D": "Dependency Inversion - DI via tsyringe"
+        }
+      },
+      {
+        "id": "BP-TS-003",
+        "title": "Imutabilidade",
+        "description": "Object.freeze em VOs, sem setters em Entities",
+        "priority": "HIGH",
+        "example": "constructor(props) { super(props); Object.freeze(this); }"
+      }
+    ],
+    
+    "sql": [
+      {
+        "id": "BP-SQL-001",
+        "title": "Índices Compostos Multi-Tenant",
+        "description": "Sempre criar índice (organization_id, branch_id)",
+        "priority": "CRITICAL",
+        "example": "index('idx_table_tenant').on(table.organizationId, table.branchId)"
+      },
+      {
+        "id": "BP-SQL-002",
+        "title": "Money com 2 Colunas",
+        "description": "amount DECIMAL + currency VARCHAR(3)",
+        "priority": "HIGH",
+        "example": "amount: decimal('amount', { precision: 18, scale: 2 }), amountCurrency: varchar('amount_currency', { length: 3 })"
+      },
+      {
+        "id": "BP-SQL-003",
+        "title": "Soft Delete",
+        "description": "deletedAt datetime2 NULL ao invés de DELETE físico",
+        "priority": "HIGH",
+        "filter": "WHERE deleted_at IS NULL"
+      },
+      {
+        "id": "BP-SQL-004",
+        "title": "Drizzle Pagination SQL Server",
+        "description": "Usar inline type assertion para .limit() ao invés de helper",
+        "priority": "HIGH",
+        "prohibited": "queryWithLimit(query, limit) → helper pode falhar em runtime",
+        "correct": "(query as unknown as QueryWithLimit).limit(limit) → inline explícito",
+        "example": "const baseQuery = db.select().from(table).where(...); type QueryWithLimit = { limit(n: number): Promise<Row[]> }; const results = await (baseQuery as unknown as QueryWithLimit).limit(10);",
+        "rationale": "Helper queryWithLimit adiciona camada de indireção que pode falhar. Inline type assertion é mais explícito e debugável.",
+        "reference": "LC-303298 (22/01/2026)",
+        "adoption": "✅ 100% - Todos arquivos API migrados (P1.A.1, 23/01/2026)"
+      },
+      {
+        "id": "BP-SQL-005",
+        "title": "Deprecar Helpers com Indireção",
+        "description": "Preferir inline type assertion ao invés de helpers que escondem comportamento",
+        "priority": "MEDIUM",
+        "example": "type QueryWithLimit = { limit(n: number): Promise<Row[]> };",
+        "rationale": "Mais explícito, debugável e mantém type safety sem camadas de indireção",
+        "reference": "P1.A.1 (23/01/2026)",
+        "action_taken": "queryWithLimit marcado como @deprecated com console.warn()"
+      }
+    ],
+    
+    "security": [
+      {
+        "id": "BP-SEC-001",
+        "title": "Cookie HttpOnly para Branch",
+        "description": "Filial ativa via cookie, não localStorage",
+        "priority": "CRITICAL",
+        "mechanism": "Middleware injeta x-branch-id automaticamente"
+      },
+      {
+        "id": "BP-SEC-002",
+        "title": "resolveBranchIdOrThrow",
+        "description": "Validar acesso a filial sempre",
+        "priority": "CRITICAL",
+        "approach": "Usar helper centralizado ao invés de código duplicado"
+      },
+      {
+        "id": "BP-SEC-003",
+        "title": "RBAC Granular",
+        "description": "Permissões específicas verificadas em TODAS as rotas",
+        "priority": "HIGH",
+        "example": "hasPermission('fiscal.cte.create')"
+      }
+    ]
+  },
+  
+  "gaps_prohibited": {
+    "architecture": [
+      {
+        "id": "GAP-ARCH-001",
+        "title": "Entity Anêmica",
+        "description": "Entity sem comportamento (apenas getters/setters)",
+        "severity": "CRITICAL",
+        "prohibited": "class Entity { id: string; setId(v) { this.id = v; } }",
+        "correct": "class Entity extends AggregateRoot { approve(): Result<void, string> { /* business logic */ } }"
+      },
+      {
+        "id": "GAP-ARCH-002",
+        "title": "Domain Importando Infrastructure",
+        "description": "Quebra separação de camadas",
+        "severity": "CRITICAL",
+        "validation": "grep -r 'import.*infrastructure' src/modules/*/domain/"
+      },
+      {
+        "id": "GAP-ARCH-003",
+        "title": "Aggregate Design Guidelines Ausentes",
+        "description": "Inconsistência entre Aggregate Root vs. Entity",
+        "severity": "MEDIUM",
+        "reference": "docs/architecture/E7_DDD_HEXAGONAL_HIBRIDO.md"
+      },
+      {
+        "id": "GAP-ARCH-004",
+        "title": "Use Case Não Registrado no DI",
+        "description": "Use Case criado mas não registrado no container",
+        "severity": "CRITICAL",
+        "symptom": "Attempted to resolve unregistered dependency token",
+        "prevention": [
+          "Criar Use Case",
+          "Adicionar token em tokens.ts",
+          "Registrar em {Module}Module.ts",
+          "Verificar: grep -n 'registerSingleton.*UseCase' src/modules/*/infrastructure/di/*.ts"
+        ]
+      }
+    ],
+    
+    "typescript": [
+      {
+        "id": "GAP-TS-001",
+        "title": "Branded Types Ausentes",
+        "description": "IDs podem ser confundidos (productId vs. userId)",
+        "severity": "HIGH",
+        "correct": "type ProductId = string & { readonly brand: unique symbol };"
+      },
+      {
+        "id": "GAP-TS-002",
+        "title": "Error Handling Inconsistente",
+        "description": "Misturar throw com Result",
+        "severity": "HIGH",
+        "prohibited": "throw new Error()",
+        "correct": "return Result.fail('error')"
+      },
+      {
+        "id": "GAP-TS-003",
+        "title": "Falta Validação Runtime",
+        "description": "Tipos são compile-time, externos podem violar",
+        "severity": "HIGH",
+        "correct": "const validated = schema.parse(input);"
+      }
+    ],
+    
+    "sql": [
+      {
+        "id": "GAP-SQL-001",
+        "title": "Row-Level Security Ausente",
+        "description": "Multi-tenancy apenas via código",
+        "severity": "CRITICAL",
+        "mitigation": "Implementar RLS no SQL Server"
+      },
+      {
+        "id": "GAP-SQL-002",
+        "title": "Backup/Recovery SLA Indefinido",
+        "description": "Sem plano claro de RPO/RTO",
+        "severity": "CRITICAL",
+        "action_required": "Criar RUNBOOK_BACKUP_RECOVERY.md (RPO=1h, RTO=4h)"
+      },
+      {
+        "id": "GAP-SQL-003",
+        "title": "Índices sem WHERE deleted_at IS NULL",
+        "description": "Índices incluem linhas deletadas",
+        "severity": "MEDIUM",
+        "correct": "CREATE INDEX idx ON table(col) WHERE deleted_at IS NULL;"
+      },
+      {
+        "id": "GAP-SQL-004",
+        "title": "Data Retention Indefinida",
+        "description": "Soft-deleted data cresce forever",
+        "severity": "LOW",
+        "correct": "Job de purge (ex.: deletar após 7 anos)"
+      },
+      {
+        "id": "GAP-SQL-005",
+        "title": "Drizzle queryWithLimit Helper",
+        "description": "Usar helper queryWithLimit que pode falhar em runtime",
+        "severity": "MEDIUM",
+        "symptom": "TypeError: e.limit is not a function",
+        "prohibited": "import { queryWithLimit } from '@/lib/db/query-helpers'; queryWithLimit(query, limit);",
+        "correct": "type QueryWithLimit = { limit(n: number): Promise<T[]> }; const results = await (query as unknown as QueryWithLimit).limit(limit);",
+        "detection": "grep -rn 'queryWithLimit' src/app/api",
+        "affected_files": [
+          "src/app/api/notifications/route.ts (✅ corrigido LC-303298)",
+          "src/app/api/financial/bank-transactions/route.ts (✅ corrigido P1.A.1)",
+          "src/app/api/products/route.ts (✅ corrigido P1.A.1)"
+        ],
+        "action_completed": "✅ Todos arquivos API migrados para inline type assertion",
+        "helper_status": "@deprecated em src/lib/db/query-helpers.ts (23/01/2026)",
+        "reference": "LC-303298 (22/01/2026)"
+      }
+    ],
+    
+    "security": [
+      {
+        "id": "GAP-SEC-001",
+        "title": "Rate Limit Global",
+        "description": "Um tenant pode esgotar recursos",
+        "severity": "CRITICAL",
+        "correct": "Rate limit POR organizationId"
+      },
+      {
+        "id": "GAP-SEC-002",
+        "title": "Dados Sensíveis em Plaintext",
+        "description": "Certificados digitais sem criptografia",
+        "severity": "CRITICAL",
+        "mitigation": "SQL Server Always Encrypted"
+      },
+      {
+        "id": "GAP-SEC-003",
+        "title": "2FA Ausente",
+        "description": "Apenas senha (single factor)",
+        "severity": "HIGH",
+        "action_required": "Implementar TOTP"
+      },
+      {
+        "id": "GAP-SEC-004",
+        "title": "Sem Detecção de Anomalias",
+        "description": "Ataques podem passar despercebidos",
+        "severity": "MEDIUM",
+        "action_required": "Módulo de Security Monitoring"
+      }
+    ]
+  },
+  
+  "pre_commit_checklist": {
+    "architecture": [
+      "Domain NÃO importa Infrastructure",
+      "Entity tem métodos de negócio (não anêmica)",
+      "Result Pattern usado (não throw)",
+      "Use Case registrado no DI Container"
+    ],
+    "typescript": [
+      "ZERO uso de 'any'",
+      "Todos retornos tipados",
+      "Zod validation em DTOs de entrada"
+    ],
+    "sql": [
+      "Índice composto (organization_id, branch_id)",
+      "Índice com WHERE deleted_at IS NULL",
+      "Money com 2 colunas (amount + currency)"
+    ],
+    "security": [
+      "getTenantContext() usado",
+      "resolveBranchIdOrThrow validado",
+      "hasPermission verificado"
+    ],
+    "tests": [
+      "Testes unitários criados/atualizados",
+      "Cobertura mínima 80%",
+      "npm test -- --run passa 100%"
+    ],
+    "validation": [
+      "npx tsc --noEmit → 0 erros",
+      "check_cursor_issues → 0 issues",
+      "grep 'as any' src/ → 0 resultados",
+      "grep 'console.log' src/ (exceto testes) → 0 resultados"
+    ]
+  },
+  
+  "statistics": {
+    "total_best_practices": 14,
+    "total_gaps_prohibited": 14,
+    "checklist_items": 21,
+    "audit_date": "2026-01-22",
+    "coverage": {
+      "architecture": 6,
+      "typescript": 3,
+      "sql": 3,
+      "security": 3
+    }
+  },
+  
+  "references": [
+    "ADR-0015: 100% DDD/Hexagonal",
+    "Clean Architecture - Robert C. Martin",
+    "Domain-Driven Design - Eric Evans",
+    "Implementing DDD - Vaughn Vernon",
+    "Hexagonal Architecture - Alistair Cockburn"
+  ]
+}

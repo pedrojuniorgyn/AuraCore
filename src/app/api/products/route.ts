@@ -4,7 +4,6 @@ import { products } from "@/lib/db/schema";
 import { createProductSchema } from "@/lib/validators/product";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, or, ilike, desc, sql } from "drizzle-orm";
-import { queryWithLimit } from "@/lib/db/query-helpers";
 
 /**
  * GET /api/products
@@ -52,16 +51,21 @@ export async function GET(request: NextRequest) {
       .where(where);
     const total = Number(count ?? 0);
 
-    // Página (LIMIT/OFFSET no banco)
-    const paginatedProducts = await queryWithLimit<typeof products.$inferSelect>(
-      db
-        .select()
-        .from(products)
-        .where(where)
-        .orderBy(desc(products.createdAt))
-        .offset(_start),
-      limit
-    );
+    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
+    // Antes: queryWithLimit(query, limit) → helper com indireção
+    // Agora: (query as QueryWithLimit).limit() → inline explícito
+    const baseQuery = db
+      .select()
+      .from(products)
+      .where(where)
+      .orderBy(desc(products.createdAt))
+      .offset(_start);
+    
+    // Type assertion necessária: Drizzle MSSQL beta tem .limit() mas tipagem incompleta
+    type ProductRow = typeof products.$inferSelect;
+    type QueryWithLimit = { limit(n: number): Promise<ProductRow[]> };
+    
+    const paginatedProducts = await (baseQuery as unknown as QueryWithLimit).limit(limit);
 
     return NextResponse.json(
       {
