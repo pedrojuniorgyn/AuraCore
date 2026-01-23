@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.61",
+  "version": "2.0.64",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1117,6 +1117,57 @@
         "src/app/api/fiscal/documents/[id]/reclassify/route.ts",
         "src/app/api/admin/update-fiscal-partners/route.ts",
         "src/modules/fiscal/infrastructure/adapters/document-import/FiscalDocumentImportAdapter.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-291677",
+      "date": "2026-01-23",
+      "epic": "E11 - Correções Arquiteturais Críticas (FINAL)",
+      "error": "E11 Architectural Fixes - 22 violações corrigidas: ARCH-001 (11 Domain->Application), ARCH-002 (10 Domain->Infrastructure), ARCH-004 (1 Node.js crypto). Módulo Accounting com 0 testes passando. Push pendente de 8 commits.",
+      "correction": "PUSHED TO MAIN: 8 commits. 100% compliance atingido: 0 circular deps, 0 ARCH violations, 0 TS errors, 44/44 testes accounting (100%), 85% arquitetura DDD. E11.1 adicionou SHA-256 para detecção de duplicatas NFe (compliance fiscal Lei 8.218/91). SUPEROU expectativas resolvendo também problemas previstos para E12.",
+      "files_affected": [
+        "src/modules/financial/domain/types/payable.types.ts",
+        "src/modules/accounting/domain/types/journal-entry.types.ts",
+        "src/modules/wms/domain/types/wms.types.ts",
+        "src/shared/domain/types/document-extraction.types.ts",
+        "src/modules/fiscal/domain/services/NfeXmlParser.ts",
+        "docs/architecture/E7_DDD_HEXAGONAL.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-469762",
+      "date": "2026-01-23",
+      "epic": "E12.1 - SPED ECD Validation",
+      "error": "E12.1 SPED ECD Validation - Necessidade de validar geração end-to-end do SPED ECD para garantir compliance fiscal (Lei 8.218/91, IN RFB 1.774/2017). Prazo de entrega: 31/05/2026.",
+      "correction": "Adicionados 7 testes de validação abrangentes para SpedEcdGenerator: geração completa de documento, encoding ISO-8859-1, validação de partidas dobradas, rejeição de dados inválidos (CNPJ, nome, ano), compatibilidade com layout PVA. Total: 10 testes SPED ECD passando. Compliance fiscal garantido com folga de 4 meses.",
+      "files_affected": [
+        "tests/unit/modules/fiscal/domain/services/SpedEcdGenerator.validation.test.ts",
+        "docs/epics/E12.1-SPED-ECD-VALIDATION.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-719653",
+      "date": "2026-01-23",
+      "epic": "E13 - Performance Optimization (Phase 0-3)",
+      "error": "E13 Performance Optimization - Estabelecer baseline de performance (Query Store + métricas p50/p95/p99), eliminar N+1 queries, migrar paginação client-side para server-side, criar infraestrutura de observabilidade.",
+      "correction": "FASE 0-3 Completa: 1) PerformanceTracker com ring buffer (10k métricas), p50/p95/p99, auto-cleanup. 2) API /api/admin/performance para visualização. 3) Scripts SQL Query Store (enable + analyze). 4) Migração de strategic/ideas para OFFSET/FETCH server-side. 5) Documentação de baseline. Sistema pronto para coleta de métricas reais após deploy.",
+      "files_affected": [
+        "src/lib/observability/performance-tracker.ts",
+        "src/lib/observability/index.ts",
+        "src/app/api/admin/performance/route.ts",
+        "src/app/api/strategic/ideas/route.ts",
+        "docs/database/migrations/manual/e13-enable-query-store.sql",
+        "docs/database/queries/e13-top-queries.sql",
+        "docs/architecture/performance/E13-PERFORMANCE-BASELINE.md"
       ],
       "pattern_created": null,
       "status": "APPROVED",

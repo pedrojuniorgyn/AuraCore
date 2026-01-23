@@ -1,0 +1,24 @@
+{
+  "epic": "E13 - Performance Optimization (Phase 0-3)",
+  "corrections": [
+    {
+      "id": "LC-719653",
+      "date": "2026-01-23",
+      "epic": "E13 - Performance Optimization (Phase 0-3)",
+      "error": "E13 Performance Optimization - Estabelecer baseline de performance (Query Store + métricas p50/p95/p99), eliminar N+1 queries, migrar paginação client-side para server-side, criar infraestrutura de observabilidade.",
+      "correction": "FASE 0-3 Completa: 1) PerformanceTracker com ring buffer (10k métricas), p50/p95/p99, auto-cleanup. 2) API /api/admin/performance para visualização. 3) Scripts SQL Query Store (enable + analyze). 4) Migração de strategic/ideas para OFFSET/FETCH server-side. 5) Documentação de baseline. Sistema pronto para coleta de métricas reais após deploy.",
+      "files_affected": [
+        "src/lib/observability/performance-tracker.ts",
+        "src/lib/observability/index.ts",
+        "src/app/api/admin/performance/route.ts",
+        "src/app/api/strategic/ideas/route.ts",
+        "docs/database/migrations/manual/e13-enable-query-store.sql",
+        "docs/database/queries/e13-top-queries.sql",
+        "docs/architecture/performance/E13-PERFORMANCE-BASELINE.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "id": "enterprise-best-practices-gaps",
+  "name": "Enterprise Best Practices & Prohibited Gaps",
+  "category": "quality-assurance",
+  "description": "Melhores práticas identificadas via auditoria enterprise-grade e gaps que devem ser evitados em todas implementações futuras. Inclui 14 best practices (Arquitetura, TypeScript, SQL, Segurança) e 14 gaps proibidos documentados para prevenção de bugs.",
+  "status": "proposed",
+  "proposedDate": "2026-01-22T23:51:48.405Z",
+  "example": {
+    "typescript": "// ✅ BP-ARCH-006: DI Registration Pattern\n// 1. tokens.ts\nexport const TOKENS = {\n  GetDashboardDataUseCase: Symbol.for('IGetDashboardDataUseCase'),\n};\n\n// 2. StrategicModule.ts\nimport { GetDashboardDataQuery } from '../../application/queries/GetDashboardDataQuery';\ncontainer.registerSingleton(TOKENS.GetDashboardDataUseCase, GetDashboardDataQuery);\n\n// 3. instrumentation.ts\nregisterStrategicModule();\n\n// ✅ BP-SQL-001: Índice Composto Multi-Tenant\n(table) => ({\n  tenantIdx: index('idx_table_tenant').on(\n    table.organizationId, \n    table.branchId\n  ),\n})\n\n// ❌ GAP-ARCH-004: Use Case não registrado causa erro\n// Error: Attempted to resolve unregistered dependency token: Symbol(IGetDashboardDataUseCase)"
+  },
+  "rules": [
+    "BP-ARCH-006: Todo Use Case DEVE ser registrado no DI Container (token + import + registerSingleton + instrumentation)",
+    "BP-ARCH-002: Domain ZERO dependências externas (verificar com grep)",
+    "BP-TS-001: Type Safety Rigorosa - NUNCA usar 'any'",
+    "BP-SQL-001: Índices Compostos Multi-Tenant obrigatórios (organization_id, branch_id)",
+    "BP-SEC-002: resolveBranchIdOrThrow - validar acesso a filial sempre",
+    "GAP-ARCH-004: PROIBIDO Use Case não registrado no DI (causa: dependency token error)",
+    "GAP-ARCH-001: PROIBIDO Entity Anêmica sem métodos de negócio",
+    "GAP-SEC-001: PROIBIDO Rate Limit Global (usar por organizationId)",
+    "GAP-SQL-002: PROIBIDO Produção sem Backup/Recovery SLA",
+    "GAP-TS-002: PROIBIDO misturar throw com Result Pattern"
+  ],
+  "tags": [
+    "best-practices",
+    "gaps",
+    "quality-assurance",
+    "ddd",
+    "di-container",
+    "enterprise",
+    "architecture"
+  ]
+}
