@@ -1,0 +1,19 @@
+{
+  "epic": "E12.1 - SPED ECD Validation",
+  "corrections": [
+    {
+      "id": "LC-469762",
+      "date": "2026-01-23",
+      "epic": "E12.1 - SPED ECD Validation",
+      "error": "E12.1 SPED ECD Validation - Necessidade de validar geração end-to-end do SPED ECD para garantir compliance fiscal (Lei 8.218/91, IN RFB 1.774/2017). Prazo de entrega: 31/05/2026.",
+      "correction": "Adicionados 7 testes de validação abrangentes para SpedEcdGenerator: geração completa de documento, encoding ISO-8859-1, validação de partidas dobradas, rejeição de dados inválidos (CNPJ, nome, ano), compatibilidade com layout PVA. Total: 10 testes SPED ECD passando. Compliance fiscal garantido com folga de 4 meses.",
+      "files_affected": [
+        "tests/unit/modules/fiscal/domain/services/SpedEcdGenerator.validation.test.ts",
+        "docs/epics/E12.1-SPED-ECD-VALIDATION.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "epic": "E11 - Correções Arquiteturais Críticas (FINAL)",
+  "corrections": [
+    {
+      "id": "LC-291677",
+      "date": "2026-01-23",
+      "epic": "E11 - Correções Arquiteturais Críticas (FINAL)",
+      "error": "E11 Architectural Fixes - 22 violações corrigidas: ARCH-001 (11 Domain->Application), ARCH-002 (10 Domain->Infrastructure), ARCH-004 (1 Node.js crypto). Módulo Accounting com 0 testes passando. Push pendente de 8 commits.",
+      "correction": "PUSHED TO MAIN: 8 commits. 100% compliance atingido: 0 circular deps, 0 ARCH violations, 0 TS errors, 44/44 testes accounting (100%), 85% arquitetura DDD. E11.1 adicionou SHA-256 para detecção de duplicatas NFe (compliance fiscal Lei 8.218/91). SUPEROU expectativas resolvendo também problemas previstos para E12.",
+      "files_affected": [
+        "src/modules/financial/domain/types/payable.types.ts",
+        "src/modules/accounting/domain/types/journal-entry.types.ts",
+        "src/modules/wms/domain/types/wms.types.ts",
+        "src/shared/domain/types/document-extraction.types.ts",
+        "src/modules/fiscal/domain/services/NfeXmlParser.ts",
+        "docs/architecture/E7_DDD_HEXAGONAL.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
