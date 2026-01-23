@@ -1,0 +1,18 @@
+{
+  "epic": "P0 - Production Critical Fixes",
+  "corrections": [
+    {
+      "id": "LC-303298",
+      "date": "2026-01-23",
+      "epic": "P0 - Production Critical Fixes",
+      "error": "Notifications não carregam - TypeError: e.limit is not a function. Causa: helper queryWithLimit com type assertion pode falhar em runtime quando Drizzle ORM SQL Server não reconhece .limit() como método.",
+      "correction": "Substituído queryWithLimit(query, limit) por inline type assertion: (baseQuery as unknown as QueryWithLimit).limit(limit). Removido import de query-helpers. Padrão mais explícito e direto.",
+      "files_affected": [
+        "src/app/api/notifications/route.ts"
+      ],
+      "pattern_created": "inline-type-assertion-drizzle-limit",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

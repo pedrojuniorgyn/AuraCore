@@ -1,0 +1,34 @@
+{
+  "epic": "P1.A - Code Consistency",
+  "corrections": [
+    {
+      "id": "LC-006425",
+      "date": "2026-01-23",
+      "epic": "P1.A - Code Consistency",
+      "error": "Inconsistência de código: 2 arquivos (bank-transactions, products) usavam helper queryWithLimit ao invés de inline type assertion. GAP-SQL-005: helper adiciona indireção desnecessária, dificulta debug e pode falhar em runtime com erro 'e.limit is not a function'.",
+      "correction": "1. Aplicado pattern LC-303298 (inline type assertion) em bank-transactions/route.ts e products/route.ts. 2. Removido import de queryWithLimit de ambos arquivos. 3. Adicionado type assertions: type QueryWithLimit = { limit(n: number): Promise<Row[]> }. 4. Validado multi-tenancy (organizationId + branchId) e soft delete (deletedAt) em ambos. 5. Deprecado helper queryWithLimit com @deprecated JSDoc, console.warn() e documentação de migração. 6. Adicionado BP-SQL-005 ao contrato. 7. Atualizado GAP-SQL-005 com status de conclusão. Consistência: 100% (3/3 arquivos API).",
+      "files_affected": [
+        "src/app/api/financial/bank-transactions/route.ts",
+        "src/app/api/products/route.ts",
+        "src/lib/db/query-helpers.ts",
+        "mcp-server/knowledge/contracts/best-practices-enterprise.json"
+      ],
+      "pattern_created": "inline-type-assertion-consistency-100pct",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-553871",
+      "date": "2026-01-23",
+      "epic": "P1.A - Code Consistency",
+      "error": "Violação de boas práticas: console.warn() adicionado em código de produção (query-helpers.ts) para alertar sobre helper deprecado. Isso viola checklist pré-commit que requer zero console output em src/ exceto testes. Impactos: poluição de logs de produção, possível degradação de performance se chamado frequentemente.",
+      "correction": "Removido console.warn() do helper queryWithLimit. A anotação @deprecated no JSDoc é suficiente pois: 1) É detectada pelo TypeScript e mostrada em IDEs. 2) Pode ser detectada por ESLint com regra apropriada. 3) Não polui logs de produção. 4) Não impacta performance. Adicionado comentário explicativo documentando a decisão e alternativa (ESLint configuration).",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts"
+      ],
+      "pattern_created": "no-console-output-production",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -126,15 +126,18 @@ O épico E7 migrou o AuraCore de arquitetura Vertical Slice para DDD/Hexagonal. 
 | E7.9 | Integrações Externas | ✅ COMPLETO | 2 |
 | E7.10 | Cleanup + CI/CD | ✅ COMPLETO | 3 |
 | E7.11 | Test Infrastructure | ✅ COMPLETO | 2 |
-| **E7.12** | **Documentação 100%** | **🟡 EM EXECUÇÃO** | **1** |
+| **E7.12** | **Documentação 100%** | **✅ COMPLETO** | **1** |
 | E7.13 | Services → DDD | ⬜ PLANEJADO | 3 |
 | E7.14 | APIs → Features | ⬜ PLANEJADO | 2 |
 | E7.15 | SPED → DDD | ⬜ PLANEJADO | 4 |
 | E7.16 | Verificação Semântica | ⬜ PLANEJADO | 1 |
 | E7.17 | Limpeza Final | ⬜ PLANEJADO | 1 |
+| **E8** | **API Routes DDD** | **✅ COMPLETO** | **-** |
+| **E9** | **Strategic Module** | **✅ COMPLETO** | **-** |
+| **E10** | **Auditoria Arquitetural** | **✅ COMPLETO** | **2026-01-23** |
 
-**Total realizado:** ~40 semanas  
-**Total planejado (E7.12-E7.17):** 13 semanas
+**Total realizado:** ~45 semanas  
+**Total planejado (E7.13-E7.17):** 11 semanas
 
 ---
 

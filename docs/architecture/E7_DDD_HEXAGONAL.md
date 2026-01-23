@@ -184,5 +184,52 @@ export class Service {
 
 ---
 
-**Versão:** 2.0.0 | **Última atualização:** 06/01/2026
+## 7. Status da Migração DDD
+
+### 7.1 Módulos DDD (12/12) ✅
+
+| Módulo | Domain | Application | Infrastructure | DI |
+|--------|--------|-------------|----------------|-----|
+| accounting | ✅ | ✅ | ✅ | ✅ |
+| commercial | ✅ | - | ✅ | ✅ |
+| contracts | ✅ | ✅ | ✅ | ✅ |
+| documents | ✅ | ✅ | ✅ | ✅ |
+| financial | ✅ | ✅ | ✅ | ✅ |
+| fiscal | ✅ | ✅ | ✅ | ✅ |
+| fleet | ✅ | - | ✅ | ✅ |
+| integrations | ✅ | ✅ | ✅ | ✅ |
+| knowledge | ✅ | ✅ | ✅ | ✅ |
+| strategic | ✅ | ✅ | ✅ | ✅ |
+| tms | ✅ | ✅ | ✅ | ✅ |
+| wms | ✅ | ✅ | ✅ | ✅ |
+
+### 7.2 Código Legado (Anti-Corruption Layer)
+
+O diretório `src/services/` contém **39 serviços legados** que são acessados **exclusivamente via Adapters** na camada de infrastructure.
+
+**Estratégia:** Anti-Corruption Layer (ACL)
+```
+API Route → Use Case → Domain → [Adapter] → Legacy Service
+                         ↓
+              Infrastructure Adapter encapsula
+              chamadas para @/services/*
+```
+
+**Benefícios:**
+- Domain permanece puro (sem imports de services/)
+- Migração gradual sem quebrar produção
+- Cada adapter pode ser substituído por implementação DDD pura
+
+### 7.3 Épicos de Arquitetura
+
+| Épico | Nome | Status | Data |
+|-------|------|--------|------|
+| E7 | DDD/Hexagonal Migration | ✅ Concluído | 2025-12 |
+| E8 | API Routes em DDD | ✅ Concluído | 2026-01 |
+| E9 | Strategic Module DDD | ✅ Concluído | 2026-01 |
+| E10 | Auditoria Arquitetural | ✅ Concluído | 2026-01-23 |
+
+---
+
+**Versão:** 2.1.0 | **Última atualização:** 23/01/2026
 
