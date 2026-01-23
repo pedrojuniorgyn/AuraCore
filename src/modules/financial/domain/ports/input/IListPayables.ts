@@ -13,8 +13,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from './IPayAccountPayable';
-import type { PaginatedPayablesDTO } from '../../../application/dtos/PayableResponseDTO';
+import type { ExecutionContext, PaginatedPayables } from '../../types/payable.types';
 
 export interface ListPayablesInput {
   /** Número da página (1-based) */
@@ -59,5 +58,5 @@ export interface IListPayables {
   execute(
     input: ListPayablesInput,
     ctx: ExecutionContext
-  ): Promise<Result<PaginatedPayablesDTO, string>>;
+  ): Promise<Result<PaginatedPayables, string>>;
 }

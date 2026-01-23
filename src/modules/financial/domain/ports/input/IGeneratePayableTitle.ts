@@ -13,7 +13,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from './IPayAccountPayable';
+import type { ExecutionContext } from '../../types/payable.types';
 
 export interface GeneratePayableTitleInput {
   /** ID da conta a pagar */

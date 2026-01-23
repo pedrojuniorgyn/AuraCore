@@ -6,7 +6,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { Result } from '@/shared/domain';
 import type { IGeneratePayableTitle } from '@/modules/financial/domain/ports/input/IGeneratePayableTitle';
 import type { IGenerateReceivableTitle } from '@/modules/financial/domain/ports/input/IGenerateReceivableTitle';
-import type { ExecutionContext } from '@/modules/financial/domain/ports/input/IPayAccountPayable';
+import type { ExecutionContext } from '@/modules/financial/domain/ports/input';
 import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
 
 /** Interface comum para outputs de geração de títulos */

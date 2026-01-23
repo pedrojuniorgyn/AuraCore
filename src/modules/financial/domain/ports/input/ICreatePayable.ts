@@ -10,15 +10,16 @@
  * - Document number deve ser único por fornecedor
  * - Multi-tenancy: organizationId + branchId obrigatórios
  * 
+ * @see ARCH-001: Domain não importa de Application
  * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from './IPayAccountPayable';
 import type {
   CreatePayableInput,
   CreatePayableOutput,
-} from '../../../application/dtos/CreatePayableDTO';
+  ExecutionContext,
+} from '../../types/payable.types';
 
 /**
  * Interface Input Port: Criar Conta a Pagar

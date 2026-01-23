@@ -3,3 +3,4 @@
  */
 
 export * from './bank-statement.types';
+export * from './payable.types';

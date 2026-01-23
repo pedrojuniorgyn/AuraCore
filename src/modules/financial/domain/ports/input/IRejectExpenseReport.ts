@@ -14,7 +14,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from './IPayAccountPayable';
+import type { ExecutionContext } from '../../types/payable.types';
 
 export interface RejectExpenseReportInput {
   /** ID do relatório de despesas */

@@ -5,7 +5,7 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { Result } from '@/shared/domain';
 import type { IReverseTitles } from '@/modules/financial/domain/ports/input/IReverseTitles';
-import type { ExecutionContext } from '@/modules/financial/domain/ports/input/IPayAccountPayable';
+import type { ExecutionContext } from '@/modules/financial/domain/ports/input';
 import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
 
 // Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)

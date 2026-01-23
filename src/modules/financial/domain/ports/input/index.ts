@@ -4,6 +4,9 @@
  * @see ARCH-010: Use Cases implementam interfaces de domain/ports/input/
  */
 
+// Domain Types (re-export for backward compatibility)
+export type { ExecutionContext } from '../../types/payable.types';
+
 // Payables
 export * from './IPayAccountPayable';
 export * from './ICancelPayable';

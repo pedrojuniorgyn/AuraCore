@@ -9,6 +9,7 @@
  * - Multi-tenancy: organizationId + branchId obrigatórios
  * - Pagamento não pode exceder o saldo restante
  * 
+ * @see ARCH-001: Domain não importa de Application
  * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 
@@ -16,17 +17,8 @@ import type { Result } from '@/shared/domain';
 import type {
   PayAccountPayableInput,
   PayAccountPayableOutput,
-} from '../../../application/dtos/PayAccountPayableDTO';
-
-/**
- * Contexto de execução (multi-tenancy + user)
- */
-export interface ExecutionContext {
-  userId: string;
-  organizationId: number;
-  branchId: number;
-  isAdmin: boolean;
-}
+  ExecutionContext,
+} from '../../types/payable.types';
 
 /**
  * Interface Input Port: Pagar Conta a Pagar

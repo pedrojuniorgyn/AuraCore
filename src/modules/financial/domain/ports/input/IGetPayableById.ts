@@ -12,8 +12,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from './IPayAccountPayable';
-import type { PayableResponseDTO } from '../../../application/dtos/PayableResponseDTO';
+import type { ExecutionContext, PayableResponse } from '../../types/payable.types';
 
 export interface GetPayableByIdInput {
   /** ID da conta a pagar */
@@ -34,5 +33,5 @@ export interface IGetPayableById {
   execute(
     input: GetPayableByIdInput,
     ctx: ExecutionContext
-  ): Promise<Result<PayableResponseDTO, string>>;
+  ): Promise<Result<PayableResponse, string>>;
 }
