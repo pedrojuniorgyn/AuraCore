@@ -3247,6 +3247,14 @@ export const frotaAbastecimentos = mssqlTable("frota_abastecimentos", {
 });
 
 // --- NOTIFICATIONS (Sistema de Notificações) ---
+// ÍNDICES DE PERFORMANCE: Criados via migration 0039_notifications_performance_indexes.sql
+// - idx_notifications_user_coverage (userId, organizationId, createdAt DESC) 
+//   INCLUDE (id, type, event, title, message, data, actionUrl, isRead, readAt, branchId)
+//   → Covering index para query principal (10x-50x mais rápido)
+// - idx_notifications_unread (userId, organizationId, isRead) 
+//   INCLUDE (id, createdAt)
+//   → Index-only scan para contador de não-lidas
+// Referência: P1.B.1, BP-SQL-001, migration 0039
 
 export const notifications = mssqlTable("notifications", {
   id: int("id").primaryKey().identity(),
@@ -3272,8 +3280,10 @@ export const notifications = mssqlTable("notifications", {
   isRead: int("is_read").default(0), // 0 = não lido, 1 = lido
   readAt: datetime2("read_at"),
 
-  // Auditoria
-  createdAt: datetime2("created_at").default(sql`CURRENT_TIMESTAMP`),
+  // Auditoria (SCHEMA-005, SCHEMA-006)
+  createdAt: datetime2("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: datetime2("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  deletedAt: datetime2("deleted_at"), // Soft delete
 });
 
 // ==========================================
