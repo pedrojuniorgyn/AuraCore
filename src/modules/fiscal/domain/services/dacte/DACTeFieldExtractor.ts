@@ -17,7 +17,7 @@ import type {
   DACTeDocumento,
   DACTeModal,
   DACTeTipoServico,
-} from '@/shared/infrastructure/docling';
+} from '@/shared/domain';
 
 // ============================================================================
 // REGEX PATTERNS

@@ -9,7 +9,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { DANFeData } from '@/shared/infrastructure/docling';
+import type { DANFeData } from '@/shared/domain';
 
 // ============================================================================
 // INPUT

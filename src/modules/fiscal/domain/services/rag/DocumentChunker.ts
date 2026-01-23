@@ -10,7 +10,7 @@
  */
 
 import { Result } from '@/shared/domain';
-import type { DocumentExtractionResult } from '@/shared/infrastructure/docling';
+import type { DocumentExtractionResult } from '@/shared/domain';
 import type {
   DocumentChunk,
   ChunkMetadata,

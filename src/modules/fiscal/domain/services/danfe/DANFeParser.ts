@@ -13,7 +13,7 @@ import { Result } from '@/shared/domain';
 import type {
   DocumentExtractionResult,
   DANFeData,
-} from '@/shared/infrastructure/docling';
+} from '@/shared/domain';
 import { DANFeFieldExtractor } from './DANFeFieldExtractor';
 import { DANFeValidator } from './DANFeValidator';
 

@@ -9,7 +9,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { DACTeData } from '@/shared/infrastructure/docling';
+import type { DACTeData } from '@/shared/domain';
 
 // ============================================================================
 // INPUT

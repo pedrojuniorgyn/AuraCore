@@ -13,7 +13,7 @@ import { Result } from '@/shared/domain';
 import type {
   ExtractedTable,
   DANFeProduto,
-} from '@/shared/infrastructure/docling';
+} from '@/shared/domain';
 
 // ============================================================================
 // TYPES

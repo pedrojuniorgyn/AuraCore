@@ -10,7 +10,7 @@
  */
 
 import { Result } from '@/shared/domain';
-import type { DACTeData, DACTeParticipante } from '@/shared/infrastructure/docling';
+import type { DACTeData, DACTeParticipante } from '@/shared/domain';
 
 // ============================================================================
 // CONSTANTS

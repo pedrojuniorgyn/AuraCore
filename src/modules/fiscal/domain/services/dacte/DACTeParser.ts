@@ -13,7 +13,7 @@ import { Result } from '@/shared/domain';
 import type {
   DocumentExtractionResult,
   DACTeData,
-} from '@/shared/infrastructure/docling';
+} from '@/shared/domain';
 import { DACTeFieldExtractor } from './DACTeFieldExtractor';
 import { DACTeValidator } from './DACTeValidator';
 

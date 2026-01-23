@@ -1,5 +1,19 @@
 // Types
 export { Result } from './types/Result';
+export type {
+  DocumentExtractionResult,
+  ExtractedTable,
+  DocumentMetadata,
+  BoundingBox,
+  DANFeData,
+  DANFeProduto,
+  DACTeData,
+  DACTeParticipante,
+  DACTeVolume,
+  DACTeDocumento,
+  DACTeModal,
+  DACTeTipoServico,
+} from './types/document-extraction.types';
 
 // Entities
 export { AggregateRoot } from './entities/AggregateRoot';
