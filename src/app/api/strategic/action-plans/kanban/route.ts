@@ -6,6 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
@@ -22,7 +23,7 @@ interface KanbanCard {
   daysUntilDue: number;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
     const { searchParams } = new URL(request.url);
@@ -105,4 +106,4 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/strategic/action-plans/kanban error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

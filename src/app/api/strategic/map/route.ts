@@ -6,6 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
@@ -28,7 +29,7 @@ const PERSPECTIVE_Y: Record<string, number> = {
 };
 
 // GET /api/strategic/map
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -145,7 +146,7 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/strategic/map error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 /**
  * Extrai código da perspectiva do ID (primeiros 3 caracteres uppercase)

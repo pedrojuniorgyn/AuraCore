@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { CreateSwotItemCommand } from '@/modules/strategic/application/commands/CreateSwotItemCommand';
@@ -25,7 +26,7 @@ const createSWOTItemSchema = z.object({
 });
 
 // GET /api/strategic/swot
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
     const { searchParams } = new URL(request.url);
@@ -117,10 +118,10 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/strategic/swot error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // POST /api/strategic/swot
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -158,4 +159,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/strategic/swot error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

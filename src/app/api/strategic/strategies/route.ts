@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { CreateStrategyUseCase } from '@/modules/strategic/application/commands/CreateStrategyUseCase';
@@ -24,7 +25,7 @@ const createStrategySchema = z.object({
 });
 
 // GET /api/strategic/strategies
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -66,10 +67,10 @@ export async function GET(request: NextRequest) {
     console.error('GET /api/strategic/strategies error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // POST /api/strategic/strategies
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -96,4 +97,4 @@ export async function POST(request: NextRequest) {
     console.error('POST /api/strategic/strategies error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

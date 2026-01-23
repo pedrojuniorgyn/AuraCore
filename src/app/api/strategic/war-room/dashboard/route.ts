@@ -6,13 +6,14 @@
  */
 import { NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const context = await getTenantContext();
 
@@ -146,4 +147,4 @@ export async function GET() {
     console.error('GET /api/strategic/war-room/dashboard error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

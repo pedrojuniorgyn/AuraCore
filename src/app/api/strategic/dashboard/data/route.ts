@@ -8,13 +8,14 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IGetDashboardDataUseCase } from '@/modules/strategic/application/queries/GetDashboardDataQuery';
 import { Result } from '@/shared/domain';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -59,4 +60,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
