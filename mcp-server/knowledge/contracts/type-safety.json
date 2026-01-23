@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.68",
+  "version": "2.0.69",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1226,6 +1226,20 @@
       "epic": "E13",
       "error": "Bug 4: LRU eviction fails when oldest cache key is a falsy value (empty string, '0', zero). The check 'if (oldestKey)' skips eviction, allowing cache to exceed maxEntries limit and violate LRU constraint.",
       "correction": "Changed eviction check from 'if (oldestKey)' to 'if (oldestKey !== undefined)' to correctly handle all falsy keys. Now eviction works with '', '0', 0, false, null, etc.",
+      "files_affected": [
+        "src/lib/cache/CacheManager.ts",
+        "tests/unit/lib/cache/CacheManager.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-913543",
+      "date": "2026-01-23",
+      "epic": "E13",
+      "error": "Bug 5: LRU order not updated when cache entries are updated. Map.set() on existing key updates value but keeps original insertion order, causing recently-updated entries to remain in 'oldest' position and be evicted incorrectly.",
+      "correction": "Implemented delete + re-insert pattern for updates: if key exists, delete it first then re-insert to move to end. Inserts continue as before with eviction check. This maintains correct LRU order where updated entries become most recently used.",
       "files_affected": [
         "src/lib/cache/CacheManager.ts",
         "tests/unit/lib/cache/CacheManager.test.ts"
