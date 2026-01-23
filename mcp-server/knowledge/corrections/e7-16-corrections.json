@@ -54,6 +54,48 @@
       "pattern_created": "DOCKER-BUILD-002: Limpar cache completo Next.js (incluindo node_modules/.cache e React prebundled)",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-915697",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro 500 na inicialização da aplicação (Next.js instrumentation) devido a dependência circular massiva no DI Container. O arquivo container.ts importava todos os módulos, e os módulos importavam container.ts.",
+      "correction": "Refatoração da injeção de dependências para eliminar ciclos.\n1. container.ts agora apenas re-exporta tsyringe.\n2. Criado global-registrations.ts para registros globais.\n3. instrumentation.ts orquestra a inicialização sequencial dos módulos.\nIsso resolve o erro 'Cannot register a type name as a singleton without a to token'.",
+      "files_affected": [
+        "src/shared/infrastructure/di/container.ts",
+        "src/shared/infrastructure/di/global-registrations.ts",
+        "src/instrumentation.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-041017",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro 500 persistente na inicialização: 'tsyringe requires a reflect polyfill'. O polyfill não estava sendo carregado corretamente no contexto do instrumentation em produção.",
+      "correction": "Adicionado import 'reflect-metadata' no topo de instrumentation.ts e global-registrations.ts para garantir que o polyfill esteja disponível antes do tsyringe ser invocado no runtime do Next.js (production build).",
+      "files_affected": [
+        "src/instrumentation.ts",
+        "src/shared/infrastructure/di/global-registrations.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-198501",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro 500 em várias rotas do módulo Strategic (SWOT, KPIs, Action Plans) com a mensagem 'Attempted to resolve unregistered dependency token'. O registro via { useClass } não estava funcionando corretamente no contexto de produção.",
+      "correction": "Atualização do registro de DI no StrategicModule para usar registerSingleton ao invés de register({ useClass }). Isso garante consistência com o restante da aplicação e resolve o erro 'Attempted to resolve unregistered dependency token' causado por falha no registro de classes concretas.",
+      "files_affected": [
+        "src/modules/strategic/infrastructure/di/StrategicModule.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

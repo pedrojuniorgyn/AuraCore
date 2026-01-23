@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.47",
+  "version": "2.0.53",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -912,6 +912,90 @@
         "Dockerfile"
       ],
       "pattern_created": "DOCKER-BUILD-002: Limpar cache completo Next.js (incluindo node_modules/.cache e React prebundled)",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-915697",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro 500 na inicialização da aplicação (Next.js instrumentation) devido a dependência circular massiva no DI Container. O arquivo container.ts importava todos os módulos, e os módulos importavam container.ts.",
+      "correction": "Refatoração da injeção de dependências para eliminar ciclos.\n1. container.ts agora apenas re-exporta tsyringe.\n2. Criado global-registrations.ts para registros globais.\n3. instrumentation.ts orquestra a inicialização sequencial dos módulos.\nIsso resolve o erro 'Cannot register a type name as a singleton without a to token'.",
+      "files_affected": [
+        "src/shared/infrastructure/di/container.ts",
+        "src/shared/infrastructure/di/global-registrations.ts",
+        "src/instrumentation.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-041017",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro 500 persistente na inicialização: 'tsyringe requires a reflect polyfill'. O polyfill não estava sendo carregado corretamente no contexto do instrumentation em produção.",
+      "correction": "Adicionado import 'reflect-metadata' no topo de instrumentation.ts e global-registrations.ts para garantir que o polyfill esteja disponível antes do tsyringe ser invocado no runtime do Next.js (production build).",
+      "files_affected": [
+        "src/instrumentation.ts",
+        "src/shared/infrastructure/di/global-registrations.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-198501",
+      "date": "2026-01-22",
+      "epic": "E7.16",
+      "error": "Erro 500 em várias rotas do módulo Strategic (SWOT, KPIs, Action Plans) com a mensagem 'Attempted to resolve unregistered dependency token'. O registro via { useClass } não estava funcionando corretamente no contexto de produção.",
+      "correction": "Atualização do registro de DI no StrategicModule para usar registerSingleton ao invés de register({ useClass }). Isso garante consistência com o restante da aplicação e resolve o erro 'Attempted to resolve unregistered dependency token' causado por falha no registro de classes concretas.",
+      "files_affected": [
+        "src/modules/strategic/infrastructure/di/StrategicModule.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-303298",
+      "date": "2026-01-23",
+      "epic": "P0 - Production Critical Fixes",
+      "error": "Notifications não carregam - TypeError: e.limit is not a function. Causa: helper queryWithLimit com type assertion pode falhar em runtime quando Drizzle ORM SQL Server não reconhece .limit() como método.",
+      "correction": "Substituído queryWithLimit(query, limit) por inline type assertion: (baseQuery as unknown as QueryWithLimit).limit(limit). Removido import de query-helpers. Padrão mais explícito e direto.",
+      "files_affected": [
+        "src/app/api/notifications/route.ts"
+      ],
+      "pattern_created": "inline-type-assertion-drizzle-limit",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-006425",
+      "date": "2026-01-23",
+      "epic": "P1.A - Code Consistency",
+      "error": "Inconsistência de código: 2 arquivos (bank-transactions, products) usavam helper queryWithLimit ao invés de inline type assertion. GAP-SQL-005: helper adiciona indireção desnecessária, dificulta debug e pode falhar em runtime com erro 'e.limit is not a function'.",
+      "correction": "1. Aplicado pattern LC-303298 (inline type assertion) em bank-transactions/route.ts e products/route.ts. 2. Removido import de queryWithLimit de ambos arquivos. 3. Adicionado type assertions: type QueryWithLimit = { limit(n: number): Promise<Row[]> }. 4. Validado multi-tenancy (organizationId + branchId) e soft delete (deletedAt) em ambos. 5. Deprecado helper queryWithLimit com @deprecated JSDoc, console.warn() e documentação de migração. 6. Adicionado BP-SQL-005 ao contrato. 7. Atualizado GAP-SQL-005 com status de conclusão. Consistência: 100% (3/3 arquivos API).",
+      "files_affected": [
+        "src/app/api/financial/bank-transactions/route.ts",
+        "src/app/api/products/route.ts",
+        "src/lib/db/query-helpers.ts",
+        "mcp-server/knowledge/contracts/best-practices-enterprise.json"
+      ],
+      "pattern_created": "inline-type-assertion-consistency-100pct",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-553871",
+      "date": "2026-01-23",
+      "epic": "P1.A - Code Consistency",
+      "error": "Violação de boas práticas: console.warn() adicionado em código de produção (query-helpers.ts) para alertar sobre helper deprecado. Isso viola checklist pré-commit que requer zero console output em src/ exceto testes. Impactos: poluição de logs de produção, possível degradação de performance se chamado frequentemente.",
+      "correction": "Removido console.warn() do helper queryWithLimit. A anotação @deprecated no JSDoc é suficiente pois: 1) É detectada pelo TypeScript e mostrada em IDEs. 2) Pode ser detectada por ESLint com regra apropriada. 3) Não polui logs de produção. 4) Não impacta performance. Adicionado comentário explicativo documentando a decisão e alternativa (ESLint configuration).",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts"
+      ],
+      "pattern_created": "no-console-output-production",
       "status": "APPROVED",
       "must_not_repeat": true
     }
