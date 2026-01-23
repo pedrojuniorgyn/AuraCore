@@ -42,7 +42,7 @@ export async function GET() {
         if (!doc.xml_content) continue;
         
         // Usar NfeXmlParser (Domain Service) ao invés do serviço legado
-        const parseResult = NfeXmlParser.parse(doc.xml_content);
+        const parseResult = await NfeXmlParser.parse(doc.xml_content);
         
         if (Result.isFail(parseResult)) {
           console.log(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${parseResult.error}`);

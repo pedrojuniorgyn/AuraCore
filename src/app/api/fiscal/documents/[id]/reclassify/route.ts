@@ -77,8 +77,8 @@ export async function POST(
       return NextResponse.json({ error: "CNPJ da filial não encontrado" }, { status: 400 });
     }
 
-    // Parse NFe usando Domain Service
-    const parseResult = NfeXmlParser.parse(document.xmlContent);
+    // Parse NFe usando Domain Service (async para SHA-256)
+    const parseResult = await NfeXmlParser.parse(document.xmlContent);
     
     if (Result.isFail(parseResult)) {
       return NextResponse.json({ error: `Erro ao parsear NFe: ${parseResult.error}` }, { status: 400 });

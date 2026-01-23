@@ -47,8 +47,8 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
       // ✅ BUG-003: userId já é string (ADR-0003), não precisa converter
       // createdBy e updatedBy esperam string diretamente
 
-      // Parse do XML da NFe usando Domain Service
-      const parseResult = NfeXmlParser.parse(xmlContent);
+      // Parse do XML da NFe usando Domain Service (async para SHA-256)
+      const parseResult = await NfeXmlParser.parse(xmlContent);
       
       if (Result.isFail(parseResult)) {
         return Result.fail(new FiscalDocumentError(`Erro ao parsear NFe: ${parseResult.error}`));

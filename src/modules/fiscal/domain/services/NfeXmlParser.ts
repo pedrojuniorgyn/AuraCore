@@ -24,19 +24,37 @@ import { Result } from '@/shared/domain';
 // ============================================================================
 
 /**
- * Simple hash function for XML content identification.
- * Uses a fast non-cryptographic hash algorithm (djb2 variant).
- * For cryptographic hashes, use infrastructure layer.
+ * Calcula hash SHA-256 do XML para detecção de duplicatas.
  * 
- * @see ARCH-004: Domain cannot import Node.js modules
+ * Conformidade:
+ * - ARCH-004: Usa Web Crypto API (não Node.js crypto)
+ * - SCHEMA: Retorna 64 caracteres (varchar(64))
+ * - Fiscal: Garante detecção confiável de duplicatas (colisão ~10^-60)
+ * 
+ * @param data - Conteúdo XML completo
+ * @returns Hash SHA-256 (64 caracteres hexadecimais)
+ * 
+ * @see Lei 8.218/91, Art. 12 - Multas por escrituração fiscal incorreta
+ * @see IN RFB 1.774/2017 - Requisitos SPED Fiscal
  */
-function simpleHash(str: string): string {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 33) ^ str.charCodeAt(i);
-  }
-  // Convert to hex and pad to ensure consistent length
-  return (hash >>> 0).toString(16).padStart(8, '0');
+async function generateSha256Hash(data: string): Promise<string> {
+  // 1. Converter string para bytes
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  
+  // 2. Calcular SHA-256 (Web Crypto API - cross-platform)
+  const hashBuffer = await globalThis.crypto.subtle.digest(
+    'SHA-256',
+    dataBuffer
+  );
+  
+  // 3. Converter buffer para hex string (64 caracteres)
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
+  
+  return hashHex; // 64 caracteres
 }
 
 // ============================================================================
@@ -227,7 +245,7 @@ export class NfeXmlParser {
    * @param xmlString - Conteúdo do arquivo XML
    * @returns Dados estruturados da NFe ou erro
    */
-  static parse(xmlString: string): Result<ParsedNFe, string> {
+  static async parse(xmlString: string): Promise<Result<ParsedNFe, string>> {
     try {
       // Parse do XML
       const xmlObj = NfeXmlParser.parser.parse(xmlString);
@@ -340,8 +358,8 @@ export class NfeXmlParser {
       // Pagamento
       const payment = NfeXmlParser.extractPaymentInfo(infNFe);
 
-      // Hash do XML (simple hash for identification, not cryptographic)
-      const xmlHash = simpleHash(xmlString);
+      // Hash SHA-256 do XML (para detecção de duplicatas - 64 caracteres)
+      const xmlHash = await generateSha256Hash(xmlString);
 
       return Result.ok({
         accessKey,
