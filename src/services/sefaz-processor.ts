@@ -236,11 +236,8 @@ async function importNFeAutomatically(
   userId: string
 ): Promise<"SUCCESS" | "DUPLICATE"> {
   try {
-    // ✅ Converter userId para number (bigint no banco)
-    const userIdNum = parseInt(userId, 10);
-    if (isNaN(userIdNum)) {
-      throw new Error(`UserId inválido: ${userId}`);
-    }
+    // ✅ BUG-003: userId já é string (ADR-0003), não precisa converter
+    // createdBy e updatedBy esperam string diretamente
     
     // Parse do XML da NFe
     const parsedNFe = await parseNFeXML(xmlContent);
@@ -303,8 +300,8 @@ async function importNFeAutomatically(
         phone: parsedNFe.issuer.phone || null,
         dataSource: "XML_IMPORT",
         status: "ACTIVE",
-        createdBy: String(userIdNum),
-        updatedBy: String(userIdNum),
+        createdBy: userId, // ✅ BUG-003: userId já é string
+        updatedBy: userId,
         version: 1,
       };
       await db.insert(businessPartners).values(partnerData);
@@ -391,8 +388,8 @@ async function importNFeAutomatically(
       importedFrom: "SEFAZ",
       
       // Auditoria
-      createdBy: String(userIdNum),
-      updatedBy: String(userIdNum),
+      createdBy: userId, // ✅ BUG-003: userId já é string
+      updatedBy: userId,
       version: 1,
     };
     await db.insert(fiscalDocuments).values(documentData);

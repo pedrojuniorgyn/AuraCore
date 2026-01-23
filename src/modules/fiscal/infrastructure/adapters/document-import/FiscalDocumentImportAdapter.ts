@@ -44,11 +44,8 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
    */
   async importNFe(xmlContent: string): Promise<Result<"SUCCESS" | "DUPLICATE", FiscalDocumentError>> {
     try {
-      // Converter userId para number (bigint no banco)
-      const userIdNum = parseInt(this.userId, 10);
-      if (isNaN(userIdNum)) {
-        return Result.fail(new FiscalDocumentError(`UserId inválido: ${this.userId}`));
-      }
+      // ✅ BUG-003: userId já é string (ADR-0003), não precisa converter
+      // createdBy e updatedBy esperam string diretamente
 
       // Parse do XML da NFe usando Domain Service
       const parseResult = NfeXmlParser.parse(xmlContent);
@@ -77,7 +74,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
       }
 
       // Auto-cadastro de fornecedor (se necessário)
-      const partnerIdResult = await this.ensurePartner(parsedNFe.issuer, userIdNum);
+      const partnerIdResult = await this.ensurePartner(parsedNFe.issuer, this.userId);
 
       if (Result.isFail(partnerIdResult)) {
         return Result.fail(partnerIdResult.error);
@@ -149,8 +146,8 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         importedFrom: "SEFAZ",
 
         // Auditoria
-        createdBy: String(userIdNum),
-        updatedBy: String(userIdNum),
+        createdBy: this.userId, // ✅ BUG-003: userId já é string
+        updatedBy: this.userId,
         version: 1,
       };
 
@@ -438,7 +435,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         state: string;
       };
     },
-    userIdNum: number
+    userId: string // ✅ BUG-003: userId é string, não number (ADR-0003)
   ): Promise<Result<number, FiscalDocumentError>> {
     try {
       const [existingPartner] = await db
@@ -480,8 +477,8 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         phone: issuer.phone || null,
         dataSource: "XML_IMPORT",
         status: "ACTIVE",
-        createdBy: String(userIdNum),
-        updatedBy: String(userIdNum),
+        createdBy: userId, // ✅ BUG-003: userId já é string
+        updatedBy: userId,
         version: 1,
       };
 

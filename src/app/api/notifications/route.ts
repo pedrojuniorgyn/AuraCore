@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
         isRead: notif.isRead,
         readAt: notif.readAt,
         createdAt: notif.createdAt,
+        updatedAt: notif.updatedAt, // ✅ BUG-001: Audit trail completo
       };
     });
 
