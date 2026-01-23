@@ -177,11 +177,15 @@ class CacheManager {
     };
 
     // BUG 1 FIX: Evict APENAS se key não existe E está em capacidade máxima
+    // BUG 4 FIX: Usar !== undefined para suportar chaves falsy ('', '0', 0, false)
     if (!existing && this.cache.size >= this.config.maxEntries) {
       const oldestKey = this.cache.keys().next().value;
-      if (oldestKey) {
+      // ✅ BUG 4 FIX: Check for undefined, not truthy
+      // ANTES: if (oldestKey) { ... } - falha com '', '0', 0, false
+      // DEPOIS: if (oldestKey !== undefined) { ... } - funciona com todos
+      if (oldestKey !== undefined) {
         this.cache.delete(oldestKey);
-        this.log(`EVICTED (LRU): ${oldestKey}`);
+        this.log(`EVICTED (LRU): ${JSON.stringify(oldestKey)}`);
       }
     }
 
