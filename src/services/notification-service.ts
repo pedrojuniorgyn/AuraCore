@@ -197,6 +197,8 @@ export class NotificationService {
 
   /**
    * Marcar notificação como lida
+   * @param notificationId ID da notificação (já validado como number pelo route)
+   * @param userId ID do usuário
    */
   async markAsRead(notificationId: number, userId: string): Promise<void> {
     await db
@@ -208,7 +210,7 @@ export class NotificationService {
       })
       .where(
         and(
-          eq(notifications.id, Number(notificationId)),
+          eq(notifications.id, notificationId), // ✅ BUG-007: Number() removido (Route valida com Zod)
           eq(notifications.userId, userId),
           isNull(notifications.deletedAt) // ✅ SCHEMA-006: Não atualizar deletados
         )

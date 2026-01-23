@@ -3,6 +3,28 @@ import { db } from "@/lib/db";
 import { notifications } from "@/lib/db/schema";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { z } from "zod";
+
+/**
+ * ✅ INPUT VALIDATION PATTERN
+ * - Routes SEMPRE validam input com Zod ANTES de processar
+ * - Services NUNCA fazem conversão defensiva (assumem input válido)
+ * - Pattern: Route valida → Service processa (assume válido)
+ * @see docs/architecture/patterns/INPUT_VALIDATION.md
+ */
+
+/**
+ * Schema Zod para marcar notificação como lida
+ * notificationId: number (obrigatório se markAll for false)
+ * markAll: boolean (opcional, default false)
+ */
+const MarkNotificationSchema = z.object({
+  notificationId: z.number().int().positive().optional(),
+  markAll: z.boolean().optional(),
+}).refine(
+  (data) => data.markAll === true || (data.notificationId !== undefined && data.notificationId > 0),
+  { message: "notificationId (number) ou markAll (true) é obrigatório" }
+);
 
 /**
  * GET /api/notifications
@@ -94,8 +116,21 @@ export async function POST(request: NextRequest) {
   try {
     const ctx = await getTenantContext();
 
+    // ✅ BUG-007: Validar input com Zod ANTES de processar
     const body = await request.json();
-    const { notificationId, markAll } = body;
+    const validation = MarkNotificationSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          error: "Dados inválidos", 
+          details: validation.error.flatten().fieldErrors 
+        },
+        { status: 400 }
+      );
+    }
+
+    const { notificationId, markAll } = validation.data;
 
     if (markAll) {
       // Marcar todas como lidas
@@ -135,12 +170,8 @@ export async function POST(request: NextRequest) {
         );
 
       return NextResponse.json({ success: true });
-    } else {
-      return NextResponse.json(
-        { error: "notificationId or markAll required" },
-        { status: 400 }
-      );
     }
+    // ✅ Não precisa de else: Zod já garantiu que markAll ou notificationId existe
   } catch (error: unknown) {
   const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {

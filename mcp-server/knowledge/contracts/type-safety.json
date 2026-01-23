@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.56",
+  "version": "2.0.57",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1042,6 +1042,21 @@
         "drizzle/migrations/0039_notifications_performance_indexes.sql"
       ],
       "pattern_created": "notifications-service-schema-005-006-compliance",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-615301",
+      "date": "2026-01-23",
+      "epic": "P1.B - Notifications Input Validation Round 3",
+      "error": "BUG-007: POST /api/notifications usava body JSON sem validação Zod. notificationId podia ser string ao invés de number, causando comportamento inesperado. Service fazia conversão defensiva Number(notificationId) que escondia o problema de validação ausente. Violação do pattern: Route valida → Service processa.",
+      "correction": "1. Adicionado Zod schema MarkNotificationSchema com validação: notificationId deve ser number.int().positive() e refine para garantir markAll ou notificationId presente. 2. POST handler agora valida com safeParse() ANTES de processar, retornando 400 com detalhes de erros. 3. Removido Number() defensivo do service - não é responsabilidade dele. 4. Criado contrato INPUT_VALIDATION_CONTRACT.md documentando o pattern para futuros endpoints.",
+      "files_affected": [
+        "src/app/api/notifications/route.ts",
+        "src/services/notification-service.ts",
+        "docs/architecture/contracts/INPUT_VALIDATION_CONTRACT.md"
+      ],
+      "pattern_created": "zod-input-validation-api-routes",
       "status": "APPROVED",
       "must_not_repeat": true
     }
