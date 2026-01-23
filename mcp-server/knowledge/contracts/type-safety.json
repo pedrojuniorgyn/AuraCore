@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.67",
+  "version": "2.0.68",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1215,6 +1215,20 @@
       "correction": "Implemented proper API Key validation with constant-time comparison to prevent timing attacks, added audit logging for all access attempts, secured all methods (GET/POST/DELETE)",
       "files_affected": [
         "src/app/api/admin/cache/stats/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-947204",
+      "date": "2026-01-23",
+      "epic": "E13",
+      "error": "Bug 4: LRU eviction fails when oldest cache key is a falsy value (empty string, '0', zero). The check 'if (oldestKey)' skips eviction, allowing cache to exceed maxEntries limit and violate LRU constraint.",
+      "correction": "Changed eviction check from 'if (oldestKey)' to 'if (oldestKey !== undefined)' to correctly handle all falsy keys. Now eviction works with '', '0', 0, false, null, etc.",
+      "files_affected": [
+        "src/lib/cache/CacheManager.ts",
+        "tests/unit/lib/cache/CacheManager.test.ts"
       ],
       "pattern_created": null,
       "status": "APPROVED",
