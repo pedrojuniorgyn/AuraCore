@@ -135,7 +135,45 @@
         "example": "type QueryWithLimit = { limit(n: number): Promise<Row[]> };",
         "rationale": "Mais explícito, debugável e mantém type safety sem camadas de indireção",
         "reference": "P1.A.1 (23/01/2026)",
-        "action_taken": "queryWithLimit marcado como @deprecated com console.warn()"
+        "action_taken": "queryWithLimit marcado como @deprecated"
+      },
+      {
+        "id": "BP-SQL-006",
+        "title": "Covering Indexes com INCLUDE",
+        "description": "Adicionar colunas frequentemente lidas via INCLUDE para eliminar key lookups",
+        "priority": "HIGH",
+        "benefits": [
+          "Elimina key lookups (index seek direto)",
+          "Query 5x-10x mais rápida",
+          "Menos I/O (index-only scan)"
+        ],
+        "example": "CREATE INDEX idx ON table(key) INCLUDE (col1, col2);",
+        "reference": "P1.B.1 (23/01/2026)",
+        "implementation": "idx_notifications_user_coverage com INCLUDE de todas colunas SELECT"
+      },
+      {
+        "id": "BP-SQL-007",
+        "title": "Índices Multi-Tenant Compostos",
+        "description": "Primeira coluna deve ser a mais seletiva (userId > organizationId)",
+        "priority": "CRITICAL",
+        "rationale": "Seletividade maior = index seek mais eficiente",
+        "example": "(userId, organizationId, createdAt DESC)",
+        "reference": "P1.B.1 (23/01/2026)",
+        "anti_pattern": "(organizationId, userId) → menos eficiente se userId mais seletivo"
+      },
+      {
+        "id": "BP-SQL-008",
+        "title": "Índices com Ordenação Integrada",
+        "description": "Incluir colunas ORDER BY no índice para eliminar sort operation",
+        "priority": "HIGH",
+        "benefits": [
+          "Elimina sort no execution plan",
+          "Performance 2x-5x melhor",
+          "Menos uso de tempdb"
+        ],
+        "example": "CREATE INDEX idx ON table(userId, organizationId, createdAt DESC)",
+        "reference": "P1.B.1 (23/01/2026)",
+        "note": "DESC no índice permite ORDER BY createdAt DESC sem sort"
       }
     ],
     
