@@ -13,11 +13,11 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/dtos/ExecutionContext';
+import type { ExecutionContext } from '../../types/wms.types';
 import type {
   StartInventoryCountInput,
   StartInventoryCountOutput,
-} from '../../../application/dtos/InventoryCountDTO';
+} from '../../types/wms.types';
 
 /**
  * Interface Input Port: Iniciar Contagem de Inventário

@@ -12,7 +12,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/dtos/ExecutionContext';
+import type { ExecutionContext } from '../../types/wms.types';
 
 /**
  * Input para buscar estoque por produto

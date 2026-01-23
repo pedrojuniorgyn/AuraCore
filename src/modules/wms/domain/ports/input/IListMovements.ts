@@ -12,8 +12,8 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/dtos/ExecutionContext';
-import type { PaginatedResponse } from '../../../application/dtos/ListQueryDTO';
+import type { ExecutionContext } from '../../types/wms.types';
+import type { PaginatedResponse } from '../../types/wms.types';
 
 /**
  * Input para listar movimentações

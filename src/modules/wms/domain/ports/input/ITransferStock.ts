@@ -15,11 +15,11 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/dtos/ExecutionContext';
+import type { ExecutionContext } from '../../types/wms.types';
 import type {
   TransferStockInput,
   TransferStockOutput,
-} from '../../../application/dtos/TransferStockDTO';
+} from '../../types/wms.types';
 
 /**
  * Interface Input Port: Transferir Estoque

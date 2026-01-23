@@ -14,11 +14,11 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/dtos/ExecutionContext';
+import type { ExecutionContext } from '../../types/wms.types';
 import type {
   RegisterStockEntryInput,
   RegisterStockEntryOutput,
-} from '../../../application/dtos/RegisterStockEntryDTO';
+} from '../../types/wms.types';
 
 /**
  * Interface Input Port: Registrar Entrada de Estoque
