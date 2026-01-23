@@ -64,9 +64,9 @@ export async function queryWithLimit<T>(
   query: unknown,
   limitCount: number
 ): Promise<T[]> {
-  console.warn(
-    'DEPRECATED: queryWithLimit is deprecated. Use inline type assertion instead. See BP-SQL-004 and LC-303298'
-  );
+  // NOTA: @deprecated annotation acima é detectada por TypeScript e IDEs
+  // Não usar console.warn() em produção (viola checklist pré-commit)
+  // ESLint pode ser configurado para alertar sobre uso de código @deprecated
   return (query as unknown as QueryWithLimit<T>).limit(limitCount);
 }
 
