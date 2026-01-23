@@ -1,54 +1,41 @@
 /**
- * Observability - Central exports
- * 
- * Módulos de observabilidade para AuraCore:
- * - Logger: Logs estruturados em JSON
- * - Metrics: Métricas de performance
- * - Query Logger: Logs de queries SQL
- * - Request ID: Correlação de requests
- * - Request Buffer: Buffer de requests com p50/p95/p99
- * 
+ * Observability Module
+ *
  * @module lib/observability
- * @see E8.1 - Performance & Observability
- * @see E8.5 - Observabilidade p95/p99
+ * @since E8.1 - Performance & Observability
+ * @updated E13 - Performance Optimization
  */
 
-// Logger estruturado
-export { log, type LogLevel } from './logger';
+// Performance Tracker (E13)
+export {
+  performanceTracker,
+  withPerformanceTracking,
+} from './performance-tracker';
 
-// Metrics collector
+export type {
+  PerformanceMetric as RoutePerformanceMetric,
+  PerformanceStats,
+  PerformanceSummary,
+} from './performance-tracker';
+
+// Metrics Collector (E8.1)
 export {
   metricsCollector,
   withMetrics,
   withQueryMetrics,
   withApiMetrics,
   withIntegrationMetrics,
-  type PerformanceMetric,
-  type MetricStats,
-  type MetricType,
 } from './metrics';
 
-// Query logger para Drizzle
-export {
-  queryLogger,
-  queryMetricsBuffer,
-  measureQuery,
-  MeasureQuery,
-  type QueryMetric,
-} from './query-logger';
+export type { PerformanceMetric, MetricStats, MetricType } from './metrics';
 
-// Request ID para correlação
-export { getOrCreateRequestId } from './request-id';
-
-// Request buffer com estatísticas por endpoint
+// Request Buffer
 export {
-  pushRequestLog,
   listRequestLogs,
   listErrorLogs,
   getEndpointStats,
   getTotalRequests,
-  cleanupOldRequests,
-  type RequestLogItem,
-  type EndpointStats,
-  type DiagnosticsResponse,
 } from './request-buffer';
+
+// Logger
+export { log } from './logger';
