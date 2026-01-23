@@ -6,6 +6,20 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    // E14.6: Configuração de pool para evitar worker memory crashes
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        // Limitar workers para reduzir consumo de memória
+        maxForks: 4,
+        minForks: 1,
+        // Isolar cada arquivo de teste para evitar memory leaks
+        isolate: true,
+      },
+    },
+    // Timeout configurado para operações longas
+    testTimeout: 30000,
+    hookTimeout: 30000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

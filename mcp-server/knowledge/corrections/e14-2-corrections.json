@@ -1,0 +1,32 @@
+{
+  "epic": "E14.2",
+  "corrections": [
+    {
+      "id": "LC-167692",
+      "date": "2026-01-23",
+      "epic": "E14.2",
+      "error": "5 bugs críticos: (1) Falta de branchId em todas queries do dashboard, violando multi-tenancy; (2) Coluna total_amount inexistente em fiscal_documents (correto: total_value); (3) Coluna fiscal_status inexistente (correto: status); (4) status='PAID' em accounts_receivable que usa 'RECEIVED'; (5) COALESCE faltando no denominador da margin.gross causando NULL.",
+      "correction": "Dashboard: Adicionado branchId da session, substituído @branchId em 6 queries, corrigido total_amount→total_value, fiscal_status→status. FinancialKPIDataSource: status='PAID'→'RECEIVED' em 5 queries de accounts_receivable, adicionado COALESCE no denominador da margin.gross.",
+      "files_affected": [
+        "src/app/api/dashboard/stats/route.ts",
+        "src/modules/strategic/infrastructure/integrations/FinancialKPIDataSource.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-444464",
+      "date": "2026-01-23",
+      "epic": "E14.2",
+      "error": "Query receivables.overdue filtrava apenas status='OPEN', mas o ReceivableStatus permite transição OPEN→OVERDUE. Recebíveis marcados explicitamente como OVERDUE não eram contabilizados, retornando contagem incompleta.",
+      "correction": "Alterado filtro de status='OPEN' para status IN ('OPEN', 'OVERDUE') para incluir recebíveis que ainda não venceram (OPEN) e os já marcados como atrasados (OVERDUE).",
+      "files_affected": [
+        "src/modules/strategic/infrastructure/integrations/FinancialKPIDataSource.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

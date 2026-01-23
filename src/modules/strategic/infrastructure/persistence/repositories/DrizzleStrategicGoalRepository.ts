@@ -12,7 +12,9 @@ import { strategicGoalTable } from '../schemas/strategic-goal.schema';
 import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository {
   async findById(
     id: string, 

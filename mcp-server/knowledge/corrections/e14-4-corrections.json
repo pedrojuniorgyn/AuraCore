@@ -1,0 +1,21 @@
+{
+  "epic": "E14.4",
+  "corrections": [
+    {
+      "id": "LC-184284",
+      "date": "2026-01-23",
+      "epic": "E14.4",
+      "error": "4 arquivos usando queryWithLimit() helper depreciado que pode causar TypeError: u.limit is not a function. O padrão BP-SQL-004 requer inline type assertion.",
+      "correction": "Substituído queryWithLimit() por inline type assertion em: (1) DrizzleWarRoomMeetingRepository - 1 ocorrência, (2) DrizzleFiscalDocumentRepository - 1 ocorrência, (3) notification-service.ts - 1 ocorrência, (4) DrizzleJournalEntryRepository - 6 ocorrências. Padrão: (query as unknown as QueryWithLimit<T>).limit(n)",
+      "files_affected": [
+        "src/modules/strategic/infrastructure/persistence/repositories/DrizzleWarRoomMeetingRepository.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts",
+        "src/services/notification-service.ts",
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

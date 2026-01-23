@@ -11,7 +11,8 @@
 import { injectable } from '@/shared/infrastructure/di/container';
 import { eq, and, isNull, sql, desc, asc, or, like } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { queryWithLimit } from '@/lib/db/query-helpers';
+// Type helper para .limit() - Drizzle MSSQL typing issue (BP-SQL-004)
+type QueryWithLimit<T> = { limit(n: number): Promise<T[]> };
 import { Result } from '@/shared/domain';
 import { JournalEntry } from '../../domain/entities/JournalEntry';
 import { JournalEntryMapper } from './JournalEntryMapper';
@@ -61,7 +62,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
         )
       );
     
-    const rows = await queryWithLimit<JournalEntryRow>(query, 1);
+    const rows = await (query as unknown as QueryWithLimit<JournalEntryRow>).limit(1);
 
     const row = rows[0];
     if (!row) {
@@ -162,7 +163,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
       .orderBy(orderFn(orderColumn))
       .offset(offsetValue);
     
-    const rows = await queryWithLimit<JournalEntryRow>(baseQuery, pageSize);
+    const rows = await (baseQuery as unknown as QueryWithLimit<JournalEntryRow>).limit(pageSize);
 
     // Mapear para domain (sem lines por performance)
     const entries: JournalEntry[] = [];
@@ -194,7 +195,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
       .from(journalEntriesTable)
       .where(eq(journalEntriesTable.id, entry.id));
     
-    const existing = await queryWithLimit<{ id: string }>(existQuery, 1);
+    const existing = await (existQuery as unknown as QueryWithLimit<{ id: string }>).limit(1);
 
     if (existing.length > 0) {
       // UPDATE
@@ -294,7 +295,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
         )
       );
     
-    const rows = await queryWithLimit<JournalEntryRow>(query, 1);
+    const rows = await (query as unknown as QueryWithLimit<JournalEntryRow>).limit(1);
 
     const row = rows[0];
     if (!row) {
@@ -335,7 +336,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
         )
       );
     
-    const rows = await queryWithLimit<{ id: string }>(query, 1);
+    const rows = await (query as unknown as QueryWithLimit<{ id: string }>).limit(1);
 
     return rows.length > 0;
   }
@@ -359,7 +360,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
       )
       .orderBy(desc(journalEntriesTable.entryNumber));
     
-    const result = await queryWithLimit<{ entryNumber: string }>(query, 1);
+    const result = await (query as unknown as QueryWithLimit<{ entryNumber: string }>).limit(1);
 
     let nextSeq = 1;
     if (result.length > 0 && result[0].entryNumber) {

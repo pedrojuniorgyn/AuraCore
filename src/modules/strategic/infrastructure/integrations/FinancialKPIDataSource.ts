@@ -21,52 +21,75 @@ export class FinancialKPIDataSource implements IKPIDataSource {
   readonly moduleName = 'financial';
 
   private readonly queries: Record<string, string> = {
+    // Receita mensal: soma de recebimentos RECEBIDOS no mês corrente
+    // NOTA: accounts_receivable usa 'RECEIVED' (não 'PAID') - ver schema linha 746
     'revenue.monthly': `
-      SELECT COALESCE(SUM(CAST(total_amount AS DECIMAL(18,2))), 0) as value
-      FROM financial_titles
+      SELECT COALESCE(SUM(CAST(amount AS DECIMAL(18,2))), 0) as value
+      FROM accounts_receivable
       WHERE organization_id = @orgId AND branch_id = @branchId
-        AND type = 'RECEIVABLE'
-        AND status = 'PAID'
-        AND MONTH(payment_date) = MONTH(GETDATE())
-        AND YEAR(payment_date) = YEAR(GETDATE())
+        AND status = 'RECEIVED'
+        AND MONTH(receive_date) = MONTH(GETDATE())
+        AND YEAR(receive_date) = YEAR(GETDATE())
         AND deleted_at IS NULL
     `,
+    // EBITDA mensal: receitas - despesas do mês corrente
+    // accounts_receivable usa 'RECEIVED', accounts_payable usa 'PAID'
     'ebitda.monthly': `
       SELECT 
         COALESCE(
-          (SELECT COALESCE(SUM(CAST(total_amount AS DECIMAL(18,2))), 0) FROM financial_titles 
+          (SELECT COALESCE(SUM(CAST(amount AS DECIMAL(18,2))), 0) FROM accounts_receivable 
            WHERE organization_id = @orgId AND branch_id = @branchId
-             AND type = 'RECEIVABLE' AND status = 'PAID' 
-             AND MONTH(payment_date) = MONTH(GETDATE())
-             AND YEAR(payment_date) = YEAR(GETDATE())
+             AND status = 'RECEIVED' 
+             AND MONTH(receive_date) = MONTH(GETDATE())
+             AND YEAR(receive_date) = YEAR(GETDATE())
              AND deleted_at IS NULL)
           -
-          (SELECT COALESCE(SUM(CAST(total_amount AS DECIMAL(18,2))), 0) FROM financial_titles
+          (SELECT COALESCE(SUM(CAST(amount AS DECIMAL(18,2))), 0) FROM accounts_payable
            WHERE organization_id = @orgId AND branch_id = @branchId
-             AND type = 'PAYABLE' AND status = 'PAID'
-             AND MONTH(payment_date) = MONTH(GETDATE())
-             AND YEAR(payment_date) = YEAR(GETDATE())
+             AND status = 'PAID'
+             AND MONTH(pay_date) = MONTH(GETDATE())
+             AND YEAR(pay_date) = YEAR(GETDATE())
              AND deleted_at IS NULL)
         , 0) as value
     `,
+    // Margem bruta: (receitas - despesas) / receitas * 100
+    // COALESCE no denominador para evitar divisão por NULL
     'margin.gross': `
       SELECT 
         CASE 
-          WHEN COALESCE(SUM(CASE WHEN type = 'RECEIVABLE' THEN CAST(total_amount AS DECIMAL(18,2)) ELSE 0 END), 0) > 0 
+          WHEN COALESCE(
+            (SELECT SUM(CAST(amount AS DECIMAL(18,2))) FROM accounts_receivable 
+             WHERE organization_id = @orgId AND branch_id = @branchId
+               AND status = 'RECEIVED'
+               AND MONTH(receive_date) = MONTH(GETDATE())
+               AND YEAR(receive_date) = YEAR(GETDATE())
+               AND deleted_at IS NULL), 0) > 0 
           THEN (
-            (SUM(CASE WHEN type = 'RECEIVABLE' THEN CAST(total_amount AS DECIMAL(18,2)) ELSE 0 END) 
-             - SUM(CASE WHEN type = 'PAYABLE' THEN CAST(total_amount AS DECIMAL(18,2)) ELSE 0 END))
-            / SUM(CASE WHEN type = 'RECEIVABLE' THEN CAST(total_amount AS DECIMAL(18,2)) ELSE 0 END)
+            (SELECT COALESCE(SUM(CAST(amount AS DECIMAL(18,2))), 0) FROM accounts_receivable 
+             WHERE organization_id = @orgId AND branch_id = @branchId
+               AND status = 'RECEIVED'
+               AND MONTH(receive_date) = MONTH(GETDATE())
+               AND YEAR(receive_date) = YEAR(GETDATE())
+               AND deleted_at IS NULL)
+            -
+            (SELECT COALESCE(SUM(CAST(amount AS DECIMAL(18,2))), 0) FROM accounts_payable 
+             WHERE organization_id = @orgId AND branch_id = @branchId
+               AND status = 'PAID'
+               AND MONTH(pay_date) = MONTH(GETDATE())
+               AND YEAR(pay_date) = YEAR(GETDATE())
+               AND deleted_at IS NULL)
+          ) / COALESCE(
+            (SELECT SUM(CAST(amount AS DECIMAL(18,2))) FROM accounts_receivable 
+             WHERE organization_id = @orgId AND branch_id = @branchId
+               AND status = 'RECEIVED'
+               AND MONTH(receive_date) = MONTH(GETDATE())
+               AND YEAR(receive_date) = YEAR(GETDATE())
+               AND deleted_at IS NULL), 1
           ) * 100
           ELSE 0
         END as value
-      FROM financial_titles
-      WHERE organization_id = @orgId AND branch_id = @branchId
-        AND status = 'PAID'
-        AND MONTH(payment_date) = MONTH(GETDATE())
-        AND YEAR(payment_date) = YEAR(GETDATE())
-        AND deleted_at IS NULL
     `,
+    // Saldo em caixa: soma dos saldos das contas bancárias ativas
     'cash.balance': `
       SELECT COALESCE(SUM(CAST(current_balance AS DECIMAL(18,2))), 0) as value
       FROM bank_accounts
@@ -74,12 +97,14 @@ export class FinancialKPIDataSource implements IKPIDataSource {
         AND is_active = 1
         AND deleted_at IS NULL
     `,
+    // Recebíveis em atraso: contas a receber não-terminais com vencimento passado
+    // Status válidos: OPEN (ainda não marcado), OVERDUE (marcado explicitamente)
+    // Exclui: RECEIVED, CANCELLED (terminais), PARTIAL, PROCESSING (em andamento)
     'receivables.overdue': `
-      SELECT COALESCE(SUM(CAST(total_amount AS DECIMAL(18,2))), 0) as value
-      FROM financial_titles
+      SELECT COALESCE(SUM(CAST(amount AS DECIMAL(18,2))), 0) as value
+      FROM accounts_receivable
       WHERE organization_id = @orgId AND branch_id = @branchId
-        AND type = 'RECEIVABLE'
-        AND status = 'PENDING'
+        AND status IN ('OPEN', 'OVERDUE')
         AND due_date < GETDATE()
         AND deleted_at IS NULL
     `,

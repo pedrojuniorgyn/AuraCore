@@ -12,7 +12,9 @@ import { actionPlanTable } from '../schemas/action-plan.schema';
 import { db } from '@/lib/db';
 import { queryPaginated, queryFirst } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleActionPlanRepository implements IActionPlanRepository {
   async getNextCode(organizationId: number, branchId: number): Promise<string> {
     // Buscar último código do ano atual para gerar sequencial

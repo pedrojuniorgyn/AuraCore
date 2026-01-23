@@ -13,9 +13,11 @@ import { WarRoomMeeting, type MeetingType, type MeetingStatus } from '../../../d
 import { WarRoomMeetingMapper } from '../mappers/WarRoomMeetingMapper';
 import { warRoomMeetingTable } from '../schemas/war-room-meeting.schema';
 import { db } from '@/lib/db';
-import { queryPaginated, queryWithLimit } from '@/lib/db/query-helpers';
+import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleWarRoomMeetingRepository implements IWarRoomMeetingRepository {
   async findById(
     id: string, 
@@ -135,22 +137,25 @@ export class DrizzleWarRoomMeetingRepository implements IWarRoomMeetingRepositor
   ): Promise<WarRoomMeeting[]> {
     const now = new Date();
     
-    const rows = await queryWithLimit<typeof warRoomMeetingTable.$inferSelect>(
-      db
-        .select()
-        .from(warRoomMeetingTable)
-        .where(
-          and(
-            eq(warRoomMeetingTable.organizationId, organizationId),
-            eq(warRoomMeetingTable.branchId, branchId),
-            eq(warRoomMeetingTable.status, 'SCHEDULED'),
-            gte(warRoomMeetingTable.scheduledAt, now),
-            isNull(warRoomMeetingTable.deletedAt)
-          )
+    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
+    type MeetingRow = typeof warRoomMeetingTable.$inferSelect;
+    type QueryWithLimit = { limit(n: number): Promise<MeetingRow[]> };
+    
+    const baseQuery = db
+      .select()
+      .from(warRoomMeetingTable)
+      .where(
+        and(
+          eq(warRoomMeetingTable.organizationId, organizationId),
+          eq(warRoomMeetingTable.branchId, branchId),
+          eq(warRoomMeetingTable.status, 'SCHEDULED'),
+          gte(warRoomMeetingTable.scheduledAt, now),
+          isNull(warRoomMeetingTable.deletedAt)
         )
-        .orderBy(asc(warRoomMeetingTable.scheduledAt)),
-      limit
-    );
+      )
+      .orderBy(asc(warRoomMeetingTable.scheduledAt));
+    
+    const rows = await (baseQuery as unknown as QueryWithLimit).limit(limit);
 
     return rows
       .map(row => WarRoomMeetingMapper.toDomain(row))

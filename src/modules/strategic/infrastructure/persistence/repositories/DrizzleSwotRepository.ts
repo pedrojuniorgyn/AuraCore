@@ -15,7 +15,9 @@ import { swotAnalysisTable } from '../schemas/swot-analysis.schema';
 import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleSwotRepository implements ISwotAnalysisRepository {
   async findById(
     id: string, 

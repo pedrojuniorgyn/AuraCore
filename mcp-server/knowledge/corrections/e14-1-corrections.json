@@ -1,0 +1,19 @@
+{
+  "epic": "E14.1",
+  "corrections": [
+    {
+      "id": "LC-693162",
+      "date": "2026-01-23",
+      "epic": "E14.1",
+      "error": "Queries SQL usavam tabela inexistente 'financial_titles' com coluna 'total_amount' e filtro 'type'. As tabelas corretas são 'accounts_payable' e 'accounts_receivable' com coluna 'amount' e datas específicas (pay_date/receive_date).",
+      "correction": "Substituídas todas queries para usar tabelas corretas: accounts_payable (para despesas) e accounts_receivable (para receitas). Corrigidas colunas: total_amount → amount, payment_date → pay_date/receive_date, status PENDING → OPEN. Removido filtro type (não existe nas tabelas separadas).",
+      "files_affected": [
+        "src/modules/strategic/infrastructure/integrations/FinancialKPIDataSource.ts",
+        "src/app/api/dashboard/stats/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

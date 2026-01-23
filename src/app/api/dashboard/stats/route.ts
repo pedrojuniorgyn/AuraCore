@@ -29,26 +29,27 @@ export async function GET() {
   try {
     const session = await auth();
     const organizationId = (session?.user as { organizationId?: number })?.organizationId ?? 1;
+    const branchId = (session?.user as { branchId?: number })?.branchId ?? 1;
 
     // Query para buscar estatísticas agregadas
+    // NOTA: Cada subquery filtra por organization_id E branch_id (multi-tenancy obrigatório)
     const statsQuery = `
-      -- Parceiros ativos (business_partners é o nome correto da tabela)
       SELECT 
-        (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND status = 'ACTIVE' AND deleted_at IS NULL) as parceiros,
-        (SELECT COUNT(*) FROM products WHERE organization_id = @orgId AND deleted_at IS NULL) as produtos,
-        (SELECT COUNT(*) FROM fiscal_documents WHERE organization_id = @orgId AND document_type IN ('NFE', 'NFCE') AND deleted_at IS NULL AND created_at >= DATEADD(day, -30, GETDATE())) as nfes,
-        (SELECT COUNT(*) FROM financial_titles WHERE organization_id = @orgId AND status = 'OPEN' AND type = 'PAYABLE' AND deleted_at IS NULL) as contas_aberto,
-        (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND status = 'ACTIVE' AND deleted_at IS NULL AND created_at >= DATEADD(month, -1, GETDATE())) as novos_parceiros
+        (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND branch_id = @branchId AND status = 'ACTIVE' AND deleted_at IS NULL) as parceiros,
+        (SELECT COUNT(*) FROM products WHERE organization_id = @orgId AND branch_id = @branchId AND deleted_at IS NULL) as produtos,
+        (SELECT COUNT(*) FROM fiscal_documents WHERE organization_id = @orgId AND branch_id = @branchId AND document_type IN ('NFE', 'NFCE') AND created_at >= DATEADD(day, -30, GETDATE())) as nfes,
+        (SELECT COUNT(*) FROM accounts_payable WHERE organization_id = @orgId AND branch_id = @branchId AND status = 'OPEN' AND deleted_at IS NULL) as contas_aberto,
+        (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND branch_id = @branchId AND status = 'ACTIVE' AND deleted_at IS NULL AND created_at >= DATEADD(month, -1, GETDATE())) as novos_parceiros
     `;
 
-    // Query para receita do mês
+    // Query para receita do mês (fiscal_documents usa total_value e status, não tem deleted_at)
     const receitaQuery = `
-      SELECT ISNULL(SUM(total_amount), 0) as receita
+      SELECT ISNULL(SUM(total_value), 0) as receita
       FROM fiscal_documents 
       WHERE organization_id = @orgId 
+        AND branch_id = @branchId
         AND document_type IN ('NFE', 'NFCE') 
-        AND fiscal_status = 'AUTHORIZED'
-        AND deleted_at IS NULL
+        AND status = 'AUTHORIZED'
         AND created_at >= DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)
     `;
 
@@ -62,8 +63,12 @@ export async function GET() {
     };
 
     try {
-      // Tentar buscar estatísticas
-      const statsResult = await pool.query(statsQuery.replace(/@orgId/g, String(organizationId)));
+      // Substituir parâmetros de multi-tenancy (organizationId + branchId)
+      const replaceParams = (query: string) => 
+        query.replace(/@orgId/g, String(organizationId)).replace(/@branchId/g, String(branchId));
+
+      // Buscar estatísticas agregadas
+      const statsResult = await pool.query(replaceParams(statsQuery));
       const statsData = (statsResult.recordset || statsResult) as Array<Record<string, number>>;
       
       if (statsData[0]) {
@@ -74,7 +79,8 @@ export async function GET() {
         stats.novosParceiros = statsData[0].novos_parceiros ?? 0;
       }
 
-      const receitaResult = await pool.query(receitaQuery.replace(/@orgId/g, String(organizationId)));
+      // Buscar receita do mês
+      const receitaResult = await pool.query(replaceParams(receitaQuery));
       const receitaData = (receitaResult.recordset || receitaResult) as Array<Record<string, number>>;
       
       if (receitaData[0]) {

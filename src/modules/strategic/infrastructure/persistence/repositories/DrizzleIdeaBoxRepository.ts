@@ -12,7 +12,9 @@ import { ideaBoxTable } from '../schemas/idea-box.schema';
 import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleIdeaBoxRepository implements IIdeaBoxRepository {
   async findById(
     id: string, 

@@ -12,7 +12,9 @@ import { actionPlanFollowUpTable } from '../schemas/action-plan-follow-up.schema
 import { db } from '@/lib/db';
 import { queryPaginated, queryFirst } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleActionPlanFollowUpRepository implements IActionPlanFollowUpRepository {
   async getNextFollowUpNumber(actionPlanId: string): Promise<number> {
     const result = await db

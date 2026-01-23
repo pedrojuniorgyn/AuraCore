@@ -12,7 +12,9 @@ import { strategyTable } from '../schemas/strategy.schema';
 import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DrizzleStrategyRepository implements IStrategyRepository {
   async findById(
     id: string, 

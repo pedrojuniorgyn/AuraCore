@@ -12,7 +12,6 @@ import { FiscalDocument } from '../../domain/entities/FiscalDocument';
 import { DocumentType } from '../../domain/value-objects/DocumentType';
 import { FiscalDocumentMapper, FiscalDocumentPersistence } from './FiscalDocumentMapper';
 import { fiscalDocuments, fiscalDocumentItems } from './FiscalDocumentSchema';
-import { queryWithLimit } from '@/lib/db/query-helpers';
 
 /**
  * Implementation: IFiscalDocumentRepository using Drizzle ORM
@@ -159,7 +158,9 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
       .orderBy(fiscalDocuments.createdAt)
       .offset(offset);
     
-    const rows = (await queryWithLimit(baseQuery, pagination.pageSize)) as FiscalDocumentPersistence[];
+    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
+    type QueryWithLimit = { limit(n: number): Promise<FiscalDocumentPersistence[]> };
+    const rows = await (baseQuery as unknown as QueryWithLimit).limit(pagination.pageSize);
 
     // Buscar items de todos os documentos em batch
     const documentIds = rows.map((row) => row.id);
