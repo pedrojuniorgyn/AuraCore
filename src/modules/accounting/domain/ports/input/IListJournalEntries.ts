@@ -14,8 +14,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/use-cases/BaseUseCase';
-import type { PaginatedJournalEntriesDTO } from '../../../application/dtos/JournalEntryResponseDTO';
+import type { ExecutionContext, PaginatedJournalEntries } from '../../types/journal-entry.types';
 
 /**
  * Input para listagem de lançamentos
@@ -59,5 +58,5 @@ export interface IListJournalEntries {
   execute(
     input: ListJournalEntriesInput,
     ctx: ExecutionContext
-  ): Promise<Result<PaginatedJournalEntriesDTO, string>>;
+  ): Promise<Result<PaginatedJournalEntries, string>>;
 }

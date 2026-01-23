@@ -10,15 +10,16 @@
  * - Source indica origem (MANUAL, PAYMENT, RECEIPT, FISCAL_DOC, etc)
  * - Multi-tenancy: organizationId + branchId obrigatórios
  *
+ * @see ARCH-001: Domain não importa de Application
  * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/use-cases/BaseUseCase';
 import type {
+  ExecutionContext,
   CreateJournalEntryInput,
   CreateJournalEntryOutput,
-} from '../../../application/dtos/CreateJournalEntryDTO';
+} from '../../types/journal-entry.types';
 
 /**
  * Interface Input Port: Criar Lançamento Contábil

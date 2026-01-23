@@ -10,15 +10,16 @@
  * - EntryType define se é DEBIT ou CREDIT
  * - Multi-tenancy: validação de branchId
  *
+ * @see ARCH-001: Domain não importa de Application
  * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/use-cases/BaseUseCase';
 import type {
+  ExecutionContext,
   AddLineInput,
   AddLineOutput,
-} from '../../../application/dtos/AddLineDTO';
+} from '../../types/journal-entry.types';
 
 /**
  * Interface Input Port: Adicionar Linha ao Lançamento

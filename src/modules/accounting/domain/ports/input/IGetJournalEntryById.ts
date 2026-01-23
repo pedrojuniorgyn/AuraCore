@@ -13,8 +13,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/use-cases/BaseUseCase';
-import type { JournalEntryResponseDTO } from '../../../application/dtos/JournalEntryResponseDTO';
+import type { ExecutionContext, JournalEntryResponse } from '../../types/journal-entry.types';
 
 /**
  * Input para buscar lançamento por ID
@@ -38,5 +37,5 @@ export interface IGetJournalEntryById {
   execute(
     input: GetJournalEntryByIdInput,
     ctx: ExecutionContext
-  ): Promise<Result<JournalEntryResponseDTO, string>>;
+  ): Promise<Result<JournalEntryResponse, string>>;
 }

@@ -15,7 +15,7 @@
  */
 
 import type { Result } from '@/shared/domain';
-import type { ExecutionContext } from '../../../application/use-cases/BaseUseCase';
+import type { ExecutionContext } from '../../types/journal-entry.types';
 
 /**
  * Input para reverter lançamento contábil
