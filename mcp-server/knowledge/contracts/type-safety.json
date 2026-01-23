@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.64",
+  "version": "2.0.67",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1168,6 +1168,53 @@
         "docs/database/migrations/manual/e13-enable-query-store.sql",
         "docs/database/queries/e13-top-queries.sql",
         "docs/architecture/performance/E13-PERFORMANCE-BASELINE.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-331503",
+      "date": "2026-01-23",
+      "epic": "E13",
+      "error": "Performance degradation in core routes (DRE, fiscal listings, dashboard) - Fases 2, 4, 5",
+      "correction": "Strategic SQL indexing (18 indexes) + LRU caching (5000 entries, TTL by type) + Benchmark validation",
+      "files_affected": [
+        "docs/database/migrations/manual/e13-indexes-batch1-financial.sql",
+        "docs/database/migrations/manual/e13-indexes-batch2-fiscal.sql",
+        "docs/database/migrations/rollback/e13-rollback-indexes.sql",
+        "src/lib/cache/CacheManager.ts",
+        "tests/unit/lib/cache/CacheManager.test.ts",
+        "src/app/api/admin/cache/stats/route.ts",
+        "scripts/e13-benchmark.ts",
+        "docs/architecture/performance/E13-FINAL-REPORT.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-442836",
+      "date": "2026-01-23",
+      "epic": "E13",
+      "error": "Bug 1: Unnecessary LRU cache eviction when updating existing keys causing cache slot wastage. Bug 2: Complete cache bypass for falsy values (null/0/false) due to incorrect null check in getOrSet()",
+      "correction": "Bug 1: Added existence check in set() to detect updates vs inserts, preserve hit count and createdAt. Bug 2: Implemented CACHE_MISS Symbol sentinel pattern to distinguish cache miss from legitimate falsy values.",
+      "files_affected": [
+        "src/lib/cache/CacheManager.ts",
+        "tests/unit/lib/cache/CacheManager.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-444845",
+      "date": "2026-01-23",
+      "epic": "E13",
+      "error": "Bug 3: SECURITY - Weak authentication in cache stats endpoint only checked if authorization header existed but never validated its content, allowing unauthorized access",
+      "correction": "Implemented proper API Key validation with constant-time comparison to prevent timing attacks, added audit logging for all access attempts, secured all methods (GET/POST/DELETE)",
+      "files_affected": [
+        "src/app/api/admin/cache/stats/route.ts"
       ],
       "pattern_created": null,
       "status": "APPROVED",
