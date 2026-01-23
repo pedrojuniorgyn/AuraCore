@@ -1404,4 +1404,382 @@ grep -rn "padrão" src/ --include="*.ts" | cut -d: -f1 | sort | uniq -c | sort -
 
 ---
 
-**FIM DAS REGRAS v3.0 - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
+## 🏆 MELHORES PRÁTICAS ENTERPRISE IDENTIFICADAS (Auditoria 22/01/2026)
+
+### ARQUITETURA DDD/HEXAGONAL
+
+✅ **BP-ARCH-001: Arquitetura Híbrida Inteligente**
+- **Descrição:** Usar padrão certo para cada complexidade
+- **Aplicação:**
+  - Vertical Slice (46%) para CRUDs simples
+  - Functional Core (12%) para cálculos puros
+  - Hexagonal Lite (7%) para operações médias
+  - Hexagonal + DDD (35%) para complexidade alta
+- **Exemplo:** Não usar DDD completo para um simples list de produtos
+- **Prioridade:** ALTA
+
+✅ **BP-ARCH-002: Separação de Camadas Clara**
+- **Descrição:** Domain ZERO dependências externas
+- **Aplicação:**
+  - Domain: Apenas lógica de negócio
+  - Application: Orquestração de Use Cases
+  - Infrastructure: Implementa interfaces do Domain
+  - Presentation: Validação e chamada de Use Cases
+- **Verificação:** `grep -r "import.*infrastructure" src/modules/*/domain/`
+- **Prioridade:** CRÍTICA
+
+✅ **BP-ARCH-003: Result Pattern para Controle de Fluxo**
+- **Descrição:** Usar Result<T, E> ao invés de exceptions
+- **Aplicação:**
+```typescript
+  // ✅ CORRETO
+  const result = Money.create(100);
+  if (Result.isFail(result)) {
+    return result.error;
+  }
+  
+  // ❌ ERRADO
+  try {
+    const money = new Money(100);
+  } catch (e) {
+    // ...
+  }
+```
+- **Prioridade:** ALTA
+
+✅ **BP-ARCH-004: Factory Pattern para Criação de Entities**
+- **Descrição:** Usar factory method create() estático
+- **Aplicação:**
+```typescript
+  // ✅ CORRETO
+  static create(props: Props): Result<Entity, string> {
+    // validações
+    return Result.ok(new Entity(props));
+  }
+  
+  // ❌ ERRADO
+  constructor(props: Props) {
+    this.validate(props); // validação no constructor
+  }
+```
+- **Prioridade:** ALTA
+
+✅ **BP-ARCH-005: Strategy Pattern para Tax Engine**
+- **Descrição:** Usar Strategy para lógica que muda com contexto
+- **Aplicação:** TaxEngineFactory retorna engine correto por data (atual vs. reforma 2026)
+- **Prioridade:** MÉDIA
+
+✅ **BP-ARCH-006: DI Registration Pattern**
+- **Descrição:** Todo Use Case DEVE ser registrado no DI Container do módulo
+- **Aplicação:**
+  1. Definir token em `tokens.ts`: `Symbol.for('IUseCase')`
+  2. Importar Use Case em `{Module}Module.ts`
+  3. Registrar: `container.registerSingleton(TOKEN, UseCase)`
+  4. Inicializar módulo em `instrumentation.ts`
+- **Verificação:** `grep -n "register.*UseCase" src/modules/*/infrastructure/di/*.ts`
+- **Prioridade:** CRÍTICA
+- **Exemplo:** Strategic Module registra 18 use cases + 9 repositories + 2 integrations
+
+### TYPESCRIPT
+
+✅ **BP-TS-001: Type Safety Rigorosa**
+- **Descrição:** NUNCA usar 'any', SEMPRE tipar retornos
+- **Verificação:** `grep -rn "as any|: any" src/`
+- **Prioridade:** CRÍTICA
+
+✅ **BP-TS-002: SOLID Principles**
+- **Single Responsibility:** Uma classe, uma responsabilidade
+- **Open/Closed:** Extensível via Factory/Strategy
+- **Liskov Substitution:** Interfaces de Repositories
+- **Interface Segregation:** Ports específicos (input/output)
+- **Dependency Inversion:** DI via tsyringe
+- **Prioridade:** ALTA
+
+✅ **BP-TS-003: Imutabilidade em Value Objects**
+- **Descrição:** Object.freeze em VOs, sem setters em Entities
+- **Aplicação:**
+```typescript
+  constructor(props: Props) {
+    super(props);
+    Object.freeze(this); // VO imutável
+  }
+```
+- **Prioridade:** ALTA
+
+### SQL/DATABASE
+
+✅ **BP-SQL-001: Índices Compostos Multi-Tenant**
+- **Descrição:** Sempre criar índice (organization_id, branch_id)
+- **Aplicação:**
+```typescript
+  (table) => ({
+    tenantIdx: index('idx_table_tenant').on(
+      table.organizationId, 
+      table.branchId
+    ),
+  })
+```
+- **Prioridade:** CRÍTICA
+
+✅ **BP-SQL-002: Money com 2 Colunas**
+- **Descrição:** amount DECIMAL + currency VARCHAR(3)
+- **Aplicação:**
+```typescript
+  amount: decimal('amount', { precision: 18, scale: 2 }),
+  amountCurrency: varchar('amount_currency', { length: 3 }).default('BRL'),
+```
+- **Prioridade:** ALTA
+
+✅ **BP-SQL-003: Soft Delete Obrigatório**
+- **Descrição:** deletedAt datetime2 NULL ao invés de DELETE físico
+- **Aplicação:** Sempre filtrar `WHERE deleted_at IS NULL`
+- **Prioridade:** ALTA
+
+✅ **BP-SQL-004: Drizzle Pagination SQL Server**
+- **Descrição:** Usar inline type assertion para .limit() ao invés de helper
+- **Proibido:** `queryWithLimit(query, limit)` → helper pode falhar em runtime
+- **Correto:**
+```typescript
+  const baseQuery = db.select().from(table).where(...);
+  type QueryWithLimit = { limit(n: number): Promise<Row[]> };
+  const results = await (baseQuery as unknown as QueryWithLimit).limit(limit);
+```
+- **Razão:** Helper adiciona camada de indireção que pode falhar. Inline type assertion é mais explícito e debugável.
+- **Prioridade:** ALTA
+- **Referência:** LC-303298 (22/01/2026)
+
+### SEGURANÇA
+
+✅ **BP-SEC-001: Cookie HttpOnly para Branch**
+- **Descrição:** Filial ativa via cookie, não localStorage
+- **Aplicação:** Middleware injeta x-branch-id automaticamente
+- **Prioridade:** CRÍTICA
+
+✅ **BP-SEC-002: resolveBranchIdOrThrow**
+- **Descrição:** Validar acesso a filial sempre
+- **Aplicação:** Usar helper centralizado ao invés de código duplicado
+- **Prioridade:** CRÍTICA
+
+✅ **BP-SEC-003: RBAC Granular**
+- **Descrição:** Permissões específicas (fiscal.cte.create)
+- **Aplicação:** hasPermission verificado em TODAS as rotas
+- **Prioridade:** ALTA
+
+---
+
+## ⛔ GAPS IDENTIFICADOS E PROIBIDOS (Auditoria 22/01/2026)
+
+### ARQUITETURA
+
+❌ **GAP-ARCH-001: Entity Anêmica**
+- **Problema:** Entity sem comportamento (apenas getters/setters)
+- **Proibido:**
+```typescript
+  // ❌ PROIBIDO
+  class AccountPayable {
+    id: string;
+    amount: number;
+    setAmount(value: number) { this.amount = value; }
+  }
+```
+- **Correto:**
+```typescript
+  // ✅ CORRETO
+  class AccountPayable extends AggregateRoot {
+    pay(amount: Money, date: Date): Result {
+      if (this.status !== 'OPEN') {
+        return Result.fail('Cannot pay non-open account');
+      }
+      // ...
+    }
+  }
+```
+- **Verificação:** Toda Entity DEVE ter métodos de negócio
+- **Severidade:** CRÍTICA
+
+❌ **GAP-ARCH-002: Domain Importando Infrastructure**
+- **Problema:** Quebra separação de camadas
+- **Proibido:** `import { DrizzleRepository } from '../infrastructure'` em domain/
+- **Verificação:** `grep -r "import.*infrastructure" src/modules/*/domain/`
+- **Severidade:** CRÍTICA
+
+❌ **GAP-ARCH-003: Falta de Aggregate Design Guidelines**
+- **Problema:** Inconsistência entre Aggregate Root vs. Entity
+- **Proibido:** Usar Entity quando deveria ser Aggregate
+- **Referência:** Ver docs/architecture/E7_DDD_HEXAGONAL_HIBRIDO.md
+- **Severidade:** MÉDIA
+
+❌ **GAP-ARCH-004: Use Case Não Registrado no DI**
+- **Problema:** Use Case criado mas não registrado no container
+- **Sintomas:** "Attempted to resolve unregistered dependency token"
+- **Prevenção:**
+  1. Criar Use Case
+  2. Adicionar token em tokens.ts
+  3. Registrar em {Module}Module.ts
+  4. Verificar: `grep -n "registerSingleton.*UseCase" src/modules/*/infrastructure/di/*.ts`
+- **Severidade:** CRÍTICA
+- **Correção:** Sempre seguir fluxo completo de criação de Use Case
+
+### TYPESCRIPT
+
+❌ **GAP-TS-001: Branded Types Ausentes**
+- **Problema:** IDs podem ser confundidos (productId vs. userId)
+- **Proibido:**
+```typescript
+  // ❌ PROIBIDO
+  function getProduct(id: string): Product
+  function getUser(id: string): User
+  // Pode passar userId para getProduct sem erro de compilação
+```
+- **Correto:**
+```typescript
+  // ✅ CORRETO
+  type ProductId = string & { readonly brand: unique symbol };
+  type UserId = string & { readonly brand: unique symbol };
+  function getProduct(id: ProductId): Product
+```
+- **Severidade:** ALTA
+
+❌ **GAP-TS-002: Error Handling Inconsistente**
+- **Problema:** Misturar throw com Result
+- **Proibido:** `throw new Error()` em domain/application
+- **Correto:** Sempre retornar `Result<T, string>`
+- **Severidade:** ALTA
+
+❌ **GAP-TS-003: Falta Validação Runtime (Zod)**
+- **Problema:** Tipos são compile-time, externos podem violar
+- **Proibido:** Confiar em tipos para dados de API/DB
+- **Correto:**
+```typescript
+  const schema = z.object({
+    organizationId: z.number().positive(),
+    branchId: z.number().positive(),
+  });
+  const validated = schema.parse(input);
+```
+- **Severidade:** ALTA
+
+### SQL/DATABASE
+
+❌ **GAP-SQL-001: Row-Level Security Ausente**
+- **Problema:** Multi-tenancy apenas via código
+- **Proibido:** Confiar apenas em WHERE organizationId
+- **Correto:** Implementar RLS (quando disponível no SQL Server)
+- **Severidade:** CRÍTICA
+
+❌ **GAP-SQL-002: Backup/Recovery SLA Indefinido**
+- **Problema:** Sem plano claro de RPO/RTO
+- **Proibido:** Produção sem política de backup
+- **Correto:** Criar RUNBOOK_BACKUP_RECOVERY.md (RPO=1h, RTO=4h)
+- **Severidade:** CRÍTICA
+
+❌ **GAP-SQL-003: Índices sem WHERE deleted_at IS NULL**
+- **Problema:** Índices incluem linhas deletadas
+- **Proibido:**
+```sql
+  -- ❌ PROIBIDO
+  CREATE INDEX idx_org ON table(organization_id);
+```
+- **Correto:**
+```sql
+  -- ✅ CORRETO
+  CREATE INDEX idx_org ON table(organization_id) 
+  WHERE deleted_at IS NULL;
+```
+- **Severidade:** MÉDIA
+
+❌ **GAP-SQL-004: Data Retention Indefinida**
+- **Problema:** Soft-deleted data cresce forever
+- **Proibido:** Manter deleted_at sem purge
+- **Correto:** Job de purge (ex.: deletar após 7 anos)
+- **Severidade:** BAIXA
+
+❌ **GAP-SQL-005: Drizzle queryWithLimit Helper**
+- **Problema:** Usar helper queryWithLimit que pode falhar em runtime
+- **Sintoma:** `TypeError: e.limit is not a function`
+- **Proibido:**
+```typescript
+  import { queryWithLimit } from '@/lib/db/query-helpers';
+  queryWithLimit(query, limit);
+```
+- **Correto:**
+```typescript
+  type QueryWithLimit = { limit(n: number): Promise<T[]> };
+  const results = await (query as unknown as QueryWithLimit).limit(limit);
+```
+- **Detecção:** `grep -rn 'queryWithLimit' src/app/api`
+- **Arquivos Afetados:**
+  - `src/app/api/notifications/route.ts` (✅ corrigido LC-303298)
+  - `src/app/api/financial/bank-transactions/route.ts` (⚠️ pendente)
+  - `src/app/api/products/route.ts` (⚠️ pendente)
+- **Ação Requerida:** Substituir queryWithLimit por inline type assertion em todos arquivos API
+- **Severidade:** MÉDIA
+- **Referência:** LC-303298 (22/01/2026)
+
+### SEGURANÇA
+
+❌ **GAP-SEC-001: Rate Limit Global (não por Tenant)**
+- **Problema:** Um tenant pode esgotar recursos
+- **Proibido:** Rate limit apenas por IP
+- **Correto:** Rate limit POR organizationId
+- **Severidade:** CRÍTICA
+
+❌ **GAP-SEC-002: Dados Sensíveis em Plaintext**
+- **Problema:** Certificados digitais sem criptografia
+- **Proibido:** Armazenar certificados/senhas em plaintext
+- **Correto:** SQL Server Always Encrypted ou encrypt em app
+- **Severidade:** CRÍTICA
+
+❌ **GAP-SEC-003: 2FA Ausente**
+- **Problema:** Apenas senha (single factor)
+- **Proibido:** Produção sem 2FA para admin
+- **Correto:** Implementar TOTP (Google Authenticator)
+- **Severidade:** ALTA
+
+❌ **GAP-SEC-004: Sem Detecção de Anomalias**
+- **Problema:** Ataques podem passar despercebidos
+- **Proibido:** Sistema sem alertas de comportamento suspeito
+- **Correto:** Módulo de Security Monitoring
+- **Severidade:** MÉDIA
+
+---
+
+## 📋 CHECKLIST DE VALIDAÇÃO PRÉ-COMMIT (ATUALIZADO)
+
+Antes de QUALQUER commit, verificar:
+
+### Arquitetura
+- [ ] Domain NÃO importa Infrastructure
+- [ ] Entity tem métodos de negócio (não anêmica)
+- [ ] Result Pattern usado (não throw)
+- [ ] Use Case registrado no DI Container
+
+### TypeScript
+- [ ] ZERO uso de 'any'
+- [ ] Todos retornos tipados
+- [ ] Zod validation em DTOs de entrada
+
+### SQL/Database
+- [ ] Índice composto (organization_id, branch_id)
+- [ ] Índice com WHERE deleted_at IS NULL
+- [ ] Money com 2 colunas (amount + currency)
+
+### Segurança
+- [ ] getTenantContext() usado
+- [ ] resolveBranchIdOrThrow validado
+- [ ] hasPermission verificado
+
+### Testes
+- [ ] Testes unitários criados/atualizados
+- [ ] Cobertura mínima 80%
+- [ ] npm test -- --run passa 100%
+
+### Validações Finais
+- [ ] npx tsc --noEmit → 0 erros
+- [ ] check_cursor_issues → 0 issues
+- [ ] grep "as any" src/ → 0 resultados
+- [ ] grep "console.log" src/ (exceto testes) → 0 resultados
+
+---
+
+**FIM DAS REGRAS v2.1 (22/01/2026) - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
