@@ -1,0 +1,25 @@
+{
+  "epic": "E13",
+  "corrections": [
+    {
+      "id": "LC-331503",
+      "date": "2026-01-23",
+      "epic": "E13",
+      "error": "Performance degradation in core routes (DRE, fiscal listings, dashboard) - Fases 2, 4, 5",
+      "correction": "Strategic SQL indexing (18 indexes) + LRU caching (5000 entries, TTL by type) + Benchmark validation",
+      "files_affected": [
+        "docs/database/migrations/manual/e13-indexes-batch1-financial.sql",
+        "docs/database/migrations/manual/e13-indexes-batch2-fiscal.sql",
+        "docs/database/migrations/rollback/e13-rollback-indexes.sql",
+        "src/lib/cache/CacheManager.ts",
+        "tests/unit/lib/cache/CacheManager.test.ts",
+        "src/app/api/admin/cache/stats/route.ts",
+        "scripts/e13-benchmark.ts",
+        "docs/architecture/performance/E13-FINAL-REPORT.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
