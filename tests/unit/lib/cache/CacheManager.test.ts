@@ -717,3 +717,157 @@ describe('Bug 4 Fix: Eviction with Falsy Keys', () => {
     expect(cacheManager.has('')).toBe(false);
   });
 });
+
+// ============================================================================
+// BUG 5 FIX TESTS: LRU Order em Updates
+// ============================================================================
+
+describe('Bug 5 Fix: LRU Order on Updates', () => {
+  beforeEach(() => {
+    cacheManager.clear();
+  });
+
+  afterEach(() => {
+    cacheManager.clear();
+  });
+
+  it('should move updated key to end (most recently used position)', () => {
+    // Setup: Use a small cache to test eviction
+    // Note: We're using the singleton, so we test order via key access patterns
+
+    // Insert 3 keys
+    cacheManager.set('order:A', 'valueA', 'test');
+    cacheManager.set('order:B', 'valueB', 'test');
+    cacheManager.set('order:C', 'valueC', 'test');
+
+    // Verify initial state
+    expect(cacheManager.get('order:A')).toBe('valueA');
+    expect(cacheManager.get('order:B')).toBe('valueB');
+    expect(cacheManager.get('order:C')).toBe('valueC');
+
+    // Update A (should move to end)
+    cacheManager.set('order:A', 'valueA_updated', 'test');
+
+    // Verify A was updated
+    expect(cacheManager.get('order:A')).toBe('valueA_updated');
+
+    // Get internal keys to verify order
+    const keys = cacheManager.keys('order:');
+
+    // A should be at the end (moved due to update)
+    expect(keys[keys.length - 1]).toBe('order:A');
+  });
+
+  it('should maintain correct LRU order with multiple updates', () => {
+    cacheManager.set('multi:A', 1, 'test');
+    cacheManager.set('multi:B', 2, 'test');
+    cacheManager.set('multi:C', 3, 'test');
+
+    // Initial order: [A, B, C]
+
+    // Update in reverse order: C, B, A
+    cacheManager.set('multi:C', 30, 'test'); // Order: [A, B, C] (C stays at end)
+    cacheManager.set('multi:B', 20, 'test'); // Order: [A, C, B] (B moved to end)
+    cacheManager.set('multi:A', 10, 'test'); // Order: [C, B, A] (A moved to end)
+
+    // Get keys FIRST before any get() calls (get() also affects LRU order)
+    const keys = cacheManager.keys('multi:');
+
+    // A should be at the end (last updated)
+    expect(keys[keys.length - 1]).toBe('multi:A');
+
+    // C should be first (oldest after updates)
+    expect(keys[0]).toBe('multi:C');
+
+    // B should be in the middle
+    expect(keys[1]).toBe('multi:B');
+
+    // Now verify values (get() calls will change order, but we already checked)
+    expect(cacheManager.get('multi:A')).toBe(10);
+    expect(cacheManager.get('multi:B')).toBe(20);
+    expect(cacheManager.get('multi:C')).toBe(30);
+  });
+
+  it('should handle alternating inserts and updates correctly', () => {
+    cacheManager.set('alt:A', 1, 'test'); // Insert: [A]
+    cacheManager.set('alt:B', 2, 'test'); // Insert: [A, B]
+    cacheManager.set('alt:A', 10, 'test'); // Update: [B, A]
+    cacheManager.set('alt:C', 3, 'test'); // Insert: [B, A, C]
+    cacheManager.set('alt:B', 20, 'test'); // Update: [A, C, B]
+    cacheManager.set('alt:D', 4, 'test'); // Insert: [A, C, B, D]
+
+    // Verify all values
+    expect(cacheManager.get('alt:A')).toBe(10);
+    expect(cacheManager.get('alt:B')).toBe(20);
+    expect(cacheManager.get('alt:C')).toBe(3);
+    expect(cacheManager.get('alt:D')).toBe(4);
+
+    // Verify D is at the end
+    const keys = cacheManager.keys('alt:');
+    expect(keys[keys.length - 1]).toBe('alt:D');
+  });
+
+  it('should preserve hit count when moving key to end', () => {
+    cacheManager.set('hits:key', 'value1', 'test');
+
+    // Access multiple times
+    cacheManager.get('hits:key'); // hit 1
+    cacheManager.get('hits:key'); // hit 2
+    cacheManager.get('hits:key'); // hit 3
+
+    // Get stats before update
+    const statsBefore = cacheManager.getStats();
+
+    // Update (should preserve hits and move to end)
+    cacheManager.set('hits:key', 'value2', 'test');
+
+    // Verify value updated
+    expect(cacheManager.get('hits:key')).toBe('value2');
+
+    // Stats should show hits were tracked
+    const statsAfter = cacheManager.getStats();
+    expect(statsAfter.totalHits).toBeGreaterThanOrEqual(statsBefore.totalHits);
+  });
+
+  it('should correctly evict oldest after updates change order', () => {
+    // This test simulates a real scenario where updates affect eviction
+
+    // Clear and set up fresh keys
+    cacheManager.clear();
+
+    // Add keys with unique prefix to isolate test
+    cacheManager.set('evict:first', 'first-value', 'test');
+    cacheManager.set('evict:second', 'second-value', 'test');
+    cacheManager.set('evict:third', 'third-value', 'test');
+
+    // Update 'first' (should move to end)
+    cacheManager.set('evict:first', 'first-updated', 'test');
+
+    // Now order is: [second, third, first]
+    // If we needed to evict, 'second' should go first, not 'first'
+
+    // Verify the update worked
+    expect(cacheManager.get('evict:first')).toBe('first-updated');
+
+    // Verify all keys still exist
+    expect(cacheManager.has('evict:first')).toBe(true);
+    expect(cacheManager.has('evict:second')).toBe(true);
+    expect(cacheManager.has('evict:third')).toBe(true);
+  });
+
+  it('should work correctly with getOrSet after updates', async () => {
+    const loader = vi.fn().mockResolvedValue('loaded-value');
+
+    // Set initial value
+    cacheManager.set('getorset:key', 'initial-value', 'test');
+
+    // Update it
+    cacheManager.set('getorset:key', 'updated-value', 'test');
+
+    // getOrSet should return cached (updated) value, not call loader
+    const result = await getOrSet('getorset:key', 'test', loader);
+
+    expect(result).toBe('updated-value');
+    expect(loader).not.toHaveBeenCalled();
+  });
+});

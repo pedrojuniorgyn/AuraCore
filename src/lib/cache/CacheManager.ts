@@ -153,8 +153,10 @@ class CacheManager {
   /**
    * Set value in cache
    *
-   * BUG 1 FIX: Verifica se key já existe antes de inserir
-   * para evitar eviction desnecessária e preservar hit count.
+   * CORREÇÕES APLICADAS:
+   * - Bug 1: Preserva metadata (hits, createdAt) em updates ✅
+   * - Bug 4: Eviction funciona com chaves falsy ✅
+   * - Bug 5: Updates movem chave para final (LRU order) ✅
    *
    * @param key - Cache key
    * @param value - Value to cache
@@ -165,7 +167,7 @@ class CacheManager {
     const now = Date.now();
     const size = this.estimateSize(value);
 
-    // BUG 1 FIX: Verificar se key já existe para preservar metadata
+    // Bug 1 fix: Check if key exists to preserve metadata
     const existing = this.cache.get(key) as CacheEntry<T> | undefined;
 
     const entry: CacheEntry<T> = {
@@ -176,21 +178,38 @@ class CacheManager {
       size,
     };
 
-    // BUG 1 FIX: Evict APENAS se key não existe E está em capacidade máxima
-    // BUG 4 FIX: Usar !== undefined para suportar chaves falsy ('', '0', 0, false)
-    if (!existing && this.cache.size >= this.config.maxEntries) {
-      const oldestKey = this.cache.keys().next().value;
-      // ✅ BUG 4 FIX: Check for undefined, not truthy
-      // ANTES: if (oldestKey) { ... } - falha com '', '0', 0, false
-      // DEPOIS: if (oldestKey !== undefined) { ... } - funciona com todos
-      if (oldestKey !== undefined) {
-        this.cache.delete(oldestKey);
-        this.log(`EVICTED (LRU): ${JSON.stringify(oldestKey)}`);
-      }
-    }
+    // ============================================
+    // BUG 5 FIX: Handle LRU order correctly
+    // ============================================
+    // JavaScript Map mantém ordem de INSERÇÃO, não de ATUALIZAÇÃO.
+    // Para mover chave para final (most recently used):
+    // - UPDATE: delete + re-insert (move to end)
+    // - INSERT: evict if needed + insert (goes to end automatically)
 
-    this.cache.set(key, entry as CacheEntry<unknown>);
-    this.log(`SET: ${key} (ttl: ${ttl}ms, size: ${size}b, update: ${!!existing})`);
+    if (existing) {
+      // UPDATE: Key already exists
+      // Must delete + re-insert to move to end (most recently used)
+      this.cache.delete(key);
+      this.cache.set(key, entry as CacheEntry<unknown>);
+      this.log(`SET (update, moved to end): ${key} (ttl: ${ttl}ms)`);
+    } else {
+      // INSERT: New key
+      // Check if at capacity (need to evict)
+      if (this.cache.size >= this.config.maxEntries) {
+        // Evict oldest (least recently used)
+        const oldestKey = this.cache.keys().next().value;
+
+        // Bug 4 fix: Check undefined, not falsy
+        if (oldestKey !== undefined) {
+          this.cache.delete(oldestKey);
+          this.log(`EVICTED (LRU): ${JSON.stringify(oldestKey)}`);
+        }
+      }
+
+      // Insert new key (goes to end automatically)
+      this.cache.set(key, entry as CacheEntry<unknown>);
+      this.log(`SET (insert): ${key} (ttl: ${ttl}ms, size: ${size}b)`);
+    }
   }
 
   /**
