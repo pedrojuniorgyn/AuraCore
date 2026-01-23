@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.60",
+  "version": "2.0.61",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1101,6 +1101,22 @@
         "src/shared/domain/types/document-extraction.types.ts",
         "src/modules/fiscal/domain/services/NfeXmlParser.ts",
         "docs/architecture/E7_DDD_HEXAGONAL.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-195041",
+      "date": "2026-01-23",
+      "epic": "E11.1 - Fix NfeXmlParser Hash Algorithm",
+      "error": "NfeXmlParser usava simpleHash() com apenas 8 caracteres (32-bit djb2), resultando em ~50% de probabilidade de colisão após 65.000 NFes. O schema do banco (xmlHash varchar(64)) e o comentário esperavam SHA-256 de 64 caracteres. Isso violava o contrato de detecção de duplicatas fiscais e poderia causar multas SEFAZ de R$ 5.000+/mês conforme Lei 8.218/91 Art. 12.",
+      "correction": "Substituído simpleHash() por generateSha256Hash() que usa Web Crypto API (globalThis.crypto.subtle.digest). Método parse() atualizado para async. 3 chamadores atualizados para usar await. Hash agora retorna 64 caracteres SHA-256 conforme esperado pelo schema. Probabilidade de colisão reduzida para ~10^-60 (negligível). ARCH-004 mantido (sem import de Node.js crypto).",
+      "files_affected": [
+        "src/modules/fiscal/domain/services/NfeXmlParser.ts",
+        "src/app/api/fiscal/documents/[id]/reclassify/route.ts",
+        "src/app/api/admin/update-fiscal-partners/route.ts",
+        "src/modules/fiscal/infrastructure/adapters/document-import/FiscalDocumentImportAdapter.ts"
       ],
       "pattern_created": null,
       "status": "APPROVED",
