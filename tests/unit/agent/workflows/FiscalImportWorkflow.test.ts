@@ -83,7 +83,8 @@ describe('FiscalImportWorkflow', () => {
       expect(result.value.fiscalDocumentId).toBeDefined();
       expect(result.value.summary).toBeDefined();
       expect(result.value.summary?.documentNumber).toBe('123');
-      expect(result.value.processingTimeMs).toBeGreaterThan(0);
+      // E14.6: Com mocks síncronos, processingTimeMs pode ser 0ms
+      expect(result.value.processingTimeMs).toBeGreaterThanOrEqual(0);
     });
 
     it('deve executar workflow com fonte email', async () => {

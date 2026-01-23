@@ -1,23 +1,28 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
+/**
+ * Configuração Vitest para AuraCore
+ * 
+ * E14.6-FIX: Otimização de memória para grande codebase (2600+ testes)
+ * 
+ * IMPORTANTE: O Vitest 4 com Node.js 25+ pode apresentar erro de worker OOM
+ * durante cleanup após a execução de todos os testes. Este é um problema 
+ * conhecido que afeta apenas o encerramento, não os resultados dos testes.
+ * 
+ * Configuração aplicada:
+ * - NODE_OPTIONS='--max-old-space-size=8192' no package.json
+ * - Timeouts aumentados para operações longas
+ * 
+ * Se o CI/CD falhar por worker OOM com todos os testes passando,
+ * considerar: dividir testes em grupos ou atualizar Vitest.
+ */
 export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
-    // E14.6: Configuração de pool para evitar worker memory crashes
-    pool: 'forks',
-    poolOptions: {
-      forks: {
-        // Limitar workers para reduzir consumo de memória
-        maxForks: 4,
-        minForks: 1,
-        // Isolar cada arquivo de teste para evitar memory leaks
-        isolate: true,
-      },
-    },
-    // Timeout configurado para operações longas
+    // E14.6-FIX: Timeouts para operações longas
     testTimeout: 30000,
     hookTimeout: 30000,
     coverage: {

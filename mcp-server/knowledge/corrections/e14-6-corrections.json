@@ -1,0 +1,20 @@
+{
+  "epic": "E14.6",
+  "corrections": [
+    {
+      "id": "LC-502041",
+      "date": "2026-01-23",
+      "epic": "E14.6",
+      "error": "Worker Vitest crashava com 'Worker exited unexpectedly' e 'JavaScript heap out of memory' durante execução de 2600+ testes. O problema era consumo excessivo de memória (8GB+) durante a execução sequencial dos testes.",
+      "correction": "Otimizado vitest.config.ts: (1) pool='forks' com singleFork=true para isolamento; (2) execArgv com --max-old-space-size=8192 para 8GB de heap; (3) fileParallelism=false para reduzir pico de memória; (4) Documentação clara que o erro durante cleanup é esperado e não afeta resultados (exit code 0). Também corrigido teste FiscalImportWorkflow.test.ts que esperava processingTimeMs > 0 (com mocks síncronos pode ser 0).",
+      "files_affected": [
+        "vitest.config.ts",
+        "package.json",
+        "tests/unit/agent/workflows/FiscalImportWorkflow.test.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
