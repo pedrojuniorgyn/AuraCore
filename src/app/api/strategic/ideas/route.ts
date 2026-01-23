@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ideaBoxTable } from '@/modules/strategic/infrastructure/persistence/schemas/idea-box.schema';
 import { getTenantContext } from '@/lib/auth/context';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 // Schema de validação para criação
@@ -45,22 +45,32 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(ideaBoxTable.status, status));
     }
 
-    // Buscar ideias com paginação manual (MSSQL não suporta .limit/.offset direto)
-    const ideas = await db
+    // E13: Migrado para paginação server-side (OFFSET/FETCH)
+    // 1. Count total
+    const [{ total }] = await db
+      .select({ total: sql<number>`COUNT(*)` })
+      .from(ideaBoxTable)
+      .where(and(...conditions));
+
+    // 2. Buscar página com OFFSET/FETCH
+    const offset = (page - 1) * pageSize;
+    const baseQuery = db
       .select()
       .from(ideaBoxTable)
       .where(and(...conditions))
-      .orderBy(desc(ideaBoxTable.createdAt));
+      .orderBy(desc(ideaBoxTable.createdAt))
+      .offset(offset);
 
-    // Paginação manual
-    const paginatedIdeas = ideas.slice((page - 1) * pageSize, page * pageSize);
+    // Drizzle MSSQL typing workaround
+    type QueryWithLimit = { limit: (n: number) => Promise<typeof ideaBoxTable.$inferSelect[]> };
+    const ideas = await (baseQuery as unknown as QueryWithLimit).limit(pageSize);
 
     return NextResponse.json({
-      items: paginatedIdeas,
-      total: ideas.length,
+      items: ideas,
+      total,
       page,
       pageSize,
-      totalPages: Math.ceil(ideas.length / pageSize),
+      totalPages: Math.ceil(total / pageSize),
     });
   } catch (error) {
     // Propagar erros de auth (getTenantContext throws Response)
