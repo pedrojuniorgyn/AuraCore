@@ -15,6 +15,20 @@
  */
 
 // ============================================================================
+// SYMBOLS
+// ============================================================================
+
+/**
+ * BUG 2 FIX: Symbol sentinel para distinguir cache miss de valores falsy
+ *
+ * Problema: Valores como null, undefined, 0, false, '' são legítimos
+ * mas eram tratados como cache miss no getOrSet().
+ *
+ * Solução: Usar Symbol único para indicar cache miss explícito.
+ */
+export const CACHE_MISS = Symbol('CACHE_MISS');
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -102,16 +116,19 @@ class CacheManager {
   /**
    * Get value from cache
    *
+   * BUG 2 FIX: Retorna CACHE_MISS symbol ao invés de null
+   * para distinguir cache miss de valores falsy legítimos.
+   *
    * @param key - Cache key (format: "resource:id:params")
-   * @returns Cached value or null if not found/expired
+   * @returns Cached value or CACHE_MISS symbol if not found/expired
    */
-  get<T>(key: string): T | null {
+  get<T>(key: string): T | typeof CACHE_MISS {
     const entry = this.cache.get(key) as CacheEntry<T> | undefined;
 
     if (!entry) {
       this.recordMiss(key);
       this.log(`MISS: ${key}`);
-      return null;
+      return CACHE_MISS;
     }
 
     // Check expiration
@@ -119,7 +136,7 @@ class CacheManager {
       this.cache.delete(key);
       this.recordMiss(key);
       this.log(`EXPIRED: ${key}`);
-      return null;
+      return CACHE_MISS;
     }
 
     // Update hit count and move to end (LRU)
@@ -136,6 +153,9 @@ class CacheManager {
   /**
    * Set value in cache
    *
+   * BUG 1 FIX: Verifica se key já existe antes de inserir
+   * para evitar eviction desnecessária e preservar hit count.
+   *
    * @param key - Cache key
    * @param value - Value to cache
    * @param resourceType - Resource type for TTL lookup
@@ -145,16 +165,19 @@ class CacheManager {
     const now = Date.now();
     const size = this.estimateSize(value);
 
+    // BUG 1 FIX: Verificar se key já existe para preservar metadata
+    const existing = this.cache.get(key) as CacheEntry<T> | undefined;
+
     const entry: CacheEntry<T> = {
       value,
       expiresAt: now + ttl,
-      createdAt: now,
-      hits: 0,
+      createdAt: existing?.createdAt ?? now, // Preservar createdAt original
+      hits: existing?.hits ?? 0, // Preservar hit count se existir
       size,
     };
 
-    // Evict if at capacity (LRU - remove oldest first)
-    if (this.cache.size >= this.config.maxEntries) {
+    // BUG 1 FIX: Evict APENAS se key não existe E está em capacidade máxima
+    if (!existing && this.cache.size >= this.config.maxEntries) {
       const oldestKey = this.cache.keys().next().value;
       if (oldestKey) {
         this.cache.delete(oldestKey);
@@ -163,7 +186,7 @@ class CacheManager {
     }
 
     this.cache.set(key, entry as CacheEntry<unknown>);
-    this.log(`SET: ${key} (ttl: ${ttl}ms, size: ${size}b)`);
+    this.log(`SET: ${key} (ttl: ${ttl}ms, size: ${size}b, update: ${!!existing})`);
   }
 
   /**
@@ -364,11 +387,15 @@ export const cacheManager = CacheManager.getInstance();
 /**
  * Get or set helper - fetches from cache or calls loader
  *
+ * BUG 2 FIX: Usa CACHE_MISS symbol para distinguir cache miss de valores falsy.
+ * Agora suporta corretamente: null, undefined, 0, false, '', NaN, 0n
+ *
  * @example
- * const branches = await getOrSet(
- *   `branches:${orgId}`,
- *   'branches',
- *   async () => fetchBranches(orgId)
+ * // Funciona corretamente com valor 0
+ * const count = await getOrSet(
+ *   'notifications:count:user123',
+ *   'notifications_count',
+ *   async () => 0 // Zero é legítimo e será cacheado
  * );
  */
 export async function getOrSet<T>(
@@ -377,8 +404,10 @@ export async function getOrSet<T>(
   loader: () => Promise<T>
 ): Promise<T> {
   const cached = cacheManager.get<T>(key);
-  if (cached !== null) {
-    return cached;
+
+  // BUG 2 FIX: Verifica CACHE_MISS ao invés de null
+  if (cached !== CACHE_MISS) {
+    return cached as T; // Inclui null, undefined, 0, false, '', etc
   }
 
   const value = await loader();

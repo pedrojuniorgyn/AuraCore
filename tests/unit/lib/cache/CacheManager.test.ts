@@ -2,10 +2,19 @@
  * E13 - CacheManager Unit Tests
  *
  * @module tests/unit/lib/cache/CacheManager.test
+ *
+ * Testes incluem correções para:
+ * - Bug 1: Eviction desnecessária no set()
+ * - Bug 2: Cache bypass para valores falsy
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { cacheManager, getOrSet, invalidateAfterMutation } from '@/lib/cache/CacheManager';
+import {
+  cacheManager,
+  getOrSet,
+  invalidateAfterMutation,
+  CACHE_MISS,
+} from '@/lib/cache/CacheManager';
 
 describe('CacheManager', () => {
   // Use singleton instance for each test
@@ -34,12 +43,12 @@ describe('CacheManager', () => {
       expect(result).toEqual(value);
     });
 
-    it('should return null for non-existent keys', () => {
+    it('should return CACHE_MISS for non-existent keys', () => {
       // Act
       const result = cache.get('non_existent:key');
 
-      // Assert
-      expect(result).toBeNull();
+      // Assert - BUG 2 FIX: Returns CACHE_MISS symbol instead of null
+      expect(result).toBe(CACHE_MISS);
     });
 
     it('should delete keys correctly', () => {
@@ -52,7 +61,7 @@ describe('CacheManager', () => {
 
       // Assert
       expect(deleted).toBe(true);
-      expect(result).toBeNull();
+      expect(result).toBe(CACHE_MISS); // BUG 2 FIX: CACHE_MISS instead of null
     });
 
     it('should return false when deleting non-existent key', () => {
@@ -85,8 +94,8 @@ describe('CacheManager', () => {
       // Advance time past TTL
       vi.advanceTimersByTime(31 * 1000);
 
-      // Should be expired
-      expect(cache.get('ttl:test')).toBeNull();
+      // Should be expired - returns CACHE_MISS
+      expect(cache.get('ttl:test')).toBe(CACHE_MISS);
 
       vi.useRealTimers();
     });
@@ -102,7 +111,7 @@ describe('CacheManager', () => {
 
       // Advance past default TTL
       vi.advanceTimersByTime(2 * 60 * 1000);
-      expect(cache.get('unknown:test')).toBeNull();
+      expect(cache.get('unknown:test')).toBe(CACHE_MISS);
 
       vi.useRealTimers();
     });
@@ -407,5 +416,203 @@ describe('Edge Cases', () => {
 
     // Assert
     expect(result).toEqual(largeObject);
+  });
+});
+
+// ============================================================================
+// BUG 1 FIX TESTS: Eviction Desnecessária no set()
+// ============================================================================
+
+describe('Bug 1 Fix: Set Method Eviction', () => {
+  beforeEach(() => {
+    cacheManager.clear();
+  });
+
+  afterEach(() => {
+    cacheManager.clear();
+  });
+
+  it('should not create duplicate entries when updating existing key', () => {
+    // Arrange
+    cacheManager.set('dup:A', 'valueA', 'test');
+    cacheManager.set('dup:B', 'valueB', 'test');
+    cacheManager.set('dup:C', 'valueC', 'test');
+
+    const sizeBefore = cacheManager.getStats().size;
+
+    // Act - Update existing key multiple times
+    cacheManager.set('dup:A', 'valueA1', 'test');
+    cacheManager.set('dup:A', 'valueA2', 'test');
+    cacheManager.set('dup:A', 'valueA3', 'test');
+
+    const sizeAfter = cacheManager.getStats().size;
+
+    // Assert - Size should remain the same (no duplicates)
+    expect(sizeAfter).toBe(sizeBefore);
+    expect(cacheManager.get('dup:A')).toBe('valueA3');
+    expect(cacheManager.get('dup:B')).toBe('valueB');
+    expect(cacheManager.get('dup:C')).toBe('valueC');
+  });
+
+  it('should preserve createdAt when updating existing key', () => {
+    // Arrange
+    vi.useFakeTimers();
+    const startTime = Date.now();
+
+    cacheManager.set('preserve:test', 'value1', 'test');
+
+    // Advance time
+    vi.advanceTimersByTime(5000);
+
+    // Act - Update the key
+    cacheManager.set('preserve:test', 'value2', 'test');
+
+    // Get stats - oldestEntry should be the original createdAt
+    const stats = cacheManager.getStats();
+
+    // Assert - oldestEntry should still be the original time
+    expect(stats.oldestEntry?.getTime()).toBe(startTime);
+
+    vi.useRealTimers();
+  });
+
+  it('should extend expiration when updating existing key', () => {
+    // Arrange
+    vi.useFakeTimers();
+    cacheManager.set('extend:test', 'value1', 'notifications_count'); // 30s TTL
+
+    // Advance time to near expiration
+    vi.advanceTimersByTime(25 * 1000); // 25s
+
+    // Act - Update the key (should reset TTL)
+    cacheManager.set('extend:test', 'value2', 'notifications_count');
+
+    // Advance another 25s (total 50s from start, but only 25s from update)
+    vi.advanceTimersByTime(25 * 1000);
+
+    // Assert - Key should still be valid (TTL was reset)
+    expect(cacheManager.get('extend:test')).toBe('value2');
+
+    // Advance past new TTL
+    vi.advanceTimersByTime(10 * 1000);
+    expect(cacheManager.get('extend:test')).toBe(CACHE_MISS);
+
+    vi.useRealTimers();
+  });
+});
+
+// ============================================================================
+// BUG 2 FIX TESTS: Cache Bypass para Valores Falsy
+// ============================================================================
+
+describe('Bug 2 Fix: Falsy Values Support', () => {
+  beforeEach(() => {
+    cacheManager.clear();
+  });
+
+  afterEach(() => {
+    cacheManager.clear();
+  });
+
+  it('should cache null values correctly', async () => {
+    const loader = vi.fn().mockResolvedValue(null);
+
+    // First call: cache miss, loader called
+    const result1 = await getOrSet('falsy:null', 'test', loader);
+    expect(result1).toBe(null);
+    expect(loader).toHaveBeenCalledTimes(1);
+
+    // Second call: cache HIT (null is legitimate)
+    const result2 = await getOrSet('falsy:null', 'test', loader);
+    expect(result2).toBe(null);
+    expect(loader).toHaveBeenCalledTimes(1); // NOT called again
+  });
+
+  it('should cache undefined values correctly', async () => {
+    const loader = vi.fn().mockResolvedValue(undefined);
+
+    const result1 = await getOrSet('falsy:undefined', 'test', loader);
+    expect(result1).toBe(undefined);
+
+    const result2 = await getOrSet('falsy:undefined', 'test', loader);
+    expect(result2).toBe(undefined);
+    expect(loader).toHaveBeenCalledTimes(1); // Cache hit
+  });
+
+  it('should cache zero (0) correctly - critical for notification counts', async () => {
+    const loader = vi.fn().mockResolvedValue(0);
+
+    // Critical case: notifications count = 0
+    const result1 = await getOrSet('notifications:count:user123', 'notifications_count', loader);
+    expect(result1).toBe(0);
+
+    const result2 = await getOrSet('notifications:count:user123', 'notifications_count', loader);
+    expect(result2).toBe(0);
+    expect(loader).toHaveBeenCalledTimes(1); // Cache hit, NOT bypass
+  });
+
+  it('should cache false correctly', async () => {
+    const loader = vi.fn().mockResolvedValue(false);
+
+    const result1 = await getOrSet('feature:enabled', 'test', loader);
+    expect(result1).toBe(false);
+
+    const result2 = await getOrSet('feature:enabled', 'test', loader);
+    expect(result2).toBe(false);
+    expect(loader).toHaveBeenCalledTimes(1); // Cache hit
+  });
+
+  it('should cache empty string correctly', async () => {
+    const loader = vi.fn().mockResolvedValue('');
+
+    const result1 = await getOrSet('user:bio', 'test', loader);
+    expect(result1).toBe('');
+
+    const result2 = await getOrSet('user:bio', 'test', loader);
+    expect(result2).toBe('');
+    expect(loader).toHaveBeenCalledTimes(1); // Cache hit
+  });
+
+  it('should distinguish cache miss from cached null', () => {
+    // Set null explicitly
+    cacheManager.set('explicit:null', null, 'test');
+
+    // Get should return null (not CACHE_MISS)
+    const result = cacheManager.get('explicit:null');
+    expect(result).toBe(null);
+    expect(result).not.toBe(CACHE_MISS);
+
+    // Try non-existent key
+    const missing = cacheManager.get('explicit:nonexistent');
+    expect(missing).toBe(CACHE_MISS);
+  });
+
+  it('should handle all falsy values in real-world scenario', async () => {
+    const falsyValues = [
+      { value: null, key: 'null' },
+      { value: undefined, key: 'undefined' },
+      { value: 0, key: 'zero' },
+      { value: false, key: 'false' },
+      { value: '', key: 'empty' },
+    ];
+
+    for (const { value, key } of falsyValues) {
+      const loader = vi.fn().mockResolvedValue(value);
+
+      // First call
+      await getOrSet(`realworld:${key}`, 'test', loader);
+
+      // Second call (should hit cache)
+      await getOrSet(`realworld:${key}`, 'test', loader);
+
+      // Verify loader called only once
+      expect(loader).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('should return CACHE_MISS symbol for non-existent keys', () => {
+    const result = cacheManager.get('nonexistent:key');
+    expect(result).toBe(CACHE_MISS);
+    expect(typeof CACHE_MISS).toBe('symbol');
   });
 });
