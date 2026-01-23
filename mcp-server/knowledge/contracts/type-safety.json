@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.53",
+  "version": "2.0.55",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -996,6 +996,38 @@
         "src/lib/db/query-helpers.ts"
       ],
       "pattern_created": "no-console-output-production",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-439590",
+      "date": "2026-01-23",
+      "epic": "P1.B - Performance Improvements",
+      "error": "Notifications table sem índices adequados, sem deletedAt (SCHEMA-006) e sem updatedAt (SCHEMA-005). Query principal (GET /api/notifications) fazia Table Scan resultando em 1000-5000 logical reads e 50-200ms de CPU time. Contador de não-lidas também não tinha índice otimizado. Violações: SCHEMA-005 (falta updatedAt), SCHEMA-006 (falta deletedAt), BP-SQL-001 (sem índices multi-tenant).",
+      "correction": "Criada migration 0039_notifications_performance_indexes.sql com: 1) Adicionado deletedAt e updatedAt na tabela notifications (SCHEMA-005, SCHEMA-006). 2) Criado índice idx_notifications_user_coverage (userId, organizationId, createdAt DESC) com INCLUDE columns para covering index da query principal. 3) Criado índice idx_notifications_unread (userId, organizationId, isRead) com INCLUDE para contador. Ambos ONLINE, com estatísticas atualizadas. 4) Atualizada API route para filtrar deletedAt IS NULL e setar updatedAt em UPDATEs. 5) Criado runbook completo de monitoramento (docs/runbooks/PERFORMANCE_MONITORING_NOTIFICATIONS.md). Performance esperada: 100x redução de logical reads, 20x melhoria de CPU time, query time <10ms.",
+      "files_affected": [
+        "drizzle/migrations/0039_notifications_performance_indexes.sql",
+        "drizzle/migrations/0039_notifications_performance_indexes_down.sql",
+        "src/lib/db/schema.ts",
+        "src/app/api/notifications/route.ts",
+        "docs/runbooks/PERFORMANCE_MONITORING_NOTIFICATIONS.md"
+      ],
+      "pattern_created": "notifications-performance-indexes-covering",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-203602",
+      "date": "2026-01-23",
+      "epic": "P1.B - Performance Improvements",
+      "error": "Bugs críticos identificados pelo Cursor Review: BUG-001: Campo updatedAt ausente no response GET de notifications, quebrando audit trail completo. BUG-003: parseInt(userId) em 3 arquivos (sefaz-processor, FiscalDocumentImportAdapter) quebra com UUID strings (ADR-0003). Código fazia conversão desnecessária String → Number → String para userId, causando potencial falha em runtime com UUIDs (ex: '550e8400-e29b-41d4-a716-446655440000'). Violações: ADR-0003 (userId deve ser UUID string), Enterprise Base Pattern (audit trail incompleto).",
+      "correction": "1) Adicionado updatedAt: notif.updatedAt no response mapping de GET /api/notifications (linha 71) para garantir audit trail completo. 2) Removido parseInt(userId) + variável userIdNum de sefaz-processor.ts - userId usado diretamente como string. 3) Removido parseInt(userId) + variável userIdNum de FiscalDocumentImportAdapter.ts - alterado parâmetro do método ensurePartner de userIdNum: number para userId: string, usando this.userId diretamente. 4) Eliminado conversão desnecessária String → Number → String em todos locais onde createdBy/updatedBy recebem userId. Validações: TypeScript 0 erros, Check Cursor Issues 0, parseInt(userId) 0 ocorrências globais.",
+      "files_affected": [
+        "src/app/api/notifications/route.ts",
+        "src/services/sefaz-processor.ts",
+        "src/modules/fiscal/infrastructure/adapters/document-import/FiscalDocumentImportAdapter.ts"
+      ],
+      "pattern_created": "notifications-audit-trail-userid-type-safety",
       "status": "APPROVED",
       "must_not_repeat": true
     }
