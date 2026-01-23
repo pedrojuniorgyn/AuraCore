@@ -37,7 +37,7 @@ export async function GET() {
       SELECT 
         (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND branch_id = @branchId AND status = 'ACTIVE' AND deleted_at IS NULL) as parceiros,
         (SELECT COUNT(*) FROM products WHERE organization_id = @orgId AND branch_id = @branchId AND deleted_at IS NULL) as produtos,
-        (SELECT COUNT(*) FROM fiscal_documents WHERE organization_id = @orgId AND branch_id = @branchId AND document_type IN ('NFE', 'NFCE') AND created_at >= DATEADD(day, -30, GETDATE())) as nfes,
+        (SELECT COUNT(*) FROM fiscal_documents WHERE organization_id = @orgId AND branch_id = @branchId AND document_type IN ('NFE', 'NFCE') AND status NOT IN ('CANCELLED', 'REJECTED') AND created_at >= DATEADD(day, -30, GETDATE())) as nfes,
         (SELECT COUNT(*) FROM accounts_payable WHERE organization_id = @orgId AND branch_id = @branchId AND status = 'OPEN' AND deleted_at IS NULL) as contas_aberto,
         (SELECT COUNT(*) FROM business_partners WHERE organization_id = @orgId AND branch_id = @branchId AND status = 'ACTIVE' AND deleted_at IS NULL AND created_at >= DATEADD(month, -1, GETDATE())) as novos_parceiros
     `;

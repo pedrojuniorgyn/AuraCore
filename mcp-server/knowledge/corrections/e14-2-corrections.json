@@ -27,6 +27,19 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-981641",
+      "date": "2026-01-23",
+      "epic": "E14.2",
+      "error": "Query fiscal_documents na statsQuery não filtrava documentos cancelados/rejeitados. fiscal_documents não tem deleted_at, mas usa status para soft delete (CANCELLED, REJECTED). Isso causava contagem inflada de NFes.",
+      "correction": "Adicionado filtro status NOT IN ('CANCELLED', 'REJECTED') na query de contagem de NFes para excluir documentos inválidos, mantendo consistência com comportamento de soft delete das outras tabelas.",
+      "files_affected": [
+        "src/app/api/dashboard/stats/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }
