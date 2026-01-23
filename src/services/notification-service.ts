@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { notifications } from "@/lib/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, isNull } from "drizzle-orm";
 import { queryWithLimit } from "@/lib/db/query-helpers";
 
 /**
@@ -204,11 +204,13 @@ export class NotificationService {
       .set({
         isRead: sql`1`,
         readAt: sql`GETDATE()`,
+        updatedAt: sql`GETDATE()`, // ✅ SCHEMA-005: Audit trail completo
       })
       .where(
         and(
           eq(notifications.id, Number(notificationId)),
-          eq(notifications.userId, userId)
+          eq(notifications.userId, userId),
+          isNull(notifications.deletedAt) // ✅ SCHEMA-006: Não atualizar deletados
         )
       );
   }
@@ -222,11 +224,13 @@ export class NotificationService {
       .set({
         isRead: sql`1`,
         readAt: sql`GETDATE()`,
+        updatedAt: sql`GETDATE()`, // ✅ SCHEMA-005: Audit trail completo
       })
       .where(
         and(
           eq(notifications.userId, userId),
-          eq(notifications.isRead, sql`0`)
+          eq(notifications.isRead, sql`0`),
+          isNull(notifications.deletedAt) // ✅ SCHEMA-006: Não atualizar deletados
         )
       );
   }

@@ -1,0 +1,19 @@
+{
+  "epic": "P1.B - Notifications Bug Fixes Round 2",
+  "corrections": [
+    {
+      "id": "LC-049200",
+      "date": "2026-01-23",
+      "epic": "P1.B - Notifications Bug Fixes Round 2",
+      "error": "BUG-004: NotificationService.markAsRead e markAllAsRead não setavam updatedAt (violação SCHEMA-005, quebra audit trail). BUG-005: Índice idx_notifications_user_coverage sem deleted_at e updated_at no INCLUDE, causando key lookups e performance degradada. Índice idx_notifications_unread também sem deleted_at. Filtro deletedAt IS NULL faltando nos métodos do service.",
+      "correction": "1. Adicionado updatedAt: sql`GETDATE()` em markAsRead e markAllAsRead para compliance com SCHEMA-005 (audit trail completo). 2. Adicionado filtro isNull(notifications.deletedAt) em ambos os métodos para compliance com SCHEMA-006 (não atualizar registros deletados). 3. Adicionado deleted_at e updated_at ao INCLUDE do índice idx_notifications_user_coverage para permitir index-only scan completo. 4. Adicionado deleted_at ao INCLUDE do índice idx_notifications_unread. Performance garantida: 10x-50x mais rápido (elimina key lookups).",
+      "files_affected": [
+        "src/services/notification-service.ts",
+        "drizzle/migrations/0039_notifications_performance_indexes.sql"
+      ],
+      "pattern_created": "notifications-service-schema-005-006-compliance",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

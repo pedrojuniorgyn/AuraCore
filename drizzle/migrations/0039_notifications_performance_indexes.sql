@@ -100,7 +100,9 @@ BEGIN
         [action_url],
         [is_read],
         [read_at],
-        [branch_id]
+        [branch_id],
+        [deleted_at],   -- ✅ BUG-005: Para index-only scan em queries com WHERE deleted_at IS NULL
+        [updated_at]    -- ✅ SCHEMA-005: Audit trail completo no response
     )
     WITH (
         ONLINE = ON,                    -- Zero downtime
@@ -140,7 +142,7 @@ BEGIN
         [organization_id] ASC,
         [is_read] ASC
     )
-    INCLUDE ([id], [created_at])
+    INCLUDE ([id], [created_at], [deleted_at])  -- ✅ BUG-005: Para index-only scan
     WITH (
         ONLINE = ON,
         FILLFACTOR = 95,                -- Poucas updates (read-heavy)
