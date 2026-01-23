@@ -1,0 +1,19 @@
+{
+  "epic": "P1.B - Notifications Exhaustive Return (Round Final)",
+  "corrections": [
+    {
+      "id": "LC-144134",
+      "date": "2026-01-23",
+      "epic": "P1.B - Notifications Exhaustive Return (Round Final)",
+      "error": "BUG-008: POST handler podia não retornar NextResponse se ambas condições (markAll e notificationId) fossem falsy após validação Zod. Embora Zod refine deveria prevenir isso estaticamente, TypeScript não consegue inferir essa garantia. Código podia terminar sem return explícito, violando o contrato de API Routes do Next.js.",
+      "correction": "1. Adicionado return final como safety net no POST handler (linha 185) com log de erro detalhado incluindo markAll, notificationId e validationData. 2. Comentários explicando WHY do fallback (TypeScript limitation + defensive programming). 3. Documentado pattern 'Exhaustive Return' (INPUT-VAL-005) em INPUT_VALIDATION_CONTRACT.md. 4. Garantia: TODOS os code paths agora retornam NextResponse explicitamente (6 returns no POST: validation fail, markAll success, notificationId success, safety net, catch Response, catch Exception).",
+      "files_affected": [
+        "src/app/api/notifications/route.ts",
+        "docs/architecture/contracts/INPUT_VALIDATION_CONTRACT.md"
+      ],
+      "pattern_created": "exhaustive-return-safety-net",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

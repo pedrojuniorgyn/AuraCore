@@ -171,7 +171,24 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true });
     }
-    // ✅ Não precisa de else: Zod já garantiu que markAll ou notificationId existe
+
+    // ✅ BUG-008: Safety net defensivo (Exhaustive Return Pattern)
+    // Teoricamente impossível chegar aqui: Zod refine garante markAll === true OU notificationId > 0
+    // Mas TypeScript não consegue inferir essa garantia estaticamente
+    // Defensive programming: sempre ter return final para garantir que NUNCA retorna undefined
+    // Se este código for atingido, há bug no Zod refine - log ajuda debug futuro
+    console.error("[POST /api/notifications] Unreachable code path hit - Zod validation may have failed", {
+      markAll,
+      notificationId,
+      validationData: validation.data,
+    });
+    return NextResponse.json(
+      { 
+        error: "Parâmetros inválidos", 
+        details: "Nenhuma ação especificada (markAll ou notificationId)" 
+      },
+      { status: 400 }
+    );
   } catch (error: unknown) {
   const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {

@@ -213,9 +213,86 @@ Antes de fazer merge de código com API Routes, verificar:
 
 ---
 
+## Exhaustive Return Pattern (INPUT-VAL-005)
+
+### Princípio
+
+**TODOS os code paths em um handler DEVEM retornar NextResponse.**
+
+TypeScript não consegue garantir exhaustiveness em casos complexos (validação runtime, refinements, etc). Por isso, SEMPRE adicione um return final como "safety net".
+
+### Pattern
+
+```typescript
+export async function POST(request: NextRequest) {
+  try {
+    // Path 1: Autenticação falhou
+    if (!ctx) {
+      return NextResponse.json({ error: "..." }, { status: 401 });
+    }
+
+    // Path 2: Validação falhou
+    if (!validation.success) {
+      return NextResponse.json({ error: "..." }, { status: 400 });
+    }
+
+    // Path 3: Condição A
+    if (conditionA) {
+      return NextResponse.json({ success: true });
+    }
+
+    // Path 4: Condição B
+    if (conditionB) {
+      return NextResponse.json({ success: true });
+    }
+
+    // ✅ Path 5: Safety net (defensive)
+    // Teoricamente impossível, mas garante type safety
+    console.error("[Handler] Unreachable code path hit");
+    return NextResponse.json({ error: "..." }, { status: 400 });
+  } catch (error) {
+    // Path 6: Exception
+    return NextResponse.json({ error: "..." }, { status: 500 });
+  }
+}
+```
+
+### Por que o Safety Net é Necessário?
+
+1. **TypeScript Limitation:** Não consegue inferir garantias de validação runtime (Zod refine, etc)
+2. **Defensive Programming:** Se houver bug na validação, não retornar `undefined`
+3. **Future-Proofing:** Se código mudar no futuro, safety net previne regressions
+4. **Debugging:** Log de erro ajuda identificar se código "impossível" foi atingido
+
+### Anti-pattern
+
+```typescript
+// ❌ ERRADO: Confiar apenas em validação
+if (conditionA) return response;
+if (conditionB) return response;
+// Sem safety net - pode retornar undefined
+```
+
+```typescript
+// ✅ CERTO: Sempre adicionar safety net
+if (conditionA) return response;
+if (conditionB) return response;
+return NextResponse.json({ error: "..." }, { status: 400 }); // Safety net
+```
+
+### Benefícios
+
+1. ✅ TypeScript satisfeito (all paths return Response)
+2. ✅ Runtime safety (nunca retorna undefined)
+3. ✅ Debuggable (log quando safety net é atingido)
+4. ✅ Future-proof (mudanças não quebram)
+
+---
+
 ## Referências
 
 - [Zod Documentation](https://zod.dev)
 - ADR-0003: userId is UUID string
 - type-safety.json (MCP Contract)
 - API_ERROR_HANDLING_CONTRACT.md
+- TS-009: Exhaustive Return Rule
