@@ -17,8 +17,27 @@
  */
 
 import { XMLParser } from 'fast-xml-parser';
-import crypto from 'crypto';
 import { Result } from '@/shared/domain';
+
+// ============================================================================
+// HASH HELPER (ARCH-004 compliant - no Node.js crypto import)
+// ============================================================================
+
+/**
+ * Simple hash function for XML content identification.
+ * Uses a fast non-cryptographic hash algorithm (djb2 variant).
+ * For cryptographic hashes, use infrastructure layer.
+ * 
+ * @see ARCH-004: Domain cannot import Node.js modules
+ */
+function simpleHash(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  // Convert to hex and pad to ensure consistent length
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 // ============================================================================
 // TYPES
@@ -321,8 +340,8 @@ export class NfeXmlParser {
       // Pagamento
       const payment = NfeXmlParser.extractPaymentInfo(infNFe);
 
-      // Hash do XML
-      const xmlHash = crypto.createHash('sha256').update(xmlString).digest('hex');
+      // Hash do XML (simple hash for identification, not cryptographic)
+      const xmlHash = simpleHash(xmlString);
 
       return Result.ok({
         accessKey,
