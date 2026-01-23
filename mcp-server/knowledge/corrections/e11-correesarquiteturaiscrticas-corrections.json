@@ -1,0 +1,23 @@
+{
+  "epic": "E11 - Correções Arquiteturais Críticas",
+  "corrections": [
+    {
+      "id": "LC-699497",
+      "date": "2026-01-23",
+      "epic": "E11 - Correções Arquiteturais Críticas",
+      "error": "22 violações arquiteturais identificadas em E10: ARCH-001 (11 violações - Domain importando DTOs de Application), ARCH-002 (10 violações - Domain importando tipos de Infrastructure/Docling), ARCH-004 (1 violação - Domain importando Node.js crypto). Domain não estava 100% puro conforme contratos MCP.",
+      "correction": "ARCH-001: Criados 3 arquivos de domain types (payable.types.ts, journal-entry.types.ts, wms.types.ts) substituindo imports de application/dtos. Atualizados 42 ports para usar domain types. ARCH-002: Criado document-extraction.types.ts em shared/domain com tipos DANFeData, DACTeData, DocumentExtractionResult. Atualizados 10 arquivos em contracts e fiscal. ARCH-004: Substituído import crypto from 'crypto' por função simpleHash() que não depende de Node.js. Resultado: 0 violações, Domain 100% puro, 5 commits individuais por categoria.",
+      "files_affected": [
+        "src/modules/financial/domain/types/payable.types.ts",
+        "src/modules/accounting/domain/types/journal-entry.types.ts",
+        "src/modules/wms/domain/types/wms.types.ts",
+        "src/shared/domain/types/document-extraction.types.ts",
+        "src/modules/fiscal/domain/services/NfeXmlParser.ts",
+        "docs/architecture/E7_DDD_HEXAGONAL.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

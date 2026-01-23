@@ -228,8 +228,26 @@ API Route → Use Case → Domain → [Adapter] → Legacy Service
 | E8 | API Routes em DDD | ✅ Concluído | 2026-01 |
 | E9 | Strategic Module DDD | ✅ Concluído | 2026-01 |
 | E10 | Auditoria Arquitetural | ✅ Concluído | 2026-01-23 |
+| E11 | Correções Arquiteturais Críticas | ✅ Concluído | 2026-01-23 |
+
+### 7.4 E11 - Correções Arquiteturais (Concluído)
+
+**Violações Corrigidas:**
+
+| Contrato | Antes | Depois | Correção |
+|----------|:-----:|:------:|----------|
+| ARCH-001 | 11 | 0 | Movido DTOs para domain/types |
+| ARCH-002 | 10 | 0 | Movido tipos docling para shared/domain |
+| ARCH-004 | 1 | 0 | Substituído crypto por hash simples |
+| **Total** | **22** | **0** | **100% corrigido** |
+
+**Arquivos Criados:**
+- `src/modules/financial/domain/types/payable.types.ts`
+- `src/modules/accounting/domain/types/journal-entry.types.ts`
+- `src/modules/wms/domain/types/wms.types.ts`
+- `src/shared/domain/types/document-extraction.types.ts`
 
 ---
 
-**Versão:** 2.1.0 | **Última atualização:** 23/01/2026
+**Versão:** 2.2.0 | **Última atualização:** 23/01/2026
 
