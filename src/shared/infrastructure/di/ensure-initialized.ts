@@ -11,8 +11,6 @@
  * @module shared/infrastructure/di
  * @since E14.8
  */
-// CRÍTICO: Polyfill DEVE ser importado ANTES de qualquer módulo com decorators
-import './reflect-polyfill';
 
 let isInitialized = false;
 
@@ -27,7 +25,10 @@ export function ensureDIInitialized(): void {
     return; // Já inicializado neste worker
   }
 
-  // console.log('[DI] Inicializando container no worker...');
+  // CRÍTICO: Carregar reflect-metadata PRIMEIRO via require dinâmico
+  // Isso garante que seja executado ANTES de qualquer módulo com decorators
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('reflect-metadata');
 
   try {
     // 1. Global Dependencies (DEVE ser primeiro)
