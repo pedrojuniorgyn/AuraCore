@@ -17,12 +17,18 @@ const nextConfig: NextConfig = {
   // CRÍTICO: Webpack config para garantir reflect-metadata carrega PRIMEIRO
   webpack: (config: WebpackConfig, { isServer }) => {
     if (isServer) {
-      // 1. Garantir que reflect-metadata e tsyringe são externos
+      // 1. Preservar nomes de exports para decorators tsyringe (mangleExports)
+      config.optimization = {
+        ...config.optimization,
+        mangleExports: false, // Previne minification quebrar DI decorators
+      };
+
+      // 2. Garantir que reflect-metadata e tsyringe são externos
       if (!config.externals) {
         config.externals = [];
       }
       
-      // 2. Modificar entry points para incluir reflect-metadata primeiro
+      // 3. Modificar entry points para incluir reflect-metadata primeiro
       if (config.entry) {
         const originalEntry = config.entry as () => Promise<EntryObject>;
         config.entry = async () => {

@@ -70,16 +70,15 @@ export class DomainEventDispatcher implements IEventDispatcher {
 @injectable()
 export class PaymentCompletedHandler implements IDomainEventHandler {
   async handle(event: DomainEvent): Promise<void> {
-    console.log(`[PaymentCompletedHandler] Payment completed:`, {
-      payableId: event.aggregateId,
-      payload: event.payload,
-    });
-    
-    // Aqui poderia:
+    // TODO: Implementar ações quando pagamento for completado:
     // - Enviar email
     // - Gerar lançamento contábil
     // - Notificar sistema externo
     // - etc.
+    
+    // Event data:
+    // - payableId: event.aggregateId
+    // - payload: event.payload
   }
 }
 

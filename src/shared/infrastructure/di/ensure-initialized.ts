@@ -62,12 +62,10 @@ async function doInitialize(): Promise<void> {
 
   try {
     // 1. Global Dependencies (DEVE ser primeiro)
-    console.log('[DI] Loading global-registrations...');
     const { registerGlobalDependencies } = await import('@/shared/infrastructure/di/global-registrations');
     registerGlobalDependencies();
 
     // 2. Core Business Modules
-    console.log('[DI] Loading modules...');
     const [
       { initializeFinancialModule },
       { registerAccountingModule },
@@ -97,7 +95,6 @@ async function doInitialize(): Promise<void> {
     ]);
 
     // Initialize in dependency order
-    console.log('[DI] Initializing all modules...');
     initializeFinancialModule();
     registerAccountingModule();
     registerFiscalModule();
@@ -112,8 +109,8 @@ async function doInitialize(): Promise<void> {
     initializeIntegrationsModule();
 
     isInitialized = true;
-    console.log('[DI] ✅ Container inicializado no worker');
   } catch (error) {
+    // ✅ Manter console.error para falhas críticas de DI
     console.error('[DI] ❌ Erro ao inicializar container:', error);
     throw error;
   }

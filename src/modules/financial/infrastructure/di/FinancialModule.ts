@@ -168,6 +168,4 @@ export function initializeFinancialModule(): void {
   // USE CASES - BANK STATEMENT (Fase 2 - Extrato Bancário)
   // ============================================================
   container.registerSingleton(TOKENS.ImportBankStatementUseCase, ImportBankStatementUseCase);
-  
-  console.log('[Financial Module] DI registrado: 5 repositories + 3 services + 3 adapters + 16 use cases');
 }

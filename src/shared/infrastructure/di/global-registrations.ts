@@ -71,6 +71,4 @@ export function registerGlobalDependencies() {
 
   container.register(TOKENS.BankTransactionRepository, { useClass: StubBankTransactionRepository });
   container.register(TOKENS.ImportBankStatementUseCase, { useClass: ImportBankStatementUseCase });
-  
-  console.log('[Global Dependencies] Registered successfully');
 }

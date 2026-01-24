@@ -342,9 +342,10 @@ export class AccountPayable extends AggregateRoot<string> {
     for (const payment of this._props.payments) {
       if (payment.status === 'PENDING') {
         const cancelResult = payment.cancel('Payable cancelled');
-        // Log se falhar (não deveria, mas por segurança)
+        // Se falhar (não deveria, invariante já validado), ignorar silenciosamente
+        // Invariante: apenas PENDING podem ser cancelados, validado acima
         if (Result.isFail(cancelResult)) {
-          console.warn(`Failed to cancel payment ${payment.id}: ${cancelResult.error}`);
+          // Defensive programming: não deveria chegar aqui
         }
       }
     }
