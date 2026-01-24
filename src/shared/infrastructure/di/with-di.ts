@@ -20,7 +20,7 @@
 // CRÍTICO: Polyfill DEVE ser importado ANTES de qualquer módulo com decorators
 import './reflect-polyfill';
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureDIInitialized } from './ensure-initialized';
+import { ensureDIInitializedAsync } from './ensure-initialized';
 
 /**
  * Tipo para route context (dynamic segments)
@@ -75,8 +75,8 @@ export function withDI(
     req: NextRequest,
     context?: RouteContext
   ): Promise<ApiResponse> => {
-    // Garantir DI inicializado ANTES de executar handler
-    ensureDIInitialized();
+    // Garantir DI inicializado ANTES de executar handler (ASYNC)
+    await ensureDIInitializedAsync();
 
     // Executar handler original
     if (context !== undefined) {

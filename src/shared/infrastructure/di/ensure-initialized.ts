@@ -10,108 +10,106 @@
  *
  * @module shared/infrastructure/di
  * @since E14.8
+ * @updated 2026-01-24 - Changed to async with dynamic import() to fix TypeError
  */
 
 let isInitialized = false;
+let initPromise: Promise<void> | null = null;
 
 /**
  * Garante que o container DI está inicializado no worker atual.
- * Deve ser chamado antes de qualquer container.resolve().
- *
- * Esta função é THREAD-SAFE (single-threaded JS) e IDEMPOTENT.
+ * VERSÃO ASYNC - deve ser awaited.
  */
-export function ensureDIInitialized(): void {
+export async function ensureDIInitializedAsync(): Promise<void> {
   if (isInitialized) {
     return; // Já inicializado neste worker
   }
 
-  // CRÍTICO: Carregar reflect-metadata PRIMEIRO via require dinâmico
-  // Isso garante que seja executado ANTES de qualquer módulo com decorators
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('reflect-metadata');
+  // Se já existe uma promise de inicialização, aguardar ela
+  if (initPromise) {
+    await initPromise;
+    return;
+  }
+  
+  initPromise = doInitialize();
+  await initPromise;
+}
+
+/**
+ * Versão síncrona (legacy) - apenas verifica se está inicializado
+ * NÃO inicializa se não estiver - use ensureDIInitializedAsync() para isso
+ */
+export function ensureDIInitialized(): void {
+  if (isInitialized) {
+    return;
+  }
+  // Iniciar em background se ainda não iniciou
+  if (!initPromise) {
+    initPromise = doInitialize();
+  }
+  // Não aguardar - a rota vai falhar se DI não estiver pronto
+  // Isso é intencional para manter compatibilidade com código legado
+}
+
+/**
+ * Inicialização assíncrona real
+ */
+async function doInitialize(): Promise<void> {
+  if (isInitialized) return;
+
+  // CRÍTICO: Carregar reflect-metadata PRIMEIRO
+  await import('reflect-metadata');
 
   try {
     // 1. Global Dependencies (DEVE ser primeiro)
     console.log('[DI] Loading global-registrations...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerGlobalDependencies } = require('@/shared/infrastructure/di/global-registrations');
+    const { registerGlobalDependencies } = await import('@/shared/infrastructure/di/global-registrations');
     registerGlobalDependencies();
 
-    // 2. Core Business Modules - carregar um por um para debug
-    console.log('[DI] Loading FinancialModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { initializeFinancialModule } = require('@/modules/financial/infrastructure/di/FinancialModule');
-    
-    console.log('[DI] Loading AccountingModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerAccountingModule } = require('@/modules/accounting/infrastructure/di/AccountingModule');
-    
-    console.log('[DI] Loading FiscalModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerFiscalModule } = require('@/modules/fiscal/infrastructure/di/FiscalModule');
-    
-    console.log('[DI] Loading WmsModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { initializeWmsModule } = require('@/modules/wms/infrastructure/di/WmsModule');
-    
-    console.log('[DI] Loading TmsModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerTmsModule } = require('@/modules/tms/infrastructure/di/TmsModule');
-    
-    console.log('[DI] Loading FleetModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerFleetModule } = require('@/modules/fleet/infrastructure/di/FleetModule');
-    
-    console.log('[DI] Loading CommercialModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerCommercialModule } = require('@/modules/commercial/infrastructure/di/CommercialModule');
-    
-    console.log('[DI] Loading DocumentsModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerDocumentsModule } = require('@/modules/documents/infrastructure/di/DocumentsModule');
-
-    // 3. Strategic & Support Modules
-    console.log('[DI] Loading StrategicModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerStrategicModule } = require('@/modules/strategic/infrastructure/di/StrategicModule');
-    
-    console.log('[DI] Loading KnowledgeModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerKnowledgeModule } = require('@/modules/knowledge/infrastructure/di/KnowledgeModule');
-    
-    console.log('[DI] Loading ContractsModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { registerContractsModule } = require('@/modules/contracts/infrastructure/di/ContractsModule');
-    
-    console.log('[DI] Loading IntegrationsModule...');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { initializeIntegrationsModule } = require('@/modules/integrations/infrastructure/di/IntegrationsModule');
+    // 2. Core Business Modules
+    console.log('[DI] Loading modules...');
+    const [
+      { initializeFinancialModule },
+      { registerAccountingModule },
+      { registerFiscalModule },
+      { initializeWmsModule },
+      { registerTmsModule },
+      { registerFleetModule },
+      { registerCommercialModule },
+      { registerDocumentsModule },
+      { registerStrategicModule },
+      { registerKnowledgeModule },
+      { registerContractsModule },
+      { initializeIntegrationsModule },
+    ] = await Promise.all([
+      import('@/modules/financial/infrastructure/di/FinancialModule'),
+      import('@/modules/accounting/infrastructure/di/AccountingModule'),
+      import('@/modules/fiscal/infrastructure/di/FiscalModule'),
+      import('@/modules/wms/infrastructure/di/WmsModule'),
+      import('@/modules/tms/infrastructure/di/TmsModule'),
+      import('@/modules/fleet/infrastructure/di/FleetModule'),
+      import('@/modules/commercial/infrastructure/di/CommercialModule'),
+      import('@/modules/documents/infrastructure/di/DocumentsModule'),
+      import('@/modules/strategic/infrastructure/di/StrategicModule'),
+      import('@/modules/knowledge/infrastructure/di/KnowledgeModule'),
+      import('@/modules/contracts/infrastructure/di/ContractsModule'),
+      import('@/modules/integrations/infrastructure/di/IntegrationsModule'),
+    ]);
 
     // Initialize in dependency order
-    console.log('[DI] Initializing Financial...');
-    try { initializeFinancialModule(); } catch (e) { console.error('[DI] ❌ Financial init:', e); throw e; }
-    console.log('[DI] Initializing Accounting...');
-    try { registerAccountingModule(); } catch (e) { console.error('[DI] ❌ Accounting:', e); throw e; }
-    console.log('[DI] Initializing Fiscal...');
-    try { registerFiscalModule(); } catch (e) { console.error('[DI] ❌ Fiscal:', e); throw e; }
-    console.log('[DI] Initializing WMS...');
-    try { initializeWmsModule(); } catch (e) { console.error('[DI] ❌ WMS:', e); throw e; }
-    console.log('[DI] Initializing TMS...');
-    try { registerTmsModule(); } catch (e) { console.error('[DI] ❌ TMS:', e); throw e; }
-    console.log('[DI] Initializing Fleet...');
-    try { registerFleetModule(); } catch (e) { console.error('[DI] ❌ Fleet:', e); throw e; }
-    console.log('[DI] Initializing Commercial...');
-    try { registerCommercialModule(); } catch (e) { console.error('[DI] ❌ Commercial:', e); throw e; }
-    console.log('[DI] Initializing Documents...');
-    try { registerDocumentsModule(); } catch (e) { console.error('[DI] ❌ Documents:', e); throw e; }
-    console.log('[DI] Initializing Strategic...');
-    try { registerStrategicModule(); } catch (e) { console.error('[DI] ❌ Strategic:', e); throw e; }
-    console.log('[DI] Initializing Knowledge...');
-    try { registerKnowledgeModule(); } catch (e) { console.error('[DI] ❌ Knowledge:', e); throw e; }
-    console.log('[DI] Initializing Contracts...');
-    try { registerContractsModule(); } catch (e) { console.error('[DI] ❌ Contracts:', e); throw e; }
-    console.log('[DI] Initializing Integrations...');
-    try { initializeIntegrationsModule(); } catch (e) { console.error('[DI] ❌ Integrations:', e); throw e; }
+    console.log('[DI] Initializing all modules...');
+    initializeFinancialModule();
+    registerAccountingModule();
+    registerFiscalModule();
+    initializeWmsModule();
+    registerTmsModule();
+    registerFleetModule();
+    registerCommercialModule();
+    registerDocumentsModule();
+    registerStrategicModule();
+    registerKnowledgeModule();
+    registerContractsModule();
+    initializeIntegrationsModule();
 
     isInitialized = true;
     console.log('[DI] ✅ Container inicializado no worker');
