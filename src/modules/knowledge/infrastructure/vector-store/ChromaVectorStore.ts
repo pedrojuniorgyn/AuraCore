@@ -92,19 +92,14 @@ export class ChromaVectorStore implements IVectorStore {
    * @param delayMs Delay entre tentativas em ms (default: 2000)
    */
   private async waitForChromaDB(maxRetries = 10, delayMs = 2000): Promise<Result<void, string>> {
-    console.log('[ChromaDB] Waiting for service...');
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.client.heartbeat();
-        console.log(`[ChromaDB] ✅ Connected (attempt ${attempt}/${maxRetries})`);
         return Result.ok(undefined);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        console.log(`[ChromaDB] ⏳ Retry ${attempt}/${maxRetries}: ${message}`);
         
         if (attempt === maxRetries) {
-          console.error(`[ChromaDB] ❌ Failed after ${maxRetries} attempts`);
           return Result.fail(`ChromaDB not available after ${maxRetries} retries: ${message}`);
         }
         
@@ -141,11 +136,9 @@ export class ChromaVectorStore implements IVectorStore {
       });
 
       this.isInitialized = true;
-      console.log(`[ChromaDB] ✅ Collection '${this.collectionName}' initialized`);
       return Result.ok(undefined);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`[ChromaDB] ❌ Initialization failed: ${message}`);
       return Result.fail(`Falha ao inicializar ChromaDB: ${message}`);
     }
   }

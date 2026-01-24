@@ -375,24 +375,17 @@ export class ChromaVectorStore implements IVectorStore {
    * @param delayMs Delay entre tentativas em ms (default: 2000)
    */
   private async waitForChromaDB(maxRetries = 10, delayMs = 2000): Promise<Result<void, string>> {
-    console.log('[ChromaDB Fiscal] Waiting for service...');
-    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const response = await fetch(`${this.baseUrl}/api/v1/heartbeat`);
         if (response.ok) {
-          console.log(`[ChromaDB Fiscal] ✅ Connected (attempt ${attempt}/${maxRetries})`);
           return Result.ok(undefined);
         }
-        
-        console.log(`[ChromaDB Fiscal] ⏳ Retry ${attempt}/${maxRetries}: status ${response.status}`);
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.log(`[ChromaDB Fiscal] ⏳ Retry ${attempt}/${maxRetries}: ${message}`);
+      } catch {
+        // Retry silently
       }
       
       if (attempt === maxRetries) {
-        console.error(`[ChromaDB Fiscal] ❌ Failed after ${maxRetries} attempts`);
         return Result.fail(`ChromaDB not available after ${maxRetries} retries`);
       }
       
@@ -430,7 +423,6 @@ export class ChromaVectorStore implements IVectorStore {
 
       if (existing) {
         this.collectionId = existing.id;
-        console.log(`[ChromaDB Fiscal] ✅ Collection '${this.collectionName}' found`);
         return Result.ok(undefined);
       }
 
@@ -454,12 +446,10 @@ export class ChromaVectorStore implements IVectorStore {
 
       const created = (await createResponse.json()) as ChromaCollection;
       this.collectionId = created.id;
-      console.log(`[ChromaDB Fiscal] ✅ Collection '${this.collectionName}' created`);
 
       return Result.ok(undefined);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[ChromaDB Fiscal] ❌ Ensure collection error: ${message}`);
       return Result.fail(`ChromaDB ensure collection error: ${message}`);
     }
   }
