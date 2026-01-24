@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.83",
+  "version": "2.0.84",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1469,6 +1469,27 @@
         "src/modules/financial/application/use-cases/ReverseTitlesUseCase.ts",
         "src/shared/infrastructure/di/tokens.ts",
         "src/shared/infrastructure/di/global-registrations.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-890830",
+      "date": "2026-01-24",
+      "epic": "HOTFIX-CRITICAL",
+      "error": "1) Route handler exportava função auxiliar (TS2344). 2) Multi-tenancy violação em DrizzleActionPlanFollowUpRepository (queries sem org/branch). 3) ChromaDB sem retry logic (agents quebrados na inicialização).",
+      "correction": "1) Movido addNotificationToStore para notification-store.ts separado. 2) Adicionado JOIN com action_plan em TODAS as queries do follow-up repository para validar multi-tenancy. 3) Implementado waitForChromaDB com 10 retries x 2s delay em ambos ChromaVectorStore.",
+      "files_affected": [
+        "src/app/api/strategic/notifications/route.ts",
+        "src/lib/notifications/notification-store.ts",
+        "src/modules/strategic/domain/ports/output/IActionPlanFollowUpRepository.ts",
+        "src/modules/strategic/infrastructure/persistence/repositories/DrizzleActionPlanFollowUpRepository.ts",
+        "src/modules/strategic/application/commands/ExecuteFollowUpUseCase.ts",
+        "src/modules/strategic/application/commands/AdvancePDCACycleUseCase.ts",
+        "src/app/api/strategic/action-plans/[id]/follow-up/route.ts",
+        "src/modules/knowledge/infrastructure/vector-store/ChromaVectorStore.ts",
+        "src/modules/fiscal/infrastructure/rag/ChromaVectorStore.ts"
       ],
       "pattern_created": null,
       "status": "APPROVED",

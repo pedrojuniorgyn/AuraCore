@@ -87,6 +87,36 @@ export class ChromaVectorStore implements IVectorStore {
   // ==========================================================================
 
   /**
+   * Aguarda ChromaDB estar disponível com retry
+   * @param maxRetries Número máximo de tentativas (default: 10)
+   * @param delayMs Delay entre tentativas em ms (default: 2000)
+   */
+  private async waitForChromaDB(maxRetries = 10, delayMs = 2000): Promise<Result<void, string>> {
+    console.log('[ChromaDB] Waiting for service...');
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.client.heartbeat();
+        console.log(`[ChromaDB] ✅ Connected (attempt ${attempt}/${maxRetries})`);
+        return Result.ok(undefined);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(`[ChromaDB] ⏳ Retry ${attempt}/${maxRetries}: ${message}`);
+        
+        if (attempt === maxRetries) {
+          console.error(`[ChromaDB] ❌ Failed after ${maxRetries} attempts`);
+          return Result.fail(`ChromaDB not available after ${maxRetries} retries: ${message}`);
+        }
+        
+        // Wait between retries
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+    
+    return Result.fail('ChromaDB connection failed');
+  }
+
+  /**
    * Garante que a collection está inicializada
    */
   private async ensureInitialized(): Promise<Result<void, string>> {
@@ -94,10 +124,13 @@ export class ChromaVectorStore implements IVectorStore {
       return Result.ok(undefined);
     }
 
-    try {
-      // Verificar conexão
-      await this.client.heartbeat();
+    // Aguardar ChromaDB estar pronto com retry
+    const connectionResult = await this.waitForChromaDB();
+    if (Result.isFail(connectionResult)) {
+      return Result.fail(connectionResult.error);
+    }
 
+    try {
       // Criar ou obter collection
       this.collection = await this.client.getOrCreateCollection({
         name: this.collectionName,
@@ -108,10 +141,12 @@ export class ChromaVectorStore implements IVectorStore {
       });
 
       this.isInitialized = true;
+      console.log(`[ChromaDB] ✅ Collection '${this.collectionName}' initialized`);
       return Result.ok(undefined);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      return Result.fail(`Falha ao conectar ChromaDB: ${message}`);
+      console.error(`[ChromaDB] ❌ Initialization failed: ${message}`);
+      return Result.fail(`Falha ao inicializar ChromaDB: ${message}`);
     }
   }
 

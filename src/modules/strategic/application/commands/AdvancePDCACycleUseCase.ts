@@ -66,7 +66,12 @@ export class AdvancePDCACycleUseCase implements IAdvancePDCACycleUseCase {
     // 4. Validar transições PDCA
     // DO -> CHECK: Precisa de follow-up 3G registrado
     if (previousCycle === 'DO') {
-      const followUps = await this.followUpRepository.findByActionPlanId(input.actionPlanId);
+      // Multi-tenancy: passar organizationId e branchId para validação
+      const followUps = await this.followUpRepository.findByActionPlanId(
+        input.actionPlanId,
+        context.organizationId,
+        context.branchId
+      );
       if (followUps.length === 0) {
         return Result.fail(
           'Para avançar de DO para CHECK, é necessário registrar pelo menos um follow-up 3G'

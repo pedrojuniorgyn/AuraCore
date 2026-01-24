@@ -102,9 +102,11 @@ export class ExecuteFollowUpUseCase implements IExecuteFollowUpUseCase {
       );
     }
 
-    // 5. Obter próximo número de follow-up
+    // 5. Obter próximo número de follow-up (com validação multi-tenancy)
     const followUpNumber = await this.followUpRepository.getNextFollowUpNumber(
-      input.actionPlanId
+      input.actionPlanId,
+      context.organizationId,
+      context.branchId
     );
 
     // 6. Criar ExecutionStatus

@@ -42,14 +42,19 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await getTenantContext(); // Validates auth
+    const context = await getTenantContext(); // Validates auth and gets tenant context
     const { id } = await params;
 
     const repository = container.resolve<IActionPlanFollowUpRepository>(
       STRATEGIC_TOKENS.ActionPlanFollowUpRepository
     );
 
-    const followUps = await repository.findByActionPlanId(id);
+    // Multi-tenancy: passar organizationId e branchId
+    const followUps = await repository.findByActionPlanId(
+      id,
+      context.organizationId,
+      context.branchId
+    );
 
     return NextResponse.json({
       items: followUps.map((fu) => ({
