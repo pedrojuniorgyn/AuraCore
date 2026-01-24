@@ -15,7 +15,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 // Repositories
 import { DrizzleFinancialTitleRepository } from "../persistence/DrizzleFinancialTitleRepository";
 import { DrizzleReceivableRepository } from '../persistence/DrizzleReceivableRepository';
-import { DrizzlePayableRepository } from '../persistence/DrizzlePayableRepository';
+// import { DrizzlePayableRepository } from '../persistence/DrizzlePayableRepository'; // TEMP DISABLED
 
 // Services
 import { FinancialTitleGenerator } from "../../application/services/FinancialTitleGenerator";
@@ -121,8 +121,8 @@ export function initializeFinancialModule(): void {
   console.log('[Financial] 2/19 DrizzleReceivableRepository');
   container.registerSingleton('IReceivableRepository', DrizzleReceivableRepository);
   
-  console.log('[Financial] 3/19 DrizzlePayableRepository');
-  container.registerSingleton<IPayableRepository>(TOKENS.PayableRepository, DrizzlePayableRepository);
+  // console.log('[Financial] 3/19 DrizzlePayableRepository');
+  // container.registerSingleton<IPayableRepository>(TOKENS.PayableRepository, DrizzlePayableRepository); // TEMP DISABLED
   
   // ============================================================
   // SERVICES
