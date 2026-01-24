@@ -1,4 +1,5 @@
-import { injectable, inject } from '@/shared/infrastructure/di/container';
+import { injectable } from '@/shared/infrastructure/di/container';
+import { container } from 'tsyringe';
 import { DomainEvent } from '@/shared/domain';
 import type { ILogger } from '@/shared/infrastructure';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
@@ -33,6 +34,16 @@ export interface IEventDispatcher {
 @injectable()
 export class DomainEventDispatcher implements IEventDispatcher {
   private handlers: Map<string, IDomainEventHandler[]> = new Map();
+
+  constructor() {
+    // ✅ Resolver logger uma vez no constructor e passar aos handlers
+    const logger = container.resolve<ILogger>(TOKENS.Logger);
+    
+    // Registrar handlers com suas dependências resolvidas
+    this.handlers.set('PaymentCompleted', [
+      new PaymentCompletedHandler(logger),
+    ]);
+  }
 
   /**
    * Registra handler para um tipo de evento
@@ -74,12 +85,12 @@ export class DomainEventDispatcher implements IEventDispatcher {
  * - (Futuro) Enviar email de confirmação
  * - (Futuro) Gerar lançamento contábil
  * - (Futuro) Notificar sistema externo
+ * 
+ * ✅ SEM @injectable: Handler recebe logger via constructor normal
+ * ✅ Logger é resolvido no DomainEventDispatcher e passado aqui
  */
-@injectable()
 export class PaymentCompletedHandler implements IDomainEventHandler {
-  constructor(
-    @inject(TOKENS.Logger) private readonly logger: ILogger
-  ) {}
+  constructor(private readonly logger: ILogger) {}
 
   async handle(event: DomainEvent): Promise<void> {
     // ✅ Log estruturado para tracking e auditoria
