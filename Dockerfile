@@ -19,7 +19,8 @@ RUN rm -rf .next node_modules/.cache
 # Coolify às vezes não exibe o erro completo do build.
 # Gravamos o log e imprimimos em caso de falha para diagnóstico.
 # NEXT_PRIVATE_PREBUNDLED_REACT=next força Next.js a não usar cache interno
-RUN NEXT_PRIVATE_PREBUNDLED_REACT=next npm run build > /tmp/next-build.log 2>&1 || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
+# CRÍTICO: Usar --webpack ao invés de Turbopack para garantir ordem correta de imports (reflect-metadata)
+RUN NEXT_PRIVATE_PREBUNDLED_REACT=next npx next build --webpack > /tmp/next-build.log 2>&1 || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
