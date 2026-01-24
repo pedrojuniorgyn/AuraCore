@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import { auth } from "@/lib/auth";
 
 export default auth;

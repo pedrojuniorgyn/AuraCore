@@ -3300,4 +3300,16 @@ export * from '@/modules/fiscal/infrastructure/persistence/schemas';
 export * from '@/modules/tms/infrastructure/persistence/schemas';
 export * from '@/modules/wms/infrastructure/persistence/schemas';
 
+// ==========================================
+// AGENT MODULE (Sessões e Mensagens IA)
+// ==========================================
+export * from '@/agent/persistence/schemas/agent-sessions.schema';
+export * from '@/agent/persistence/schemas/agent-messages.schema';
+
+// ==========================================
+// SHARED INFRASTRUCTURE (Audit, Retention)
+// ==========================================
+export * from '@/shared/infrastructure/audit/audit.schema';
+export * from '@/shared/infrastructure/retention/retention.schema';
+
 // 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑
