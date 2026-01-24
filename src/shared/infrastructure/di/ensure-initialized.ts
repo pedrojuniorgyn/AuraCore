@@ -62,19 +62,31 @@ export function ensureDIInitialized(): void {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { initializeIntegrationsModule } = require('@/modules/integrations/infrastructure/di/IntegrationsModule');
 
-    // Initialize in dependency order
+    // Initialize in dependency order with debug
+    console.log('[DI] Iniciando Financial...');
     initializeFinancialModule();
+    console.log('[DI] Iniciando Accounting...');
     registerAccountingModule();
+    console.log('[DI] Iniciando Fiscal...');
     registerFiscalModule();
+    console.log('[DI] Iniciando WMS...');
     initializeWmsModule();
+    console.log('[DI] Iniciando TMS...');
     registerTmsModule();
+    console.log('[DI] Iniciando Fleet...');
     registerFleetModule();
+    console.log('[DI] Iniciando Commercial...');
     registerCommercialModule();
+    console.log('[DI] Iniciando Documents...');
     registerDocumentsModule();
 
+    console.log('[DI] Iniciando Strategic...');
     registerStrategicModule();
+    console.log('[DI] Iniciando Knowledge...');
     registerKnowledgeModule();
+    console.log('[DI] Iniciando Contracts...');
     registerContractsModule();
+    console.log('[DI] Iniciando Integrations...');
     initializeIntegrationsModule();
 
     isInitialized = true;
