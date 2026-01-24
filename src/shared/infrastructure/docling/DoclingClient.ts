@@ -28,6 +28,7 @@
  * @see E-Agent-Fase-D1
  */
 
+import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type {
   DoclingConfig,
@@ -61,6 +62,7 @@ const DEFAULT_CONFIG: DoclingConfig = {
  * O Docling é um serviço Python (Docker) que processa PDFs usando
  * a biblioteca Docling da IBM, com 97.9% de precisão.
  */
+@injectable()
 export class DoclingClient {
   private readonly config: DoclingConfig;
 
