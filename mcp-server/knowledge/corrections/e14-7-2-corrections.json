@@ -1,0 +1,21 @@
+{
+  "epic": "E14.7-2",
+  "corrections": [
+    {
+      "id": "LC-722323",
+      "date": "2026-01-23",
+      "epic": "E14.7-2",
+      "error": "8 queries SQL referenciavam tabela inexistente 'financial_cost_centers' ao invés da tabela correta 'cost_centers'. Causava erro 'Invalid column name branch_id' porque a tabela não existia.",
+      "correction": "Substituído 'financial_cost_centers' por 'cost_centers' em todas as 8 ocorrências em 4 arquivos ativos (excluindo migrations e arquivos travados).",
+      "files_affected": [
+        "src/app/api/cost-centers/3d/route.ts",
+        "src/app/api/reports/cte-margin/route.ts",
+        "src/services/cost-center-allocation.ts",
+        "src/services/management-accounting.ts"
+      ],
+      "pattern_created": "TABLE-NAME-CONSISTENCY",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

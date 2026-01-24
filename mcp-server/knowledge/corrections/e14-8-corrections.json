@@ -1,0 +1,65 @@
+{
+  "epic": "E14.8",
+  "corrections": [
+    {
+      "id": "LC-879460",
+      "date": "2026-01-23",
+      "epic": "E14.8",
+      "error": "Next.js production usa múltiplos workers isolados. instrumentation.ts executa apenas no processo principal, deixando workers com containers tsyringe vazios. Causava erro 'Attempted to resolve unregistered dependency token' em rotas /api/strategic/*.",
+      "correction": "Implementado lazy initialization pattern: ensureDIInitialized() registra todos os módulos DDD na primeira chamada de cada worker. Wrapper withDI() garante DI inicializado antes de executar handlers. Singleton flag previne re-inicializações. Aplicado em 9 rotas strategic críticas.",
+      "files_affected": [
+        "src/shared/infrastructure/di/ensure-initialized.ts",
+        "src/shared/infrastructure/di/with-di.ts",
+        "src/shared/infrastructure/di/index.ts",
+        "src/app/api/strategic/war-room/dashboard/route.ts",
+        "src/app/api/strategic/kpis/route.ts",
+        "src/app/api/strategic/action-plans/route.ts",
+        "src/app/api/strategic/action-plans/kanban/route.ts",
+        "src/app/api/strategic/goals/route.ts",
+        "src/app/api/strategic/swot/route.ts",
+        "src/app/api/strategic/strategies/route.ts",
+        "src/app/api/strategic/map/route.ts",
+        "src/app/api/strategic/dashboard/data/route.ts"
+      ],
+      "pattern_created": "NEXTJS-WORKER-LAZY-DI",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-920856",
+      "date": "2026-01-24",
+      "epic": "E14.8",
+      "error": "Classes registradas no DI container sem decorator @injectable() causavam erro 'r is not a function' em produção. tsyringe requer @injectable() em todas as classes registradas via registerSingleton.",
+      "correction": "Adicionado @injectable() a 7 repositórios: DrizzleFinancialTitleRepository, DrizzleFiscalAccountingRepository, DrizzleSpedDataRepository, DrizzleLocationRepository, DrizzleStockRepository, DrizzleMovementRepository, DrizzleInventoryCountRepository. FinancialTitleGenerator (Domain Service) migrado para factory pattern.",
+      "files_affected": [
+        "src/modules/accounting/infrastructure/persistence/DrizzleFiscalAccountingRepository.ts",
+        "src/modules/financial/domain/services/FinancialTitleGenerator.ts",
+        "src/modules/financial/infrastructure/di/FinancialModule.ts",
+        "src/modules/financial/infrastructure/persistence/DrizzleFinancialTitleRepository.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleSpedDataRepository.ts",
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleInventoryCountRepository.ts",
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleLocationRepository.ts",
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleMovementRepository.ts",
+        "src/modules/wms/infrastructure/persistence/repositories/DrizzleStockRepository.ts"
+      ],
+      "pattern_created": "DI-INJECTABLE-REQUIRED",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-072776",
+      "date": "2026-01-24",
+      "epic": "E14.8",
+      "error": "Classes DoclingClient e AnalyzeContractUseCase registradas no DI container sem decorator @injectable() causavam erro 'r is not a function' em produção.",
+      "correction": "Adicionado @injectable() às classes: DoclingClient (shared/infrastructure/docling), AnalyzeContractUseCase (contracts/application/commands). Também movido FinancialTitleGenerator de domain/services para application/services por violação DOMAIN-SVC-001.",
+      "files_affected": [
+        "src/shared/infrastructure/docling/DoclingClient.ts",
+        "src/modules/contracts/application/commands/analyze-contract/AnalyzeContractUseCase.ts",
+        "src/modules/financial/application/services/FinancialTitleGenerator.ts"
+      ],
+      "pattern_created": "DI-INJECTABLE-COMPLETE",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
