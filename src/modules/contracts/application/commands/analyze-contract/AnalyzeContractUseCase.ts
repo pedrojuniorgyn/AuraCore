@@ -7,6 +7,7 @@
  * @module contracts/application/commands
  */
 
+import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { ContractParser } from '../../../domain/services/ContractParser';
 import type { ContractAnalysisResult, ParsedRiskLevel } from '../../../domain/types';
@@ -56,6 +57,7 @@ export interface AnalyzeContractOutput {
 /**
  * Use Case para análise de contratos
  */
+@injectable()
 export class AnalyzeContractUseCase {
   /**
    * Executa a análise do contrato
