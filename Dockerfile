@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS deps
+FROM node:25-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # Coolify pode injetar NODE_ENV=production em build-time.
@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 ENV NODE_ENV=development
 RUN npm ci --legacy-peer-deps --include=dev
 
-FROM node:20-bookworm-slim AS builder
+FROM node:25-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -22,7 +22,7 @@ RUN rm -rf .next node_modules/.cache
 # CRÍTICO: Usar --webpack ao invés de Turbopack para garantir ordem correta de imports (reflect-metadata)
 RUN NEXT_PRIVATE_PREBUNDLED_REACT=next npx next build --webpack > /tmp/next-build.log 2>&1 || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
 
-FROM node:20-bookworm-slim AS runner
+FROM node:25-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
