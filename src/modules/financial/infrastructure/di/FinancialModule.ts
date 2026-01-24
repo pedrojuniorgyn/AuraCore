@@ -33,12 +33,12 @@ import { ListReceivablesUseCase } from "../../application/use-cases/ListReceivab
 import { CancelReceivableUseCase } from "../../application/use-cases/CancelReceivableUseCase";
 import { ReceivePaymentUseCase } from "../../application/use-cases/ReceivePaymentUseCase";
 
-// Use Cases - Payables
-import { CreatePayableUseCase } from "../../application/use-cases/CreatePayableUseCase";
-import { GetPayableByIdUseCase } from "../../application/use-cases/GetPayableByIdUseCase";
-import { ListPayablesUseCase } from "../../application/use-cases/ListPayablesUseCase";
-import { PayAccountPayableUseCase } from "../../application/use-cases/PayAccountPayableUseCase";
-import { CancelPayableUseCase } from "../../application/use-cases/CancelPayableUseCase";
+// Use Cases - Payables (TEMPORARIAMENTE COMENTADO - investigar TypeError)
+// import { CreatePayableUseCase } from "../../application/use-cases/CreatePayableUseCase";
+// import { GetPayableByIdUseCase } from "../../application/use-cases/GetPayableByIdUseCase";
+// import { ListPayablesUseCase } from "../../application/use-cases/ListPayablesUseCase";
+// import { PayAccountPayableUseCase } from "../../application/use-cases/PayAccountPayableUseCase";
+// import { CancelPayableUseCase } from "../../application/use-cases/CancelPayableUseCase";
 
 // Types
 import type { IGeneratePayableTitle } from '../../domain/ports/input/IGeneratePayableTitle';
@@ -161,32 +161,32 @@ export function initializeFinancialModule(): void {
   container.registerSingleton(ReceivePaymentUseCase);
   
   // ============================================================
-  // USE CASES - PAYABLES
+  // USE CASES - PAYABLES (TEMPORARIAMENTE DESABILITADO - investigar TypeError)
   // ============================================================
-  console.log('[Financial] 13/19 CreatePayableUseCase');
-  container.registerSingleton(CreatePayableUseCase);
-  
-  console.log('[Financial] 14/19 GetPayableByIdUseCase');
-  container.registerSingleton(GetPayableByIdUseCase);
-  
-  console.log('[Financial] 15/19 ListPayablesUseCase');
-  container.registerSingleton(ListPayablesUseCase);
-  
-  console.log('[Financial] 16/19 PayAccountPayableUseCase');
-  container.registerSingleton(PayAccountPayableUseCase);
-  
-  console.log('[Financial] 17/19 CancelPayableUseCase');
-  container.registerSingleton(CancelPayableUseCase);
+  // console.log('[Financial] 13/19 CreatePayableUseCase');
+  // container.registerSingleton(CreatePayableUseCase);
+  // 
+  // console.log('[Financial] 14/19 GetPayableByIdUseCase');
+  // container.registerSingleton(GetPayableByIdUseCase);
+  // 
+  // console.log('[Financial] 15/19 ListPayablesUseCase');
+  // container.registerSingleton(ListPayablesUseCase);
+  // 
+  // console.log('[Financial] 16/19 PayAccountPayableUseCase');
+  // container.registerSingleton(PayAccountPayableUseCase);
+  // 
+  // console.log('[Financial] 17/19 CancelPayableUseCase');
+  // container.registerSingleton(CancelPayableUseCase);
   
   // ============================================================
   // GATEWAYS (E9 Fase 2)
   // ============================================================
-  console.log('[Financial] 18/19 BillingPdfAdapter');
+  console.log('[Financial] 13/14 BillingPdfAdapter');
   container.registerSingleton<IBillingPdfGateway>(FINANCIAL_TOKENS.BillingPdfGateway, BillingPdfAdapter);
   
-  console.log('[Financial] 19/19 BoletoAdapter + CnabAdapter');
+  console.log('[Financial] 14/14 BoletoAdapter + CnabAdapter');
   container.registerSingleton<IBoletoGateway>(FINANCIAL_TOKENS.BoletoGateway, BoletoAdapter);
   container.registerSingleton<ICnabGateway>(FINANCIAL_TOKENS.CnabGateway, CnabAdapter);
   
-  console.log('[Financial Module] DI configured - 3 Repos + 12 UseCases + 3 Gateways');
+  console.log('[Financial Module] DI configured - 3 Repos + 7 UseCases + 3 Gateways (Payables disabled for debug)');
 }
