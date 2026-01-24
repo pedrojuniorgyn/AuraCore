@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FinancialTitleGenerator } from '@/modules/financial/domain/services/FinancialTitleGenerator';
+import { FinancialTitleGenerator } from '@/modules/financial/application/services/FinancialTitleGenerator';
 import { IFinancialTitleRepository, FiscalDocumentData } from '@/modules/financial/domain/ports/output/IFinancialTitleRepository';
 import { Result } from '@/shared/domain';
 

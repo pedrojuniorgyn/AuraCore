@@ -11,7 +11,7 @@
 import { container } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { DrizzleFinancialTitleRepository } from "../persistence/DrizzleFinancialTitleRepository";
-import { FinancialTitleGenerator } from "../../domain/services/FinancialTitleGenerator";
+import { FinancialTitleGenerator } from "../../application/services/FinancialTitleGenerator";
 import {
   GeneratePayableTitleUseCase,
   GenerateReceivableTitleUseCase,
@@ -104,13 +104,11 @@ export function initializeFinancialModule(): void {
     DrizzleReceivableRepository
   );
   
-  // Domain Services (via factory - Domain não usa @injectable)
-  container.register(TOKENS.FinancialTitleGenerator, {
-    useFactory: (c) => {
-      const repository = c.resolve<DrizzleFinancialTitleRepository>(TOKENS.FinancialTitleRepository);
-      return new FinancialTitleGenerator(repository);
-    }
-  });
+  // Application Services (com @injectable)
+  container.registerSingleton(
+    TOKENS.FinancialTitleGenerator,
+    FinancialTitleGenerator
+  );
   
   // Title Use Cases
   container.registerSingleton<IGeneratePayableTitle>(

@@ -16,7 +16,7 @@ import {
   FinancialTitleGenerator,
   GenerateReceivableInput as DomainGenerateReceivableInput,
   TitleGenerationOutput,
-} from "../../domain/services/FinancialTitleGenerator";
+} from "../services/FinancialTitleGenerator";
 import { FinancialTitleError } from "../../domain/errors";
 import type {
   IGenerateReceivableTitle,

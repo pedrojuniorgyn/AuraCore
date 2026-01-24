@@ -1,7 +1,7 @@
 /**
- * 💰 FINANCIAL TITLE GENERATOR - DOMAIN SERVICE
+ * 💰 FINANCIAL TITLE GENERATOR - APPLICATION SERVICE
  * 
- * Domain service encapsulating pure business logic for financial title generation
+ * Application service for financial title generation from fiscal documents.
  * 
  * Responsibilities:
  * - Validate fiscal classification for title generation
@@ -11,18 +11,24 @@
  * 
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
  * 
- * NOTA: Domain Services NÃO usam @injectable() - são instanciados via factory
- * no FinancialModule para manter separação de camadas.
+ * NOTA ARQUITETURAL:
+ * Este serviço foi movido de domain/services para application/services porque:
+ * - Possui dependência de repositório (estado)
+ * - Usa @injectable() para DI
+ * - Orquestra operações de persistência
+ * Isso viola DOMAIN-SVC-001 (Domain Services devem ser stateless).
  */
 
+import { injectable, inject } from 'tsyringe';
 import { Result } from "@/shared/domain";
-import { FinancialTitleError } from "../errors";
-import {
+import { FinancialTitleError } from "../../domain/errors";
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
+import type {
   IFinancialTitleRepository,
   FiscalDocumentData,
   AccountPayableInsert,
   AccountReceivableInsert,
-} from '../ports/output/IFinancialTitleRepository';
+} from '../../domain/ports/output/IFinancialTitleRepository';
 
 export interface GeneratePayableInput {
   fiscalDocumentId: bigint;
@@ -48,10 +54,14 @@ export interface TitleGenerationOutput {
 }
 
 /**
- * Domain Service: Financial Title Generator
+ * Application Service: Financial Title Generator
  */
+@injectable()
 export class FinancialTitleGenerator {
-  constructor(private readonly repository: IFinancialTitleRepository) {}
+  constructor(
+    @inject(TOKENS.FinancialTitleRepository)
+    private readonly repository: IFinancialTitleRepository
+  ) {}
 
   /**
    * Gera Conta a Pagar a partir de NFe PURCHASE
@@ -343,4 +353,3 @@ export class FinancialTitleGenerator {
     return Result.ok(undefined);
   }
 }
-

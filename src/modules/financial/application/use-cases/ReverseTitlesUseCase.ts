@@ -15,7 +15,7 @@ import { ILogger } from "@/shared/infrastructure";
 import {
   FinancialTitleGenerator,
   ReverseTitlesInput as DomainReverseTitlesInput,
-} from "../../domain/services/FinancialTitleGenerator";
+} from "../services/FinancialTitleGenerator";
 import { FinancialTitleError } from "../../domain/errors";
 import type {
   IReverseTitles,
