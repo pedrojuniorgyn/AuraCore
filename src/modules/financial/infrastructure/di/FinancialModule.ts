@@ -93,59 +93,33 @@ export function createReverseTitlesUseCase(): ReverseTitlesUseCase {
  * @see Onda 7.2 - Receivables Use Cases
  */
 export function initializeFinancialModule(): void {
+  const reg = (name: string, fn: () => void) => {
+    try { fn(); } catch (e) { console.error(`[Financial] ❌ ${name}:`, e); throw e; }
+  };
+  
   // Repositories
-  container.registerSingleton(
-    TOKENS.FinancialTitleRepository,
-    DrizzleFinancialTitleRepository
-  );
+  reg('DrizzleFinancialTitleRepository', () => container.registerSingleton(TOKENS.FinancialTitleRepository, DrizzleFinancialTitleRepository));
+  reg('DrizzleReceivableRepository', () => container.registerSingleton('IReceivableRepository', DrizzleReceivableRepository));
   
-  container.registerSingleton(
-    'IReceivableRepository',
-    DrizzleReceivableRepository
-  );
-  
-  // Application Services (com @injectable)
-  container.registerSingleton(
-    TOKENS.FinancialTitleGenerator,
-    FinancialTitleGenerator
-  );
+  // Application Services
+  reg('FinancialTitleGenerator', () => container.registerSingleton(TOKENS.FinancialTitleGenerator, FinancialTitleGenerator));
   
   // Title Use Cases
-  container.registerSingleton<IGeneratePayableTitle>(
-    TOKENS.GeneratePayableTitleUseCase,
-    GeneratePayableTitleUseCase
-  );
-  
-  container.registerSingleton<IGenerateReceivableTitle>(
-    TOKENS.GenerateReceivableTitleUseCase,
-    GenerateReceivableTitleUseCase
-  );
-  
-  container.registerSingleton(
-    TOKENS.ReverseTitlesUseCase,
-    ReverseTitlesUseCase
-  );
+  reg('GeneratePayableTitleUseCase', () => container.registerSingleton<IGeneratePayableTitle>(TOKENS.GeneratePayableTitleUseCase, GeneratePayableTitleUseCase));
+  reg('GenerateReceivableTitleUseCase', () => container.registerSingleton<IGenerateReceivableTitle>(TOKENS.GenerateReceivableTitleUseCase, GenerateReceivableTitleUseCase));
+  reg('ReverseTitlesUseCase', () => container.registerSingleton(TOKENS.ReverseTitlesUseCase, ReverseTitlesUseCase));
   
   // Receivable Use Cases
-  container.registerSingleton(CreateReceivableUseCase);
-  container.registerSingleton(GetReceivableByIdUseCase);
-  container.registerSingleton(ListReceivablesUseCase);
-  container.registerSingleton(CancelReceivableUseCase);
-  container.registerSingleton(ReceivePaymentUseCase);
+  reg('CreateReceivableUseCase', () => container.registerSingleton(CreateReceivableUseCase));
+  reg('GetReceivableByIdUseCase', () => container.registerSingleton(GetReceivableByIdUseCase));
+  reg('ListReceivablesUseCase', () => container.registerSingleton(ListReceivablesUseCase));
+  reg('CancelReceivableUseCase', () => container.registerSingleton(CancelReceivableUseCase));
+  reg('ReceivePaymentUseCase', () => container.registerSingleton(ReceivePaymentUseCase));
   
-  // Gateways (E9 Fase 2)
-  container.registerSingleton<IBillingPdfGateway>(
-    FINANCIAL_TOKENS.BillingPdfGateway,
-    BillingPdfAdapter
-  );
-  container.registerSingleton<IBoletoGateway>(
-    FINANCIAL_TOKENS.BoletoGateway,
-    BoletoAdapter
-  );
-  container.registerSingleton<ICnabGateway>(
-    FINANCIAL_TOKENS.CnabGateway,
-    CnabAdapter
-  );
+  // Gateways
+  reg('BillingPdfAdapter', () => container.registerSingleton<IBillingPdfGateway>(FINANCIAL_TOKENS.BillingPdfGateway, BillingPdfAdapter));
+  reg('BoletoAdapter', () => container.registerSingleton<IBoletoGateway>(FINANCIAL_TOKENS.BoletoGateway, BoletoAdapter));
+  reg('CnabAdapter', () => container.registerSingleton<ICnabGateway>(FINANCIAL_TOKENS.CnabGateway, CnabAdapter));
   
   console.log('[Financial Module] DI configured - Receivables Use Cases + 3 Gateways');
 }

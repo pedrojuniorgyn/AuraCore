@@ -60,6 +60,23 @@
       "pattern_created": "DI-INJECTABLE-COMPLETE",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-804554",
+      "date": "2026-01-24",
+      "epic": "E14.8",
+      "error": "TypeError: r is not a function - erro de DI no Financial Module. Os Use Cases GeneratePayableTitleUseCase, GenerateReceivableTitleUseCase e ReverseTitlesUseCase não tinham @injectable() decorator, causando falha ao inicializar o container tsyringe em workers Next.js.",
+      "correction": "Adicionado @injectable() e @inject() decorators nos 3 Use Cases do Financial Module. Adicionado TOKENS.Logger e registrado ConsoleLogger no global-registrations.ts.",
+      "files_affected": [
+        "src/modules/financial/application/use-cases/GeneratePayableTitleUseCase.ts",
+        "src/modules/financial/application/use-cases/GenerateReceivableTitleUseCase.ts",
+        "src/modules/financial/application/use-cases/ReverseTitlesUseCase.ts",
+        "src/shared/infrastructure/di/tokens.ts",
+        "src/shared/infrastructure/di/global-registrations.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }
