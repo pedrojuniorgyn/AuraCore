@@ -40,6 +40,85 @@
       "pattern_created": "P-MIGRATION-003",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-647804",
+      "date": "2026-01-24",
+      "epic": "E8.4",
+      "error": "TypeError: b is not a function no DI do módulo Financial ao usar require() para carregar módulos com decorators @injectable()",
+      "correction": "1. Migração de require() para async import() em ensure-initialized.ts para garantir processamento correto de decorators tsyringe em ambiente bundled Next.js. 2. Restauração completa do FinancialModule.ts seguindo padrão StrategicModule.ts com 5 repositories + 3 services + 3 adapters + 16 use cases.",
+      "files_affected": [
+        "src/shared/infrastructure/di/ensure-initialized.ts",
+        "src/shared/infrastructure/di/with-di.ts",
+        "src/modules/financial/infrastructure/di/FinancialModule.ts",
+        "src/modules/financial/infrastructure/di/index.ts",
+        "src/modules/financial/presentation/bootstrap.ts"
+      ],
+      "pattern_created": "async-di-initialization",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-994359",
+      "date": "2026-01-24",
+      "epic": "E8.4",
+      "error": "Débito técnico DI: async/await desnecessário, 8+ console.log em produção, falta mangleExports para preservar decorators",
+      "correction": "1. Adicionado mangleExports: false no webpack config para preservar nomes de decorators tsyringe\n2. Removidos 8 console.log/warn de debug (mantido apenas console.error crítico)\n3. Verificado que Drizzle .limit() já usa padrão correto (inline type assertion)\n4. Mantido async import() para performance e tree-shaking",
+      "files_affected": [
+        "next.config.ts",
+        "src/shared/infrastructure/di/ensure-initialized.ts",
+        "src/shared/infrastructure/di/global-registrations.ts",
+        "src/modules/financial/infrastructure/di/FinancialModule.ts",
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts",
+        "src/modules/financial/domain/entities/AccountPayable.ts"
+      ],
+      "pattern_created": "BP-WEBPACK-001: mangleExports false para decorators",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-417463",
+      "date": "2026-01-24",
+      "epic": "E8.4",
+      "error": "Bugs introduzidos durante remoção de console.log (LC-994359): \n1. AccountPayable.cancel() com falhas de invariante silenciosas (sem log, sem tracking)\n2. PaymentCompletedHandler vazio (eventos disparados mas perdidos)",
+      "correction": "Bug #1 (AccountPayable): Substituído comentário vazio por throw exception. Invariante violado (PENDING não cancela) = BUG no código, deve explodir ruidosamente com stack trace completo. Solução: Opção B (Throw exception).\n\nBug #2 (PaymentCompletedHandler): Implementado handler com ILogger para tracking estruturado. Registra eventType, payableId, paymentId, amount, currency, method, occurredAt. Preparado para futuras ações (email, contábil, integrações). Solução: Opção A (Implement with ILogger).",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts"
+      ],
+      "pattern_created": "P-ERROR-VISIBILITY-001: Erros críticos devem ser visíveis (throw ou log)",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-896336",
+      "date": "2026-01-24",
+      "epic": "E8.4",
+      "error": "PaymentCompletedHandler usava @inject(TOKENS.Logger) mas era instanciado com new (não via container), resultando em logger = undefined em runtime. Crash ao disparar evento: Cannot read property 'info' of undefined",
+      "correction": "Aplicado Passo 2 (Abordagem Simples):\n1. Removido @injectable e @inject do handler\n2. Handler recebe logger via constructor normal (sem decorators)\n3. DomainEventDispatcher constructor resolve logger do container\n4. Logger é passado ao handler via new PaymentCompletedHandler(logger)\n5. Dispatcher mantém @injectable (correto - precisa ser resolvido do container)\n\nRazão da escolha: Handler só precisa de Logger (dependência única). Abordagem simples funciona imediatamente sem registro adicional no FinancialModule.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts"
+      ],
+      "pattern_created": "P-DI-HANDLER-001: Event handlers com dependências devem receber via constructor",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-269994",
+      "date": "2026-01-24",
+      "epic": "E8.4",
+      "error": "Bug #3 - Partial Cancellation: AccountPayable.cancel() com throw dentro do loop podia deixar payments parcialmente cancelados (dados órfãos)",
+      "correction": "Coletar TODOS os erros de payment.cancel() em array antes de falhar. Se ALGUM erro, reportar TODOS com Result.fail() detalhado. Previne modificação parcial e mantém consistência de dados.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/AccountPayable.ts",
+        "src/modules/documents/infrastructure/persistence/repositories/DrizzleDocumentRepository.ts",
+        "src/modules/documents/infrastructure/persistence/repositories/DrizzleDocumentJobRepository.ts",
+        "scripts/test-apis.py",
+        "scripts/test-all-apis-complete.sh"
+      ],
+      "pattern_created": "P-ERROR-CONSISTENCY-002",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

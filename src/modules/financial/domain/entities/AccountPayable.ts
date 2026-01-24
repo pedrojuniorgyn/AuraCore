@@ -338,22 +338,37 @@ export class AccountPayable extends AggregateRoot<string> {
       );
     }
 
-    // Cancelar pagamentos PENDING (agora seguro - só há PENDING)
+    // ✅ FIX LC-896337: Coletar TODOS os erros antes de falhar (previne partial cancellation)
+    // NUNCA fazer throw dentro do loop - pode deixar payments órfãos
+    const cancellationErrors: Array<{ paymentId: string; error: string }> = [];
+    
     for (const payment of this._props.payments) {
       if (payment.status === 'PENDING') {
         const cancelResult = payment.cancel('Payable cancelled');
         
-        // ✅ INVARIANTE: Se payment está PENDING, cancel() DEVE funcionar
-        // Se falhar = BUG no código (lógica de Payment.cancel() quebrada)
-        // Melhor explodir ruidosamente do que silenciar erro
         if (Result.isFail(cancelResult)) {
-          throw new Error(
-            `[INVARIANT VIOLATION] Failed to cancel PENDING payment ${payment.id}: ${cancelResult.error}. ` +
-            `This should never happen - Payment.cancel() has a bug or payment status is corrupted. ` +
-            `Payable: ${this.id}, Status: ${payment.status}`
-          );
+          // ✅ COLETAR erro, mas CONTINUAR processando todos
+          cancellationErrors.push({
+            paymentId: payment.id,
+            error: cancelResult.error,
+          });
+          // NÃO fazer throw aqui - processar todos primeiro
         }
       }
+    }
+    
+    // ✅ Se ALGUM erro, reportar TODOS (não fazer alteração parcial)
+    if (cancellationErrors.length > 0) {
+      const errorDetails = cancellationErrors
+        .map(e => `Payment ${e.paymentId}: ${e.error}`)
+        .join('; ');
+      
+      // ✅ Agora sim, falhar com detalhes COMPLETOS
+      return Result.fail(
+        `[INVARIANT VIOLATION] Failed to cancel ${cancellationErrors.length} PENDING payment(s): ${errorDetails}. ` +
+        `This indicates a bug in Payment.cancel() logic or corrupted payment status. ` +
+        `Payable: ${this.id}. No payments were cancelled to maintain consistency.`
+      );
     }
 
     this._props.status = 'CANCELLED';

@@ -98,7 +98,10 @@ export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
         .orderBy(desc(documentJobsTable.createdAt));
 
       const queryWithOffset = (query as unknown as QueryWithOffset).offset(offset);
-      const rows = await queryWithOffset.limit(pageSize);
+      // ✅ BP-SQL-004: Type assertion para .limit() (LC-303298, GAP-SQL-005)
+      type DocumentJobRow = typeof documentJobsTable.$inferSelect;
+      type QueryWithLimit = { limit(n: number): Promise<DocumentJobRow[]> };
+      const rows = await (queryWithOffset as unknown as QueryWithLimit).limit(pageSize);
 
       // Map to domain
       const items: DocumentJob[] = [];

@@ -106,7 +106,10 @@ export class DrizzleDocumentRepository implements IDocumentRepository {
         .orderBy(desc(documentStoreTable.createdAt));
 
       const queryWithOffset = (query as unknown as QueryWithOffset).offset(offset);
-      const rows = await queryWithOffset.limit(pageSize);
+      // ✅ BP-SQL-004: Type assertion para .limit() (LC-303298, GAP-SQL-005)
+      type DocumentRow = typeof documentStoreTable.$inferSelect;
+      type QueryWithLimit = { limit(n: number): Promise<DocumentRow[]> };
+      const rows = await (queryWithOffset as unknown as QueryWithLimit).limit(pageSize);
 
       // Map to domain
       const items: Document[] = [];
