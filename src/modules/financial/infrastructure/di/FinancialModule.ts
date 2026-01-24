@@ -104,11 +104,13 @@ export function initializeFinancialModule(): void {
     DrizzleReceivableRepository
   );
   
-  // Domain Services
-  container.registerSingleton(
-    TOKENS.FinancialTitleGenerator,
-    FinancialTitleGenerator
-  );
+  // Domain Services (via factory - Domain não usa @injectable)
+  container.register(TOKENS.FinancialTitleGenerator, {
+    useFactory: (c) => {
+      const repository = c.resolve<DrizzleFinancialTitleRepository>(TOKENS.FinancialTitleRepository);
+      return new FinancialTitleGenerator(repository);
+    }
+  });
   
   // Title Use Cases
   container.registerSingleton<IGeneratePayableTitle>(

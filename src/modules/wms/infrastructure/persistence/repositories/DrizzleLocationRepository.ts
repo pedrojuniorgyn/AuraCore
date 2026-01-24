@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import type { ILocationRepository } from '../../../domain/ports/output/ILocationRepository';
 import { Location } from '../../../domain/entities/Location';
@@ -8,6 +9,7 @@ import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
+@injectable()
 export class DrizzleLocationRepository implements ILocationRepository {
   async findById(id: string, organizationId: number, branchId: number): Promise<Location | null> {
     const rows = await db

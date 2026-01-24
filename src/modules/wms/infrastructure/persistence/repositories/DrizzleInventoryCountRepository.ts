@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { eq, and, isNull } from 'drizzle-orm';
 import type { IInventoryCountRepository } from '../../../domain/ports/output/IInventoryCountRepository';
 import { InventoryCount } from '../../../domain/entities/InventoryCount';
@@ -6,6 +7,7 @@ import { wmsInventoryCounts } from '../schemas/InventoryCountSchema';
 import { db } from '@/lib/db';
 import { Result } from '@/shared/domain';
 
+@injectable()
 export class DrizzleInventoryCountRepository implements IInventoryCountRepository {
   async findById(id: string, organizationId: number, branchId: number): Promise<InventoryCount | null> {
     const rows = await db

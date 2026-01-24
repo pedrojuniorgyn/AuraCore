@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { eq, and, isNull, sql, lte, isNotNull, desc } from 'drizzle-orm';
 import type { IStockRepository } from '../../../domain/ports/output/IStockRepository';
 import { StockItem } from '../../../domain/entities/StockItem';
@@ -9,6 +10,7 @@ import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
+@injectable()
 export class DrizzleStockRepository implements IStockRepository {
   async findById(id: string, organizationId: number, branchId: number): Promise<StockItem | null> {
     const rows = await db

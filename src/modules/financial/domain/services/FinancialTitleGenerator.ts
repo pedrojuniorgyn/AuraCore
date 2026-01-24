@@ -10,6 +10,9 @@
  * - Validate reversal conditions
  * 
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
+ * 
+ * NOTA: Domain Services NÃO usam @injectable() - são instanciados via factory
+ * no FinancialModule para manter separação de camadas.
  */
 
 import { Result } from "@/shared/domain";

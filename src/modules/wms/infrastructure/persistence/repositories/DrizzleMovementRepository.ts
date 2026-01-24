@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { eq, and, isNull, gte, lte, or, desc, sql, type SQL } from 'drizzle-orm';
 import type { IMovementRepository } from '../../../domain/ports/output/IMovementRepository';
 import { StockMovement } from '../../../domain/entities/StockMovement';
@@ -8,6 +9,7 @@ import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 
+@injectable()
 export class DrizzleMovementRepository implements IMovementRepository {
   async findById(id: string, organizationId: number, branchId: number): Promise<StockMovement | null> {
     const rows = await db

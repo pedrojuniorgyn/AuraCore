@@ -11,6 +11,7 @@
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
  */
 
+import { injectable } from 'tsyringe';
 import { db } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
@@ -40,6 +41,7 @@ interface FiscalDocumentQueryResult {
   financial_status: string;
 }
 
+@injectable()
 export class DrizzleFinancialTitleRepository
   implements IFinancialTitleRepository
 {

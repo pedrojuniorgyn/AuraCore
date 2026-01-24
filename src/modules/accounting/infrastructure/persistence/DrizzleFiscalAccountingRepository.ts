@@ -11,6 +11,7 @@
  * @service 4/8 - accounting-engine.ts → JournalEntryGenerator
  */
 
+import { injectable } from 'tsyringe';
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { Result } from "@/shared/domain";
@@ -76,6 +77,7 @@ interface InsertIdResult {
 // REPOSITORY IMPLEMENTATION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+@injectable()
 export class DrizzleFiscalAccountingRepository implements IFiscalAccountingRepository {
   async getFiscalDocumentData(
     fiscalDocumentId: bigint,

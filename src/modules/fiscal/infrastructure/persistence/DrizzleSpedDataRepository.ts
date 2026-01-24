@@ -11,6 +11,7 @@
  * Épico: E7.13 - Migration to DDD/Hexagonal Architecture
  */
 
+import { injectable } from 'tsyringe';
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { Result } from "@/shared/domain";
@@ -34,6 +35,7 @@ import {
   TaxTotalsContribData,
 } from '../../domain/ports/output/ISpedDataRepository';
 
+@injectable()
 export class DrizzleSpedDataRepository implements ISpedDataRepository {
   async getOrganization(
     organizationId: bigint
