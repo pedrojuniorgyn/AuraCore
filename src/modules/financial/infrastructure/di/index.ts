@@ -1,12 +1,6 @@
 /**
  * Financial Module DI Exports
  * 
- * Exports factories for creating Financial module components.
+ * Exports the initialization function and tokens for the Financial module.
  */
-export {
-  createFinancialTitleRepository,
-  createFinancialTitleGenerator,
-  createGeneratePayableTitleUseCase,
-  createGenerateReceivableTitleUseCase,
-  createReverseTitlesUseCase,
-} from './FinancialModule';
+export { initializeFinancialModule, FINANCIAL_TOKENS } from './FinancialModule';
