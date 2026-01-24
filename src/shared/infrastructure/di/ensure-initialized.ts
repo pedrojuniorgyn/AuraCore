@@ -62,20 +62,30 @@ export function ensureDIInitialized(): void {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { initializeIntegrationsModule } = require('@/modules/integrations/infrastructure/di/IntegrationsModule');
 
-    // Initialize in dependency order
-    initializeFinancialModule();
-    registerAccountingModule();
-    registerFiscalModule();
-    initializeWmsModule();
-    registerTmsModule();
-    registerFleetModule();
-    registerCommercialModule();
-    registerDocumentsModule();
+    // Initialize in dependency order with individual error handling
+    const modules = [
+      { name: 'Financial', fn: initializeFinancialModule },
+      { name: 'Accounting', fn: registerAccountingModule },
+      { name: 'Fiscal', fn: registerFiscalModule },
+      { name: 'WMS', fn: initializeWmsModule },
+      { name: 'TMS', fn: registerTmsModule },
+      { name: 'Fleet', fn: registerFleetModule },
+      { name: 'Commercial', fn: registerCommercialModule },
+      { name: 'Documents', fn: registerDocumentsModule },
+      { name: 'Strategic', fn: registerStrategicModule },
+      { name: 'Knowledge', fn: registerKnowledgeModule },
+      { name: 'Contracts', fn: registerContractsModule },
+      { name: 'Integrations', fn: initializeIntegrationsModule },
+    ];
 
-    registerStrategicModule();
-    registerKnowledgeModule();
-    registerContractsModule();
-    initializeIntegrationsModule();
+    for (const mod of modules) {
+      try {
+        mod.fn();
+      } catch (err) {
+        console.error(`[DI] ❌ Falha ao inicializar ${mod.name}:`, err);
+        throw err;
+      }
+    }
 
     isInitialized = true;
     // console.log('[DI] ✅ Container inicializado no worker');
