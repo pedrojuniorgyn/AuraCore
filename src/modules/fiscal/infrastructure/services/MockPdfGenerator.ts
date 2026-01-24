@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { IFiscalDocumentPdfGenerator } from '../../domain/ports/output/IFiscalDocumentPdfGenerator';
 import type { FiscalDocument } from '../../domain/entities/FiscalDocument';
@@ -22,6 +23,7 @@ import type { DocumentType } from '../../domain/value-objects/DocumentType';
  * - QR Code da chave fiscal
  * - Código de barras
  */
+@injectable()
 export class MockPdfGenerator implements IFiscalDocumentPdfGenerator {
   private readonly DELAY_MIN_MS = 200;
   private readonly DELAY_MAX_MS = 500;
