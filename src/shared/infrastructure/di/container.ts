@@ -1,4 +1,5 @@
-import 'reflect-metadata';
+// CRÍTICO: Polyfill DEVE ser importado ANTES de tsyringe
+import './reflect-polyfill';
 import { container, injectable, inject, singleton, autoInjectable, registry, delay } from 'tsyringe';
 
 /**

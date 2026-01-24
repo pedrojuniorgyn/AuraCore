@@ -17,6 +17,8 @@
  * @module shared/infrastructure/di
  * @since E14.8
  */
+// CRÍTICO: Polyfill DEVE ser importado ANTES de qualquer módulo com decorators
+import './reflect-polyfill';
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureDIInitialized } from './ensure-initialized';
 

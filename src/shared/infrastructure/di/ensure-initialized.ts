@@ -11,7 +11,8 @@
  * @module shared/infrastructure/di
  * @since E14.8
  */
-import 'reflect-metadata';
+// CRÍTICO: Polyfill DEVE ser importado ANTES de qualquer módulo com decorators
+import './reflect-polyfill';
 
 let isInitialized = false;
 
