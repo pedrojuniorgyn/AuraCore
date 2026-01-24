@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { TOKENS } from './tokens';
 import { CryptoUuidGenerator } from '../adapters/CryptoUuidGenerator';
+import { ConsoleLogger } from '../logging/ConsoleLogger';
 import { DoclingClient } from '../docling';
 import { ImportDANFeUseCase } from '@/modules/fiscal/application/commands/import-danfe';
 import { ImportDACTeUseCase } from '@/modules/fiscal/application/commands/import-dacte';
@@ -43,6 +44,7 @@ export function registerGlobalDependencies() {
   // ============================================================================
 
   container.registerSingleton(TOKENS.UuidGenerator, CryptoUuidGenerator);
+  container.registerSingleton(TOKENS.Logger, ConsoleLogger);
 
   // ============================================================================
   // DOCLING INTEGRATION (E-Agent-Fase-D1/D2/D3)

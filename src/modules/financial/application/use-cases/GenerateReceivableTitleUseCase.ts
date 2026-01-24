@@ -10,8 +10,11 @@
  * @see ARCH-010: Use Cases implementam Input Ports
  */
 
+import { injectable, inject } from 'tsyringe';
 import { Result } from "@/shared/domain";
-import { ILogger } from "@/shared/infrastructure";
+import type { ILogger } from "@/shared/infrastructure";
+import { ConsoleLogger } from "@/shared/infrastructure/logging/ConsoleLogger";
+import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import {
   FinancialTitleGenerator,
   GenerateReceivableInput as DomainGenerateReceivableInput,
@@ -25,10 +28,11 @@ import type {
   ExecutionContext,
 } from "../../domain/ports/input";
 
+@injectable()
 export class GenerateReceivableTitleUseCase implements IGenerateReceivableTitle {
   constructor(
-    private readonly financialTitleGenerator: FinancialTitleGenerator,
-    private readonly logger: ILogger
+    @inject(TOKENS.FinancialTitleGenerator) private readonly financialTitleGenerator: FinancialTitleGenerator,
+    @inject(TOKENS.Logger) private readonly logger: ConsoleLogger
   ) {}
 
   async execute(
