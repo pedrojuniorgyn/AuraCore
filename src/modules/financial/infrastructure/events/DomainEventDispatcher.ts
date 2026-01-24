@@ -1,5 +1,7 @@
-import { injectable } from '@/shared/infrastructure/di/container';
+import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { DomainEvent } from '@/shared/domain';
+import type { ILogger } from '@/shared/infrastructure';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 
 /**
  * Interface para handlers de eventos
@@ -65,20 +67,41 @@ export class DomainEventDispatcher implements IEventDispatcher {
 }
 
 /**
- * Exemplo de handler para PaymentCompleted
+ * Handler para PaymentCompleted event
+ * 
+ * Responsável por:
+ * - Tracking estruturado de pagamentos completados
+ * - (Futuro) Enviar email de confirmação
+ * - (Futuro) Gerar lançamento contábil
+ * - (Futuro) Notificar sistema externo
  */
 @injectable()
 export class PaymentCompletedHandler implements IDomainEventHandler {
+  constructor(
+    @inject(TOKENS.Logger) private readonly logger: ILogger
+  ) {}
+
   async handle(event: DomainEvent): Promise<void> {
-    // TODO: Implementar ações quando pagamento for completado:
-    // - Enviar email
-    // - Gerar lançamento contábil
-    // - Notificar sistema externo
-    // - etc.
+    // ✅ Log estruturado para tracking e auditoria
+    this.logger.info('Payment completed', {
+      eventType: event.eventType,
+      payableId: event.aggregateId,
+      paymentId: event.payload?.paymentId,
+      amount: event.payload?.amount,
+      currency: event.payload?.currency,
+      method: event.payload?.method,
+      occurredAt: event.occurredAt,
+      metadata: event.payload,
+    });
     
-    // Event data:
-    // - payableId: event.aggregateId
-    // - payload: event.payload
+    // TODO: Implementar ações de negócio quando estiverem disponíveis:
+    // 1. EmailGateway: Disparar email de confirmação de pagamento
+    // 2. AccountingService: Gerar lançamento contábil (débito/crédito)
+    // 3. IntegrationGateway: Notificar ERP/sistema externo
+    // 4. NotificationService: Criar notificação in-app para usuário
+    
+    // Por enquanto, apenas tracking via logger estruturado
+    // Futuras implementações adicionarão lógica aqui
   }
 }
 
