@@ -62,30 +62,19 @@ export function ensureDIInitialized(): void {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { initializeIntegrationsModule } = require('@/modules/integrations/infrastructure/di/IntegrationsModule');
 
-    // Initialize in dependency order with individual error handling
-    const modules = [
-      { name: 'Financial', fn: initializeFinancialModule },
-      { name: 'Accounting', fn: registerAccountingModule },
-      { name: 'Fiscal', fn: registerFiscalModule },
-      { name: 'WMS', fn: initializeWmsModule },
-      { name: 'TMS', fn: registerTmsModule },
-      { name: 'Fleet', fn: registerFleetModule },
-      { name: 'Commercial', fn: registerCommercialModule },
-      { name: 'Documents', fn: registerDocumentsModule },
-      { name: 'Strategic', fn: registerStrategicModule },
-      { name: 'Knowledge', fn: registerKnowledgeModule },
-      { name: 'Contracts', fn: registerContractsModule },
-      { name: 'Integrations', fn: initializeIntegrationsModule },
-    ];
-
-    for (const mod of modules) {
-      try {
-        mod.fn();
-      } catch (err) {
-        console.error(`[DI] ❌ Falha ao inicializar ${mod.name}:`, err);
-        throw err;
-      }
-    }
+    // Initialize in dependency order
+    try { initializeFinancialModule(); } catch (e) { console.error('[DI] ❌ Financial:', e); throw e; }
+    try { registerAccountingModule(); } catch (e) { console.error('[DI] ❌ Accounting:', e); throw e; }
+    try { registerFiscalModule(); } catch (e) { console.error('[DI] ❌ Fiscal:', e); throw e; }
+    try { initializeWmsModule(); } catch (e) { console.error('[DI] ❌ WMS:', e); throw e; }
+    try { registerTmsModule(); } catch (e) { console.error('[DI] ❌ TMS:', e); throw e; }
+    try { registerFleetModule(); } catch (e) { console.error('[DI] ❌ Fleet:', e); throw e; }
+    try { registerCommercialModule(); } catch (e) { console.error('[DI] ❌ Commercial:', e); throw e; }
+    try { registerDocumentsModule(); } catch (e) { console.error('[DI] ❌ Documents:', e); throw e; }
+    try { registerStrategicModule(); } catch (e) { console.error('[DI] ❌ Strategic:', e); throw e; }
+    try { registerKnowledgeModule(); } catch (e) { console.error('[DI] ❌ Knowledge:', e); throw e; }
+    try { registerContractsModule(); } catch (e) { console.error('[DI] ❌ Contracts:', e); throw e; }
+    try { initializeIntegrationsModule(); } catch (e) { console.error('[DI] ❌ Integrations:', e); throw e; }
 
     isInitialized = true;
     // console.log('[DI] ✅ Container inicializado no worker');
