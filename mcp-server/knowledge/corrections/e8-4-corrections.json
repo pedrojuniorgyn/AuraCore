@@ -119,6 +119,19 @@
       "pattern_created": "P-ERROR-CONSISTENCY-002",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-889110",
+      "date": "2026-01-24",
+      "epic": "E8.4",
+      "error": "Race Condition DI: DomainEventDispatcher resolvia Logger no constructor, mas Logger pode não estar registrado ainda, causando crash se dispatcher for instanciado antes de registerGlobalDependencies()",
+      "correction": "Implementada lazy resolution com getHandlers(): Constructor vazio (sem DI calls), Logger resolvido apenas no primeiro dispatch() de cada event type. Elimina race condition completamente - Dispatcher pode ser criado em qualquer momento, Logger será resolvido quando necessário.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts"
+      ],
+      "pattern_created": "P-DI-LAZY-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

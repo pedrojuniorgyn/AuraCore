@@ -36,13 +36,35 @@ export class DomainEventDispatcher implements IEventDispatcher {
   private handlers: Map<string, IDomainEventHandler[]> = new Map();
 
   constructor() {
-    // ✅ Resolver logger uma vez no constructor e passar aos handlers
-    const logger = container.resolve<ILogger>(TOKENS.Logger);
+    // ✅ FIX LC-[AUTO]: Constructor vazio - sem DI calls
+    // Logger será resolvido apenas quando primeiro evento for disparado (lazy resolution)
+    // Previne race condition: Dispatcher pode ser criado ANTES de Logger estar registrado
+  }
+
+  /**
+   * Lazy resolution de handlers para evitar race condition com Logger DI.
+   * Handlers são criados apenas quando primeiro evento do tipo é disparado.
+   * 
+   * Pattern: P-DI-LAZY-001
+   * Reason: Logger pode não estar registrado no constructor, causando crash
+   * Solution: Resolve Logger on-demand quando handler é necessário
+   */
+  private getHandlers(eventType: string): IDomainEventHandler[] {
+    let handlers = this.handlers.get(eventType);
     
-    // Registrar handlers com suas dependências resolvidas
-    this.handlers.set('PaymentCompleted', [
-      new PaymentCompletedHandler(logger),
-    ]);
+    if (!handlers) {
+      // ✅ Criar handlers sob demanda (lazy)
+      if (eventType === 'PaymentCompleted') {
+        // ✅ Resolver logger AQUI (quando necessário)
+        // Neste ponto, Logger JÁ foi registrado em global dependencies
+        const logger = container.resolve<ILogger>(TOKENS.Logger);
+        handlers = [new PaymentCompletedHandler(logger)];
+        this.handlers.set(eventType, handlers);
+      }
+      // TODO: Adicionar outros event types aqui conforme necessário
+    }
+    
+    return handlers || [];
   }
 
   /**
@@ -62,7 +84,8 @@ export class DomainEventDispatcher implements IEventDispatcher {
    */
   async dispatch(events: DomainEvent[]): Promise<void> {
     for (const event of events) {
-      const handlers = this.handlers.get(event.eventType) || [];
+      // ✅ Usar getHandlers() para lazy resolution
+      const handlers = this.getHandlers(event.eventType);
       
       for (const handler of handlers) {
         try {
