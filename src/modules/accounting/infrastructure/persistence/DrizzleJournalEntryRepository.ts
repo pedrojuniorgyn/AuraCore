@@ -11,8 +11,6 @@
 import { injectable } from '@/shared/infrastructure/di/container';
 import { eq, and, isNull, sql, desc, asc, or, like } from 'drizzle-orm';
 import { db } from '@/lib/db';
-// Type helper para .limit() - Drizzle MSSQL typing issue (BP-SQL-004)
-type QueryWithLimit<T> = { limit(n: number): Promise<T[]> };
 import { Result } from '@/shared/domain';
 import { JournalEntry } from '../../domain/entities/JournalEntry';
 import { JournalEntryMapper } from './JournalEntryMapper';
@@ -60,9 +58,10 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
           eq(journalEntriesTable.branchId, branchId),
           isNull(journalEntriesTable.deletedAt)
         )
-      );
+      )
+      .orderBy(asc(journalEntriesTable.id));
     
-    const rows = await (query as unknown as QueryWithLimit<JournalEntryRow>).limit(1);
+    const rows = await query.offset(0).fetch(1);
 
     const row = rows[0];
     if (!row) {
@@ -155,7 +154,6 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
     const orderFn = sortOrder === 'desc' ? desc : asc;
 
     // Buscar entries com paginação
-    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
     const offsetValue = (page - 1) * pageSize;
     const baseQuery = db
       .select()
@@ -163,8 +161,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
       .where(and(...conditions))
       .orderBy(orderFn(orderColumn));
     
-    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<JournalEntryRow[]> } };
-    const rows = await (baseQuery as unknown as QueryWithLimitOffset).limit(pageSize).offset(offsetValue);
+    const rows = await baseQuery.offset(offsetValue).fetch(pageSize);
 
     // Mapear para domain (sem lines por performance)
     const entries: JournalEntry[] = [];
@@ -194,9 +191,10 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
     const existQuery = db
       .select({ id: journalEntriesTable.id })
       .from(journalEntriesTable)
-      .where(eq(journalEntriesTable.id, entry.id));
+      .where(eq(journalEntriesTable.id, entry.id))
+      .orderBy(asc(journalEntriesTable.id));
     
-    const existing = await (existQuery as unknown as QueryWithLimit<{ id: string }>).limit(1);
+    const existing = await existQuery.offset(0).fetch(1);
 
     if (existing.length > 0) {
       // UPDATE
@@ -294,9 +292,10 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
           eq(journalEntriesTable.branchId, branchId),
           isNull(journalEntriesTable.deletedAt)
         )
-      );
+      )
+      .orderBy(asc(journalEntriesTable.id));
     
-    const rows = await (query as unknown as QueryWithLimit<JournalEntryRow>).limit(1);
+    const rows = await query.offset(0).fetch(1);
 
     const row = rows[0];
     if (!row) {
@@ -335,9 +334,10 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
           eq(journalEntriesTable.branchId, branchId),
           isNull(journalEntriesTable.deletedAt)
         )
-      );
+      )
+      .orderBy(asc(journalEntriesTable.id));
     
-    const rows = await (query as unknown as QueryWithLimit<{ id: string }>).limit(1);
+    const rows = await query.offset(0).fetch(1);
 
     return rows.length > 0;
   }
@@ -361,7 +361,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
       )
       .orderBy(desc(journalEntriesTable.entryNumber));
     
-    const result = await (query as unknown as QueryWithLimit<{ entryNumber: string }>).limit(1);
+    const result = await query.offset(0).fetch(1);
 
     let nextSeq = 1;
     if (result.length > 0 && result[0].entryNumber) {

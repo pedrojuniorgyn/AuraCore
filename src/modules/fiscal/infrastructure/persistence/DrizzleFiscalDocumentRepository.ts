@@ -150,7 +150,6 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
     const total = countResult[0]?.count ?? 0;
 
     // Query paginated data
-    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
     const offset = (pagination.page - 1) * pagination.pageSize;
     const baseQuery = db
       .select()
@@ -158,8 +157,7 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
       .where(whereClause)
       .orderBy(fiscalDocuments.createdAt);
     
-    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<FiscalDocumentPersistence[]> } };
-    const rows = await (baseQuery as unknown as QueryWithLimitOffset).limit(pagination.pageSize).offset(offset);
+    const rows = await baseQuery.offset(offset).fetch(pagination.pageSize);
 
     // Buscar items de todos os documentos em batch
     const documentIds = rows.map((row) => row.id);

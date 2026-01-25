@@ -4,7 +4,7 @@
  * Usa Drizzle ORM para persistência de Documents
  */
 import { injectable } from 'tsyringe';
-import { eq, and, isNull, sql, desc, gte, lte, SQL } from 'drizzle-orm';
+import { eq, and, isNull, sql, desc, asc, gte, lte, SQL } from 'drizzle-orm';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
 import type { Document } from '../../../domain/entities/Document';
@@ -16,9 +16,6 @@ import type {
 import { documentStoreTable, type DocumentStoreRow } from '../schemas/document-store.schema';
 import { DocumentMapper } from '../mappers/DocumentMapper';
 
-// Type helpers para contornar limitações de tipagem do Drizzle MSSQL
-// HOTFIX S3: Mantendo QueryWithLimit para queries simples sem offset
-type QueryWithLimit = { limit(n: number): Promise<DocumentStoreRow[]> };
 
 @injectable()
 export class DrizzleDocumentRepository implements IDocumentRepository {
@@ -38,9 +35,10 @@ export class DrizzleDocumentRepository implements IDocumentRepository {
             eq(documentStoreTable.branchId, branchId),
             isNull(documentStoreTable.deletedAt),
           ),
-        );
+        )
+        .orderBy(asc(documentStoreTable.id));
 
-      const rows = await (query as unknown as QueryWithLimit).limit(1);
+      const rows = await query.offset(0).fetch(1);
 
       if (rows.length === 0) {
         return Result.ok(null);
@@ -105,10 +103,7 @@ export class DrizzleDocumentRepository implements IDocumentRepository {
         .where(and(...conditions))
         .orderBy(desc(documentStoreTable.createdAt));
 
-      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
-      // A ordem contrária causa: TypeError: .limit is not a function
-      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof documentStoreTable.$inferSelect[]> } };
-      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
+      const rows = await query.offset(offset).fetch(pageSize);
 
       // Map to domain
       const items: Document[] = [];
@@ -175,9 +170,10 @@ export class DrizzleDocumentRepository implements IDocumentRepository {
       const query = db
         .select({ id: documentStoreTable.id })
         .from(documentStoreTable)
-        .where(eq(documentStoreTable.id, document.id));
+        .where(eq(documentStoreTable.id, document.id))
+        .orderBy(asc(documentStoreTable.id));
 
-      const existing = await (query as unknown as QueryWithLimit).limit(1);
+      const existing = await query.offset(0).fetch(1);
 
       if (existing.length > 0) {
         // Update

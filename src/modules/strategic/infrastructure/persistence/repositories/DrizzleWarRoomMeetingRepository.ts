@@ -137,10 +137,6 @@ export class DrizzleWarRoomMeetingRepository implements IWarRoomMeetingRepositor
   ): Promise<WarRoomMeeting[]> {
     const now = new Date();
     
-    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
-    type MeetingRow = typeof warRoomMeetingTable.$inferSelect;
-    type QueryWithLimit = { limit(n: number): Promise<MeetingRow[]> };
-    
     const baseQuery = db
       .select()
       .from(warRoomMeetingTable)
@@ -155,7 +151,7 @@ export class DrizzleWarRoomMeetingRepository implements IWarRoomMeetingRepositor
       )
       .orderBy(asc(warRoomMeetingTable.scheduledAt));
     
-    const rows = await (baseQuery as unknown as QueryWithLimit).limit(limit);
+    const rows = await baseQuery.offset(0).fetch(limit);
 
     return rows
       .map(row => WarRoomMeetingMapper.toDomain(row))

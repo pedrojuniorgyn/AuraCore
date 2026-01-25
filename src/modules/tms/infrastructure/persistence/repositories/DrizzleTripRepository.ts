@@ -119,9 +119,8 @@ export class DrizzleTripRepository implements ITripRepository {
         .where(and(...conditions))
         .orderBy(desc(trips.createdAt));
       
-      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
-      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof trips.$inferSelect[]> } };
-      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
+      // Usar .offset().fetch() ao invés de .limit() (Drizzle MSSQL não suporta .limit() em runtime)
+      const rows = await query.offset(offset).fetch(pageSize);
 
       // Map to domain entities
       const items: Trip[] = [];

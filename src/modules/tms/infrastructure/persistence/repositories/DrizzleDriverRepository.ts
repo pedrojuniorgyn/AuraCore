@@ -115,9 +115,8 @@ export class DrizzleDriverRepository implements IDriverRepository {
         .where(and(...conditions))
         .orderBy(drivers.name);
       
-      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
-      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof drivers.$inferSelect[]> } };
-      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
+      // Usar .offset().fetch() ao invés de .limit() (Drizzle MSSQL não suporta .limit() em runtime)
+      const rows = await query.offset(offset).fetch(pageSize);
 
       // Map to domain entities
       const items: Driver[] = [];

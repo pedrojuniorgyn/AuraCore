@@ -37,20 +37,14 @@ export async function GET(req: NextRequest) {
       ...(end ? [lte(bankTransactions.transactionDate, end)] : []),
     ];
 
-    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
-    // Antes: queryWithLimit(query, limit) → helper com indireção
-    // Agora: (query as QueryWithLimit).limit() → inline explícito
+    // MSSQL: usar offset(0).fetch(n) ao invés de limit(n)
     const baseQuery = db
       .select()
       .from(bankTransactions)
       .where(and(...where))
       .orderBy(desc(bankTransactions.transactionDate));
     
-    // Type assertion necessária: Drizzle MSSQL beta tem .limit() mas tipagem incompleta
-    type TransactionRow = typeof bankTransactions.$inferSelect;
-    type QueryWithLimit = { limit(n: number): Promise<TransactionRow[]> };
-    
-    const items = await (baseQuery as unknown as QueryWithLimit).limit(parsed.data.limit);
+    const items = await baseQuery.offset(0).fetch(parsed.data.limit);
 
     return NextResponse.json({ success: true, data: items });
   } catch (error: unknown) {

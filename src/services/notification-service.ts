@@ -250,17 +250,14 @@ export class NotificationService {
       conditions.push(eq(notifications.isRead, sql`0`));
     }
 
-    // ✅ BP-SQL-004: Inline type assertion (LC-303298)
-    type NotificationRow = typeof notifications.$inferSelect;
-    type QueryWithLimit = { limit(n: number): Promise<NotificationRow[]> };
-    
+    // MSSQL: usar .offset(0).fetch(n) ao invés de .limit(n)
     const baseQuery = db
       .select()
       .from(notifications)
       .where(and(...conditions))
       .orderBy(desc(notifications.createdAt));
     
-    return await (baseQuery as unknown as QueryWithLimit).limit(limit);
+    return await baseQuery.offset(0).fetch(limit);
   }
 
   /**

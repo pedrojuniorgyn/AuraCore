@@ -26,12 +26,12 @@ import type {
 type DrizzleTableWithColumns = AnyMsSqlTable & Record<string, unknown>;
 
 /**
- * Interface para queries com métodos de paginação
+ * Interface para queries com métodos de paginação (MSSQL)
+ * MSSQL usa .offset().fetch() ao invés de .limit().offset()
  * @see LC-001 (Type Safety Contract) - usar unknown ao invés de any
  */
 interface PaginatedQuery<T> {
-  limit(count: number): { offset(count: number): Promise<T[]> };
-  offset(count: number): { limit(count: number): Promise<T[]> };
+  offset(count: number): { fetch(count: number): Promise<T[]> };
 }
 
 /**
@@ -108,10 +108,10 @@ export async function executeSSRMQuery(
     .where(whereClause)
     .orderBy(...orderByClause);
   
-  // Aplicar paginação com type-safety (usando unknown ao invés de any)
+  // Aplicar paginação MSSQL: .offset().fetch() ao invés de .limit().offset()
   // @see LC-001 (Type Safety Contract) - usar interface específica
   const paginatedQuery = baseQuery as unknown as PaginatedQuery<Record<string, unknown>>;
-  const rows = await paginatedQuery.limit(pageSize).offset(startRow);
+  const rows = await paginatedQuery.offset(startRow).fetch(pageSize);
 
   // Query de count
   const countResult = await db

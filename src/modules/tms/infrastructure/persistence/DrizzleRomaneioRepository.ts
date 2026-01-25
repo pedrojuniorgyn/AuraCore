@@ -201,17 +201,15 @@ export class DrizzleRomaneioRepository implements IRomaneioRepository {
         .where(and(...conditions))
         .orderBy(romaneios.dataEmissao);
 
-      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
+      // Usar .offset().fetch() ao invés de .limit() (Drizzle MSSQL não suporta .limit() em runtime)
       // Aplicar limit e offset se fornecidos
       let romaneioRows: unknown[];
       if (filters.limit !== undefined && filters.offset !== undefined) {
-        type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<unknown[]> } };
-        romaneioRows = await (baseQuery as unknown as QueryWithLimitOffset).limit(filters.limit).offset(filters.offset);
+        romaneioRows = await baseQuery.offset(filters.offset).fetch(filters.limit);
       } else if (filters.limit !== undefined) {
-        type QueryWithLimit = { limit(n: number): Promise<unknown[]> };
-        romaneioRows = await (baseQuery as unknown as QueryWithLimit).limit(filters.limit);
+        romaneioRows = await baseQuery.offset(0).fetch(filters.limit);
       } else {
-        romaneioRows = await baseQuery as unknown[];
+        romaneioRows = await baseQuery;
       }
 
       // Carregar itens para cada romaneio

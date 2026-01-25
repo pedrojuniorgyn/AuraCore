@@ -5,7 +5,7 @@
  * Implementa lock/claim pattern para processamento seguro.
  */
 import { injectable } from 'tsyringe';
-import { eq, and, or, lt, sql, desc, lte, SQL } from 'drizzle-orm';
+import { eq, and, or, lt, sql, desc, asc, lte, SQL } from 'drizzle-orm';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
 import type { DocumentJob } from '../../../domain/entities/DocumentJob';
@@ -19,9 +19,6 @@ import type { JobStatusType } from '../../../domain/value-objects/JobStatus';
 import { documentJobsTable, type DocumentJobRow } from '../schemas/document-jobs.schema';
 import { DocumentJobMapper } from '../mappers/DocumentJobMapper';
 
-// Type helpers para contornar limitações de tipagem do Drizzle MSSQL
-// HOTFIX S3: Mantendo QueryWithLimit para queries simples sem offset
-type QueryWithLimit = { limit(n: number): Promise<DocumentJobRow[]> };
 
 @injectable()
 export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
@@ -38,9 +35,10 @@ export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
             eq(documentJobsTable.id, id),
             eq(documentJobsTable.organizationId, organizationId),
           ),
-        );
+        )
+        .orderBy(asc(documentJobsTable.id));
 
-      const rows = await (query as unknown as QueryWithLimit).limit(1);
+      const rows = await query.offset(0).fetch(1);
 
       if (rows.length === 0) {
         return Result.ok(null);
@@ -97,10 +95,7 @@ export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
         .where(and(...conditions))
         .orderBy(desc(documentJobsTable.createdAt));
 
-      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
-      // A ordem contrária causa: TypeError: .limit is not a function
-      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof documentJobsTable.$inferSelect[]> } };
-      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
+      const rows = await query.offset(offset).fetch(pageSize);
 
       // Map to domain
       const items: DocumentJob[] = [];
@@ -181,7 +176,7 @@ export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
           )
           .orderBy(documentJobsTable.scheduledAt, documentJobsTable.id);
 
-        const jobs = await (query as unknown as QueryWithLimit).limit(1);
+        const jobs = await query.offset(0).fetch(1);
 
         if (jobs.length === 0) {
           return null;
@@ -205,9 +200,10 @@ export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
         const updatedQuery = tx
           .select()
           .from(documentJobsTable)
-          .where(eq(documentJobsTable.id, job.id));
+          .where(eq(documentJobsTable.id, job.id))
+          .orderBy(asc(documentJobsTable.id));
 
-        const updatedJobs = await (updatedQuery as unknown as QueryWithLimit).limit(1);
+        const updatedJobs = await updatedQuery.offset(0).fetch(1);
 
         return updatedJobs[0] ?? null;
       });
@@ -236,9 +232,10 @@ export class DrizzleDocumentJobRepository implements IDocumentJobRepository {
       const query = db
         .select({ id: documentJobsTable.id })
         .from(documentJobsTable)
-        .where(eq(documentJobsTable.id, job.id));
+        .where(eq(documentJobsTable.id, job.id))
+        .orderBy(asc(documentJobsTable.id));
 
-      const existing = await (query as unknown as QueryWithLimit).limit(1);
+      const existing = await query.offset(0).fetch(1);
 
       if (existing.length > 0) {
         // Update

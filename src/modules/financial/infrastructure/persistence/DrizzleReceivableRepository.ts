@@ -123,9 +123,8 @@ export class DrizzleReceivableRepository implements IReceivableRepository {
         .where(and(...conditions))
         .orderBy(desc(accountsReceivableTable.dueDate));
 
-      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
-      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof accountsReceivableTable.$inferSelect[]> } };
-      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
+      // Usar .offset().fetch() (padrão Drizzle MSSQL)
+      const rows = await query.offset(offset).fetch(pageSize);
 
       // Map to domain entities
       const items: AccountReceivable[] = [];

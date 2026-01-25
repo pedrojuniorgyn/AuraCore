@@ -59,10 +59,8 @@ export async function GET(request: NextRequest) {
       )
       .orderBy(desc(notifications.createdAt));
     
-    // Type assertion necessária: Drizzle MSSQL tem .limit() mas tipagem incompleta
-    type NotificationRow = typeof notifications.$inferSelect;
-    type QueryWithLimit = { limit(n: number): Promise<NotificationRow[]> };
-    const resultsArray = await (baseQuery as unknown as QueryWithLimit).limit(limit);
+    // MSSQL: usar offset(0).fetch(n) ao invés de limit(n) que não existe em runtime
+    const resultsArray = await baseQuery.offset(0).fetch(limit);
 
     // Parse JSON data with safe fallback
     const parsed = resultsArray.map((notif) => {

@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     const orderByClause = buildOrderBy(sortModel);
 
     // Query com JOIN para buscar nomes de parceiros e categorias
-    // Drizzle MSSQL requer fetch() ao invés de limit()
+    // MSSQL: usar offset(n).fetch(m) ao invés de limit(m).offset(n)
     const baseQuery = db
       .select({
         id: accountsPayable.id,
@@ -126,9 +126,7 @@ export async function POST(request: NextRequest) {
       .where(and(...conditions))
       .orderBy(...orderByClause);
 
-    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
-    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<PayableSSRMRow[]> } };
-    const rows = await (baseQuery as unknown as QueryWithLimitOffset).limit(pageSize).offset(startRow);
+    const rows = await baseQuery.offset(startRow).fetch(pageSize);
 
     // Count total (sem JOINs para performance)
     const [countResult] = await db
