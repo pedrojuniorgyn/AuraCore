@@ -1,0 +1,1709 @@
+=== INICIO AUDITORIA ===
+Sat Jan 24 21:37:50 -03 2026
+
+--- FASE 1: ARQUITETURA ---
+1.1 Estrutura de Pastas:
+src/modules/accounting/application
+src/modules/accounting/domain
+src/modules/accounting/infrastructure
+src/modules/commercial/domain
+src/modules/commercial/infrastructure
+src/modules/contracts/application
+src/modules/contracts/domain
+src/modules/contracts/infrastructure
+src/modules/documents/application
+src/modules/documents/domain
+src/modules/documents/infrastructure
+src/modules/financial/application
+src/modules/financial/domain
+src/modules/financial/infrastructure
+src/modules/fiscal/application
+src/modules/fiscal/domain
+src/modules/fiscal/infrastructure
+src/modules/fleet/domain
+src/modules/fleet/infrastructure
+src/modules/integrations/application
+src/modules/integrations/domain
+src/modules/integrations/infrastructure
+src/modules/knowledge/application
+src/modules/knowledge/domain
+src/modules/knowledge/infrastructure
+src/modules/strategic/application
+src/modules/strategic/domain
+src/modules/strategic/infrastructure
+src/modules/tms/application
+src/modules/tms/domain
+src/modules/tms/infrastructure
+src/modules/wms/application
+src/modules/wms/domain
+src/modules/wms/infrastructure
+1.2 Contagem de Arquivos:
+Domain:
+     382
+Application:
+     187
+Infrastructure:
+     217
+1.3 Imports Ilegais em Domain (Infra/App):
+1.4 Imports Externos em Domain:
+1.5 Console.log em Domain:
+src/modules/fiscal/domain/split-payment/ISplitPaymentService.ts:   *   console.log('Split obrigatório:', requirement.reason);
+src/modules/fiscal/domain/split-payment/ISplitPaymentService.ts:   *   console.log(`Pagar ${instruction.amount} para ${instruction.pixKey || instruction.bankCode}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log("🔍 Parseando resposta da Sefaz...");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`📊 Status Sefaz: ${cStat} - ${xMotivo}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`🔢 ultNSU: ${ultNSU}, maxNSU: ${maxNSU}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log(`⚠️  Nenhum documento novo (Status: ${cStat})`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log(`📋 Retorno completo:`, JSON.stringify(retDistDFeInt, null, 2));
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log("⚠️  Nenhum documento no lote");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`📦 Total de documentos: ${result.totalDocuments}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log("📊 RESUMO DA IMPORTAÇÃO:");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`  ├─ 📦 Total retornados: ${result.totalDocuments}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`  ├─ ✅ Importados: ${result.imported}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`  ├─ ⚠️  Duplicados: ${result.duplicates}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`  ├─ ❌ Erros: ${result.errors}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`  ├─ 📋 Resumos: ${result.resumos}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`  └─ 📄 Completos: ${result.completas}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.warn("⚠️  ALERTA: TODOS os documentos retornados são duplicatas!");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.warn("⚠️  Isso pode indicar que o NSU não está sendo atualizado corretamente.");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.warn("⚠️  Ou os documentos já foram importados anteriormente.");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.error("❌ Erro ao processar resposta Sefaz:", errorMessage);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`\n📄 Processando NSU ${nsu} (Tipo: ${schema})...`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.log(`✅ XML descompactado (${xmlContent.length} bytes)`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log("📋 Resumo de NFe detectado (não será importado)");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log("📥 NFe completa detectada! Importando...");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:          console.log(
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log("📋 Evento de NFe detectado (será ignorado)");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log("🚚 CTe externo detectado! Importando...");
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:          console.log(
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:        console.log(`⚠️  Tipo de documento não suportado: ${schema}`);
+src/modules/fiscal/domain/services/SefazDocumentProcessor.ts:      console.error(`❌ Erro ao processar documento:`, errorMessage);
+src/modules/fiscal/domain/services/NfeXmlParser.ts:      console.error('⚠️  Erro ao extrair informações de pagamento:', errorMessage);
+1.6 DDD Patterns (Entities/VOs):
+Total Entities:
+      39
+Entities sem create():
+❌ Missing create(): src/modules/accounting/domain/entities/index.ts
+❌ Missing create(): src/modules/documents/domain/entities/index.ts
+❌ Missing create(): src/modules/financial/domain/entities/index.ts
+❌ Missing create(): src/modules/fiscal/domain/entities/index.ts
+❌ Missing create(): src/modules/strategic/domain/entities/index.ts
+❌ Missing create(): src/modules/tms/domain/entities/index.ts
+Entities sem reconstitute():
+❌ Missing reconstitute(): src/modules/accounting/domain/entities/index.ts
+❌ Missing reconstitute(): src/modules/documents/domain/entities/index.ts
+❌ Missing reconstitute(): src/modules/financial/domain/entities/index.ts
+❌ Missing reconstitute(): src/modules/fiscal/domain/entities/index.ts
+❌ Missing reconstitute(): src/modules/strategic/domain/entities/index.ts
+❌ Missing reconstitute(): src/modules/tms/domain/entities/index.ts
+
+--- FASE 2: QUALIDADE DE CODIGO ---
+2.1 TypeScript Errors (Resumo):
+      25
+2.2 Any Usage:
+       0
+       1
+2.3 Anti-Patterns (throw, ==, TODO):
+Throw em Domain:
+      11
+Uso de ==:
+       0
+TODOs:
+     333
+2.4 Test Coverage (Arquivos):
+Test Files:
+      11
+Source Files:
+    1495
+
+--- FASE 3: DATABASE ---
+3.1 Schemas sem Tenant Columns:
+❌ Missing branchId: agent-messages (src/agent/persistence/schemas/agent-messages.schema.ts)
+❌ Missing organizationId: agent-messages (src/agent/persistence/schemas/agent-messages.schema.ts)
+❌ Missing branchId: retention (src/shared/infrastructure/retention/retention.schema.ts)
+❌ Missing organizationId: retention (src/shared/infrastructure/retention/retention.schema.ts)
+❌ Missing branchId: goal-cascade (src/modules/strategic/infrastructure/persistence/schemas/goal-cascade.schema.ts)
+❌ Missing organizationId: goal-cascade (src/modules/strategic/infrastructure/persistence/schemas/goal-cascade.schema.ts)
+❌ Missing branchId: pdca-cycle (src/modules/strategic/infrastructure/persistence/schemas/pdca-cycle.schema.ts)
+❌ Missing organizationId: pdca-cycle (src/modules/strategic/infrastructure/persistence/schemas/pdca-cycle.schema.ts)
+❌ Missing branchId: bsc-perspective (src/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema.ts)
+❌ Missing organizationId: bsc-perspective (src/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema.ts)
+❌ Missing branchId: action-plan-follow-up (src/modules/strategic/infrastructure/persistence/schemas/action-plan-follow-up.schema.ts)
+❌ Missing organizationId: action-plan-follow-up (src/modules/strategic/infrastructure/persistence/schemas/action-plan-follow-up.schema.ts)
+❌ Missing branchId: kpi-history (src/modules/strategic/infrastructure/persistence/schemas/kpi-history.schema.ts)
+❌ Missing organizationId: kpi-history (src/modules/strategic/infrastructure/persistence/schemas/kpi-history.schema.ts)
+3.2 Indices Compostos:
+      23
+3.3 Repositories sem Filtro de Tenant:
+
+--- FASE 4: API & SECURITY ---
+4.1 Rotas sem Zod:
+⚠️ No Zod: src/app/api/tenant/branch/route.ts
+⚠️ No Zod: src/app/api/accounting/journal-entries/route.ts
+⚠️ No Zod: src/app/api/accounting/journal-entries/[id]/reverse/route.ts
+⚠️ No Zod: src/app/api/seed/route.ts
+⚠️ No Zod: src/app/api/wms/billing-events/route.ts
+⚠️ No Zod: src/app/api/wms/billing-events/[id]/route.ts
+⚠️ No Zod: src/app/api/wms/pre-invoices/route.ts
+⚠️ No Zod: src/app/api/wms/pre-invoices/[id]/send-approval/route.ts
+⚠️ No Zod: src/app/api/wms/pre-invoices/[id]/issue-nfse/route.ts
+⚠️ No Zod: src/app/api/wms/movements/route.ts
+⚠️ No Zod: src/app/api/wms/movements/[id]/route.ts
+⚠️ No Zod: src/app/api/wms/locations/route.ts
+⚠️ No Zod: src/app/api/wms/locations/[id]/route.ts
+⚠️ No Zod: src/app/api/wms/inventory/complete/route.ts
+⚠️ No Zod: src/app/api/wms/inventory/route.ts
+⚠️ No Zod: src/app/api/wms/inventory/[id]/route.ts
+⚠️ No Zod: src/app/api/wms/inventory/counts/route.ts
+⚠️ No Zod: src/app/api/wms/stock/entry/route.ts
+⚠️ No Zod: src/app/api/wms/stock/transfer/route.ts
+⚠️ No Zod: src/app/api/wms/stock/route.ts
+⚠️ No Zod: src/app/api/wms/stock/exit/route.ts
+⚠️ No Zod: src/app/api/wms/stock/[id]/route.ts
+⚠️ No Zod: src/app/api/products/route.ts
+⚠️ No Zod: src/app/api/products/[id]/route.ts
+⚠️ No Zod: src/app/api/products/[id]/unit-conversions/route.ts
+⚠️ No Zod: src/app/api/financial/receivables/ssrm/route.ts
+⚠️ No Zod: src/app/api/financial/receivables/route.ts
+⚠️ No Zod: src/app/api/financial/receivables/[id]/receive/route.ts
+⚠️ No Zod: src/app/api/financial/receivables/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/receivables/summary/route.ts
+⚠️ No Zod: src/app/api/financial/chart-of-accounts/route.ts
+⚠️ No Zod: src/app/api/financial/tax-credits/route.ts
+⚠️ No Zod: src/app/api/financial/remittances/route.ts
+⚠️ No Zod: src/app/api/financial/remittances/generate/route.ts
+⚠️ No Zod: src/app/api/financial/remittances/[id]/download/route.ts
+⚠️ No Zod: src/app/api/financial/remittances/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/chart-accounts/analytical/route.ts
+⚠️ No Zod: src/app/api/financial/chart-accounts/route.ts
+⚠️ No Zod: src/app/api/financial/chart-accounts/suggest-code/route.ts
+⚠️ No Zod: src/app/api/financial/chart-accounts/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/cash-flow/route.ts
+⚠️ No Zod: src/app/api/financial/bank-transactions/import-ofx/route.ts
+⚠️ No Zod: src/app/api/financial/payables/ssrm/route.ts
+⚠️ No Zod: src/app/api/financial/payables/route.ts
+⚠️ No Zod: src/app/api/financial/payables/[id]/pay/route.ts
+⚠️ No Zod: src/app/api/financial/payables/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/payables/[id]/calculate-payment/route.ts
+⚠️ No Zod: src/app/api/financial/payables/[id]/items/route.ts
+⚠️ No Zod: src/app/api/financial/payables/summary/route.ts
+⚠️ No Zod: src/app/api/financial/bank-accounts/route.ts
+⚠️ No Zod: src/app/api/financial/cost-centers/analytical/route.ts
+⚠️ No Zod: src/app/api/financial/cost-centers/allocations/route.ts
+⚠️ No Zod: src/app/api/financial/cost-centers/route.ts
+⚠️ No Zod: src/app/api/financial/cost-centers/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/dda/route.ts
+⚠️ No Zod: src/app/api/financial/dda/sync/route.ts
+⚠️ No Zod: src/app/api/financial/dda/[id]/create-payable/route.ts
+⚠️ No Zod: src/app/api/financial/dda/[id]/link/route.ts
+⚠️ No Zod: src/app/api/financial/categories/route.ts
+⚠️ No Zod: src/app/api/financial/categories/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/billing/route.ts
+⚠️ No Zod: src/app/api/financial/billing/[id]/generate-boleto/route.ts
+⚠️ No Zod: src/app/api/financial/billing/[id]/pdf/route.ts
+⚠️ No Zod: src/app/api/financial/billing/[id]/send-email/route.ts
+⚠️ No Zod: src/app/api/financial/billing/[id]/route.ts
+⚠️ No Zod: src/app/api/financial/billing/[id]/finalize/route.ts
+⚠️ No Zod: src/app/api/financial/billing/[id]/generate-boleto-btg/route.ts
+⚠️ No Zod: src/app/api/financial/reports/dre/consolidated/route.ts
+⚠️ No Zod: src/app/api/financial/reports/dre/route.ts
+⚠️ No Zod: src/app/api/fiscal/settings/route.ts
+⚠️ No Zod: src/app/api/fiscal/mdfe/route.ts
+⚠️ No Zod: src/app/api/fiscal/chart-of-accounts/route.ts
+⚠️ No Zod: src/app/api/fiscal/simulate/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/rates/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/validate/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/calculate/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/simulate/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/compensation/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/audit/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-reform/compare/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-matrix/calculate/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-matrix/route.ts
+⚠️ No Zod: src/app/api/fiscal/tax-matrix/[id]/route.ts
+⚠️ No Zod: src/app/api/fiscal/nfe/[id]/manifest/route.ts
+⚠️ No Zod: src/app/api/fiscal/ncm-categories/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/ssrm/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/items/[id]/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/cancel/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/reverse-titles/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/submit/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/calculate-taxes/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/upload-pdf/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/generate-titles/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/authorize/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/reclassify/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/[id]/items/route.ts
+⚠️ No Zod: src/app/api/fiscal/documents/summary/route.ts
+⚠️ No Zod: src/app/api/fiscal/legislation/index/route.ts
+⚠️ No Zod: src/app/api/fiscal/legislation/documents/route.ts
+⚠️ No Zod: src/app/api/fiscal/legislation/query/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/inutilize/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/ssrm/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/[id]/cancel/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/[id]/correction/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/[id]/dacte/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/[id]/authorize/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/[id]/query/route.ts
+⚠️ No Zod: src/app/api/fiscal/cte/summary/route.ts
+⚠️ No Zod: src/app/api/fiscal/import/danfe/route.ts
+⚠️ No Zod: src/app/api/fiscal/import/dacte/route.ts
+⚠️ No Zod: src/app/api/auth/permissions/route.ts
+⚠️ No Zod: src/app/api/auth/[...nextauth]/route.ts
+⚠️ No Zod: src/app/api/contracts/freight/analyze/route.ts
+⚠️ No Zod: src/app/api/health/wms/route.ts
+⚠️ No Zod: src/app/api/health/embeddings/route.ts
+⚠️ No Zod: src/app/api/health/route.ts
+⚠️ No Zod: src/app/api/sefaz/test-connection/route.ts
+⚠️ No Zod: src/app/api/sefaz/download-nfes/route.ts
+⚠️ No Zod: src/app/api/sefaz/upload-xml/route.ts
+⚠️ No Zod: src/app/api/sefaz/process-saved-xml/route.ts
+⚠️ No Zod: src/app/api/intercompany/allocations/route.ts
+⚠️ No Zod: src/app/api/intercompany/allocations/[id]/reverse/route.ts
+⚠️ No Zod: src/app/api/admin/migrate-nfe-only/route.ts
+⚠️ No Zod: src/app/api/admin/migrations/0033-idempotency/route.ts
+⚠️ No Zod: src/app/api/admin/run-enterprise-seed/route.ts
+⚠️ No Zod: src/app/api/admin/test-fiscal-fk/route.ts
+⚠️ No Zod: src/app/api/admin/run-btg-migration/route.ts
+⚠️ No Zod: src/app/api/admin/debug-sefaz-response/route.ts
+⚠️ No Zod: src/app/api/admin/test-import-nfe/route.ts
+⚠️ No Zod: src/app/api/admin/run-migration-022/route.ts
+⚠️ No Zod: src/app/api/admin/cache/stats/route.ts
+⚠️ No Zod: src/app/api/admin/force-auto-import/route.ts
+⚠️ No Zod: src/app/api/admin/fix-branch-index/route.ts
+⚠️ No Zod: src/app/api/admin/run-final-migration/route.ts
+⚠️ No Zod: src/app/api/admin/retention/policies/route.ts
+⚠️ No Zod: src/app/api/admin/retention/cleanup/route.ts
+⚠️ No Zod: src/app/api/admin/run-notifications-migration/route.ts
+⚠️ No Zod: src/app/api/admin/seed-ncm-categories/route.ts
+⚠️ No Zod: src/app/api/admin/fix-environment/route.ts
+⚠️ No Zod: src/app/api/admin/check-chart-accounts/route.ts
+⚠️ No Zod: src/app/api/admin/clean-mock-data/route.ts
+⚠️ No Zod: src/app/api/admin/run-accounting-migration/route.ts
+⚠️ No Zod: src/app/api/admin/clean-fiscal-tables/route.ts
+⚠️ No Zod: src/app/api/admin/fix-accounting-userid-columns/route.ts
+⚠️ No Zod: src/app/api/admin/roles/route.ts
+⚠️ No Zod: src/app/api/admin/run-dda-migration/route.ts
+⚠️ No Zod: src/app/api/admin/seed-enterprise-accounts/route.ts
+⚠️ No Zod: src/app/api/admin/run-banking-migration/route.ts
+⚠️ No Zod: src/app/api/admin/list-ncm-categories/route.ts
+⚠️ No Zod: src/app/api/admin/audit/history/route.ts
+⚠️ No Zod: src/app/api/admin/migrate-fiscal-data/route.ts
+⚠️ No Zod: src/app/api/admin/check-environment/route.ts
+⚠️ No Zod: src/app/api/admin/users/route.ts
+⚠️ No Zod: src/app/api/admin/users/[id]/route.ts
+⚠️ No Zod: src/app/api/admin/run-migration-021/route.ts
+⚠️ No Zod: src/app/api/admin/diagnostics/endpoints/route.ts
+⚠️ No Zod: src/app/api/admin/diagnostics/requests/route.ts
+⚠️ No Zod: src/app/api/admin/diagnostics/route.ts
+⚠️ No Zod: src/app/api/admin/diagnostics/query-store/route.ts
+⚠️ No Zod: src/app/api/admin/diagnostics/errors/route.ts
+⚠️ No Zod: src/app/api/admin/fix-partners-from-bp/route.ts
+⚠️ No Zod: src/app/api/admin/ops/health/latest/route.ts
+⚠️ No Zod: src/app/api/admin/ops/health/history/route.ts
+⚠️ No Zod: src/app/api/admin/ops/health/run/route.ts
+⚠️ No Zod: src/app/api/admin/run-external-ctes-migration/route.ts
+⚠️ No Zod: src/app/api/admin/debug-sefaz/route.ts
+⚠️ No Zod: src/app/api/admin/add-fiscal-fk-columns/route.ts
+⚠️ No Zod: src/app/api/admin/branches/migrate/route.ts
+⚠️ No Zod: src/app/api/admin/run-ncm-migration/route.ts
+⚠️ No Zod: src/app/api/admin/test-classification/route.ts
+⚠️ No Zod: src/app/api/admin/performance/route.ts
+⚠️ No Zod: src/app/api/admin/clean-fiscal-complete/route.ts
+⚠️ No Zod: src/app/api/admin/run-enterprise-migration/route.ts
+⚠️ No Zod: src/app/api/admin/check-deleted-documents/route.ts
+⚠️ No Zod: src/app/api/admin/reset-nsu-homologacao/route.ts
+⚠️ No Zod: src/app/api/admin/update-nsu/route.ts
+⚠️ No Zod: src/app/api/admin/migrate-fiscal-data-v2/route.ts
+⚠️ No Zod: src/app/api/admin/seed-accounting/route.ts
+⚠️ No Zod: src/app/api/admin/update-fiscal-partners/route.ts
+⚠️ No Zod: src/app/api/strategic/settings/route.ts
+⚠️ No Zod: src/app/api/strategic/comments/route.ts
+⚠️ No Zod: src/app/api/strategic/comments/[id]/like/route.ts
+⚠️ No Zod: src/app/api/strategic/comments/[id]/reactions/route.ts
+⚠️ No Zod: src/app/api/strategic/comments/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/chat/route.ts
+⚠️ No Zod: src/app/api/strategic/pdca/route.ts
+⚠️ No Zod: src/app/api/strategic/pdca/[id]/advance/route.ts
+⚠️ No Zod: src/app/api/strategic/pdca/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/achievements/route.ts
+⚠️ No Zod: src/app/api/strategic/achievements/[id]/claim/route.ts
+⚠️ No Zod: src/app/api/strategic/okrs/tree/route.ts
+⚠️ No Zod: src/app/api/strategic/okrs/route.ts
+⚠️ No Zod: src/app/api/strategic/okrs/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/okrs/[id]/key-results/route.ts
+⚠️ No Zod: src/app/api/strategic/okrs/[id]/key-results/[krId]/value/route.ts
+⚠️ No Zod: src/app/api/strategic/okrs/[id]/key-results/[krId]/route.ts
+⚠️ No Zod: src/app/api/strategic/goals/tree/route.ts
+⚠️ No Zod: src/app/api/strategic/activity/route.ts
+⚠️ No Zod: src/app/api/strategic/strategies/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/strategies/[id]/activate/route.ts
+⚠️ No Zod: src/app/api/strategic/kpis/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/kpis/[id]/history/route.ts
+⚠️ No Zod: src/app/api/strategic/roles/route.ts
+⚠️ No Zod: src/app/api/strategic/roles/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/audit-log/route.ts
+⚠️ No Zod: src/app/api/strategic/audit-log/export/route.ts
+⚠️ No Zod: src/app/api/strategic/leaderboard/route.ts
+⚠️ No Zod: src/app/api/strategic/permissions/route.ts
+⚠️ No Zod: src/app/api/strategic/search/route.ts
+⚠️ No Zod: src/app/api/strategic/search/suggestions/route.ts
+⚠️ No Zod: src/app/api/strategic/dashboard/layout/route.ts
+⚠️ No Zod: src/app/api/strategic/dashboard/data/route.ts
+⚠️ No Zod: src/app/api/strategic/action-plans/options/route.ts
+⚠️ No Zod: src/app/api/strategic/action-plans/kanban/route.ts
+⚠️ No Zod: src/app/api/strategic/integrations/webhook/route.ts
+⚠️ No Zod: src/app/api/strategic/integrations/test/route.ts
+⚠️ No Zod: src/app/api/strategic/integrations/logs/route.ts
+⚠️ No Zod: src/app/api/strategic/integrations/route.ts
+⚠️ No Zod: src/app/api/strategic/integrations/[id]/toggle/route.ts
+⚠️ No Zod: src/app/api/strategic/integrations/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/map/route.ts
+⚠️ No Zod: src/app/api/strategic/control-items/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/audit/entity/[type]/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/audit/entity/[type]/[id]/compare/route.ts
+⚠️ No Zod: src/app/api/strategic/audit/entity/[type]/[id]/restore/route.ts
+⚠️ No Zod: src/app/api/strategic/audit/route.ts
+⚠️ No Zod: src/app/api/strategic/audit/export/route.ts
+⚠️ No Zod: src/app/api/strategic/audit/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/dashboards/route.ts
+⚠️ No Zod: src/app/api/strategic/dashboards/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/dashboards/[id]/widgets/route.ts
+⚠️ No Zod: src/app/api/strategic/users/[id]/roles/[roleId]/route.ts
+⚠️ No Zod: src/app/api/strategic/users/[id]/roles/route.ts
+⚠️ No Zod: src/app/api/strategic/users/[id]/permissions/route.ts
+⚠️ No Zod: src/app/api/strategic/users/with-roles/route.ts
+⚠️ No Zod: src/app/api/strategic/points/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/stream/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/dashboard/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/[id]/updates/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/[id]/team/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/war-room/[id]/actions/route.ts
+⚠️ No Zod: src/app/api/strategic/templates/route.ts
+⚠️ No Zod: src/app/api/strategic/templates/[id]/use/route.ts
+⚠️ No Zod: src/app/api/strategic/templates/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/export/template/route.ts
+⚠️ No Zod: src/app/api/strategic/export/pdf/route.ts
+⚠️ No Zod: src/app/api/strategic/export/route.ts
+⚠️ No Zod: src/app/api/strategic/ideas/[id]/reject/route.ts
+⚠️ No Zod: src/app/api/strategic/ideas/[id]/approve/route.ts
+⚠️ No Zod: src/app/api/strategic/webhooks/[id]/test/route.ts
+⚠️ No Zod: src/app/api/strategic/webhooks/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/import/validate/route.ts
+⚠️ No Zod: src/app/api/strategic/import/parse/route.ts
+⚠️ No Zod: src/app/api/strategic/import/route.ts
+⚠️ No Zod: src/app/api/strategic/import/preview/route.ts
+⚠️ No Zod: src/app/api/strategic/notifications/stream/route.ts
+⚠️ No Zod: src/app/api/strategic/notifications/read-all/route.ts
+⚠️ No Zod: src/app/api/strategic/notifications/route.ts
+⚠️ No Zod: src/app/api/strategic/onboarding/progress/route.ts
+⚠️ No Zod: src/app/api/strategic/onboarding/route.ts
+⚠️ No Zod: src/app/api/strategic/analytics/track/route.ts
+⚠️ No Zod: src/app/api/strategic/analytics/route.ts
+⚠️ No Zod: src/app/api/strategic/reports/route.ts
+⚠️ No Zod: src/app/api/strategic/reports/history/route.ts
+⚠️ No Zod: src/app/api/strategic/reports/[id]/route.ts
+⚠️ No Zod: src/app/api/strategic/reports/[id]/generate/route.ts
+⚠️ No Zod: src/app/api/sped/contributions/generate/route.ts
+⚠️ No Zod: src/app/api/sped/fiscal/generate/route.ts
+⚠️ No Zod: src/app/api/sped/ecd/generate/route.ts
+⚠️ No Zod: src/app/api/management/dre/route.ts
+⚠️ No Zod: src/app/api/management/chart-accounts/route.ts
+⚠️ No Zod: src/app/api/management/chart-accounts/[id]/route.ts
+⚠️ No Zod: src/app/api/management/allocate/route.ts
+⚠️ No Zod: src/app/api/tms/occurrences/route.ts
+⚠️ No Zod: src/app/api/tms/occurrences/[id]/route.ts
+⚠️ No Zod: src/app/api/tms/drivers/[id]/shift-events/route.ts
+⚠️ No Zod: src/app/api/tms/pickup-orders/route.ts
+⚠️ No Zod: src/app/api/tms/cargo-repository/route.ts
+⚠️ No Zod: src/app/api/tms/cargo-repository/[id]/route.ts
+⚠️ No Zod: src/app/api/tms/cockpit/kpis/route.ts
+⚠️ No Zod: src/app/api/tms/control-tower/route.ts
+⚠️ No Zod: src/app/api/tms/trips/ssrm/route.ts
+⚠️ No Zod: src/app/api/tms/trips/route.ts
+⚠️ No Zod: src/app/api/tms/trips/[id]/route.ts
+⚠️ No Zod: src/app/api/tax/credits/process/route.ts
+⚠️ No Zod: src/app/api/agents/chat/stream/route.ts
+⚠️ No Zod: src/app/api/agents/chat/route.ts
+⚠️ No Zod: src/app/api/agents/health/route.ts
+⚠️ No Zod: src/app/api/agents/rag/query/route.ts
+⚠️ No Zod: src/app/api/agents/voice/chat/route.ts
+⚠️ No Zod: src/app/api/agents/route.ts
+⚠️ No Zod: src/app/api/agents/documents/import/route.ts
+⚠️ No Zod: src/app/api/agent/voice/stream/route.ts
+⚠️ No Zod: src/app/api/agent/voice/transcribe/route.ts
+⚠️ No Zod: src/app/api/agent/voice/conversation/route.ts
+⚠️ No Zod: src/app/api/agent/voice/session/route.ts
+⚠️ No Zod: src/app/api/backoffice/accounts/route.ts
+⚠️ No Zod: src/app/api/backoffice/cost-centers/route.ts
+⚠️ No Zod: src/app/api/ciap/appropriate/route.ts
+⚠️ No Zod: src/app/api/ciap/assets/route.ts
+⚠️ No Zod: src/app/api/ciap/sped-block-g/route.ts
+⚠️ No Zod: src/app/api/commercial/calculate/route.ts
+⚠️ No Zod: src/app/api/commercial/quotes/route.ts
+⚠️ No Zod: src/app/api/commercial/quotes/[id]/approve/route.ts
+⚠️ No Zod: src/app/api/commercial/quotes/[id]/route.ts
+⚠️ No Zod: src/app/api/commercial/freight-tables/route.ts
+⚠️ No Zod: src/app/api/commercial/freight-tables/[id]/route.ts
+⚠️ No Zod: src/app/api/btg/webhook/route.ts
+⚠️ No Zod: src/app/api/btg/payments/pix/route.ts
+⚠️ No Zod: src/app/api/btg/boletos/route.ts
+⚠️ No Zod: src/app/api/btg/health/route.ts
+⚠️ No Zod: src/app/api/btg/pix/charges/route.ts
+⚠️ No Zod: src/app/api/btg/dda/debits/route.ts
+⚠️ No Zod: src/app/api/btg/dda/route.ts
+⚠️ No Zod: src/app/api/btg/dda/sync/route.ts
+⚠️ No Zod: src/app/api/v2/financial/payables/route.ts
+⚠️ No Zod: src/app/api/v2/financial/payables/[id]/cancel/route.ts
+⚠️ No Zod: src/app/api/v2/financial/payables/[id]/pay/route.ts
+⚠️ No Zod: src/app/api/v2/financial/payables/[id]/route.ts
+⚠️ No Zod: src/app/api/dashboard/stats/route.ts
+⚠️ No Zod: src/app/api/comercial/crm/leads/route.ts
+⚠️ No Zod: src/app/api/comercial/crm/leads/[id]/route.ts
+⚠️ No Zod: src/app/api/comercial/proposals/route.ts
+⚠️ No Zod: src/app/api/comercial/proposals/[id]/pdf/route.ts
+⚠️ No Zod: src/app/api/knowledge/stats/route.ts
+⚠️ No Zod: src/app/api/users/[id]/route.ts
+⚠️ No Zod: src/app/api/hr/driver-journey/route.ts
+⚠️ No Zod: src/app/api/esg/batch-calculate/route.ts
+⚠️ No Zod: src/app/api/esg/emissions/route.ts
+⚠️ No Zod: src/app/api/branches/route.ts
+⚠️ No Zod: src/app/api/branches/[id]/certificate/route.ts
+⚠️ No Zod: src/app/api/branches/[id]/set-nsu/route.ts
+⚠️ No Zod: src/app/api/branches/[id]/route.ts
+⚠️ No Zod: src/app/api/documents/jobs/route.ts
+⚠️ No Zod: src/app/api/documents/jobs/run/route.ts
+⚠️ No Zod: src/app/api/documents/jobs/[id]/retry/route.ts
+⚠️ No Zod: src/app/api/documents/jobs/[id]/route.ts
+⚠️ No Zod: src/app/api/cost-centers/3d/route.ts
+⚠️ No Zod: src/app/api/fleet/fuel/route.ts
+⚠️ No Zod: src/app/api/fleet/drivers/route.ts
+⚠️ No Zod: src/app/api/fleet/drivers/[id]/route.ts
+⚠️ No Zod: src/app/api/fleet/tires/route.ts
+⚠️ No Zod: src/app/api/fleet/tires/[id]/move/route.ts
+⚠️ No Zod: src/app/api/fleet/tires/[id]/route.ts
+⚠️ No Zod: src/app/api/fleet/maintenance-plans/route.ts
+⚠️ No Zod: src/app/api/fleet/vehicles/route.ts
+⚠️ No Zod: src/app/api/fleet/vehicles/[id]/route.ts
+⚠️ No Zod: src/app/api/fleet/maintenance/work-orders/route.ts
+⚠️ No Zod: src/app/api/fleet/maintenance/work-orders/[id]/route.ts
+⚠️ No Zod: src/app/api/fleet/documents/route.ts
+⚠️ No Zod: src/app/api/fleet/documents/[id]/route.ts
+⚠️ No Zod: src/app/api/pcg-ncm-rules/fiscal-flags/route.ts
+⚠️ No Zod: src/app/api/pcg-ncm-rules/route.ts
+⚠️ No Zod: src/app/api/pcg-ncm-rules/[id]/route.ts
+⚠️ No Zod: src/app/api/notifications/count/route.ts
+⚠️ No Zod: src/app/api/reports/export/route.ts
+⚠️ No Zod: src/app/api/reports/cte-margin/route.ts
+⚠️ No Zod: src/app/api/claims/route.ts
+⚠️ No Zod: src/app/api/claims/[id]/decide/route.ts
+⚠️ No Zod: src/app/api/claims/[id]/route.ts
+⚠️ No Zod: src/app/api/business-partners/route.ts
+⚠️ No Zod: src/app/api/business-partners/[id]/route.ts
+4.2 Hardcoded Secrets:
+src/app/api/seed/route.ts:        req.headers.get("x-seed-reset-password") === "1" || !existingAdmin.passwordHash;
+src/app/api/branches/[id]/certificate/route.ts:    const password = formData.get("password") as string;
+src/modules/fiscal/infrastructure/rag/OpenAIEmbedder.ts:    this.apiKey = process.env.OPENAI_API_KEY ?? '';
+src/modules/fiscal/infrastructure/rag/ClaudeAnswerGenerator.ts:    this.apiKey = process.env.ANTHROPIC_API_KEY ?? '';
+
+--- FASE 5: COMPLIANCE FISCAL ---
+5.1 Blocos SPED:
+src/modules/fiscal/domain/services/SpedEcdGenerator.ts: * - Bloco 0: Cadastros (Abertura)
+src/modules/fiscal/domain/services/SpedContributionsGenerator.ts: * - Bloco 0: Cadastros (Abertura)
+src/modules/fiscal/domain/services/SpedContributionsGenerator.ts: * - Bloco C: Créditos (Documentos fiscais de entrada com crédito)
+5.2 Reforma Tributaria:
+src/modules/fiscal/application/dtos/AuditTaxTransitionDto.ts:  ibsUf: number;
+src/modules/fiscal/application/dtos/AuditTaxTransitionDto.ts:  ibsMun: number;
+src/modules/fiscal/application/dtos/AuditTaxTransitionDto.ts:  cbs: number;
+src/modules/fiscal/application/dtos/AuditTaxTransitionDto.ts:  ibsUf: z.number().nonnegative(),
+src/modules/fiscal/application/dtos/AuditTaxTransitionDto.ts:  ibsMun: z.number().nonnegative(),
+src/modules/fiscal/application/dtos/AuditTaxTransitionDto.ts:  cbs: z.number().nonnegative(),
+src/modules/fiscal/application/dtos/SimulateTaxScenarioDto.ts:    ibsUf: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/SimulateTaxScenarioDto.ts:    ibsMun: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/SimulateTaxScenarioDto.ts:    cbs: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts: * Input para cálculo de IBS/CBS
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:export interface CalculateIbsCbsInput {
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  items: CalculateIbsCbsItemInput[];
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:export interface CalculateIbsCbsItemInput {
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts: * Output do cálculo de IBS/CBS
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:export interface CalculateIbsCbsOutput {
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  items: CalculateIbsCbsItemOutput[];
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:export interface CalculateIbsCbsItemOutput {
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  ibsUfRate: number;
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  ibsUfValue: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  ibsMunRate: number;
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  ibsMunValue: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  cbsRate: number;
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  cbsValue: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  totalIbsUf: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  totalIbsMun: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  totalCbs: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:export const CalculateIbsCbsItemInputSchema = z.object({
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:export const CalculateIbsCbsInputSchema = z.object({
+src/modules/fiscal/application/dtos/CalculateIbsCbsDto.ts:  items: z.array(CalculateIbsCbsItemInputSchema).min(1),
+src/modules/fiscal/application/dtos/index.ts:// E7.4.1 Semana 7 - Application Layer (IBS/CBS)
+src/modules/fiscal/application/dtos/index.ts:  CalculateIbsCbsInputSchema,
+src/modules/fiscal/application/dtos/index.ts:  type CalculateIbsCbsInput,
+src/modules/fiscal/application/dtos/index.ts:  type CalculateIbsCbsOutput,
+src/modules/fiscal/application/dtos/index.ts:  type CalculateIbsCbsItemInput,
+src/modules/fiscal/application/dtos/index.ts:  type CalculateIbsCbsItemOutput,
+src/modules/fiscal/application/dtos/index.ts:} from './CalculateIbsCbsDto';
+src/modules/fiscal/application/dtos/index.ts:  ValidateIbsCbsGroupInputSchema,
+src/modules/fiscal/application/dtos/index.ts:  type ValidateIbsCbsGroupInput,
+src/modules/fiscal/application/dtos/index.ts:  type ValidateIbsCbsGroupOutput,
+src/modules/fiscal/application/dtos/index.ts:  type IbsCbsValidationError,
+src/modules/fiscal/application/dtos/index.ts:} from './ValidateIbsCbsGroupDto';
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts: * Input para validação de grupo IBS/CBS
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts:export interface ValidateIbsCbsGroupInput {
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts: * NOTA: IbsCbsValidationError renomeado para evitar conflito com domain/ports/input/IValidateFiscalDocument
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts:export interface ValidateIbsCbsGroupOutput {
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts:  errors: IbsCbsValidationError[];
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts:export interface IbsCbsValidationError {
+src/modules/fiscal/application/dtos/ValidateIbsCbsGroupDto.ts:export const ValidateIbsCbsGroupInputSchema = z.object({
+src/modules/fiscal/application/dtos/TaxRatesDto.ts:  ibsUf: number;
+src/modules/fiscal/application/dtos/TaxRatesDto.ts:  ibsMun: number;
+src/modules/fiscal/application/dtos/TaxRatesDto.ts:  cbs: number;
+src/modules/fiscal/application/dtos/TaxRatesDto.ts:    ibs: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/TaxRatesDto.ts:    cbs: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CompareTaxRegimesDto.ts:  ibsUf: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CompareTaxRegimesDto.ts:  ibsMun: { amount: number; currency: string };
+src/modules/fiscal/application/dtos/CompareTaxRegimesDto.ts:  cbs: { amount: number; currency: string };
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:  ValidateIbsCbsGroupInput,
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:  ValidateIbsCbsGroupInputSchema,
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:  ValidateIbsCbsGroupOutput,
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:  IbsCbsValidationError,
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:} from '../dtos/ValidateIbsCbsGroupDto';
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts: * Use Case: Validar Grupo IBS/CBS
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts: * - Validar grupo IBS/CBS antes de emissão
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:export class ValidateIbsCbsGroupUseCase implements IUseCaseWithContext<ValidateIbsCbsGroupInput, ValidateIbsCbsGroupOutput> {
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    input: ValidateIbsCbsGroupInput,
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:  ): Promise<Result<ValidateIbsCbsGroupOutput, string>> {
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    const validation = ValidateIbsCbsGroupInputSchema.safeParse(input);
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    // 4. Validar grupo IBS/CBS (mockado para demonstração)
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    const errors: IbsCbsValidationError[] = [];
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    //   field: 'ibsUfRate',
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    //   message: 'IBS UF rate exceeds maximum allowed',
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:    //   code: 'IBS_RATE_EXCEEDED',
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:      field: 'cbsRate',
+src/modules/fiscal/application/use-cases/ValidateIbsCbsGroupUseCase.ts:      message: 'CBS rate is higher than expected for this operation',
+src/modules/fiscal/application/use-cases/CompareTaxRegimesUseCase.ts: * - Comparar carga tributária: Atual (ICMS/PIS/COFINS) vs Novo (IBS/CBS)
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts: * - Buscar alíquotas IBS/CBS vigentes para UF/Município/Data
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        ibsUf: 0,
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        ibsMun: 0,
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        cbs: 0,
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:      const transitionRates: Record<number, { ibsRate: number; cbsRate: number }> = {
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2026: { ibsRate: 0.10, cbsRate: 0.90 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2027: { ibsRate: 0.10, cbsRate: 8.80 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2028: { ibsRate: 0.10, cbsRate: 8.80 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2029: { ibsRate: 1.77, cbsRate: 8.80 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2030: { ibsRate: 3.54, cbsRate: 8.80 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2031: { ibsRate: 7.08, cbsRate: 8.80 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        2032: { ibsRate: 10.62, cbsRate: 8.80 },
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:      const rate = transitionRates[year] || { ibsRate: 0, cbsRate: 0 };
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        ibsUf: rate.ibsRate * 0.6,
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        ibsMun: rate.ibsRate * 0.4,
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:        cbs: rate.cbsRate,
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:      ibsUf: 17.70 * 0.6, // 10.62%
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:      ibsMun: 17.70 * 0.4, // 7.08%
+src/modules/fiscal/application/use-cases/GetTaxRatesUseCase.ts:      cbs: 8.80,
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts: * - Calcular créditos do novo sistema (IBS/CBS)
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:    const ibsCredits = Money.create(5000.00, 'BRL');
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:    const cbsCredits = Money.create(3500.00, 'BRL');
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:      Result.isFail(ibsCredits) || 
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:      Result.isFail(cbsCredits)
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:    const newTotal = ibsCredits.value.amount + cbsCredits.value.amount;
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:        ibs: {
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:          amount: ibsCredits.value.amount,
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:          currency: ibsCredits.value.currency,
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:        cbs: {
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:          amount: cbsCredits.value.amount,
+src/modules/fiscal/application/use-cases/CalculateCompensationUseCase.ts:          currency: cbsCredits.value.currency,
+src/modules/fiscal/application/use-cases/index.ts:export { CalculateIbsCbsUseCase } from './CalculateIbsCbsUseCase';
+src/modules/fiscal/application/use-cases/index.ts:export { ValidateIbsCbsGroupUseCase } from './ValidateIbsCbsGroupUseCase';
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:  CalculateIbsCbsInput, 
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:  CalculateIbsCbsInputSchema, 
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:  CalculateIbsCbsOutput,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:  CalculateIbsCbsItemOutput,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:} from '../dtos/CalculateIbsCbsDto';
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts: * Use Case: Calcular IBS/CBS
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:export class CalculateIbsCbsUseCase implements IUseCaseWithContext<CalculateIbsCbsInput, CalculateIbsCbsOutput> {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:    input: CalculateIbsCbsInput,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:  ): Promise<Result<CalculateIbsCbsOutput, string>> {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:    const validation = CalculateIbsCbsInputSchema.safeParse(input);
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:    const itemsOutput: CalculateIbsCbsItemOutput[] = calculations.map(calc => ({
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      ibsUfRate: calc.ibsUf.rate,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      ibsUfValue: {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        amount: calc.ibsUf.value.amount,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        currency: calc.ibsUf.value.currency,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      ibsMunRate: calc.ibsMun.rate,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      ibsMunValue: {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        amount: calc.ibsMun.value.amount,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        currency: calc.ibsMun.value.currency,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      cbsRate: calc.cbs.rate,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      cbsValue: {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        amount: calc.cbs.value.amount,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        currency: calc.cbs.value.currency,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:    let totalIbsUf = 0;
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:    let totalIbsMun = 0;
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:    let totalCbs = 0;
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      totalIbsUf += calc.ibsUf.value.amount;
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      totalIbsMun += calc.ibsMun.value.amount;
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      totalCbs += calc.cbs.value.amount;
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      totalIbsUf: {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        amount: totalIbsUf,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      totalIbsMun: {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        amount: totalIbsMun,
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:      totalCbs: {
+src/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase.ts:        amount: totalCbs,
+src/modules/fiscal/infrastructure/nfse/xml/NFSeXmlBuilder.ts:import { GrupoIBSCBS } from '../../xml/builders/GrupoIBSCBS';
+src/modules/fiscal/infrastructure/nfse/xml/NFSeXmlBuilder.ts:    // IBS/CBS (Reforma Tributária)
+src/modules/fiscal/infrastructure/nfse/xml/NFSeXmlBuilder.ts:    if (nfse.ibsCbsGroup) {
+src/modules/fiscal/infrastructure/nfse/xml/NFSeXmlBuilder.ts:      xml.push(GrupoIBSCBS.build(nfse.ibsCbsGroup));
+src/modules/fiscal/infrastructure/nfse/persistence/NFSeMapper.ts:      // TODO: ibsCbsGroup - Deve ser persistido separadamente via FiscalDocumentIbsCbsMapper
+src/modules/fiscal/infrastructure/nfse/persistence/NFSeMapper.ts:      // Se necessário, criar método toPersistenceWithIbsCbs() que retorna array com ambos
+src/modules/fiscal/infrastructure/nfse/persistence/NFSeMapper.ts:      // Por enquanto, NFSeDocument não usa ibsCbsGroup (apenas FiscalDocument usa)
+src/modules/fiscal/infrastructure/nfse/persistence/NFSeMapper.ts:    // TODO: ibsCbsGroup - Carregado separadamente via FiscalDocumentIbsCbsMapper
+src/modules/fiscal/infrastructure/nfse/persistence/NFSeMapper.ts:    // Por enquanto, NFSeDocument não usa ibsCbsGroup (apenas FiscalDocument usa)
+src/modules/fiscal/infrastructure/nfse/persistence/NFSeSchema.ts:  // ibsCbsGroup será armazenado em tabela separada (fiscal_document_ibs_cbs)
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:import { IBSCBSGroup } from '@/modules/fiscal/domain/tax/value-objects/IBSCBSGroup';
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: * XML Builder: Grupo IBSCBS
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: * <IBSCBS>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: *   <pIBSUF>0.10</pIBSUF>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: *   <vIBSUF>1.00</vIBSUF>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: *   <pIBSMun>0.10</pIBSMun>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: *   <vIBSMun>1.00</vIBSMun>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: *   <pCBS>0.90</pCBS>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: *   <vCBS>9.00</vCBS>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts: * </IBSCBS>
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:export class GrupoIBSCBS {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:   * Gera XML do grupo IBSCBS
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:  static build(group: IBSCBSGroup): string {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push('<IBSCBS>');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    // IBS UF (obrigatório)
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push(`  <pIBSUF>${group.ibsUfRate.percentual.toFixed(4)}</pIBSUF>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push(`  <vIBSUF>${group.ibsUfValue.amount.toFixed(2)}</vIBSUF>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    // IBS Municipal (obrigatório)
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push(`  <pIBSMun>${group.ibsMunRate.percentual.toFixed(4)}</pIBSMun>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push(`  <vIBSMun>${group.ibsMunValue.amount.toFixed(2)}</vIBSMun>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    // CBS (obrigatório)
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push(`  <pCBS>${group.cbsRate.percentual.toFixed(4)}</pCBS>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push(`  <vCBS>${group.cbsValue.amount.toFixed(2)}</vCBS>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (group.ibsUfEffectiveRate) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`  <pIBSUFEfet>${group.ibsUfEffectiveRate.percentual.toFixed(4)}</pIBSUFEfet>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (group.ibsMunEffectiveRate) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`  <pIBSMunEfet>${group.ibsMunEffectiveRate.percentual.toFixed(4)}</pIBSMunEfet>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (group.cbsEffectiveRate) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`  <pCBSEfet>${group.cbsEffectiveRate.percentual.toFixed(4)}</pCBSEfet>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <vIBSDif>${group.deferral.ibsDeferredValue.amount.toFixed(2)}</vIBSDif>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <vCBSDif>${group.deferral.cbsDeferredValue.amount.toFixed(2)}</vCBSDif>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <vIBSDev>${group.refund.ibsRefundValue.amount.toFixed(2)}</vIBSDev>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <vCBSDev>${group.refund.cbsRefundValue.amount.toFixed(2)}</vCBSDev>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <pRedIBS>${group.reduction.ibsReductionRate.toFixed(2)}</pRedIBS>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <pRedCBS>${group.reduction.cbsReductionRate.toFixed(2)}</pRedCBS>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <vCredPresIBS>${group.presumedCredit.ibsCreditValue.amount.toFixed(2)}</vCredPresIBS>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      xml.push(`    <vCredPresCBS>${group.presumedCredit.cbsCreditValue.amount.toFixed(2)}</vCredPresCBS>`);
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    xml.push('</IBSCBS>');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:  static validate(group: IBSCBSGroup): { valid: boolean; errors: string[] } {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('CST é obrigatório no grupo IBSCBS');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (!group.ibsUfRate) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('Alíquota IBS UF é obrigatória');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (!group.ibsUfValue || group.ibsUfValue.amount < 0) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('Valor IBS UF não pode ser negativo');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (!group.ibsMunRate) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('Alíquota IBS Municipal é obrigatória');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (!group.ibsMunValue || group.ibsMunValue.amount < 0) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('Valor IBS Municipal não pode ser negativo');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (!group.cbsRate) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('Alíquota CBS é obrigatória');
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:    if (!group.cbsValue || group.cbsValue.amount < 0) {
+src/modules/fiscal/infrastructure/xml/builders/GrupoIBSCBS.ts:      errors.push('Valor CBS não pode ser negativo');
+src/modules/fiscal/infrastructure/xml/builders/GrupoCompraGov.ts: * que podem ter alíquotas reduzidas de IBS/CBS.
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts: * IbsCbsXmlValidator: Validador específico para grupo IBSCBS em XML
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts: * - Validar campos obrigatórios do grupo IBSCBS
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts: * Referência: NT 2025.001/002 - Grupo IBSCBS
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:interface ParsedIbsCbs {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  pIBSUF?: string;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  vIBSUF?: string;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  pIBSMun?: string;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  vIBSMun?: string;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  pCBS?: string;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  vCBS?: string;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:export class IbsCbsXmlValidator {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:   * Valida XML do grupo IBSCBS
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:   * @param xmlContent Conteúdo XML do grupo IBSCBS (string ou objeto parsed)
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  static validate(xmlContent: string | ParsedIbsCbs): ValidationResult {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:  private static parseXml(xmlContent: string): ParsedIbsCbs | null {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      const parsed: ParsedIbsCbs = {};
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      parsed.pIBSUF = extractTag('pIBSUF');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      parsed.vIBSUF = extractTag('vIBSUF');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      parsed.pIBSMun = extractTag('pIBSMun');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      parsed.vIBSMun = extractTag('vIBSMun');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      parsed.pCBS = extractTag('pCBS');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      parsed.vCBS = extractTag('vCBS');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    parsed: ParsedIbsCbs,
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      'pIBSUF',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      'vIBSUF',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      'pIBSMun',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      'vIBSMun',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      'pCBS',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      'vCBS',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      const value = parsed[field as keyof ParsedIbsCbs];
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    parsed: ParsedIbsCbs,
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      { field: 'pIBSUF', value: parsed.pIBSUF },
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      { field: 'pIBSMun', value: parsed.pIBSMun },
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      { field: 'pCBS', value: parsed.pCBS },
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      { field: 'vIBSUF', value: parsed.vIBSUF },
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      { field: 'vIBSMun', value: parsed.vIBSMun },
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:      { field: 'vCBS', value: parsed.vCBS },
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    parsed: ParsedIbsCbs,
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    // Validar vIBSUF = vBC * pIBSUF / 100
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const pIBSUF = parseFloat(parsed.pIBSUF || '0');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const vIBSUF = parseFloat(parsed.vIBSUF || '0');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const expectedIBSUF = (vBC * pIBSUF) / 100;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    if (Math.abs(vIBSUF - expectedIBSUF) > 0.01) {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:        field: 'vIBSUF',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:        message: `vIBSUF inconsistente: esperado ${expectedIBSUF.toFixed(2)}, encontrado ${vIBSUF.toFixed(2)}`,
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    // Validar vIBSMun = vBC * pIBSMun / 100
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const pIBSMun = parseFloat(parsed.pIBSMun || '0');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const vIBSMun = parseFloat(parsed.vIBSMun || '0');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const expectedIBSMun = (vBC * pIBSMun) / 100;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    if (Math.abs(vIBSMun - expectedIBSMun) > 0.01) {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:        field: 'vIBSMun',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:        message: `vIBSMun inconsistente: esperado ${expectedIBSMun.toFixed(2)}, encontrado ${vIBSMun.toFixed(2)}`,
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    // Validar vCBS = vBC * pCBS / 100
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const pCBS = parseFloat(parsed.pCBS || '0');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const vCBS = parseFloat(parsed.vCBS || '0');
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    const expectedCBS = (vBC * pCBS) / 100;
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:    if (Math.abs(vCBS - expectedCBS) > 0.01) {
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:        field: 'vCBS',
+src/modules/fiscal/infrastructure/xml/validators/IbsCbsXmlValidator.ts:        message: `vCBS inconsistente: esperado ${expectedCBS.toFixed(2)}, encontrado ${vCBS.toFixed(2)}`,
+src/modules/fiscal/infrastructure/xml/validators/index.ts:export * from './IbsCbsXmlValidator';
+src/modules/fiscal/infrastructure/xml/validators/index.ts:} from './IbsCbsXmlValidator';
+src/modules/fiscal/infrastructure/xml/validators/MockXsdValidator.ts:import { ValidationResult, XmlValidationError, XmlValidationWarning } from './IbsCbsXmlValidator';
+src/modules/fiscal/infrastructure/xml/validators/XmlSchemaValidator.ts:import { ValidationResult } from './IbsCbsXmlValidator';
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts: * - Validar registro de transações de crédito IBS/CBS
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:  ibsCbsCredits?: {
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    ibsUfCredit: number;
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    ibsMunCredit: number;
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    cbsCredit: number;
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:      // 3. Validar créditos IBS/CBS (se presente)
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:      if (document.ibsCbsCredits) {
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:   * Valida créditos IBS/CBS
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    const credits = document.ibsCbsCredits!;
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    if (credits.ibsUfCredit < 0) {
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        message: 'Crédito IBS UF não pode ser negativo',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        field: 'ibsUfCredit',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    if (credits.ibsMunCredit < 0) {
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        message: 'Crédito IBS Municipal não pode ser negativo',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        field: 'ibsMunCredit',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    if (credits.cbsCredit < 0) {
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        message: 'Crédito CBS não pode ser negativo',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        field: 'cbsCredit',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    const totalCredits = credits.ibsUfCredit + credits.ibsMunCredit + credits.cbsCredit;
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        field: 'ibsCbsCredits',
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:    const transitionDate = new Date('2026-01-01'); // Data de transição IBS/CBS
+src/modules/fiscal/infrastructure/xml/validators/RtcMockValidator.ts:        message: 'Data da operação anterior à transição IBS/CBS (01/01/2026)',
+src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts:          totalIbs: documentPersistence.totalIbs,
+src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts:          totalIbsCurrency: documentPersistence.totalIbsCurrency,
+src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts:          totalCbs: documentPersistence.totalCbs,
+src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts:          totalCbsCurrency: documentPersistence.totalCbsCurrency,
+src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts:          ibsCbsMunicipalityCode: documentPersistence.ibsCbsMunicipalityCode,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:  totalIbs: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:  totalIbsCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:  totalCbs: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:  totalCbsCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:  ibsCbsMunicipalityCode: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      totalIbs: document.totalIbs ? String(document.totalIbs.amount) : null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      totalIbsCurrency: document.totalIbs?.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      totalCbs: document.totalCbs ? String(document.totalCbs.amount) : null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      totalCbsCurrency: document.totalCbs?.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      ibsCbsMunicipalityCode: document.ibsCbsMunicipalityCode ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:    let totalIbs: Money | undefined;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:    if (persistence.totalIbs && persistence.totalIbsCurrency) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      const result = Money.create(parseFloat(persistence.totalIbs), persistence.totalIbsCurrency);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:        return Result.fail(`Invalid totalIbs: ${result.error}`);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      totalIbs = result.value;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:    let totalCbs: Money | undefined;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:    if (persistence.totalCbs && persistence.totalCbsCurrency) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      const result = Money.create(parseFloat(persistence.totalCbs), persistence.totalCbsCurrency);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:        return Result.fail(`Invalid totalCbs: ${result.error}`);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      totalCbs = result.value;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:      ibsCbsMunicipalityCode: persistence.ibsCbsMunicipalityCode ?? undefined,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:    props['totalIbs'] = totalIbs;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper.ts:    props['totalCbs'] = totalCbs;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * Drizzle Schema: fiscal_document_ibs_cbs
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * Persistence model para IBSCBSGroup Value Object
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * 1. Schema DEVE espelhar Domain Model COMPLETO (IBSCBSGroup)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:export const fiscalDocumentIbsCbs = mssqlTable('fiscal_document_ibs_cbs', {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  cst: varchar('cst', { length: 2 }).notNull(), // CST IBS/CBS (00-99)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  // IBS UF (alíquota + valor)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsUfRate: decimal('ibs_uf_rate', { precision: 7, scale: 4 }).notNull(), // até 100.0000%
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsUfValue: decimal('ibs_uf_value', { precision: 18, scale: 2 }).notNull(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsUfValueCurrency: varchar('ibs_uf_value_currency', { length: 3 }).notNull().default('BRL'),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  // IBS Municipal (alíquota + valor)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsMunRate: decimal('ibs_mun_rate', { precision: 7, scale: 4 }).notNull(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsMunValue: decimal('ibs_mun_value', { precision: 18, scale: 2 }).notNull(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsMunValueCurrency: varchar('ibs_mun_value_currency', { length: 3 }).notNull().default('BRL'),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  // CBS (alíquota + valor)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  cbsRate: decimal('cbs_rate', { precision: 7, scale: 4 }).notNull(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  cbsValue: decimal('cbs_value', { precision: 18, scale: 2 }).notNull(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  cbsValueCurrency: varchar('cbs_value_currency', { length: 3 }).notNull().default('BRL'),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsUfEffectiveRate: decimal('ibs_uf_effective_rate', { precision: 7, scale: 4 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  ibsMunEffectiveRate: decimal('ibs_mun_effective_rate', { precision: 7, scale: 4 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  cbsEffectiveRate: decimal('cbs_effective_rate', { precision: 7, scale: 4 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  deferralIbsValue: decimal('deferral_ibs_value', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  deferralIbsValueCurrency: varchar('deferral_ibs_value_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  deferralCbsValue: decimal('deferral_cbs_value', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  deferralCbsValueCurrency: varchar('deferral_cbs_value_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  refundIbsValue: decimal('refund_ibs_value', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  refundIbsValueCurrency: varchar('refund_ibs_value_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  refundCbsValue: decimal('refund_cbs_value', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  refundCbsValueCurrency: varchar('refund_cbs_value_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  reductionIbsRate: decimal('reduction_ibs_rate', { precision: 5, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  reductionCbsRate: decimal('reduction_cbs_rate', { precision: 5, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  presumedCreditIbsValue: decimal('presumed_credit_ibs_value', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  presumedCreditIbsValueCurrency: varchar('presumed_credit_ibs_value_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  presumedCreditCbsValue: decimal('presumed_credit_cbs_value', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts:  presumedCreditCbsValueCurrency: varchar('presumed_credit_cbs_value_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * CREATE INDEX idx_fiscal_doc_ibs_cbs_doc_id 
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: *   ON fiscal_document_ibs_cbs(fiscal_document_id);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * CREATE INDEX idx_fiscal_doc_ibs_cbs_item_id 
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: *   ON fiscal_document_ibs_cbs(fiscal_document_item_id)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * CREATE INDEX idx_fiscal_doc_ibs_cbs_organization 
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: *   ON fiscal_document_ibs_cbs(organization_id, branch_id);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: * CREATE INDEX idx_fiscal_doc_ibs_cbs_cst 
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsSchema.ts: *   ON fiscal_document_ibs_cbs(cst);
+src/modules/fiscal/infrastructure/persistence/schemas/SplitPaymentSchema.ts:  tributo: varchar('tributo', { length: 20 }).notNull(), // IBS_UF, IBS_MUN, CBS, IS
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts:  totalIbs: decimal('total_ibs', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts:  totalIbsCurrency: varchar('total_ibs_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts:  totalCbs: decimal('total_cbs', { precision: 18, scale: 2 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts:  totalCbsCurrency: varchar('total_cbs_currency', { length: 3 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts:  ibsCbsMunicipalityCode: varchar('ibs_cbs_municipality_code', { length: 7 }),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:import { IBSCBSGroup, DeferralInfo, RefundInfo, ReductionInfo, PresumedCreditInfo, GovernmentPurchaseInfo } from '@/modules/fiscal/domain/tax/value-objects/IBSCBSGroup';
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:import { CSTIbsCbs } from '@/modules/fiscal/domain/tax/value-objects/CSTIbsCbs';
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:import { AliquotaIBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaIBS';
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:import { AliquotaCBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaCBS';
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:function isValidCSTIbsCbs(code: string): boolean {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts: * Persistence interface para IBSCBSGroup
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:export interface IBSCBSPersistence {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsUfRate: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsUfValue: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsUfValueCurrency: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsMunRate: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsMunValue: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsMunValueCurrency: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  cbsRate: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  cbsValue: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  cbsValueCurrency: string;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsUfEffectiveRate: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ibsMunEffectiveRate: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  cbsEffectiveRate: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  deferralIbsValue: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  deferralIbsValueCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  deferralCbsValue: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  deferralCbsValueCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  refundIbsValue: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  refundIbsValueCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  refundCbsValue: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  refundCbsValueCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  reductionIbsRate: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  reductionCbsRate: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  presumedCreditIbsValue: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  presumedCreditIbsValueCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  presumedCreditCbsValue: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  presumedCreditCbsValueCurrency: string | null;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts: * Mapper: IBSCBSGroup ↔ Persistence
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:export class FiscalDocumentIbsCbsMapper {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:   * Timestamps são passados como parâmetros pois IBSCBSGroup é um Value Object puro
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    group: IBSCBSGroup,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  ): IBSCBSPersistence {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfRate: group.ibsUfRate.percentual.toString(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfValue: group.ibsUfValue.amount.toString(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfValueCurrency: group.ibsUfValue.currency,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunRate: group.ibsMunRate.percentual.toString(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunValue: group.ibsMunValue.amount.toString(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunValueCurrency: group.ibsMunValue.currency,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsRate: group.cbsRate.percentual.toString(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsValue: group.cbsValue.amount.toString(),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsValueCurrency: group.cbsValue.currency,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfEffectiveRate: group.ibsUfEffectiveRate?.percentual.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunEffectiveRate: group.ibsMunEffectiveRate?.percentual.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsEffectiveRate: group.cbsEffectiveRate?.percentual.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      deferralIbsValue: group.deferral?.ibsDeferredValue.amount.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      deferralIbsValueCurrency: group.deferral?.ibsDeferredValue.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      deferralCbsValue: group.deferral?.cbsDeferredValue.amount.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      deferralCbsValueCurrency: group.deferral?.cbsDeferredValue.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      refundIbsValue: group.refund?.ibsRefundValue.amount.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      refundIbsValueCurrency: group.refund?.ibsRefundValue.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      refundCbsValue: group.refund?.cbsRefundValue.amount.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      refundCbsValueCurrency: group.refund?.cbsRefundValue.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      reductionIbsRate: group.reduction?.ibsReductionRate.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      reductionCbsRate: group.reduction?.cbsReductionRate.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      presumedCreditIbsValue: group.presumedCredit?.ibsCreditValue.amount.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      presumedCreditIbsValueCurrency: group.presumedCredit?.ibsCreditValue.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      presumedCreditCbsValue: group.presumedCredit?.cbsCreditValue.amount.toString() ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      presumedCreditCbsValueCurrency: group.presumedCredit?.cbsCreditValue.currency ?? null,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:  static toDomain(persistence: IBSCBSPersistence): Result<IBSCBSGroup, string> {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (!isValidCSTIbsCbs(persistence.cst)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(`Invalid CST IBS/CBS: ${persistence.cst}`);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const cstResult = CSTIbsCbs.create(persistence.cst);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    // Criar Alíquotas IBS
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const ibsUfRateResult = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsUfRate));
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (Result.isFail(ibsUfRateResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(ibsUfRateResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const ibsMunRateResult = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsMunRate));
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (Result.isFail(ibsMunRateResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(ibsMunRateResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    // Criar Money - Valores IBS
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const ibsUfValueResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      parseFloat(persistence.ibsUfValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.ibsUfValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (Result.isFail(ibsUfValueResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(ibsUfValueResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const ibsMunValueResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      parseFloat(persistence.ibsMunValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.ibsMunValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (Result.isFail(ibsMunValueResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(ibsMunValueResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    // Criar Alíquota CBS
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const cbsRateResult = AliquotaCBS.fromPercentage(parseFloat(persistence.cbsRate));
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (Result.isFail(cbsRateResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(cbsRateResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    // Criar Money - Valor CBS
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    const cbsValueResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      parseFloat(persistence.cbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.cbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (Result.isFail(cbsValueResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      return Result.fail(cbsValueResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    let ibsUfEffectiveRate: AliquotaIBS | undefined;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (persistence.ibsUfEffectiveRate !== null) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const result = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsUfEffectiveRate));
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfEffectiveRate = result.value;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    let ibsMunEffectiveRate: AliquotaIBS | undefined;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (persistence.ibsMunEffectiveRate !== null) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const result = AliquotaIBS.fromPercentage(parseFloat(persistence.ibsMunEffectiveRate));
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunEffectiveRate = result.value;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    let cbsEffectiveRate: AliquotaCBS | undefined;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    if (persistence.cbsEffectiveRate !== null) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const result = AliquotaCBS.fromPercentage(parseFloat(persistence.cbsEffectiveRate));
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsEffectiveRate = result.value;
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.deferralIbsValue !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.deferralIbsValueCurrency !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.deferralCbsValue !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.deferralCbsValueCurrency !== null
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const deferralIbsResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        parseFloat(persistence.deferralIbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        persistence.deferralIbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      if (Result.isFail(deferralIbsResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        return Result.fail(deferralIbsResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const deferralCbsResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        parseFloat(persistence.deferralCbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        persistence.deferralCbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      if (Result.isFail(deferralCbsResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        return Result.fail(deferralCbsResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        ibsDeferredValue: deferralIbsResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        cbsDeferredValue: deferralCbsResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.refundIbsValue !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.refundIbsValueCurrency !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.refundCbsValue !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.refundCbsValueCurrency !== null
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const refundIbsResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        parseFloat(persistence.refundIbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        persistence.refundIbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      if (Result.isFail(refundIbsResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        return Result.fail(refundIbsResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const refundCbsResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        parseFloat(persistence.refundCbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        persistence.refundCbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      if (Result.isFail(refundCbsResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        return Result.fail(refundCbsResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        ibsRefundValue: refundIbsResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        cbsRefundValue: refundCbsResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.reductionIbsRate !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.reductionCbsRate !== null
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        ibsReductionRate: parseFloat(persistence.reductionIbsRate),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        cbsReductionRate: parseFloat(persistence.reductionCbsRate),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.presumedCreditIbsValue !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.presumedCreditIbsValueCurrency !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.presumedCreditCbsValue !== null &&
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      persistence.presumedCreditCbsValueCurrency !== null
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const presumedIbsResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        parseFloat(persistence.presumedCreditIbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        persistence.presumedCreditIbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      if (Result.isFail(presumedIbsResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        return Result.fail(presumedIbsResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      const presumedCbsResult = Money.create(
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        parseFloat(persistence.presumedCreditCbsValue),
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        persistence.presumedCreditCbsValueCurrency
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      if (Result.isFail(presumedCbsResult)) {
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        return Result.fail(presumedCbsResult.error);
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        ibsCreditValue: presumedIbsResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:        cbsCreditValue: presumedCbsResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    // Create (IBSCBSGroup não tem reconstitute, apenas create)
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:    return IBSCBSGroup.create({
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfRate: ibsUfRateResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfValue: ibsUfValueResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunRate: ibsMunRateResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunValue: ibsMunValueResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsRate: cbsRateResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsValue: cbsValueResult.value,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsUfEffectiveRate,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      ibsMunEffectiveRate,
+src/modules/fiscal/infrastructure/persistence/FiscalDocumentIbsCbsMapper.ts:      cbsEffectiveRate,
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    // Split IBS UF
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    if (taxBreakdown.ibsUf.amount > 0) {
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        amount: taxBreakdown.ibsUf,
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        tributo: 'IBS_UF',
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        barcode: this.generateMockBarcode('IBS_UF', uf),
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        digitableLine: this.generateMockDigitableLine('IBS_UF', uf),
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    // Split IBS Municipal
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    if (taxBreakdown.ibsMun.amount > 0) {
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        amount: taxBreakdown.ibsMun,
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        tributo: 'IBS_MUN',
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        barcode: this.generateMockBarcode('IBS_MUN', municipio),
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        digitableLine: this.generateMockDigitableLine('IBS_MUN', municipio),
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    // Split CBS
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    if (taxBreakdown.cbs.amount > 0) {
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        amount: taxBreakdown.cbs,
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        tributo: 'CBS',
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        barcode: this.generateMockBarcode('CBS', 'BR'),
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        digitableLine: this.generateMockDigitableLine('CBS', 'BR'),
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:    // Sempre incluir Federal (CBS)
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:      pixKey: 'cbs@receita.fazenda.gov.br',
+src/modules/fiscal/domain/split-payment/MockSplitPaymentService.ts:        pixKey: type === 'FEDERAL' ? 'cbs@receita.fazenda.gov.br' : `${code.toLowerCase()}@sefaz.gov.br`,
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  | 'IBS_UF'       // IBS - Parcela UF
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  | 'IBS_MUN'      // IBS - Parcela Municipal
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  | 'CBS'          // Contribuição sobre Bens e Serviços
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  | 'FEDERAL'      // União (CBS)
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  | 'ESTADUAL'     // Estado (IBS UF)
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  | 'MUNICIPAL';   // Município (IBS Municipal)
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  /** IBS - Parcela UF */
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  ibsUf: Money;
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  /** IBS - Parcela Municipal */
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  ibsMun: Money;
+src/modules/fiscal/domain/split-payment/SplitPaymentTypes.ts:  cbs: Money;
+src/modules/fiscal/domain/split-payment/ISplitPaymentService.ts:   *   { ibsUf: ..., ibsMun: ..., cbs: ... },
+src/modules/fiscal/domain/split-payment/ISplitPaymentService.ts:   * @param uf UF do destinatário (para IBS UF)
+src/modules/fiscal/domain/split-payment/ISplitPaymentService.ts:   * @param municipio Código do município (para IBS Municipal)
+src/modules/fiscal/domain/nfse/entities/NFSeDocument.ts:import { IBSCBSGroup } from '../../tax/value-objects/IBSCBSGroup';
+src/modules/fiscal/domain/nfse/entities/NFSeDocument.ts:  ibsCbsGroup?: IBSCBSGroup;
+src/modules/fiscal/domain/nfse/entities/NFSeDocument.ts:  get ibsCbsGroup(): IBSCBSGroup | undefined { return this._props.ibsCbsGroup; }
+src/modules/fiscal/domain/nfse/entities/NFSeDocument.ts:    ibsCbsGroup?: IBSCBSGroup;
+src/modules/fiscal/domain/nfse/entities/NFSeDocument.ts:          ibsCbsGroup: props.ibsCbsGroup,
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts: * Value Object: Alíquota CBS (Contribuição sobre Bens e Serviços)
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts: * Representa a alíquota da CBS (substitui PIS + COFINS).
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts: * A CBS é tributo federal que substitui:
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:export interface AliquotaCBSProps {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:export class AliquotaCBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  private readonly _props: AliquotaCBSProps;
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  private constructor(props: AliquotaCBSProps) {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  static fromPercentage(value: number): Result<AliquotaCBS, string> {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:      return Result.fail(`AliquotaCBS cannot be negative: ${value}`);
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:      return Result.fail(`AliquotaCBS cannot exceed 100%: ${value}`);
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:    return Result.ok(new AliquotaCBS({ percentual: value }));
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  static fromDecimal(value: number): Result<AliquotaCBS, string> {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:    return AliquotaCBS.fromPercentage(value * 100);
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  static zero(): AliquotaCBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:    const result = AliquotaCBS.fromPercentage(0);
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:      throw new Error('Failed to create zero aliquota CBS');
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  static testRate(): AliquotaCBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:    const result = AliquotaCBS.fromPercentage(0.9);
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:      throw new Error('Failed to create test rate aliquota CBS');
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  static standardRate(): AliquotaCBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:    const result = AliquotaCBS.fromPercentage(8.8);
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:      throw new Error('Failed to create standard rate aliquota CBS');
+src/modules/fiscal/domain/tax/value-objects/AliquotaCBS.ts:  equals(other: AliquotaCBS): boolean {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts: * Value Object: Alíquota IBS (Imposto sobre Bens e Serviços)
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts: * Representa a alíquota do IBS (unificação de ICMS + ISS).
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts: * O IBS é dividido em:
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts: * - IBS UF (estadual)
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts: * - IBS Municipal
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:export interface AliquotaIBSProps {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:export class AliquotaIBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  private readonly _props: AliquotaIBSProps;
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  private constructor(props: AliquotaIBSProps) {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  static fromPercentage(value: number): Result<AliquotaIBS, string> {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:      return Result.fail(`AliquotaIBS cannot be negative: ${value}`);
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:      return Result.fail(`AliquotaIBS cannot exceed 100%: ${value}`);
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:    return Result.ok(new AliquotaIBS({ percentual: value }));
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  static fromDecimal(value: number): Result<AliquotaIBS, string> {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:    return AliquotaIBS.fromPercentage(value * 100);
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  static zero(): AliquotaIBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:    const result = AliquotaIBS.fromPercentage(0);
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:      throw new Error('Failed to create zero aliquota IBS');
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  static testRate(): AliquotaIBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:    const result = AliquotaIBS.fromPercentage(0.1);
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:      throw new Error('Failed to create test rate aliquota IBS');
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  static standardRate(): AliquotaIBS {
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:    const result = AliquotaIBS.fromPercentage(17.7);
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:      throw new Error('Failed to create standard rate aliquota IBS');
+src/modules/fiscal/domain/tax/value-objects/AliquotaIBS.ts:  equals(other: AliquotaIBS): boolean {
+src/modules/fiscal/domain/tax/value-objects/TaxRegime.ts: * - NEW: Sistema novo (IBS/CBS/IS) - A partir de 01/01/2033
+src/modules/fiscal/domain/tax/value-objects/TaxRegime.ts:   * É regime novo (IBS/CBS/IS)?
+src/modules/fiscal/domain/tax/value-objects/TaxRegime.ts:      [TaxRegimeType.NEW]: 'Sistema Novo (IBS/CBS/IS)',
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts: * Value Object: CST IBS/CBS (Código de Situação Tributária do IBS/CBS)
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts: * Base Legal: LC 214/2025, Ato Conjunto CGIBS/RFB 01/2025
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:export interface CSTIbsCbsProps {
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:export class CSTIbsCbs {
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:  private readonly _props: CSTIbsCbsProps;
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:  private constructor(props: CSTIbsCbsProps) {
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:  static create(code: string): Result<CSTIbsCbs, string> {
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:      return Result.fail(`CST IBS/CBS must have 2 digits, got: ${code}`);
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:        `Invalid CST IBS/CBS: ${cleanCode}. Must be one of: ${validCodes.join(', ')}`
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:    return Result.ok(new CSTIbsCbs({ code: cleanCode }));
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:  static tributacaoNormal(): CSTIbsCbs {
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:    const result = CSTIbsCbs.create('00');
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:  static isencao(): CSTIbsCbs {
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:    const result = CSTIbsCbs.create('40');
+src/modules/fiscal/domain/tax/value-objects/CSTIbsCbs.ts:  equals(other: CSTIbsCbs): boolean {
+src/modules/fiscal/domain/tax/value-objects/index.ts:// Reforma Tributária 2026 (IBS/CBS/IS)
+src/modules/fiscal/domain/tax/value-objects/index.ts:export { CSTIbsCbs } from './CSTIbsCbs';
+src/modules/fiscal/domain/tax/value-objects/index.ts:export type { CSTIbsCbsProps } from './CSTIbsCbs';
+src/modules/fiscal/domain/tax/value-objects/index.ts:export { AliquotaIBS } from './AliquotaIBS';
+src/modules/fiscal/domain/tax/value-objects/index.ts:export type { AliquotaIBSProps } from './AliquotaIBS';
+src/modules/fiscal/domain/tax/value-objects/index.ts:export { AliquotaCBS } from './AliquotaCBS';
+src/modules/fiscal/domain/tax/value-objects/index.ts:export type { AliquotaCBSProps } from './AliquotaCBS';
+src/modules/fiscal/domain/tax/value-objects/index.ts:export { IBSCBSGroup } from './IBSCBSGroup';
+src/modules/fiscal/domain/tax/value-objects/index.ts:  IBSCBSGroupProps,
+src/modules/fiscal/domain/tax/value-objects/index.ts:} from './IBSCBSGroup';
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:import { CSTIbsCbs } from './CSTIbsCbs';
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:import { AliquotaIBS } from './AliquotaIBS';
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:import { AliquotaCBS } from './AliquotaCBS';
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts: * Value Object: Grupo IBSCBS
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts: * Representa o grupo completo de tributação IBS/CBS conforme
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts: * - CST IBS/CBS
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts: * - IBS UF (alíquota + valor)
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts: * - IBS Municipal (alíquota + valor)
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts: * - CBS (alíquota + valor)
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsDeferredValue: Money; // Valor IBS diferido
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsDeferredValue: Money; // Valor CBS diferido
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsRefundValue: Money; // Valor IBS devolvido
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsRefundValue: Money; // Valor CBS devolvido
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsReductionRate: number; // Percentual de redução IBS (0-100%)
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsReductionRate: number; // Percentual de redução CBS (0-100%)
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsCreditValue: Money; // Valor crédito IBS
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsCreditValue: Money; // Valor crédito CBS
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:export interface IBSCBSGroupProps {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cst: CSTIbsCbs;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsUfRate: AliquotaIBS;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsUfValue: Money;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsMunRate: AliquotaIBS;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsMunValue: Money;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsRate: AliquotaCBS;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsValue: Money;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsUfEffectiveRate?: AliquotaIBS;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  ibsMunEffectiveRate?: AliquotaIBS;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  cbsEffectiveRate?: AliquotaCBS;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:export class IBSCBSGroup {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  private readonly _props: IBSCBSGroupProps;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  private constructor(props: IBSCBSGroupProps) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get cst(): CSTIbsCbs {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get ibsUfRate(): AliquotaIBS {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.ibsUfRate;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get ibsUfValue(): Money {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.ibsUfValue;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get ibsMunRate(): AliquotaIBS {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.ibsMunRate;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get ibsMunValue(): Money {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.ibsMunValue;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get cbsRate(): AliquotaCBS {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.cbsRate;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get cbsValue(): Money {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.cbsValue;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get ibsUfEffectiveRate(): AliquotaIBS | undefined {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.ibsUfEffectiveRate;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get ibsMunEffectiveRate(): AliquotaIBS | undefined {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.ibsMunEffectiveRate;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get cbsEffectiveRate(): AliquotaCBS | undefined {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return this._props.cbsEffectiveRate;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  get totalIbs(): Money {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this._props.ibsUfValue.amount + this._props.ibsMunValue.amount,
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this._props.ibsUfValue.currency
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      throw new Error('Failed to calculate total IBS');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this.totalIbs.amount + this._props.cbsValue.amount,
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this._props.cbsValue.currency
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  static create(props: IBSCBSGroupProps): Result<IBSCBSGroup, string> {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      return Result.fail('CST IBS/CBS is required');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      props.ibsUfValue.currency !== currency ||
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      props.ibsMunValue.currency !== currency ||
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      props.cbsValue.currency !== currency
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    if (props.ibsUfValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      return Result.fail('IBS UF value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    if (props.ibsMunValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      return Result.fail('IBS Municipal value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    if (props.cbsValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      return Result.fail('CBS value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    const expectedIbsUf = props.baseValue.amount * props.ibsUfRate.decimal;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    if (Math.abs(props.ibsUfValue.amount - expectedIbsUf) > tolerance) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        `IBS UF value (${props.ibsUfValue.amount}) inconsistent with base (${props.baseValue.amount}) and rate (${props.ibsUfRate.percentual}%). Expected: ${expectedIbsUf.toFixed(2)}`
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    const expectedIbsMun = props.baseValue.amount * props.ibsMunRate.decimal;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    if (Math.abs(props.ibsMunValue.amount - expectedIbsMun) > tolerance) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        `IBS Municipal value (${props.ibsMunValue.amount}) inconsistent with base (${props.baseValue.amount}) and rate (${props.ibsMunRate.percentual}%). Expected: ${expectedIbsMun.toFixed(2)}`
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    const expectedCbs = props.baseValue.amount * props.cbsRate.decimal;
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    if (Math.abs(props.cbsValue.amount - expectedCbs) > tolerance) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        `CBS value (${props.cbsValue.amount}) inconsistent with base (${props.baseValue.amount}) and rate (${props.cbsRate.percentual}%). Expected: ${expectedCbs.toFixed(2)}`
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.deferral.ibsDeferredValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('IBS deferred value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.deferral.cbsDeferredValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('CBS deferred value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.refund.ibsRefundValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('IBS refund value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.refund.cbsRefundValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('CBS refund value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.reduction.ibsReductionRate < 0 || props.reduction.ibsReductionRate > 100) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('IBS reduction rate must be between 0% and 100%');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.reduction.cbsReductionRate < 0 || props.reduction.cbsReductionRate > 100) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('CBS reduction rate must be between 0% and 100%');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.presumedCredit.ibsCreditValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('IBS credit value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      if (props.presumedCredit.cbsCreditValue.amount < 0) {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:        return Result.fail('CBS credit value cannot be negative');
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:    return Result.ok(new IBSCBSGroup(props));
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:  equals(other: IBSCBSGroup): boolean {
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this._props.ibsUfRate.equals(other.ibsUfRate) &&
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this._props.ibsMunRate.equals(other.ibsMunRate) &&
+src/modules/fiscal/domain/tax/value-objects/IBSCBSGroup.ts:      this._props.cbsRate.equals(other.cbsRate)
+src/modules/fiscal/domain/tax/engines/ITaxEngine.ts: * - Novo sistema (IBS/CBS/IS - 2033+)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:import { IBSCalculator, IBSCalculationParams, IBSCalculationResult } from '../calculators/IBSCalculator';
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:import { CBSCalculator, CBSCalculationParams, CBSCalculationResult } from '../calculators/CBSCalculator';
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:import { TaxAmount, AliquotaIBS, AliquotaCBS } from '../value-objects';
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  ibsRate: number; // Alíquota IBS (percentual)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  cbsRate: number; // Alíquota CBS (percentual)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    ibs?: IBSCalculationResult;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    cbs?: CBSCalculationResult;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2026: PIS/COFINS substituídos por CBS (0,9%), ICMS/ISS mantidos (100%), IBS teste (0,1%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2027: PIS/COFINS extintos, CBS alíquota cheia (8,8%), IBS teste (0,1%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2029-2032: Redução gradual de ICMS/ISS e aumento de IBS
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2033: Sistema completamente novo (IBS/CBS/IS)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2026: ICMS/ISS 100%, CBS 0,9%, IBS 0,1%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2027: ICMS/ISS 100%, CBS 8,8%, IBS 0,1%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2029: ICMS/ISS 90%, CBS 8,8%, IBS 1,77% (10%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2030: ICMS/ISS 80%, CBS 8,8%, IBS 3,54% (20%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2031: ICMS/ISS 60%, CBS 8,8%, IBS 7,08% (40%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2032: ICMS/ISS 40%, CBS 8,8%, IBS 10,62% (60%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts: * - 2033: ICMS/ISS extintos, CBS 8,8%, IBS 17,7% (100%)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  private ibsCalculator: IBSCalculator;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  private cbsCalculator: CBSCalculator;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    this.ibsCalculator = new IBSCalculator();
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    this.cbsCalculator = new CBSCalculator();
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * Calcula IBS (novo imposto)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  calculateIBSTransition(params: IBSCalculationParams): Result<IBSCalculationResult, string> {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    return this.ibsCalculator.calculate(params);
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * Calcula CBS (substitui PIS/COFINS)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  calculateCBSTransition(params: CBSCalculationParams): Result<CBSCalculationResult, string> {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    return this.cbsCalculator.calculate(params);
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      ibs?: IBSCalculationParams;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      cbs?: CBSCalculationParams;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      ibs?: IBSCalculationResult;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      cbs?: CBSCalculationResult;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    // IBS
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    if (typedParams.ibs) {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      const ibsResult = this.calculateIBSTransition(typedParams.ibs);
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      if (Result.isOk(ibsResult)) {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        newTax.ibs = ibsResult.value;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        const addResult = newTotal.add(ibsResult.value.totalIBS);
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    // CBS
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:    if (typedParams.cbs) {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      const cbsResult = this.calculateCBSTransition(typedParams.cbs);
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:      if (Result.isOk(cbsResult)) {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        newTax.cbs = cbsResult.value;
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        const addResult = newTotal.add(cbsResult.value.cbsValue.value);
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2026: ICMS/ISS 100%, PIS/COFINS 100%, CBS 0,9%, IBS 0,1%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2027: ICMS/ISS 100%, PIS/COFINS 0%, CBS 8,8%, IBS 0,1%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2029: ICMS/ISS 90%, CBS 8,8%, IBS 1,77%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2030: ICMS/ISS 80%, CBS 8,8%, IBS 3,54%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2031: ICMS/ISS 60%, CBS 8,8%, IBS 7,08%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2032: ICMS/ISS 40%, CBS 8,8%, IBS 10,62%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * - 2033+: ICMS/ISS 0%, CBS 8,8%, IBS 17,7%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 0.1, // 0,1% IBS (teste)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 0.9, // 0,9% CBS (teste)
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 0.1, // IBS ainda em teste
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8, // CBS alíquota cheia
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 0.1, // IBS teste
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8, // CBS alíquota cheia
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 1.77, // IBS 10%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8,
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 3.54, // IBS 20%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8,
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 7.08, // IBS 40%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8,
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 10.62, // IBS 60%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8,
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        ibsRate: 17.7, // IBS 100%
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:        cbsRate: 8.8,
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * Verifica se CBS é aplicável em um ano
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  public static isCBSApplicable(year: number): boolean {
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:   * Verifica se IBS é aplicável em um ano
+src/modules/fiscal/domain/tax/engines/TransitionTaxEngine.ts:  public static isIBSApplicable(year: number): boolean {
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:  // Crédito IBS/CBS compensando débito PIS/COFINS
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:  // Crédito PIS/COFINS compensando débito IBS/CBS
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:  // Créditos do novo sistema (IBS/CBS)
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:  // Débitos do novo sistema (IBS/CBS devidos)
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts: * e o novo sistema (IBS/CBS) durante o período de transição (2026-2032).
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts: *    - CBS em teste (0,9%)
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts: *    - Créditos PIS/COFINS podem compensar débitos CBS
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts: *    - CBS alíquota cheia (8,8%)
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts: *    - IBS aumento gradual
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts: *      a) Compensados com CBS/IBS
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:        // Créditos PIS/COFINS compensam débitos IBS/CBS
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:          details = `Créditos PIS/COFINS (${params.oldSystemCredits.format()}) compensaram débitos IBS/CBS`;
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:        // Créditos IBS/CBS compensam débitos PIS/COFINS
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:          details = `Créditos IBS/CBS (${params.newSystemCredits.format()}) compensaram débitos PIS/COFINS`;
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:   * Compensa créditos antigos (PIS/COFINS) com débitos novos (IBS/CBS)
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:   * Compensa créditos novos (IBS/CBS) com débitos antigos (PIS/COFINS)
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:    // 2026: PIS/COFINS ainda vigentes, CBS em teste
+src/modules/fiscal/domain/tax/engines/CompensationEngine.ts:    // 2027-2032: PIS/COFINS extintos, créditos acumulados podem compensar IBS/CBS
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts: * - A partir de 01/01/2033: NewTaxEngine (IBS/CBS/IS)
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:          applicableTaxes: ['IBS', 'CBS', 'IS'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:      taxes.push('ICMS', 'ISS', 'PIS', 'COFINS', 'CBS (teste)', 'IBS (teste)');
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:      taxes.push('ICMS (redução gradual)', 'ISS (redução gradual)', 'CBS', 'IBS (aumento gradual)');
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['CBS em teste (0,9%)', 'IBS em teste (0,1%)', 'PIS/COFINS mantidos'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['PIS/COFINS extintos', 'CBS alíquota cheia (8,8%)', 'IBS ainda em teste (0,1%)'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        description: 'Início da transição ICMS/ISS → IBS',
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['ICMS/ISS reduzidos para 90%', 'IBS sobe para 1,77% (10%)'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['ICMS/ISS reduzidos para 80%', 'IBS sobe para 3,54% (20%)'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['ICMS/ISS reduzidos para 60%', 'IBS sobe para 7,08% (40%)'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['ICMS/ISS reduzidos para 40%', 'IBS sobe para 10,62% (60%)'],
+src/modules/fiscal/domain/tax/engines/TaxEngineFactory.ts:        changes: ['ICMS/ISS extintos', 'IBS alíquota cheia (17,7%)', 'CBS mantida (8,8%)', 'IS implementado'],
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:import { IBSCalculator, IBSCalculationParams, IBSCalculationResult } from '../calculators/IBSCalculator';
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:import { CBSCalculator, CBSCalculationParams, CBSCalculationResult } from '../calculators/CBSCalculator';
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:import { TaxAmount, AliquotaIBS, AliquotaCBS } from '../value-objects';
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:import { IBSCBSGroup } from '../value-objects/IBSCBSGroup';
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:import { CSTIbsCbs } from '../value-objects/CSTIbsCbs';
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  // IBS (substitui ICMS + ISS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  ibs?: IBSCalculationResult;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  // CBS (substitui PIS + COFINS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  cbs?: CBSCalculationResult;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  // Grupo IBS/CBS completo (se aplicável)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  ibsCbsGroup?: IBSCBSGroup;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts: * - IBS (Imposto sobre Bens e Serviços) - substitui ICMS + ISS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts: * - CBS (Contribuição sobre Bens e Serviços) - substitui PIS + COFINS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts: * - IVA dual (IBS estadual/municipal + CBS federal)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts: *   - IBS: 17,7% (estimativa, pode variar por UF/Município)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts: *   - CBS: 8,8%
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  private ibsCalculator: IBSCalculator;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  private cbsCalculator: CBSCalculator;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    this.ibsCalculator = new IBSCalculator();
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    this.cbsCalculator = new CBSCalculator();
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * ICMS não existe no novo sistema (substituído por IBS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      'ICMS foi extinto em 2033 e substituído por IBS. Use calculateIBS() em vez disso.'
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * PIS não existe no novo sistema (substituído por CBS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      'PIS foi extinto em 2027 e substituído por CBS. Use calculateCBS() em vez disso.'
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * COFINS não existe no novo sistema (substituído por CBS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      'COFINS foi extinto em 2027 e substituído por CBS. Use calculateCBS() em vez disso.'
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * ISS não existe no novo sistema (substituído por IBS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      'ISS foi extinto em 2033 e substituído por IBS. Use calculateIBS() em vez disso.'
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * Calcula IBS (substitui ICMS + ISS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  calculateIBS(params: IBSCalculationParams): Result<IBSCalculationResult, string> {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    return this.ibsCalculator.calculate(params);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * Calcula CBS (substitui PIS + COFINS)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  calculateCBS(params: CBSCalculationParams): Result<CBSCalculationResult, string> {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    return this.cbsCalculator.calculate(params);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      // Parâmetros para IBS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      ibs?: IBSCalculationParams;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      // Parâmetros para CBS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      cbs?: CBSCalculationParams;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      // Opção para criar IBSCBSGroup (agrupamento para NFe)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:        cst: CSTIbsCbs;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    // Calcular IBS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    if (typedParams.ibs) {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      const ibsResult = this.calculateIBS(typedParams.ibs);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      if (Result.isFail(ibsResult)) {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:        return Result.fail(`IBS calculation failed: ${ibsResult.error}`);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      result.ibs = ibsResult.value;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      const addResult = totalTaxes.add(ibsResult.value.totalIBS);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    // Calcular CBS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    if (typedParams.cbs) {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      const cbsResult = this.calculateCBS(typedParams.cbs);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      if (Result.isFail(cbsResult)) {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:        return Result.fail(`CBS calculation failed: ${cbsResult.error}`);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      result.cbs = cbsResult.value;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      const addResult = totalTaxes.add(cbsResult.value.cbsValue.value);
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    // Criar IBSCBSGroup se solicitado
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    if (typedParams.createGroup && typedParams.groupParams && result.ibs && result.cbs) {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      const groupResult = this.createIBSCBSGroup(
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:        result.ibs,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:        result.cbs
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:        result.ibsCbsGroup = groupResult.value;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * Cria um IBSCBSGroup a partir dos resultados de cálculo
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  private createIBSCBSGroup(
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    cst: CSTIbsCbs,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    ibsResult: IBSCalculationResult,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    cbsResult: CBSCalculationResult
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:  ): Result<IBSCBSGroup, string> {
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    const baseValue = ibsResult.baseCalculoEfetiva.reducedValue;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    return IBSCBSGroup.create({
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      ibsUfRate: ibsResult.ibsUfRate,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      ibsUfValue: ibsResult.ibsUfValue.value,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      ibsMunRate: ibsResult.ibsMunRate,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      ibsMunValue: ibsResult.ibsMunValue.value,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      cbsRate: cbsResult.cbsRate,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      cbsValue: cbsResult.cbsValue.value,
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    ibsRate: number;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    cbsRate: number;
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      ibsRate: 17.7, // 17,7% (alíquota padrão estimada)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:      cbsRate: 8.8, // 8,8% (alíquota padrão)
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:   * Calcula alíquota combinada IBS + CBS
+src/modules/fiscal/domain/tax/engines/NewTaxEngine.ts:    return rates.ibsRate + rates.cbsRate; // 26,5%
+src/modules/fiscal/domain/tax/calculators/ISCalculator.ts: * Implementação em 2027 (após período de teste do IBS/CBS)
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:import { AliquotaCBS, BaseCalculo, TaxAmount, Aliquota } from '../value-objects';
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts: * Parâmetros para cálculo de CBS
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:export interface CBSCalculationParams {
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  cbsRate: AliquotaCBS;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts: * Resultado do cálculo de CBS
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:export interface CBSCalculationResult {
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  // CBS
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  cbsRate: AliquotaCBS;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  cbsValue: TaxAmount;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  cbsEffectiveRate?: AliquotaCBS; // Após reduções
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts: * Calculator: CBS (Contribuição sobre Bens e Serviços)
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts: * Implementa cálculo da CBS conforme LC 214/2025 (Reforma Tributária).
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts: * A CBS substitui PIS + COFINS e é um tributo federal.
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts: * - Base única com IBS
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:export class CBSCalculator {
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:   * Calcula CBS
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  calculate(params: CBSCalculationParams): Result<CBSCalculationResult, string> {
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:    let cbsEffectiveRate: AliquotaCBS | undefined;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      const effectiveRate = params.cbsRate.percentual * reductionMultiplier;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      const cbsEffResult = AliquotaCBS.fromPercentage(effectiveRate);
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      if (Result.isOk(cbsEffResult)) {
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:        cbsEffectiveRate = cbsEffResult.value;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:    // Calcular CBS
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:    const aliquotaGeneric = Aliquota.fromPercentage(params.cbsRate.percentual);
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      return Result.fail(`Failed to convert CBS rate: ${aliquotaGeneric.error}`);
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:    const cbsValueResult = TaxAmount.calculate(baseCalculoEfetiva, aliquotaGeneric.value);
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:    if (Result.isFail(cbsValueResult)) {
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      return Result.fail(cbsValueResult.error);
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:    const cbsValue = cbsValueResult.value;
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      const deferredAmount = cbsValue.value.amount * (params.deferralRate / 100);
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      cbsRate: params.cbsRate,
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      cbsValue,
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:      cbsEffectiveRate,
+src/modules/fiscal/domain/tax/calculators/CBSCalculator.ts:  private validateParams(params: CBSCalculationParams): Result<void, string> {
+src/modules/fiscal/domain/tax/calculators/index.ts:export { IBSCalculator } from './IBSCalculator';
+src/modules/fiscal/domain/tax/calculators/index.ts:export type { IBSCalculationParams, IBSCalculationResult } from './IBSCalculator';
+src/modules/fiscal/domain/tax/calculators/index.ts:export { CBSCalculator } from './CBSCalculator';
+src/modules/fiscal/domain/tax/calculators/index.ts:export type { CBSCalculationParams, CBSCalculationResult } from './CBSCalculator';
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:import { AliquotaIBS, BaseCalculo, TaxAmount, Aliquota } from '../value-objects';
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * Parâmetros para cálculo de IBS
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:export interface IBSCalculationParams {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsUfRate: AliquotaIBS;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsMunRate: AliquotaIBS;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * Resultado do cálculo de IBS
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:export interface IBSCalculationResult {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  // IBS UF
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsUfRate: AliquotaIBS;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsUfValue: TaxAmount;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsUfEffectiveRate?: AliquotaIBS; // Após reduções
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  // IBS Municipal
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsMunRate: AliquotaIBS;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsMunValue: TaxAmount;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  ibsMunEffectiveRate?: AliquotaIBS; // Após reduções
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  totalIBS: Money;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * Calculator: IBS (Imposto sobre Bens e Serviços)
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * Implementa cálculo do IBS conforme LC 214/2025 (Reforma Tributária).
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * O IBS substitui ICMS + ISS e é dividido em:
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * - IBS UF (estadual)
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts: * - IBS Municipal
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:export class IBSCalculator {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:   * Calcula IBS
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  calculate(params: IBSCalculationParams): Result<IBSCalculationResult, string> {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    let ibsUfEffectiveRate: AliquotaIBS | undefined;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    let ibsMunEffectiveRate: AliquotaIBS | undefined;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      const effectiveUfRate = params.ibsUfRate.percentual * reductionMultiplier;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      const effectiveMunRate = params.ibsMunRate.percentual * reductionMultiplier;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      const ibsUfEffResult = AliquotaIBS.fromPercentage(effectiveUfRate);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      const ibsMunEffResult = AliquotaIBS.fromPercentage(effectiveMunRate);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      if (Result.isOk(ibsUfEffResult)) {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:        ibsUfEffectiveRate = ibsUfEffResult.value;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      if (Result.isOk(ibsMunEffResult)) {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:        ibsMunEffectiveRate = ibsMunEffResult.value;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    // Calcular IBS UF
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const aliquotaUfGeneric = Aliquota.fromPercentage(params.ibsUfRate.percentual);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      return Result.fail(`Failed to convert IBS UF rate: ${aliquotaUfGeneric.error}`);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const ibsUfValueResult = TaxAmount.calculate(baseCalculoEfetiva, aliquotaUfGeneric.value);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    if (Result.isFail(ibsUfValueResult)) {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      return Result.fail(ibsUfValueResult.error);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const ibsUfValue = ibsUfValueResult.value;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    // Calcular IBS Municipal
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const aliquotaMunGeneric = Aliquota.fromPercentage(params.ibsMunRate.percentual);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      return Result.fail(`Failed to convert IBS Mun rate: ${aliquotaMunGeneric.error}`);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const ibsMunValueResult = TaxAmount.calculate(baseCalculoEfetiva, aliquotaMunGeneric.value);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    if (Result.isFail(ibsMunValueResult)) {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      return Result.fail(ibsMunValueResult.error);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const ibsMunValue = ibsMunValueResult.value;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const totalIBSAmount = ibsUfValue.value.amount + ibsMunValue.value.amount;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const totalIBSResult = Money.create(totalIBSAmount, params.baseValue.currency);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    if (Result.isFail(totalIBSResult)) {
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      return Result.fail(totalIBSResult.error);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:    const totalIBS = totalIBSResult.value;
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      const deferredAmount = totalIBS.amount * (params.deferralRate / 100);
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      ibsUfRate: params.ibsUfRate,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      ibsUfValue,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      ibsUfEffectiveRate,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      ibsMunRate: params.ibsMunRate,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      ibsMunValue,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      ibsMunEffectiveRate,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:      totalIBS,
+src/modules/fiscal/domain/tax/calculators/IBSCalculator.ts:  private validateParams(params: IBSCalculationParams): Result<void, string> {
+src/modules/fiscal/domain/ports/input/ISimulateTaxReform.ts:  /** Cenário: ATUAL (ICMS/PIS/COFINS) ou REFORMA (IBS/CBS) */
+src/modules/fiscal/domain/ports/input/ISimulateTaxReform.ts:  /** Alíquota IBS (se simulação reforma) */
+src/modules/fiscal/domain/ports/input/ISimulateTaxReform.ts:  ibsRate?: number;
+src/modules/fiscal/domain/ports/input/ISimulateTaxReform.ts:  /** Alíquota CBS (se simulação reforma) */
+src/modules/fiscal/domain/ports/input/ISimulateTaxReform.ts:  cbsRate?: number;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:import { AliquotaIBS, AliquotaCBS } from '../../tax/value-objects';
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts: * Alíquotas regionais de IBS
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts: * O IBS será diferenciado por UF e Município, permitindo
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:export interface IBSRegionalRates {
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:  ibsUfRate: AliquotaIBS;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:  ibsMunRate: AliquotaIBS;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts: * Alíquotas de CBS (federal, uniforme)
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts: * A CBS é federal e uniforme em todo território nacional,
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:export interface CBSRates {
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:  cbsRate: AliquotaCBS;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts: * dos novos impostos (IBS/CBS/IS).
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * Busca alíquotas de IBS para UF e Município específicos
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * @returns Alíquotas IBS UF e Municipal
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:  findIBSRates(
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:  ): Promise<Result<IBSRegionalRates, string>>;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * Busca alíquota de CBS para determinado período
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * @returns Alíquota CBS do período
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:  findCBSRate(referenceDate: Date): Promise<Result<CBSRates, string>>;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * - 2026: IBS 0.1%, CBS 0.9%
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * - 2027: IBS 0.1%, CBS 8.8%
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:   * - 2033+: IBS 17.7%, CBS 8.8%
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:    ibsRate: AliquotaIBS;
+src/modules/fiscal/domain/ports/output/ITaxRateRepository.ts:    cbsRate: AliquotaCBS;
+src/modules/fiscal/domain/ports/output/index.ts:  IBSRegionalRates,
+src/modules/fiscal/domain/ports/output/index.ts:  CBSRates,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:  ibsUf: { rate: number; value: Money };
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:  ibsMun: { rate: number; value: Money };
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:  cbs: { rate: number; value: Money };
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts: * Orquestra o cálculo de tributos IBS/CBS:
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:   * Calcula IBS/CBS para um item
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const rates = this.getIbsCbsRates(engineType, year);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const ibsUfAmount = input.baseValue.amount * (rates.ibsUfRate / 100);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const ibsMunAmount = input.baseValue.amount * (rates.ibsMunRate / 100);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const cbsAmount = input.baseValue.amount * (rates.cbsRate / 100);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const ibsUfValueResult = Money.create(ibsUfAmount, input.baseValue.currency);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const ibsMunValueResult = Money.create(ibsMunAmount, input.baseValue.currency);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const cbsValueResult = Money.create(cbsAmount, input.baseValue.currency);
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      Result.isFail(ibsUfValueResult) || 
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      Result.isFail(ibsMunValueResult) || 
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      Result.isFail(cbsValueResult)
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      ibsUf: {
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        rate: rates.ibsUfRate,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        value: ibsUfValueResult.value,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      ibsMun: {
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        rate: rates.ibsMunRate,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        value: ibsMunValueResult.value,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      cbs: {
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        rate: rates.cbsRate,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        value: cbsValueResult.value,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:   * Retorna alíquotas IBS/CBS baseado no regime e ano
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:  private getIbsCbsRates(engineType: TaxEngineType, year: number): {
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    ibsUfRate: number;
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    ibsMunRate: number;
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    cbsRate: number;
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      // Sistema atual: sem IBS/CBS
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        ibsUfRate: 0,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        ibsMunRate: 0,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        cbsRate: 0,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      const transitionRates: Record<number, { ibsRate: number; cbsRate: number }> = {
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2026: { ibsRate: 0.10, cbsRate: 0.90 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2027: { ibsRate: 0.10, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2028: { ibsRate: 0.10, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2029: { ibsRate: 1.77, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2030: { ibsRate: 3.54, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2031: { ibsRate: 7.08, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        2032: { ibsRate: 10.62, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      const rate = transitionRates[year] || { ibsRate: 0, cbsRate: 0 };
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      // IBS dividido: 60% UF, 40% Município
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        ibsUfRate: rate.ibsRate * 0.6,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        ibsMunRate: rate.ibsRate * 0.4,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        cbsRate: rate.cbsRate,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const ibsTotalRate = 17.70;
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:    const cbsRate = 8.80;
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      ibsUfRate: ibsTotalRate * 0.6, // 60% para UF
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      ibsMunRate: ibsTotalRate * 0.4, // 40% para Município
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:      cbsRate,
+src/modules/fiscal/domain/services/TaxCalculationOrchestrator.ts:        description = 'Novo Sistema Tributário (IBS/CBS/IS)';
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    ibsUf: Money;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    ibsMun: Money;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    cbs: Money;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      newSystemTotal += scenario.newSystemTaxes.ibsUf.amount +
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:                       scenario.newSystemTaxes.ibsMun.amount +
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:                       scenario.newSystemTaxes.cbs.amount;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    // Simular novo sistema (IBS, CBS)
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const ibsRates = this.getIbsCbsRates(year);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const ibsUfAmount = baseValue.amount * (ibsRates.ibsUfRate / 100);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const ibsMunAmount = baseValue.amount * (ibsRates.ibsMunRate / 100);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const cbsAmount = baseValue.amount * (ibsRates.cbsRate / 100);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const ibsUfResult = Money.create(ibsUfAmount, baseValue.currency);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const ibsMunResult = Money.create(ibsMunAmount, baseValue.currency);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const cbsResult = Money.create(cbsAmount, baseValue.currency);
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      Result.isFail(ibsUfResult) || 
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      Result.isFail(ibsMunResult) || 
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      Result.isFail(cbsResult)
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:                       ibsUfAmount + ibsMunAmount + cbsAmount;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:        ibsUf: ibsUfResult.value,
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:        ibsMun: ibsMunResult.value,
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:        cbs: cbsResult.value,
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:   * Retorna alíquotas IBS/CBS para o ano (conforme TransitionTaxEngine)
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:  private getIbsCbsRates(year: number): {
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    ibsUfRate: number;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    ibsMunRate: number;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    cbsRate: number;
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const rates: Record<number, { ibsRate: number; cbsRate: number }> = {
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2026: { ibsRate: 0.10, cbsRate: 0.90 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2027: { ibsRate: 0.10, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2028: { ibsRate: 0.10, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2029: { ibsRate: 1.77, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2030: { ibsRate: 3.54, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2031: { ibsRate: 7.08, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      2032: { ibsRate: 10.62, cbsRate: 8.80 },
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    const rate = rates[year] || { ibsRate: 17.70, cbsRate: 8.80 }; // 2033+ alíquotas cheias
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:    // IBS dividido: 60% UF, 40% Município
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      ibsUfRate: rate.ibsRate * 0.6,
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      ibsMunRate: rate.ibsRate * 0.4,
+src/modules/fiscal/domain/services/TaxScenarioSimulator.ts:      cbsRate: rate.cbsRate,
+src/modules/fiscal/domain/services/rag/DocumentChunker.ts:      upperText.includes('IBS') ||
+src/modules/fiscal/domain/services/rag/DocumentChunker.ts:      upperText.includes('CBS') ||
+src/modules/fiscal/domain/entities/FiscalDocument.ts:import { IBSCBSGroup } from '../tax/value-objects/IBSCBSGroup';
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  totalIbs?: Money;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  totalCbs?: Money;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  ibsCbsMunicipalityCode?: string;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  ibsCbsGroup?: IBSCBSGroup;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  get totalIbs(): Money | undefined { return this._props.totalIbs; }
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  get totalCbs(): Money | undefined { return this._props.totalCbs; }
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  get ibsCbsMunicipalityCode(): string | undefined { return this._props.ibsCbsMunicipalityCode; }
+src/modules/fiscal/domain/entities/FiscalDocument.ts:  get ibsCbsGroup(): IBSCBSGroup | undefined { return this._props.ibsCbsGroup; }
+src/modules/fiscal/domain/entities/FiscalDocument.ts:    if (this._props.totalIbs) {
+src/modules/fiscal/domain/entities/FiscalDocument.ts:      total += this._props.totalIbs.amount;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:    if (this._props.totalCbs) {
+src/modules/fiscal/domain/entities/FiscalDocument.ts:      total += this._props.totalCbs.amount;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:    ibsCbsMunicipalityCode?: string;
+src/modules/fiscal/domain/entities/FiscalDocument.ts:        ibsCbsMunicipalityCode: props.ibsCbsMunicipalityCode,
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:import { IBSCBSGroup } from '../tax/value-objects/IBSCBSGroup';
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:  ibsCbsGroup?: IBSCBSGroup;
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:  get ibsCbsGroup(): IBSCBSGroup | undefined { return this._props.ibsCbsGroup; }
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:    if (this._props.ibsCbsGroup) {
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:      total += this._props.ibsCbsGroup.totalTax.amount;
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:    ibsCbsGroup?: IBSCBSGroup;
+src/modules/fiscal/domain/entities/FiscalDocumentItem.ts:        ibsCbsGroup: props.ibsCbsGroup,
+
+--- FASE 6: PERFORMANCE ---
+6.1 Loops em Repositories (Risco N+1):
+
+--- FASE 7: DOCUMENTACAO ---
+7.1 ADRs:
+       6
+7.2 READMEs em Modulos:
+       2
+=== FIM AUDITORIA ===

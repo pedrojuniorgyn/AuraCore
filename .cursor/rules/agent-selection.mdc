@@ -1,0 +1,316 @@
+---
+description: Guia de seleção de agentes Cursor para otimizar execução de tarefas. Consultar ANTES de executar prompts para escolher o agente mais adequado.
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# GUIA DE SELEÇÃO DE AGENTES CURSOR
+
+**Versão:** 1.0.0  
+**Data:** 25/01/2026  
+**Projeto:** AuraCore ERP Logístico
+
+---
+
+## 🎯 OBJETIVO
+
+Este guia ajuda a selecionar o agente Cursor mais adequado para cada tipo de tarefa, otimizando:
+- **Precisão** (menos retrabalho)
+- **Velocidade** (tempo de execução)
+- **Custo** (tokens consumidos)
+
+---
+
+## 📊 PERFIL DOS AGENTES
+
+### Sonnet 4.5 ⚡
+
+```
+Velocidade: ████████░░ Rápido
+Precisão:   ██████░░░░ Boa
+Contexto:   ██████░░░░ Médio
+Custo:      ██░░░░░░░░ Baixo
+```
+
+**Características:**
+- Execução rápida
+- Bom para tarefas repetitivas
+- Pode cometer erros em lógica complexa
+- Contexto limitado em arquivos grandes
+
+**Ideal para:**
+- ✅ Batch de correções simples (muitos arquivos, mesma correção)
+- ✅ Validações e verificações
+- ✅ Geração de código boilerplate
+- ✅ Correções TypeScript pontuais
+- ✅ Testes unitários padronizados
+- ✅ Documentação simples
+
+**Evitar em:**
+- ❌ Debugging complexo
+- ❌ Decisões arquiteturais
+- ❌ Código crítico (fiscal, financeiro, SPED)
+- ❌ HOTFIX urgentes
+
+---
+
+### Sonnet 4.5 Thinking 🧠⚡
+
+```
+Velocidade: ██████░░░░ Médio
+Precisão:   ███████░░░ Muito Boa
+Contexto:   ███████░░░ Bom
+Custo:      ████░░░░░░ Médio
+```
+
+**Características:**
+- Mostra raciocínio antes de agir
+- Melhor para debugging
+- Velocidade intermediária
+- Bom equilíbrio custo/benefício
+
+**Ideal para:**
+- ✅ Debugging com múltiplas hipóteses
+- ✅ Refatorações médias
+- ✅ Análise de código existente
+- ✅ Quando precisa "mostrar o trabalho"
+- ✅ Correções que envolvem entender contexto
+
+**Evitar em:**
+- ❌ Tarefas triviais (overkill)
+- ❌ Batch de muitos arquivos (lento)
+- ❌ Código extremamente crítico
+
+---
+
+### Opus 4.5 🎯
+
+```
+Velocidade: ████░░░░░░ Médio-Lento
+Precisão:   █████████░ Excelente
+Contexto:   █████████░ Amplo
+Custo:      ████████░░ Alto
+```
+
+**Características:**
+- Maior capacidade de raciocínio
+- Entende padrões complexos (DDD, Hexagonal)
+- Menos propenso a erros
+- Contexto amplo
+
+**Ideal para:**
+- ✅ HOTFIX críticos (deploy quebrado)
+- ✅ Código fiscal/financeiro (SPED, NFe, CTe)
+- ✅ Decisões arquiteturais
+- ✅ Implementações DDD complexas
+- ✅ Schemas de banco de dados
+- ✅ Migrations SQL
+- ✅ Quando NÃO PODE errar
+
+**Evitar em:**
+- ❌ Tarefas simples (desperdício de recursos)
+- ❌ Batch de correções triviais
+
+---
+
+### Opus 4.5 Thinking 🎯🧠
+
+```
+Velocidade: ██░░░░░░░░ Lento
+Precisão:   ██████████ Máxima
+Contexto:   ██████████ Máximo
+Custo:      ██████████ Muito Alto
+```
+
+**Características:**
+- Raciocínio explícito e detalhado
+- Máxima precisão possível
+- Ideal para problemas "impossíveis"
+- Custo elevado
+
+**Ideal para:**
+- ✅ Debugging de bugs impossíveis
+- ✅ Análise de causa raiz profunda
+- ✅ Refatorações arquiteturais grandes
+- ✅ Planejamento de sprints complexos
+- ✅ Quando precisa de raciocínio explícito documentado
+- ✅ Code review de código crítico
+
+**Evitar em:**
+- ❌ Qualquer tarefa simples
+- ❌ Implementações diretas
+- ❌ Quando tempo é crítico
+
+---
+
+## 📋 MATRIZ DE DECISÃO POR TIPO DE TAREFA
+
+| Tipo de Tarefa | Agente Recomendado | Alternativa |
+|----------------|-------------------|-------------|
+| **HOTFIX urgente (deploy)** | Opus 4.5 | Opus 4.5 Thinking |
+| **Debugging complexo** | Opus 4.5 Thinking | Opus 4.5 |
+| **Batch correções (>5 arquivos)** | Sonnet 4.5 | Sonnet 4.5 Thinking |
+| **Refatoração arquitetural** | Opus 4.5 Thinking | Opus 4.5 |
+| **Validação/Verificação** | Sonnet 4.5 | - |
+| **Criação módulos DDD** | Opus 4.5 | Opus 4.5 Thinking |
+| **Correção TypeScript** | Sonnet 4.5 | Sonnet 4.5 Thinking |
+| **Análise logs deploy** | Opus 4.5 Thinking | Opus 4.5 |
+| **Migrations SQL** | Opus 4.5 | Opus 4.5 Thinking |
+| **Testes unitários** | Sonnet 4.5 | Sonnet 4.5 Thinking |
+| **Código SPED/Fiscal** | Opus 4.5 | Opus 4.5 Thinking |
+| **Código Financeiro** | Opus 4.5 | Opus 4.5 Thinking |
+| **Domain Services** | Opus 4.5 | Sonnet 4.5 Thinking |
+| **API Routes simples** | Sonnet 4.5 | Sonnet 4.5 Thinking |
+| **Schemas Drizzle** | Opus 4.5 | Sonnet 4.5 Thinking |
+| **Documentação** | Sonnet 4.5 | - |
+
+---
+
+## 🏷️ TAGS DE COMPLEXIDADE
+
+Use estas tags nos prompts para indicar complexidade:
+
+| Tag | Significado | Agente Sugerido |
+|-----|-------------|-----------------|
+| `[TRIVIAL]` | Tarefa simples, baixo risco | Sonnet 4.5 |
+| `[STANDARD]` | Tarefa comum, risco moderado | Sonnet 4.5 Thinking |
+| `[COMPLEX]` | Múltiplas dependências, alto impacto | Opus 4.5 |
+| `[CRITICAL]` | Não pode errar, deploy/fiscal/financial | Opus 4.5 |
+| `[IMPOSSIBLE]` | Bug difícil, precisa raciocínio explícito | Opus 4.5 Thinking |
+
+---
+
+## 📝 TEMPLATE DE CABEÇALHO PARA PROMPTS
+
+```markdown
+# [NOME DO PROMPT]
+
+## 🤖 AGENTE RECOMENDADO: [Opus 4.5 / Sonnet 4.5 / etc]
+**Complexidade:** [TRIVIAL / STANDARD / COMPLEX / CRITICAL / IMPOSSIBLE]
+**Motivo:** [Justificativa breve]
+**Alternativa:** [Se não disponível, usar X]
+
+---
+[Resto do prompt]
+```
+
+---
+
+## 🎯 REGRAS DE ESCALAÇÃO
+
+### Quando Escalar para Agente Superior
+
+1. **Sonnet 4.5 → Sonnet 4.5 Thinking**
+   - Se cometer mesmo erro 2x
+   - Se não entender o contexto
+   - Se a correção criar novos bugs
+
+2. **Sonnet 4.5 Thinking → Opus 4.5**
+   - Se não encontrar causa raiz
+   - Se a solução for parcial
+   - Se envolver múltiplos módulos
+
+3. **Opus 4.5 → Opus 4.5 Thinking**
+   - Se o problema for recorrente
+   - Se precisar de análise profunda
+   - Se for código de compliance (SPED, fiscal)
+
+### Quando Desescalar para Agente Inferior
+
+1. **Opus 4.5 Thinking → Opus 4.5**
+   - Após entender o problema
+   - Para implementação direta
+   - Quando já tem a solução clara
+
+2. **Opus 4.5 → Sonnet 4.5**
+   - Para batch de correções similares
+   - Após estabelecer o padrão
+   - Para tarefas de validação
+
+---
+
+## 📊 EXEMPLOS PRÁTICOS - AURACORE
+
+### Sprint Blindagem
+
+| Prompt | Agente Ideal | Motivo |
+|--------|--------------|--------|
+| S1.1 Batch Zod Validation | Sonnet 4.5 | Batch repetitivo, mesmo padrão |
+| S1.2 Multi-tenancy Schemas | Opus 4.5 | Schemas críticos, DDD |
+| S1.3 Result Pattern | Opus 4.5 | Refatoração arquitetural |
+| HOTFIX table-creator | Opus 4.5 | Crítico, deploy quebrado |
+| HOTFIX-2 Zod Refinement | Opus 4.5 Thinking | Debugging causa raiz |
+| Verificação pós-hotfix | Sonnet 4.5 | Checagem simples |
+
+### Módulos por Criticidade
+
+| Módulo | Agente Mínimo | Motivo |
+|--------|---------------|--------|
+| Fiscal (SPED, NFe, CTe) | Opus 4.5 | Multas R$ 5.000+ |
+| Financial (títulos, pagamentos) | Opus 4.5 | Dinheiro, auditoria |
+| Accounting (contabilização) | Opus 4.5 | SPED ECD, compliance |
+| TMS (viagens, fretes) | Sonnet 4.5 Thinking | Operacional |
+| WMS (estoque) | Sonnet 4.5 Thinking | Operacional |
+| Strategic (BSC, OKR) | Sonnet 4.5 | Menor criticidade |
+| CRM | Sonnet 4.5 | Menor criticidade |
+
+---
+
+## ⚠️ ALERTAS IMPORTANTES
+
+### Nunca Use Sonnet 4.5 Para:
+
+1. **Código SPED** - Multas por erro podem chegar a R$ 5.000/mês
+2. **Cálculos tributários** - ICMS, PIS/COFINS, IBS/CBS
+3. **Migrations em produção** - Risco de perda de dados
+4. **HOTFIX de deploy** - Urgência + criticidade
+5. **Schemas financeiros** - Dinheiro envolvido
+
+### Sempre Documente a Escolha
+
+Ao receber um prompt, o agente atual deve:
+1. Verificar se é o agente adequado
+2. Se não for, sugerir escalação
+3. Informar ao usuário antes de começar
+
+---
+
+## 🔄 FLUXO DE DECISÃO
+
+```
+┌─────────────────────────────────────────┐
+│ 1. Recebeu prompt                       │
+└─────────────────┬───────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
+│ 2. Avaliar complexidade e risco         │
+│    - É código fiscal/financeiro?        │
+│    - Pode quebrar deploy?               │
+│    - Envolve múltiplos módulos?         │
+└─────────────────┬───────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
+│ 3. Consultar matriz de decisão          │
+└─────────────────┬───────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
+│ 4. Sugerir agente adequado              │
+│    (se diferente do atual)              │
+└─────────────────┬───────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
+│ 5. Executar ou aguardar troca           │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 📚 REFERÊNCIAS
+
+- Anthropic Claude Model Card
+- Cursor IDE Documentation
+- AuraCore regrasmcp.mdc
+
+---
+
+**FIM DO GUIA - CONSULTAR ANTES DE EXECUTAR PROMPTS**
