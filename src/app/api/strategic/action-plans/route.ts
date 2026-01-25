@@ -13,20 +13,32 @@ import { getTenantContext } from '@/lib/auth/context';
 import { CreateActionPlanUseCase } from '@/modules/strategic/application/commands/CreateActionPlanUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
+import { queryActionPlansSchema, actionPlanStatusSchema, prioritySchema, pdcaPhaseSchema } from '@/lib/validation/strategic-schemas';
 
+// ✅ S1.1 Batch 3: Schema estendido para 5W2H
 const createSchema = z.object({
   goalId: z.string().uuid().optional(),
   what: z.string().min(1, 'O que fazer é obrigatório'),
   why: z.string().min(1, 'Por que fazer é obrigatório'),
   whereLocation: z.string().min(1, 'Onde fazer é obrigatório'),
-  whenStart: z.string().transform((s) => new Date(s)),
-  whenEnd: z.string().transform((s) => new Date(s)),
+  whenStart: z.string().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(z.string().transform((s) => new Date(s).toISOString())),
+  whenEnd: z.string().datetime({ message: 'Data de término inválida (ISO 8601)' }).or(z.string().transform((s) => new Date(s).toISOString())),
   who: z.string().min(1, 'Responsável é obrigatório'),
   whoUserId: z.string().uuid('whoUserId deve ser UUID'),
   how: z.string().min(1, 'Como fazer é obrigatório'),
   howMuchAmount: z.number().optional(),
   howMuchCurrency: z.string().length(3).optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  priority: prioritySchema.optional(),
+});
+
+// ✅ S1.1 Batch 3: Schema de query
+const querySchema = queryActionPlansSchema.extend({
+  goalId: z.string().uuid().optional(),
+  whoUserId: z.string().uuid().optional(),
+  pdcaCycle: pdcaPhaseSchema.optional(),
+  status: actionPlanStatusSchema.optional(),
+  priority: prioritySchema.optional(),
+  overdueOnly: z.enum(['true', 'false']).transform((val) => val === 'true').optional(),
 });
 
 // GET /api/strategic/action-plans
@@ -35,6 +47,20 @@ export const GET = withDI(async (request: NextRequest) => {
     const context = await getTenantContext();
     const { searchParams } = new URL(request.url);
 
+    // ✅ S1.1 Batch 3: Validar query params
+    const queryParams = Object.fromEntries(searchParams.entries());
+    const validation = querySchema.safeParse(queryParams);
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Parâmetros inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
     const repository = container.resolve<IActionPlanRepository>(
       STRATEGIC_TOKENS.ActionPlanRepository
     );
@@ -42,14 +68,7 @@ export const GET = withDI(async (request: NextRequest) => {
     const filter = {
       organizationId: context.organizationId,
       branchId: context.branchId,
-      goalId: searchParams.get('goalId') ?? undefined,
-      whoUserId: searchParams.get('whoUserId') ?? undefined,
-      pdcaCycle: searchParams.get('pdcaCycle') ?? undefined,
-      status: searchParams.get('status') ?? undefined,
-      priority: searchParams.get('priority') ?? undefined,
-      overdueOnly: searchParams.get('overdueOnly') === 'true',
-      page: parseInt(searchParams.get('page') ?? '1', 10),
-      pageSize: parseInt(searchParams.get('pageSize') ?? '20', 10),
+      ...validation.data,
     };
 
     const { items, total } = await repository.findMany(filter);

@@ -24,15 +24,35 @@ const createStrategySchema = z.object({
   endDate: z.string().transform((s) => new Date(s)),
 });
 
+// ✅ S1.1 Batch 3: Schema de query
+const queryStrategiesSchema = z.object({
+  status: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 // GET /api/strategic/strategies
 export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') ?? undefined;
-    const page = parseInt(searchParams.get('page') ?? '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') ?? '20', 10);
+    
+    // ✅ S1.1 Batch 3: Validar query params
+    const queryParams = Object.fromEntries(searchParams.entries());
+    const validation = queryStrategiesSchema.safeParse(queryParams);
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Parâmetros inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    
+    const { status, page, pageSize } = validation.data;
 
     const repository = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository

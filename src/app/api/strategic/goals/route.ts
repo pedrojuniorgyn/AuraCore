@@ -16,25 +16,20 @@ import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/
 import { db } from '@/lib/db';
 import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
 import { eq, and } from 'drizzle-orm';
+import { createGoalSchema as baseCreateGoalSchema, queryGoalsSchema } from '@/lib/validation/strategic-schemas';
 
-// Schema de validação
-const createGoalSchema = z.object({
-  perspectiveId: z.string().uuid('perspectiveId deve ser UUID válido').optional(),
+// ✅ S1.1 Batch 3: Schema estendido para compatibilidade com estrutura existente
+// Mantém campos específicos do sistema (perspectiveCode, cascadeLevel) + base do strategic-schemas.ts
+const createGoalSchema = baseCreateGoalSchema.extend({
   perspectiveCode: z.string().optional(), // Fallback se ID não for informado
-  strategyId: z.string().optional(), // Necessário para resolver perspectiveCode
-  parentGoalId: z.string().uuid().optional(),
-  code: z.string().min(1, 'Código é obrigatório').max(20),
-  description: z.string().min(1, 'Descrição é obrigatória'),
   cascadeLevel: z.enum(['CEO', 'DIRECTOR', 'MANAGER', 'TEAM']),
-  targetValue: z.number(),
+  code: z.string().min(1, 'Código é obrigatório').max(20),
   baselineValue: z.number().optional(),
-  unit: z.string().min(1).max(20),
   polarity: z.enum(['UP', 'DOWN']).optional(),
-  weight: z.number().min(0).max(100),
   ownerUserId: z.string().uuid().optional(),
   ownerBranchId: z.number().optional(),
-  startDate: z.string().transform((s) => new Date(s)),
-  dueDate: z.string().transform((s) => new Date(s)),
+  startDate: z.string().datetime().or(z.string().transform((s) => new Date(s).toISOString())),
+  dueDate: z.string().datetime().or(z.string().transform((s) => new Date(s).toISOString())),
 });
 
 // GET /api/strategic/goals
@@ -43,13 +38,26 @@ export const GET = withDI(async (request: NextRequest) => {
     const context = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
-    const perspectiveId = searchParams.get('perspectiveId') ?? undefined;
+    
+    // ✅ S1.1 Batch 3: Validar query params com Zod
+    const queryParams = Object.fromEntries(searchParams.entries());
+    const validation = queryGoalsSchema.safeParse(queryParams);
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Parâmetros inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    
+    const { page, pageSize, status, perspectiveId, responsibleId: ownerUserId, startDate, endDate } = validation.data;
+    
+    // Campos específicos do sistema (não no schema base)
     const parentGoalId = searchParams.get('parentGoalId') ?? undefined;
     const cascadeLevel = searchParams.get('cascadeLevel') ?? undefined;
-    const status = searchParams.get('status') ?? undefined;
-    const ownerUserId = searchParams.get('ownerUserId') ?? undefined;
-    const page = parseInt(searchParams.get('page') ?? '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') ?? '20', 10);
 
     const repository = container.resolve<IStrategicGoalRepository>(
       STRATEGIC_TOKENS.StrategicGoalRepository

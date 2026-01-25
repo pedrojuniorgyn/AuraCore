@@ -1,12 +1,35 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { pickupOrders } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
+import { createPickupOrderSchema } from "@/lib/validation/tms-schemas";
+
+// ✅ S1.1 Batch 3: Schema de query para pickup orders
+const queryPickupOrdersSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  status: z.string().optional(),
+  customerId: z.string().uuid().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+}).refine(
+  (data) => {
+    if (data.startDate && data.endDate) {
+      return new Date(data.startDate) <= new Date(data.endDate);
+    }
+    return true;
+  },
+  { message: 'startDate deve ser anterior ou igual a endDate', path: ['startDate'] }
+);
 
 /**
  * GET /api/tms/pickup-orders
+ * 
+ * Multi-tenancy: ✅ organizationId + branchId
+ * Validação: ✅ Zod query params
  */
 export async function GET(req: Request) {
   try {
@@ -15,16 +38,38 @@ export async function GET(req: Request) {
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
 
+    // ✅ S1.1 Batch 3: Validar query params
+    const url = new URL(req.url);
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const validation = queryPickupOrdersSchema.safeParse(queryParams);
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Parâmetros inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    
+    const { page, pageSize, status, customerId, startDate, endDate } = validation.data;
+
+    // ✅ Construir condições dinamicamente (aplicar filtros!)
+    const conditions = [
+      eq(pickupOrders.organizationId, organizationId),
+      isNull(pickupOrders.deletedAt),
+      ...getBranchScopeFilter(ctx, pickupOrders.branchId)
+    ];
+    
+    if (status) conditions.push(eq(pickupOrders.status, status));
+    if (customerId) conditions.push(eq(pickupOrders.customerId, customerId));
+    // TODO: Aplicar startDate, endDate se campos existirem no schema
+
     const orders = await db
       .select()
       .from(pickupOrders)
-      .where(
-        and(
-          eq(pickupOrders.organizationId, organizationId),
-          isNull(pickupOrders.deletedAt),
-          ...getBranchScopeFilter(ctx, pickupOrders.branchId)
-        )
-      )
+      .where(and(...conditions))
       .orderBy(desc(pickupOrders.createdAt));
 
     return NextResponse.json({
@@ -43,6 +88,9 @@ export async function GET(req: Request) {
 
 /**
  * POST /api/tms/pickup-orders
+ * 
+ * Multi-tenancy: ✅ organizationId + branchId
+ * Validação: ✅ Zod schema
  */
 export async function POST(req: Request) {
   try {
@@ -53,34 +101,38 @@ export async function POST(req: Request) {
     const createdBy = ctx.userId || "system";
 
     const body = await req.json();
+    
+    // ✅ S1.1 Batch 3: Validar body com Zod
+    const validation = createPickupOrderSchema.safeParse({
+      ...body,
+      organizationId,
+      branchId: body.branchId ?? ctx.defaultBranchId,
+    });
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Dados inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    
+    const validatedData = validation.data;
+    const branchId = validatedData.branchId;
+    
+    // Verificar acesso à filial
+    if (!hasAccessToBranch(ctx, branchId)) {
+      return NextResponse.json({ error: "Sem permissão para a filial" }, { status: 403 });
+    }
+    
     // Evitar override de campos sensíveis via spread
     const {
       organizationId: _orgId,
       branchId: _branchId,
-      orderNumber: _orderNumber,
-      status: _status,
-      createdBy: _createdBy,
-      deletedAt: _deletedAt,
-      version: _version,
       ...safeBody
-    } = (body ?? {}) as Record<string, unknown>;
-
-    // branchId é NOT NULL no schema: usar body.branchId (se vier) ou defaultBranchId da sessão
-    const bodyData = body as Record<string, unknown>;
-    const branchIdCandidate = bodyData.branchId ?? ctx.defaultBranchId;
-    if (branchIdCandidate === null || branchIdCandidate === undefined) {
-      return NextResponse.json(
-        { error: "branchId é obrigatório (ou defina defaultBranchId no usuário)" },
-        { status: 400 }
-      );
-    }
-    const branchId = Number(branchIdCandidate);
-    if (!Number.isFinite(branchId) || branchId <= 0) {
-      return NextResponse.json({ error: "branchId inválido" }, { status: 400 });
-    }
-    if (!hasAccessToBranch(ctx, branchId)) {
-      return NextResponse.json({ error: "Sem permissão para a filial" }, { status: 403 });
-    }
+    } = body as Record<string, unknown>;
 
     // Gerar número
     const year = new Date().getFullYear();
