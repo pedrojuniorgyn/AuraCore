@@ -10,6 +10,10 @@ import { CreateTaxMatrixRuleSchema, ListTaxMatrixQuerySchema } from "@/modules/f
  * 
  * Multi-tenancy: ✅ organizationId
  * Validação: ✅ Zod query params
+ * 
+ * ⚠️ S1.1-FIX-4: CORRIGIDO SQL Injection
+ * - Antes: string interpolation vulnerável
+ * - Agora: sql tagged template com parâmetros seguros
  */
 export async function GET(request: NextRequest) {
   try {
@@ -34,41 +38,30 @@ export async function GET(request: NextRequest) {
 
     const { ufOrigin, ufDestination, cargoType, isActive } = validation.data;
 
-    // ✅ FIX Bug #2 (S1.1-FIX-3): Construir WHERE dinâmico com filtros validados
-    // Filtros: ufOrigin, ufDestination, cargoType, isActive
-    let whereClause = `WHERE organization_id = ${organizationId}`;
-    
-    if (ufOrigin) {
-      whereClause += ` AND uf_origin = '${ufOrigin}'`;
-    }
-    if (ufDestination) {
-      whereClause += ` AND uf_destination = '${ufDestination}'`;
-    }
-    if (cargoType) {
-      whereClause += ` AND cargo_type = '${cargoType}'`;
-    }
-    if (isActive !== undefined && isActive !== null) {
-      whereClause += ` AND is_active = ${isActive ? 1 : 0}`;
-    } else {
-      // ✅ Default: apenas ativos (comportamento anterior)
-      whereClause += ` AND is_active = 1`;
-    }
+    // ✅ S1.1-FIX-4: Query PARAMETRIZADA (SEGURA contra SQL Injection)
+    // Usar sql tagged template - Drizzle converte para parâmetros SQL (@p0, @p1, etc)
+    // Filtros opcionais são tratados com COALESCE/condicionais no SQL
+    const isActiveValue = isActive !== undefined && isActive !== null ? isActive : true;
 
-    const matrix = await db.execute(sql.raw(`
+    const matrix = await db.execute(sql`
       SELECT 
         id,
-        CONCAT(uf_origin, ' → ', uf_destination) as route,
+        CONCAT(uf_origin, N' → ', uf_destination) as route,
         cargo_type as cargo,
-        CASE WHEN is_icms_contributor = 1 THEN 'Sim' ELSE 'Não' END as contributor,
+        CASE WHEN is_icms_contributor = 1 THEN N'Sim' ELSE N'Não' END as contributor,
         cst_code as cst,
         icms_rate as icms,
         fcp_rate as fcp,
-        CASE WHEN difal_applicable = 1 THEN 'Sim' ELSE 'Não' END as difal,
+        CASE WHEN difal_applicable = 1 THEN N'Sim' ELSE N'Não' END as difal,
         legal_basis as legal
       FROM fiscal_tax_matrix
-      ${whereClause}
+      WHERE organization_id = ${organizationId}
+        AND (${ufOrigin} IS NULL OR uf_origin = ${ufOrigin})
+        AND (${ufDestination} IS NULL OR uf_destination = ${ufDestination})
+        AND (${cargoType} IS NULL OR cargo_type = ${cargoType})
+        AND is_active = ${isActiveValue ? 1 : 0}
       ORDER BY uf_origin, uf_destination
-    `));
+    `);
 
     return NextResponse.json({
       success: true,
