@@ -43,14 +43,15 @@ const createSchema = z.object({
 });
 
 // ✅ S1.1 Batch 3: Schema de query
-const querySchema = queryActionPlansSchema.extend({
+// ⚠️ HOTFIX-2: Usar .merge() ao invés de .extend() pois queryActionPlansSchema tem .refine()
+const querySchema = queryActionPlansSchema.merge(z.object({
   goalId: z.string().uuid().optional(),
   whoUserId: z.string().uuid().optional(),
   pdcaCycle: pdcaPhaseSchema.optional(),
   status: actionPlanStatusSchema.optional(),
   priority: prioritySchema.optional(),
   overdueOnly: z.enum(['true', 'false']).transform((val) => val === 'true').optional(),
-});
+}));
 
 // GET /api/strategic/action-plans
 export const GET = withDI(async (request: NextRequest) => {
