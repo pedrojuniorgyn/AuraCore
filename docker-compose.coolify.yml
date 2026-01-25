@@ -1,6 +1,23 @@
+# =============================================================================
+# AURACORE - DOCKER COMPOSE PARA COOLIFY (PRODUÇÃO)
+# =============================================================================
+# Serviços:
+#   - sql: Microsoft SQL Server 2022 (CU16)
+#   - chromadb: Vector Store para RAG/Embeddings
+#   - web: Next.js 15 AuraCore Application
+#
+# Versão: 1.1.0
+# Atualizado: 25/01/2026
+# =============================================================================
+
 services:
+  # ===========================================================================
+  # SQL SERVER 2022 (Cumulative Update 16)
+  # ===========================================================================
+  # Imagem versionada para evitar quebras com :latest
+  # Documentação: https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-release-notes-2022
   sql:
-    image: 'mcr.microsoft.com/mssql/server:2022-latest'
+    image: 'mcr.microsoft.com/mssql/server:2022-CU16-ubuntu-22.04'
     environment:
       ACCEPT_EULA: 'Y'
       MSSQL_PID: Developer
@@ -33,6 +50,10 @@ services:
     networks:
       - auracore
 
+  # ===========================================================================
+  # CHROMADB (Vector Store para RAG)
+  # ===========================================================================
+  # Usado para armazenar embeddings do sistema de conhecimento
   chromadb:
     image: 'chromadb/chroma:0.5.23'
     environment:
@@ -53,6 +74,9 @@ services:
     networks:
       - auracore
 
+  # ===========================================================================
+  # WEB (Next.js 15 AuraCore Application)
+  # ===========================================================================
   web:
     build:
       context: .
@@ -63,7 +87,7 @@ services:
       chromadb:
         condition: service_healthy
     environment:
-      # ===== DATABASE =====
+      # ----- Database -----
       DB_HOST: '${DB_HOST:-sql}'
       DB_PORT: '${DB_PORT:-1433}'
       DB_USER: '${DB_USER:-sa}'
@@ -72,9 +96,12 @@ services:
       DB_ENCRYPT: '${DB_ENCRYPT:-false}'
       DB_TRUST_CERT: '${DB_TRUST_CERT:-true}'
       
-      # ===== APP & AUTH =====
+      # ----- Application -----
       NODE_ENV: '${NODE_ENV:-production}'
       APP_URL: '${APP_URL}'
+      NODE_OPTIONS: '${NODE_OPTIONS:---max-old-space-size=4096}'
+      
+      # ----- Authentication -----
       NEXTAUTH_URL: '${NEXTAUTH_URL:-${APP_URL}}'
       AUTH_URL: '${AUTH_URL:-${APP_URL}}'
       AUTH_SECRET: '${AUTH_SECRET}'
@@ -83,23 +110,27 @@ services:
       AUTH_GOOGLE_SECRET: '${AUTH_GOOGLE_SECRET}'
       AUTH_GOOGLE_ALLOWED_DOMAINS: '${AUTH_GOOGLE_ALLOWED_DOMAINS}'
       
-      # ===== CRON =====
+      # ----- CRON -----
       ENABLE_CRON: '${ENABLE_CRON:-false}'
       
-      # ===== EMBEDDING SERVICE (Phase D.1/D.4) =====
+      # ----- AI/Embeddings -----
       GOOGLE_AI_API_KEY: '${GOOGLE_AI_API_KEY}'
       GEMINI_EMBEDDING_MODEL: '${GEMINI_EMBEDDING_MODEL:-text-embedding-004}'
       OPENAI_API_KEY: '${OPENAI_API_KEY}'
       EMBEDDING_FALLBACK_ENABLED: '${EMBEDDING_FALLBACK_ENABLED:-true}'
       
-      # ===== VECTOR STORE - CHROMADB (Phase D.2) =====
+      # ----- Vector Store (ChromaDB) -----
       VECTOR_STORE_TYPE: '${VECTOR_STORE_TYPE:-chroma}'
       CHROMA_HOST: 'chromadb'
       CHROMA_PORT: '8000'
       CHROMA_COLLECTION: '${CHROMA_COLLECTION:-auracore_knowledge}'
       
-      # ===== MCP KNOWLEDGE (Phase D.3) =====
+      # ----- MCP Knowledge -----
       MCP_KNOWLEDGE_ENABLED: '${MCP_KNOWLEDGE_ENABLED:-true}'
+      
+      # ----- Observability -----
+      DEBUG: '${DEBUG:-false}'
+      LOG_LEVEL: '${LOG_LEVEL:-info}'
     expose:
       - '3000'
     healthcheck:
@@ -114,10 +145,16 @@ services:
     networks:
       - auracore
 
+# =============================================================================
+# VOLUMES
+# =============================================================================
 volumes:
   sql_data:
   chromadb_data:
 
+# =============================================================================
+# NETWORKS
+# =============================================================================
 networks:
   auracore:
     driver: bridge
