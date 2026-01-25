@@ -44,7 +44,8 @@ export class IPICalculator {
 
     // Isento
     if (params.isento || !params.aliquota || params.aliquota.isZero) {
-      return Result.ok(TaxAmount.zero(baseCalculo));
+      // ⚠️ S1.3-FIX: TaxAmount.zero() agora retorna Result<TaxAmount, string>
+      return TaxAmount.zero(baseCalculo);
     }
 
     // Alíquota obrigatória para tributado

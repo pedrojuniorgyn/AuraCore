@@ -51,8 +51,14 @@ export class InventoryValidator {
       return Result.fail('Inventory has unresolved divergence');
     }
 
+    // ⚠️ S1.3-FIX: getDifference() agora retorna Result<StockQuantity | undefined, string>
+    const differenceResult = count.getDifference();
+    if (Result.isFail(differenceResult)) {
+      return Result.fail(`Cannot get difference: ${differenceResult.error}`);
+    }
+    
     // Verificar se a diferença é razoável (< 100%)
-    const difference = count.difference;
+    const difference = differenceResult.value;
     if (difference) {
       const systemValue = count.systemQuantity.value;
       if (systemValue !== 0) {
@@ -84,7 +90,17 @@ export class InventoryValidator {
       return Result.fail('Cannot calculate adjustment without divergence');
     }
 
-    const difference = count.difference!;
+    // ⚠️ S1.3-FIX: getDifference() agora retorna Result<StockQuantity | undefined, string>
+    const differenceResult = count.getDifference();
+    if (Result.isFail(differenceResult)) {
+      return Result.fail(`Cannot get difference: ${differenceResult.error}`);
+    }
+    
+    if (!differenceResult.value) {
+      return Result.fail('Cannot calculate adjustment: difference is undefined');
+    }
+    
+    const difference = differenceResult.value;
     
     // Determinar tipo de ajuste (positivo ou negativo)
     let movementTypeResult: Result<MovementType, string>;
@@ -142,7 +158,16 @@ export class InventoryValidator {
     for (const count of counts) {
       // Anomalia 1: Divergência significativa
       if (count.hasDivergence()) {
-        const difference = count.difference!;
+        // ⚠️ S1.3-FIX: getDifference() agora retorna Result<StockQuantity | undefined, string>
+        const differenceResult = count.getDifference();
+        if (Result.isFail(differenceResult)) {
+          // Não bloqueia detecção de outras anomalias, apenas pula esta
+          continue;
+        }
+        
+        const difference = differenceResult.value;
+        if (!difference) continue; // Sem diferença, pular
+        
         const systemValue = count.systemQuantity.value;
         
         if (systemValue !== 0) {

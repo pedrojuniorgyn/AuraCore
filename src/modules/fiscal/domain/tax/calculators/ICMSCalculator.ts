@@ -229,10 +229,16 @@ export class ICMSCalculator {
 
     const creditValue = creditValueResult.value;
 
+    // ⚠️ S1.3-FIX: TaxAmount.zero() agora retorna Result<TaxAmount, string>
+    const zeroValorResult = TaxAmount.zero(baseCalculo);
+    if (Result.isFail(zeroValorResult)) {
+      return Result.fail(`Failed to create zero tax amount: ${zeroValorResult.error}`);
+    }
+
     return Result.ok({
       baseCalculo,
       aliquota: params.creditAliquota,
-      valor: TaxAmount.zero(baseCalculo),
+      valor: zeroValorResult.value,
       creditValue,
       totalICMS: creditValue.value,
     });
@@ -285,18 +291,27 @@ export class ICMSCalculator {
     }
 
     const baseCalculo = baseCalculoResult.value;
-    const zeroAliquota = Aliquota.zero();
-    const zeroValor = TaxAmount.zero(baseCalculo);
+    
+    // ⚠️ S1.3-FIX: Aliquota.zero() e TaxAmount.zero() agora retornam Result
+    const zeroAliquotaResult = Aliquota.zero();
+    if (Result.isFail(zeroAliquotaResult)) {
+      return Result.fail(`Failed to create zero aliquota: ${zeroAliquotaResult.error}`);
+    }
+    
+    const zeroValorResult = TaxAmount.zero(baseCalculo);
+    if (Result.isFail(zeroValorResult)) {
+      return Result.fail(`Failed to create zero tax amount: ${zeroValorResult.error}`);
+    }
+    
     const zeroMoney = Money.create(0, baseValue.currency);
-
     if (Result.isFail(zeroMoney)) {
       return Result.fail(zeroMoney.error);
     }
 
     return Result.ok({
       baseCalculo,
-      aliquota: zeroAliquota,
-      valor: zeroValor,
+      aliquota: zeroAliquotaResult.value,
+      valor: zeroValorResult.value,
       totalICMS: zeroMoney.value,
     });
   }

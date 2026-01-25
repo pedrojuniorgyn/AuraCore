@@ -68,8 +68,10 @@ export class TaxAmount {
 
   /**
    * Alíquota efetiva (considerando redução de base)
+   * 
+   * ⚠️ S1.3-FIX: Convertido de getter para método pois Aliquota.zero() retorna Result
    */
-  get effectiveRate(): Aliquota {
+  getEffectiveRate(): Result<Aliquota, string> {
     const originalValue = this._props.baseCalculo.originalValue.amount;
     
     if (originalValue === 0) {
@@ -80,10 +82,10 @@ export class TaxAmount {
     const aliquotaResult = Aliquota.fromPercentage(effectivePercentage);
     
     if (Result.isFail(aliquotaResult)) {
-      return Aliquota.zero();
+      return Aliquota.zero(); // Fallback já retorna Result
     }
     
-    return aliquotaResult.value;
+    return Result.ok(aliquotaResult.value);
   }
 
   /**

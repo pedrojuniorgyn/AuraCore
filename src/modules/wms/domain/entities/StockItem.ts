@@ -342,9 +342,15 @@ export class StockItem {
 
   /**
    * Verifica se há quantidade disponível
+   * 
+   * ⚠️ S1.3-FIX: Atualizado para usar getAvailableQuantity() que retorna Result
    */
-  hasAvailableQuantity(): boolean {
-    return this.availableQuantity.isPositive();
+  hasAvailableQuantity(): Result<boolean, string> {
+    const availableResult = this.getAvailableQuantity();
+    if (Result.isFail(availableResult)) {
+      return Result.fail(`Cannot check available quantity: ${availableResult.error}`);
+    }
+    return Result.ok(availableResult.value.isPositive());
   }
 
   /**
@@ -380,8 +386,18 @@ export class StockItem {
       return Result.fail('Quantity to remove must be positive');
     }
 
-    // Verificar se há quantidade disponível suficiente
-    if (quantity.isGreaterThan(this.availableQuantity)) {
+    // ⚠️ S1.3-FIX: getAvailableQuantity() e isGreaterThan() agora retornam Result
+    const availableResult = this.getAvailableQuantity();
+    if (Result.isFail(availableResult)) {
+      return Result.fail(`Cannot check available quantity: ${availableResult.error}`);
+    }
+    
+    const isGreaterResult = quantity.isGreaterThan(availableResult.value);
+    if (Result.isFail(isGreaterResult)) {
+      return Result.fail(`Cannot compare quantities: ${isGreaterResult.error}`);
+    }
+    
+    if (isGreaterResult.value) {
       return Result.fail('Insufficient available quantity');
     }
 
@@ -407,8 +423,18 @@ export class StockItem {
       return Result.fail('Quantity to reserve must be positive');
     }
 
-    // Verificar se há quantidade disponível suficiente
-    if (quantity.isGreaterThan(this.availableQuantity)) {
+    // ⚠️ S1.3-FIX: getAvailableQuantity() e isGreaterThan() agora retornam Result
+    const availableResult = this.getAvailableQuantity();
+    if (Result.isFail(availableResult)) {
+      return Result.fail(`Cannot check available quantity: ${availableResult.error}`);
+    }
+    
+    const isGreaterResult = quantity.isGreaterThan(availableResult.value);
+    if (Result.isFail(isGreaterResult)) {
+      return Result.fail(`Cannot compare quantities: ${isGreaterResult.error}`);
+    }
+    
+    if (isGreaterResult.value) {
       return Result.fail('Insufficient available quantity to reserve');
     }
 

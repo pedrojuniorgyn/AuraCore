@@ -138,21 +138,23 @@ export class JournalEntry extends AggregateRoot<string> {
 
   /**
    * Total de débitos
+   * 
+   * ⚠️ S1.3-FIX: Convertido de getter para método que retorna Result (getters não devem fazer throw)
    */
-  get totalDebit(): Money {
+  getTotalDebit(): Result<Money, string> {
     const total = this._props.lines
       .filter(l => l.isDebit)
       .reduce((sum, l) => sum + l.amount.amount, 0);
     
     const result = Money.create(total);
     if (Result.isOk(result)) {
-      return result.value;
+      return Result.ok(result.value);
     }
     
     // Fallback seguro: Money.create(0) sempre sucede para valores finitos >= 0
     const zeroResult = Money.create(0);
     if (Result.isOk(zeroResult)) {
-      return zeroResult.value;
+      return Result.ok(zeroResult.value);
     }
     
     // Este caso nunca deveria acontecer (Money.create(0) com BRL sempre sucede)
@@ -186,9 +188,21 @@ export class JournalEntry extends AggregateRoot<string> {
 
   /**
    * Verifica se está balanceado (Débito = Crédito)
+   * 
+   * ⚠️ S1.3-FIX: Convertido de getter para método para usar getTotalDebit/getTotalCredit
    */
-  get isBalanced(): boolean {
-    return Math.abs(this.totalDebit.amount - this.totalCredit.amount) < 0.01;
+  getIsBalanced(): Result<boolean, string> {
+    const debitResult = this.getTotalDebit();
+    if (Result.isFail(debitResult)) {
+      return Result.fail(`Cannot check balance: ${debitResult.error}`);
+    }
+    
+    const creditResult = this.getTotalCredit();
+    if (Result.isFail(creditResult)) {
+      return Result.fail(`Cannot check balance: ${creditResult.error}`);
+    }
+    
+    return Result.ok(Math.abs(debitResult.value.amount - creditResult.value.amount) < 0.01);
   }
 
   /**
@@ -291,12 +305,22 @@ export class JournalEntry extends AggregateRoot<string> {
     }
 
     // Está balanceado? (INVARIANTE PRINCIPAL)
-    if (!this.isBalanced) {
+    // ⚠️ S1.3-FIX: Usar getIsBalanced() que retorna Result
+    const balancedResult = this.getIsBalanced();
+    if (Result.isFail(balancedResult)) {
+      return Result.fail(`Cannot verify balance: ${balancedResult.error}`);
+    }
+    
+    if (!balancedResult.value) {
+      // Obter valores para mensagem de erro
+      const debitResult = this.getTotalDebit();
+      const creditResult = this.getTotalCredit();
+      
+      const debitAmount = Result.isOk(debitResult) ? debitResult.value.amount : 0;
+      const creditAmount = Result.isOk(creditResult) ? creditResult.value.amount : 0;
+      
       return Result.fail(
-        new UnbalancedEntryError(
-          this.totalDebit.amount,
-          this.totalCredit.amount
-        ).message
+        new UnbalancedEntryError(debitAmount, creditAmount).message
       );
     }
 
@@ -307,6 +331,13 @@ export class JournalEntry extends AggregateRoot<string> {
     this.touch();
     this._props.version++;
 
+    // ⚠️ S1.3-FIX: Obter totais para domain event usando métodos Result
+    const debitForEvent = this.getTotalDebit();
+    const creditForEvent = this.getTotalCredit();
+    
+    const debitAmount = Result.isOk(debitForEvent) ? debitForEvent.value.amount : 0;
+    const creditAmount = Result.isOk(creditForEvent) ? creditForEvent.value.amount : 0;
+
     // Emitir evento
     this.addDomainEvent({
       eventId: crypto.randomUUID(),
@@ -316,8 +347,8 @@ export class JournalEntry extends AggregateRoot<string> {
       aggregateType: 'JournalEntry',
       payload: {
         entryNumber: this.entryNumber,
-        totalDebit: this.totalDebit.amount,
-        totalCredit: this.totalCredit.amount,
+        totalDebit: debitAmount,
+        totalCredit: creditAmount,
         lineCount: this.lineCount,
         postedBy: userId,
       },

@@ -144,7 +144,13 @@ export class StockCalculator {
         return Result.fail('All items must have the same currency');
       }
 
-      totalValue += item.totalCost.amount;
+      // ⚠️ S1.3-FIX: getTotalCost() agora retorna Result<Money, string>
+      const totalCostResult = item.getTotalCost();
+      if (Result.isFail(totalCostResult)) {
+        return Result.fail(`Failed to get total cost for item ${item.id}: ${totalCostResult.error}`);
+      }
+
+      totalValue += totalCostResult.value.amount;
     }
 
     return Money.create(totalValue, currency);

@@ -87,8 +87,10 @@ export class FiscalDocumentItem {
 
   /**
    * Total de impostos do item (sistema atual + novo)
+   * 
+   * ⚠️ S1.3-FIX: Convertido de getter para método pois ibsCbsGroup.getTotalTax() retorna Result
    */
-  get totalTaxes(): number {
+  getTotalTaxes(): Result<number, string> {
     let total = (this._props.icmsValue?.amount ?? 0) +
                 (this._props.ipiValue?.amount ?? 0) +
                 (this._props.pisValue?.amount ?? 0) +
@@ -96,10 +98,14 @@ export class FiscalDocumentItem {
     
     // Adicionar impostos do novo sistema se existirem
     if (this._props.ibsCbsGroup) {
-      total += this._props.ibsCbsGroup.totalTax.amount;
+      const totalTaxResult = this._props.ibsCbsGroup.getTotalTax();
+      if (Result.isFail(totalTaxResult)) {
+        return Result.fail(`Failed to get IBS/CBS total tax: ${totalTaxResult.error}`);
+      }
+      total += totalTaxResult.value.amount;
     }
     
-    return total;
+    return Result.ok(total);
   }
 
   /**

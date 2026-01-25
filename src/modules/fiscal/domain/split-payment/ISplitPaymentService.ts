@@ -1,4 +1,4 @@
-import { Money } from '@/shared/domain';
+import { Money, Result } from '@/shared/domain';
 import {
   TaxBreakdown,
   SplitInstruction,
@@ -110,10 +110,12 @@ export interface ISplitPaymentService {
   /**
    * Gera resumo do split payment
    * 
+   * ⚠️ S1.3-FIX: Atualizado para retornar Result (DOMAIN-SVC-004)
+   * 
    * @param split Instruções de split
    * @returns Resumo consolidado
    */
-  generateSummary(split: SplitInstruction[]): SplitPaymentSummary;
+  generateSummary(split: SplitInstruction[]): Result<SplitPaymentSummary, string>;
 
   /**
    * Obtém destinatários cadastrados para um ente

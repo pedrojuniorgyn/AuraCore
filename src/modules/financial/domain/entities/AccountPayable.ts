@@ -96,18 +96,25 @@ export class AccountPayable extends AggregateRoot<string> {
     return Result.ok(total);
   }
 
-  get remainingAmount(): Money {
+  /**
+   * ⚠️ S1.3-FIX: Convertido de getter para método pois depende de getTotalPaid()
+   */
+  getRemainingAmount(): Result<Money, string> {
     const totalDueResult = this._props.terms.calculateTotalDue();
     if (Result.isFail(totalDueResult)) {
       // Se não consegue calcular total devido, usa valor original
-      return this._props.terms.amount;
+      return Result.ok(this._props.terms.amount);
     }
     
-    const totalDue = totalDueResult.value;
-    const subtractResult = totalDue.subtract(this.totalPaid);
+    const totalPaidResult = this.getTotalPaid();
+    if (Result.isFail(totalPaidResult)) {
+      return Result.fail(`Cannot calculate remaining: ${totalPaidResult.error}`);
+    }
+    
+    const subtractResult = totalDueResult.value.subtract(totalPaidResult.value);
     
     // Se subtract falhar, retorna total devido (não o original)
-    return Result.isOk(subtractResult) ? subtractResult.value : totalDue;
+    return Result.isOk(subtractResult) ? Result.ok(subtractResult.value) : Result.ok(totalDueResult.value);
   }
 
   get isOverdue(): boolean {
@@ -201,8 +208,12 @@ export class AccountPayable extends AggregateRoot<string> {
       return Result.fail('Could not calculate total due');
     }
 
-    // Calcular total confirmado atual
-    const currentConfirmedTotal = this.totalPaid;
+    // ⚠️ S1.3-FIX: Usar getTotalPaid() que retorna Result
+    const currentConfirmedTotalResult = this.getTotalPaid();
+    if (Result.isFail(currentConfirmedTotalResult)) {
+      return Result.fail(`Cannot calculate current paid total: ${currentConfirmedTotalResult.error}`);
+    }
+    const currentConfirmedTotal = currentConfirmedTotalResult.value;
     
     // Calcular projeção se este pagamento for confirmado
     const projectedTotal = currentConfirmedTotal.add(payment.amount);
@@ -222,7 +233,11 @@ export class AccountPayable extends AggregateRoot<string> {
     this._props.payments.push(payment);
 
     // Recalcular status baseado SOMENTE em pagamentos confirmados
-    this._recalculateStatus();
+    // ⚠️ S1.3-FIX: _recalculateStatus() agora retorna Result
+    const recalcResult = this._recalculateStatus();
+    if (Result.isFail(recalcResult)) {
+      return Result.fail(`Failed to recalculate status: ${recalcResult.error}`);
+    }
 
     this._props.version++;
     this.touch();
@@ -246,7 +261,11 @@ export class AccountPayable extends AggregateRoot<string> {
     }
 
     // Recalcular status após confirmação
-    this._recalculateStatus();
+    // ⚠️ S1.3-FIX: _recalculateStatus() agora retorna Result
+    const recalcResult = this._recalculateStatus();
+    if (Result.isFail(recalcResult)) {
+      return Result.fail(`Failed to recalculate status: ${recalcResult.error}`);
+    }
 
     this._props.version++;
     this.touch();
@@ -270,7 +289,11 @@ export class AccountPayable extends AggregateRoot<string> {
     }
 
     // Recalcular status após cancelamento
-    this._recalculateStatus();
+    // ⚠️ S1.3-FIX: _recalculateStatus() agora retorna Result
+    const recalcResult = this._recalculateStatus();
+    if (Result.isFail(recalcResult)) {
+      return Result.fail(`Failed to recalculate status: ${recalcResult.error}`);
+    }
 
     this._props.version++;
     this.touch();
@@ -282,14 +305,19 @@ export class AccountPayable extends AggregateRoot<string> {
    * Recalcula status baseado em pagamentos confirmados
    * 
    * Garante consistência: status sempre reflete totalPaid (apenas CONFIRMED)
+   * 
+   * ⚠️ S1.3-FIX: Convertido para Result<void> para usar getTotalPaid()
    */
-  private _recalculateStatus(): void {
-    if (this._props.status === 'CANCELLED') return;
+  private _recalculateStatus(): Result<void, string> {
+    if (this._props.status === 'CANCELLED') return Result.ok(undefined);
 
     const totalDueResult = this._props.terms.calculateTotalDue();
-    if (Result.isFail(totalDueResult)) return;
+    if (Result.isFail(totalDueResult)) return Result.ok(undefined); // Silent fail, não bloqueia
 
-    const confirmedTotal = this.totalPaid;
+    const confirmedTotalResult = this.getTotalPaid();
+    if (Result.isFail(confirmedTotalResult)) return Result.ok(undefined); // Silent fail
+
+    const confirmedTotal = confirmedTotalResult.value;
 
     if (confirmedTotal.equals(totalDueResult.value) || 
         confirmedTotal.isGreaterThan(totalDueResult.value)) {
@@ -319,6 +347,8 @@ export class AccountPayable extends AggregateRoot<string> {
         this._props.status = 'OPEN';
       }
     }
+    
+    return Result.ok(undefined);
   }
 
   /**
@@ -343,9 +373,15 @@ export class AccountPayable extends AggregateRoot<string> {
     // INVARIANTE: Não pode cancelar com pagamentos confirmados
     const confirmedPayments = this._props.payments.filter(p => p.status === 'CONFIRMED');
     if (confirmedPayments.length > 0) {
+      // ⚠️ S1.3-FIX: Usar getTotalPaid() que retorna Result
+      const totalPaidResult = this.getTotalPaid();
+      const totalPaidFormatted = Result.isOk(totalPaidResult) 
+        ? totalPaidResult.value.format() 
+        : 'unknown';
+      
       return Result.fail(
         `Cannot cancel payable with ${confirmedPayments.length} confirmed payment(s). ` +
-        `Total confirmed: ${this.totalPaid.format()}. Reverse payments first.`
+        `Total confirmed: ${totalPaidFormatted}. Reverse payments first.`
       );
     }
 

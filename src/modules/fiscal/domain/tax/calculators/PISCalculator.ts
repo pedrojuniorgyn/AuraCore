@@ -54,7 +54,8 @@ export class PISCalculator {
     // CSTs isentos ou não tributados
     const cstIsento = ['04', '05', '06', '07', '08', '09'];
     if (cstIsento.includes(params.cst)) {
-      return Result.ok(TaxAmount.zero(baseCalculo));
+      // ⚠️ S1.3-FIX: TaxAmount.zero() agora retorna Result<TaxAmount, string>
+      return TaxAmount.zero(baseCalculo);
     }
 
     // Determinar alíquota
