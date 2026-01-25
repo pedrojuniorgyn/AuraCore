@@ -87,7 +87,9 @@ export class ProcessTaxCreditsUseCase {
 
           const credit = creditResult.value;
 
-          if (!credit.hasCredit()) {
+          // ✅ S1.3-APP: hasCredit() retorna Result<boolean, string>
+          const hasCreditResult = credit.hasCredit();
+          if (Result.isFail(hasCreditResult) || !hasCreditResult.value) {
             console.log(`⚠️  Documento ${docId}: crédito zerado`);
             continue;
           }
