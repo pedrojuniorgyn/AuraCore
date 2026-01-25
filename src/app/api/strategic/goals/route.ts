@@ -28,8 +28,19 @@ const createGoalSchema = baseCreateGoalSchema.extend({
   polarity: z.enum(['UP', 'DOWN']).optional(),
   ownerUserId: z.string().uuid().optional(),
   ownerBranchId: z.number().optional(),
-  startDate: z.string().datetime().or(z.string().transform((s) => new Date(s).toISOString())),
-  dueDate: z.string().datetime().or(z.string().transform((s) => new Date(s).toISOString())),
+  // ✅ S1.X-BUGFIX: Validar data antes de transform (Bug 4)
+  startDate: z.string().datetime().or(
+    z.string().refine(
+      (s) => !isNaN(Date.parse(s)),
+      { message: 'startDate deve ser uma data válida' }
+    ).transform((s) => new Date(s).toISOString())
+  ),
+  dueDate: z.string().datetime().or(
+    z.string().refine(
+      (s) => !isNaN(Date.parse(s)),
+      { message: 'dueDate deve ser uma data válida' }
+    ).transform((s) => new Date(s).toISOString())
+  ),
 });
 
 // GET /api/strategic/goals

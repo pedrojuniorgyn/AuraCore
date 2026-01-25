@@ -21,8 +21,19 @@ const createSchema = z.object({
   what: z.string().min(1, 'O que fazer é obrigatório'),
   why: z.string().min(1, 'Por que fazer é obrigatório'),
   whereLocation: z.string().min(1, 'Onde fazer é obrigatório'),
-  whenStart: z.string().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(z.string().transform((s) => new Date(s).toISOString())),
-  whenEnd: z.string().datetime({ message: 'Data de término inválida (ISO 8601)' }).or(z.string().transform((s) => new Date(s).toISOString())),
+  // ✅ S1.X-BUGFIX: Validar data antes de transform (Bug 4)
+  whenStart: z.string().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(
+    z.string().refine(
+      (s) => !isNaN(Date.parse(s)),
+      { message: 'whenStart deve ser uma data válida' }
+    ).transform((s) => new Date(s).toISOString())
+  ),
+  whenEnd: z.string().datetime({ message: 'Data de término inválida (ISO 8601)' }).or(
+    z.string().refine(
+      (s) => !isNaN(Date.parse(s)),
+      { message: 'whenEnd deve ser uma data válida' }
+    ).transform((s) => new Date(s).toISOString())
+  ),
   who: z.string().min(1, 'Responsável é obrigatório'),
   whoUserId: z.string().uuid('whoUserId deve ser UUID'),
   how: z.string().min(1, 'Como fazer é obrigatório'),
