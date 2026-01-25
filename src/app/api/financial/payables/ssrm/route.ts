@@ -124,11 +124,11 @@ export async function POST(request: NextRequest) {
       .leftJoin(businessPartners, eq(accountsPayable.partnerId, businessPartners.id))
       .leftJoin(financialCategories, eq(accountsPayable.categoryId, financialCategories.id))
       .where(and(...conditions))
-      .orderBy(...orderByClause)
-      .offset(startRow);
+      .orderBy(...orderByClause);
 
-    // Aplicar limit via cast (Drizzle MSSQL typing issue)
-    const rows = await (baseQuery as unknown as { limit: (n: number) => Promise<PayableSSRMRow[]> }).limit(pageSize);
+    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
+    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<PayableSSRMRow[]> } };
+    const rows = await (baseQuery as unknown as QueryWithLimitOffset).limit(pageSize).offset(startRow);
 
     // Count total (sem JOINs para performance)
     const [countResult] = await db

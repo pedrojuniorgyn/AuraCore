@@ -52,20 +52,18 @@ export async function GET(request: NextRequest) {
     const total = Number(count ?? 0);
 
     // ✅ BP-SQL-004: Inline type assertion (LC-303298)
-    // Antes: queryWithLimit(query, limit) → helper com indireção
-    // Agora: (query as QueryWithLimit).limit() → inline explícito
+    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
     const baseQuery = db
       .select()
       .from(products)
       .where(where)
-      .orderBy(desc(products.createdAt))
-      .offset(_start);
+      .orderBy(desc(products.createdAt));
     
     // Type assertion necessária: Drizzle MSSQL beta tem .limit() mas tipagem incompleta
     type ProductRow = typeof products.$inferSelect;
-    type QueryWithLimit = { limit(n: number): Promise<ProductRow[]> };
+    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<ProductRow[]> } };
     
-    const paginatedProducts = await (baseQuery as unknown as QueryWithLimit).limit(limit);
+    const paginatedProducts = await (baseQuery as unknown as QueryWithLimitOffset).limit(limit).offset(_start);
 
     return NextResponse.json(
       {

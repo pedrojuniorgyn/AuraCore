@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.94",
+  "version": "2.0.95",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1645,6 +1645,28 @@
         "src/app/api/strategic/ideas/route.ts"
       ],
       "pattern_created": "DRIZZLE-PAGINATION-ORDER",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-747677",
+      "date": "2026-01-25",
+      "epic": "S3",
+      "error": "HOTFIX v2: Ainda havia 10 arquivos adicionais usando padrão .offset().limit() que causavam erro 500. Arquivos incluem: accounting, fiscal, products, SSRM routes (cte, trips, documents, payables, receivables), romaneio, expense report.",
+      "correction": "Corrigida ordem .offset().limit() para .limit().offset() em todos os 10 arquivos restantes. Busca abrangente com grep confirmou que não há mais ocorrências do padrão incorreto em TODO o codebase.",
+      "files_affected": [
+        "src/modules/accounting/infrastructure/persistence/DrizzleJournalEntryRepository.ts",
+        "src/modules/fiscal/infrastructure/persistence/DrizzleFiscalDocumentRepository.ts",
+        "src/app/api/products/route.ts",
+        "src/app/api/fiscal/cte/ssrm/route.ts",
+        "src/app/api/tms/trips/ssrm/route.ts",
+        "src/app/api/fiscal/documents/ssrm/route.ts",
+        "src/app/api/financial/payables/ssrm/route.ts",
+        "src/app/api/financial/receivables/ssrm/route.ts",
+        "src/modules/tms/infrastructure/persistence/DrizzleRomaneioRepository.ts",
+        "src/modules/financial/infrastructure/persistence/expense/DrizzleExpenseReportRepository.ts"
+      ],
+      "pattern_created": "DRIZZLE-PAGINATION-ORDER-V2",
       "status": "APPROVED",
       "must_not_repeat": true
     }

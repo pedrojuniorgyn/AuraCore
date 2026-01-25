@@ -106,18 +106,18 @@ export class DrizzleExpenseReportRepository implements IExpenseReportRepository 
         .where(and(...conditions))
         .orderBy(desc(expenseReports.createdAt));
 
-      // Aplicar offset se fornecido
-      const queryWithOffset = filters.offset !== undefined
-        ? baseQuery.offset(filters.offset)
-        : baseQuery;
-
-      // Execute query
-      const allRows = await queryWithOffset;
-
-      // Aplicar limit manualmente se fornecido
-      const reportRows = filters.limit !== undefined
-        ? allRows.slice(0, filters.limit)
-        : allRows;
+      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
+      // Aplicar limit e offset se fornecidos
+      let reportRows: typeof expenseReports.$inferSelect[];
+      if (filters.limit !== undefined && filters.offset !== undefined) {
+        type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof expenseReports.$inferSelect[]> } };
+        reportRows = await (baseQuery as unknown as QueryWithLimitOffset).limit(filters.limit).offset(filters.offset);
+      } else if (filters.limit !== undefined) {
+        type QueryWithLimit = { limit(n: number): Promise<typeof expenseReports.$inferSelect[]> };
+        reportRows = await (baseQuery as unknown as QueryWithLimit).limit(filters.limit);
+      } else {
+        reportRows = await baseQuery;
+      }
 
       // Carregar items para cada report
       const reports: ExpenseReport[] = [];

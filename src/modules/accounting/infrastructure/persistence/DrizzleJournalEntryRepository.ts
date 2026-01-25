@@ -155,15 +155,16 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
     const orderFn = sortOrder === 'desc' ? desc : asc;
 
     // Buscar entries com paginação
+    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3 v2)
     const offsetValue = (page - 1) * pageSize;
     const baseQuery = db
       .select()
       .from(journalEntriesTable)
       .where(and(...conditions))
-      .orderBy(orderFn(orderColumn))
-      .offset(offsetValue);
+      .orderBy(orderFn(orderColumn));
     
-    const rows = await (baseQuery as unknown as QueryWithLimit<JournalEntryRow>).limit(pageSize);
+    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<JournalEntryRow[]> } };
+    const rows = await (baseQuery as unknown as QueryWithLimitOffset).limit(pageSize).offset(offsetValue);
 
     // Mapear para domain (sem lines por performance)
     const entries: JournalEntry[] = [];
