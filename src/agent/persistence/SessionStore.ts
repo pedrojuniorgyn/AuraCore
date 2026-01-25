@@ -274,9 +274,13 @@ export class SessionStore {
 
   /**
    * Adiciona mensagem à sessão
+   * 
+   * ⚠️ S1.2: Agora requer organizationId e branchId para multi-tenancy
    */
   async addMessage(
-    params: AddMessageParams
+    params: AddMessageParams,
+    organizationId: number,
+    branchId: number
   ): Promise<Result<ChatMessage, string>> {
     try {
       const id = crypto.randomUUID();
@@ -292,9 +296,12 @@ export class SessionStore {
         createdAt: now,
       };
 
+      // ✅ S1.2: Inserir organizationId e branchId para multi-tenancy
       await db.insert(agentMessagesTable).values({
         id: message.id,
         sessionId: message.sessionId,
+        organizationId, // ← S1.2
+        branchId, // ← S1.2
         role: message.role,
         content: message.content,
         toolsUsed: JSON.stringify(message.toolsUsed ?? []),
@@ -351,10 +358,17 @@ export class SessionStore {
       }
 
       // 2. Buscar mensagens (agora seguro pois validamos o tenant)
+      // ✅ S1.2: Filtrar TAMBÉM por organizationId + branchId para multi-tenancy
       const allMessages = await db
         .select()
         .from(agentMessagesTable)
-        .where(eq(agentMessagesTable.sessionId, sessionId))
+        .where(
+          and(
+            eq(agentMessagesTable.sessionId, sessionId),
+            eq(agentMessagesTable.organizationId, organizationId), // ← S1.2
+            eq(agentMessagesTable.branchId, branchId) // ← S1.2
+          )
+        )
         .orderBy(asc(agentMessagesTable.createdAt));
 
       // Aplicar limit em memória se fornecido
@@ -399,9 +413,16 @@ export class SessionStore {
   ): Promise<Result<void, string>> {
     try {
       // Deletar mensagens primeiro
+      // ✅ S1.2: Filtrar por organizationId + branchId para multi-tenancy
       await db
         .delete(agentMessagesTable)
-        .where(eq(agentMessagesTable.sessionId, sessionId));
+        .where(
+          and(
+            eq(agentMessagesTable.sessionId, sessionId),
+            eq(agentMessagesTable.organizationId, organizationId), // ← S1.2
+            eq(agentMessagesTable.branchId, branchId) // ← S1.2
+          )
+        );
 
       // Deletar sessão
       await db

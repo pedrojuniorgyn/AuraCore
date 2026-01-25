@@ -2,10 +2,16 @@
  * Retention Policies Schema
  * 
  * Schema para armazenar configurações de políticas de retenção de dados.
+ * 
+ * Multi-tenancy: organizationId + branchId (OBRIGATÓRIO - S1.2)
+ * Soft delete: N/A (configuração, não deletável - usar isActive)
+ * 
+ * @see Sprint Blindagem S1.2
  */
 
 import { sql } from 'drizzle-orm';
-import { varchar, int, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
+import { int, varchar, datetime2, index } from 'drizzle-orm/mssql-core';
+import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
 
 /**
  * Tabela de configuração de políticas de retenção
@@ -14,6 +20,10 @@ export const retentionPolicies = mssqlTable(
   'retention_policies',
   {
     id: varchar('id', { length: 36 }).primaryKey(),
+    
+    // Multi-tenancy (OBRIGATÓRIO - S1.2)
+    organizationId: int('organization_id').notNull(),
+    branchId: int('branch_id').notNull(),
     
     // Identificação
     policyName: varchar('policy_name', { length: 100 }).notNull(),
@@ -35,10 +45,13 @@ export const retentionPolicies = mssqlTable(
     createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
     updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   },
-  (table) => ([
-    index('idx_retention_policies_name').on(table.policyName),
-    index('idx_retention_policies_table').on(table.tableName),
-  ])
+  (table) => ({
+    // ✅ SCHEMA-003: Índice composto OBRIGATÓRIO para multi-tenancy (S1.2)
+    tenantIdx: index('idx_retention_tenant').on(table.organizationId, table.branchId),
+    // Índices para queries
+    nameIdx: index('idx_retention_policies_name').on(table.policyName),
+    tableIdx: index('idx_retention_policies_table').on(table.tableName),
+  })
 );
 
 export type RetentionPolicyRow = typeof retentionPolicies.$inferSelect;

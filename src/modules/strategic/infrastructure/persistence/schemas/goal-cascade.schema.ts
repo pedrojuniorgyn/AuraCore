@@ -2,39 +2,54 @@
  * Schema: Goal Cascade
  * Relações N:N de causa-efeito entre metas estratégicas
  * 
+ * Multi-tenancy: organizationId + branchId (OBRIGATÓRIO - S1.2)
+ * Soft delete: N/A (relação lógica, não deletável)
+ * 
  * @module strategic/infrastructure/persistence/schemas
  * @see ADR-0021
+ * @see Sprint Blindagem S1.2
  */
 import { sql } from 'drizzle-orm';
-import { varchar, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { int, varchar, decimal, datetime2, index } from 'drizzle-orm/mssql-core';
+import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
 import { strategicGoalTable } from './strategic-goal.schema';
 
-export const goalCascadeTable = mssqlTable('strategic_goal_cascade', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  
-  // Meta causa (origem)
-  causeGoalId: varchar('cause_goal_id', { length: 36 })
-    .notNull()
-    .references(() => strategicGoalTable.id),
-  
-  // Meta efeito (destino)
-  effectGoalId: varchar('effect_goal_id', { length: 36 })
-    .notNull()
-    .references(() => strategicGoalTable.id),
-  
-  // Peso da contribuição (0-100%)
-  contributionWeight: decimal('contribution_weight', { precision: 5, scale: 2 }).notNull().default('100.00'),
-  
-  // Descrição da relação causa-efeito
-  description: varchar('description', { length: 500 }),
-  
-  createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
-});
-
-// Índices serão criados via migration:
-// CREATE INDEX idx_goal_cascade_cause ON strategic_goal_cascade (cause_goal_id);
-// CREATE INDEX idx_goal_cascade_effect ON strategic_goal_cascade (effect_goal_id);
-// CREATE UNIQUE INDEX idx_goal_cascade_unique ON strategic_goal_cascade (cause_goal_id, effect_goal_id);
+export const goalCascadeTable = mssqlTable(
+  'strategic_goal_cascade',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    
+    // Multi-tenancy (OBRIGATÓRIO - S1.2)
+    organizationId: int('organization_id').notNull(),
+    branchId: int('branch_id').notNull(),
+    
+    // Meta causa (origem)
+    causeGoalId: varchar('cause_goal_id', { length: 36 })
+      .notNull()
+      .references(() => strategicGoalTable.id),
+    
+    // Meta efeito (destino)
+    effectGoalId: varchar('effect_goal_id', { length: 36 })
+      .notNull()
+      .references(() => strategicGoalTable.id),
+    
+    // Peso da contribuição (0-100%)
+    contributionWeight: decimal('contribution_weight', { precision: 5, scale: 2 }).notNull().default('100.00'),
+    
+    // Descrição da relação causa-efeito
+    description: varchar('description', { length: 500 }),
+    
+    // Auditoria
+    createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
+  },
+  (table) => ({
+    // ✅ SCHEMA-003: Índice composto OBRIGATÓRIO para multi-tenancy (S1.2)
+    tenantIdx: index('idx_goal_cascade_tenant').on(table.organizationId, table.branchId),
+    // Índices para hierarquia
+    causeIdx: index('idx_goal_cascade_cause').on(table.causeGoalId),
+    effectIdx: index('idx_goal_cascade_effect').on(table.effectGoalId),
+  })
+);
 
 export type GoalCascadeRow = typeof goalCascadeTable.$inferSelect;
 export type GoalCascadeInsert = typeof goalCascadeTable.$inferInsert;

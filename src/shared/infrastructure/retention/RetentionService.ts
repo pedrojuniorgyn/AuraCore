@@ -152,10 +152,14 @@ export class RetentionService {
 
   /**
    * Mapeia row do banco para interface RetentionPolicy
+   * 
+   * ⚠️ S1.2: Agora inclui organizationId e branchId
    */
   private mapRowToPolicy(row: RetentionPolicyRow): RetentionPolicy {
     return {
       id: row.id,
+      organizationId: row.organizationId, // ← S1.2
+      branchId: row.branchId, // ← S1.2
       policyName: row.policyName,
       tableName: row.tableName,
       retentionDays: row.retentionDays,
@@ -171,17 +175,22 @@ export class RetentionService {
 
   /**
    * Cria ou atualiza uma política de retenção
+   * 
+   * ⚠️ S1.2: Agora requer organizationId e branchId para multi-tenancy
    */
   async upsertPolicy(policy: Omit<RetentionPolicy, 'createdAt' | 'updatedAt' | 'lastRunAt' | 'lastRunRecordsDeleted'>): Promise<void> {
     const now = new Date();
 
     // MSSQL não suporta onConflictDoUpdate, usar MERGE via raw SQL
+    // ✅ S1.2: Incluir organization_id e branch_id
     await db.execute(sql`
       MERGE INTO retention_policies AS target
       USING (SELECT ${policy.id} AS id) AS source
       ON target.id = source.id
       WHEN MATCHED THEN
         UPDATE SET
+          organization_id = ${policy.organizationId},
+          branch_id = ${policy.branchId},
           policy_name = ${policy.policyName},
           table_name = ${policy.tableName},
           retention_days = ${policy.retentionDays},
@@ -190,8 +199,8 @@ export class RetentionService {
           is_active = ${policy.isActive},
           updated_at = ${now}
       WHEN NOT MATCHED THEN
-        INSERT (id, policy_name, table_name, retention_days, date_column, additional_conditions, is_active, created_at, updated_at)
-        VALUES (${policy.id}, ${policy.policyName}, ${policy.tableName}, ${policy.retentionDays}, ${policy.dateColumn}, ${policy.additionalConditions}, ${policy.isActive}, ${now}, ${now});
+        INSERT (id, organization_id, branch_id, policy_name, table_name, retention_days, date_column, additional_conditions, is_active, created_at, updated_at)
+        VALUES (${policy.id}, ${policy.organizationId}, ${policy.branchId}, ${policy.policyName}, ${policy.tableName}, ${policy.retentionDays}, ${policy.dateColumn}, ${policy.additionalConditions}, ${policy.isActive}, ${now}, ${now});
     `);
   }
 

@@ -8,9 +8,15 @@
 
 /**
  * Política de retenção de dados
+ * 
+ * ⚠️ S1.2: Agora inclui organizationId e branchId para multi-tenancy
  */
 export interface RetentionPolicy {
   id: string;
+  /** ID da organização (OBRIGATÓRIO - S1.2 multi-tenancy) */
+  organizationId: number;
+  /** ID da filial (OBRIGATÓRIO - S1.2 multi-tenancy) */
+  branchId: number;
   /** Nome identificador da política */
   policyName: string;
   /** Nome da tabela alvo */
