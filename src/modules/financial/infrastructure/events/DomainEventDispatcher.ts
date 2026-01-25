@@ -75,18 +75,19 @@ export class DomainEventDispatcher implements IEventDispatcher {
           handlers = [new PayableOverdueHandler(logger)];
           break;
         
-        default:
-          // ✅ Log para eventos desconhecidos (debugging)
-          console.warn(`[DomainEventDispatcher] No handler registered for event type: ${eventType}`);
-          handlers = [];
-      }
-      
-      if (handlers.length > 0) {
-        this.handlers.set(eventType, handlers);
-      }
+      default:
+        // ✅ Log para eventos desconhecidos (debugging)
+        console.warn(`[DomainEventDispatcher] No handler registered for event type: ${eventType}`);
+        handlers = [];
     }
     
-    return handlers || [];
+    // ✅ FIX Bug #1 (S1.1-FIX-3): Sempre cacheia, incluindo arrays vazios
+    // Previne re-execução do switch para eventos desconhecidos
+    // Performance: Logger não é resolvido novamente para mesmo event type
+    this.handlers.set(eventType, handlers);
+  }
+  
+  return handlers || [];
   }
 
   /**

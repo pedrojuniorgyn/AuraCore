@@ -34,7 +34,27 @@ export async function GET(request: NextRequest) {
 
     const { ufOrigin, ufDestination, cargoType, isActive } = validation.data;
 
-    const matrix = await db.execute(sql`
+    // ✅ FIX Bug #2 (S1.1-FIX-3): Construir WHERE dinâmico com filtros validados
+    // Filtros: ufOrigin, ufDestination, cargoType, isActive
+    let whereClause = `WHERE organization_id = ${organizationId}`;
+    
+    if (ufOrigin) {
+      whereClause += ` AND uf_origin = '${ufOrigin}'`;
+    }
+    if (ufDestination) {
+      whereClause += ` AND uf_destination = '${ufDestination}'`;
+    }
+    if (cargoType) {
+      whereClause += ` AND cargo_type = '${cargoType}'`;
+    }
+    if (isActive !== undefined && isActive !== null) {
+      whereClause += ` AND is_active = ${isActive ? 1 : 0}`;
+    } else {
+      // ✅ Default: apenas ativos (comportamento anterior)
+      whereClause += ` AND is_active = 1`;
+    }
+
+    const matrix = await db.execute(sql.raw(`
       SELECT 
         id,
         CONCAT(uf_origin, ' → ', uf_destination) as route,
@@ -46,10 +66,9 @@ export async function GET(request: NextRequest) {
         CASE WHEN difal_applicable = 1 THEN 'Sim' ELSE 'Não' END as difal,
         legal_basis as legal
       FROM fiscal_tax_matrix
-      WHERE organization_id = ${organizationId}
-        AND is_active = 1
+      ${whereClause}
       ORDER BY uf_origin, uf_destination
-    `);
+    `));
 
     return NextResponse.json({
       success: true,
