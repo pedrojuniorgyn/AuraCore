@@ -55,9 +55,11 @@ export default function UploadXMLPage() {
         formData.append("xml_files", files[i]);
       }
 
+      // FormData não pode usar fetchAPI (que força JSON)
       const response = await fetch("/api/sefaz/upload-xml", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       const data = await response.json();

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
+import { fetchAPI } from "@/lib/api";
 
 interface FiscalSettings {
   nfeEnvironment: string;
@@ -36,14 +37,10 @@ export default function FiscalConfigPage() {
       
       setLoading(true);
       try {
-        const res = await fetch("/api/fiscal/settings", {
+        const data = await fetchAPI<{ data: FiscalSettings }>("/api/fiscal/settings", {
           headers: { "x-branch-id": currentBranch.id.toString() },
         });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setSettings(data.data);
-        }
+        setSettings(data.data);
       } catch (error) {
         console.error(error);
         toast.error("Erro ao carregar configurações");
@@ -58,22 +55,13 @@ export default function FiscalConfigPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch("/api/fiscal/settings", {
+      await fetchAPI("/api/fiscal/settings", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-branch-id": currentBranch?.id.toString() || "",
-        },
-        body: JSON.stringify(settings),
+        headers: { "x-branch-id": currentBranch?.id.toString() || "" },
+        body: settings,
       });
-
-      if (res.ok) {
-        toast.success("Configurações salvas com sucesso!");
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Erro ao salvar");
-      }
-    } catch (error) {
+      toast.success("Configurações salvas com sucesso!");
+    } catch {
       toast.error("Erro ao salvar configurações");
     } finally {
       setSaving(false);

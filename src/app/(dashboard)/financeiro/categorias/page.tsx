@@ -15,6 +15,7 @@ import { NumberCounter } from "@/components/ui/magic-components";
 import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { AccountingAIWidget } from "@/components/accounting";
+import { fetchAPI, fetchAPISafe } from "@/lib/api";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -79,23 +80,19 @@ export default function CategoriasPage() {
     try {
       setLoading(true);
       setLoadError(null);
-      const response = await fetch("/api/financial/categories");
-      const json = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const msg =
-          (json?.details
-            ? `${json?.error || json?.message || "Falha"}: ${json.details}`
-            : json?.message || json?.error) ||
-          `Falha ao carregar categorias (HTTP ${response.status})`;
+      
+      const { data: json, error } = await fetchAPISafe<{ data?: FinancialCategory[] } | FinancialCategory[]>("/api/financial/categories");
+      
+      if (error) {
+        const msg = error.message || "Falha ao carregar categorias";
         setLoadError(msg);
-        console.error("Erro ao buscar categorias:", msg, json);
+        console.error("Erro ao buscar categorias:", msg);
         setCategories([]);
         setStats({ total: 0, income: 0, expense: 0, active: 0 });
         return;
       }
 
-      const data = json?.data ?? json;
+      const data = (json && 'data' in json) ? json.data : json;
       const catArray = Array.isArray(data) ? data : [];
       setCategories(catArray);
 
@@ -122,20 +119,14 @@ export default function CategoriasPage() {
         : "/api/financial/categories";
       const method = editingCategory ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      await fetchAPI(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
       });
 
-      if (response.ok) {
-        alert(editingCategory ? "✅ Categoria atualizada!" : "✅ Categoria criada!");
-        closeModal();
-        fetchCategories();
-      } else {
-        const error = await response.json().catch(() => ({}));
-        alert("❌ " + (error.message || error.error || "Erro ao salvar categoria"));
-      }
+      alert(editingCategory ? "✅ Categoria atualizada!" : "✅ Categoria criada!");
+      closeModal();
+      fetchCategories();
     } catch (error) {
       console.error("Erro:", error);
       alert("❌ Erro ao salvar categoria");
@@ -157,17 +148,12 @@ export default function CategoriasPage() {
     if (!confirm("Tem certeza que deseja excluir esta categoria?")) return;
 
     try {
-      const response = await fetch(`/api/financial/categories/${id}`, {
+      await fetchAPI(`/api/financial/categories/${id}`, {
         method: "DELETE",
       });
 
-      if (response.ok) {
-        alert("✅ Categoria excluída!");
-        fetchCategories();
-      } else {
-        const error = await response.json().catch(() => ({}));
-        alert("❌ " + (error.message || error.error || "Erro ao excluir categoria"));
-      }
+      alert("✅ Categoria excluída!");
+      fetchCategories();
     } catch (error) {
       console.error("Erro:", error);
       alert("❌ Erro ao excluir categoria");

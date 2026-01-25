@@ -22,6 +22,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
 import { Building2, CheckCircle, XCircle, MapPin } from "lucide-react";
 import { AdminAIWidget } from "@/components/admin";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -46,14 +47,7 @@ export default function BranchesPage() {
   const fetchBranches = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/branches?_start=0&_end=1000");
-
-      if (!response.ok) {
-        toast.error("Erro ao carregar filiais");
-        return;
-      }
-
-      const result = await response.json();
+      const result = await fetchAPI<{ data: Branch[] }>("/api/branches?_start=0&_end=1000");
       setRowData(result.data || []);
     } catch (error) {
       console.error("Erro ao buscar filiais:", error);

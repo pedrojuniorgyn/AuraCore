@@ -7,6 +7,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { FileText, Save, Upload } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 export default function NovoDocumentoFiscalPage() {
   const router = useRouter();
@@ -25,10 +26,9 @@ export default function NovoDocumentoFiscalPage() {
     e.preventDefault();
     
     try {
-      const response = await fetch("/api/fiscal/documents", {
+      await fetchAPI("/api/fiscal/documents", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           documentType,
           documentNumber,
           documentSeries,
@@ -39,16 +39,11 @@ export default function NovoDocumentoFiscalPage() {
           netAmount: grossAmount,
           notes,
           operationType: documentType === "RECEIPT" ? "ENTRADA" : "SAIDA",
-        }),
+        },
       });
       
-      if (response.ok) {
-        alert("Documento criado com sucesso!");
-        router.push("/fiscal/documentos");
-      } else {
-        const error = await response.json();
-        alert(`Erro: ${error.error}`);
-      }
+      alert("Documento criado com sucesso!");
+      router.push("/fiscal/documentos");
     } catch (error) {
       console.error("Erro ao criar documento:", error);
       alert("Erro ao criar documento");

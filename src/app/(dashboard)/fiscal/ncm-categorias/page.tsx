@@ -12,6 +12,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { Plus, Download, RefreshCw, Save, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import "@/styles/aurora-premium-grid.css";
@@ -54,11 +55,10 @@ export default function NCMCategoriasPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir esta categoria?")) return;
     try {
-      const res = await fetch(`/api/fiscal/ncm-categories/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/fiscal/ncm-categories/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       fetchData();
-    } catch (error) { toast.error("Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
 
   useEffect(() => {
@@ -69,11 +69,8 @@ export default function NCMCategoriasPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/fiscal/ncm-categories");
-      if (response.ok) {
-        const data = await response.json();
-        setRowData(data);
-      }
+      const data = await fetchAPI<NCMCategory[]>("/api/fiscal/ncm-categories");
+      setRowData(data);
     } catch (error) {
       console.error("Erro ao buscar NCM:", error);
     } finally {
@@ -105,17 +102,12 @@ export default function NCMCategoriasPage() {
     if (!confirm("Importar 40 NCMs padrão do transporte?")) return;
 
     try {
-      const response = await fetch("/api/admin/seed-ncm-categories", {
+      await fetchAPI("/api/admin/seed-ncm-categories", {
         method: "POST",
       });
 
-      if (response.ok) {
-        alert("NCMs importados com sucesso!");
-        fetchData();
-      } else {
-        const error = await response.json();
-        alert(`Erro: ${error.error}`);
-      }
+      alert("NCMs importados com sucesso!");
+      fetchData();
     } catch (error) {
       console.error("Erro ao importar NCMs:", error);
       alert("Erro ao importar NCMs");

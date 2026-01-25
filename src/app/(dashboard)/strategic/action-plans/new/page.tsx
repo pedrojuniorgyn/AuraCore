@@ -12,6 +12,8 @@ import { motion } from 'framer-motion';
 import { FileText, ArrowLeft, Loader2 } from 'lucide-react';
 import { FiveW2HWizard, type FiveW2HFormData } from '@/components/strategic/FiveW2HWizard';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { fetchAPI } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface OptionsData {
   objectives: Array<{ id: string; description: string }>;
@@ -28,11 +30,8 @@ export default function NewActionPlanPage() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const response = await fetch('/api/strategic/action-plans/options');
-        if (response.ok) {
-          const data = await response.json();
-          setOptions(data);
-        }
+        const data = await fetchAPI<OptionsData>('/api/strategic/action-plans/options');
+        setOptions(data);
       } catch (error) {
         console.error('Erro ao carregar opções:', error);
       } finally {
@@ -46,32 +45,31 @@ export default function NewActionPlanPage() {
     const whoId = formData.who[0];
     const whoUser = options?.users.find(u => u.id === whoId);
     
-    const response = await fetch('/api/strategic/action-plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        what: formData.what,
-        why: formData.why,
-        whereLocation: formData.where, // API espera whereLocation, form tem where
-        whenStart: formData.startDate,
-        whenEnd: formData.endDate,
-        who: whoUser ? whoUser.name : 'Responsável',
-        whoUserId: whoId,
-        how: formData.how,
-        howMuchAmount: formData.howMuch,
-        howMuchCurrency: 'BRL', // Default currency
-        priority: formData.priority,
-        goalId: formData.linkedObjective, // API espera goalId, form tem linkedObjective
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erro ao criar plano');
+    try {
+      const result = await fetchAPI<{ id: string }>('/api/strategic/action-plans', {
+        method: 'POST',
+        body: {
+          what: formData.what,
+          why: formData.why,
+          whereLocation: formData.where, // API espera whereLocation, form tem where
+          whenStart: formData.startDate,
+          whenEnd: formData.endDate,
+          who: whoUser ? whoUser.name : 'Responsável',
+          whoUserId: whoId,
+          how: formData.how,
+          howMuchAmount: formData.howMuch,
+          howMuchCurrency: 'BRL', // Default currency
+          priority: formData.priority,
+          goalId: formData.linkedObjective, // API espera goalId, form tem linkedObjective
+        },
+      });
+      
+      toast.success('Plano de ação criado com sucesso!');
+      router.push(`/strategic/action-plans/${result.id}`);
+    } catch (error) {
+      console.error('Erro ao criar plano de ação:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar plano de ação');
     }
-    
-    const result = await response.json();
-    router.push(`/strategic/action-plans/${result.id}`);
   };
 
   const handleCancel = () => {

@@ -28,6 +28,7 @@ import {
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
+import { fetchAPI } from "@/lib/api";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
 import { DollarSign, FileCheck } from "lucide-react";
@@ -86,19 +87,17 @@ export default function RemittancesPage() {
   const handleDelete = useCallback(async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir esta remessa?")) return;
     try {
-      const res = await fetch(`/api/financial/remittances/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/financial/remittances/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["remittances"] });
-    } catch (error) { toast.error("Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
   }, [queryClient]);
 
   // === QUERIES ===
   const { data: payables = [], isLoading: loadingPayables } = useQuery({
     queryKey: ["payables", "open"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/payables?status=OPEN");
-      const json = await res.json();
+      const json = await fetchAPI<{ data: IPayable[] }>("/api/financial/payables?status=OPEN");
       return json.data || [];
     },
   });
@@ -106,8 +105,7 @@ export default function RemittancesPage() {
   const { data: bankAccounts = [] } = useQuery({
     queryKey: ["bank-accounts"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/bank-accounts");
-      const json = await res.json();
+      const json = await fetchAPI<{ data: IBankAccount[] }>("/api/financial/bank-accounts");
       return json.data || [];
     },
   });
@@ -115,8 +113,7 @@ export default function RemittancesPage() {
   const { data: remittances = [], isLoading: loadingHistory } = useQuery({
     queryKey: ["remittances"],
     queryFn: async () => {
-      const res = await fetch("/api/financial/remittances");
-      const json = await res.json();
+      const json = await fetchAPI<{ data: IRemittance[] }>("/api/financial/remittances");
       return json.data || [];
     },
   });
@@ -124,13 +121,10 @@ export default function RemittancesPage() {
   // === MUTATIONS ===
   const generateMutation = useMutation({
     mutationFn: async (data: { bankAccountId: number; payableIds: number[] }) => {
-      const res = await fetch("/api/financial/remittances/generate", {
+      return fetchAPI("/api/financial/remittances/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: data,
       });
-      if (!res.ok) throw new Error("Falha ao gerar remessa");
-      return res.json();
     },
     onSuccess: () => {
       toast.success("Remessa gerada com sucesso!");

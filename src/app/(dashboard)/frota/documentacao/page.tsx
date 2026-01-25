@@ -7,31 +7,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, CellStyle } from "ag-grid-community";
 import { FleetAIWidget } from "@/components/fleet";
+import { fetchAPI } from "@/lib/api";
 
 export default function FleetDocsPage() {
   const router = useRouter();
-  const [vehicleDocs, setVehicleDocs] = useState([]);
-  const [driverDocs, setDriverDocs] = useState([]);
+  const [vehicleDocs, setVehicleDocs] = useState<unknown[]>([]);
+  const [driverDocs, setDriverDocs] = useState<unknown[]>([]);
 
   const handleEdit = (data: { id: number }) => {
     router.push(`/frota/documentacao/editar/${data.id}`);
   };
 
+  const [loading, setLoading] = useState(false);
+
+  const loadDocs = async () => {
+    setLoading(true);
+    try {
+      const [vehicleData, driverData] = await Promise.all([
+        fetchAPI<{ data: unknown[] }>("/api/fleet/documents?type=vehicle"),
+        fetchAPI<{ data: unknown[] }>("/api/fleet/documents?type=driver"),
+      ]);
+      setVehicleDocs(vehicleData.data || []);
+      setDriverDocs(driverData.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar documentação:", error);
+      toast.error("Erro ao carregar documentos. Tente novamente.");
+      // Inicializar com arrays vazios para não quebrar UI
+      setVehicleDocs([]);
+      setDriverDocs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este documento?")) return;
     try {
-      const res = await fetch(`/api/fleet/documents/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/fleet/documents/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
-      // Recarregar dados
-      fetch("/api/fleet/documents?type=vehicle").then(r => r.json()).then(d => setVehicleDocs(d.data || []));
-      fetch("/api/fleet/documents?type=driver").then(r => r.json()).then(d => setDriverDocs(d.data || []));
+      loadDocs();
     } catch { toast.error("Erro ao excluir"); }
   };
 
   useEffect(() => {
-    fetch("/api/fleet/documents?type=vehicle").then(r => r.json()).then(d => setVehicleDocs(d.data || []));
-    fetch("/api/fleet/documents?type=driver").then(r => r.json()).then(d => setDriverDocs(d.data || []));
+    loadDocs();
   }, []);
 
   const vehicleColumns: ColDef[] = [

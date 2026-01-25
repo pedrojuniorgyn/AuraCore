@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Plus } from "lucide-react";
 import { CommercialAIWidget } from "@/components/commercial";
+import { fetchAPI } from "@/lib/api";
 
 interface Proposal {
   id: number;
@@ -20,8 +21,7 @@ export default function PropostasPage() {
 
   const loadProposals = async () => {
     try {
-      const response = await fetch("/api/comercial/proposals");
-      const data = await response.json();
+      const data = await fetchAPI<{ data: Proposal[] }>("/api/comercial/proposals");
       setProposals(data.data || []);
     } catch (error) {
       console.error("Erro:", error);

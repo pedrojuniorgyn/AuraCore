@@ -25,6 +25,7 @@ import {
   Percent,
 } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 interface ExpenseItem {
   code: string;
@@ -80,10 +81,7 @@ export default function DREPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `/api/financial/reports/dre?type=${reportType}&startDate=${startDate}&endDate=${endDate}`
-      );
-      const result = await response.json();
+      const result = await fetchAPI<DREData & { success: boolean; error?: string }>(`/api/financial/reports/dre?type=${reportType}&startDate=${startDate}&endDate=${endDate}`);
 
       if (result.success) {
         setDreData(result);

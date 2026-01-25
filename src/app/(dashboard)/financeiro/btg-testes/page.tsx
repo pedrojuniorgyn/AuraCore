@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { FileText, QrCode, Loader2 } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 interface BTGBoletoResult {
   boleto: {
@@ -34,20 +35,17 @@ export default function BTGTestesPage() {
       setLoading(true);
       setResultado(null);
 
-      const response = await fetch("/api/btg/boletos", {
+      const data = await fetchAPI<BTGBoletoResult & { success: boolean; error?: string }>("/api/btg/boletos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           payerName: "João da Silva Teste",
           payerDocument: "12345678901",
           payerEmail: "joao.teste@example.com",
           valor: 250.00,
           dataVencimento: "2025-12-20",
           descricao: "Teste de boleto BTG - Pedido #001",
-        }),
+        },
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setResultado(data);
@@ -79,18 +77,15 @@ export default function BTGTestesPage() {
       setLoading(true);
       setResultado(null);
 
-      const response = await fetch("/api/btg/pix/charges", {
+      const data = await fetchAPI<BTGPixResult & { success: boolean; error?: string }>("/api/btg/pix/charges", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           valor: 150.00,
           chavePix: "12345678000190", // Substitua pelo CNPJ real
           descricao: "Teste Pix BTG - Pedido #002",
           expiracao: 3600,
-        }),
+        },
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setResultado(data);

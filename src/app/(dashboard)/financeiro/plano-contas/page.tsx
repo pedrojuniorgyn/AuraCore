@@ -34,6 +34,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Edit, Trash2, BookOpen, TrendingUp, TrendingDown, Landmark } from "lucide-react";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 interface ChartAccount {
   id: number;
@@ -180,8 +181,7 @@ export default function ChartOfAccountsPage() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const response = await fetch("/api/financial/chart-accounts");
-      const result = await response.json();
+      const result = await fetchAPI<{ success: boolean; data: { flat: ChartAccount[] } }>("/api/financial/chart-accounts");
       if (result.success) {
         setAccounts(result.data.flat);
       }
@@ -230,18 +230,11 @@ export default function ChartOfAccountsPage() {
     if (!confirm("Deseja realmente excluir esta conta?")) return;
 
     try {
-      const response = await fetch(`/api/financial/chart-accounts/${id}`, {
+      await fetchAPI(`/api/financial/chart-accounts/${id}`, {
         method: "DELETE",
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Conta excluída!");
-        fetchAccounts();
-      } else {
-        toast.error(result.error || "Erro ao excluir");
-      }
+      toast.success("Conta excluída!");
+      fetchAccounts();
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error("Erro ao excluir conta");
@@ -257,24 +250,17 @@ export default function ChartOfAccountsPage() {
         : "/api/financial/chart-accounts";
       const method = isEditing ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      await fetchAPI(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           ...formData,
           category: formData.category || null,
-        }),
+        },
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(isEditing ? "Conta atualizada!" : "Conta criada!");
-        setIsDialogOpen(false);
-        fetchAccounts();
-      } else {
-        toast.error(result.error || "Erro ao salvar");
-      }
+      toast.success(isEditing ? "Conta atualizada!" : "Conta criada!");
+      setIsDialogOpen(false);
+      fetchAccounts();
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar conta");

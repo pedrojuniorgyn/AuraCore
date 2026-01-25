@@ -11,6 +11,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { Building2, Wrench, Fuel, Droplets, Briefcase, Users, Plus, Download, Settings, FileDown } from "lucide-react";
 import { AdminAIWidget } from "@/components/admin";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -119,10 +120,12 @@ export default function BackofficePage() {
 
   const handleExport = async () => {
     try {
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'backoffice', format: 'csv' })
+        body: JSON.stringify({ type: 'backoffice', format: 'csv' }),
+        credentials: 'include',
       });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

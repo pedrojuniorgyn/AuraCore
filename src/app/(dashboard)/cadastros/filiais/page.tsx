@@ -13,6 +13,7 @@ import { Plus, Building2, MapPin, Phone, Mail, Edit, Trash2 } from "lucide-react
 import { useRouter } from "next/navigation";
 import { auraTheme } from "@/lib/ag-grid-theme";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 interface Branch {
   id: number;
@@ -41,11 +42,7 @@ export default function BranchesPage() {
     try {
       setLoading(true);
       // API já filtra por tenant via sessão (não precisa organizationId na query)
-      const response = await fetch("/api/branches", { credentials: "include" });
-      
-      if (!response.ok) throw new Error("Erro ao carregar filiais");
-      
-      const result = await response.json();
+      const result = await fetchAPI<{ data: Branch[] }>("/api/branches");
       setBranches(result?.data || []);
     } catch (error) {
       console.error("Erro ao buscar filiais:", error);

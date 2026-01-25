@@ -14,6 +14,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, FileText } from "lucide-react";
 import { OperationalAIWidget } from "@/components/operational";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -69,11 +70,8 @@ export default function SinistrosPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/claims');
-      if (response.ok) {
-        const data = await response.json();
-        setClaims(data.data || []);
-      }
+      const data = await fetchAPI<{ data: Claim[] }>('/api/claims');
+      setClaims(data.data || []);
     } catch (error) {
       console.error('Erro ao carregar sinistros:', error);
     } finally {
@@ -84,15 +82,11 @@ export default function SinistrosPage() {
   const handleNewClaim = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/claims', {
+      const data = await fetchAPI<{ success: boolean; error?: string; claimNumber: string }>('/api/claims', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData
-        })
+        body: formData,
       });
 
-      const data = await response.json();
       if (data.success) {
         alert(`✅ Sinistro registrado!\nNúmero: ${data.claimNumber}`);
         setShowNewModal(false);
@@ -101,7 +95,7 @@ export default function SinistrosPage() {
       } else {
         alert('❌ Erro: ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao registrar sinistro');
     } finally {
       setLoading(false);
@@ -111,13 +105,11 @@ export default function SinistrosPage() {
   const handleDecide = async (decision: string, amount: number) => {
     if (!selectedClaim) return;
     try {
-      const response = await fetch(`/api/claims/${selectedClaim.id}/decide`, {
+      const data = await fetchAPI<{ success: boolean; error?: string; message: string }>(`/api/claims/${selectedClaim.id}/decide`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, amount, notes: 'Decisão via sistema' })
+        body: { decision, amount, notes: 'Decisão via sistema' }
       });
 
-      const data = await response.json();
       if (data.success) {
         alert(`✅ ${data.message}`);
         setShowDecideModal(false);
@@ -126,7 +118,7 @@ export default function SinistrosPage() {
       } else {
         alert('❌ Erro: ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao decidir');
     }
   };
@@ -137,10 +129,12 @@ export default function SinistrosPage() {
 
   const handleExport = async () => {
     try {
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'claims', format: 'csv' })
+        body: JSON.stringify({ type: 'claims', format: 'csv' }),
+        credentials: 'include',
       });
 
       const blob = await response.blob();
@@ -150,7 +144,7 @@ export default function SinistrosPage() {
       a.download = `sinistros_${Date.now()}.csv`;
       a.click();
       alert('✅ Relatório exportado com sucesso!');
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao exportar');
     }
   };

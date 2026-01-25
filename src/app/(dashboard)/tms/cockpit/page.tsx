@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Clock, Truck } from "lucide-react";
 import { TmsAIWidget } from "@/components/tms";
+import { fetchAPI } from "@/lib/api";
 
 interface DashboardKPIs {
   tripsInProgress: number;
@@ -25,8 +26,7 @@ export default function CockpitPage() {
   useEffect(() => {
     const loadKPIs = async () => {
       try {
-        const response = await fetch("/api/tms/cockpit/kpis");
-        const data = await response.json();
+        const data = await fetchAPI<{ data: DashboardKPIs }>("/api/tms/cockpit/kpis");
         setKpis(prev => data.data || prev);
       } catch (error) {
         console.error("Erro ao carregar KPIs:", error);

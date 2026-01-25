@@ -8,6 +8,7 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FleetAIWidget } from "@/components/fleet";
+import { fetchAPI } from "@/lib/api";
 
 // Evita pré-render em build (dependências usam hooks de URL / CSR bailout)
 export const dynamic = "force-dynamic";
@@ -28,8 +29,7 @@ export default function PneusPage() {
 
   const loadTires = async () => {
     try {
-      const response = await fetch("/api/fleet/tires");
-      const data = await response.json();
+      const data = await fetchAPI<{ data: Tire[] }>("/api/fleet/tires");
       setTires(data.data || []);
     } catch (error) {
       console.error("Erro:", error);
@@ -51,11 +51,10 @@ export default function PneusPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este pneu?")) return;
     try {
-      const res = await fetch(`/api/fleet/tires/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/fleet/tires/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       loadTires();
-    } catch (error) { toast.error("Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
 
   const calculateCPK = (tire: Tire) => {

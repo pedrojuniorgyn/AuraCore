@@ -17,6 +17,7 @@ import { SettingsSection } from '@/components/strategic/SettingsSection';
 import { SettingsItem } from '@/components/strategic/SettingsItem';
 import { SettingsRadioGroup } from '@/components/strategic/SettingsRadioGroup';
 import { ThresholdConfig } from '@/components/strategic/ThresholdConfig';
+import { fetchAPI } from '@/lib/api';
 
 interface StrategicSettings {
   appearance: {
@@ -79,13 +80,10 @@ export default function SettingsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/strategic/settings');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.settings) {
-          setSettings(data.settings);
-          setOriginalSettings(data.settings);
-        }
+      const data = await fetchAPI<{ settings: StrategicSettings }>('/api/strategic/settings');
+      if (data.settings) {
+        setSettings(data.settings);
+        setOriginalSettings(data.settings);
       }
     } catch (err) {
       console.error('Erro ao carregar configurações:', err);
@@ -120,18 +118,13 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/strategic/settings', {
+      await fetchAPI('/api/strategic/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
+        body: settings,
       });
       
-      if (response.ok) {
-        setOriginalSettings(settings);
-        toast.success('Configurações salvas com sucesso!');
-      } else {
-        throw new Error('Erro ao salvar');
-      }
+      setOriginalSettings(settings);
+      toast.success('Configurações salvas com sucesso!');
     } catch {
       toast.error('Erro ao salvar configurações');
     } finally {

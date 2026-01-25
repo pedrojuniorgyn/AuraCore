@@ -16,6 +16,7 @@ import { currencyFormatter, dateFormatter, StatusCellRenderer } from "@/componen
 import { Play, FileSpreadsheet, DollarSign, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { FiscalAIWidget } from "@/components/fiscal";
+import { fetchAPI } from "@/lib/api";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -85,13 +86,12 @@ export default function CreditosFiscaisPage() {
   const processPending = async () => {
     setProcessing(true);
     try {
-      const response = await fetch('/api/tax/credits/process', { method: 'POST' });
-      const result = await response.json();
+      const result = await fetchAPI<{ success: boolean; data: { documentsProcessed: number } }>('/api/tax/credits/process', { method: 'POST' });
       if (result.success) {
         alert(`✅ ${result.data.documentsProcessed} documentos processados!`);
         fetchCredits();
       }
-    } catch (error) {
+    } catch {
       alert("Erro ao processar créditos");
     } finally {
       setProcessing(false);

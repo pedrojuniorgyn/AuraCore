@@ -21,10 +21,12 @@ export default function CentralSpedPage() {
       
       const body = type === 'ecd' ? { year: year || 2024 } : { month: month || 12, year: year || 2024 };
 
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        credentials: 'include',
       });
 
       if (response.ok) {

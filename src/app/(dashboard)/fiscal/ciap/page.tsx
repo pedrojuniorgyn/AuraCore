@@ -14,6 +14,7 @@ import { Truck, DollarSign, CheckCircle, Clock, BarChart3, Plus, Calculator, Fil
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FiscalAIWidget } from "@/components/fiscal";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -57,11 +58,10 @@ export default function CIAPPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este ativo?")) return;
     try {
-      const res = await fetch(`/api/ciap/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/ciap/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       loadData();
-    } catch (error) { toast.error("Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
 
   useEffect(() => {
@@ -111,15 +111,13 @@ export default function CIAPPage() {
   const handleAppropriation = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/ciap/appropriate', {
+      const data = await fetchAPI<{ success: boolean; error?: string; details: { appropriationFactor: number; totalAppropriated: number; assetsProcessed: number } }>('/api/ciap/appropriate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           referenceMonth: new Date().toISOString()
-        })
+        }
       });
 
-      const data = await response.json();
       if (data.success) {
         alert(`✅ Apropriação CIAP executada com sucesso!\n\nDetalhes:\n• Fator: ${data.details.appropriationFactor}\n• Total Apropriado: R$ ${data.details.totalAppropriated.toFixed(2)}\n• Ativos Processados: ${data.details.assetsProcessed}`);
         await loadData();

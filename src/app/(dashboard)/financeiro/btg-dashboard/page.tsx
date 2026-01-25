@@ -8,6 +8,7 @@ import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animat
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { fetchAPI } from "@/lib/api";
 
 interface DashboardStats {
   boletosAtivos: number;
@@ -38,8 +39,7 @@ export default function BTGDashboardPage() {
     const loadDashboard = async () => {
     try {
       // Testar conexão BTG
-      const healthRes = await fetch("/api/btg/health");
-      const healthData = await healthRes.json();
+      const healthData = await fetchAPI<BTGHealth>("/api/btg/health");
       setHealth(healthData);
 
       // Carregar estatísticas (mock por enquanto)

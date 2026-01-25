@@ -39,6 +39,7 @@ import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
 import { HoverCard } from "@/components/ui/glassmorphism-card";
+import { fetchAPI } from "@/lib/api";
 
 // === TYPES ===
 interface IDdaItem {

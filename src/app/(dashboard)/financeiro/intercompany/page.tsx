@@ -12,6 +12,7 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { AccountingAIWidget } from "@/components/accounting";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { Building2, DollarSign, TrendingUp, CheckCircle, Clock, Plus, Eye, RotateCcw } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -94,23 +95,21 @@ export default function IntercompanyPage() {
   const handleExecuteAllocation = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/intercompany/allocations', {
+      const data = await fetchAPI<{ success: boolean; error?: string; totalAmount?: number; targetsProcessed?: number }>('/api/intercompany/allocations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           period: new Date().toISOString().slice(0, 7).replace('-', '/'),
           totalAmount: 50000,
           method: 'REVENUE'
-        })
+        }
       });
-      const data = await response.json();
       if (data.success) {
         alert(`✅ Rateio executado!\n\nValor total: R$ ${data.totalAmount?.toFixed(2)}\nFiliais processadas: ${data.targetsProcessed || 0}`);
         await loadData();
       } else {
         alert('❌ ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao executar rateio');
     } finally {
       setLoading(false);
@@ -119,10 +118,12 @@ export default function IntercompanyPage() {
 
   const handleExport = async () => {
     try {
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'intercompany', format: 'csv' })
+        body: JSON.stringify({ type: 'intercompany', format: 'csv' }),
+        credentials: 'include',
       });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

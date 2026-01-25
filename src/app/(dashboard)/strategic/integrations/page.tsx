@@ -8,6 +8,7 @@ import { IntegrationSetup, type IntegrationConfig } from '@/components/strategic
 import { IntegrationLogs, type LogEntry } from '@/components/strategic/IntegrationLogs';
 import { toast } from 'sonner';
 import { IntegrationsAIWidget } from '@/components/integrations';
+import { fetchAPI } from '@/lib/api';
 
 interface IntegrationWithLogs extends Integration {
   logs?: LogEntry[];
@@ -38,11 +39,8 @@ export default function IntegrationsPage() {
   // Fetch integrations with cleanup
   const fetchIntegrations = useCallback(async () => {
     try {
-      const response = await fetch('/api/strategic/integrations');
-      if (response.ok) {
-        const data = await response.json();
-        setIntegrations(data.integrations || []);
-      }
+      const data = await fetchAPI<{ integrations: IntegrationWithLogs[] }>('/api/strategic/integrations');
+      setIntegrations(data.integrations || []);
     } catch (error) {
       console.error('Failed to fetch integrations:', error);
       toast.error('Erro ao carregar integrações');
@@ -57,11 +55,10 @@ export default function IntegrationsPage() {
 
     const loadData = async () => {
       try {
-        const response = await fetch('/api/strategic/integrations', {
+        const data = await fetchAPI<{ integrations: IntegrationWithLogs[] }>('/api/strategic/integrations', {
           signal: controller.signal,
         });
-        if (response.ok && isMounted) {
-          const data = await response.json();
+        if (isMounted) {
           setIntegrations(data.integrations || []);
         }
       } catch (error) {
@@ -92,30 +89,27 @@ export default function IntegrationsPage() {
       ? `/api/strategic/integrations/${editingIntegration.id}` 
       : '/api/strategic/integrations';
     
-    const response = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
-    });
+    try {
+      await fetchAPI(url, {
+        method,
+        body: config,
+      });
 
-    if (response.ok) {
       await fetchIntegrations();
       toast.success(editingIntegration ? 'Integração atualizada!' : 'Integração criada!');
       setEditingIntegration(null);
       setSetupType(null);
-    } else {
+    } catch {
       toast.error('Erro ao salvar integração');
     }
   };
 
   const handleTest = async (config: IntegrationConfig): Promise<{ success: boolean; message: string }> => {
     try {
-      const response = await fetch('/api/strategic/integrations/test', {
+      return await fetchAPI<{ success: boolean; message: string }>('/api/strategic/integrations/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: config,
       });
-      return response.json();
     } catch {
       return { success: false, message: 'Erro ao testar conexão' };
     }
@@ -123,11 +117,9 @@ export default function IntegrationsPage() {
 
   const handleToggle = async (id: string) => {
     try {
-      const response = await fetch(`/api/strategic/integrations/${id}/toggle`, { method: 'POST' });
-      if (response.ok) {
-        await fetchIntegrations();
-        toast.success('Status atualizado');
-      }
+      await fetchAPI(`/api/strategic/integrations/${id}/toggle`, { method: 'POST' });
+      await fetchIntegrations();
+      toast.success('Status atualizado');
     } catch {
       toast.error('Erro ao atualizar status');
     }
@@ -137,11 +129,9 @@ export default function IntegrationsPage() {
     if (!confirm('Tem certeza que deseja excluir esta integração?')) return;
     
     try {
-      const response = await fetch(`/api/strategic/integrations/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        await fetchIntegrations();
-        toast.success('Integração excluída');
-      }
+      await fetchAPI(`/api/strategic/integrations/${id}`, { method: 'DELETE' });
+      await fetchIntegrations();
+      toast.success('Integração excluída');
     } catch {
       toast.error('Erro ao excluir integração');
     }

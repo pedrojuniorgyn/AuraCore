@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createProductSchema } from "@/lib/validators/product";
 import { z } from "zod";
+import { fetchAPI } from "@/lib/api";
 
 type ProductFormData = z.infer<typeof createProductSchema>;
 
@@ -31,20 +32,13 @@ export default function CreateProductPage() {
         ncm: values.ncm?.replace(/\D/g, ""),
       };
 
-      const response = await fetch("/api/products", {
+      await fetchAPI("/api/products", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "x-branch-id": branchId,
         },
-        body: JSON.stringify(cleanedData),
+        body: cleanedData,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Erro ao criar produto");
-        return;
-      }
 
       toast.success("Produto criado com sucesso!");
       router.push("/cadastros/produtos");

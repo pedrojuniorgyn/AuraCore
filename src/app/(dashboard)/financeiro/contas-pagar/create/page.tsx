@@ -9,6 +9,7 @@ import { FadeIn } from "@/components/ui/animated-wrappers";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select";
+import { fetchAPI } from "@/lib/api";
 
 interface BusinessPartner {
   id: number;
@@ -53,36 +54,27 @@ export default function CreatePayablePage() {
 
   useEffect(() => {
     const loadData = async () => {
-    try {
-      // Carregar fornecedores
-      const partnersRes = await fetch("/api/business-partners?type=SUPPLIER");
-      if (partnersRes.ok) {
-        const data = await partnersRes.json();
-        setPartners(Array.isArray(data) ? data : (data.data || []));
-      }
+      try {
+        // Carregar fornecedores
+        const partnersData = await fetchAPI<BusinessPartner[] | { data: BusinessPartner[] }>("/api/business-partners?type=SUPPLIER");
+        setPartners(Array.isArray(partnersData) ? partnersData : (partnersData.data || []));
 
-      // Carregar categorias
-      const categoriesRes = await fetch("/api/financial/categories?type=EXPENSE");
-      if (categoriesRes.ok) {
-        const data = await categoriesRes.json();
-        setCategories(Array.isArray(data) ? data : (data.data || []));
-      }
+        // Carregar categorias
+        const categoriesData = await fetchAPI<FinancialCategory[] | { data: FinancialCategory[] }>("/api/financial/categories?type=EXPENSE");
+        setCategories(Array.isArray(categoriesData) ? categoriesData : (categoriesData.data || []));
 
-      // Carregar plano de contas
-      const accountsRes = await fetch("/api/financial/chart-of-accounts?type=EXPENSE&analytical=true");
-      if (accountsRes.ok) {
-        const data = await accountsRes.json();
-        setAccounts(Array.isArray(data) ? data : (data.data || []));
+        // Carregar plano de contas
+        const accountsData = await fetchAPI<ChartAccount[] | { data: ChartAccount[] }>("/api/financial/chart-of-accounts?type=EXPENSE&analytical=true");
+        setAccounts(Array.isArray(accountsData) ? accountsData : (accountsData.data || []));
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        toast({
+          title: "Aviso",
+          description: "Erro ao carregar dados. Tente recarregar a página.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast({
-        title: "Aviso",
-        description: "Erro ao carregar dados. Tente recarregar a página.",
-        variant: "destructive",
-      });
-    }
-  };
+    };
 
     loadData();
   }, [toast]);
@@ -119,15 +111,10 @@ export default function CreatePayablePage() {
       }
 
       for (const payable of payables) {
-        const res = await fetch("/api/financial/payables", {
+        await fetchAPI("/api/financial/payables", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payable),
+          body: payable,
         });
-
-        if (!res.ok) {
-          throw new Error("Erro ao criar conta a pagar");
-        }
       }
 
       toast({

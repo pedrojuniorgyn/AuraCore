@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { createBusinessPartnerSchema } from "@/lib/validators/business-partner";
 import { z } from "zod";
+import { fetchAPI } from "@/lib/api";
 
 type BusinessPartnerFormData = z.infer<typeof createBusinessPartnerSchema>;
 
@@ -39,19 +40,12 @@ export default function EditBusinessPartnerPage() {
       setIsLoading(true);
       const branchId = localStorage.getItem("auracore:current-branch") || "1";
 
-      const response = await fetch(`/api/business-partners/${id}`, {
+      const data = await fetchAPI<PartnerData>(`/api/business-partners/${id}`, {
         headers: {
           "x-branch-id": branchId,
         },
       });
 
-      if (!response.ok) {
-        toast.error("Erro ao carregar parceiro");
-        router.push("/cadastros/parceiros");
-        return;
-      }
-
-      const data = await response.json();
       console.log("✅ Partner loaded:", data);
       setPartner(data);
     } catch (error) {
@@ -83,20 +77,13 @@ export default function EditBusinessPartnerPage() {
         version: partner?.version || 1, // Inclui versão para Optimistic Lock
       };
 
-      const response = await fetch(`/api/business-partners/${id}`, {
+      await fetchAPI(`/api/business-partners/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           "x-branch-id": branchId,
         },
-        body: JSON.stringify(cleanedData),
+        body: cleanedData,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Erro ao atualizar parceiro");
-        return;
-      }
 
       toast.success("Parceiro atualizado com sucesso!");
       router.push("/cadastros/parceiros");

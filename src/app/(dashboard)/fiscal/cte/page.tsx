@@ -15,6 +15,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { FileText, CheckCircle, XCircle, Clock, AlertTriangle, Download, RefreshCw } from "lucide-react";
 import { FiscalAIWidget } from "@/components/fiscal";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 // SSRM Hook
 import { useSSRMDatasource } from "@/hooks/useSSRMDatasource";
@@ -51,11 +52,8 @@ export default function CtePage() {
   // Buscar KPIs separadamente
   const fetchKPIs = useCallback(async () => {
     try {
-      const response = await fetch("/api/fiscal/cte/summary");
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const data = await fetchAPI<CteSummary>("/api/fiscal/cte/summary");
+      setStats(data);
     } catch (error) {
       console.error("Error fetching KPIs:", error);
     }

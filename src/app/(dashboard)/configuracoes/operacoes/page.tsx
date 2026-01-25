@@ -8,6 +8,7 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GridPattern } from "@/components/ui/animated-background";
 import { Activity, RefreshCw, Play, History as HistoryIcon } from "lucide-react";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 type OpsRun = {
   id: number;
@@ -52,31 +53,13 @@ export default function OperacoesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [latestRes, histRes] = await Promise.all([
-        fetch("/api/admin/ops/health/latest", { cache: "no-store" }),
-        fetch("/api/admin/ops/health/history?limit=25", { cache: "no-store" }),
+      const [latestJson, histJson] = await Promise.all([
+        fetchAPI<{ run: OpsRun }>("/api/admin/ops/health/latest"),
+        fetchAPI<{ runs: OpsRun[] }>("/api/admin/ops/health/history?limit=25"),
       ]);
 
-      if (!latestRes.ok) {
-        const latestErr = await latestRes.json().catch(() => null);
-        throw new Error(
-          latestErr?.message ??
-            latestErr?.error ??
-            `Falha ao carregar último resultado (${latestRes.status})`
-        );
-      }
-      if (!histRes.ok) {
-        const histErr = await histRes.json().catch(() => null);
-        throw new Error(
-          histErr?.message ?? histErr?.error ?? `Falha ao carregar histórico (${histRes.status})`
-        );
-      }
-
-      const latestJson = await latestRes.json();
-      const histJson = await histRes.json();
-
-      setLatest((latestJson?.run as OpsRun) ?? null);
-      setHistory((histJson?.runs as OpsRun[]) ?? []);
+      setLatest(latestJson?.run ?? null);
+      setHistory(histJson?.runs ?? []);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao carregar Operações";
       toast.error(errorMessage);
@@ -92,13 +75,10 @@ export default function OperacoesPage() {
   const onRunNow = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/ops/health/run", {
+      await fetchAPI("/api/admin/ops/health/run", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "ui" }),
+        body: { reason: "ui" },
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.message ?? "Falha ao executar smoke test");
       toast.success("Smoke test iniciado/registrado");
       await load();
     } catch (e: unknown) {

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AIInsightWidget } from "@/components/ai";
+import { fetchAPI } from "@/lib/api";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -101,11 +102,8 @@ export default function ContasReceberPage() {
   // Buscar KPIs separadamente
   const fetchKPIs = useCallback(async () => {
     try {
-      const response = await fetch("/api/financial/receivables/summary");
-      if (response.ok) {
-        const data = await response.json();
-        setKpis(data);
-      }
+      const data = await fetchAPI<KPIs>("/api/financial/receivables/summary");
+      setKpis(data);
     } catch (error) {
       console.error("Error fetching KPIs:", error);
     }
@@ -118,12 +116,7 @@ export default function ContasReceberPage() {
   const handleDelete = useCallback(async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir esta conta a receber?")) return;
     try {
-      const res = await fetch(`/api/financial/receivables/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const error = await res.json();
-        toast.error(error.error || "Erro ao excluir");
-        return;
-      }
+      await fetchAPI(`/api/financial/receivables/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       // Refresh grid e KPIs
       gridApi?.refreshServerSide({ purge: true });

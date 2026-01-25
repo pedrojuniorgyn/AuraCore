@@ -20,6 +20,7 @@ import { NumberCounter } from "@/components/ui/magic-components";
 import { TrendingUp, TrendingDown, DollarSign, Truck, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { AIInsightWidget } from "@/components/ai";
+import { fetchAPI } from "@/lib/api";
 
 interface DreData {
   revenues: number;
@@ -47,10 +48,9 @@ export default function DreDashboardPage() {
   const fetchDre = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const result = await fetchAPI<{ success: boolean; data: DreData }>(
         `/api/financial/reports/dre/consolidated?startDate=${startDate}&endDate=${endDate}`
       );
-      const result = await response.json();
 
       if (result.success && result.data) {
         setDreData(result.data);

@@ -10,6 +10,7 @@ import { AllEnterpriseModule } from 'ag-grid-enterprise';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 import { Target, Plus, Download, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { fetchAPI } from '@/lib/api';
 
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
@@ -88,11 +89,8 @@ export default function GoalsPage() {
   const fetchGoals = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/goals?pageSize=100');
-      if (response.ok) {
-        const result = await response.json();
-        setGoals(result.items || []);
-      }
+      const result = await fetchAPI<{ items: Goal[] }>('/api/strategic/goals?pageSize=100');
+      setGoals(result.items || []);
     } catch (error) {
       console.error('Erro ao carregar objetivos:', error);
     } finally {

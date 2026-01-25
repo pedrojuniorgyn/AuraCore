@@ -34,6 +34,7 @@ import {
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { fetchAPI, APIResponseError } from '@/lib/api';
 
 interface ActionPlanDetail {
   id: string;
@@ -100,14 +101,14 @@ export default function ActionPlanDetailPage({
     const loadPlan = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/strategic/action-plans/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setPlan(data);
-        } else if (response.status === 404) {
-          router.push('/strategic/action-plans');
-        }
+        const data = await fetchAPI<ActionPlanDetail>(`/api/strategic/action-plans/${id}`);
+        setPlan(data);
       } catch (error) {
+        // Se for 404, redirecionar
+        if (error instanceof APIResponseError && error.status === 404) {
+          router.push('/strategic/action-plans');
+          return;
+        }
         console.error('Erro ao carregar plano:', error);
       } finally {
         setLoading(false);
@@ -119,11 +120,8 @@ export default function ActionPlanDetailPage({
   const refreshPlan = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/strategic/action-plans/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setPlan(data);
-      }
+      const data = await fetchAPI<ActionPlanDetail>(`/api/strategic/action-plans/${id}`);
+      setPlan(data);
     } catch (error) {
       console.error('Erro ao carregar plano:', error);
     } finally {

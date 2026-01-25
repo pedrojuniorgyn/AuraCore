@@ -30,6 +30,7 @@ import { format, isPast } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FleetAIWidget } from "@/components/fleet";
+import { fetchAPI } from "@/lib/api";
 
 // === TYPES ===
 interface IDriver {
@@ -54,8 +55,7 @@ export default function DriversPage() {
   const { data: drivers = [], isLoading } = useQuery({
     queryKey: ["drivers"],
     queryFn: async () => {
-      const res = await fetch("/api/fleet/drivers");
-      const json = await res.json();
+      const json = await fetchAPI<{ data: IDriver[] }>("/api/fleet/drivers");
       return json.data || [];
     },
   });
@@ -74,15 +74,9 @@ export default function DriversPage() {
     if (!deleteId) return;
 
     try {
-      const res = await fetch(`/api/fleet/drivers/${deleteId}`, {
+      await fetchAPI(`/api/fleet/drivers/${deleteId}`, {
         method: "DELETE",
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        toast.error(error.error || "Erro ao excluir motorista");
-        return;
-      }
 
       toast.success("Motorista excluído com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["drivers"] });

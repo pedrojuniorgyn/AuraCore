@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { CommercialAIWidget } from "@/components/commercial";
+import { fetchAPI } from "@/lib/api";
 
 interface Quote {
   id: number;
@@ -43,11 +44,10 @@ export default function QuotesPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir esta cotação?")) return;
     try {
-      const res = await fetch(`/api/commercial/quotes/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/commercial/quotes/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       fetchQuotes();
-    } catch (error) { toast.error("Erro"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
 
   const columnDefs: ColDef[] = [
@@ -150,8 +150,7 @@ export default function QuotesPage() {
 
   const fetchQuotes = async () => {
     try {
-      const response = await fetch("/api/commercial/quotes");
-      const result = await response.json();
+      const result = await fetchAPI<{ success: boolean; data: Quote[] }>("/api/commercial/quotes");
       if (result.success) {
         setQuotes(result.data);
       }
@@ -167,13 +166,10 @@ export default function QuotesPage() {
 
   const handleApprove = async (id: number) => {
     try {
-      const response = await fetch(`/api/commercial/quotes/${id}/approve`, {
+      const result = await fetchAPI<{ success: boolean; error?: string; data: { pickupOrderNumber: string } }>(`/api/commercial/quotes/${id}/approve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: {},
       });
-
-      const result = await response.json();
 
       if (result.success) {
         toast.success(`Cotação aprovada! Ordem de Coleta ${result.data.pickupOrderNumber} criada!`);
@@ -192,23 +188,16 @@ export default function QuotesPage() {
     if (!reason) return;
 
     try {
-      const response = await fetch(`/api/commercial/quotes/${id}`, {
+      await fetchAPI(`/api/commercial/quotes/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           status: "REJECTED",
           rejectionReason: reason,
-        }),
+        },
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Cotação recusada");
-        fetchQuotes();
-      } else {
-        toast.error(result.error || "Erro ao recusar");
-      }
+      toast.success("Cotação recusada");
+      fetchQuotes();
     } catch (error) {
       console.error("Erro ao recusar:", error);
       toast.error("Erro ao recusar cotação");

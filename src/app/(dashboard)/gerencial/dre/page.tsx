@@ -27,6 +27,7 @@ import {
   PiggyBank,
   TrendingDown
 } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -51,8 +52,7 @@ export default function DREGerencialPage() {
     const fetchDREData = async () => {
       try {
         const period = new Date().toISOString().slice(0, 7);
-        const response = await fetch(`/api/management/dre?period=${period}`);
-        const result = await response.json();
+        const result = await fetchAPI<{ success: boolean; data: DREItem[] }>(`/api/management/dre?period=${period}`);
         
         if (result.success) {
           setDreData(result.data);

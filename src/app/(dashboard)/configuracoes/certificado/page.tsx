@@ -12,6 +12,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { Upload, Shield, CheckCircle, XCircle, AlertCircle, FileKey } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/tenant-context";
+import { fetchAPI } from "@/lib/api";
 
 interface CertificateInfo {
   valid: boolean;
@@ -46,25 +47,21 @@ export default function CertificadoDigitalPage() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/branches/${currentBranch.id}`);
+      const result = await fetchAPI<{ data?: { name: string; createdAt: string; certificatePfx?: string; certificateExpiry?: string } } | { name: string; createdAt: string; certificatePfx?: string; certificateExpiry?: string }>(`/api/branches/${currentBranch.id}`);
+      const branch = 'data' in result && result.data ? result.data : result;
       
-      if (response.ok) {
-        const result = await response.json();
-        const branch = result.data || result;
-        
-        if (branch.certificatePfx && branch.certificateExpiry) {
-          setCertificateInfo({
-            valid: new Date(branch.certificateExpiry) > new Date(),
-            subject: branch.name,
-            validFrom: new Date(branch.createdAt).toLocaleDateString('pt-BR'),
-            validTo: new Date(branch.certificateExpiry).toLocaleDateString('pt-BR'),
-            issuer: "Certificadora (AC)",
-            serialNumber: "********",
-            branchName: branch.name,
-          });
-        } else {
-          setCertificateInfo(null);
-        }
+      if ('certificatePfx' in branch && branch.certificatePfx && 'certificateExpiry' in branch && branch.certificateExpiry) {
+        setCertificateInfo({
+          valid: new Date(branch.certificateExpiry) > new Date(),
+          subject: branch.name,
+          validFrom: new Date(branch.createdAt).toLocaleDateString('pt-BR'),
+          validTo: new Date(branch.certificateExpiry).toLocaleDateString('pt-BR'),
+          issuer: "Certificadora (AC)",
+          serialNumber: "********",
+          branchName: branch.name,
+        });
+      } else {
+        setCertificateInfo(null);
       }
     } catch (error) {
       console.error("Erro ao carregar certificado:", error);
@@ -113,9 +110,11 @@ export default function CertificadoDigitalPage() {
       formData.append("pfx", certificateFile); // Nome correto do campo
       formData.append("password", password);
 
+      // FormData não pode usar fetchAPI (que força JSON)
       const response = await fetch(`/api/branches/${currentBranch.id}/certificate`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -154,41 +153,36 @@ export default function CertificadoDigitalPage() {
 
     try {
       // Fazer requisição de teste para Sefaz
-      const response = await fetch(`/api/sefaz/test-connection`, {
+      const data = await fetchAPI<{ success?: boolean; details?: string; error?: string; message?: string }>(`/api/sefaz/test-connection`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          branchId: currentBranch.id,
-        }),
+        body: { branchId: currentBranch.id },
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      // ✅ VERIFICAR data.success explicitamente (API pode retornar 200 com success: false)
+      if (data.success === true) {
         setTestResult({
           success: true,
-          message: "Conexão estabelecida com sucesso!",
+          message: data.message || "Conexão estabelecida com sucesso!",
           details: data.details || "Certificado válido e aceito pela Sefaz",
         });
         toast.success("Conexão com Sefaz estabelecida!");
       } else {
+        // API retornou 200 mas success !== true
         setTestResult({
           success: false,
-          message: "Falha ao conectar com Sefaz",
-          details: data.error || data.details || "Verifique o certificado e tente novamente",
+          message: data.error || data.message || "Falha na conexão com Sefaz",
+          details: data.details,
         });
-        toast.error("Falha na conexão com Sefaz");
+        toast.error(data.error || "Falha na conexão com Sefaz");
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Erro de rede ou servidor indisponível";
       setTestResult({
         success: false,
-        message: "Erro ao testar conexão",
+        message: "Falha ao conectar com Sefaz",
         details: errorMessage,
       });
-      toast.error("Erro ao testar conexão");
+      toast.error("Falha na conexão com Sefaz");
       console.error(error);
     } finally {
       setIsTesting(false);

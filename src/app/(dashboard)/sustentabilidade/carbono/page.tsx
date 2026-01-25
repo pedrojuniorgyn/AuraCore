@@ -13,6 +13,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 import { Leaf, Truck, Fuel, TrendingDown, Trees, FileText, Send, Plus, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -100,22 +101,20 @@ export default function ESGCarbonoPage() {
   const handleBatchCalculate = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/esg/batch-calculate', {
+      const data = await fetchAPI<{ success: boolean; error?: string; processed: number; message: string }>('/api/esg/batch-calculate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
           endDate: new Date().toISOString()
-        })
+        }
       });
-      const data = await response.json();
       if (data.success) {
         alert(`✅ Cálculo em lote concluído!\n\n${data.processed} CT-es processados\n${data.message}`);
         await loadData();
       } else {
         alert('❌ ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao calcular lote');
     } finally {
       setLoading(false);
@@ -124,10 +123,12 @@ export default function ESGCarbonoPage() {
 
   const handleExport = async () => {
     try {
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'esg', format: 'csv' })
+        body: JSON.stringify({ type: 'esg', format: 'csv' }),
+        credentials: 'include',
       });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -136,7 +137,7 @@ export default function ESGCarbonoPage() {
       a.download = `esg_carbono_${Date.now()}.csv`;
       a.click();
       alert('✅ Relatório ESG exportado!');
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao exportar');
     }
   };

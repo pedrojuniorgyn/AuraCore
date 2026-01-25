@@ -28,6 +28,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { AccountingAIWidget } from "@/components/accounting";
 import { Plus, Edit, Trash2, FolderTree, Target, TrendingUp } from "lucide-react";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
+import { fetchAPI } from "@/lib/api";
 import { toast } from "sonner";
 
 interface CostCenter {
@@ -129,8 +130,7 @@ export default function CostCentersPage() {
 
   const fetchCostCenters = useCallback(async () => {
     try {
-      const response = await fetch("/api/financial/cost-centers");
-      const result = await response.json();
+      const result = await fetchAPI<{ success: boolean; data: { flat: CostCenter[] } }>("/api/financial/cost-centers");
       if (result.success) {
         setCostCenters(result.data.flat);
       }
@@ -173,18 +173,11 @@ export default function CostCentersPage() {
     if (!confirm("Deseja realmente excluir este centro de custo?")) return;
 
     try {
-      const response = await fetch(`/api/financial/cost-centers/${id}`, {
+      await fetchAPI(`/api/financial/cost-centers/${id}`, {
         method: "DELETE",
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Centro de custo excluído!");
-        fetchCostCenters();
-      } else {
-        toast.error(result.error || "Erro ao excluir");
-      }
+      toast.success("Centro de custo excluído!");
+      fetchCostCenters();
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error("Erro ao excluir centro de custo");
@@ -200,25 +193,18 @@ export default function CostCentersPage() {
         : "/api/financial/cost-centers";
       const method = isEditing ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      await fetchAPI(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success(
-          isEditing
-            ? "Centro de custo atualizado!"
-            : "Centro de custo criado!"
-        );
-        setIsDialogOpen(false);
-        fetchCostCenters();
-      } else {
-        toast.error(result.error || "Erro ao salvar");
-      }
+      toast.success(
+        isEditing
+          ? "Centro de custo atualizado!"
+          : "Centro de custo criado!"
+      );
+      setIsDialogOpen(false);
+      fetchCostCenters();
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar centro de custo");

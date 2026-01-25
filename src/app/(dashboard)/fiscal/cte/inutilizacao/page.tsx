@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { fetchAPI } from "@/lib/api";
 
 export default function CTeInutilizacaoPage() {
   const [loading, setLoading] = useState(false);
@@ -26,19 +27,16 @@ export default function CTeInutilizacaoPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/fiscal/cte/inutilize", {
+      const data = await fetchAPI<{ success: boolean; message?: string; error?: string }>("/api/fiscal/cte/inutilize", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           serie: formData.serie,
           numberFrom: parseInt(formData.numberFrom),
           numberTo: parseInt(formData.numberTo),
           year: parseInt(formData.year),
           justification: formData.justification,
-        }),
+        },
       });
-
-      const data = await response.json();
 
       if (data.success) {
         toast({

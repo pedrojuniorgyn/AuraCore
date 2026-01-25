@@ -10,6 +10,7 @@ import { NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { FleetAIWidget } from "@/components/fleet";
+import { fetchAPI } from "@/lib/api";
 
 interface WorkOrder {
   id: number;
@@ -62,14 +63,10 @@ export default function WorkOrdersPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir esta ordem?")) return;
     try {
-      const res = await fetch(`/api/fleet/maintenance/work-orders/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
-        return;
-      }
+      await fetchAPI(`/api/fleet/maintenance/work-orders/${id}`, { method: "DELETE" });
       toast({ title: "Sucesso", description: "Excluído com sucesso!" });
       fetchWorkOrders();
-    } catch (error) {
+    } catch {
       toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
     }
   };
@@ -81,8 +78,7 @@ export default function WorkOrdersPage() {
           ? "/api/fleet/maintenance/work-orders"
           : `/api/fleet/maintenance/work-orders?status=${statusFilter}`;
 
-      const res = await fetch(url);
-      const data = await res.json();
+      const data = await fetchAPI<{ success: boolean; workOrders: WorkOrder[] }>(url);
       if (data.success) {
         setWorkOrders(data.workOrders);
       }

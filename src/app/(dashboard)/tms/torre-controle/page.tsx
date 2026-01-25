@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 import { TmsAIWidget } from "@/components/tms";
+import { fetchAPI } from "@/lib/api";
 
 interface Trip {
   id: number;
@@ -33,8 +34,7 @@ export default function TorreControlePage() {
 
   const loadTrips = async () => {
     try {
-      const response = await fetch("/api/tms/control-tower");
-      const data = await response.json();
+      const data = await fetchAPI<{ data: Trip[] }>("/api/tms/control-tower");
       setTrips(data.data || []);
     } catch (error) {
       console.error("Erro:", error);
@@ -46,13 +46,11 @@ export default function TorreControlePage() {
   const addCheckpoint = async (tripId: number, checkpointType: string) => {
     setSavingTripId(tripId);
     try {
-      const res = await fetch(`/api/tms/trips/${tripId}/checkpoint`, {
+      const data = await fetchAPI<{ success: boolean; error?: string }>(`/api/tms/trips/${tripId}/checkpoint`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ checkpointType }),
+        body: { checkpointType },
       });
-      const data = await res.json();
-      if (!res.ok || !data?.success) {
+      if (!data?.success) {
         throw new Error(data?.error ?? "Falha ao registrar checkpoint");
       }
       await loadTrips();

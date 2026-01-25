@@ -7,6 +7,7 @@ import { PageTransition, FadeIn, StaggerContainer, StaggerItem } from "@/compone
 import { GradientText, NumberCounter, BentoGrid, BentoGridItem } from "@/components/ui/magic-components";
 import { HoverCard } from "@/components/ui/glassmorphism-card";
 import { DotPattern } from "@/components/ui/animated-background";
+import { fetchAPISafe } from "@/lib/api";
 
 interface DashboardStats {
   receita: number;
@@ -23,17 +24,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchStats() {
-      try {
-        const response = await fetch("/api/dashboard/stats");
-        const data = await response.json();
-        if (data.success && data.data) {
-          setStats(data.data);
-        }
-      } catch (error) {
+      const { data, error } = await fetchAPISafe<{ success: boolean; data: DashboardStats }>("/api/dashboard/stats");
+      if (!error && data?.success && data.data) {
+        setStats(data.data);
+      } else if (error) {
         console.error("Erro ao carregar estatísticas:", error);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     }
     fetchStats();
   }, []);

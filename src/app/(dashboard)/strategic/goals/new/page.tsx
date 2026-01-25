@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { FadeIn } from '@/components/ui/animated-wrappers';
+import { fetchAPI } from '@/lib/api';
 
 const BSC_PERSPECTIVES = [
   { code: 'FIN', name: 'Financeira', color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50' },
@@ -57,13 +58,10 @@ export default function NewGoalPage() {
   useEffect(() => {
     const fetchStrategies = async () => {
       try {
-        const response = await fetch('/api/strategic/strategies?status=ACTIVE');
-        if (response.ok) {
-          const data = await response.json();
-          setStrategies(data.items || []);
-          if (data.items?.length > 0) {
-            setFormData(prev => ({ ...prev, strategyId: data.items[0].id }));
-          }
+        const data = await fetchAPI<{ items: StrategyOption[] }>('/api/strategic/strategies?status=ACTIVE');
+        setStrategies(data.items || []);
+        if (data.items?.length > 0) {
+          setFormData(prev => ({ ...prev, strategyId: data.items[0].id }));
         }
       } catch (error) {
         console.error('Erro ao carregar estratégias:', error);
@@ -92,10 +90,9 @@ export default function NewGoalPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/strategic/goals', {
+      await fetchAPI('/api/strategic/goals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           code: formData.code.trim().toUpperCase(),
           description: formData.description.trim(),
           perspectiveCode: formData.perspectiveCode, // API agora aceita code
@@ -106,13 +103,8 @@ export default function NewGoalPage() {
           endDate: formData.endDate,
           strategyId: formData.strategyId || undefined,
           weight: Number(formData.weight),
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao criar objetivo');
-      }
 
       toast.success('Objetivo criado com sucesso!');
       router.push('/strategic/goals');

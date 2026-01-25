@@ -9,6 +9,7 @@ import { WidgetPicker } from '@/components/strategic/WidgetPicker';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
 import { toast } from 'sonner';
 import { AIInsightWidget } from '@/components/ai';
+import { fetchAPI } from '@/lib/api';
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -48,13 +49,12 @@ export default function DashboardPage() {
 
     try {
       setIsLoadingData(true);
-      const response = await fetch('/api/strategic/dashboard/data', {
+      const result = await fetchAPI<DashboardData>('/api/strategic/dashboard/data', {
         signal: controller.signal,
       });
       
       // FIX Bug 3: Só atualizar se ainda montado
-      if (response.ok && isMountedRef.current) {
-        const result = await response.json();
+      if (isMountedRef.current) {
         setData(result);
       }
     } catch (error) {

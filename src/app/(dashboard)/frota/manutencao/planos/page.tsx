@@ -6,6 +6,7 @@ import { Plus, AlertCircle, Calendar, Gauge, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { FleetAIWidget } from "@/components/fleet";
+import { fetchAPI } from "@/lib/api";
 
 interface MaintenancePlan {
   id: number;
@@ -33,22 +34,17 @@ export default function MaintenancePlansPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este plano?")) return;
     try {
-      const res = await fetch(`/api/fleet/maintenance-plans/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
-        return;
-      }
+      await fetchAPI(`/api/fleet/maintenance-plans/${id}`, { method: "DELETE" });
       toast({ title: "Sucesso", description: "Excluído com sucesso!" });
       fetchPlans();
-    } catch (error) {
+    } catch {
       toast({ title: "Erro", description: "Erro ao excluir", variant: "destructive" });
     }
   };
 
   const fetchPlans = useCallback(async () => {
     try {
-      const res = await fetch("/api/fleet/maintenance-plans");
-      const data = await res.json();
+      const data = await fetchAPI<{ success: boolean; plans: MaintenancePlan[] }>("/api/fleet/maintenance-plans");
       if (data.success) {
         setPlans(data.plans);
       }
@@ -84,13 +80,10 @@ export default function MaintenancePlansPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/fleet/maintenance-plans", {
+      const data = await fetchAPI<{ success: boolean }>("/api/fleet/maintenance-plans", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
       });
-
-      const data = await res.json();
 
       if (data.success) {
         toast({
@@ -109,8 +102,6 @@ export default function MaintenancePlansPage() {
           advanceWarningKm: "",
           advanceWarningDays: "",
         });
-      } else {
-        throw new Error(data.error);
       }
     } catch (error) {
       console.error("Erro ao criar plano:", error);

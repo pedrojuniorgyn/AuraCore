@@ -12,6 +12,7 @@ import { AuditLogFilters, type AuditFilters } from '@/components/strategic/Audit
 import { AuditLogTable } from '@/components/strategic/AuditLogTable';
 import { AuditLogDetail, type AuditEntry } from '@/components/strategic/AuditLogDetail';
 import { toast } from 'sonner';
+import { fetchAPI } from '@/lib/api';
 
 interface AuditLogData {
   users: { id: string; name: string }[];
@@ -54,13 +55,7 @@ export default function AuditLogPage() {
         dateTo: filters.dateTo,
       });
 
-      const response = await fetch(`/api/strategic/audit-log?${queryParams}`);
-      
-      if (!response.ok) {
-        throw new Error('Erro ao carregar histórico');
-      }
-
-      const result = await response.json();
+      const result = await fetchAPI<AuditLogData>(`/api/strategic/audit-log?${queryParams}`);
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
@@ -90,7 +85,10 @@ export default function AuditLogPage() {
         dateTo: filters.dateTo,
       });
 
-      const response = await fetch(`/api/strategic/audit-log/export?${queryParams}`);
+      // Nota: Export precisa de credentials para autenticação, mas retorna blob
+      const response = await fetch(`/api/strategic/audit-log/export?${queryParams}`, {
+        credentials: 'include',
+      });
       
       if (!response.ok) {
         throw new Error('Erro ao exportar');

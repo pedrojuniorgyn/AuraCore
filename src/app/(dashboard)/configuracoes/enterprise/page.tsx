@@ -19,6 +19,7 @@ import {
   Database,
   Upload
 } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 const modules = [
   {
@@ -104,14 +105,13 @@ export default function ConfiguracoesEnterprisePage() {
   const handleRunSeed = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/run-enterprise-seed', { method: 'POST' });
-      const data = await response.json();
+      const data = await fetchAPI<{ success: boolean; error?: string; message: string }>('/api/admin/run-enterprise-seed', { method: 'POST' });
       if (data.success) {
         alert(`✅ Seed executado!\n\n${data.message}`);
       } else {
         alert('❌ Erro: ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao executar seed');
     } finally {
       setLoading(false);
@@ -121,14 +121,13 @@ export default function ConfiguracoesEnterprisePage() {
   const handleFixStructure = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/fix-fiscal-matrix', { method: 'POST' });
-      const data = await response.json();
+      const data = await fetchAPI<{ success: boolean; error?: string; message: string }>('/api/admin/fix-fiscal-matrix', { method: 'POST' });
       if (data.success) {
         alert(`✅ Estrutura corrigida!\n\n${data.message}`);
       } else {
         alert('❌ Erro: ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao corrigir estrutura');
     } finally {
       setLoading(false);

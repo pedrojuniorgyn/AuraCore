@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { FileText, DollarSign, Mail, CheckCircle, Plus, Download, Send, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AIInsightWidget } from "@/components/ai";
+import { fetchAPI } from "@/lib/api";
 
 interface BillingInvoice {
   id: number;
@@ -45,8 +46,7 @@ export default function BillingPage() {
 
   const loadInvoices = async () => {
     try {
-      const response = await fetch("/api/financial/billing");
-      const data = await response.json();
+      const data = await fetchAPI<{ data: BillingInvoice[] }>("/api/financial/billing");
       setInvoices(data.data || []);
     } catch (error) {
       console.error("Erro ao carregar faturas:", error);
@@ -67,35 +67,24 @@ export default function BillingPage() {
 
     setCreating(true);
     try {
-      const response = await fetch("/api/financial/billing", {
+      await fetchAPI("/api/financial/billing", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           customerId: parseInt(customerId),
           periodStart,
           periodEnd,
           billingFrequency: frequency,
-        }),
+        },
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "Sucesso!",
-          description: "Fatura criada com sucesso",
-        });
-        loadInvoices();
-        setCustomerId("");
-        setPeriodStart("");
-        setPeriodEnd("");
-      } else {
-        toast({
-          title: "Erro",
-          description: data.error,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Sucesso!",
+        description: "Fatura criada com sucesso",
+      });
+      loadInvoices();
+      setCustomerId("");
+      setPeriodStart("");
+      setPeriodEnd("");
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
@@ -110,25 +99,15 @@ export default function BillingPage() {
 
   const generateBoleto = async (invoiceId: number) => {
     try {
-      const response = await fetch(`/api/financial/billing/${invoiceId}/generate-boleto`, {
+      await fetchAPI(`/api/financial/billing/${invoiceId}/generate-boleto`, {
         method: "POST",
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "Boleto Gerado!",
-          description: "Boleto criado com sucesso",
-        });
-        loadInvoices();
-      } else {
-        toast({
-          title: "Erro",
-          description: data.error,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Boleto Gerado!",
+        description: "Boleto criado com sucesso",
+      });
+      loadInvoices();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
@@ -148,27 +127,16 @@ export default function BillingPage() {
     if (!email) return;
 
     try {
-      const response = await fetch(`/api/financial/billing/${invoiceId}/send-email`, {
+      await fetchAPI(`/api/financial/billing/${invoiceId}/send-email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: { email },
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "Email Enviado!",
-          description: `Fatura enviada para ${email}`,
-        });
-        loadInvoices();
-      } else {
-        toast({
-          title: "Erro",
-          description: data.error,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Email Enviado!",
+        description: `Fatura enviada para ${email}`,
+      });
+      loadInvoices();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
@@ -183,25 +151,15 @@ export default function BillingPage() {
     if (!confirm("Finalizar fatura? Isso criará o título no Contas a Receber.")) return;
 
     try {
-      const response = await fetch(`/api/financial/billing/${invoiceId}/finalize`, {
+      await fetchAPI(`/api/financial/billing/${invoiceId}/finalize`, {
         method: "POST",
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "Fatura Finalizada!",
-          description: "Título criado no Contas a Receber",
-        });
-        loadInvoices();
-      } else {
-        toast({
-          title: "Erro",
-          description: data.error,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Fatura Finalizada!",
+        description: "Título criado no Contas a Receber",
+      });
+      loadInvoices();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({

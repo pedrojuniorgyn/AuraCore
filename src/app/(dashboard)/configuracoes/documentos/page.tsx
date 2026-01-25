@@ -9,6 +9,7 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { FileText, RefreshCw, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { fetchAPI } from "@/lib/api";
 
 type Job = {
   id: number;
@@ -37,9 +38,8 @@ export default function DocumentosPipelinePage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/documents/jobs?limit=50", { cache: "no-store" });
-      const json = await res.json();
-      if (!res.ok || !json?.success) throw new Error(json?.error ?? "Falha ao carregar jobs");
+      const json = await fetchAPI<{ success: boolean; jobs: Job[]; error?: string }>("/api/documents/jobs?limit=50");
+      if (!json?.success) throw new Error(json?.error ?? "Falha ao carregar jobs");
       setJobs((json.jobs as Job[]) ?? []);
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao carregar Document Pipeline";

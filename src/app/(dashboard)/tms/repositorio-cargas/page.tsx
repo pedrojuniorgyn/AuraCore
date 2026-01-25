@@ -19,6 +19,7 @@ import { auraTheme } from "@/lib/ag-grid/theme";
 import { PageTransition, FadeIn, StaggerContainer } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GridPattern } from "@/components/ui/animated-background";
+import { fetchAPI } from "@/lib/api";
 
 interface ICargo {
   id: number;
@@ -82,11 +83,10 @@ export default function CargoRepositoryPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir esta carga?")) return;
     try {
-      const res = await fetch(`/api/tms/cargo-repository/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/tms/cargo-repository/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       fetchCargos();
-    } catch (error) { toast.error("Erro"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
   const [kpis, setKpis] = useState({
     totalPending: 0,
@@ -134,21 +134,15 @@ export default function CargoRepositoryPage() {
     
     setIsLoading(true);
     try {
-      const response = await fetch(
+      const result = await fetchAPI<{ data: ICargo[]; kpis: Record<string, number> }>(
         `/api/tms/cargo-repository?status=${statusFilter}`,
         {
           headers: { "x-branch-id": currentBranch.id.toString() },
         }
       );
 
-      if (!response.ok) {
-        toast.error("Erro ao carregar cargas");
-        return;
-      }
-
-      const result = await response.json();
       setCargos(result.data || []);
-      setKpis(result.kpis || {});
+      setKpis(prev => ({ ...prev, ...result.kpis }));
     } catch (error) {
       console.error("❌ Erro:", error);
       toast.error("Erro ao carregar repositório de cargas");

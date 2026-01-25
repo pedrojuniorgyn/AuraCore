@@ -26,6 +26,7 @@ import { RippleButton } from "@/components/ui/ripple-button";
 import { Plus, Truck, MapPin, CheckCircle, Clock, XCircle, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { TmsAIWidget } from "@/components/tms";
+import { fetchAPI } from "@/lib/api";
 
 interface Trip {
   id: number;
@@ -142,20 +143,17 @@ export default function TripsPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch("/api/tms/trips", {
+      const result = await fetchAPI<{ success: boolean; error?: string }>("/api/tms/trips", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           vehicleId: parseInt(formData.vehicleId),
           driverId: parseInt(formData.driverId),
           driverType: formData.driverType,
           scheduledStart: formData.scheduledStart,
           ciotNumber: formData.ciotNumber || null,
           ciotValue: formData.ciotValue ? parseFloat(formData.ciotValue) : null,
-        }),
+        },
       });
-
-      const result = await response.json();
 
       if (result.success) {
         toast.success("Viagem criada!");

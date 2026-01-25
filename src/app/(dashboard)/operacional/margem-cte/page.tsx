@@ -16,6 +16,7 @@ import { currencyFormatter, dateFormatter } from "@/components/ag-grid/renderers
 import { FileSpreadsheet, TrendingUp, TrendingDown, Target, AlertTriangle } from "lucide-react";
 import { auraTheme } from "@/lib/ag-grid/theme";
 import { OperationalAIWidget } from "@/components/operational";
+import { fetchAPI } from "@/lib/api";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -51,26 +52,23 @@ export default function MargemCtePage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/tms/cte-margins');
-      if (response.ok) {
-        const data = await response.json();
-        const cteList: CteMargin[] = data.data || [];
-        setCtes(cteList);
+      const data = await fetchAPI<{ data: CteMargin[] }>('/api/tms/cte-margins');
+      const cteList: CteMargin[] = data.data || [];
+      setCtes(cteList);
+      
+      // Calcular stats a partir dos dados carregados
+      if (cteList.length > 0) {
+        const margins = cteList.map((c: CteMargin) => c.marginPercent || 0);
+        const avgMargin = margins.reduce((a: number, b: number) => a + b, 0) / margins.length;
+        const deficitCtes = cteList.filter((c: CteMargin) => (c.contributionMargin || 0) < 0).length;
+        const bestMargin = Math.max(...margins);
         
-        // Calcular stats a partir dos dados carregados
-        if (cteList.length > 0) {
-          const margins = cteList.map((c: CteMargin) => c.marginPercent || 0);
-          const avgMargin = margins.reduce((a: number, b: number) => a + b, 0) / margins.length;
-          const deficitCtes = cteList.filter((c: CteMargin) => (c.contributionMargin || 0) < 0).length;
-          const bestMargin = Math.max(...margins);
-          
-          setStats({
-            avgMargin,
-            totalCtes: cteList.length,
-            deficitCtes,
-            bestMargin
-          });
-        }
+        setStats({
+          avgMargin,
+          totalCtes: cteList.length,
+          deficitCtes,
+          bestMargin
+        });
       }
     } catch (error) {
       console.error('Erro ao carregar margens CTe:', error);

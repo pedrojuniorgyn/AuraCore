@@ -35,6 +35,7 @@ import {
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { fetchAPI } from '@/lib/api';
 
 type MeetingStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 type MeetingType = 'BOARD' | 'DIRECTOR' | 'MANAGER' | 'TACTICAL' | 'EMERGENCY';
@@ -110,11 +111,8 @@ export default function MeetingsPage() {
   const fetchMeetings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/war-room/meetings?pageSize=50');
-      if (response.ok) {
-        const data = await response.json();
-        setMeetings(data.items);
-      }
+      const data = await fetchAPI<{ items: Meeting[] }>('/api/strategic/war-room/meetings?pageSize=50');
+      setMeetings(data.items);
     } catch (error) {
       console.error('Erro ao carregar reuniões:', error);
     } finally {

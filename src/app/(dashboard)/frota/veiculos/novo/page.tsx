@@ -8,6 +8,7 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { fetchAPI } from "@/lib/api";
 
 export default function NovoVeiculoPage() {
   const router = useRouter();
@@ -33,24 +34,18 @@ export default function NovoVeiculoPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/fleet/vehicles", {
+      await fetchAPI("/api/fleet/vehicles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           ...formData,
           year: parseInt(formData.year),
           capacityKg: parseFloat(formData.capacityKg),
           currentKm: parseInt(formData.currentKm),
-        }),
+        },
       });
 
-      if (response.ok) {
-        toast.success("Veículo cadastrado com sucesso!");
-        router.push("/frota/veiculos");
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Erro ao cadastrar veículo");
-      }
+      toast.success("Veículo cadastrado com sucesso!");
+      router.push("/frota/veiculos");
     } catch (error) {
       console.error("Erro ao cadastrar veículo:", error);
       toast.error("Erro ao cadastrar veículo");

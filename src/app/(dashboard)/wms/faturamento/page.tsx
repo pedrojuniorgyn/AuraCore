@@ -14,6 +14,7 @@ import { Package, ArrowDownToLine, ArrowUpFromLine, Zap, DollarSign, CheckCircle
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { WmsAIWidget } from "@/components/wms";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -54,11 +55,10 @@ export default function WMSFaturamentoPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este faturamento?")) return;
     try {
-      const res = await fetch(`/api/financial/billing/${id}`, { method: "DELETE" });
-      if (!res.ok) { toast.error("Erro ao excluir"); return; }
+      await fetchAPI(`/api/financial/billing/${id}`, { method: "DELETE" });
       toast.success("Excluído com sucesso!");
       loadData();
-    } catch (error) { toast.error("Erro ao excluir"); }
+    } catch { toast.error("Erro ao excluir"); }
   };
 
   const [kpis, setKpis] = useState({
@@ -132,17 +132,15 @@ export default function WMSFaturamentoPage() {
   const handleCloseMeasurement = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/wms/pre-invoices', {
+      const data = await fetchAPI<{ success: boolean; error?: string }>('/api/wms/pre-invoices', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           customerId: 1,
           period: '12/2024',
           subtotal: kpis.total
-        })
+        }
       });
 
-      const data = await response.json();
       if (data.success) {
         alert('✅ Medição fechada e pré-fatura gerada com sucesso!');
         await loadData();
@@ -159,11 +157,10 @@ export default function WMSFaturamentoPage() {
 
   const handleSendApproval = async (invoiceId: number) => {
     try {
-      const response = await fetch(`/api/wms/pre-invoices/${invoiceId}/send-approval`, {
+      const data = await fetchAPI<{ success: boolean; error?: string }>(`/api/wms/pre-invoices/${invoiceId}/send-approval`, {
         method: 'PUT'
       });
 
-      const data = await response.json();
       if (data.success) {
         alert('✅ Pré-fatura enviada para aprovação do cliente!');
         await loadData();
@@ -178,11 +175,10 @@ export default function WMSFaturamentoPage() {
 
   const handleIssueNFSe = async (invoiceId: number) => {
     try {
-      const response = await fetch(`/api/wms/pre-invoices/${invoiceId}/issue-nfse`, {
+      const data = await fetchAPI<{ success: boolean; error?: string; invoiceNumber?: string }>(`/api/wms/pre-invoices/${invoiceId}/issue-nfse`, {
         method: 'POST'
       });
 
-      const data = await response.json();
       if (data.success) {
         alert(`✅ NFS-e emitida com sucesso!\nNúmero: ${data.invoiceNumber}`);
         await loadData();

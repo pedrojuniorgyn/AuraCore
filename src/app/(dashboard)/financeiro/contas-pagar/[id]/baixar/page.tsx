@@ -8,6 +8,7 @@ import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { DollarSign, Calendar, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
 import { differenceInDays } from "date-fns";
+import { fetchAPI } from "@/lib/api";
 
 export default function BaixarContaPagarPage() {
   const params = useParams();

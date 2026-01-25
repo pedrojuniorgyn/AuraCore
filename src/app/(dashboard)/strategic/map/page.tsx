@@ -29,6 +29,7 @@ import { StrategicMap } from '@/components/strategic/StrategicMap';
 import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 import { CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { fetchAPI } from '@/lib/api';
 
 // Tipos que correspondem à resposta da API /api/strategic/map
 interface MapNode {
@@ -127,28 +128,25 @@ export default function StrategicMapPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/map');
-      if (response.ok) {
-        const result: MapApiResponse = await response.json();
-        
-        const goalsFromNodes: GoalForMap[] = result.nodes.map((node) => ({
-          id: node.id,
-          code: node.data.code,
-          description: node.data.description,
-          perspectiveId: node.data.perspectiveCode,
-          progress: node.data.progress,
-          status: mapStatus(node.data.status),
-          targetValue: node.data.targetValue,
-          currentValue: node.data.currentValue,
-          unit: node.data.unit,
-          parentGoalId: findParentFromEdges(node.id, result.edges),
-          kpiCount: 0,
-          ownerName: 'Responsável',
-        }));
+      const result = await fetchAPI<MapApiResponse>('/api/strategic/map');
+      
+      const goalsFromNodes: GoalForMap[] = result.nodes.map((node) => ({
+        id: node.id,
+        code: node.data.code,
+        description: node.data.description,
+        perspectiveId: node.data.perspectiveCode,
+        progress: node.data.progress,
+        status: mapStatus(node.data.status),
+        targetValue: node.data.targetValue,
+        currentValue: node.data.currentValue,
+        unit: node.data.unit,
+        parentGoalId: findParentFromEdges(node.id, result.edges),
+        kpiCount: 0,
+        ownerName: 'Responsável',
+      }));
 
-        setGoals(goalsFromNodes);
-        setEdges(result.edges);
-      }
+      setGoals(goalsFromNodes);
+      setEdges(result.edges);
     } catch (error) {
       console.error('Erro ao carregar mapa estratégico:', error);
     } finally {

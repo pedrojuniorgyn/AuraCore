@@ -7,6 +7,7 @@ import { ReportCard, type Report } from '@/components/strategic/ReportCard';
 import { ReportBuilder, type ReportConfig } from '@/components/strategic/ReportBuilder';
 import { ReportHistory } from '@/components/strategic/ReportHistory';
 import { toast } from 'sonner';
+import { fetchAPI } from '@/lib/api';
 
 type TabType = 'reports' | 'scheduled' | 'history';
 
@@ -19,11 +20,8 @@ export default function ReportsPage() {
 
   const fetchReports = useCallback(async () => {
     try {
-      const response = await fetch('/api/strategic/reports');
-      if (response.ok) {
-        const data = await response.json();
-        setReports(data.reports || []);
-      }
+      const data = await fetchAPI<{ reports: Report[] }>('/api/strategic/reports');
+      setReports(data.reports || []);
     } catch (error) {
       console.error('Failed to fetch reports:', error);
       toast.error('Erro ao carregar relatórios');
@@ -49,17 +47,10 @@ export default function ReportsPage() {
     const existingReportId = editingReport?.id;
 
     try {
-      const response = await fetch(url, {
+      const result = await fetchAPI<{ id: string }>(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: config,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to save report');
-      }
-
-      const result = await response.json();
       
       // FIX Bug 6: Usar o ID da resposta OU o ID existente (capturado antes)
       const reportId = result.id || existingReportId;
@@ -70,15 +61,13 @@ export default function ReportsPage() {
       // FIX Bug 6: Validar ID antes de chamar generate
       if (config.generateNow && reportId) {
         toast.info('Gerando relatório...');
-        const generateResponse = await fetch(`/api/strategic/reports/${reportId}/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config),
-        });
-        
-        if (generateResponse.ok) {
+        try {
+          await fetchAPI(`/api/strategic/reports/${reportId}/generate`, {
+            method: 'POST',
+            body: config,
+          });
           toast.success('Relatório gerado e enviado!');
-        } else {
+        } catch {
           toast.error('Erro ao gerar relatório');
         }
       } else if (config.generateNow && !reportId) {
@@ -100,14 +89,9 @@ export default function ReportsPage() {
 
     toast.info('Gerando relatório...');
     try {
-      const response = await fetch(`/api/strategic/reports/${id}/generate`, { method: 'POST' });
-      if (response.ok) {
-        toast.success('Relatório gerado!');
-        await fetchReports();
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.error || 'Erro ao gerar relatório');
-      }
+      await fetchAPI(`/api/strategic/reports/${id}/generate`, { method: 'POST' });
+      toast.success('Relatório gerado!');
+      await fetchReports();
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error('Erro ao gerar relatório');
@@ -126,13 +110,9 @@ export default function ReportsPage() {
     if (!confirm('Excluir este relatório?')) return;
     
     try {
-      const response = await fetch(`/api/strategic/reports/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        await fetchReports();
-        toast.success('Relatório excluído');
-      } else {
-        toast.error('Erro ao excluir relatório');
-      }
+      await fetchAPI(`/api/strategic/reports/${id}`, { method: 'DELETE' });
+      await fetchReports();
+      toast.success('Relatório excluído');
     } catch (error) {
       console.error('Error deleting report:', error);
       toast.error('Erro ao excluir relatório');

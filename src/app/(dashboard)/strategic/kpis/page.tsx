@@ -27,6 +27,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StaggerContainer } from '@/components/ui/animated-wrappers';
+import { fetchAPI } from '@/lib/api';
 
 type KpiStatus = 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' | 'NO_DATA';
 type Perspective = 'FINANCIAL' | 'CUSTOMER' | 'INTERNAL' | 'LEARNING';
@@ -67,25 +68,22 @@ export default function KpisPage() {
     else setLoading(true);
     
     try {
-      const response = await fetch('/api/strategic/kpis?pageSize=100');
-      if (response.ok) {
-        const result = await response.json();
-        // Normalizar dados da API
-        const normalizedKpis: KpiData[] = (result.items || result.kpis || []).map((kpi: Record<string, unknown>) => ({
-          id: kpi.id as string,
-          code: kpi.code as string || `KPI-${String(kpi.id).slice(0, 4)}`,
-          name: kpi.name as string || kpi.description as string,
-          currentValue: Number(kpi.currentValue) || 0,
-          targetValue: Number(kpi.targetValue) || 100,
-          unit: kpi.unit as string || '%',
-          status: normalizeStatus(kpi.status as string),
-          trend: Number(kpi.trend) || 0,
-          history: (kpi.history as number[]) || generateMockHistory(),
-          variance: Number(kpi.variance) || Number(kpi.deviationPercent) || 0,
-          perspective: kpi.perspective as string || 'INTERNAL',
-        }));
-        setKpis(normalizedKpis);
-      }
+      const result = await fetchAPI<{ items?: Record<string, unknown>[]; kpis?: Record<string, unknown>[] }>('/api/strategic/kpis?pageSize=100');
+      // Normalizar dados da API
+      const normalizedKpis: KpiData[] = (result.items || result.kpis || []).map((kpi: Record<string, unknown>) => ({
+        id: kpi.id as string,
+        code: kpi.code as string || `KPI-${String(kpi.id).slice(0, 4)}`,
+        name: kpi.name as string || kpi.description as string,
+        currentValue: Number(kpi.currentValue) || 0,
+        targetValue: Number(kpi.targetValue) || 100,
+        unit: kpi.unit as string || '%',
+        status: normalizeStatus(kpi.status as string),
+        trend: Number(kpi.trend) || 0,
+        history: (kpi.history as number[]) || generateMockHistory(),
+        variance: Number(kpi.variance) || Number(kpi.deviationPercent) || 0,
+        perspective: kpi.perspective as string || 'INTERNAL',
+      }));
+      setKpis(normalizedKpis);
     } catch (error) {
       console.error('Erro ao carregar KPIs:', error);
     } finally {

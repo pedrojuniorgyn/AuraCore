@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { createProductSchema } from "@/lib/validators/product";
 import { z } from "zod";
+import { fetchAPI } from "@/lib/api";
 
 type ProductFormData = z.infer<typeof createProductSchema>;
 
@@ -36,19 +37,12 @@ export default function EditProductPage() {
       setIsLoading(true);
       const branchId = localStorage.getItem("auracore:current-branch") || "1";
 
-      const response = await fetch(`/api/products/${id}`, {
+      const data = await fetchAPI<ProductData>(`/api/products/${id}`, {
         headers: {
           "x-branch-id": branchId,
         },
       });
 
-      if (!response.ok) {
-        toast.error("Erro ao carregar produto");
-        router.push("/cadastros/produtos");
-        return;
-      }
-
-      const data = await response.json();
       console.log("✅ Product loaded:", data);
       setProduct(data);
     } catch (error) {
@@ -78,20 +72,13 @@ export default function EditProductPage() {
         version: product?.version || 1, // Inclui versão para Optimistic Lock
       };
 
-      const response = await fetch(`/api/products/${id}`, {
+      await fetchAPI(`/api/products/${id}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           "x-branch-id": branchId,
         },
-        body: JSON.stringify(cleanedData),
+        body: cleanedData,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Erro ao atualizar produto");
-        return;
-      }
 
       toast.success("Produto atualizado com sucesso!");
       router.push("/cadastros/produtos");

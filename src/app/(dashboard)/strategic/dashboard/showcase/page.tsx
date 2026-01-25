@@ -16,6 +16,7 @@ import {
   PlansCard,
   AIInsightsCard,
 } from '@/components/strategic/dashboard-showcase';
+import { fetchAPI } from '@/lib/api';
 
 // ============================================
 // TIPOS
@@ -99,23 +100,20 @@ export default function StrategicDashboardShowcasePage() {
 
     try {
       setIsLoading(true);
-      const response = await fetch('/api/strategic/dashboard/data', {
+      const result = await fetchAPI<{ healthScore?: number; previousHealthScore?: number; auroraInsight?: string }>('/api/strategic/dashboard/data', {
         signal: controller.signal,
       });
       
-      if (response.ok && isMountedRef.current) {
-        const result = await response.json();
-        // Mapear dados da API para o formato do dashboard
-        if (result.healthScore !== undefined) {
-          setData(prev => ({
-            ...prev,
-            healthScore: result.healthScore ?? prev.healthScore,
-            healthScoreTrend: result.previousHealthScore 
-              ? result.healthScore - result.previousHealthScore 
-              : prev.healthScoreTrend,
-            aiInsight: result.auroraInsight ?? prev.aiInsight,
-          }));
-        }
+      // Mapear dados da API para o formato do dashboard
+      if (isMountedRef.current && result.healthScore !== undefined) {
+        setData(prev => ({
+          ...prev,
+          healthScore: result.healthScore ?? prev.healthScore,
+          healthScoreTrend: typeof result.previousHealthScore === 'number'
+            ? (result.healthScore ?? 0) - result.previousHealthScore 
+            : prev.healthScoreTrend,
+          aiInsight: result.auroraInsight ?? prev.aiInsight,
+        }));
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {

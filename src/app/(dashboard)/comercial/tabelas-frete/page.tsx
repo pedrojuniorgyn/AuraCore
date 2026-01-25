@@ -32,6 +32,7 @@ import { CommercialAIWidget } from "@/components/commercial";
 import { Plus, Edit, Trash2, Table2, Route as RouteIcon } from "lucide-react";
 import { toast } from "sonner";
 import { StatusCellRenderer } from "@/lib/ag-grid/cell-renderers";
+import { fetchAPI } from "@/lib/api";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -166,8 +167,7 @@ export default function FreightTablesPage() {
 
   const fetchTables = async () => {
     try {
-      const response = await fetch("/api/commercial/freight-tables");
-      const result = await response.json();
+      const result = await fetchAPI<{ success: boolean; data: FreightTable[] }>("/api/commercial/freight-tables");
       if (result.success) {
         setTables(result.data);
       }
@@ -214,16 +214,11 @@ export default function FreightTablesPage() {
     if (!confirm("Tem certeza que deseja excluir esta tabela?")) return;
 
     try {
-      const response = await fetch(`/api/commercial/freight-tables/${id}`, {
+      await fetchAPI(`/api/commercial/freight-tables/${id}`, {
         method: "DELETE",
       });
-
-      if (response.ok) {
-        toast.success("Tabela excluída!");
-        fetchTables();
-      } else {
-        toast.error("Erro ao excluir");
-      }
+      toast.success("Tabela excluída!");
+      fetchTables();
     } catch (error) {
       console.error("Erro ao excluir:", error);
       toast.error("Erro ao excluir tabela");
@@ -234,25 +229,18 @@ export default function FreightTablesPage() {
     e.preventDefault();
 
     try {
-      const response = await fetch("/api/commercial/freight-tables", {
+      await fetchAPI("/api/commercial/freight-tables", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           ...formData,
           routes,
           generalities,
-        }),
+        },
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Tabela criada com sucesso!");
-        setIsDialogOpen(false);
-        fetchTables();
-      } else {
-        toast.error(result.error || "Erro ao salvar");
-      }
+      toast.success("Tabela criada com sucesso!");
+      setIsDialogOpen(false);
+      fetchTables();
     } catch (error) {
       console.error("Erro ao salvar:", error);
       toast.error("Erro ao salvar tabela");

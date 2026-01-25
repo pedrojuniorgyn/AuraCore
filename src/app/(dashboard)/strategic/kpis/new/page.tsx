@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { FadeIn } from '@/components/ui/animated-wrappers';
+import { fetchAPI } from '@/lib/api';
 
 const UNITS = [
   { value: 'PERCENTAGE', label: 'Percentual (%)', symbol: '%' },
@@ -72,11 +73,8 @@ export default function NewKPIPage() {
   useEffect(() => {
     const fetchGoals = async () => {
       try {
-        const response = await fetch('/api/strategic/goals?pageSize=100');
-        if (response.ok) {
-          const data = await response.json();
-          setGoals(data.items || []);
-        }
+        const data = await fetchAPI<{ items: GoalOption[] }>('/api/strategic/goals?pageSize=100');
+        setGoals(data.items || []);
       } catch (error) {
         console.error('Erro ao carregar objetivos:', error);
       }
@@ -95,10 +93,9 @@ export default function NewKPIPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/strategic/kpis', {
+      await fetchAPI('/api/strategic/kpis', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           code: formData.code.trim().toUpperCase(),
           name: formData.name.trim(),
           description: formData.description?.trim(),
@@ -111,13 +108,8 @@ export default function NewKPIPage() {
           goalId: formData.goalId || undefined,
           dataSource: formData.dataSource,
           sourceQuery: formData.formula || undefined, // Map formula -> sourceQuery
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao criar KPI');
-      }
 
       toast.success('KPI criado com sucesso!');
       router.push('/strategic/kpis');

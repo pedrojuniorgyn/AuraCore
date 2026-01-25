@@ -14,6 +14,7 @@ import { Scale, CheckCircle, XCircle, AlertTriangle, Target, Plus, Upload, FileT
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FiscalAIWidget } from "@/components/fiscal";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -100,34 +101,34 @@ export default function MatrizTributariaPage() {
 
   const handleSimulate = async () => {
     try {
-      const response = await fetch('/api/fiscal/simulate', {
+      const data = await fetchAPI<{ success: boolean; error?: string; result?: SimResult }>('/api/fiscal/simulate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           ufOrigin: 'SP',
           ufDestination: 'RJ',
           cargoType: 'GERAL',
           isContributor: true,
           baseValue: 10000
-        })
+        }
       });
-      const data = await response.json();
       if (data.success && data.result) {
         alert(`✅ Simulação Fiscal\n\nCST: ${data.result.cst}\nICMS: ${data.result.icms}% = R$ ${data.result.icmsValue?.toFixed(2)}\nFCP: ${data.result.fcp}% = R$ ${data.result.fcpValue?.toFixed(2)}\nTotal: R$ ${data.result.totalTax?.toFixed(2)}\n\nBase Legal: ${data.result.legal}`);
       } else {
         alert('❌ ' + (data.error || 'Erro na simulação'));
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao simular');
     }
   };
 
   const handleExport = async () => {
     try {
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'matrix', format: 'csv' })
+        body: JSON.stringify({ type: 'matrix', format: 'csv' }),
+        credentials: 'include',
       });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

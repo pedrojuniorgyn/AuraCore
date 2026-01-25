@@ -40,6 +40,7 @@ import {
   type ActionPlanItem 
 } from '@/components/strategic/ActionPlanKanban';
 import type { ActionPlanStatus } from '@/components/strategic/ActionPlanCard';
+import { fetchAPI } from '@/lib/api';
 
 // Tipos compartilhados (Single Source of Truth)
 import type { 
@@ -59,39 +60,36 @@ export default function ActionPlansPage() {
   const fetchActionPlans = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/action-plans?pageSize=200');
-      if (response.ok) {
-        const data: ActionPlansApiResponse = await response.json();
-        // Filtrar DRAFT (não exibido no Kanban) e mapear para ActionPlanItem
-        const kanbanStatuses: ActionPlanStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'CANCELLED'];
-        const mapped: ActionPlanItem[] = data.items
-          .filter((item) => kanbanStatuses.includes(item.status as ActionPlanStatus))
-          .map((item: ActionPlanApiItem) => {
-            const daysUntilDue = Math.ceil(
-              (new Date(item.whenEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-            );
-            return {
-              id: item.id,
-              code: item.code,
-              what: item.what,
-              who: item.who,
-              whereLocation: item.whereLocation,
-              whenStart: item.whenStart,
-              whenEnd: item.whenEnd,
-              how: item.how,
-              howMuchAmount: item.howMuchAmount,
-              howMuchCurrency: item.howMuchCurrency,
-              pdcaCycle: item.pdcaCycle as ActionPlanItem['pdcaCycle'],
-              completionPercent: item.completionPercent,
-              priority: item.priority as ActionPlanItem['priority'],
-              status: item.status as ActionPlanStatus, // Garantido pelo filter acima
-              isOverdue: item.isOverdue,
-              daysUntilDue,
-              followUpCount: 0, // Contagem de follow-ups (aguardando endpoint dedicado)
-            };
-          });
-        setPlans(mapped);
-      }
+      const data = await fetchAPI<ActionPlansApiResponse>('/api/strategic/action-plans?pageSize=200');
+      // Filtrar DRAFT (não exibido no Kanban) e mapear para ActionPlanItem
+      const kanbanStatuses: ActionPlanStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'CANCELLED'];
+      const mapped: ActionPlanItem[] = data.items
+        .filter((item) => kanbanStatuses.includes(item.status as ActionPlanStatus))
+        .map((item: ActionPlanApiItem) => {
+          const daysUntilDue = Math.ceil(
+            (new Date(item.whenEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          );
+          return {
+            id: item.id,
+            code: item.code,
+            what: item.what,
+            who: item.who,
+            whereLocation: item.whereLocation,
+            whenStart: item.whenStart,
+            whenEnd: item.whenEnd,
+            how: item.how,
+            howMuchAmount: item.howMuchAmount,
+            howMuchCurrency: item.howMuchCurrency,
+            pdcaCycle: item.pdcaCycle as ActionPlanItem['pdcaCycle'],
+            completionPercent: item.completionPercent,
+            priority: item.priority as ActionPlanItem['priority'],
+            status: item.status as ActionPlanStatus, // Garantido pelo filter acima
+            isOverdue: item.isOverdue,
+            daysUntilDue,
+            followUpCount: 0, // Contagem de follow-ups (aguardando endpoint dedicado)
+          };
+        });
+      setPlans(mapped);
     } catch (error) {
       console.error('Erro ao carregar action plans:', error);
     } finally {
@@ -135,15 +133,10 @@ export default function ActionPlansPage() {
     newStatus: ActionPlanStatus
   ) => {
     try {
-      const response = await fetch(`/api/strategic/action-plans/${planId}/status`, {
+      await fetchAPI(`/api/strategic/action-plans/${planId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: { status: newStatus },
       });
-      
-      if (!response.ok) {
-        throw new Error('Falha ao atualizar status');
-      }
       
       await fetchActionPlans();
     } catch (error) {

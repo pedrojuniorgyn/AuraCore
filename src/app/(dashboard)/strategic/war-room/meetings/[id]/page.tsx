@@ -34,6 +34,7 @@ import {
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { fetchAPI } from '@/lib/api';
 
 // Tipos compartilhados (Single Source of Truth)
 import type { 
@@ -89,30 +90,27 @@ export default function MeetingDetailPage({
     setLoading(true);
     try {
       // Busca meeting da lista (endpoint de detalhe: GET /api/strategic/war-room/meetings/[id])
-      const response = await fetch('/api/strategic/war-room/meetings?pageSize=100');
-      if (response.ok) {
-        const data: MeetingsApiResponse = await response.json();
-        const found: MeetingListItem | undefined = data.items.find((m) => m.id === id);
-        if (found) {
-          // Construir MeetingDetail a partir de MeetingListItem
-          // found já tem facilitatorName (vem da API via lookup)
-          const meetingDetail: MeetingDetail = {
-            ...found,
-            // Campos adicionais para detalhe (mock até API de detalhe estar disponível)
-            participants: [],
-            agendaItems: [
-              { id: '1', title: 'Abertura e contextualização', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 1 },
-              { id: '2', title: 'Revisão de KPIs críticos', presenter: 'Analista', duration: 30, isCompleted: false, order: 2 },
-              { id: '3', title: 'Status dos ciclos PDCA', presenter: 'Gerente', duration: 20, isCompleted: false, order: 3 },
-              { id: '4', title: 'Planos de ação atrasados', presenter: 'Coordenador', duration: 20, isCompleted: false, order: 4 },
-              { id: '5', title: 'Encerramento e próximos passos', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 5 },
-            ],
-            decisions: [],
-          };
-          setMeeting(meetingDetail);
-        } else {
-          router.push('/strategic/war-room/meetings');
-        }
+      const data = await fetchAPI<MeetingsApiResponse>('/api/strategic/war-room/meetings?pageSize=100');
+      const found: MeetingListItem | undefined = data.items.find((m) => m.id === id);
+      if (found) {
+        // Construir MeetingDetail a partir de MeetingListItem
+        // found já tem facilitatorName (vem da API via lookup)
+        const meetingDetail: MeetingDetail = {
+          ...found,
+          // Campos adicionais para detalhe (mock até API de detalhe estar disponível)
+          participants: [],
+          agendaItems: [
+            { id: '1', title: 'Abertura e contextualização', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 1 },
+            { id: '2', title: 'Revisão de KPIs críticos', presenter: 'Analista', duration: 30, isCompleted: false, order: 2 },
+            { id: '3', title: 'Status dos ciclos PDCA', presenter: 'Gerente', duration: 20, isCompleted: false, order: 3 },
+            { id: '4', title: 'Planos de ação atrasados', presenter: 'Coordenador', duration: 20, isCompleted: false, order: 4 },
+            { id: '5', title: 'Encerramento e próximos passos', presenter: 'Facilitador', duration: 10, isCompleted: false, order: 5 },
+          ],
+          decisions: [],
+        };
+        setMeeting(meetingDetail);
+      } else {
+        router.push('/strategic/war-room/meetings');
       }
     } catch (error) {
       console.error('Erro ao carregar reunião:', error);

@@ -5,6 +5,7 @@ import { Plus, PackageSearch, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { WmsAIWidget } from "@/components/wms";
+import { fetchAPI } from "@/lib/api";
 
 interface InventoryCount {
   id: number;
@@ -43,8 +44,7 @@ export default function InventoryPage() {
 
   const fetchCounts = useCallback(async () => {
     try {
-      const res = await fetch("/api/wms/inventory/counts");
-      const data = await res.json();
+      const data = await fetchAPI<{ success: boolean; counts: InventoryCount[] }>("/api/wms/inventory/counts");
       if (data.success) {
         setCounts(data.counts);
       }
@@ -68,13 +68,10 @@ export default function InventoryPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/wms/inventory/counts", {
+      const data = await fetchAPI<{ success: boolean; error?: string; count: { count_number: string } }>("/api/wms/inventory/counts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
       });
-
-      const data = await res.json();
 
       if (data.success) {
         toast({

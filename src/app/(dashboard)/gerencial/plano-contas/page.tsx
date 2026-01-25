@@ -20,6 +20,7 @@ import {
   ActionCellRenderer
 } from "@/components/ag-grid/renderers/aurora-renderers";
 import { Plus, FileText, BookOpen, Settings } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -49,8 +50,7 @@ export default function GestaoPCGPage() {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const response = await fetch('/api/management/chart-accounts');
-        const result = await response.json();
+        const result = await fetchAPI<{ success: boolean; data: ChartAccount[] }>('/api/management/chart-accounts');
         
         if (result.success) {
           setAccounts(result.data);

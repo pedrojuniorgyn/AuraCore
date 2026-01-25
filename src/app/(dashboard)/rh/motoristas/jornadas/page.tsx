@@ -13,6 +13,7 @@ import { AlertTriangle, Clock, DollarSign, Moon, FileDown, Settings, Edit, Trash
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { HRAIWidget } from "@/components/hr";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -56,11 +57,8 @@ export default function JornadasPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch('/api/hr/driver-journey');
-      if (response.ok) {
-        const data = await response.json();
-        setJourneys(data.data || []);
-      }
+      const data = await fetchAPI<{ data: Journey[] }>('/api/hr/driver-journey');
+      setJourneys(data.data || []);
     } catch (error) {
       console.error('Erro ao carregar jornadas:', error);
     } finally {
@@ -71,19 +69,17 @@ export default function JornadasPage() {
   const handleProcessJourneys = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/hr/process-payroll', {
+      const data = await fetchAPI<{ success: boolean; error?: string; totalPayroll?: number }>('/api/hr/process-payroll', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ period: new Date().toISOString() })
+        body: { period: new Date().toISOString() }
       });
-      const data = await response.json();
       if (data.success) {
         alert(`✅ Jornadas processadas!\nTotal: R$ ${data.totalPayroll?.toFixed(2) || '0.00'}`);
         await loadData();
       } else {
         alert('❌ Erro: ' + data.error);
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao processar');
     } finally {
       setLoading(false);
@@ -100,10 +96,12 @@ export default function JornadasPage() {
 
   const handleExport = async () => {
     try {
+      // Retorna blob, não pode usar fetchAPI
       const response = await fetch('/api/reports/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'hr', format: 'csv' })
+        body: JSON.stringify({ type: 'hr', format: 'csv' }),
+        credentials: 'include',
       });
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -112,7 +110,7 @@ export default function JornadasPage() {
       a.download = `jornadas_${Date.now()}.csv`;
       a.click();
       alert('✅ Relatório exportado!');
-    } catch (error) {
+    } catch {
       alert('❌ Erro ao exportar');
     }
   };

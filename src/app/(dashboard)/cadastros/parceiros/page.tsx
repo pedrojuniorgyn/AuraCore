@@ -22,6 +22,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { GridPattern } from "@/components/ui/animated-background";
 import { Users, UserCheck, Truck as TruckIcon, CheckCircle } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -49,18 +50,12 @@ export default function BusinessPartnersPage() {
       setIsLoading(true);
       const branchId = localStorage.getItem("auracore:current-branch") || "1";
       
-      const response = await fetch("/api/business-partners?_start=0&_end=1000", {
+      const result = await fetchAPI<{ data: Partner[] }>("/api/business-partners?_start=0&_end=1000", {
         headers: {
           "x-branch-id": branchId,
         },
       });
 
-      if (!response.ok) {
-        toast.error("Erro ao carregar parceiros");
-        return;
-      }
-
-      const result = await response.json();
       setRowData(result.data || []);
     } catch (error) {
       console.error("Erro ao buscar parceiros:", error);

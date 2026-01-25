@@ -9,6 +9,7 @@ import { NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { AIInsightWidget } from "@/components/ai";
+import { fetchAPI } from "@/lib/api";
 
 interface BankTransaction {
   id: number;
@@ -32,9 +33,8 @@ export default function BankReconciliationPage() {
   const loadTransactions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/financial/bank-transactions?bankAccountId=${bankAccountId}&limit=200`);
-      const data = await res.json();
-      if (!res.ok || !data.success) {
+      const data = await fetchAPI<{ success: boolean; data: BankTransaction[]; error?: string }>(`/api/financial/bank-transactions?bankAccountId=${bankAccountId}&limit=200`);
+      if (!data.success) {
         throw new Error(data?.error ?? "Falha ao listar transações");
       }
       setTransactions(data.data || []);
@@ -56,9 +56,11 @@ export default function BankReconciliationPage() {
       formData.append("file", file);
       formData.append("bankAccountId", String(bankAccountId)); // TODO: trocar por seleção de conta
 
+      // FormData não pode usar fetchAPI (que força JSON)
       const res = await fetch("/api/financial/bank-transactions/import-ofx", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -75,27 +77,49 @@ export default function BankReconciliationPage() {
 
         // Poll simples (best-effort) para dar feedback e atualizar lista
         const startedAt = Date.now();
+        let errorCount = 0;
+        const maxErrors = 3;
+        
         while (Date.now() - startedAt < 60_000) {
           await new Promise((r) => setTimeout(r, 2000));
-          const jobRes = await fetch(`/api/documents/jobs/${jobId}`, { cache: "no-store" });
-          const jobJson = await jobRes.json().catch(() => null);
-          const status = jobJson?.job?.status as string | undefined;
-          if (status === "SUCCEEDED") {
-            const result = jobJson?.job?.resultJson ? JSON.parse(jobJson.job.resultJson) : null;
-            toast({
-              title: "Importação concluída",
-              description: `${result?.inserted ?? 0} transações importadas`,
-            });
-            await loadTransactions();
-            break;
-          }
-          if (status === "FAILED") {
-            toast({
-              title: "Importação falhou",
-              description: jobJson?.job?.lastError ?? "Falha ao importar OFX",
-              variant: "destructive",
-            });
-            break;
+          
+          try {
+            const jobJson = await fetchAPI<{ job: { status: string; lastError?: string; resultJson?: string } }>(`/api/documents/jobs/${jobId}`);
+            const status = jobJson?.job?.status as string | undefined;
+            
+            // Reset error count on successful request
+            errorCount = 0;
+            
+            if (status === "SUCCEEDED") {
+              const result = jobJson?.job?.resultJson ? JSON.parse(jobJson.job.resultJson) : null;
+              toast({
+                title: "Importação concluída",
+                description: `${result?.inserted ?? 0} transações importadas`,
+              });
+              await loadTransactions();
+              break;
+            }
+            if (status === "FAILED") {
+              toast({
+                title: "Importação falhou",
+                description: jobJson?.job?.lastError ?? "Falha ao importar OFX",
+                variant: "destructive",
+              });
+              break;
+            }
+          } catch (pollError) {
+            errorCount++;
+            console.error(`Erro ao verificar status do job (${errorCount}/${maxErrors}):`, pollError);
+            
+            if (errorCount >= maxErrors) {
+              toast({
+                title: "Erro",
+                description: "Falha ao verificar status da importação. Verifique em Configurações → Document Pipeline.",
+                variant: "destructive",
+              });
+              break;
+            }
+            // Continua tentando se ainda não atingiu maxErrors
           }
         }
       } else {
@@ -120,13 +144,11 @@ export default function BankReconciliationPage() {
 
   const reconcile = async (txId: number) => {
     try {
-      const res = await fetch(`/api/financial/bank-transactions/${txId}/reconcile`, {
+      const data = await fetchAPI<{ success: boolean; error?: string }>(`/api/financial/bank-transactions/${txId}/reconcile`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reconciled: "S" }),
+        body: { reconciled: "S" },
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data?.error ?? "Falha ao conciliar");
+      if (!data.success) throw new Error(data?.error ?? "Falha ao conciliar");
       await loadTransactions();
     } catch (e) {
       console.error(e);

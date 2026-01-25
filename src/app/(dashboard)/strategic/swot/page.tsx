@@ -46,6 +46,7 @@ import {
   DialogDescription 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { fetchAPI } from '@/lib/api';
 
 type SwotQuadrant = 'STRENGTH' | 'WEAKNESS' | 'OPPORTUNITY' | 'THREAT';
 
@@ -176,22 +177,16 @@ export default function SwotMatrixPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/strategic/swot', {
+      await fetchAPI('/api/strategic/swot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           quadrant: selectedQuadrant,
           title: newItemTitle.trim(),
           description: newItemDescription.trim(),
           impactScore: newItemImpact,
           probabilityScore: selectedQuadrant === 'OPPORTUNITY' || selectedQuadrant === 'THREAT' ? 3 : 0,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao adicionar item');
-      }
 
       toast.success('Item adicionado com sucesso!');
       setIsAddModalOpen(false);
@@ -208,11 +203,9 @@ export default function SwotMatrixPage() {
     if (!confirm('Tem certeza que deseja excluir este item?')) return;
 
     try {
-      const response = await fetch(`/api/strategic/swot/${item.id}`, {
+      await fetchAPI(`/api/strategic/swot/${item.id}`, {
         method: 'DELETE',
       });
-
-      if (!response.ok) throw new Error('Erro ao excluir item');
 
       toast.success('Item excluído');
       fetchSwotData();
@@ -224,12 +217,9 @@ export default function SwotMatrixPage() {
   const fetchSwotData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/swot?pageSize=100');
-      if (response.ok) {
-        const data = await response.json();
-        setItems(data.items);
-        setSummary(data.summary);
-      }
+      const data = await fetchAPI<{ items: SwotItem[]; summary: SwotSummary }>('/api/strategic/swot?pageSize=100');
+      setItems(data.items);
+      setSummary(data.summary);
     } catch (error) {
       console.error('Erro ao carregar SWOT:', error);
     } finally {

@@ -15,6 +15,7 @@ import {
   Bar,
   Line,
 } from "recharts";
+import { fetchAPI } from "@/lib/api";
 
 export default function FluxoCaixaPage() {
   const [data, setData] = useState<{ income: Array<{ date: string; amount: number }>; expenses: Array<{ date: string; amount: number }> } | null>(null);
@@ -27,8 +28,7 @@ export default function FluxoCaixaPage() {
 
   const loadData = async () => {
     try {
-      const response = await fetch(`/api/financial/cash-flow?monthsAhead=${monthsAhead}`);
-      const result = await response.json();
+      const result = await fetchAPI<{ data: { income: Array<{ date: string; amount: number }>; expenses: Array<{ date: string; amount: number }> } }>(`/api/financial/cash-flow?monthsAhead=${monthsAhead}`);
       setData(result.data);
     } catch (error) {
       console.error("Erro:", error);

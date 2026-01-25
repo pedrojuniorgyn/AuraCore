@@ -8,6 +8,7 @@ import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ArrowLeft, Save, FileText, Trash2 } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 interface FiscalDocument {
   id: number;
@@ -131,19 +132,13 @@ export default function EditarDocumentoPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const response = await fetch(`/api/fiscal/documents/${documentId}`, {
+      await fetchAPI(`/api/fiscal/documents/${documentId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formData,
       });
 
-      if (response.ok) {
-        alert("Documento atualizado com sucesso!");
-        router.push("/fiscal/documentos");
-      } else {
-        const error = await response.json();
-        alert(`Erro: ${error.error}`);
-      }
+      alert("Documento atualizado com sucesso!");
+      router.push("/fiscal/documentos");
     } catch (error) {
       console.error("Erro ao salvar:", error);
       alert("Erro ao salvar documento");
@@ -154,10 +149,9 @@ export default function EditarDocumentoPage() {
 
   const handleItemUpdate = async (itemId: number, field: string, value: unknown) => {
     try {
-      await fetch(`/api/fiscal/documents/items/${itemId}`, {
+      await fetchAPI(`/api/fiscal/documents/items/${itemId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
+        body: { [field]: value },
       });
 
       // Atualizar estado local

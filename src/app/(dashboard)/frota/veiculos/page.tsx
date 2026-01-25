@@ -16,6 +16,7 @@ import { GridPattern } from "@/components/ui/animated-background";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { LicensePlate } from "@/components/fleet/LicensePlate";
 import { getStatusConfig } from "@/lib/utils/status-colors";
+import { fetchAPI } from "@/lib/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,8 +59,7 @@ export default function VehiclesPage() {
     queryFn: async () => {
       let url = "/api/fleet/vehicles";
       if (filterStatus) url += `&status=${filterStatus}`;
-      const res = await fetch(url);
-      const json = await res.json();
+      const json = await fetchAPI<{ data: IVehicle[] }>(url);
       return json.data || [];
     },
   });
@@ -78,15 +78,9 @@ export default function VehiclesPage() {
     if (!deleteId) return;
 
     try {
-      const res = await fetch(`/api/fleet/vehicles/${deleteId}`, {
+      await fetchAPI(`/api/fleet/vehicles/${deleteId}`, {
         method: "DELETE",
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        toast.error(error.error || "Erro ao excluir veículo");
-        return;
-      }
 
       toast.success("Veículo excluído com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["vehicles"] });

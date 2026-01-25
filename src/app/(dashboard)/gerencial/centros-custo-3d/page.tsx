@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { ActionCellRenderer, BooleanCellRenderer } from "@/components/ag-grid/renderers/aurora-renderers";
 import { Plus, Layers, Target, Truck, Building2 } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
@@ -58,8 +59,7 @@ export default function GestaoCC3DPage() {
 
   const fetchCostCenters = async () => {
     try {
-      const response = await fetch('/api/cost-centers/3d');
-      const result = await response.json();
+      const result = await fetchAPI<{ success: boolean; data: CostCenter3D[] }>('/api/cost-centers/3d');
       if (result.success) {
         setCostCenters(result.data || []);
       }

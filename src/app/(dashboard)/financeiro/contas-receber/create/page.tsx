@@ -9,6 +9,7 @@ import { FadeIn } from "@/components/ui/animated-wrappers";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { fetchAPI } from "@/lib/api";
 
 interface BusinessPartner {
   id: number;
@@ -53,36 +54,27 @@ export default function CreateReceivablePage() {
 
   useEffect(() => {
     const loadData = async () => {
-    try {
-      // Carregar clientes
-      const partnersRes = await fetch("/api/business-partners?type=CLIENT");
-      if (partnersRes.ok) {
-        const data = await partnersRes.json();
-        setPartners(Array.isArray(data) ? data : (data.data || []));
-      }
+      try {
+        // Carregar clientes
+        const partnersData = await fetchAPI<BusinessPartner[] | { data: BusinessPartner[] }>("/api/business-partners?type=CLIENT");
+        setPartners(Array.isArray(partnersData) ? partnersData : (partnersData.data || []));
 
-      // Carregar categorias
-      const categoriesRes = await fetch("/api/financial/categories?type=INCOME");
-      if (categoriesRes.ok) {
-        const data = await categoriesRes.json();
-        setCategories(Array.isArray(data) ? data : (data.data || []));
-      }
+        // Carregar categorias
+        const categoriesData = await fetchAPI<FinancialCategory[] | { data: FinancialCategory[] }>("/api/financial/categories?type=INCOME");
+        setCategories(Array.isArray(categoriesData) ? categoriesData : (categoriesData.data || []));
 
-      // Carregar plano de contas
-      const accountsRes = await fetch("/api/financial/chart-of-accounts?type=REVENUE&analytical=true");
-      if (accountsRes.ok) {
-        const data = await accountsRes.json();
-        setAccounts(Array.isArray(data) ? data : (data.data || []));
+        // Carregar plano de contas
+        const accountsData = await fetchAPI<ChartAccount[] | { data: ChartAccount[] }>("/api/financial/chart-of-accounts?type=REVENUE&analytical=true");
+        setAccounts(Array.isArray(accountsData) ? accountsData : (accountsData.data || []));
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        toast({
+          title: "Aviso",
+          description: "Erro ao carregar dados. Tente recarregar a página.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast({
-        title: "Aviso",
-        description: "Erro ao carregar dados. Tente recarregar a página.",
-        variant: "destructive",
-      });
-    }
-  };
+    };
 
     loadData();
   }, [toast]);
@@ -119,15 +111,10 @@ export default function CreateReceivablePage() {
       }
 
       for (const receivable of receivables) {
-        const res = await fetch("/api/financial/receivables", {
+        await fetchAPI("/api/financial/receivables", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(receivable),
+          body: receivable,
         });
-
-        if (!res.ok) {
-          throw new Error("Erro ao criar conta a receber");
-        }
       }
 
       toast({

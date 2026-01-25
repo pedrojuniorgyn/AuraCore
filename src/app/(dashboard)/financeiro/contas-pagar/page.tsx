@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { AIInsightWidget } from "@/components/ai";
+import { fetchAPI } from "@/lib/api";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -83,11 +84,8 @@ function DetailCellRenderer(props: IDetailCellRendererParams) {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch(`/api/financial/payables/${props.data.id}/items`);
-        if (response.ok) {
-          const data = await response.json();
-          setItems(data);
-        }
+        const data = await fetchAPI<PayableItem[]>(`/api/financial/payables/${props.data.id}/items`);
+        setItems(data);
       } catch (error) {
         console.error("Error fetching items:", error);
       } finally {
@@ -188,11 +186,8 @@ export default function ContasPagarPage() {
   // Buscar KPIs separadamente (não depende do grid)
   const fetchKPIs = useCallback(async () => {
     try {
-      const response = await fetch("/api/financial/payables/summary");
-      if (response.ok) {
-        const data = await response.json();
-        setKpis(data);
-      }
+      const data = await fetchAPI<KPIs>("/api/financial/payables/summary");
+      setKpis(data);
     } catch (error) {
       console.error("Error fetching KPIs:", error);
     }
@@ -206,15 +201,9 @@ export default function ContasPagarPage() {
   // Handler para excluir
   const handleDelete = useCallback(async (id: number) => {
     try {
-      const response = await fetch(`/api/financial/payables/${id}`, {
+      await fetchAPI(`/api/financial/payables/${id}`, {
         method: "DELETE",
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        toast.error(error.error || "Erro ao excluir conta a pagar");
-        return;
-      }
 
       toast.success("Conta a pagar excluída com sucesso!");
       // Refresh grid e KPIs

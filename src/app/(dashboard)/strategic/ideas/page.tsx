@@ -29,6 +29,7 @@ import {
   DialogFooter,
   DialogDescription 
 } from '@/components/ui/dialog';
+import { fetchAPI } from '@/lib/api';
 
 interface Idea {
   id: string;
@@ -92,11 +93,8 @@ export default function IdeasPage() {
       const url = filterStatus === 'all' 
         ? '/api/strategic/ideas?pageSize=100'
         : `/api/strategic/ideas?pageSize=100&status=${filterStatus}`;
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setIdeas(data.items || []);
-      }
+      const data = await fetchAPI<{ items: Idea[] }>(url);
+      setIdeas(data.items || []);
     } catch (error) {
       console.error('Erro ao carregar ideias:', error);
       toast.error('Erro ao carregar ideias');
@@ -117,22 +115,16 @@ export default function IdeasPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/strategic/ideas', {
+      await fetchAPI('/api/strategic/ideas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           title: newIdea.title.trim(),
           description: newIdea.description.trim(),
           sourceType: newIdea.sourceType,
           importance: newIdea.importance,
           department: newIdea.department,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro ao submeter ideia');
-      }
 
       toast.success('Ideia submetida com sucesso!');
       setIsModalOpen(false);
@@ -147,11 +139,9 @@ export default function IdeasPage() {
 
   const handleApprove = async (idea: Idea) => {
     try {
-      const response = await fetch(`/api/strategic/ideas/${idea.id}/approve`, {
+      await fetchAPI(`/api/strategic/ideas/${idea.id}/approve`, {
         method: 'POST',
       });
-
-      if (!response.ok) throw new Error('Erro ao aprovar ideia');
 
       toast.success('Ideia aprovada!');
       fetchIdeas();
@@ -162,11 +152,9 @@ export default function IdeasPage() {
 
   const handleReject = async (idea: Idea) => {
     try {
-      const response = await fetch(`/api/strategic/ideas/${idea.id}/reject`, {
+      await fetchAPI(`/api/strategic/ideas/${idea.id}/reject`, {
         method: 'POST',
       });
-
-      if (!response.ok) throw new Error('Erro ao rejeitar ideia');
 
       toast.success('Ideia rejeitada');
       fetchIdeas();

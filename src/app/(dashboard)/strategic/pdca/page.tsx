@@ -33,6 +33,7 @@ import { RippleButton } from '@/components/ui/ripple-button';
 import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 import { PdcaKanban, type KanbanColumn, type PdcaPhase } from '@/components/strategic/PdcaKanban';
+import { fetchAPI } from '@/lib/api';
 
 interface KanbanApiResponse {
   columns: Array<{
@@ -87,12 +88,9 @@ export default function PdcaKanbanPage() {
   const fetchKanbanData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/strategic/action-plans/kanban');
-      if (response.ok) {
-        const data: KanbanApiResponse = await response.json();
-        setColumns(mapApiToKanban(data.columns));
-        setStats(data.stats);
-      }
+      const data = await fetchAPI<KanbanApiResponse>('/api/strategic/action-plans/kanban');
+      setColumns(mapApiToKanban(data.columns));
+      setStats(data.stats);
     } catch (error) {
       console.error('Erro ao carregar kanban PDCA:', error);
     } finally {
@@ -107,17 +105,12 @@ export default function PdcaKanbanPage() {
   ) => {
     try {
       // Chamar API para avançar fase PDCA
-      const response = await fetch(`/api/strategic/action-plans/${cardId}`, {
+      await fetchAPI(`/api/strategic/action-plans/${cardId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           notes: `Movido de ${fromPhase} para ${toPhase}`,
-        }),
+        },
       });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar fase');
-      }
 
       // Recarregar dados
       await fetchKanbanData();

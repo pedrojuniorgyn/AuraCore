@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 import { WmsAIWidget } from "@/components/wms";
+import { fetchAPI } from "@/lib/api";
 
 interface Location {
   location: {
@@ -25,8 +26,7 @@ export default function WmsEnderecosPage() {
 
   const loadLocations = async () => {
     try {
-      const response = await fetch("/api/wms/locations");
-      const data = await response.json();
+      const data = await fetchAPI<{ data: Location[] }>("/api/wms/locations");
       setLocations(data.data || []);
     } catch (error) {
       console.error("Erro:", error);

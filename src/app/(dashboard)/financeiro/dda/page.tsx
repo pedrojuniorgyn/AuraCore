@@ -18,6 +18,7 @@ import {
   AlertCircle,
   type LucideIcon,
 } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 interface DDADebit {
   id: number;
@@ -46,8 +47,7 @@ export default function DDAPage() {
   const loadDebits = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/btg/dda/debits");
-      const data = await response.json();
+      const data = await fetchAPI<{ success: boolean; debits: DDADebit[] }>("/api/btg/dda/debits");
 
       if (data.success) {
         setDebits(data.debits);
@@ -84,11 +84,9 @@ export default function DDAPage() {
         description: "Buscando débitos do BTG",
       });
 
-      const response = await fetch("/api/btg/dda/sync", {
+      const data = await fetchAPI<{ success: boolean; error?: string; stats: { debits: number } }>("/api/btg/dda/sync", {
         method: "POST",
       });
-
-      const data = await response.json();
 
       if (data.success) {
         toast({

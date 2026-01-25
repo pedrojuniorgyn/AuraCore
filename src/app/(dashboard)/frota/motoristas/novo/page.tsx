@@ -8,6 +8,7 @@ import { PageTransition, FadeIn } from "@/components/ui/animated-wrappers";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { RippleButton } from "@/components/ui/ripple-button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { fetchAPI } from "@/lib/api";
 
 export default function NovoMotoristaPage() {
   const router = useRouter();
@@ -31,21 +32,15 @@ export default function NovoMotoristaPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/fleet/drivers", {
+      await fetchAPI("/api/fleet/drivers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           ...formData,
-        }),
+        },
       });
 
-      if (response.ok) {
-        toast.success("Motorista cadastrado com sucesso!");
-        router.push("/frota/motoristas");
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Erro ao cadastrar motorista");
-      }
+      toast.success("Motorista cadastrado com sucesso!");
+      router.push("/frota/motoristas");
     } catch (error) {
       console.error("Erro ao cadastrar motorista:", error);
       toast.error("Erro ao cadastrar motorista");

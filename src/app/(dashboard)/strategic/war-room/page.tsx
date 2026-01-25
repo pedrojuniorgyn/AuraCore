@@ -19,6 +19,7 @@ import { WeeklyTrendChart } from '@/components/strategic/WeeklyTrendChart';
 import { AuroraInsightCard } from '@/components/strategic/AuroraInsightCard';
 import { AIInsightWidget } from '@/components/ai';
 import { VoiceChatPanel } from '@/components/voice';
+import { fetchAPI } from '@/lib/api';
 
 interface WarRoomData {
   healthScore: number;
@@ -64,35 +65,30 @@ export default function WarRoomPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch('/api/strategic/war-room/dashboard');
-      if (response.ok) {
-        const result = await response.json();
-        // Normalizar dados da API
-        setData({
-          healthScore: result.healthScore ?? EMPTY_DATA.healthScore,
-          previousHealthScore: result.previousHealthScore,
-          alerts: result.criticalKpis?.map((k: Record<string, unknown>, i: number) => ({
-            id: String(k.id || i),
-            type: 'CRITICAL' as const,
-            title: k.name as string || 'KPI Crítico',
-            description: `Variação: ${k.variance}%`,
-            metric: { current: k.currentValue as number, target: k.targetValue as number, unit: k.unit as string || '%' },
-            kpiId: k.id as string,
-          })) || EMPTY_DATA.alerts,
-          perspectives: result.perspectives || EMPTY_DATA.perspectives,
-          weeklyTrend: result.weeklyTrend || EMPTY_DATA.weeklyTrend,
-          priorityActions: result.overduePlans?.map((p: Record<string, unknown>) => ({
-            id: p.id as string,
-            code: p.code as string,
-            title: p.what as string,
-            status: (p.daysOverdue as number) > 0 ? 'OVERDUE' : 'AT_RISK' as const,
-            daysRemaining: -(p.daysOverdue as number),
-          })) || EMPTY_DATA.priorityActions,
-          aiInsight: result.aiInsight || EMPTY_DATA.aiInsight,
-        });
-      } else {
-        setData(EMPTY_DATA);
-      }
+      const result = await fetchAPI<Record<string, unknown>>('/api/strategic/war-room/dashboard');
+      // Normalizar dados da API
+      setData({
+        healthScore: (result.healthScore as number) ?? EMPTY_DATA.healthScore,
+        previousHealthScore: result.previousHealthScore as number | undefined,
+        alerts: (result.criticalKpis as Record<string, unknown>[] | undefined)?.map((k: Record<string, unknown>, i: number) => ({
+          id: String(k.id || i),
+          type: 'CRITICAL' as const,
+          title: k.name as string || 'KPI Crítico',
+          description: `Variação: ${k.variance}%`,
+          metric: { current: k.currentValue as number, target: k.targetValue as number, unit: k.unit as string || '%' },
+          kpiId: k.id as string,
+        })) || EMPTY_DATA.alerts,
+        perspectives: (result.perspectives as WarRoomData['perspectives']) || EMPTY_DATA.perspectives,
+        weeklyTrend: (result.weeklyTrend as WarRoomData['weeklyTrend']) || EMPTY_DATA.weeklyTrend,
+        priorityActions: (result.overduePlans as Record<string, unknown>[] | undefined)?.map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          code: p.code as string,
+          title: p.what as string,
+          status: (p.daysOverdue as number) > 0 ? 'OVERDUE' : 'AT_RISK' as const,
+          daysRemaining: -(p.daysOverdue as number),
+        })) || EMPTY_DATA.priorityActions,
+        aiInsight: (result.aiInsight as string) || EMPTY_DATA.aiInsight,
+      });
     } catch (error) {
       console.error('Erro ao carregar War Room:', error);
       setData(EMPTY_DATA);
@@ -128,7 +124,7 @@ export default function WarRoomPage() {
 
   const handleDismissAlert = async (id: string) => {
     try {
-      await fetch(`/api/strategic/alerts/${id}/dismiss`, { method: 'POST' });
+      await fetchAPI(`/api/strategic/alerts/${id}/dismiss`, { method: 'POST' });
       fetchData();
     } catch (error) {
       console.error('Erro ao dispensar alerta:', error);

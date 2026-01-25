@@ -14,6 +14,7 @@ import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
 import { NumberCounter } from "@/components/ui/magic-components";
 import { GradientText } from "@/components/ui/magic-components";
 import { RippleButton } from "@/components/ui/ripple-button";
+import { fetchAPI } from "@/lib/api";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -96,11 +97,8 @@ export default function FiscalDocumentsPage() {
   // Buscar KPIs separadamente (não depende do grid)
   const fetchKPIs = useCallback(async () => {
     try {
-      const response = await fetch("/api/fiscal/documents/summary");
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      const data = await fetchAPI<FiscalDocumentStats>("/api/fiscal/documents/summary");
+      setStats(data);
     } catch (error) {
       console.error("Error fetching KPIs:", error);
     }
@@ -113,19 +111,14 @@ export default function FiscalDocumentsPage() {
     }
 
     try {
-      const response = await fetch(`/api/fiscal/documents/${id}`, {
+      await fetchAPI(`/api/fiscal/documents/${id}`, {
         method: "DELETE",
       });
 
-      if (response.ok) {
-        toast.success("Documento excluído com sucesso!");
-        // Refresh grid e KPIs
-        gridApi?.refreshServerSide({ purge: true });
-        void fetchKPIs();
-      } else {
-        const error = await response.json();
-        toast.error(`Erro ao excluir: ${error.error}`);
-      }
+      toast.success("Documento excluído com sucesso!");
+      // Refresh grid e KPIs
+      gridApi?.refreshServerSide({ purge: true });
+      void fetchKPIs();
     } catch (error) {
       console.error("Erro ao excluir documento:", error);
       toast.error("Erro ao excluir documento");
