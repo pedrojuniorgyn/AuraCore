@@ -4,11 +4,22 @@ import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
+import { z } from "zod";
+import { idParamSchema } from "@/lib/validation/common-schemas";
 
 // Interface para queries de contagem SQL
 interface CountResult {
   count: number;
 }
+
+const updateCostCenterSchema = z.object({
+  code: z.string().optional(),
+  name: z.string().optional(),
+  type: z.enum(["ANALYTIC", "SYNTHETIC"]).optional(),
+  parentId: z.number().int().positive().optional().nullable(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+  ccClass: z.enum(["REVENUE", "EXPENSE", "BOTH"]).optional(),
+});
 
 /**
  * GET /api/financial/cost-centers/:id
@@ -22,7 +33,12 @@ export async function GET(
     await ensureConnection();
     const resolvedParams = await params;
     const ctx = await getTenantContext();
-    const id = parseInt(resolvedParams.id);
+
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+    const id = paramValidation.data.id;
 
     const result = await db
       .select()
@@ -69,10 +85,25 @@ export async function PUT(
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
     const updatedBy = ctx.userId;
-    const id = parseInt(resolvedParams.id);
+
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+    const id = paramValidation.data.id;
 
     const body = await req.json();
-    const { code, name, type, parentId, status, ccClass } = body;
+
+    // Validação Zod
+    const validation = updateCostCenterSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { code, name, type, parentId, status, ccClass } = validation.data;
 
     // Verificar se existe
     const existing = await db
@@ -224,7 +255,12 @@ export async function DELETE(
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
     const updatedBy = ctx.userId;
-    const id = parseInt(resolvedParams.id);
+
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+    const id = paramValidation.data.id;
 
     // Verificar se existe
     const existing = await db
@@ -389,7 +425,3 @@ export async function DELETE(
     );
   }
 }
-
-
-
-

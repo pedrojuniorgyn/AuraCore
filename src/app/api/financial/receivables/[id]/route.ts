@@ -4,6 +4,22 @@ import { accountsReceivable } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
+import { z } from "zod";
+import { idParamSchema } from "@/lib/validation/common-schemas";
+
+const updateReceivableSchema = z.object({
+  partnerId: z.number().int().positive().optional(),
+  customerId: z.number().int().positive().optional(), // Alias for partnerId
+  categoryId: z.number().int().positive().optional(),
+  costCenterId: z.number().int().positive().optional().nullable(),
+  chartAccountId: z.number().int().positive().optional().nullable(),
+  description: z.string().optional(),
+  documentNumber: z.string().optional().nullable(),
+  issueDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date().optional(),
+  amount: z.string().or(z.number()).transform((val) => String(val)).optional(),
+  notes: z.string().optional().nullable(),
+});
 
 // GET - Buscar conta a receber específica
 export async function GET(
@@ -16,10 +32,11 @@ export async function GET(
     const resolvedParams = await params;
     const ctx = await getTenantContext();
 
-    const receivableId = parseInt(resolvedParams.id);
-    if (isNaN(receivableId)) {
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
+    const receivableId = paramValidation.data.id;
 
     const receivable = await queryFirst<typeof accountsReceivable.$inferSelect>(db
       .select()
@@ -64,20 +81,25 @@ export async function PUT(
     const resolvedParams = await params;
     const ctx = await getTenantContext();
 
-    const receivableId = parseInt(resolvedParams.id);
-    if (isNaN(receivableId)) {
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
+    const receivableId = paramValidation.data.id;
 
     const body = await req.json();
 
-    // Validações básicas
-    if (!body.customerId || !body.dueDate || !body.amount) {
+    // Validação Zod
+    const validation = updateReceivableSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Cliente, vencimento e valor são obrigatórios" },
+        { error: "Dados inválidos", details: validation.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+
+    const data = validation.data;
+    const partnerId = data.partnerId || data.customerId;
 
     // Verificar se conta existe
     const existing = await queryFirst<typeof accountsReceivable.$inferSelect>(db
@@ -107,23 +129,27 @@ export async function PUT(
       );
     }
 
-    // TODO: Validar mudança de valor se tiver boleto gerado
-    // Propriedade boletoId não existe mais no schema atual
-    // if (existing.boletoId && body.amount !== existing.amount) {
-    //   return NextResponse.json(
-    //     { error: "Não é possível alterar valor de conta com boleto gerado" },
-    //     { status: 400 }
-    //   );
-    // }
+    // Prepare update data
+    const updateData: Partial<typeof accountsReceivable.$inferInsert> = {
+      updatedBy: ctx.userId,
+      updatedAt: new Date(),
+    };
+
+    if (partnerId) updateData.partnerId = partnerId;
+    if (data.categoryId) updateData.categoryId = data.categoryId;
+    if (data.costCenterId !== undefined) updateData.costCenterId = data.costCenterId;
+    if (data.chartAccountId !== undefined) updateData.chartAccountId = data.chartAccountId;
+    if (data.description) updateData.description = data.description;
+    if (data.documentNumber !== undefined) updateData.documentNumber = data.documentNumber;
+    if (data.issueDate) updateData.issueDate = data.issueDate;
+    if (data.dueDate) updateData.dueDate = data.dueDate;
+    if (data.amount) updateData.amount = data.amount;
+    if (data.notes !== undefined) updateData.notes = data.notes;
 
     // Atualizar
     await db
       .update(accountsReceivable)
-      .set({
-        ...body,
-        updatedBy: ctx.userId,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(and(eq(accountsReceivable.id, receivableId), eq(accountsReceivable.organizationId, ctx.organizationId)));
 
     const updated = await queryFirst<typeof accountsReceivable.$inferSelect>(db
@@ -160,10 +186,11 @@ export async function DELETE(
     const resolvedParams = await params;
     const ctx = await getTenantContext();
 
-    const receivableId = parseInt(resolvedParams.id);
-    if (isNaN(receivableId)) {
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
+    const receivableId = paramValidation.data.id;
 
     // Verificar se conta existe
     const existing = await queryFirst<typeof accountsReceivable.$inferSelect>(db
@@ -193,20 +220,6 @@ export async function DELETE(
       );
     }
 
-    // TODO: Validar exclusão se tiver boleto gerado
-    // Propriedade boletoId não existe mais no schema atual
-    // if (existing.boletoId) {
-    //   return NextResponse.json(
-    //     { error: "Não é possível excluir conta com boleto gerado. Cancele o boleto primeiro." },
-    //     { status: 400 }
-    //   );
-    // }
-
-    // TODO: Reverter lançamento contábil se houver
-    // if (existing.journalEntryId) {
-    //   await reverseJournalEntry(existing.journalEntryId);
-    // }
-
     // Soft delete
     await db
       .update(accountsReceivable)
@@ -230,12 +243,3 @@ export async function DELETE(
     );
   }
 }
-
-
-
-
-
-
-
-
-

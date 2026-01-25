@@ -4,6 +4,17 @@ import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
+import { z } from "zod";
+
+// Schemas de validação
+const createCostCenterSchema = z.object({
+  code: z.string().min(1, "Código é obrigatório"),
+  name: z.string().min(1, "Nome é obrigatório"),
+  type: z.enum(["ANALYTIC", "SYNTHETIC"]),
+  parentId: z.number().int().positive().optional().nullable(),
+  linkedVehicleId: z.coerce.number().int().positive().optional().nullable(),
+  ccClass: z.enum(["REVENUE", "EXPENSE", "BOTH"]).optional().default("BOTH"),
+});
 
 /**
  * GET /api/financial/cost-centers
@@ -70,22 +81,17 @@ export async function POST(req: Request) {
     const ctx = await getTenantContext();
 
     const body = await req.json();
-    const { code, name, type, parentId, linkedVehicleId, ccClass } = body;
 
-    // Validações
-    if (!code || !name || !type) {
+    // Validação Zod
+    const validation = createCostCenterSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Código, nome e tipo são obrigatórios" },
+        { error: "Dados inválidos", details: validation.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
-    if (!["ANALYTIC", "SYNTHETIC"].includes(type)) {
-      return NextResponse.json(
-        { error: "Tipo inválido. Use ANALYTIC ou SYNTHETIC" },
-        { status: 400 }
-      );
-    }
+    const { code, name, type, parentId, linkedVehicleId, ccClass } = validation.data;
 
     // E9.3: Verificar duplicação de código com branchId
     const existing = await db
@@ -144,7 +150,7 @@ export async function POST(req: Request) {
       linkedVehicleId: linkedVehicleId || null,
       // ⚠️ Schema usa string "true"/"false". Código downstream deve usar === "true"
       isAnalytical: type === "ANALYTIC" ? "true" : "false",
-      class: ccClass || "BOTH", // ✅ REVENUE, EXPENSE, BOTH
+      class: ccClass, // ✅ REVENUE, EXPENSE, BOTH
       status: "ACTIVE",
       createdBy: ctx.userId,
     };
@@ -186,7 +192,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
-
-
-

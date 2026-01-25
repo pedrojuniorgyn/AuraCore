@@ -5,6 +5,27 @@ import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull, gte, lte, sql, type SQL } from "drizzle-orm";
 import { ensureFinancialData } from "@/lib/services/financial-init";
+import { z } from "zod";
+
+// Schemas de validação
+const createPayableSchema = z.object({
+  partnerId: z.number().int().positive().optional().nullable(),
+  categoryId: z.number().int().positive({ message: "Categoria é obrigatória" }),
+  costCenterId: z.number().int().positive().optional().nullable(),
+  chartAccountId: z.number().int().positive().optional().nullable(),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  documentNumber: z.string().optional().nullable(),
+  issueDate: z.coerce.date(),
+  dueDate: z.coerce.date(),
+  amount: z.string().or(z.number()).transform((val) => String(val)),
+  notes: z.string().optional().nullable(),
+});
+
+const queryPayablesSchema = z.object({
+  status: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
 
 /**
  * GET /api/financial/payables
@@ -19,10 +40,18 @@ export async function GET(request: NextRequest) {
     // Garante que categorias e contas existem
     await ensureFinancialData(ctx.organizationId, ctx.userId);
     const { searchParams } = new URL(request.url);
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    const status = searchParams.get("status");
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    // Validação Zod
+    const validation = queryPayablesSchema.safeParse(queryParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Parâmetros inválidos", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { status, startDate, endDate } = validation.data;
 
     // Construir condições dinâmicas
     const conditions: SQL<unknown>[] = [
@@ -102,28 +131,39 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
+    // Validação Zod
+    const validation = createPayableSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
+
     const payableData: typeof accountsPayable.$inferInsert = {
       organizationId: ctx.organizationId,
       // Política: header manda; body não decide filial.
       branchId,
-      partnerId: body.partnerId || null,
-      categoryId: body.categoryId,
+      partnerId: data.partnerId || null,
+      categoryId: data.categoryId,
       bankAccountId: null,
-      costCenterId: body.costCenterId || null,
-      chartAccountId: body.chartAccountId || null,
-      description: body.description,
-      documentNumber: body.documentNumber || null,
-      issueDate: new Date(body.issueDate),
-      dueDate: new Date(body.dueDate),
+      costCenterId: data.costCenterId || null,
+      chartAccountId: data.chartAccountId || null,
+      description: data.description,
+      documentNumber: data.documentNumber || null,
+      issueDate: data.issueDate,
+      dueDate: data.dueDate,
       payDate: null,
-      amount: body.amount,
+      amount: data.amount,
       amountPaid: "0",
       discount: "0",
       interest: "0",
       fine: "0",
       status: "OPEN",
       origin: "MANUAL",
-      notes: body.notes || null,
+      notes: data.notes || null,
       createdBy: ctx.userId,
       updatedBy: ctx.userId,
       version: 1,
@@ -138,7 +178,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(accountsPayable.organizationId, ctx.organizationId),
-          eq(accountsPayable.documentNumber, body.documentNumber || "")
+          eq(accountsPayable.documentNumber, data.documentNumber || "")
         )
       )
       .orderBy(accountsPayable.id);
@@ -156,4 +196,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

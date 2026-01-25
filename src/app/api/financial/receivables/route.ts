@@ -3,7 +3,28 @@ import { db, ensureConnection } from "@/lib/db";
 import { accountsReceivable, businessPartners, financialCategories, costCenters, chartOfAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
-import { eq, and, isNull, gte, lte } from "drizzle-orm";
+import { eq, and, isNull, gte, lte, type SQL } from "drizzle-orm";
+import { z } from "zod";
+
+// Schemas de validação
+const createReceivableSchema = z.object({
+  partnerId: z.number().int().positive().optional().nullable(),
+  categoryId: z.number().int().positive({ message: "Categoria é obrigatória" }),
+  costCenterId: z.number().int().positive().optional().nullable(),
+  chartAccountId: z.number().int().positive().optional().nullable(),
+  description: z.string().min(1, "Descrição é obrigatória"),
+  documentNumber: z.string().optional().nullable(),
+  issueDate: z.coerce.date(),
+  dueDate: z.coerce.date(),
+  amount: z.string().or(z.number()).transform((val) => String(val)),
+  notes: z.string().optional().nullable(),
+});
+
+const queryReceivablesSchema = z.object({
+  status: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
 
 /**
  * GET /api/financial/receivables
@@ -13,12 +34,20 @@ export async function GET(request: NextRequest) {
     await ensureConnection();
     const ctx = await getTenantContext();
     const { searchParams } = new URL(request.url);
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    const status = searchParams.get("status");
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    // Validação Zod
+    const validation = queryReceivablesSchema.safeParse(queryParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Parâmetros inválidos", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
-    const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof isNull>> = [
+    const { status, startDate, endDate } = validation.data;
+
+    const conditions: SQL<unknown>[] = [
       eq(accountsReceivable.organizationId, ctx.organizationId),
       isNull(accountsReceivable.deletedAt),
     ];
@@ -93,28 +122,39 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
+    // Validação Zod
+    const validation = createReceivableSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
+
     const receivableData: typeof accountsReceivable.$inferInsert = {
       organizationId: ctx.organizationId,
       // Política: header manda; body não decide filial.
       branchId,
-      partnerId: body.partnerId || null,
-      categoryId: body.categoryId,
+      partnerId: data.partnerId || null,
+      categoryId: data.categoryId,
       bankAccountId: null,
-      costCenterId: body.costCenterId || null,
-      chartAccountId: body.chartAccountId || null,
-      description: body.description,
-      documentNumber: body.documentNumber || null,
-      issueDate: new Date(body.issueDate),
-      dueDate: new Date(body.dueDate),
+      costCenterId: data.costCenterId || null,
+      chartAccountId: data.chartAccountId || null,
+      description: data.description,
+      documentNumber: data.documentNumber || null,
+      issueDate: data.issueDate,
+      dueDate: data.dueDate,
       receiveDate: null,
-      amount: body.amount,
+      amount: data.amount,
       amountReceived: "0",
       discount: "0",
       interest: "0",
       fine: "0",
       status: "OPEN",
       origin: "MANUAL",
-      notes: body.notes || null,
+      notes: data.notes || null,
       createdBy: ctx.userId,
       updatedBy: ctx.userId,
       version: 1,
@@ -128,7 +168,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(accountsReceivable.organizationId, ctx.organizationId),
-          eq(accountsReceivable.documentNumber, body.documentNumber || "")
+          eq(accountsReceivable.documentNumber, data.documentNumber || "")
         )
       )
       .orderBy(accountsReceivable.id);
