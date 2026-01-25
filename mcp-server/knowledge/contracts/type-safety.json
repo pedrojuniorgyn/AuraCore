@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.91",
+  "version": "2.0.92",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1598,6 +1598,20 @@
         "src/modules/financial/infrastructure/di/FinancialModule.ts"
       ],
       "pattern_created": "P-EVENT-COMPLETE-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-013746",
+      "date": "2026-01-25",
+      "epic": "E8.4",
+      "error": "Bug de atomicidade em AccountPayable.cancel(): método mutava payments durante iteração. Se algum payment falhasse, payments anteriores já estavam CANCELLED, criando dados órfãos (payments CANCELLED com payable PENDING). Violava consistência de dados.",
+      "correction": "Implementado Two-Phase Commit Pattern: Fase 1 (Validação) - Adicionado Payment.canCancel() que valida SEM mutar, verifica TODOS payments antes de mutar qualquer um. Fase 2 (Execução) - Só cancela se Fase 1 passou, throw exception se falhar (invariante violado). Fase 3 (Atualização) - Atualiza payable status. Garante atomicidade: TODOS cancelados OU NENHUM, zero dados órfãos.",
+      "files_affected": [
+        "src/modules/financial/domain/entities/Payment.ts",
+        "src/modules/financial/domain/entities/AccountPayable.ts"
+      ],
+      "pattern_created": "P-ATOMIC-OPERATION-001",
       "status": "APPROVED",
       "must_not_repeat": true
     }

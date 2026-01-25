@@ -338,38 +338,85 @@ export class AccountPayable extends AggregateRoot<string> {
       );
     }
 
-    // ✅ FIX LC-896337: Coletar TODOS os erros antes de falhar (previne partial cancellation)
-    // NUNCA fazer throw dentro do loop - pode deixar payments órfãos
-    const cancellationErrors: Array<{ paymentId: string; error: string }> = [];
+    // ===================================================================
+    // TWO-PHASE COMMIT PATTERN (P-ATOMIC-OPERATION-001)
+    // ===================================================================
+    // Garante atomicidade: TODOS payments cancelados OU NENHUM
+    // Previne dados órfãos: payments CANCELLED com payable PENDING
+    // ===================================================================
+
+    const pendingPayments = this._props.payments.filter(p => p.status === 'PENDING');
+
+    // ===================================================================
+    // FASE 1: VALIDAÇÃO (SEM MUTAÇÃO)
+    // ===================================================================
+    // Verifica que TODOS os payments podem ser cancelados ANTES de mutar qualquer um
     
-    for (const payment of this._props.payments) {
-      if (payment.status === 'PENDING') {
-        const cancelResult = payment.cancel('Payable cancelled');
-        
-        if (Result.isFail(cancelResult)) {
-          // ✅ COLETAR erro, mas CONTINUAR processando todos
-          cancellationErrors.push({
-            paymentId: payment.id,
-            error: cancelResult.error,
-          });
-          // NÃO fazer throw aqui - processar todos primeiro
-        }
+    const validationErrors: Array<{ paymentId: string; error: string }> = [];
+    
+    for (const payment of pendingPayments) {
+      const canCancelResult = payment.canCancel(); // ✅ NÃO muta!
+      
+      if (Result.isFail(canCancelResult)) {
+        validationErrors.push({
+          paymentId: payment.id,
+          error: canCancelResult.error,
+        });
       }
     }
     
-    // ✅ Se ALGUM erro, reportar TODOS (não fazer alteração parcial)
+    // ✅ Se ALGUMA validação falhou, abortar SEM mutar nada
+    if (validationErrors.length > 0) {
+      const errorDetails = validationErrors
+        .map(e => `Payment ${e.paymentId}: ${e.error}`)
+        .join('; ');
+      
+      return Result.fail(
+        `Cannot cancel payable - ${validationErrors.length} payment(s) in invalid state: ${errorDetails}. ` +
+        `Payable: ${this.id}. No changes were made (atomic operation).`
+      );
+    }
+
+    // ===================================================================
+    // FASE 2: EXECUÇÃO (COM MUTAÇÃO)
+    // ===================================================================
+    // Neste ponto, SABEMOS que todos podem ser cancelados (validado na Fase 1)
+    
+    const cancellationErrors: Array<{ paymentId: string; error: string }> = [];
+    
+    for (const payment of pendingPayments) {
+      const cancelResult = payment.cancel('Payable cancelled');
+      
+      if (Result.isFail(cancelResult)) {
+        // ❌ Isso NÃO deveria acontecer (validamos na Fase 1)
+        // Se acontecer, é BUG no código ou invariante violado
+        cancellationErrors.push({
+          paymentId: payment.id,
+          error: cancelResult.error,
+        });
+      }
+    }
+    
+    // ❌ Se ALGUM erro na execução, é invariante violado (BUG)
     if (cancellationErrors.length > 0) {
       const errorDetails = cancellationErrors
         .map(e => `Payment ${e.paymentId}: ${e.error}`)
         .join('; ');
       
-      // ✅ Agora sim, falhar com detalhes COMPLETOS
-      return Result.fail(
-        `[INVARIANT VIOLATION] Failed to cancel ${cancellationErrors.length} PENDING payment(s): ${errorDetails}. ` +
-        `This indicates a bug in Payment.cancel() logic or corrupted payment status. ` +
-        `Payable: ${this.id}. No payments were cancelled to maintain consistency.`
+      // ❌ Throw exception - indica BUG no código (Fase 1 validou mas Fase 2 falhou)
+      throw new Error(
+        `[INVARIANT VIOLATION] Payment cancellation failed after validation passed. ` +
+        `This indicates a bug in the cancellation logic or race condition. ` +
+        `Failed payments: ${errorDetails}. ` +
+        `Payable: ${this.id}. ` +
+        `State is now inconsistent and requires manual investigation.`
       );
     }
+
+    // ===================================================================
+    // FASE 3: ATUALIZAÇÃO DO AGGREGATE
+    // ===================================================================
+    // Se chegou aqui, TODOS payments foram cancelados com sucesso (atomicamente)
 
     this._props.status = 'CANCELLED';
     this._props.version++;

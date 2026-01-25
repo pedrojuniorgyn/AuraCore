@@ -94,9 +94,14 @@ export class Payment extends Entity<string> {
   }
 
   /**
-   * Cancela o pagamento
+   * Valida se pagamento pode ser cancelado (SEM mutação)
+   * 
+   * Usado para two-phase commit em operações agregadas.
+   * 
+   * Pattern: P-ATOMIC-OPERATION-001
+   * Phase 1: Validation without mutation
    */
-  cancel(reason: string): Result<void, string> {
+  canCancel(): Result<void, string> {
     if (this._props.status === 'CONFIRMED') {
       return Result.fail('Cannot cancel confirmed payment');
     }
@@ -105,6 +110,23 @@ export class Payment extends Entity<string> {
       return Result.fail('Payment already cancelled');
     }
 
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Cancela o pagamento (com mutação)
+   * 
+   * Pattern: P-ATOMIC-OPERATION-001
+   * Phase 2: Execution (mutations)
+   */
+  cancel(reason: string): Result<void, string> {
+    // ✅ Reutilizar validação de canCancel()
+    const validation = this.canCancel();
+    if (Result.isFail(validation)) {
+      return Result.fail(validation.error);
+    }
+
+    // ✅ Mutação (só executa se validação passou)
     this._props.status = 'CANCELLED';
     this._props.notes = reason;
     this.touch();
