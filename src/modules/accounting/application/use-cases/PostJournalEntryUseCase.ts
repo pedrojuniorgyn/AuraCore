@@ -84,12 +84,23 @@ export class PostJournalEntryUseCase implements IPostJournalEntry {
       return Result.fail('Internal error: posted entry missing postedAt or postedBy');
     }
 
+    // ✅ S1.3-APP: Obter valores calculados (getTotalDebit/getTotalCredit retornam Result)
+    const totalDebitResult = entry.getTotalDebit();
+    if (Result.isFail(totalDebitResult)) {
+      return Result.fail(`Erro ao obter total débito: ${totalDebitResult.error}`);
+    }
+    
+    const totalCreditResult = entry.getTotalCredit();
+    if (Result.isFail(totalCreditResult)) {
+      return Result.fail(`Erro ao obter total crédito: ${totalCreditResult.error}`);
+    }
+    
     return Result.ok({
       id: entry.id,
       entryNumber: entry.entryNumber,
       status: entry.status,
-      totalDebit: entry.totalDebit.amount,
-      totalCredit: entry.totalCredit.amount,
+      totalDebit: totalDebitResult.value.amount,
+      totalCredit: totalCreditResult.value.amount,
       postedAt: postedAt.toISOString(),
       postedBy: postedBy,
     });

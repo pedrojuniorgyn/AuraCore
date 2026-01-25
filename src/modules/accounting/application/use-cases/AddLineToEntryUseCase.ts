@@ -96,15 +96,34 @@ export class AddLineToEntryUseCase implements IAddLineToEntry {
       return Result.fail(`Failed to save: ${message}`);
     }
 
-    // 8. Retornar resultado
+    // 8. Obter valores calculados (agora são métodos Result)
+    // ✅ S1.3-APP: getTotalDebit() retorna Result<Money, string>
+    const totalDebitResult = entry.getTotalDebit();
+    if (Result.isFail(totalDebitResult)) {
+      return Result.fail(`Erro ao obter total débito: ${totalDebitResult.error}`);
+    }
+    
+    // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+    const totalCreditResult = entry.getTotalCredit();
+    if (Result.isFail(totalCreditResult)) {
+      return Result.fail(`Erro ao obter total crédito: ${totalCreditResult.error}`);
+    }
+    
+    // ✅ S1.3-APP: getIsBalanced() retorna Result<boolean, string>
+    const isBalancedResult = entry.getIsBalanced();
+    if (Result.isFail(isBalancedResult)) {
+      return Result.fail(`Erro ao verificar balanceamento: ${isBalancedResult.error}`);
+    }
+    
+    // 9. Retornar resultado
     return Result.ok({
       lineId,
       journalEntryId: entry.id,
       entryType: data.entryType,
       amount: data.amount,
-      totalDebit: entry.totalDebit.amount,
-      totalCredit: entry.totalCredit.amount,
-      isBalanced: entry.isBalanced,
+      totalDebit: totalDebitResult.value.amount,
+      totalCredit: totalCreditResult.value.amount,
+      isBalanced: isBalancedResult.value,
     });
   }
 }

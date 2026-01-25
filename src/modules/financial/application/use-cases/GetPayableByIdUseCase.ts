@@ -50,7 +50,8 @@ export class GetPayableByIdUseCase implements IGetPayableById {
     }
 
     // 3. Retornar DTO (branchId já filtrado na query)
-    return Result.ok(toPayableResponseDTO(payable));
+    // ✅ S1.3-APP: toPayableResponseDTO agora retorna Result
+    return toPayableResponseDTO(payable);
   }
 }
 

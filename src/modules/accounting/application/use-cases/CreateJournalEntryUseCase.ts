@@ -114,7 +114,26 @@ export class CreateJournalEntryUseCase implements ICreateJournalEntry {
       return Result.fail(`Failed to save journal entry: ${message}`);
     }
 
-    // 7. Retornar DTO
+    // 7. Obter valores calculados (agora são métodos Result)
+    // ✅ S1.3-APP: getTotalDebit() retorna Result<Money, string>
+    const totalDebitResult = entry.getTotalDebit();
+    if (Result.isFail(totalDebitResult)) {
+      return Result.fail(`Erro ao obter total débito: ${totalDebitResult.error}`);
+    }
+    
+    // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+    const totalCreditResult = entry.getTotalCredit();
+    if (Result.isFail(totalCreditResult)) {
+      return Result.fail(`Erro ao obter total crédito: ${totalCreditResult.error}`);
+    }
+    
+    // ✅ S1.3-APP: getIsBalanced() retorna Result<boolean, string>
+    const isBalancedResult = entry.getIsBalanced();
+    if (Result.isFail(isBalancedResult)) {
+      return Result.fail(`Erro ao verificar balanceamento: ${isBalancedResult.error}`);
+    }
+    
+    // 8. Retornar DTO
     return Result.ok({
       id: entry.id,
       entryNumber: entry.entryNumber,
@@ -122,9 +141,9 @@ export class CreateJournalEntryUseCase implements ICreateJournalEntry {
       entryDate: entry.entryDate.toISOString(),
       description: entry.description,
       lineCount: entry.lineCount,
-      totalDebit: entry.totalDebit.amount,
-      totalCredit: entry.totalCredit.amount,
-      isBalanced: entry.isBalanced,
+      totalDebit: totalDebitResult.value.amount,
+      totalCredit: totalCreditResult.value.amount,
+      isBalanced: isBalancedResult.value,
       createdAt: entry.createdAt.toISOString(),
     });
   }

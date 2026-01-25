@@ -6,7 +6,7 @@ import type { IRegisterStockExit } from '../../domain/ports/input';
 import { StockMovement } from '../../domain/entities/StockMovement';
 import { MovementType, MovementTypeEnum } from '../../domain/value-objects/MovementType';
 import { StockQuantity, UnitOfMeasure } from '../../domain/value-objects/StockQuantity'
-import { Result, Money } from '@/shared/domain';
+import { Result } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { RegisterStockExitInput, RegisterStockExitOutput } from '../dtos/RegisterStockExitDTO';
@@ -67,9 +67,14 @@ export class RegisterStockExit implements IRegisterStockExit {
       return Result.fail(quantityResult.error);
     }
 
-    // Verificar se há quantidade disponível
-    if (stockItem.availableQuantity.value < input.quantity) {
-      return Result.fail(`Insufficient stock. Available: ${stockItem.availableQuantity.value} ${stockItem.availableQuantity.unit}`);
+    // ✅ S1.3-APP: Verificar se há quantidade disponível (getAvailableQuantity retorna Result)
+    const availableResult = stockItem.getAvailableQuantity();
+    if (Result.isFail(availableResult)) {
+      return Result.fail(`Erro ao obter quantidade disponível: ${availableResult.error}`);
+    }
+    
+    if (availableResult.value.value < input.quantity) {
+      return Result.fail(`Insufficient stock. Available: ${availableResult.value.value} ${availableResult.value.unit}`);
     }
 
     // Criar MovementType

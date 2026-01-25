@@ -1,4 +1,5 @@
 import { JournalEntry } from '../../domain/entities/JournalEntry';
+import { Result } from '@/shared/domain';
 
 /**
  * DTO de linha para resposta
@@ -46,9 +47,29 @@ export interface JournalEntryResponseDTO {
 
 /**
  * Mapper: Domain → DTO
+ * 
+ * ⚠️ S1.3-APP: Atualizado para usar getTotalDebit(), getTotalCredit(), getIsBalanced() (Result pattern)
  */
-export function toJournalEntryResponseDTO(entry: JournalEntry): JournalEntryResponseDTO {
-  return {
+export function toJournalEntryResponseDTO(entry: JournalEntry): Result<JournalEntryResponseDTO, string> {
+  // ✅ S1.3-APP: Obter totalDebit (agora é método que retorna Result)
+  const totalDebitResult = entry.getTotalDebit();
+  if (Result.isFail(totalDebitResult)) {
+    return Result.fail(`Erro ao obter total débito: ${totalDebitResult.error}`);
+  }
+  
+  // ✅ S1.3-APP: Obter totalCredit (agora é método que retorna Result)
+  const totalCreditResult = entry.getTotalCredit();
+  if (Result.isFail(totalCreditResult)) {
+    return Result.fail(`Erro ao obter total crédito: ${totalCreditResult.error}`);
+  }
+  
+  // ✅ S1.3-APP: Obter isBalanced (agora é método que retorna Result)
+  const isBalancedResult = entry.getIsBalanced();
+  if (Result.isFail(isBalancedResult)) {
+    return Result.fail(`Erro ao verificar balanceamento: ${isBalancedResult.error}`);
+  }
+  
+  return Result.ok({
     id: entry.id,
     organizationId: entry.organizationId,
     branchId: entry.branchId,
@@ -70,9 +91,9 @@ export function toJournalEntryResponseDTO(entry: JournalEntry): JournalEntryResp
       costCenterId: line.costCenterId,
       businessPartnerId: line.businessPartnerId,
     })),
-    totalDebit: entry.totalDebit.amount,
-    totalCredit: entry.totalCredit.amount,
-    isBalanced: entry.isBalanced,
+    totalDebit: totalDebitResult.value.amount,
+    totalCredit: totalCreditResult.value.amount,
+    isBalanced: isBalancedResult.value,
     lineCount: entry.lineCount,
     reversedById: entry.reversedById,
     reversesId: entry.reversesId,
@@ -82,7 +103,7 @@ export function toJournalEntryResponseDTO(entry: JournalEntry): JournalEntryResp
     version: entry.version,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
-  };
+  });
 }
 
 /**

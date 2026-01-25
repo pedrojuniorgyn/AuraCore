@@ -140,6 +140,13 @@ export class DrizzleTaxCreditRepository implements ITaxCreditRepository {
       }
 
       const { pisAccount, cofinsAccount } = accountsResult.value;
+      
+      // ✅ S1.3-APP: Obter totalCredit (agora é método que retorna Result)
+      const totalCreditResult = credit.getTotalCredit();
+      if (Result.isFail(totalCreditResult)) {
+        return Result.fail(new Error(`Erro ao obter total crédito: ${totalCreditResult.error}`));
+      }
+      const totalCreditAmount = totalCreditResult.value.amount;
 
       // 2. Criar lançamento contábil (journal_entry)
       const entryResult = await db.execute(sql`
@@ -166,8 +173,8 @@ export class DrizzleTaxCreditRepository implements ITaxCreditRepository {
           'TAX_CREDIT',
           ${credit.fiscalDocumentId || null},
           'Crédito PIS/COFINS - ' + ${credit.accountName},
-          ${credit.totalCredit.amount},
-          ${credit.totalCredit.amount},
+          ${totalCreditAmount},
+          ${totalCreditAmount},
           'POSTED',
           ${userId},
           ${userId}
@@ -218,12 +225,12 @@ export class DrizzleTaxCreditRepository implements ITaxCreditRepository {
         VALUES 
         (${entryId}, ${organizationId}, 1, ${pisAccount.id}, ${credit.pisCredit.amount}, 0, 'Crédito PIS a Recuperar'),
         (${entryId}, ${organizationId}, 2, ${cofinsAccount.id}, ${credit.cofinsCredit.amount}, 0, 'Crédito COFINS a Recuperar'),
-        (${entryId}, ${organizationId}, 3, ${costAccount.id}, 0, ${credit.totalCredit.amount}, 'Redução Custo - Recuperação PIS/COFINS')
+        (${entryId}, ${organizationId}, 3, ${costAccount.id}, 0, ${totalCreditAmount}, 'Redução Custo - Recuperação PIS/COFINS')
       `);
 
       // 5. Validar balanceamento (Débitos = Créditos)
       const totalDebits = credit.pisCredit.amount + credit.cofinsCredit.amount;
-      const totalCredits = credit.totalCredit.amount;
+      const totalCredits = totalCreditAmount;
 
       if (Math.abs(totalDebits - totalCredits) > 0.01) {
         return Result.fail(
@@ -231,7 +238,7 @@ export class DrizzleTaxCreditRepository implements ITaxCreditRepository {
         );
       }
 
-      console.log(`✅ Crédito fiscal registrado (balanceado): R$ ${credit.totalCredit.amount.toFixed(2)}`);
+      console.log(`✅ Crédito fiscal registrado (balanceado): R$ ${totalCreditAmount.toFixed(2)}`);
       console.log(`   D - PIS a Recuperar: R$ ${credit.pisCredit.amount.toFixed(2)}`);
       console.log(`   D - COFINS a Recuperar: R$ ${credit.cofinsCredit.amount.toFixed(2)}`);
       console.log(`   C - ${costAccount.name}: R$ ${totalCredits.toFixed(2)}`);

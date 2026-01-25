@@ -70,9 +70,19 @@ export class ListPayablesUseCase implements IListPayables {
     try {
       const result = await this.payableRepository.findMany(filter, pagination);
 
-      // 5. Mapear para DTOs
+      // 5. Mapear para DTOs (toPayableResponseDTO agora retorna Result)
+      // ✅ S1.3-APP: Unwrap Result para cada DTO
+      const dtos = [];
+      for (const payable of result.data) {
+        const dtoResult = toPayableResponseDTO(payable);
+        if (Result.isFail(dtoResult)) {
+          return Result.fail(`Erro ao mapear payable ${payable.id}: ${dtoResult.error}`);
+        }
+        dtos.push(dtoResult.value);
+      }
+      
       return Result.ok({
-        data: result.data.map(toPayableResponseDTO),
+        data: dtos,
         total: result.total,
         page: result.page,
         pageSize: result.pageSize,

@@ -54,7 +54,8 @@ export class GetJournalEntryByIdUseCase implements IGetJournalEntryById {
     }
 
     // 3. Retornar DTO (branchId já filtrado na query)
-    return Result.ok(toJournalEntryResponseDTO(entry));
+    // ✅ S1.3-APP: toJournalEntryResponseDTO agora retorna Result
+    return toJournalEntryResponseDTO(entry);
   }
 }
 

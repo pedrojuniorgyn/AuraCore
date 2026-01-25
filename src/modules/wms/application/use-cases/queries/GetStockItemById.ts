@@ -31,6 +31,12 @@ export class GetStockItemById implements IGetStockItemById {
       return Result.fail('Stock item not found');
     }
 
+    // ✅ S1.3-APP: getAvailableQuantity() retorna Result<StockQuantity, string>
+    const availableResult = stockItem.getAvailableQuantity();
+    if (Result.isFail(availableResult)) {
+      return Result.fail(`Erro ao obter quantidade disponível: ${availableResult.error}`);
+    }
+    
     return Result.ok<GetStockItemByIdOutput>({
       id: stockItem.id,
       productId: stockItem.productId,
@@ -38,7 +44,7 @@ export class GetStockItemById implements IGetStockItemById {
       quantity: stockItem.quantity.value,
       unit: stockItem.quantity.unit,
       reservedQuantity: stockItem.reservedQuantity.value,
-      availableQuantity: stockItem.availableQuantity.value,
+      availableQuantity: availableResult.value.value,
       lotNumber: stockItem.lotNumber ?? null,
       expirationDate: stockItem.expirationDate ?? null,
       isExpired: stockItem.isExpired(),

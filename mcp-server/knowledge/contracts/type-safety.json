@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.92",
+  "version": "2.0.93",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1612,6 +1612,19 @@
         "src/modules/financial/domain/entities/AccountPayable.ts"
       ],
       "pattern_created": "P-ATOMIC-OPERATION-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-579819",
+      "date": "2026-01-25",
+      "epic": "S1.1",
+      "error": "SQL Injection crítico em tax-matrix/route.ts: string interpolation direta em sql.raw() permitia injeção de código SQL via parâmetros ufOrigin, ufDestination, cargoType",
+      "correction": "Substituído sql.raw() com string interpolation por sql tagged template parametrizado. Filtros opcionais agora usam pattern (${param} IS NULL OR column = ${param}) que é seguro contra SQL injection",
+      "files_affected": [
+        "src/app/api/fiscal/tax-matrix/route.ts"
+      ],
+      "pattern_created": "PARAMETERIZED-SQL-FILTERS",
       "status": "APPROVED",
       "must_not_repeat": true
     }

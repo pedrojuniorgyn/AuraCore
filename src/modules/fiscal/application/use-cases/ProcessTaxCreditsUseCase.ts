@@ -105,9 +105,17 @@ export class ProcessTaxCreditsUseCase {
           }
 
           processed++;
-          totalCredit += credit.totalCredit.amount;
+          
+          // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+          const totalCreditResult = credit.getTotalCredit();
+          if (Result.isFail(totalCreditResult)) {
+            errors.push(`Documento ${docId}: Erro ao obter total crédito - ${totalCreditResult.error}`);
+            continue;
+          }
+          
+          totalCredit += totalCreditResult.value.amount;
 
-          console.log(`✅ Documento ${docId}: R$ ${credit.totalCredit.amount.toFixed(2)}`);
+          console.log(`✅ Documento ${docId}: R$ ${totalCreditResult.value.amount.toFixed(2)}`);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           errors.push(`Documento ${docId}: ${errorMessage}`);

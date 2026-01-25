@@ -4,7 +4,6 @@ import type { IStockRepository } from '@/modules/wms/domain/ports/output/IStockR
 import type { IListStockItems, ListStockItemsInput, StockItemListItem } from '@/modules/wms/domain/ports/input';
 import type { ExecutionContext } from '../../dtos/ExecutionContext';
 import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
-import type { StockItem } from '@/modules/wms/domain/entities/StockItem';
 
 /**
  * ListStockItems Query - E7.8 WMS Semana 2
@@ -62,20 +61,29 @@ export class ListStockItems implements IListStockItems {
       }
     );
 
-    const items: StockItemListItem[] = stockItems.map((item: StockItem) => ({
-      id: item.id,
-      productId: item.productId,
-      locationId: item.locationId,
-      quantity: item.quantity.value,
-      unit: item.quantity.unit,
-      availableQuantity: item.availableQuantity.value,
-      lotNumber: item.lotNumber ?? null,
-      expirationDate: item.expirationDate ?? null,
-      isExpired: item.isExpired(),
-      unitCost: item.unitCost.amount,
-      currency: item.unitCost.currency,
-      createdAt: item.createdAt
-    }));
+    // ✅ S1.3-APP: Mapear items com Result unwrap
+    const items: StockItemListItem[] = [];
+    for (const item of stockItems) {
+      const availableResult = item.getAvailableQuantity();
+      if (Result.isFail(availableResult)) {
+        return Result.fail(`Erro ao obter quantidade disponível: ${availableResult.error}`);
+      }
+      
+      items.push({
+        id: item.id,
+        productId: item.productId,
+        locationId: item.locationId,
+        quantity: item.quantity.value,
+        unit: item.quantity.unit,
+        availableQuantity: availableResult.value.value,
+        lotNumber: item.lotNumber ?? null,
+        expirationDate: item.expirationDate ?? null,
+        isExpired: item.isExpired(),
+        unitCost: item.unitCost.amount,
+        currency: item.unitCost.currency,
+        createdAt: item.createdAt
+      });
+    }
 
     return Result.ok<PaginatedResponse<StockItemListItem>>({
       items,

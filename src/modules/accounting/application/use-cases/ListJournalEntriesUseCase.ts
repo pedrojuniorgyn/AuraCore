@@ -82,8 +82,18 @@ export class ListJournalEntriesUseCase implements IListJournalEntries {
     try {
       const result = await this.repository.findMany(filter, pagination);
 
+      // ✅ S1.3-APP: toJournalEntryResponseDTO agora retorna Result, precisa unwrap
+      const dtos = [];
+      for (const entry of result.data) {
+        const dtoResult = toJournalEntryResponseDTO(entry);
+        if (Result.isFail(dtoResult)) {
+          return Result.fail(`Erro ao mapear entry ${entry.id}: ${dtoResult.error}`);
+        }
+        dtos.push(dtoResult.value);
+      }
+
       return Result.ok({
-        data: result.data.map(toJournalEntryResponseDTO),
+        data: dtos,
         total: result.total,
         page: result.page,
         pageSize: result.pageSize,

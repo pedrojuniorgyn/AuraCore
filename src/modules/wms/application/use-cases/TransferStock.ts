@@ -101,9 +101,14 @@ export class TransferStock implements ITransferStock {
       return Result.fail(quantityResult.error);
     }
 
-    // 2.2 Verificar disponibilidade na origem
-    if (fromStockItem.availableQuantity.value < input.quantity) {
-      return Result.fail(`Insufficient stock in from location. Available: ${fromStockItem.availableQuantity.value} ${fromStockItem.availableQuantity.unit}`);
+    // ✅ S1.3-APP: Verificar disponibilidade na origem (getAvailableQuantity retorna Result)
+    const availableResult = fromStockItem.getAvailableQuantity();
+    if (Result.isFail(availableResult)) {
+      return Result.fail(`Erro ao obter quantidade disponível: ${availableResult.error}`);
+    }
+    
+    if (availableResult.value.value < input.quantity) {
+      return Result.fail(`Insufficient stock in from location. Available: ${availableResult.value.value} ${availableResult.value.unit}`);
     }
 
     // 2.3 Calcular custo médio no destino (se já existir estoque)

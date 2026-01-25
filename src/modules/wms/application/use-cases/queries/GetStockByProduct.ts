@@ -59,33 +59,39 @@ export class GetStockByProduct implements IGetStockByProduct {
       }
     }
 
-    // Mapear stock items com totalizadores e location data
+    // ✅ S1.3-APP: Mapear stock items com totalizadores e location data (com Result unwrap)
     let totalQuantity = 0;
     let totalReserved = 0;
     let totalAvailable = 0;
 
-    const locations: StockByLocationItem[] = stockItems.map((item: StockItem) => {
+    const locations: StockByLocationItem[] = [];
+    for (const item of stockItems) {
+      const availableResult = item.getAvailableQuantity();
+      if (Result.isFail(availableResult)) {
+        return Result.fail(`Erro ao obter quantidade disponível: ${availableResult.error}`);
+      }
+      
       totalQuantity += item.quantity.value;
       totalReserved += item.reservedQuantity.value;
-      totalAvailable += item.availableQuantity.value;
+      totalAvailable += availableResult.value.value;
 
       const locationData = locationsMap.get(item.locationId);
 
-      return {
+      locations.push({
         locationId: item.locationId,
         locationCode: locationData?.code ?? 'UNKNOWN',
         locationName: locationData?.name ?? 'Unknown Location',
         quantity: item.quantity.value,
         unit: item.quantity.unit,
         reservedQuantity: item.reservedQuantity.value,
-        availableQuantity: item.availableQuantity.value,
+        availableQuantity: availableResult.value.value,
         lotNumber: item.lotNumber ?? null,
         expirationDate: item.expirationDate ?? null,
         isExpired: item.isExpired(),
         unitCost: item.unitCost.amount,
         currency: item.unitCost.currency
-      };
-    });
+      });
+    }
 
     return Result.ok<GetStockByProductOutput>({
       productId: input.productId,

@@ -113,14 +113,27 @@ export class PayAccountPayableUseCase implements IPayAccountPayable {
       return Result.fail(`Failed to save payable: ${message}`);
     }
 
-    // 9. Retornar resultado
+    // 9. Obter valores calculados (agora são métodos Result)
+    // ✅ S1.3-APP: getTotalPaid() retorna Result<Money, string>
+    const totalPaidResult = payable.getTotalPaid();
+    if (Result.isFail(totalPaidResult)) {
+      return Result.fail(`Erro ao obter total pago: ${totalPaidResult.error}`);
+    }
+    
+    // ✅ S1.3-APP: getRemainingAmount() retorna Result<Money, string>
+    const remainingResult = payable.getRemainingAmount();
+    if (Result.isFail(remainingResult)) {
+      return Result.fail(`Erro ao obter saldo restante: ${remainingResult.error}`);
+    }
+    
+    // 10. Retornar resultado
     return Result.ok({
       payableId: payable.id,
       paymentId: payment.id,
       payableStatus: payable.status,
       paymentStatus: payment.status,
-      totalPaid: payable.totalPaid.amount,
-      remainingAmount: payable.remainingAmount.amount,
+      totalPaid: totalPaidResult.value.amount,
+      remainingAmount: remainingResult.value.amount,
       paidAt: payment.paidAt.toISOString(),
     });
   }
