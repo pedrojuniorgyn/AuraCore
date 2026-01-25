@@ -87,13 +87,11 @@ export class Aliquota {
 
   /**
    * Alíquota zero
+   * 
+   * ⚠️ S1.3: Agora retorna Result<Aliquota, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  static zero(): Aliquota {
-    const result = Aliquota.fromPercentage(0);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create zero aliquota');
-    }
-    return result.value;
+  static zero(): Result<Aliquota, string> {
+    return Aliquota.fromPercentage(0);
   }
 
   /**

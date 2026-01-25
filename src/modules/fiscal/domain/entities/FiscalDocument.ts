@@ -183,8 +183,10 @@ export class FiscalDocument {
 
   /**
    * Total de impostos (sistema atual + novo)
+   * 
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
    */
-  get totalTaxes(): Money {
+  getTotalTaxes(): Result<Money, string> {
     let total = this._props.totalIcms.amount +
                 this._props.totalIpi.amount +
                 this._props.totalPis.amount +
@@ -203,13 +205,13 @@ export class FiscalDocument {
     
     const result = Money.create(total, this._props.totalDocument.currency);
     if (Result.isOk(result)) {
-      return result.value;
+      return Result.ok(result.value);
     }
     const zero = Money.create(0, this._props.totalDocument.currency);
     if (Result.isOk(zero)) {
-      return zero.value;
+      return Result.ok(zero.value);
     }
-    throw new Error('Failed to create Money for totalTaxes');
+    return Result.fail('Failed to create Money for totalTaxes');
   }
 
   /**
@@ -259,7 +261,13 @@ export class FiscalDocument {
     }
 
     this._props.items.push(item);
-    this.recalculateTotals();
+    
+    // ⚠️ S1.3: recalculateTotals() agora retorna Result
+    const recalcResult = this.recalculateTotals();
+    if (Result.isFail(recalcResult)) {
+      return Result.fail(recalcResult.error);
+    }
+    
     this._updatedAt = new Date();
     this._props.version++;
 
@@ -289,7 +297,12 @@ export class FiscalDocument {
       // Na prática, seria necessário um método updateItemNumber
     });
 
-    this.recalculateTotals();
+    // ⚠️ S1.3: recalculateTotals() agora retorna Result
+    const recalcResult = this.recalculateTotals();
+    if (Result.isFail(recalcResult)) {
+      return Result.fail(recalcResult.error);
+    }
+    
     this._updatedAt = new Date();
     this._props.version++;
 
@@ -433,7 +446,10 @@ export class FiscalDocument {
   /**
    * Recalcula totais com base nos itens
    */
-  private recalculateTotals(): void {
+  /**
+   * ⚠️ S1.3: Convertido para Result<void, string> ao invés de throw (DOMAIN-SVC-004)
+   */
+  private recalculateTotals(): Result<void, string> {
     let totalProducts = 0;
     let totalIcms = 0;
     let totalIpi = 0;
@@ -452,24 +468,37 @@ export class FiscalDocument {
 
     const currency = this._props.totalDocument.currency;
     
-    const createMoney = (amount: number): Money => {
+    // Helper que retorna Result ao invés de throw
+    const createMoney = (amount: number): Result<Money, string> => {
       const result = Money.create(amount, currency);
       if (Result.isOk(result)) {
-        return result.value;
+        return Result.ok(result.value);
       }
       const zero = Money.create(0, currency);
       if (Result.isOk(zero)) {
-        return zero.value;
+        return Result.ok(zero.value);
       }
-      throw new Error('Failed to create Money');
+      return Result.fail('Failed to create Money');
     };
 
-    this._props.totalProducts = createMoney(totalProducts);
-    this._props.totalIcms = createMoney(totalIcms);
-    this._props.totalIpi = createMoney(totalIpi);
-    this._props.totalPis = createMoney(totalPis);
-    this._props.totalCofins = createMoney(totalCofins);
-    this._props.totalDiscount = createMoney(totalDiscount);
+    // Criar todos os Money values com Result handling
+    const totalProductsResult = createMoney(totalProducts);
+    if (Result.isFail(totalProductsResult)) return Result.fail(totalProductsResult.error);
+    
+    const totalIcmsResult = createMoney(totalIcms);
+    if (Result.isFail(totalIcmsResult)) return Result.fail(totalIcmsResult.error);
+    
+    const totalIpiResult = createMoney(totalIpi);
+    if (Result.isFail(totalIpiResult)) return Result.fail(totalIpiResult.error);
+    
+    const totalPisResult = createMoney(totalPis);
+    if (Result.isFail(totalPisResult)) return Result.fail(totalPisResult.error);
+    
+    const totalCofinsResult = createMoney(totalCofins);
+    if (Result.isFail(totalCofinsResult)) return Result.fail(totalCofinsResult.error);
+    
+    const totalDiscountResult = createMoney(totalDiscount);
+    if (Result.isFail(totalDiscountResult)) return Result.fail(totalDiscountResult.error);
 
     // Total do documento
     const totalDoc = totalProducts - totalDiscount +
@@ -478,7 +507,19 @@ export class FiscalDocument {
                      this._props.totalOtherCosts.amount +
                      totalIpi;
     
-    this._props.totalDocument = createMoney(totalDoc);
+    const totalDocResult = createMoney(totalDoc);
+    if (Result.isFail(totalDocResult)) return Result.fail(totalDocResult.error);
+
+    // Atribuir valores (só depois de validar TODOS)
+    this._props.totalProducts = totalProductsResult.value;
+    this._props.totalIcms = totalIcmsResult.value;
+    this._props.totalIpi = totalIpiResult.value;
+    this._props.totalPis = totalPisResult.value;
+    this._props.totalCofins = totalCofinsResult.value;
+    this._props.totalDiscount = totalDiscountResult.value;
+    this._props.totalDocument = totalDocResult.value;
+
+    return Result.ok(undefined);
   }
 
   /**

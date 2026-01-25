@@ -122,20 +122,25 @@ export class TaxAmount {
 
   /**
    * Factory method: imposto zero
+   * 
+   * ⚠️ S1.3: Agora retorna Result<TaxAmount, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  static zero(baseCalculo: BaseCalculo): TaxAmount {
+  static zero(baseCalculo: BaseCalculo): Result<TaxAmount, string> {
     const zeroMoney = Money.create(0, baseCalculo.originalValue.currency);
     if (Result.isFail(zeroMoney)) {
-      throw new Error('Failed to create zero Money');
+      return Result.fail('Failed to create zero Money');
     }
 
-    const zeroAliquota = Aliquota.zero();
+    const zeroAliquotaResult = Aliquota.zero();
+    if (Result.isFail(zeroAliquotaResult)) {
+      return Result.fail(`Failed to create zero aliquota: ${zeroAliquotaResult.error}`);
+    }
 
-    return new TaxAmount({
+    return Result.ok(new TaxAmount({
       value: zeroMoney.value,
-      aliquota: zeroAliquota,
+      aliquota: zeroAliquotaResult.value,
       baseCalculo,
-    });
+    }));
   }
 
   /**

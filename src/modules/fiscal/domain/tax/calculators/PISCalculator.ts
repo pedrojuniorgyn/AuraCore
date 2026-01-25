@@ -81,17 +81,15 @@ export class PISCalculator {
 
   /**
    * Retorna alíquota padrão para regime
+   * 
+   * ⚠️ S1.3: Agora retorna Result<Aliquota, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  static getDefaultRate(regime: PISRegime): Aliquota {
+  static getDefaultRate(regime: PISRegime): Result<Aliquota, string> {
     const rate = regime === 'CUMULATIVO'
       ? PISCalculator.ALIQUOTA_CUMULATIVO
       : PISCalculator.ALIQUOTA_NAO_CUMULATIVO;
     
-    const aliquotaResult = Aliquota.fromPercentage(rate);
-    if (Result.isFail(aliquotaResult)) {
-      throw new Error(`Failed to create default PIS rate: ${aliquotaResult.error}`);
-    }
-    return aliquotaResult.value;
+    return Aliquota.fromPercentage(rate);
   }
 }
 

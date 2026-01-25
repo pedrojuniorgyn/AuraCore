@@ -63,22 +63,35 @@ export class TaxCredit {
     );
   }
 
-  get totalCredit(): Money {
+  /**
+   * Retorna crédito total (PIS + COFINS)
+   * 
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
+   */
+  getTotalCredit(): Result<Money, string> {
     const result = Money.create(
       this.pisCredit.amount + this.cofinsCredit.amount,
       this.pisCredit.currency
     );
     
     if (Result.isFail(result)) {
-      // Não deveria acontecer se pisCredit e cofinsCredit são válidos
-      throw new Error(`Erro ao calcular crédito total: ${result.error}`);
+      return Result.fail(`Erro ao calcular crédito total: ${result.error}`);
     }
     
-    return result.value;
+    return Result.ok(result.value);
   }
 
-  hasCredit(): boolean {
-    return this.totalCredit.amount > 0;
+  /**
+   * Verifica se há crédito
+   * 
+   * ⚠️ S1.3: Atualizado para usar getTotalCredit() que retorna Result
+   */
+  hasCredit(): Result<boolean, string> {
+    const totalCreditResult = this.getTotalCredit();
+    if (Result.isFail(totalCreditResult)) {
+      return Result.fail(totalCreditResult.error);
+    }
+    return Result.ok(totalCreditResult.value.amount > 0);
   }
 }
 

@@ -81,17 +81,15 @@ export class COFINSCalculator {
 
   /**
    * Retorna alíquota padrão para regime
+   * 
+   * ⚠️ S1.3: Agora retorna Result<Aliquota, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  static getDefaultRate(regime: COFINSRegime): Aliquota {
+  static getDefaultRate(regime: COFINSRegime): Result<Aliquota, string> {
     const rate = regime === 'CUMULATIVO'
       ? COFINSCalculator.ALIQUOTA_CUMULATIVO
       : COFINSCalculator.ALIQUOTA_NAO_CUMULATIVO;
     
-    const aliquotaResult = Aliquota.fromPercentage(rate);
-    if (Result.isFail(aliquotaResult)) {
-      throw new Error(`Failed to create default COFINS rate: ${aliquotaResult.error}`);
-    }
-    return aliquotaResult.value;
+    return Aliquota.fromPercentage(rate);
   }
 }
 

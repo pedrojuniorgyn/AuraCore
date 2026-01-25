@@ -70,18 +70,20 @@ export class BaseCalculo {
 
   /**
    * Valor da redução (valor original - valor reduzido)
+   * 
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
    */
-  get reductionAmount(): Money {
+  getReductionAmount(): Result<Money, string> {
     const subtractResult = this._props.value.subtract(this.reducedValue);
     if (Result.isFail(subtractResult)) {
       // Fallback: zero se falhar
       const zeroResult = Money.create(0, this._props.value.currency);
       if (Result.isFail(zeroResult)) {
-        throw new Error('Failed to create zero Money');
+        return Result.fail('Failed to create zero Money');
       }
-      return zeroResult.value;
+      return Result.ok(zeroResult.value);
     }
-    return subtractResult.value;
+    return Result.ok(subtractResult.value);
   }
 
   /**
