@@ -8,6 +8,11 @@
 -- Backup recomendado antes da execução
 -- =============================================
 
+-- ✅ MIGRATION-003: Configurações obrigatórias para filtered indexes
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
