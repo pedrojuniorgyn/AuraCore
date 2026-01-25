@@ -44,6 +44,8 @@ export class TaxCreditCalculator {
 
   /**
    * Calcula crédito de PIS/COFINS para um documento fiscal
+   * 
+   * ⚠️ S1.3: Atualizado para trabalhar com calculatePisCredit/COFINS que retornam Result
    */
   calculate(document: FiscalDocumentData): Result<TaxCredit, TaxCreditCalculationError> {
     // 1. Verificar se é elegível para crédito
@@ -61,16 +63,23 @@ export class TaxCreditCalculator {
       );
     }
 
-    // 2. Calcular créditos
-    const pisCredit = this.calculatePisCredit(document.netAmount);
-    const cofinsCredit = this.calculateCofinsCredit(document.netAmount);
+    // 2. Calcular créditos (agora retornam Result - S1.3)
+    const pisCreditResult = this.calculatePisCredit(document.netAmount);
+    if (Result.isFail(pisCreditResult)) {
+      return Result.fail(new TaxCreditCalculationError(pisCreditResult.error));
+    }
+    
+    const cofinsCreditResult = this.calculateCofinsCredit(document.netAmount);
+    if (Result.isFail(cofinsCreditResult)) {
+      return Result.fail(new TaxCreditCalculationError(cofinsCreditResult.error));
+    }
 
     // 3. Criar Value Object
     const taxCreditProps: TaxCreditProps = {
       fiscalDocumentId: document.id,
       purchaseAmount: document.netAmount,
-      pisCredit,
-      cofinsCredit,
+      pisCredit: pisCreditResult.value,
+      cofinsCredit: cofinsCreditResult.value,
       accountCode: document.cfop,
       accountName: document.documentType,
     };
@@ -97,30 +106,34 @@ export class TaxCreditCalculator {
 
   /**
    * Calcula crédito de PIS
+   * 
+   * ⚠️ S1.3: Agora retorna Result<Money, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  private calculatePisCredit(netAmount: Money): Money {
+  private calculatePisCredit(netAmount: Money): Result<Money, string> {
     const creditAmount = (netAmount.amount * this.taxRate.pis) / 100;
     const result = Money.create(creditAmount, netAmount.currency);
     
     if (Result.isFail(result)) {
-      throw new Error(`Erro ao calcular crédito PIS: ${result.error}`);
+      return Result.fail(`Erro ao calcular crédito PIS: ${result.error}`);
     }
     
-    return result.value;
+    return Result.ok(result.value);
   }
 
   /**
    * Calcula crédito de COFINS
+   * 
+   * ⚠️ S1.3: Agora retorna Result<Money, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  private calculateCofinsCredit(netAmount: Money): Money {
+  private calculateCofinsCredit(netAmount: Money): Result<Money, string> {
     const creditAmount = (netAmount.amount * this.taxRate.cofins) / 100;
     const result = Money.create(creditAmount, netAmount.currency);
     
     if (Result.isFail(result)) {
-      throw new Error(`Erro ao calcular crédito COFINS: ${result.error}`);
+      return Result.fail(`Erro ao calcular crédito COFINS: ${result.error}`);
     }
     
-    return result.value;
+    return Result.ok(result.value);
   }
 
   /**
