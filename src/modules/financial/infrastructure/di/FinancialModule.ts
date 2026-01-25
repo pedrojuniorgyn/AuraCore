@@ -37,6 +37,11 @@ import { BoletoAdapter } from '../adapters/BoletoAdapter';
 import { CnabAdapter } from '../adapters/CnabAdapter';
 
 // ============================================================
+// EVENTS (Domain Events Infrastructure)
+// ============================================================
+import { DomainEventDispatcher } from '../events/DomainEventDispatcher';
+
+// ============================================================
 // USE CASES - PAYABLES (Contas a Pagar)
 // ============================================================
 import { CreatePayableUseCase } from '../../application/use-cases/CreatePayableUseCase';
@@ -168,4 +173,11 @@ export function initializeFinancialModule(): void {
   // USE CASES - BANK STATEMENT (Fase 2 - Extrato Bancário)
   // ============================================================
   container.registerSingleton(TOKENS.ImportBankStatementUseCase, ImportBankStatementUseCase);
+  
+  // ============================================================
+  // EVENT DISPATCHER (Domain Events Infrastructure)
+  // ============================================================
+  // ✅ FIX Bug #3: Register DomainEventDispatcher in DI
+  // Allows use cases to inject and dispatch domain events
+  container.registerSingleton(TOKENS.EventDispatcher, DomainEventDispatcher);
 }

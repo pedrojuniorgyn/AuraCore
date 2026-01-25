@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.90",
+  "version": "2.0.91",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1584,6 +1584,20 @@
         "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts"
       ],
       "pattern_created": "P-DI-LAZY-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-577534",
+      "date": "2026-01-25",
+      "epic": "E8.4",
+      "error": "3 bugs críticos em Domain Events: (1) Apenas PaymentCompleted tinha handler, outros eventos (PayableCreated, PayableCancelled) eram perdidos; (2) PaymentCompletedHandler acessava campos errados (amount/currency/method vs paidAmount/paidAt/paymentMethod); (3) DomainEventDispatcher NÃO registrado no DI",
+      "correction": "Bug #1: Implementados 4 handlers (PayableCreated, PayableCancelled, PaymentCompleted, PayableOverdue) com switch/case em getHandlers(). Bug #2: Corrigidos campos do payload no PaymentCompletedHandler para corresponder ao evento real. Bug #3: Registrado DomainEventDispatcher no FinancialModule DI container com TOKENS.EventDispatcher.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/events/DomainEventDispatcher.ts",
+        "src/modules/financial/infrastructure/di/FinancialModule.ts"
+      ],
+      "pattern_created": "P-EVENT-COMPLETE-001",
       "status": "APPROVED",
       "must_not_repeat": true
     }
