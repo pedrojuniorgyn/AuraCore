@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { trips } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
+import { updateTripSchema } from "@/lib/validation/tms-schemas";
+import { idParamSchema } from "@/lib/validation/common-schemas";
 
 // GET - Buscar viagem específica
 export async function GET(
@@ -19,10 +22,19 @@ export async function GET(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const tripId = parseInt(resolvedParams.id);
-    if (isNaN(tripId)) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    // ✅ S1.1 Batch 3 Phase 2: Validar ID com Zod
+    const validation = idParamSchema.safeParse(resolvedParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: "ID inválido",
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
+
+    const tripId = validation.data.id;
 
     const trip = await queryFirst<typeof trips.$inferSelect>(
       db
@@ -72,12 +84,36 @@ export async function PUT(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const tripId = parseInt(resolvedParams.id);
-    if (isNaN(tripId)) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    // ✅ S1.1 Batch 3 Phase 2: Validar ID com Zod
+    const idValidation = idParamSchema.safeParse(resolvedParams);
+    if (!idValidation.success) {
+      return NextResponse.json(
+        {
+          error: "ID inválido",
+          details: idValidation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
+    const tripId = idValidation.data.id;
+
     const body = await req.json();
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validar body com Zod
+    const validation = updateTripSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: "Dados inválidos",
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
+
     // Evitar override de campos sensíveis via spread
     const {
       organizationId: _orgId,
@@ -90,14 +126,6 @@ export async function PUT(
       version: _version,
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
-
-    // Validações básicas
-    if (!body.vehicleId || !body.driverId) {
-      return NextResponse.json(
-        { error: "Veículo e motorista são obrigatórios" },
-        { status: 400 }
-      );
-    }
 
     // Verificar se viagem existe
     const existing = await queryFirst<typeof trips.$inferSelect>(

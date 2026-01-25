@@ -1,12 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+
+// ✅ S1.1 Batch 3 Phase 2: Schemas inline para billing-events
+const createBillingEventSchema = z.object({
+  organizationId: z.number().int().positive().default(1),
+  customerId: z.string().uuid('ID do cliente inválido'),
+  eventType: z.enum(['STORAGE', 'HANDLING', 'PICKING', 'PACKING', 'SHIPPING', 'ADDITIONAL_SERVICE']),
+  quantity: z.number().positive('Quantidade deve ser positiva'),
+  unitPrice: z.number().nonnegative('Preço unitário deve ser não-negativo'),
+  unitOfMeasure: z.string().default('UN'),
+});
+
+const queryBillingEventsSchema = z.object({
+  organizationId: z.coerce.number().int().positive().optional(),
+  period: z.string().regex(/^\d{4}-\d{2}$/, 'Período deve estar no formato YYYY-MM').optional(),
+  status: z.enum(['PENDING', 'INVOICED', 'PAID', 'CANCELLED']).optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get("organizationId") || "1";
-    const period = searchParams.get("period");
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validar query params
+    const queryParams = Object.fromEntries(searchParams.entries());
+    const validation = queryBillingEventsSchema.safeParse(queryParams);
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Parâmetros inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    
+    const { organizationId = "1", period, status } = validation.data;
 
     const events = await db.execute(sql`
       SELECT 
@@ -45,13 +76,27 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validar body com Zod
+    const validation = createBillingEventSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Dados inválidos',
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    
     const { 
       organizationId = 1, 
       customerId, 
       eventType, 
       quantity, 
-      unitPrice 
-    } = body;
+      unitPrice,
+      unitOfMeasure = 'UN'
+    } = validation.data;
 
     await db.execute(sql`
       INSERT INTO wms_billing_events 
