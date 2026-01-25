@@ -12,8 +12,7 @@ import { VehicleMapper } from '../mappers/VehicleMapper';
 import type { VehicleRow } from '../schemas/vehicle.schema';
 
 // Type helper para contornar limitações de tipagem do Drizzle MSSQL
-type QueryWithLimit = { limit: (n: number) => Promise<VehicleRow[]> };
-type QueryWithOffset = { offset: (n: number) => QueryWithLimit };
+// Tipos antigos removidos - usamos inline type assertion (HOTFIX S3)
 
 @injectable()
 export class DrizzleVehicleRepository implements IVehicleRepository {
@@ -116,7 +115,9 @@ export class DrizzleVehicleRepository implements IVehicleRepository {
         .where(and(...conditions))
         .orderBy(vehicles.plate);
       
-      const rows = await (query as unknown as QueryWithOffset).offset(offset).limit(pageSize);
+      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
+      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof vehicles.$inferSelect[]> } };
+      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
 
       // Map to domain entities
       const items: Vehicle[] = [];

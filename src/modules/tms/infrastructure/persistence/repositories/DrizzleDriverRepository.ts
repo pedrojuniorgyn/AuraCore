@@ -12,8 +12,7 @@ import { DriverMapper } from '../mappers/DriverMapper';
 import type { DriverRow } from '../schemas/driver.schema';
 
 // Type helper para contornar limitações de tipagem do Drizzle MSSQL
-type QueryWithLimit = { limit: (n: number) => Promise<DriverRow[]> };
-type QueryWithOffset = { offset: (n: number) => QueryWithLimit };
+// Tipos antigos removidos - usamos inline type assertion (HOTFIX S3)
 
 @injectable()
 export class DrizzleDriverRepository implements IDriverRepository {
@@ -116,7 +115,9 @@ export class DrizzleDriverRepository implements IDriverRepository {
         .where(and(...conditions))
         .orderBy(drivers.name);
       
-      const rows = await (query as unknown as QueryWithOffset).offset(offset).limit(pageSize);
+      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
+      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof drivers.$inferSelect[]> } };
+      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
 
       // Map to domain entities
       const items: Driver[] = [];

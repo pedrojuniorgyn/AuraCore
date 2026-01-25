@@ -52,18 +52,18 @@ export async function GET(request: NextRequest) {
       .from(ideaBoxTable)
       .where(and(...conditions));
 
-    // 2. Buscar página com OFFSET/FETCH
+    // 2. Buscar página com paginação (HOTFIX S3: limit ANTES de offset)
     const offset = (page - 1) * pageSize;
     const baseQuery = db
       .select()
       .from(ideaBoxTable)
       .where(and(...conditions))
-      .orderBy(desc(ideaBoxTable.createdAt))
-      .offset(offset);
+      .orderBy(desc(ideaBoxTable.createdAt));
 
-    // Drizzle MSSQL typing workaround
-    type QueryWithLimit = { limit: (n: number) => Promise<typeof ideaBoxTable.$inferSelect[]> };
-    const ideas = await (baseQuery as unknown as QueryWithLimit).limit(pageSize);
+    // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM
+    // A ordem contrária causa: TypeError: .limit is not a function
+    type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof ideaBoxTable.$inferSelect[]> } };
+    const ideas = await (baseQuery as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
 
     return NextResponse.json({
       items: ideas,

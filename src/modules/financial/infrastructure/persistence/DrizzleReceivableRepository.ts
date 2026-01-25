@@ -16,8 +16,7 @@ import { accountsReceivableTable, type AccountReceivableRow } from './Receivable
 import { ReceivableMapper } from './ReceivableMapper';
 
 // Type helper para contornar limitações de tipagem do Drizzle MSSQL
-type QueryWithLimit = { limit: (n: number) => Promise<AccountReceivableRow[]> };
-type QueryWithOffset = { offset: (n: number) => QueryWithLimit };
+// Tipos antigos removidos - usamos inline type assertion (HOTFIX S3)
 
 @injectable()
 export class DrizzleReceivableRepository implements IReceivableRepository {
@@ -124,7 +123,9 @@ export class DrizzleReceivableRepository implements IReceivableRepository {
         .where(and(...conditions))
         .orderBy(desc(accountsReceivableTable.dueDate));
 
-      const rows = await (query as unknown as QueryWithOffset).offset(offset).limit(pageSize);
+      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
+      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof accountsReceivableTable.$inferSelect[]> } };
+      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
 
       // Map to domain entities
       const items: AccountReceivable[] = [];

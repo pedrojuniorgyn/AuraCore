@@ -13,8 +13,7 @@ import { TripMapper } from '../mappers/TripMapper';
 import type { TripRow } from '../schemas/trip.schema';
 
 // Type helper para contornar limitações de tipagem do Drizzle MSSQL
-type QueryWithLimit = { limit: (n: number) => Promise<TripRow[]> };
-type QueryWithOffset = { offset: (n: number) => QueryWithLimit };
+// Tipos antigos removidos - usamos inline type assertion (HOTFIX S3)
 
 @injectable()
 export class DrizzleTripRepository implements ITripRepository {
@@ -120,7 +119,9 @@ export class DrizzleTripRepository implements ITripRepository {
         .where(and(...conditions))
         .orderBy(desc(trips.createdAt));
       
-      const rows = await (query as unknown as QueryWithOffset).offset(offset).limit(pageSize);
+      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
+      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof trips.$inferSelect[]> } };
+      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
 
       // Map to domain entities
       const items: Trip[] = [];

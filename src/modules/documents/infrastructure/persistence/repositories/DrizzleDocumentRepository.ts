@@ -16,9 +16,9 @@ import type {
 import { documentStoreTable, type DocumentStoreRow } from '../schemas/document-store.schema';
 import { DocumentMapper } from '../mappers/DocumentMapper';
 
-// Type helper para contornar limitações de tipagem do Drizzle MSSQL
-type QueryWithLimit = { limit: (n: number) => Promise<DocumentStoreRow[]> };
-type QueryWithOffset = { offset: (n: number) => QueryWithLimit };
+// Type helpers para contornar limitações de tipagem do Drizzle MSSQL
+// HOTFIX S3: Mantendo QueryWithLimit para queries simples sem offset
+type QueryWithLimit = { limit(n: number): Promise<DocumentStoreRow[]> };
 
 @injectable()
 export class DrizzleDocumentRepository implements IDocumentRepository {
@@ -105,11 +105,10 @@ export class DrizzleDocumentRepository implements IDocumentRepository {
         .where(and(...conditions))
         .orderBy(desc(documentStoreTable.createdAt));
 
-      const queryWithOffset = (query as unknown as QueryWithOffset).offset(offset);
-      // ✅ BP-SQL-004: Type assertion para .limit() (LC-303298, GAP-SQL-005)
-      type DocumentRow = typeof documentStoreTable.$inferSelect;
-      type QueryWithLimit = { limit(n: number): Promise<DocumentRow[]> };
-      const rows = await (queryWithOffset as unknown as QueryWithLimit).limit(pageSize);
+      // CRÍTICO: .limit() DEVE vir ANTES de .offset() no Drizzle ORM (HOTFIX S3)
+      // A ordem contrária causa: TypeError: .limit is not a function
+      type QueryWithLimitOffset = { limit(n: number): { offset(n: number): Promise<typeof documentStoreTable.$inferSelect[]> } };
+      const rows = await (query as unknown as QueryWithLimitOffset).limit(pageSize).offset(offset);
 
       // Map to domain
       const items: Document[] = [];

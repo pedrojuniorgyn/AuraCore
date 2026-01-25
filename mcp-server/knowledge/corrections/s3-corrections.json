@@ -1,0 +1,25 @@
+{
+  "epic": "S3",
+  "corrections": [
+    {
+      "id": "LC-050854",
+      "date": "2026-01-25",
+      "epic": "S3",
+      "error": "TypeError: .limit is not a function - Drizzle ORM com SQL Server não suporta a ordem .offset().limit(). A ordem correta é .limit().offset() (limit ANTES de offset). Bug causava erro 500 em TODAS as APIs que usam paginação.",
+      "correction": "Corrigida ordem de chamada de .offset().limit() para .limit().offset() em todos os repositories e rotas API. A função queryPaginated no helper central foi corrigida. Adicionado comentário CRÍTICO explicando a ordem obrigatória.",
+      "files_affected": [
+        "src/lib/db/query-helpers.ts",
+        "src/modules/financial/infrastructure/persistence/DrizzleReceivableRepository.ts",
+        "src/modules/tms/infrastructure/persistence/repositories/DrizzleVehicleRepository.ts",
+        "src/modules/tms/infrastructure/persistence/repositories/DrizzleDriverRepository.ts",
+        "src/modules/tms/infrastructure/persistence/repositories/DrizzleTripRepository.ts",
+        "src/modules/documents/infrastructure/persistence/repositories/DrizzleDocumentRepository.ts",
+        "src/modules/documents/infrastructure/persistence/repositories/DrizzleDocumentJobRepository.ts",
+        "src/app/api/strategic/ideas/route.ts"
+      ],
+      "pattern_created": "DRIZZLE-PAGINATION-ORDER",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -86,7 +86,20 @@ export async function queryFirst<T>(
 }
 
 /**
+ * Interface para queries com método .limit() que retorna objeto com .offset()
+ */
+interface QueryWithLimitOffset<T> {
+  limit(count: number): { offset(count: number): Promise<T[]> };
+}
+
+/**
  * Aplica .limit() e .offset() para paginação
+ * 
+ * IMPORTANTE: No Drizzle ORM com SQL Server, a ordem DEVE ser .limit().offset()
+ * (limit ANTES de offset). A ordem contrária (.offset().limit()) não funciona.
+ * 
+ * @see HOTFIX Sprint S3 - 25/01/2026
+ * @see https://orm.drizzle.team/docs/select#limit--offset
  * 
  * @example
  * const users = await queryPaginated(
@@ -99,8 +112,9 @@ export async function queryPaginated<T>(
   pagination: { page: number; pageSize: number }
 ): Promise<T[]> {
   const offset = (pagination.page - 1) * pagination.pageSize;
-  const withOffset = (query as unknown as QueryWithOffset<unknown>).offset(offset);
-  return (withOffset as unknown as QueryWithLimit<T>).limit(pagination.pageSize);
+  // CRÍTICO: .limit() DEVE vir ANTES de .offset()
+  // A ordem contrária causa: TypeError: .limit is not a function
+  return (query as unknown as QueryWithLimitOffset<T>).limit(pagination.pageSize).offset(offset);
 }
 
 /**
