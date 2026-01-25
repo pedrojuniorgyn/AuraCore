@@ -216,7 +216,10 @@ describe('JournalEntry', () => {
         amount: money,
       }).value!);
 
-      expect(entry.isBalanced).toBe(true);
+      // ✅ S1.3-APP: getIsBalanced() retorna Result<boolean, string>
+      const isBalancedResult = entry.getIsBalanced();
+      expect(Result.isOk(isBalancedResult)).toBe(true);
+      expect(isBalancedResult.value).toBe(true);
     });
 
     it('should return false when debits do not equal credits', () => {
@@ -240,7 +243,10 @@ describe('JournalEntry', () => {
         amount: Money.create(500).value!,
       }).value!);
 
-      expect(entry.isBalanced).toBe(false);
+      // ✅ S1.3-APP: getIsBalanced() retorna Result<boolean, string>
+      const isBalancedResult = entry.getIsBalanced();
+      expect(Result.isOk(isBalancedResult)).toBe(true);
+      expect(isBalancedResult.value).toBe(false);
     });
   });
 

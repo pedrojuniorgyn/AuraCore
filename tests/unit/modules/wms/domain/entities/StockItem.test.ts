@@ -35,7 +35,10 @@ describe('StockItem', () => {
     it('should calculate available quantity correctly', () => {
       const stockItem = createValidStockItem().value;
       
-      expect(stockItem.availableQuantity.value).toBe(80); // 100 - 20
+      // ✅ S1.3-APP: getAvailableQuantity() retorna Result<StockQuantity, string>
+      const availableResult = stockItem.getAvailableQuantity();
+      expect(Result.isOk(availableResult)).toBe(true);
+      expect(availableResult.value.value).toBe(80); // 100 - 20
     });
 
     it('should calculate total cost correctly', () => {
@@ -164,7 +167,10 @@ describe('StockItem', () => {
       
       expect(Result.isOk(result)).toBe(true);
       expect(stockItem.reservedQuantity.value).toBe(50); // 20 + 30
-      expect(stockItem.availableQuantity.value).toBe(50); // 100 - 50
+      // ✅ S1.3-APP: getAvailableQuantity() retorna Result<StockQuantity, string>
+      const availableResult = stockItem.getAvailableQuantity();
+      expect(Result.isOk(availableResult)).toBe(true);
+      expect(availableResult.value.value).toBe(50); // 100 - 50
     });
 
     it('should fail when reserving more than available', () => {
@@ -187,7 +193,10 @@ describe('StockItem', () => {
       
       expect(Result.isOk(result)).toBe(true);
       expect(stockItem.reservedQuantity.value).toBe(10); // 20 - 10
-      expect(stockItem.availableQuantity.value).toBe(90); // 100 - 10
+      // ✅ S1.3-APP: getAvailableQuantity() retorna Result<StockQuantity, string>
+      const availableResult = stockItem.getAvailableQuantity();
+      expect(Result.isOk(availableResult)).toBe(true);
+      expect(availableResult.value.value).toBe(90); // 100 - 10
     });
 
     it('should fail when releasing more than reserved', () => {

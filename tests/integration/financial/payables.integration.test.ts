@@ -162,7 +162,10 @@ describe('Financial Payables - Integration Tests', () => {
 
       // Assert
       expect(payable.status).toBe('PAID');
-      expect(payable.remainingAmount.amount).toBe(0);
+      // ✅ S1.3-APP: getRemainingAmount() retorna Result<Money, string>
+      const remainingResult = payable.getRemainingAmount();
+      expect(Result.isOk(remainingResult)).toBe(true);
+      expect(remainingResult.value.amount).toBe(0);
     });
 
     it('should allow partial payment', () => {
@@ -199,7 +202,10 @@ describe('Financial Payables - Integration Tests', () => {
 
       // Assert
       expect(payable.status).toBe('PARTIAL');
-      expect(payable.remainingAmount.amount).toBe(400);
+      // ✅ S1.3-APP: getRemainingAmount() retorna Result<Money, string>
+      const remainingResult = payable.getRemainingAmount();
+      expect(Result.isOk(remainingResult)).toBe(true);
+      expect(remainingResult.value.amount).toBe(400);
     });
 
     it('should reject payment for cancelled payable', () => {

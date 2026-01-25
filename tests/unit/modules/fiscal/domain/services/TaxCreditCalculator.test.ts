@@ -38,7 +38,10 @@ describe('TaxCreditCalculator', () => {
         const credit = result.value;
         expect(credit.pisCredit.amount).toBeCloseTo(16.5); // 1.65% de 1000
         expect(credit.cofinsCredit.amount).toBeCloseTo(76); // 7.6% de 1000
-        expect(credit.totalCredit.amount).toBeCloseTo(92.5); // 9.25% de 1000
+        // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+        const totalCreditResult = credit.getTotalCredit();
+        expect(Result.isOk(totalCreditResult)).toBe(true);
+        expect(totalCreditResult.value.amount).toBeCloseTo(92.5); // 9.25% de 1000
       }
     });
 
@@ -60,7 +63,10 @@ describe('TaxCreditCalculator', () => {
         const credit = result.value;
         expect(credit.pisCredit.amount).toBeCloseTo(82.5); // 1.65% de 5000
         expect(credit.cofinsCredit.amount).toBeCloseTo(380); // 7.6% de 5000
-        expect(credit.totalCredit.amount).toBeCloseTo(462.5); // 9.25% de 5000
+        // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+        const totalCreditResult = credit.getTotalCredit();
+        expect(Result.isOk(totalCreditResult)).toBe(true);
+        expect(totalCreditResult.value.amount).toBeCloseTo(462.5); // 9.25% de 5000
       }
     });
 
@@ -80,7 +86,10 @@ describe('TaxCreditCalculator', () => {
       expect(Result.isOk(result)).toBe(true);
       if (Result.isOk(result)) {
         const credit = result.value;
-        expect(credit.totalCredit.amount).toBeCloseTo(185); // 9.25% de 2000
+        // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+        const totalCreditResult = credit.getTotalCredit();
+        expect(Result.isOk(totalCreditResult)).toBe(true);
+        expect(totalCreditResult.value.amount).toBeCloseTo(185); // 9.25% de 2000
       }
     });
 
@@ -160,7 +169,10 @@ describe('TaxCreditCalculator', () => {
         const credit = result.value;
         expect(credit.pisCredit.amount).toBeCloseTo(6.5); // 0.65% de 1000
         expect(credit.cofinsCredit.amount).toBeCloseTo(30); // 3.0% de 1000
-        expect(credit.totalCredit.amount).toBeCloseTo(36.5); // 3.65% de 1000
+        // ✅ S1.3-APP: getTotalCredit() retorna Result<Money, string>
+        const totalCreditResult = credit.getTotalCredit();
+        expect(Result.isOk(totalCreditResult)).toBe(true);
+        expect(totalCreditResult.value.amount).toBeCloseTo(36.5); // 3.65% de 1000
       }
     });
   });

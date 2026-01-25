@@ -137,7 +137,10 @@ describe('AccountPayable', () => {
           
           expect(Result.isOk(result)).toBe(true);
           expect(payable.status).toBe('PAID');
-          expect(payable.totalPaid.amount).toBe(validMoney.amount);
+          // ✅ S1.3-APP: getTotalPaid() retorna Result<Money, string>
+          const totalPaidResult = payable.getTotalPaid();
+          expect(Result.isOk(totalPaidResult)).toBe(true);
+          expect(totalPaidResult.value.amount).toBe(validMoney.amount);
           expect(payable.domainEvents.length).toBe(2); // Created + PaymentCompleted
         }
       }
@@ -174,7 +177,10 @@ describe('AccountPayable', () => {
           expect(Result.isOk(result)).toBe(true);
           // Status should still be OPEN because payment is not confirmed
           expect(payable.status).toBe('OPEN');
-          expect(payable.totalPaid.amount).toBe(0);
+          // ✅ S1.3-APP: getTotalPaid() retorna Result<Money, string>
+          const totalPaidResult = payable.getTotalPaid();
+          expect(Result.isOk(totalPaidResult)).toBe(true);
+          expect(totalPaidResult.value.amount).toBe(0);
         }
       }
     });
@@ -237,7 +243,10 @@ describe('AccountPayable', () => {
           // Register (PENDING)
           payable.registerPayment(payment);
           expect(payable.status).toBe('OPEN');
-          expect(payable.totalPaid.amount).toBe(0);
+          // ✅ S1.3-APP: getTotalPaid() retorna Result<Money, string>
+          let totalPaidResult = payable.getTotalPaid();
+          expect(Result.isOk(totalPaidResult)).toBe(true);
+          expect(totalPaidResult.value.amount).toBe(0);
           
           // Confirm payment
           const confirmResult = payable.confirmPayment('pmt-001', 'TXN-123');
@@ -245,7 +254,9 @@ describe('AccountPayable', () => {
           
           // Now should be PAID
           expect(payable.status).toBe('PAID');
-          expect(payable.totalPaid.amount).toBe(validMoney.amount);
+          totalPaidResult = payable.getTotalPaid();
+          expect(Result.isOk(totalPaidResult)).toBe(true);
+          expect(totalPaidResult.value.amount).toBe(validMoney.amount);
           expect(payable.domainEvents.length).toBe(2); // Created + PaymentCompleted
         }
       }
@@ -435,7 +446,10 @@ describe('AccountPayable', () => {
             payable.registerPayment(payment);
             
             expect(payable.status).toBe('PARTIAL');
-            expect(payable.totalPaid.amount).toBe(500);
+            // ✅ S1.3-APP: getTotalPaid() retorna Result<Money, string>
+            const totalPaidResult = payable.getTotalPaid();
+            expect(Result.isOk(totalPaidResult)).toBe(true);
+            expect(totalPaidResult.value.amount).toBe(500);
 
             // Tentar cancelar deve FALHAR
             const result = payable.cancel('Test', 'user-001');
@@ -508,7 +522,10 @@ describe('AccountPayable', () => {
         const payable = payableResult.value;
         
         // Inicialmente, remaining = total due
-        expect(payable.remainingAmount.amount).toBe(validMoney.amount);
+        // ✅ S1.3-APP: getRemainingAmount() retorna Result<Money, string>
+        const remainingResult = payable.getRemainingAmount();
+        expect(Result.isOk(remainingResult)).toBe(true);
+        expect(remainingResult.value.amount).toBe(validMoney.amount);
       }
     });
 
@@ -542,7 +559,10 @@ describe('AccountPayable', () => {
             payable.registerPayment(payment);
             
             // Remaining should be 1000 - 500 = 500
-            expect(payable.remainingAmount.amount).toBe(500);
+            // ✅ S1.3-APP: getRemainingAmount() retorna Result<Money, string>
+            const remainingResult = payable.getRemainingAmount();
+            expect(Result.isOk(remainingResult)).toBe(true);
+            expect(remainingResult.value.amount).toBe(500);
             expect(payable.status).toBe('PARTIAL');
           }
         }
@@ -580,7 +600,10 @@ describe('AccountPayable', () => {
           // Multa (2%): 20
           // Juros (~30 dias * 1%/30): ~10
           // Total aproximado: > 1000
-          expect(payable.remainingAmount.amount).toBeGreaterThan(validMoney.amount);
+          // ✅ S1.3-APP: getRemainingAmount() retorna Result<Money, string>
+          const remainingResult = payable.getRemainingAmount();
+          expect(Result.isOk(remainingResult)).toBe(true);
+          expect(remainingResult.value.amount).toBeGreaterThan(validMoney.amount);
           expect(payable.isOverdue).toBe(true);
         }
       }
