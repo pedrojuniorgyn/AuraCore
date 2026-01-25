@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { trips } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { updateTripSchema } from "@/lib/validation/tms-schemas";
 import { idParamSchema } from "@/lib/validation/common-schemas";
@@ -47,6 +47,7 @@ export async function GET(
             isNull(trips.deletedAt)
           )
         )
+        .orderBy(asc(trips.id))
     );
 
     if (!trip) {
@@ -139,6 +140,7 @@ export async function PUT(
             isNull(trips.deletedAt)
           )
         )
+        .orderBy(asc(trips.id))
     );
 
     if (!existing) {
@@ -190,6 +192,7 @@ export async function PUT(
             isNull(trips.deletedAt)
           )
         )
+        .orderBy(asc(trips.id))
     );
 
     return NextResponse.json({
@@ -241,6 +244,7 @@ export async function DELETE(
             isNull(trips.deletedAt)
           )
         )
+        .orderBy(asc(trips.id))
     );
 
     if (!existing) {

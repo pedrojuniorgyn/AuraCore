@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vehicles } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
@@ -32,6 +32,7 @@ export async function GET(
             isNull(vehicles.deletedAt)
           )
         )
+        .orderBy(asc(vehicles.id))
     );
 
     if (!vehicle) {
@@ -89,6 +90,7 @@ export async function PUT(
             isNull(vehicles.deletedAt)
           )
         )
+        .orderBy(asc(vehicles.id))
     );
 
     if (!existing) {
@@ -111,6 +113,7 @@ export async function PUT(
               isNull(vehicles.deletedAt)
             )
           )
+          .orderBy(asc(vehicles.id))
       );
 
       if (duplicatePlate && duplicatePlate.id !== vehicleId) {
@@ -158,6 +161,7 @@ export async function PUT(
         .select()
         .from(vehicles)
         .where(and(eq(vehicles.id, vehicleId), eq(vehicles.organizationId, ctx.organizationId), isNull(vehicles.deletedAt)))
+        .orderBy(asc(vehicles.id))
     );
 
     return NextResponse.json({
@@ -205,6 +209,7 @@ export async function DELETE(
             isNull(vehicles.deletedAt)
           )
         )
+        .orderBy(asc(vehicles.id))
     );
 
     if (!existing) {

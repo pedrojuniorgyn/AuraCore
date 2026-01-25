@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { z } from "zod";
@@ -221,6 +221,7 @@ export async function PUT(
         .select()
         .from(costCenters)
         .where(and(eq(costCenters.id, id), eq(costCenters.organizationId, organizationId)))
+        .orderBy(asc(costCenters.id))
     );
 
     return NextResponse.json({

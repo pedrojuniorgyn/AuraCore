@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { drivers } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
@@ -32,6 +32,7 @@ export async function GET(
             isNull(drivers.deletedAt)
           )
         )
+        .orderBy(asc(drivers.id))
     );
 
     if (!driver) {
@@ -92,6 +93,7 @@ export async function PUT(
             isNull(drivers.deletedAt)
           )
         )
+        .orderBy(asc(drivers.id))
     );
 
     if (!existing) {
@@ -114,6 +116,7 @@ export async function PUT(
               isNull(drivers.deletedAt)
             )
           )
+          .orderBy(asc(drivers.id))
       );
 
       if (duplicateCpf && duplicateCpf.id !== driverId) {
@@ -137,6 +140,7 @@ export async function PUT(
               isNull(drivers.deletedAt)
             )
           )
+          .orderBy(asc(drivers.id))
       );
 
       if (duplicateCnh && duplicateCnh.id !== driverId) {
@@ -184,6 +188,7 @@ export async function PUT(
         .select()
         .from(drivers)
         .where(and(eq(drivers.id, driverId), eq(drivers.organizationId, ctx.organizationId), isNull(drivers.deletedAt)))
+        .orderBy(asc(drivers.id))
     );
 
     return NextResponse.json({
@@ -231,6 +236,7 @@ export async function DELETE(
             isNull(drivers.deletedAt)
           )
         )
+        .orderBy(asc(drivers.id))
     );
 
     if (!existing) {

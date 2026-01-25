@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bankAccounts, accountsPayable, bankRemittances, branches } from "@/lib/db/schema";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, asc } from "drizzle-orm";
 import { container } from "@/shared/infrastructure/di/container";
 import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/FinancialModule";
 import type { ICnabGateway } from "@/modules/financial/domain/ports/output/ICnabGateway";
@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
                 isNull(bankRemittances.deletedAt)
               )
             )
+            .orderBy(asc(bankRemittances.id))
         );
         if (existing) {
           return NextResponse.json({
@@ -180,6 +181,7 @@ export async function POST(request: NextRequest) {
             isNull(branches.deletedAt)
           )
         )
+        .orderBy(asc(branches.id))
     );
 
     if (!branch) {

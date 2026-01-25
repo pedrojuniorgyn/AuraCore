@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
@@ -268,6 +268,7 @@ export async function PUT(
         .select()
         .from(chartOfAccounts)
         .where(and(eq(chartOfAccounts.id, id), eq(chartOfAccounts.organizationId, organizationId)))
+        .orderBy(asc(chartOfAccounts.id))
     );
 
     // ✅ Registrar auditoria

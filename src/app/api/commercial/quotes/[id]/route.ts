@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { freightQuotes } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
 /**
@@ -131,6 +131,7 @@ export async function PUT(
       .select()
       .from(freightQuotes)
       .where(and(eq(freightQuotes.id, id), eq(freightQuotes.organizationId, organizationId), isNull(freightQuotes.deletedAt)))
+      .orderBy(asc(freightQuotes.id))
     );
 
     if (!updated) {

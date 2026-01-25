@@ -8,7 +8,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tripOccurrences } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 // ✅ S1.1 Batch 3 Phase 2: Schemas
@@ -63,6 +63,7 @@ export async function GET(
           isNull(tripOccurrences.deletedAt)
         )
       )
+      .orderBy(asc(tripOccurrences.id))
       );
 
     if (!occurrence) {
@@ -147,6 +148,7 @@ export async function PUT(
           isNull(tripOccurrences.deletedAt)
         )
       )
+      .orderBy(asc(tripOccurrences.id))
       );
 
     if (!existing) {
@@ -190,6 +192,7 @@ export async function PUT(
           isNull(tripOccurrences.deletedAt)
         )
       )
+      .orderBy(asc(tripOccurrences.id))
       );
 
     return NextResponse.json({
@@ -240,6 +243,7 @@ export async function DELETE(
           isNull(tripOccurrences.deletedAt)
         )
       )
+      .orderBy(asc(tripOccurrences.id))
       );
 
     if (!existing) {

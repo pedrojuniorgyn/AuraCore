@@ -3,7 +3,7 @@ import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { BRANCH_COOKIE_NAME } from "@/lib/tenant/branch-cookie";
 import { db, ensureConnection } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 export const runtime = "nodejs";
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
         .select({ id: branches.id })
         .from(branches)
         .where(and(eq(branches.id, branchId), eq(branches.organizationId, ctx.organizationId), isNull(branches.deletedAt)))
+        .orderBy(asc(branches.id))
     );
 
     if (!branch) {

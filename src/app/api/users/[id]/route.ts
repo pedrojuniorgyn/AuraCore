@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar usuário específico
@@ -52,6 +52,7 @@ export async function GET(
             isNull(users.deletedAt)
           )
         )
+        .orderBy(asc(users.id))
     );
 
     if (!user) {
@@ -119,6 +120,7 @@ export async function PUT(
             isNull(users.deletedAt)
           )
         )
+        .orderBy(asc(users.id))
     );
 
     if (!existing) {
@@ -141,6 +143,7 @@ export async function PUT(
               isNull(users.deletedAt)
             )
           )
+          .orderBy(asc(users.id))
       );
 
       if (duplicateEmail && duplicateEmail.id !== userId) {
@@ -214,6 +217,7 @@ export async function PUT(
             isNull(users.deletedAt)
           )
         )
+        .orderBy(asc(users.id))
     );
 
     return NextResponse.json({
@@ -277,6 +281,7 @@ export async function DELETE(
             isNull(users.deletedAt)
           )
         )
+        .orderBy(asc(users.id))
     );
 
     if (!existing) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vehicleDocuments } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
@@ -31,6 +31,7 @@ export async function GET(
           isNull(vehicleDocuments.deletedAt)
         )
       )
+      .orderBy(asc(vehicleDocuments.id))
       );
 
     if (!document) {
@@ -90,6 +91,7 @@ export async function PUT(
           isNull(vehicleDocuments.deletedAt)
         )
       )
+      .orderBy(asc(vehicleDocuments.id))
       );
 
     if (!existing) {
@@ -157,6 +159,7 @@ export async function PUT(
           isNull(vehicleDocuments.deletedAt)
         )
       )
+      .orderBy(asc(vehicleDocuments.id))
       );
 
     return NextResponse.json({
@@ -203,6 +206,7 @@ export async function DELETE(
           isNull(vehicleDocuments.deletedAt)
         )
       )
+      .orderBy(asc(vehicleDocuments.id))
       );
 
     if (!existing) {

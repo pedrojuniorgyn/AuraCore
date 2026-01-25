@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bankRemittances } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 // GET - Buscar remessa específica
@@ -33,6 +33,7 @@ export async function GET(
             isNull(bankRemittances.deletedAt)
           )
         )
+        .orderBy(asc(bankRemittances.id))
     );
 
     if (!remittance) {
@@ -85,6 +86,7 @@ export async function DELETE(
             isNull(bankRemittances.deletedAt)
           )
         )
+        .orderBy(asc(bankRemittances.id))
     );
 
     if (!existing) {

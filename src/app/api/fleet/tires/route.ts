@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { tires, tireMovements } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, asc } from "drizzle-orm";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET() {
@@ -79,6 +79,7 @@ export async function POST(request: Request) {
             .select()
             .from(tires)
             .where(and(eq(tires.id, Number(tireId)), eq(tires.organizationId, ctx.organizationId), isNull(tires.deletedAt)))
+            .orderBy(asc(tires.id))
         )
       : null;
 

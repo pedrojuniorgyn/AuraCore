@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { tripCheckpoints, trips } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
 export const runtime = "nodejs";
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .select({ id: trips.id })
         .from(trips)
         .where(and(eq(trips.id, tripId), eq(trips.organizationId, ctx.organizationId), isNull(trips.deletedAt)))
+        .orderBy(asc(trips.id))
     );
 
     if (!trip) {

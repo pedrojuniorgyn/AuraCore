@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { bankTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { and, eq } from "drizzle-orm";
+import { and, eq, asc } from "drizzle-orm";
 
 export const runtime = "nodejs";
 
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .select({ id: bankTransactions.id })
       .from(bankTransactions)
       .where(and(eq(bankTransactions.id, txId), eq(bankTransactions.organizationId, ctx.organizationId)))
+      .orderBy(asc(bankTransactions.id))
     );
 
     if (!existing) {

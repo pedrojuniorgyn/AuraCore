@@ -2,7 +2,7 @@ import { getDb, ensureConnection } from "@/lib/db";
 import { branches, organizations, permissions, rolePermissions, roles, userBranches, userRoles, users } from "@/lib/db/schema";
 import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
@@ -88,6 +88,7 @@ export async function GET(req: NextRequest) {
         .select({ id: organizations.id })
         .from(organizations)
         .where(and(eq(organizations.slug, orgSlug), isNull(organizations.deletedAt)))
+        .orderBy(asc(organizations.id))
     );
 
     if (existingBySlug) {
@@ -98,6 +99,7 @@ export async function GET(req: NextRequest) {
           .select({ id: organizations.id })
           .from(organizations)
           .where(and(eq(organizations.document, orgDocument), isNull(organizations.deletedAt)))
+          .orderBy(asc(organizations.id))
       );
       if (existingByDocument) {
         organizationId = existingByDocument.id;
@@ -110,6 +112,7 @@ export async function GET(req: NextRequest) {
             .select({ id: organizations.id })
             .from(organizations)
             .where(isNull(organizations.deletedAt))
+            .orderBy(asc(organizations.id))
         );
       organizationId = organizationId ?? anyOrg?.id ?? null;
     }
@@ -145,6 +148,7 @@ export async function GET(req: NextRequest) {
         .select({ id: roles.id })
         .from(roles)
         .where(eq(roles.name, "ADMIN"))
+        .orderBy(asc(roles.id))
     );
 
     let adminRoleId = adminRoleRow?.id ?? null;
@@ -178,6 +182,7 @@ export async function GET(req: NextRequest) {
           .select({ id: permissions.id })
           .from(permissions)
           .where(eq(permissions.slug, p.slug))
+          .orderBy(asc(permissions.id))
       );
       if (!exists) {
         await db.insert(permissions).values({
@@ -195,6 +200,7 @@ export async function GET(req: NextRequest) {
           .select({ roleId: rolePermissions.roleId })
           .from(rolePermissions)
           .where(and(eq(rolePermissions.roleId, adminRoleId), eq(rolePermissions.permissionId, perm.id)))
+          .orderBy(asc(rolePermissions.roleId))
       );
       if (!linkExists) {
         await db.insert(rolePermissions).values({
@@ -227,6 +233,7 @@ export async function GET(req: NextRequest) {
         .select({ id: branches.id })
         .from(branches)
         .where(and(eq(branches.organizationId, organizationId), eq(branches.document, matrizDocument), isNull(branches.deletedAt)))
+        .orderBy(asc(branches.id))
     );
 
     if (existingMatriz) {
@@ -285,6 +292,7 @@ export async function GET(req: NextRequest) {
         .select({ id: users.id, passwordHash: users.passwordHash })
         .from(users)
         .where(and(eq(users.organizationId, organizationId), eq(users.email, adminEmail), isNull(users.deletedAt)))
+        .orderBy(asc(users.id))
     );
 
     if (existingAdmin) {
@@ -322,6 +330,7 @@ export async function GET(req: NextRequest) {
           .select({ id: users.id })
           .from(users)
           .where(and(eq(users.organizationId, organizationId), eq(users.email, adminEmail), isNull(users.deletedAt)))
+          .orderBy(asc(users.id))
       );
       adminUserId = createdUser?.id ?? null;
     }
@@ -350,6 +359,7 @@ export async function GET(req: NextRequest) {
             eq(userRoles.organizationId, organizationId)
           )
         )
+        .orderBy(asc(userRoles.userId))
     );
 
     if (!urExists) {
@@ -369,6 +379,7 @@ export async function GET(req: NextRequest) {
           .select({ userId: userBranches.userId })
           .from(userBranches)
           .where(and(eq(userBranches.userId, adminUserId), eq(userBranches.branchId, matrizBranchId)))
+          .orderBy(asc(userBranches.userId))
       );
       if (!ubExists) {
         await db.insert(userBranches).values({

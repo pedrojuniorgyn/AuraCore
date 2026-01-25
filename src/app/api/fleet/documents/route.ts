@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vehicleDocuments, driverDocuments } from "@/lib/db/schema";
 import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
-import { eq, and, isNull, lte } from "drizzle-orm";
+import { eq, and, isNull, lte, asc } from "drizzle-orm";
 import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 
 // GET - Lista documentos vencendo
@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
               .select()
               .from(vehicleDocuments)
               .where(and(eq(vehicleDocuments.id, Number(docId)), eq(vehicleDocuments.organizationId, ctx.organizationId)))
+              .orderBy(asc(vehicleDocuments.id))
           )
         : null;
 
@@ -149,6 +150,7 @@ export async function POST(request: NextRequest) {
               .select()
               .from(driverDocuments)
               .where(and(eq(driverDocuments.id, Number(docId)), eq(driverDocuments.organizationId, ctx.organizationId)))
+              .orderBy(asc(driverDocuments.id))
           )
         : null;
 

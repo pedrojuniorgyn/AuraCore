@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { crmLeads } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 export async function PUT(
   request: Request,
@@ -67,6 +67,7 @@ export async function PUT(
       .select()
       .from(crmLeads)
       .where(and(eq(crmLeads.id, leadId), eq(crmLeads.organizationId, ctx.organizationId)))
+      .orderBy(asc(crmLeads.id))
     );
 
     if (!lead) {

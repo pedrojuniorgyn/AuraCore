@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { taxCredits, inboundInvoices } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
 export async function GET(request: NextRequest) {
@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
             .select()
             .from(taxCredits)
             .where(and(eq(taxCredits.id, Number(creditId)), eq(taxCredits.organizationId, ctx.organizationId)))
+            .orderBy(asc(taxCredits.id))
         )
       : null;
 
