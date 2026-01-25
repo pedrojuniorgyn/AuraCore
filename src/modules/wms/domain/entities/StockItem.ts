@@ -261,13 +261,15 @@ export class StockItem {
   /**
    * Quantidade disponível (calculated)
    * availableQuantity = quantity - reservedQuantity
+   * 
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
    */
-  get availableQuantity(): StockQuantity {
+  getAvailableQuantity(): Result<StockQuantity, string> {
     const result = this.props.quantity.subtract(this.props.reservedQuantity);
     if (!Result.isOk(result)) {
-      throw new Error(`Failed to calculate available quantity: ${result.error}`);
+      return Result.fail(`Failed to calculate available quantity: ${result.error}`);
     }
-    return result.value;
+    return Result.ok(result.value);
   }
 
   /**
@@ -294,13 +296,15 @@ export class StockItem {
   /**
    * Custo total (calculated)
    * totalCost = unitCost * quantity
+   * 
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
    */
-  get totalCost(): Money {
+  getTotalCost(): Result<Money, string> {
     const result = this.props.unitCost.multiply(this.props.quantity.value);
     if (!Result.isOk(result)) {
-      throw new Error(`Failed to calculate total cost: ${result.error}`);
+      return Result.fail(`Failed to calculate total cost: ${result.error}`);
     }
-    return result.value;
+    return Result.ok(result.value);
   }
 
   /**

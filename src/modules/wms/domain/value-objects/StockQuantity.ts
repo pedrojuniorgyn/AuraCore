@@ -201,45 +201,63 @@ export class StockQuantity {
   /**
    * Compara se esta quantidade é maior que outra
    * 
+   * ⚠️ S1.3: Agora retorna Result<boolean, string> para lidar com unidades diferentes
+   * 
    * @param other Outra quantidade
-   * @returns true se esta quantidade é maior
+   * @returns Result com true se esta quantidade é maior
    */
-  isGreaterThan(other: StockQuantity): boolean {
-    this.assertSameUnit(other);
-    return this.props.value > other.value;
+  isGreaterThan(other: StockQuantity): Result<boolean, string> {
+    const assertResult = this.assertSameUnit(other);
+    if (Result.isFail(assertResult)) {
+      return Result.fail(assertResult.error);
+    }
+    return Result.ok(this.props.value > other.value);
   }
 
   /**
    * Compara se esta quantidade é menor que outra
    * 
+   * ⚠️ S1.3: Agora retorna Result<boolean, string> para lidar com unidades diferentes
+   * 
    * @param other Outra quantidade
-   * @returns true se esta quantidade é menor
+   * @returns Result com true se esta quantidade é menor
    */
-  isLessThan(other: StockQuantity): boolean {
-    this.assertSameUnit(other);
-    return this.props.value < other.value;
+  isLessThan(other: StockQuantity): Result<boolean, string> {
+    const assertResult = this.assertSameUnit(other);
+    if (Result.isFail(assertResult)) {
+      return Result.fail(assertResult.error);
+    }
+    return Result.ok(this.props.value < other.value);
   }
 
   /**
    * Compara se esta quantidade é maior ou igual a outra
    * 
+   * ⚠️ S1.3: Agora retorna Result<boolean, string> para lidar com unidades diferentes
+   * 
    * @param other Outra quantidade
-   * @returns true se esta quantidade é maior ou igual
+   * @returns Result com true se esta quantidade é maior ou igual
    */
-  isGreaterThanOrEqual(other: StockQuantity): boolean {
-    this.assertSameUnit(other);
-    return this.props.value >= other.value;
+  isGreaterThanOrEqual(other: StockQuantity): Result<boolean, string> {
+    const assertResult = this.assertSameUnit(other);
+    if (Result.isFail(assertResult)) {
+      return Result.fail(assertResult.error);
+    }
+    return Result.ok(this.props.value >= other.value);
   }
 
   /**
    * Garante que duas quantidades têm a mesma unidade
+   * 
+   * ⚠️ S1.3: Agora retorna Result<void, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  private assertSameUnit(other: StockQuantity): void {
+  private assertSameUnit(other: StockQuantity): Result<void, string> {
     if (this.props.unit !== other.unit) {
-      throw new Error(
+      return Result.fail(
         `Cannot compare quantities with different units: ${this.props.unit} and ${other.unit}`
       );
     }
+    return Result.ok(undefined);
   }
 
   /**

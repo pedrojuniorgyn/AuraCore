@@ -217,14 +217,17 @@ export class InventoryCount {
    * Diferença (calculated)
    * difference = countedQuantity - systemQuantity
    */
-  get difference(): StockQuantity | undefined {
-    if (!this.props.countedQuantity) return undefined;
+  /**
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
+   */
+  getDifference(): Result<StockQuantity | undefined, string> {
+    if (!this.props.countedQuantity) return Result.ok(undefined);
     
     const result = this.calculateDifference();
     if (!Result.isOk(result)) {
-      throw new Error(`Failed to calculate difference: ${result.error}`);
+      return Result.fail(`Failed to calculate difference: ${result.error}`);
     }
-    return result.value;
+    return Result.ok(result.value);
   }
 
   /**
