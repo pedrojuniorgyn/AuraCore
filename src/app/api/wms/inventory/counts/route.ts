@@ -1,8 +1,23 @@
+/**
+ * API Routes: /api/wms/inventory/counts
+ * 
+ * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
+ */
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { pool, ensureConnection } from "@/lib/db";
 import { getTenantContext } from "@/lib/auth/context";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
+
+// ✅ S1.1 Batch 3 Phase 2: Schema
+const createInventoryCountSchema = z.object({
+  warehouseId: z.number().int().positive('ID do armazém obrigatório'),
+  countType: z.enum(['FULL', 'CYCLE', 'SPOT'], { 
+    errorMap: () => ({ message: 'Tipo deve ser FULL, CYCLE ou SPOT' })
+  }),
+  notes: z.string().max(500).optional(),
+});
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -54,15 +69,17 @@ export async function POST(request: NextRequest) {
     const ctx = await getTenantContext();
 
     const body = await request.json();
-    const { warehouseId, countType, notes } = body;
-
-    // Tipos: FULL (completo), CYCLE (cíclico), SPOT (pontual)
-    if (!["FULL", "CYCLE", "SPOT"].includes(countType)) {
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validate body with Zod
+    const validation = createInventoryCountSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Tipo de contagem inválido" },
+        { error: 'Dados inválidos', details: validation.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    
+    const { warehouseId, countType, notes } = validation.data;
 
     await ensureConnection();
 

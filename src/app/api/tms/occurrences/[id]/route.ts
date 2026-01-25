@@ -1,9 +1,32 @@
+/**
+ * API Routes: /api/tms/occurrences/[id]
+ * 
+ * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
+ */
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { tripOccurrences } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
+
+// ✅ S1.1 Batch 3 Phase 2: Schemas
+const idParamSchema = z.object({
+  id: z.string().transform((val) => parseInt(val, 10)).refine((val) => !isNaN(val) && val > 0, { message: 'ID inválido' }),
+});
+
+const updateOccurrenceSchema = z.object({
+  tripId: z.number().int().positive('ID da viagem inválido'),
+  occurrenceType: z.string().min(1, 'Tipo de ocorrência obrigatório'),
+  title: z.string().min(1, 'Título obrigatório').max(200),
+  description: z.string().max(1000).optional(),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  resolvedAt: z.string().datetime().optional(),
+  notes: z.string().max(1000).optional(),
+});
 
 // GET - Buscar ocorrência específica
 export async function GET(
@@ -19,10 +42,16 @@ export async function GET(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const occurrenceId = parseInt(resolvedParams.id);
-    if (isNaN(occurrenceId)) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    // ✅ S1.1 Batch 3 Phase 2: Validate ID with Zod
+    const validation = idParamSchema.safeParse(resolvedParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "ID inválido", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+
+    const occurrenceId = validation.data.id;
 
     const occurrence = await queryFirst<typeof tripOccurrences.$inferSelect>(db
       .select()
@@ -71,12 +100,30 @@ export async function PUT(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const occurrenceId = parseInt(resolvedParams.id);
-    if (isNaN(occurrenceId)) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    // ✅ S1.1 Batch 3 Phase 2: Validate ID with Zod
+    const idValidation = idParamSchema.safeParse(resolvedParams);
+    if (!idValidation.success) {
+      return NextResponse.json(
+        { error: "ID inválido", details: idValidation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
+    const occurrenceId = idValidation.data.id;
+
     const body = await req.json();
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validate body with Zod
+    const bodyValidation = updateOccurrenceSchema.safeParse(body);
+    if (!bodyValidation.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: bodyValidation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    
+    const data = bodyValidation.data;
+    
     // Evitar override de campos sensíveis via spread
     const {
       organizationId: _orgId,
@@ -88,14 +135,6 @@ export async function PUT(
       version: _version,
       ...safeBody
     } = (body ?? {}) as Record<string, unknown>;
-
-    // Validações básicas
-    if (!body.tripId || !body.occurrenceType || !body.title) {
-      return NextResponse.json(
-        { error: "Viagem, tipo e título são obrigatórios" },
-        { status: 400 }
-      );
-    }
 
     // Verificar se ocorrência existe
     const existing = await queryFirst<typeof tripOccurrences.$inferSelect>(db

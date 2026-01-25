@@ -5,12 +5,20 @@
  * Nota: POST /activate é tratado em ./activate/route.ts
  * 
  * @module app/api/strategic
+ * 
+ * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
+
+// ✅ S1.1 Batch 3 Phase 2: ID param validation
+const idParamSchema = z.object({
+  id: z.string().uuid('ID da estratégia inválido'),
+});
 
 // GET /api/strategic/strategies/[id]
 export async function GET(
@@ -19,7 +27,18 @@ export async function GET(
 ) {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const resolvedParams = await params;
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validate ID
+    const validation = idParamSchema.safeParse(resolvedParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    
+    const { id } = validation.data;
 
     const repository = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
@@ -62,7 +81,18 @@ export async function DELETE(
 ) {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const resolvedParams = await params;
+    
+    // ✅ S1.1 Batch 3 Phase 2: Validate ID
+    const validation = idParamSchema.safeParse(resolvedParams);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    
+    const { id } = validation.data;
 
     const repository = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository

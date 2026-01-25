@@ -1,8 +1,16 @@
 /**
  * API: PDCA Cycle by ID
  * @module api/strategic/pdca/[id]
+ * 
+ * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+// ✅ S1.1 Batch 3 Phase 2: ID param validation
+const idParamSchema = z.object({
+  id: z.string().min(1, 'ID do PDCA é obrigatório'),
+});
 
 interface PDCATransition {
   id: string;
@@ -50,7 +58,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   initializeMockData();
-  const { id } = await params;
+  const resolvedParams = await params;
+  
+  // ✅ S1.1 Batch 3 Phase 2: Validate ID
+  const validation = idParamSchema.safeParse(resolvedParams);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+  
+  const { id } = validation.data;
 
   const transition = pdcaStore.get(id);
 
@@ -67,7 +86,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   initializeMockData();
-  const { id } = await params;
+  const resolvedParams = await params;
+  
+  // ✅ S1.1 Batch 3 Phase 2: Validate ID
+  const validation = idParamSchema.safeParse(resolvedParams);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+  
+  const { id } = validation.data;
 
   if (!pdcaStore.has(id)) {
     return NextResponse.json({ error: 'PDCA transition not found' }, { status: 404 });
