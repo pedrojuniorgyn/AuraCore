@@ -23,9 +23,18 @@ const createPayableSchema = z.object({
 
 const queryPayablesSchema = z.object({
   status: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-});
+  // ✅ CORRIGIDO: .datetime() valida formato ISO 8601
+  startDate: z.string().datetime({ message: 'Data inicial inválida (use formato ISO 8601: YYYY-MM-DDTHH:mm:ssZ)' }).optional(),
+  endDate: z.string().datetime({ message: 'Data final inválida (use formato ISO 8601: YYYY-MM-DDTHH:mm:ssZ)' }).optional(),
+}).refine(
+  (data) => {
+    if (data.startDate && data.endDate) {
+      return new Date(data.startDate) <= new Date(data.endDate);
+    }
+    return true;
+  },
+  { message: 'startDate deve ser anterior ou igual a endDate', path: ['startDate'] }
+);
 
 /**
  * GET /api/financial/payables
