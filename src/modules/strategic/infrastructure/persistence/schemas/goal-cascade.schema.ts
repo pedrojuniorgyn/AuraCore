@@ -10,8 +10,7 @@
  * @see Sprint Blindagem S1.2
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, decimal, datetime2, index } from 'drizzle-orm/mssql-core';
-import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
+import { int, varchar, decimal, datetime2, index, mssqlTable } from 'drizzle-orm/mssql-core';
 import { strategicGoalTable } from './strategic-goal.schema';
 
 export const goalCascadeTable = mssqlTable(
@@ -42,13 +41,13 @@ export const goalCascadeTable = mssqlTable(
     // Auditoria
     createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   },
-  (table) => ({
+  (table) => [
     // ✅ SCHEMA-003: Índice composto OBRIGATÓRIO para multi-tenancy (S1.2)
-    tenantIdx: index('idx_goal_cascade_tenant').on(table.organizationId, table.branchId),
+    index('idx_goal_cascade_tenant').on(table.organizationId, table.branchId),
     // Índices para hierarquia
-    causeIdx: index('idx_goal_cascade_cause').on(table.causeGoalId),
-    effectIdx: index('idx_goal_cascade_effect').on(table.effectGoalId),
-  })
+    index('idx_goal_cascade_cause').on(table.causeGoalId),
+    index('idx_goal_cascade_effect').on(table.effectGoalId),
+  ]
 );
 
 export type GoalCascadeRow = typeof goalCascadeTable.$inferSelect;

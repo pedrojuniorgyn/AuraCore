@@ -10,8 +10,7 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { int, varchar, datetime2, index } from 'drizzle-orm/mssql-core';
-import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
+import { int, varchar, datetime2, index, mssqlTable } from 'drizzle-orm/mssql-core';
 
 /**
  * Tabela de configuração de políticas de retenção
@@ -45,13 +44,13 @@ export const retentionPolicies = mssqlTable(
     createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
     updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   },
-  (table) => ({
+  (table) => [
     // ✅ SCHEMA-003: Índice composto OBRIGATÓRIO para multi-tenancy (S1.2)
-    tenantIdx: index('idx_retention_tenant').on(table.organizationId, table.branchId),
+    index('idx_retention_tenant').on(table.organizationId, table.branchId),
     // Índices para queries
-    nameIdx: index('idx_retention_policies_name').on(table.policyName),
-    tableIdx: index('idx_retention_policies_table').on(table.tableName),
-  })
+    index('idx_retention_policies_name').on(table.policyName),
+    index('idx_retention_policies_table').on(table.tableName),
+  ]
 );
 
 export type RetentionPolicyRow = typeof retentionPolicies.$inferSelect;

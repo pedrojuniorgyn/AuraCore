@@ -10,8 +10,7 @@
  * @see Sprint Blindagem S1.2
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, datetime2, index } from 'drizzle-orm/mssql-core';
-import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
+import { int, varchar, text, datetime2, index, mssqlTable } from 'drizzle-orm/mssql-core';
 import { actionPlanTable } from './action-plan.schema';
 
 export const pdcaCycleTable = mssqlTable(
@@ -47,14 +46,14 @@ export const pdcaCycleTable = mssqlTable(
     // Auditoria
     createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   },
-  (table) => ({
+  (table) => [
     // ✅ SCHEMA-003: Índice composto OBRIGATÓRIO para multi-tenancy (S1.2)
-    tenantIdx: index('idx_pdca_cycle_tenant').on(table.organizationId, table.branchId),
+    index('idx_pdca_cycle_tenant').on(table.organizationId, table.branchId),
     // Índices para queries
-    actionPlanIdx: index('idx_pdca_cycle_action_plan').on(table.actionPlanId),
-    transitionIdx: index('idx_pdca_cycle_transition').on(table.transitionedAt),
-    phaseIdx: index('idx_pdca_cycle_phase').on(table.toPhase),
-  })
+    index('idx_pdca_cycle_action_plan').on(table.actionPlanId),
+    index('idx_pdca_cycle_transition').on(table.transitionedAt),
+    index('idx_pdca_cycle_phase').on(table.toPhase),
+  ]
 );
 
 export type PDCACycleRow = typeof pdcaCycleTable.$inferSelect;

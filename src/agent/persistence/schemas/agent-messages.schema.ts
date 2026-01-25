@@ -13,8 +13,7 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { int, varchar, datetime2, text, index } from 'drizzle-orm/mssql-core';
-import { mssqlTable } from '@/shared/infrastructure/database/table-creator';
+import { int, varchar, datetime2, text, index, mssqlTable } from 'drizzle-orm/mssql-core';
 
 export const agentMessagesTable = mssqlTable(
   'agent_messages',
@@ -34,13 +33,13 @@ export const agentMessagesTable = mssqlTable(
     // Auditoria
     createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
   },
-  (table) => ({
+  (table) => [
     // ✅ SCHEMA-003: Índice composto OBRIGATÓRIO para multi-tenancy (S1.2)
-    tenantIdx: index('idx_agent_messages_tenant').on(table.organizationId, table.branchId),
+    index('idx_agent_messages_tenant').on(table.organizationId, table.branchId),
     // Índices para queries
-    sessionIdx: index('idx_agent_messages_session').on(table.sessionId),
-    createdIdx: index('idx_agent_messages_created').on(table.createdAt),
-  })
+    index('idx_agent_messages_session').on(table.sessionId),
+    index('idx_agent_messages_created').on(table.createdAt),
+  ]
 );
 
 export type AgentMessageRow = typeof agentMessagesTable.$inferSelect;
