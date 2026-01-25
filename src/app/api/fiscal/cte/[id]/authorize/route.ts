@@ -4,12 +4,16 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IAuthorizeCteUseCase } from "@/modules/fiscal/domain/ports/input/IAuthorizeCteUseCase";
 import { Result } from "@/shared/domain";
+import { idParamSchema } from "@/lib/validation/common-schemas";
 
 /**
  * POST /api/fiscal/cte/:id/authorize
  * 🔐 Requer permissão: fiscal.cte.authorize
  * 
  * Autoriza um CTe na Sefaz via Use Case (DDD)
+ * 
+ * Multi-tenancy: ✅ organizationId + branchId
+ * Validação: ✅ Zod path params
  * 
  * @since E8 Fase 3 - Use Case orquestrador
  *   - AuthorizeCteUseCase via DI
@@ -21,14 +25,21 @@ export async function POST(
 ) {
   return withPermission(request, "fiscal.cte.authorize", async (user, ctx) => {
     const resolvedParams = await params;
-    const cteId = parseInt(resolvedParams.id);
 
-    if (isNaN(cteId)) {
+    // Validar path param com Zod
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
       return NextResponse.json(
-        { error: "ID de CTe inválido" },
+        {
+          success: false,
+          error: "ID de CTe inválido",
+          details: paramValidation.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    const cteId = paramValidation.data.id;
 
     if (!ctx.branchId) {
       return NextResponse.json(

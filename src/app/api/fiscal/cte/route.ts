@@ -8,10 +8,14 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { ICreateCteUseCase } from "@/modules/fiscal/domain/ports/input/ICreateCteUseCase";
 import { Result } from "@/shared/domain";
+import { CreateCteSchema, ListCteQuerySchema } from "@/modules/fiscal/presentation/validators";
 
 /**
  * GET /api/fiscal/cte
  * Lista CTes da organização
+ * 
+ * Multi-tenancy: ✅ organizationId
+ * Validação: ✅ Zod query params
  */
 export async function GET(req: Request) {
   try {
@@ -21,6 +25,24 @@ export async function GET(req: Request) {
     }
 
     const organizationId = session.user.organizationId;
+
+    // Validar query params com Zod
+    const url = new URL(req.url);
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const validation = ListCteQuerySchema.safeParse(queryParams);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Parâmetros inválidos",
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { page, limit, status } = validation.data;
 
     const ctes = await db
       .select()
@@ -56,6 +78,9 @@ export async function GET(req: Request) {
  * Cria CTe a partir de uma Ordem de Coleta via Use Case (DDD)
  * 🔐 Requer permissão: fiscal.cte.create
  * 
+ * Multi-tenancy: ✅ organizationId + branchId
+ * Validação: ✅ Zod schema
+ * 
  * @since E8 Fase 3 - Use Case orquestrador
  *   - CreateCteUseCase via DI
  *   - Encapsula: validação seguro, geração XML
@@ -64,14 +89,22 @@ export async function POST(req: NextRequest) {
   return withPermission(req, "fiscal.cte.create", async (user, ctx) => {
     try {
       const body = await req.json();
-      const { pickupOrderId } = body;
 
-      if (!pickupOrderId) {
+      // Validar body com Zod
+      const validation = CreateCteSchema.safeParse(body);
+
+      if (!validation.success) {
         return NextResponse.json(
-          { error: "Ordem de Coleta é obrigatória" },
+          {
+            success: false,
+            error: "Dados inválidos",
+            details: validation.error.flatten().fieldErrors,
+          },
           { status: 400 }
         );
       }
+
+      const { pickupOrderId, modal, tipoServico, finalidade, notes } = validation.data;
 
       if (!ctx.branchId) {
         return NextResponse.json(

@@ -3,9 +3,14 @@ import { db } from "@/lib/db";
 import { mdfeHeader, mdfeDocuments, trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { CreateMdfeSchema, ListMdfeQuerySchema } from "@/modules/fiscal/presentation/validators";
 
 /**
  * GET /api/fiscal/mdfe
+ * Lista MDFes da organização
+ * 
+ * Multi-tenancy: ✅ organizationId
+ * Validação: ✅ Zod query params
  */
 export async function GET(req: Request) {
   try {
@@ -13,6 +18,24 @@ export async function GET(req: Request) {
     await ensureConnection();
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
+
+    // Validar query params com Zod
+    const url = new URL(req.url);
+    const queryParams = Object.fromEntries(url.searchParams.entries());
+    const validation = ListMdfeQuerySchema.safeParse(queryParams);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Parâmetros inválidos",
+          details: validation.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { page, limit, status, tripId } = validation.data;
 
     const mdfes = await db
       .select()
@@ -30,7 +53,7 @@ export async function GET(req: Request) {
       data: mdfes,
     });
   } catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (error instanceof Response) {
       return error;
     }
@@ -45,6 +68,9 @@ export async function GET(req: Request) {
 /**
  * POST /api/fiscal/mdfe
  * Cria MDFe para uma Viagem
+ * 
+ * Multi-tenancy: ✅ organizationId
+ * Validação: ✅ Zod schema
  */
 export async function POST(req: Request) {
   try {
@@ -56,14 +82,22 @@ export async function POST(req: Request) {
     const createdBy = ctx.userId;
 
     const body = await req.json();
-    const { tripId, cteIds = [] } = body;
 
-    if (!tripId) {
+    // Validar body com Zod
+    const validation = CreateMdfeSchema.safeParse(body);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Viagem é obrigatória" },
+        {
+          success: false,
+          error: "Dados inválidos",
+          details: validation.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    const { tripId, cteIds, modal, tipoEmitente, tipoTransportador, ufInicio, ufFim, notes } = validation.data;
 
     // Buscar viagem
     const [trip] = await db

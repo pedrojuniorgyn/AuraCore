@@ -7,12 +7,17 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { ISefazGateway } from "@/modules/integrations/domain/ports/output/ISefazGateway";
 import { Result } from "@/shared/domain";
+import { idParamSchema } from "@/lib/validation/common-schemas";
+import { CancelCteSchema } from "@/modules/fiscal/presentation/validators";
 
 /**
  * POST /api/fiscal/cte/:id/cancel
  * 🔐 Requer permissão: fiscal.cte.cancel
  * 
  * Cancela um CTe na Sefaz
+ * 
+ * Multi-tenancy: ✅ organizationId + branchId
+ * Validação: ✅ Zod path params + body
  * 
  * @since E8 Fase 2.4 - Migrado para DI
  */
@@ -22,31 +27,42 @@ export async function POST(
 ) {
   return withPermission(request, "fiscal.cte.cancel", async (user, ctx) => {
     const resolvedParams = await params;
-    const cteId = parseInt(resolvedParams.id);
 
-    if (isNaN(cteId)) {
+    // Validar path param com Zod
+    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    if (!paramValidation.success) {
       return NextResponse.json(
-        { error: "ID de CTe inválido" },
+        {
+          success: false,
+          error: "ID de CTe inválido",
+          details: paramValidation.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    const cteId = paramValidation.data.id;
 
     const body = await request.json();
-    const { justificativa } = body;
 
-    if (!justificativa) {
+    // Validar body com Zod
+    const bodyValidation = CancelCteSchema.safeParse({
+      reason: body.justificativa, // Mapear campo antigo para schema
+      protocolNumber: body.protocolNumber,
+    });
+
+    if (!bodyValidation.success) {
       return NextResponse.json(
-        { error: "Justificativa é obrigatória" },
+        {
+          success: false,
+          error: "Dados inválidos",
+          details: bodyValidation.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
 
-    if (justificativa.length < 15) {
-      return NextResponse.json(
-        { error: "Justificativa deve ter no mínimo 15 caracteres" },
-        { status: 400 }
-      );
-    }
+    const { reason: justificativa, protocolNumber } = bodyValidation.data;
 
     try {
       // 1. Buscar CTe
