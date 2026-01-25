@@ -109,35 +109,29 @@ export class AliquotaIBS {
 
   /**
    * Alíquota zero
+   * 
+   * ⚠️ S1.3: Agora retorna Result<AliquotaIBS, string> ao invés de throw
    */
-  static zero(): AliquotaIBS {
-    const result = AliquotaIBS.fromPercentage(0);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create zero aliquota IBS');
-    }
-    return result.value;
+  static zero(): Result<AliquotaIBS, string> {
+    return AliquotaIBS.fromPercentage(0);
   }
 
   /**
    * Alíquota de teste (0,1%)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<AliquotaIBS, string> ao invés de throw
    */
-  static testRate(): AliquotaIBS {
-    const result = AliquotaIBS.fromPercentage(0.1);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create test rate aliquota IBS');
-    }
-    return result.value;
+  static testRate(): Result<AliquotaIBS, string> {
+    return AliquotaIBS.fromPercentage(0.1);
   }
 
   /**
    * Alíquota padrão (17,7%)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<AliquotaIBS, string> ao invés de throw
    */
-  static standardRate(): AliquotaIBS {
-    const result = AliquotaIBS.fromPercentage(17.7);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create standard rate aliquota IBS');
-    }
-    return result.value;
+  static standardRate(): Result<AliquotaIBS, string> {
+    return AliquotaIBS.fromPercentage(17.7);
   }
 
   /**

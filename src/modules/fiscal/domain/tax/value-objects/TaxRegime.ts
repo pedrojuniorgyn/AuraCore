@@ -117,35 +117,29 @@ export class TaxRegime {
 
   /**
    * Regime atual (padrão para datas < 2026)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<TaxRegime, string> ao invés de throw
    */
-  static current(): TaxRegime {
-    const result = TaxRegime.create(TaxRegimeType.CURRENT);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create CURRENT tax regime');
-    }
-    return result.value;
+  static current(): Result<TaxRegime, string> {
+    return TaxRegime.create(TaxRegimeType.CURRENT);
   }
 
   /**
    * Regime de transição (2026-2032)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<TaxRegime, string> ao invés de throw
    */
-  static transition(): TaxRegime {
-    const result = TaxRegime.create(TaxRegimeType.TRANSITION);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create TRANSITION tax regime');
-    }
-    return result.value;
+  static transition(): Result<TaxRegime, string> {
+    return TaxRegime.create(TaxRegimeType.TRANSITION);
   }
 
   /**
    * Regime novo (2033+)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<TaxRegime, string> ao invés de throw
    */
-  static new(): TaxRegime {
-    const result = TaxRegime.create(TaxRegimeType.NEW);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create NEW tax regime');
-    }
-    return result.value;
+  static new(): Result<TaxRegime, string> {
+    return TaxRegime.create(TaxRegimeType.NEW);
   }
 
   /**

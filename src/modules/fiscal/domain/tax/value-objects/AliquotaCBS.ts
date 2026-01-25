@@ -105,35 +105,29 @@ export class AliquotaCBS {
 
   /**
    * Alíquota zero
+   * 
+   * ⚠️ S1.3: Agora retorna Result<AliquotaCBS, string> ao invés de throw
    */
-  static zero(): AliquotaCBS {
-    const result = AliquotaCBS.fromPercentage(0);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create zero aliquota CBS');
-    }
-    return result.value;
+  static zero(): Result<AliquotaCBS, string> {
+    return AliquotaCBS.fromPercentage(0);
   }
 
   /**
    * Alíquota de teste (0,9%)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<AliquotaCBS, string> ao invés de throw
    */
-  static testRate(): AliquotaCBS {
-    const result = AliquotaCBS.fromPercentage(0.9);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create test rate aliquota CBS');
-    }
-    return result.value;
+  static testRate(): Result<AliquotaCBS, string> {
+    return AliquotaCBS.fromPercentage(0.9);
   }
 
   /**
    * Alíquota padrão (8,8%)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<AliquotaCBS, string> ao invés de throw
    */
-  static standardRate(): AliquotaCBS {
-    const result = AliquotaCBS.fromPercentage(8.8);
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create standard rate aliquota CBS');
-    }
-    return result.value;
+  static standardRate(): Result<AliquotaCBS, string> {
+    return AliquotaCBS.fromPercentage(8.8);
   }
 
   /**

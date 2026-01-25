@@ -158,26 +158,33 @@ export class IBSCBSGroup {
   }
 
   // Cálculos
-  get totalIbs(): Money {
+  // ⚠️ S1.3: Converter getter para método que retorna Result (getters não devem fazer throw)
+  getTotalIbs(): Result<Money, string> {
     const result = Money.create(
       this._props.ibsUfValue.amount + this._props.ibsMunValue.amount,
       this._props.ibsUfValue.currency
     );
     if (Result.isFail(result)) {
-      throw new Error('Failed to calculate total IBS');
+      return Result.fail('Failed to calculate total IBS');
     }
-    return result.value;
+    return Result.ok(result.value);
   }
 
-  get totalTax(): Money {
+  // ⚠️ S1.3: Converter getter para método que retorna Result (getters não devem fazer throw)
+  getTotalTax(): Result<Money, string> {
+    const totalIbsResult = this.getTotalIbs();
+    if (Result.isFail(totalIbsResult)) {
+      return Result.fail(`Failed to calculate total tax: ${totalIbsResult.error}`);
+    }
+    
     const result = Money.create(
-      this.totalIbs.amount + this._props.cbsValue.amount,
+      totalIbsResult.value.amount + this._props.cbsValue.amount,
       this._props.cbsValue.currency
     );
     if (Result.isFail(result)) {
-      throw new Error('Failed to calculate total tax');
+      return Result.fail('Failed to calculate total tax');
     }
-    return result.value;
+    return Result.ok(result.value);
   }
 
   /**

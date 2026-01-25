@@ -165,24 +165,20 @@ export class ClassificacaoTributaria {
 
   /**
    * Tributação integral padrão (10100)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<ClassificacaoTributaria, string> ao invés de throw
    */
-  static tributacaoIntegral(): ClassificacaoTributaria {
-    const result = ClassificacaoTributaria.create('10100');
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create cClassTrib 10100');
-    }
-    return result.value;
+  static tributacaoIntegral(): Result<ClassificacaoTributaria, string> {
+    return ClassificacaoTributaria.create('10100');
   }
 
   /**
    * Isenção padrão (30100)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<ClassificacaoTributaria, string> ao invés de throw
    */
-  static isencao(): ClassificacaoTributaria {
-    const result = ClassificacaoTributaria.create('30100');
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create cClassTrib 30100');
-    }
-    return result.value;
+  static isencao(): Result<ClassificacaoTributaria, string> {
+    return ClassificacaoTributaria.create('30100');
   }
 
   /**

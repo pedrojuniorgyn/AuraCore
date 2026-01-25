@@ -177,16 +177,18 @@ export class MockSplitPaymentService implements ISplitPaymentService {
 
   /**
    * Gera resumo do split payment
+   * 
+   * ⚠️ S1.3: Agora retorna Result<SplitPaymentSummary, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  generateSummary(split: SplitInstruction[]): SplitPaymentSummary {
+  generateSummary(split: SplitInstruction[]): Result<SplitPaymentSummary, string> {
     const totalAmountResult = Money.create(
       split.reduce((sum, s) => sum + s.amount.amount, 0),
       'BRL'
     );
     
-    // Verificação de Result (não deve falhar com valores válidos)
+    // ✅ S1.3: Retornar Result.fail ao invés de throw
     if (!Result.isOk(totalAmountResult)) {
-      throw new Error(`Failed to create totalAmount: ${totalAmountResult.error}`);
+      return Result.fail(`Failed to create totalAmount: ${totalAmountResult.error}`);
     }
     const totalAmount = totalAmountResult.value;
 
@@ -201,8 +203,9 @@ export class MockSplitPaymentService implements ISplitPaymentService {
           currentTributo.amount + instruction.amount.amount,
           'BRL'
         );
+        // ✅ S1.3: Retornar Result.fail ao invés de throw
         if (!Result.isOk(tributoMoneyResult)) {
-          throw new Error(`Failed to create tributo Money: ${tributoMoneyResult.error}`);
+          return Result.fail(`Failed to create tributo Money: ${tributoMoneyResult.error}`);
         }
         breakdownByTributo.set(instruction.tributo, tributoMoneyResult.value);
       } else {
@@ -217,8 +220,9 @@ export class MockSplitPaymentService implements ISplitPaymentService {
           currentRecipient.amount + instruction.amount.amount,
           'BRL'
         );
+        // ✅ S1.3: Retornar Result.fail ao invés de throw
         if (!Result.isOk(recipientMoneyResult)) {
-          throw new Error(`Failed to create recipient Money: ${recipientMoneyResult.error}`);
+          return Result.fail(`Failed to create recipient Money: ${recipientMoneyResult.error}`);
         }
         breakdownByRecipient.set(recipientKey, recipientMoneyResult.value);
       } else {
@@ -226,13 +230,13 @@ export class MockSplitPaymentService implements ISplitPaymentService {
       }
     }
 
-    return {
+    return Result.ok({
       totalAmount,
       totalInstructions: split.length,
       breakdownByTributo,
       breakdownByRecipient,
       status: 'PENDING' as SplitPaymentStatus,
-    };
+    });
   }
 
   /**

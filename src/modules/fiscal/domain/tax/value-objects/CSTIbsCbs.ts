@@ -161,24 +161,20 @@ export class CSTIbsCbs {
 
   /**
    * CST para tributação normal (00)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<CSTIbsCbs, string> ao invés de throw
    */
-  static tributacaoNormal(): CSTIbsCbs {
-    const result = CSTIbsCbs.create('00');
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create CST 00');
-    }
-    return result.value;
+  static tributacaoNormal(): Result<CSTIbsCbs, string> {
+    return CSTIbsCbs.create('00');
   }
 
   /**
    * CST para isenção (40)
+   * 
+   * ⚠️ S1.3: Agora retorna Result<CSTIbsCbs, string> ao invés de throw
    */
-  static isencao(): CSTIbsCbs {
-    const result = CSTIbsCbs.create('40');
-    if (Result.isFail(result)) {
-      throw new Error('Failed to create CST 40');
-    }
-    return result.value;
+  static isencao(): Result<CSTIbsCbs, string> {
+    return CSTIbsCbs.create('40');
   }
 
   /**
