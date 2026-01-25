@@ -156,32 +156,32 @@ export class JournalEntry extends AggregateRoot<string> {
     }
     
     // Este caso nunca deveria acontecer (Money.create(0) com BRL sempre sucede)
-    // Mas TypeScript exige tratamento completo do Result
-    throw new Error('Failed to create Money with value 0 - this should never happen');
+    return Result.fail('Failed to create Money with value 0 - this should never happen');
   }
 
   /**
    * Total de créditos
+   * 
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
    */
-  get totalCredit(): Money {
+  getTotalCredit(): Result<Money, string> {
     const total = this._props.lines
       .filter(l => l.isCredit)
       .reduce((sum, l) => sum + l.amount.amount, 0);
     
     const result = Money.create(total);
     if (Result.isOk(result)) {
-      return result.value;
+      return Result.ok(result.value);
     }
     
     // Fallback seguro: Money.create(0) sempre sucede para valores finitos >= 0
     const zeroResult = Money.create(0);
     if (Result.isOk(zeroResult)) {
-      return zeroResult.value;
+      return Result.ok(zeroResult.value);
     }
     
     // Este caso nunca deveria acontecer (Money.create(0) com BRL sempre sucede)
-    // Mas TypeScript exige tratamento completo do Result
-    throw new Error('Failed to create Money with value 0 - this should never happen');
+    return Result.fail('Failed to create Money with value 0 - this should never happen');
   }
 
   /**

@@ -434,14 +434,15 @@ export class ExpenseReport {
    * Saldo = Total Despesas - Adiantamento Aprovado
    * Saldo positivo = reembolso ao colaborador
    * Saldo negativo = colaborador deve devolver
+   * 
+   * ⚠️ S1.3: Convertido para Result<void, string> ao invés de throw (DOMAIN-SVC-004)
    */
-  private calculateTotals(): void {
+  private calculateTotals(): Result<void, string> {
     // Total de despesas
     // Money.create(0, 'BRL') é garantido sucesso para valor 0
     const zeroMoneyResult = Money.create(0, 'BRL');
     if (Result.isFail(zeroMoneyResult)) {
-      // Fallback: se falhar, usar erro (não deve acontecer com valor 0)
-      throw new Error('Failed to create zero money for calculation');
+      return Result.fail('Failed to create zero money for calculation');
     }
 
     const totalResult = this._props.items.reduce((acc, item) => {
@@ -459,6 +460,8 @@ export class ExpenseReport {
     } else {
       this._props.saldo = totalResult;
     }
+    
+    return Result.ok(undefined);
   }
 }
 

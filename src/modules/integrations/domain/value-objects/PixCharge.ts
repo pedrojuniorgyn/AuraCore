@@ -59,22 +59,23 @@ export class PixCharge extends ValueObject<PixChargeProps & Record<string, unkno
            (this.props.status === 'ACTIVE' && this.props.expiresAt < new Date());
   }
 
+  /**
+   * ⚠️ S1.3: Constructor privado SEM throw (validação movida para create)
+   */
   private constructor(props: PixChargeProps) {
     super(props);
-    const validationResult = this.validate();
-    if (Result.isFail(validationResult)) {
-      throw new Error(validationResult.error);
-    }
   }
 
+  /**
+   * ⚠️ S1.3: Validação no create() ao invés de throw no constructor
+   */
   static create(props: PixChargeProps): Result<PixCharge, string> {
-    try {
-      const charge = new PixCharge(props);
-      return Result.ok(charge);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(errorMessage);
+    const charge = new PixCharge(props);
+    const validationResult = charge.validate();
+    if (Result.isFail(validationResult)) {
+      return Result.fail(validationResult.error);
     }
+    return Result.ok(charge);
   }
 
   private validate(): Result<void, string> {

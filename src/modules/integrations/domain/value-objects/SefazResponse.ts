@@ -35,47 +35,50 @@ export class SefazResponse extends ValueObject<SefazResponseProps & Record<strin
     return this.props.isSuccess;
   }
 
+  /**
+   * ⚠️ S1.3: Constructor privado SEM throw (validação movida para factory methods)
+   */
   private constructor(props: SefazResponseProps) {
     super(props);
-    const validationResult = this.validate();
-    if (Result.isFail(validationResult)) {
-      throw new Error(validationResult.error);
-    }
   }
 
+  /**
+   * ⚠️ S1.3: Validação no factory method ao invés de throw no constructor
+   */
   static success(
     code: string,
     message: string,
     protocol: string,
     authorizationDate: Date
   ): Result<SefazResponse, string> {
-    try {
-      const response = new SefazResponse({
-        code,
-        message,
-        protocol,
-        authorizationDate,
-        isSuccess: true,
-      });
-      return Result.ok(response);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(errorMessage);
+    const response = new SefazResponse({
+      code,
+      message,
+      protocol,
+      authorizationDate,
+      isSuccess: true,
+    });
+    const validationResult = response.validate();
+    if (Result.isFail(validationResult)) {
+      return Result.fail(validationResult.error);
     }
+    return Result.ok(response);
   }
 
+  /**
+   * ⚠️ S1.3: Validação no factory method ao invés de throw no constructor
+   */
   static failure(code: string, message: string): Result<SefazResponse, string> {
-    try {
-      const response = new SefazResponse({
-        code,
-        message,
-        isSuccess: false,
-      });
-      return Result.ok(response);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(errorMessage);
+    const response = new SefazResponse({
+      code,
+      message,
+      isSuccess: false,
+    });
+    const validationResult = response.validate();
+    if (Result.isFail(validationResult)) {
+      return Result.fail(validationResult.error);
     }
+    return Result.ok(response);
   }
 
   private validate(): Result<void, string> {

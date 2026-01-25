@@ -64,7 +64,10 @@ export class AccountPayable extends AggregateRoot<string> {
   // Getters calculados
   get originalAmount(): Money { return this._props.terms.amount; }
   
-  get totalPaid(): Money {
+  /**
+   * ⚠️ S1.3: Convertido de getter para método que retorna Result (getters não devem fazer throw)
+   */
+  getTotalPaid(): Result<Money, string> {
     const currency = this._props.terms.amount.currency;
     const zeroResult = Money.zero(currency);
     
@@ -72,17 +75,25 @@ export class AccountPayable extends AggregateRoot<string> {
       // Fallback para criar zero manualmente se falhar
       const fallbackResult = Money.create(0, currency);
       if (Result.isFail(fallbackResult)) {
-        throw new Error('Failed to create zero money');
+        return Result.fail('Failed to create zero money');
       }
-      return fallbackResult.value;
+      
+      const total = this._props.payments
+        .filter(p => p.status === 'CONFIRMED')
+        .reduce((sum, p) => {
+          const result = sum.add(p.amount);
+          return Result.isOk(result) ? result.value : sum;
+        }, fallbackResult.value);
+      return Result.ok(total);
     }
 
-    return this._props.payments
+    const total = this._props.payments
       .filter(p => p.status === 'CONFIRMED')
       .reduce((sum, p) => {
         const result = sum.add(p.amount);
         return Result.isOk(result) ? result.value : sum;
       }, zeroResult.value);
+    return Result.ok(total);
   }
 
   get remainingAmount(): Money {
@@ -398,13 +409,13 @@ export class AccountPayable extends AggregateRoot<string> {
     }
     
     // ❌ Se ALGUM erro na execução, é invariante violado (BUG)
+    // ⚠️ S1.3: Convertido de throw para Result.fail() (DOMAIN-SVC-004)
     if (cancellationErrors.length > 0) {
       const errorDetails = cancellationErrors
         .map(e => `Payment ${e.paymentId}: ${e.error}`)
         .join('; ');
       
-      // ❌ Throw exception - indica BUG no código (Fase 1 validou mas Fase 2 falhou)
-      throw new Error(
+      return Result.fail(
         `[INVARIANT VIOLATION] Payment cancellation failed after validation passed. ` +
         `This indicates a bug in the cancellation logic or race condition. ` +
         `Failed payments: ${errorDetails}. ` +

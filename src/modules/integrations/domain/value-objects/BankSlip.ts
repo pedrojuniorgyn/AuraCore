@@ -60,22 +60,23 @@ export class BankSlip extends ValueObject<BankSlipProps & Record<string, unknown
            (this.props.status === 'PENDING' && this.props.dueDate < new Date());
   }
 
+  /**
+   * ⚠️ S1.3: Constructor privado SEM throw (validação movida para create)
+   */
   private constructor(props: BankSlipProps) {
     super(props);
-    const validationResult = this.validate();
-    if (Result.isFail(validationResult)) {
-      throw new Error(validationResult.error);
-    }
   }
 
+  /**
+   * ⚠️ S1.3: Validação no create() ao invés de throw no constructor
+   */
   static create(props: BankSlipProps): Result<BankSlip, string> {
-    try {
-      const slip = new BankSlip(props);
-      return Result.ok(slip);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(errorMessage);
+    const slip = new BankSlip(props);
+    const validationResult = slip.validate();
+    if (Result.isFail(validationResult)) {
+      return Result.fail(validationResult.error);
     }
+    return Result.ok(slip);
   }
 
   private validate(): Result<void, string> {

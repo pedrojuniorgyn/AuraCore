@@ -64,22 +64,23 @@ export class BankTransaction extends ValueObject<BankTransactionProps & Record<s
     return this.props.type === 'DEBIT';
   }
 
+  /**
+   * ⚠️ S1.3: Constructor privado SEM throw (validação movida para create)
+   */
   private constructor(props: BankTransactionProps) {
     super(props);
-    const validationResult = this.validate();
-    if (Result.isFail(validationResult)) {
-      throw new Error(validationResult.error);
-    }
   }
 
+  /**
+   * ⚠️ S1.3: Validação no create() ao invés de throw no constructor
+   */
   static create(props: BankTransactionProps): Result<BankTransaction, string> {
-    try {
-      const transaction = new BankTransaction(props);
-      return Result.ok(transaction);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return Result.fail(errorMessage);
+    const transaction = new BankTransaction(props);
+    const validationResult = transaction.validate();
+    if (Result.isFail(validationResult)) {
+      return Result.fail(validationResult.error);
     }
+    return Result.ok(transaction);
   }
 
   private validate(): Result<void, string> {
