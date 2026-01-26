@@ -4,28 +4,42 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/auth/context';
 
+const idSchema = z.string().trim().uuid();
+
 const analyzeSchema = z.object({
-  why1: z.string().min(1, 'Primeiro "porquê" é obrigatório'),
-  why2: z.string().min(1, 'Segundo "porquê" é obrigatório'),
-  why3: z.string().optional(),
-  why4: z.string().optional(),
-  why5: z.string().optional(),
-  rootCause: z.string().optional(),
+  why1: z.string().trim().min(1, 'Primeiro "porquê" é obrigatório'),
+  why2: z.string().trim().min(1, 'Segundo "porquê" é obrigatório'),
+  why3: z.string().trim().optional(),
+  why4: z.string().trim().optional(),
+  why5: z.string().trim().optional(),
+  rootCause: z.string().trim().optional(),
 });
 
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid anomaly id' }, { status: 400 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const validation = analyzeSchema.safeParse(body);
 
     if (!validation.success) {
@@ -53,7 +67,7 @@ export async function POST(
     // await repository.save(anomaly);
 
     return NextResponse.json({
-      anomalyId: id,
+      anomalyId: idResult.data,
       status: 'ANALYZING',
       rootCauseAnalysis: lines.join('\n'),
       rootCause: determinedRootCause,
