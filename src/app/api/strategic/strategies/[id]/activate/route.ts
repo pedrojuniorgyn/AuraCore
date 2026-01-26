@@ -4,23 +4,33 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { ActivateStrategyUseCase } from '@/modules/strategic/application/commands/ActivateStrategyUseCase';
+import { z } from 'zod';
+
+const idSchema = z.string().trim().uuid('Invalid strategy id');
 
 // POST /api/strategic/strategies/[id]/activate
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid strategy id' }, { status: 400 });
+    }
 
     const useCase = container.resolve(ActivateStrategyUseCase);
-    const result = await useCase.execute({ strategyId: id }, context);
+    const result = await useCase.execute({ strategyId: idResult.data }, context);
 
     if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 400 });

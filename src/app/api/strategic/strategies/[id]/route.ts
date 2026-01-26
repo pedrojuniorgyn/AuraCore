@@ -8,44 +8,37 @@
  * 
  * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 
-// ✅ S1.1 Batch 3 Phase 2: ID param validation
-const idParamSchema = z.object({
-  id: z.string().uuid('ID da estratégia inválido'),
-});
+const idSchema = z.string().trim().uuid('ID da estratégia inválido');
 
 // GET /api/strategic/strategies/[id]
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
-    const resolvedParams = await params;
-    
-    // ✅ S1.1 Batch 3 Phase 2: Validate ID
-    const validation = idParamSchema.safeParse(resolvedParams);
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const { id } = validation.data;
+    const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
 
     const repository = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
     );
 
     const strategy = await repository.findById(
-      id,
+      idResult.data,
       context.organizationId,
       context.branchId
     );
@@ -76,29 +69,25 @@ export async function GET(
 
 // DELETE /api/strategic/strategies/[id]
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
-    const resolvedParams = await params;
-    
-    // ✅ S1.1 Batch 3 Phase 2: Validate ID
-    const validation = idParamSchema.safeParse(resolvedParams);
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const { id } = validation.data;
+    const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
 
     const repository = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
     );
 
-    await repository.delete(id, context.organizationId, context.branchId);
+    await repository.delete(idResult.data, context.organizationId, context.branchId);
 
     return NextResponse.json({ message: 'Estratégia arquivada com sucesso' });
   } catch (error: unknown) {
