@@ -4,27 +4,45 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { UpdateKPIValueUseCase } from '@/modules/strategic/application/commands/UpdateKPIValueUseCase';
 
+const idSchema = z.string().trim().uuid('Invalid kpi id');
 const updateValueSchema = z.object({
   value: z.number(),
-  periodDate: z.string().transform((s) => new Date(s)).optional(),
+  periodDate: z
+    .string()
+    .trim()
+    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'periodDate inválida' })
+    .transform((s) => new Date(s))
+    .optional(),
 });
 
 export async function PUT(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const validation = updateValueSchema.safeParse(body);
 
     if (!validation.success) {
@@ -37,7 +55,7 @@ export async function PUT(
     const useCase = container.resolve(UpdateKPIValueUseCase);
     const result = await useCase.execute(
       {
-        kpiId: id,
+        kpiId: idResult.data,
         value: validation.data.value,
         periodDate: validation.data.periodDate,
       },

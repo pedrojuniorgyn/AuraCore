@@ -5,7 +5,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
@@ -16,11 +16,11 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
 
 const createKPISchema = z.object({
-  goalId: z.string().uuid().optional(),
-  code: z.string().min(1).max(20),
-  name: z.string().min(1).max(200),
-  description: z.string().optional(),
-  unit: z.string().min(1).max(20),
+  goalId: z.string().trim().uuid().optional(),
+  code: z.string().trim().min(1).max(20),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().optional(),
+  unit: z.string().trim().min(1).max(20),
   polarity: z.enum(['UP', 'DOWN']).optional(),
   frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).optional(),
   targetValue: z.number(),
@@ -28,15 +28,18 @@ const createKPISchema = z.object({
   alertThreshold: z.number().optional(),
   criticalThreshold: z.number().optional(),
   autoCalculate: z.boolean().optional(),
-  sourceModule: z.string().optional(),
-  sourceQuery: z.string().optional(),
-  ownerUserId: z.string().uuid().optional(),
+  sourceModule: z.string().trim().optional(),
+  sourceQuery: z.string().trim().optional(),
+  ownerUserId: z.string().trim().uuid().optional(),
 });
 
 // GET /api/strategic/kpis
-export const GET = withDI(async (request: NextRequest) => {
+export const GET = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const goalId = searchParams.get('goalId') ?? undefined;
@@ -92,11 +95,19 @@ export const GET = withDI(async (request: NextRequest) => {
 });
 
 // POST /api/strategic/kpis
-export const POST = withDI(async (request: NextRequest) => {
+export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const validation = createKPISchema.safeParse(body);
 
     if (!validation.success) {

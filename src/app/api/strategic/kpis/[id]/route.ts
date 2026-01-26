@@ -7,44 +7,37 @@
  * 
  * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
 
-// ✅ S1.1 Batch 3 Phase 2: ID param validation
-const idParamSchema = z.object({
-  id: z.string().uuid('ID do KPI inválido'),
-});
+const idSchema = z.string().trim().uuid('Invalid kpi id');
 
 // GET /api/strategic/kpis/[id]
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
-    const resolvedParams = await params;
-    
-    // ✅ S1.1 Batch 3 Phase 2: Validate ID
-    const validation = idParamSchema.safeParse(resolvedParams);
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const { id } = validation.data;
+    const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
+    }
 
     const repository = container.resolve<IKPIRepository>(
       STRATEGIC_TOKENS.KPIRepository
     );
 
     const kpi = await repository.findById(
-      id,
+      idResult.data,
       context.organizationId,
       context.branchId
     );
@@ -86,23 +79,19 @@ export async function GET(
 
 // DELETE /api/strategic/kpis/[id]
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
-    const resolvedParams = await params;
-    
-    // ✅ S1.1 Batch 3 Phase 2: Validate ID
-    const validation = idParamSchema.safeParse(resolvedParams);
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'ID inválido', details: validation.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const { id } = validation.data;
+    const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
+    }
 
     const repository = container.resolve<IKPIRepository>(
       STRATEGIC_TOKENS.KPIRepository
@@ -110,7 +99,7 @@ export async function DELETE(
 
     // Verificar se existe
     const kpi = await repository.findById(
-      id,
+      idResult.data,
       context.organizationId,
       context.branchId
     );
@@ -119,11 +108,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'KPI não encontrado' }, { status: 404 });
     }
 
-    await repository.delete(
-      id,
-      context.organizationId,
-      context.branchId
-    );
+    await repository.delete(idResult.data, context.organizationId, context.branchId);
 
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
