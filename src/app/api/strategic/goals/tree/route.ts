@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
@@ -12,9 +12,12 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import { GoalCascadeService, type CascadeTreeNode } from '@/modules/strategic/domain/services/GoalCascadeService';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const rootGoalId = searchParams.get('rootGoalId') ?? undefined;

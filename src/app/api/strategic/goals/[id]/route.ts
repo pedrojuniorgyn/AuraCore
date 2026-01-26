@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
@@ -12,21 +12,30 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
+const idSchema = z.string().trim().uuid();
+
 // GET /api/strategic/goals/[id]
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
+    }
 
     const repository = container.resolve<IStrategicGoalRepository>(
       STRATEGIC_TOKENS.StrategicGoalRepository
     );
 
     const goal = await repository.findById(
-      id,
+      idResult.data,
       context.organizationId,
       context.branchId
     );
@@ -76,14 +85,26 @@ const updateProgressSchema = z.object({
 
 // PATCH /api/strategic/goals/[id]
 export async function PATCH(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const validation = updateProgressSchema.safeParse(body);
 
     if (!validation.success) {
@@ -98,7 +119,7 @@ export async function PATCH(
     );
 
     const goal = await repository.findById(
-      id,
+      idResult.data,
       context.organizationId,
       context.branchId
     );
@@ -130,18 +151,25 @@ export async function PATCH(
 
 // DELETE /api/strategic/goals/[id]
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
+    }
 
     const repository = container.resolve<IStrategicGoalRepository>(
       STRATEGIC_TOKENS.StrategicGoalRepository
     );
 
-    await repository.delete(id, context.organizationId, context.branchId);
+    await repository.delete(idResult.data, context.organizationId, context.branchId);
 
     return NextResponse.json({ message: 'Meta removida com sucesso' });
   } catch (error: unknown) {

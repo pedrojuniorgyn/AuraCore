@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
@@ -21,38 +21,52 @@ import { createGoalSchema as baseCreateGoalSchema, queryGoalsSchema } from '@/li
 // ✅ S1.1 Batch 3: Schema estendido para compatibilidade com estrutura existente
 // Mantém campos específicos do sistema (perspectiveCode, cascadeLevel) + base do strategic-schemas.ts
 const createGoalSchema = baseCreateGoalSchema.extend({
-  perspectiveCode: z.string().optional(), // Fallback se ID não for informado
+  perspectiveId: z.string().trim().uuid().optional(),
+  strategyId: z.string().trim().uuid('ID da estratégia inválido'),
+  title: z.string().trim().min(3).max(200),
+  description: z.string().trim().max(2000).optional(),
+  perspective: baseCreateGoalSchema.shape.perspective,
+  perspectiveCode: z.string().trim().optional(), // Fallback se ID não for informado
   cascadeLevel: z.enum(['CEO', 'DIRECTOR', 'MANAGER', 'TEAM']),
-  code: z.string().min(1, 'Código é obrigatório').max(20),
+  code: z.string().trim().min(1, 'Código é obrigatório').max(20),
   baselineValue: z.number().optional(),
   polarity: z.enum(['UP', 'DOWN']).optional(),
-  ownerUserId: z.string().uuid().optional(),
+  ownerUserId: z.string().trim().uuid().optional(),
   ownerBranchId: z.number().optional(),
   // ✅ S1.X-BUGFIX: Validar data antes de transform (Bug 4)
-  startDate: z.string().datetime().or(
-    z.string().refine(
+  startDate: z.string().trim().datetime().or(
+    z.string().trim().refine(
       (s) => !isNaN(Date.parse(s)),
       { message: 'startDate deve ser uma data válida' }
-    ).transform((s) => new Date(s).toISOString())
-  ),
-  dueDate: z.string().datetime().or(
-    z.string().refine(
+    )
+  ).transform((s) => new Date(s)),
+  dueDate: z.string().trim().datetime().or(
+    z.string().trim().refine(
       (s) => !isNaN(Date.parse(s)),
       { message: 'dueDate deve ser uma data válida' }
-    ).transform((s) => new Date(s).toISOString())
-  ),
+    )
+  ).transform((s) => new Date(s)),
 });
 
+const goalsQuerySchema = queryGoalsSchema.and(z.object({
+  perspectiveId: z.string().trim().uuid().optional(),
+  parentGoalId: z.string().trim().uuid().optional(),
+  cascadeLevel: z.string().trim().optional(),
+}));
+
 // GET /api/strategic/goals
-export const GET = withDI(async (request: NextRequest) => {
+export const GET = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     
     // ✅ S1.1 Batch 3: Validar query params com Zod
     const queryParams = Object.fromEntries(searchParams.entries());
-    const validation = queryGoalsSchema.safeParse(queryParams);
+    const validation = goalsQuerySchema.safeParse(queryParams);
     
     if (!validation.success) {
       return NextResponse.json(
@@ -64,11 +78,15 @@ export const GET = withDI(async (request: NextRequest) => {
       );
     }
     
-    const { page, pageSize, status, perspectiveId, responsibleId: ownerUserId, startDate, endDate } = validation.data;
-    
-    // Campos específicos do sistema (não no schema base)
-    const parentGoalId = searchParams.get('parentGoalId') ?? undefined;
-    const cascadeLevel = searchParams.get('cascadeLevel') ?? undefined;
+    const {
+      page,
+      pageSize,
+      status,
+      perspectiveId,
+      responsibleId: ownerUserId,
+      parentGoalId,
+      cascadeLevel,
+    } = validation.data;
 
     const repository = container.resolve<IStrategicGoalRepository>(
       STRATEGIC_TOKENS.StrategicGoalRepository
@@ -123,11 +141,20 @@ export const GET = withDI(async (request: NextRequest) => {
 });
 
 // POST /api/strategic/goals
-export const POST = withDI(async (request: NextRequest) => {
+export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const validation = createGoalSchema.safeParse(body);
 
     if (!validation.success) {
@@ -138,7 +165,8 @@ export const POST = withDI(async (request: NextRequest) => {
     }
 
     let { perspectiveId, ownerUserId, ownerBranchId } = validation.data;
-    const { perspectiveCode, strategyId, ...data } = validation.data;
+    const { perspectiveCode, strategyId, description, ...data } = validation.data;
+    const ensuredDescription = description ?? '';
 
     // Resolver ownerUserId se não informado
     if (!ownerUserId) {
@@ -182,6 +210,7 @@ export const POST = withDI(async (request: NextRequest) => {
     const useCase = container.resolve(CreateStrategicGoalUseCase);
     const result = await useCase.execute({
       ...data,
+      description: ensuredDescription,
       perspectiveId,
       ownerUserId,
       ownerBranchId
