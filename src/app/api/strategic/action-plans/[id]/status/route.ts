@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
@@ -13,20 +13,33 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 import type { ActionPlanStatus } from '@/modules/strategic/domain/entities/ActionPlan';
 
+const idSchema = z.string().trim().uuid();
+
 const updateStatusSchema = z.object({
   status: z.enum(['DRAFT', 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'BLOCKED']),
 });
 
 // PATCH /api/strategic/action-plans/[id]/status
 export async function PATCH(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
     const { id } = await params;
 
-    const body = await request.json();
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const validation = updateStatusSchema.safeParse(body);
 
     if (!validation.success) {
@@ -43,7 +56,11 @@ export async function PATCH(
     );
 
     // Buscar plano existente
-    const plan = await repository.findById(id, context.organizationId, context.branchId);
+    const plan = await repository.findById(
+      idValidation.data,
+      context.organizationId,
+      context.branchId
+    );
 
     if (!plan) {
       return NextResponse.json(
