@@ -4,26 +4,29 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { Anomaly } from '@/modules/strategic/domain/entities/Anomaly';
 
 const createAnomalySchema = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().min(1),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().min(1),
   source: z.enum(['CONTROL_ITEM', 'KPI', 'MANUAL', 'AUDIT']),
-  sourceEntityId: z.string().uuid().optional(),
+  sourceEntityId: z.string().trim().uuid().optional(),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
-  processArea: z.string().min(1).max(100),
-  responsibleUserId: z.string().uuid(),
+  processArea: z.string().trim().min(1).max(100),
+  responsibleUserId: z.string().trim().uuid(),
 });
 
 // GET /api/strategic/anomalies
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    await getTenantContext(); // Validates auth
+    const context = await getTenantContext(); // Validates auth
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') ?? undefined;
@@ -48,11 +51,19 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/strategic/anomalies
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const validation = createAnomalySchema.safeParse(body);
 
     if (!validation.success) {
