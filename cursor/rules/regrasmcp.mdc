@@ -1,0 +1,12 @@
+# Regras MCP e Rotas API (Obrigatórias)
+
+- Multi-tenant: nenhum UPDATE/DELETE sem `organizationId` + `branchId` (+ `deletedAt IS NULL` para soft delete).
+- Validação de params: sempre validar path/query (UUID ou inteiro positivo) antes de usar em DB. Retornar 400 se inválido.
+- Body: usar safeJson + Zod; em caso de erro, 400 com payload sem stack.
+- Autorização: usar `getTenantContext` em todas as rotas; 401 se não autenticado; 404 quando não pertencer ao tenant.
+- Atomicidade/TOCTOU: status/tenant devem estar no WHERE da operação (não só no select anterior).
+- Respostas padrão: 401 (sem sessão), 400 (input inválido), 404 (não encontrado no tenant ou deletado), 500 (erro interno sem vazar stack/SQL).
+- Observabilidade: seguir padrão de logs/correlação do projeto (ex.: console com contexto + requestId se disponível).
+- Testes mínimos: endpoints críticos precisam de pelo menos 1 teste feliz + 1 inválido + 1 cross-tenant (404/403).
+- MCP tools: seguir `docs/mcp/contracts.md` (erro em `error/message/details`), sem stack trace.
+- Documentação: ao criar/alterar tool/rota, atualizar `docs/mcp/*` e `docs/api/standards.md` quando relevante.
