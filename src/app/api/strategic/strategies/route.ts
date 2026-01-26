@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
@@ -16,25 +16,30 @@ import type { IStrategyRepository } from '@/modules/strategic/domain/ports/outpu
 
 // Schema de validação
 const createStrategySchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório').max(200),
-  vision: z.string().optional(),
-  mission: z.string().optional(),
-  values: z.array(z.string()).optional(),
-  startDate: z.string().transform((s) => new Date(s)),
-  endDate: z.string().transform((s) => new Date(s)),
+  name: z.string().trim().min(1, 'Nome é obrigatório').max(200),
+  vision: z.string().trim().optional(),
+  mission: z.string().trim().optional(),
+  values: z.array(z.string().trim()).optional(),
+  startDate: z.string().trim().refine((s) => !Number.isNaN(Date.parse(s)), { message: 'Data inicial inválida' })
+    .transform((s) => new Date(s)),
+  endDate: z.string().trim().refine((s) => !Number.isNaN(Date.parse(s)), { message: 'Data final inválida' })
+    .transform((s) => new Date(s)),
 });
 
 // ✅ S1.1 Batch 3: Schema de query
 const queryStrategiesSchema = z.object({
-  status: z.string().optional(),
+  status: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 // GET /api/strategic/strategies
-export const GET = withDI(async (request: NextRequest) => {
+export const GET = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     
@@ -90,11 +95,19 @@ export const GET = withDI(async (request: NextRequest) => {
 });
 
 // POST /api/strategic/strategies
-export const POST = withDI(async (request: NextRequest) => {
+export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const validation = createStrategySchema.safeParse(body);
 
     if (!validation.success) {
