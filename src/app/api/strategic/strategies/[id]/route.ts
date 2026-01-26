@@ -15,7 +15,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 
-const idSchema = z.string().trim().uuid('ID da estratégia inválido');
+const idSchema = z.string().trim().uuid('Invalid strategy id');
 
 // GET /api/strategic/strategies/[id]
 export async function GET(
@@ -30,7 +30,7 @@ export async function GET(
     const { id } = await params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid strategy id' }, { status: 400 });
     }
 
     const repository = container.resolve<IStrategyRepository>(
@@ -80,7 +80,7 @@ export async function DELETE(
     const { id } = await params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
-      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid strategy id' }, { status: 400 });
     }
 
     const repository = container.resolve<IStrategyRepository>(
