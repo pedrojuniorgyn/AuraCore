@@ -7,7 +7,7 @@
  * 
  * @module api/strategic/ideas/[id]
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ideaBoxTable } from '@/modules/strategic/infrastructure/persistence/schemas/idea-box.schema';
 import { getTenantContext } from '@/lib/auth/context';
@@ -27,12 +27,12 @@ const ideaTenantFilter = (
 
 // Schema de validação para atualização
 const UpdateIdeaSchema = z.object({
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().max(2000).optional(),
+  title: z.string().trim().min(1).max(200).optional(),
+  description: z.string().trim().max(2000).optional(),
   importance: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
   urgency: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-  department: z.string().max(100).optional(),
-  estimatedImpact: z.string().max(500).optional(),
+  department: z.string().trim().max(100).optional(),
+  estimatedImpact: z.string().trim().max(500).optional(),
 });
 
 const idSchema = z.string().uuid();
@@ -57,8 +57,8 @@ const buildUpdatePayload = (data: z.infer<typeof UpdateIdeaSchema>) => {
 };
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -66,7 +66,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -96,8 +96,8 @@ export async function GET(
 }
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -105,7 +105,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -166,8 +166,8 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -175,7 +175,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {

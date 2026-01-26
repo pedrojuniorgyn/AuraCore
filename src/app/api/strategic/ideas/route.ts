@@ -6,7 +6,7 @@
  * 
  * @module api/strategic/ideas
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ideaBoxTable } from '@/modules/strategic/infrastructure/persistence/schemas/idea-box.schema';
 import { getTenantContext } from '@/lib/auth/context';
@@ -22,7 +22,7 @@ const CreateIdeaSchema = z.object({
   department: z.string().max(100).optional(),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {

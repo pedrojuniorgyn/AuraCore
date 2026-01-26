@@ -5,7 +5,7 @@
  * 
  * @module api/strategic/ideas/[id]/reject
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ideaBoxTable } from '@/modules/strategic/infrastructure/persistence/schemas/idea-box.schema';
 import { getTenantContext } from '@/lib/auth/context';
@@ -13,6 +13,11 @@ import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
 const idSchema = z.string().uuid();
+const RejectReasonSchema = z
+  .object({
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .optional();
 
 const parseRowsAffected = (result: unknown): number => {
   const raw = (result as Record<string, unknown> | undefined)?.rowsAffected;
@@ -23,8 +28,8 @@ const parseRowsAffected = (result: unknown): number => {
 };
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -32,7 +37,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -43,8 +48,9 @@ export async function POST(
     let reviewNotes = 'Não atende aos critérios estratégicos';
     try {
       const body = await request.json();
-      if (body.reason) {
-        reviewNotes = body.reason;
+      const parsed = RejectReasonSchema.safeParse(body);
+      if (parsed.success && parsed.data?.reason) {
+        reviewNotes = parsed.data.reason;
       }
     } catch {
       // Body vazio é ok

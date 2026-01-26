@@ -64,7 +64,7 @@ describe('approve idea route', () => {
   it('returns 401 when tenant context is missing', async () => {
     mockGetTenantContext.mockResolvedValue(null);
 
-    const response = await approveIdea({} as NextRequest, { params: { id: validId } });
+    const response = await approveIdea({} as NextRequest, { params: Promise.resolve({ id: validId }) });
 
     expect(response.status).toBe(401);
   });
@@ -72,7 +72,7 @@ describe('approve idea route', () => {
   it('returns 400 for invalid uuid', async () => {
     mockGetTenantContext.mockResolvedValue(tenant);
 
-    const response = await approveIdea({} as NextRequest, { params: { id: 'invalid' } });
+    const response = await approveIdea({} as NextRequest, { params: Promise.resolve({ id: 'invalid' }) });
 
     expect(response.status).toBe(400);
   });
@@ -82,7 +82,7 @@ describe('approve idea route', () => {
     mockUpdate(0);
     mockSelectOnce([]);
 
-    const response = await approveIdea({} as NextRequest, { params: { id: validId } });
+    const response = await approveIdea({} as NextRequest, { params: Promise.resolve({ id: validId }) });
 
     expect(response.status).toBe(404);
   });
@@ -92,7 +92,7 @@ describe('approve idea route', () => {
     mockUpdate(0);
     mockSelectOnce([{ status: 'APPROVED' }]);
 
-    const response = await approveIdea({} as NextRequest, { params: { id: validId } });
+    const response = await approveIdea({} as NextRequest, { params: Promise.resolve({ id: validId }) });
     const json = await response.json();
 
     expect(response.status).toBe(400);
@@ -103,7 +103,7 @@ describe('approve idea route', () => {
     mockGetTenantContext.mockResolvedValue(tenant);
     mockUpdate(1);
 
-    const response = await approveIdea({} as NextRequest, { params: { id: validId } });
+    const response = await approveIdea({} as NextRequest, { params: Promise.resolve({ id: validId }) });
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -128,7 +128,7 @@ describe('update idea route', () => {
     mockGetTenantContext.mockResolvedValue(tenant);
     const response = await updateIdea(
       makeRequest(vi.fn().mockRejectedValue(new Error('bad json'))),
-      { params: { id: validId } }
+      { params: Promise.resolve({ id: validId }) }
     );
 
     expect(response.status).toBe(400);
@@ -138,7 +138,7 @@ describe('update idea route', () => {
     mockGetTenantContext.mockResolvedValue(tenant);
     const response = await updateIdea(
       makeRequest(vi.fn().mockResolvedValue({ title: '' })),
-      { params: { id: validId } }
+      { params: Promise.resolve({ id: validId }) }
     );
     expect(response.status).toBe(400);
   });
@@ -148,7 +148,7 @@ describe('update idea route', () => {
     mockUpdate(0);
 
     const response = await updateIdea(makeRequest(vi.fn().mockResolvedValue(validBody)), {
-      params: { id: validId },
+      params: Promise.resolve({ id: validId }),
     });
 
     expect(response.status).toBe(404);
@@ -158,7 +158,7 @@ describe('update idea route', () => {
     mockGetTenantContext.mockResolvedValue(tenant);
 
     const response = await updateIdea(makeRequest(vi.fn().mockResolvedValue({})), {
-      params: { id: validId },
+      params: Promise.resolve({ id: validId }),
     });
 
     expect(response.status).toBe(400);
@@ -171,7 +171,7 @@ describe('update idea route', () => {
     mockSelectOnce([{ id: validId, ...validBody }]);
 
     const response = await updateIdea(makeRequest(vi.fn().mockResolvedValue(validBody)), {
-      params: { id: validId },
+      params: Promise.resolve({ id: validId }),
     });
     const json = await response.json();
 
