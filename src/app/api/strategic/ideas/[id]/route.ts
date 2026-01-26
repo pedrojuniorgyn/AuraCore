@@ -35,9 +35,30 @@ const UpdateIdeaSchema = z.object({
   estimatedImpact: z.string().max(500).optional(),
 });
 
+const idSchema = z.string().uuid();
+
+const parseRowsAffected = (result: unknown): number => {
+  const raw = (result as Record<string, unknown> | undefined)?.rowsAffected;
+  if (Array.isArray(raw)) {
+    return Number(raw[0] ?? 0);
+  }
+  return Number(raw ?? 0);
+};
+
+const buildUpdatePayload = (data: z.infer<typeof UpdateIdeaSchema>) => {
+  const payload: Partial<typeof ideaBoxTable.$inferInsert> = {};
+  if (data.title !== undefined) payload.title = data.title;
+  if (data.description !== undefined) payload.description = data.description;
+  if (data.importance !== undefined) payload.importance = data.importance;
+  if (data.urgency !== undefined) payload.urgency = data.urgency;
+  if (data.department !== undefined) payload.department = data.department;
+  if (data.estimatedImpact !== undefined) payload.estimatedImpact = data.estimatedImpact;
+  return payload;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -45,7 +66,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
+
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+    }
 
     const [idea] = await db
       .select()
@@ -71,7 +97,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -79,8 +105,19 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
-    const body = await request.json();
+    const { id } = params;
+
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
     // Validar input
     const validation = UpdateIdeaSchema.safeParse(body);
@@ -91,24 +128,20 @@ export async function PUT(
       );
     }
 
-    // Verificar se ideia existe
-    const [existing] = await db
-      .select({ id: ideaBoxTable.id })
-      .from(ideaBoxTable)
-      .where(ideaTenantFilter(ctx, id));
+    const updatePayload = buildUpdatePayload(validation.data);
 
-    if (!existing) {
-      return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
-    }
-
-    // Atualizar
-    await db
+    const updateResult = await db
       .update(ideaBoxTable)
       .set({
-        ...validation.data,
+        ...updatePayload,
         updatedAt: new Date(),
       })
       .where(ideaTenantFilter(ctx, id));
+
+    const rowsAffected = parseRowsAffected(updateResult);
+    if (!rowsAffected) {
+      return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
+    }
 
     // Retornar atualizado
     const [updated] = await db
@@ -131,7 +164,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -139,26 +172,26 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
-    // Verificar se ideia existe
-    const [existing] = await db
-      .select({ id: ideaBoxTable.id })
-      .from(ideaBoxTable)
-      .where(ideaTenantFilter(ctx, id));
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
     }
 
     // Soft delete
-    await db
+    const deleteResult = await db
       .update(ideaBoxTable)
       .set({
         deletedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(ideaTenantFilter(ctx, id));
+
+    const rowsAffected = parseRowsAffected(deleteResult);
+    if (!rowsAffected) {
+      return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
