@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
@@ -17,36 +17,36 @@ import { queryActionPlansSchema, actionPlanStatusSchema, prioritySchema, pdcaPha
 
 // ✅ S1.1 Batch 3: Schema estendido para 5W2H
 const createSchema = z.object({
-  goalId: z.string().uuid().optional(),
-  what: z.string().min(1, 'O que fazer é obrigatório'),
-  why: z.string().min(1, 'Por que fazer é obrigatório'),
-  whereLocation: z.string().min(1, 'Onde fazer é obrigatório'),
+  goalId: z.string().trim().uuid().optional(),
+  what: z.string().trim().min(1, 'O que fazer é obrigatório'),
+  why: z.string().trim().min(1, 'Por que fazer é obrigatório'),
+  whereLocation: z.string().trim().min(1, 'Onde fazer é obrigatório'),
   // ✅ S1.X-BUGFIX: Validar data antes de transform (Bug 4)
-  whenStart: z.string().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(
-    z.string().refine(
+  whenStart: z.string().trim().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(
+    z.string().trim().refine(
       (s) => !isNaN(Date.parse(s)),
       { message: 'whenStart deve ser uma data válida' }
     ).transform((s) => new Date(s).toISOString())
   ),
-  whenEnd: z.string().datetime({ message: 'Data de término inválida (ISO 8601)' }).or(
-    z.string().refine(
+  whenEnd: z.string().trim().datetime({ message: 'Data de término inválida (ISO 8601)' }).or(
+    z.string().trim().refine(
       (s) => !isNaN(Date.parse(s)),
       { message: 'whenEnd deve ser uma data válida' }
     ).transform((s) => new Date(s).toISOString())
   ),
-  who: z.string().min(1, 'Responsável é obrigatório'),
-  whoUserId: z.string().uuid('whoUserId deve ser UUID'),
-  how: z.string().min(1, 'Como fazer é obrigatório'),
+  who: z.string().trim().min(1, 'Responsável é obrigatório'),
+  whoUserId: z.string().trim().uuid('whoUserId deve ser UUID'),
+  how: z.string().trim().min(1, 'Como fazer é obrigatório'),
   howMuchAmount: z.number().optional(),
-  howMuchCurrency: z.string().length(3).optional(),
+  howMuchCurrency: z.string().trim().length(3).optional(),
   priority: prioritySchema.optional(),
 });
 
 // ✅ S1.1 Batch 3: Schema de query
 // ⚠️ HOTFIX-2: Usar .merge() ao invés de .extend() pois queryActionPlansSchema tem .refine()
 const querySchema = queryActionPlansSchema.merge(z.object({
-  goalId: z.string().uuid().optional(),
-  whoUserId: z.string().uuid().optional(),
+  goalId: z.string().trim().uuid().optional(),
+  whoUserId: z.string().trim().uuid().optional(),
   pdcaCycle: pdcaPhaseSchema.optional(),
   status: actionPlanStatusSchema.optional(),
   priority: prioritySchema.optional(),
@@ -54,7 +54,7 @@ const querySchema = queryActionPlansSchema.merge(z.object({
 }));
 
 // GET /api/strategic/action-plans
-export const GET = withDI(async (request: NextRequest) => {
+export const GET = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
     const { searchParams } = new URL(request.url);
@@ -120,11 +120,17 @@ export const GET = withDI(async (request: NextRequest) => {
 });
 
 // POST /api/strategic/action-plans
-export const POST = withDI(async (request: NextRequest) => {
+export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const validation = createSchema.safeParse(body);
 
     if (!validation.success) {

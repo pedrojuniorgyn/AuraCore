@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
@@ -23,7 +23,7 @@ interface KanbanCard {
   daysUntilDue: number;
 }
 
-export const GET = withDI(async (request: NextRequest) => {
+export const GET = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
     const { searchParams } = new URL(request.url);

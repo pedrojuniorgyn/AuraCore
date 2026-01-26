@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
@@ -13,25 +13,36 @@ import { AdvancePDCACycleUseCase } from '@/modules/strategic/application/command
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 
+const idSchema = z.string().trim().uuid();
+
 const advancePDCASchema = z.object({
   completionPercent: z.number().min(0).max(100).optional(),
-  notes: z.string().optional(),
+  notes: z.string().trim().optional(),
 });
 
 // GET /api/strategic/action-plans/[id]
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
     const { id } = await params;
 
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
+    }
+
     const repository = container.resolve<IActionPlanRepository>(
       STRATEGIC_TOKENS.ActionPlanRepository
     );
 
-    const plan = await repository.findById(id, context.organizationId, context.branchId);
+    const plan = await repository.findById(
+      idValidation.data,
+      context.organizationId,
+      context.branchId
+    );
 
     if (!plan) {
       return NextResponse.json({ error: 'Plano de ação não encontrado' }, { status: 404 });
@@ -73,14 +84,25 @@ export async function GET(
 
 // PUT /api/strategic/action-plans/[id]/advance - Avançar PDCA
 export async function PUT(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
     const { id } = await params;
 
-    const body = await request.json();
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const validation = advancePDCASchema.safeParse(body);
 
     if (!validation.success) {
@@ -93,7 +115,7 @@ export async function PUT(
     const useCase = container.resolve(AdvancePDCACycleUseCase);
     const result = await useCase.execute(
       {
-        actionPlanId: id,
+        actionPlanId: idValidation.data,
         ...validation.data,
       },
       context
@@ -113,18 +135,23 @@ export async function PUT(
 
 // DELETE /api/strategic/action-plans/[id]
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
     const { id } = await params;
 
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
+    }
+
     const repository = container.resolve<IActionPlanRepository>(
       STRATEGIC_TOKENS.ActionPlanRepository
     );
 
-    await repository.delete(id, context.organizationId, context.branchId);
+    await repository.delete(idValidation.data, context.organizationId, context.branchId);
 
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {

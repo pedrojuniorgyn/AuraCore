@@ -4,7 +4,7 @@
  * 
  * @module app/api/strategic
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
@@ -13,37 +13,44 @@ import { ExecuteFollowUpUseCase } from '@/modules/strategic/application/commands
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanFollowUpRepository } from '@/modules/strategic/domain/ports/output/IActionPlanFollowUpRepository';
 
+const idSchema = z.string().trim().uuid();
+
 const followUpSchema = z.object({
-  followUpDate: z.string().transform((s) => new Date(s)),
+  followUpDate: z.string().trim().transform((s) => new Date(s)),
   
   // 3G (OBRIGATÓRIOS)
-  gembaLocal: z.string().min(1, 'GEMBA (local) é obrigatório'),
-  gembutsuObservation: z.string().min(1, 'GEMBUTSU (observação) é obrigatório'),
-  genjitsuData: z.string().min(1, 'GENJITSU (dados) é obrigatório'),
+  gembaLocal: z.string().trim().min(1, 'GEMBA (local) é obrigatório'),
+  gembutsuObservation: z.string().trim().min(1, 'GEMBUTSU (observação) é obrigatório'),
+  genjitsuData: z.string().trim().min(1, 'GENJITSU (dados) é obrigatório'),
   
   // Resultado
   executionStatus: z.enum(['EXECUTED_OK', 'EXECUTED_PARTIAL', 'NOT_EXECUTED', 'BLOCKED']),
   executionPercent: z.number().min(0).max(100),
-  problemsObserved: z.string().optional(),
+  problemsObserved: z.string().trim().optional(),
   problemSeverity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   
   // Reproposição
   requiresNewPlan: z.boolean().optional(),
-  newPlanDescription: z.string().optional(),
-  newPlanAssignedTo: z.string().uuid().optional(),
+  newPlanDescription: z.string().trim().optional(),
+  newPlanAssignedTo: z.string().trim().uuid().optional(),
   
   // Evidências
-  evidenceUrls: z.array(z.string().url()).optional(),
+  evidenceUrls: z.array(z.string().trim().url()).optional(),
 });
 
 // GET /api/strategic/action-plans/[id]/follow-up - Lista follow-ups
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext(); // Validates auth and gets tenant context
     const { id } = await params;
+
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
+    }
 
     const repository = container.resolve<IActionPlanFollowUpRepository>(
       STRATEGIC_TOKENS.ActionPlanFollowUpRepository
@@ -51,7 +58,7 @@ export async function GET(
 
     // Multi-tenancy: passar organizationId e branchId
     const followUps = await repository.findByActionPlanId(
-      id,
+      idValidation.data,
       context.organizationId,
       context.branchId
     );
@@ -86,14 +93,25 @@ export async function GET(
 
 // POST /api/strategic/action-plans/[id]/follow-up - Registra follow-up 3G
 export async function POST(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
     const { id } = await params;
 
-    const body = await request.json();
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const validation = followUpSchema.safeParse(body);
 
     if (!validation.success) {
@@ -106,7 +124,7 @@ export async function POST(
     const useCase = container.resolve(ExecuteFollowUpUseCase);
     const result = await useCase.execute(
       {
-        actionPlanId: id,
+        actionPlanId: idValidation.data,
         ...validation.data,
       },
       context
