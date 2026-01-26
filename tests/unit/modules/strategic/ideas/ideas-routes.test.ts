@@ -154,6 +154,17 @@ describe('update idea route', () => {
     expect(response.status).toBe(404);
   });
 
+  it('returns 400 when no updatable fields are provided', async () => {
+    mockGetTenantContext.mockResolvedValue(tenant);
+
+    const response = await updateIdea(makeRequest(vi.fn().mockResolvedValue({})), {
+      params: { id: validId },
+    });
+
+    expect(response.status).toBe(400);
+    expect(mockDb.update).not.toHaveBeenCalled();
+  });
+
   it('returns 200 when update succeeds', async () => {
     mockGetTenantContext.mockResolvedValue(tenant);
     mockUpdate(1);

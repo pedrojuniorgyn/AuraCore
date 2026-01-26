@@ -144,7 +144,14 @@ export async function POST(request: NextRequest) {
     const created = await db
       .select()
       .from(ideaBoxTable)
-      .where(eq(ideaBoxTable.id, id));
+      .where(
+        and(
+          eq(ideaBoxTable.id, id),
+          eq(ideaBoxTable.organizationId, ctx.organizationId),
+          eq(ideaBoxTable.branchId, ctx.branchId),
+          isNull(ideaBoxTable.deletedAt)
+        )
+      );
 
     return NextResponse.json(created[0], { status: 201 });
   } catch (error) {
