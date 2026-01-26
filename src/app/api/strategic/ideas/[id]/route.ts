@@ -14,6 +14,17 @@ import { getTenantContext } from '@/lib/auth/context';
 import { eq, and, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
+const ideaTenantFilter = (
+  ctx: { organizationId: number; branchId: number },
+  id: string
+) =>
+  and(
+    eq(ideaBoxTable.id, id),
+    eq(ideaBoxTable.organizationId, ctx.organizationId),
+    eq(ideaBoxTable.branchId, ctx.branchId),
+    isNull(ideaBoxTable.deletedAt)
+  );
+
 // Schema de validação para atualização
 const UpdateIdeaSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -39,14 +50,7 @@ export async function GET(
     const [idea] = await db
       .select()
       .from(ideaBoxTable)
-      .where(
-        and(
-          eq(ideaBoxTable.id, id),
-          eq(ideaBoxTable.organizationId, ctx.organizationId),
-          eq(ideaBoxTable.branchId, ctx.branchId),
-          isNull(ideaBoxTable.deletedAt)
-        )
-      );
+      .where(ideaTenantFilter(ctx, id));
 
     if (!idea) {
       return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
@@ -91,14 +95,7 @@ export async function PUT(
     const [existing] = await db
       .select({ id: ideaBoxTable.id })
       .from(ideaBoxTable)
-      .where(
-        and(
-          eq(ideaBoxTable.id, id),
-          eq(ideaBoxTable.organizationId, ctx.organizationId),
-          eq(ideaBoxTable.branchId, ctx.branchId),
-          isNull(ideaBoxTable.deletedAt)
-        )
-      );
+      .where(ideaTenantFilter(ctx, id));
 
     if (!existing) {
       return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
@@ -111,13 +108,13 @@ export async function PUT(
         ...validation.data,
         updatedAt: new Date(),
       })
-      .where(eq(ideaBoxTable.id, id));
+      .where(ideaTenantFilter(ctx, id));
 
     // Retornar atualizado
     const [updated] = await db
       .select()
       .from(ideaBoxTable)
-      .where(eq(ideaBoxTable.id, id));
+      .where(ideaTenantFilter(ctx, id));
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -148,14 +145,7 @@ export async function DELETE(
     const [existing] = await db
       .select({ id: ideaBoxTable.id })
       .from(ideaBoxTable)
-      .where(
-        and(
-          eq(ideaBoxTable.id, id),
-          eq(ideaBoxTable.organizationId, ctx.organizationId),
-          eq(ideaBoxTable.branchId, ctx.branchId),
-          isNull(ideaBoxTable.deletedAt)
-        )
-      );
+      .where(ideaTenantFilter(ctx, id));
 
     if (!existing) {
       return NextResponse.json({ error: 'Ideia não encontrada' }, { status: 404 });
@@ -168,7 +158,7 @@ export async function DELETE(
         deletedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(ideaBoxTable.id, id));
+      .where(ideaTenantFilter(ctx, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

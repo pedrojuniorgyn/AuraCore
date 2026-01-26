@@ -456,7 +456,7 @@ export default function IdeaDetailPage() {
                     <div>
                       <span className="text-white/50 text-sm">Atualizado em</span>
                       <p className="text-white/70 text-sm">
-                        {new Date(idea.updatedAt).toLocaleDateString('pt-BR', {
+                        {new Date(idea.updatedAt).toLocaleString('pt-BR', {
                           day: '2-digit',
                           month: 'long',
                           year: 'numeric',
