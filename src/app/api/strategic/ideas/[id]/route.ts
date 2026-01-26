@@ -129,6 +129,9 @@ export async function PUT(
     }
 
     const updatePayload = buildUpdatePayload(validation.data);
+    if (Object.keys(updatePayload).length === 0) {
+      return NextResponse.json({ error: 'Nenhum campo para atualizar' }, { status: 400 });
+    }
 
     const updateResult = await db
       .update(ideaBoxTable)
