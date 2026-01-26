@@ -16,7 +16,11 @@ import type { IActionPlanFollowUpRepository } from '@/modules/strategic/domain/p
 const idSchema = z.string().trim().uuid();
 
 const followUpSchema = z.object({
-  followUpDate: z.string().trim().transform((s) => new Date(s)),
+  followUpDate: z
+    .string()
+    .trim()
+    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'followUpDate inválida' })
+    .transform((s) => new Date(s)),
   
   // 3G (OBRIGATÓRIOS)
   gembaLocal: z.string().trim().min(1, 'GEMBA (local) é obrigatório'),
