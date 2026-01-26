@@ -5,7 +5,7 @@
  * 
  * @module api/strategic/ideas/[id]/approve
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ideaBoxTable } from '@/modules/strategic/infrastructure/persistence/schemas/idea-box.schema';
 import { getTenantContext } from '@/lib/auth/context';
@@ -23,8 +23,8 @@ const parseRowsAffected = (result: unknown): number => {
 };
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -32,7 +32,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
