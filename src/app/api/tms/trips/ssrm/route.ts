@@ -75,13 +75,14 @@ const safeJson = async <T>(request: Request): Promise<T> => {
   }
 };
 
-const unauthorizedResponse = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+const createUnauthorizedResponse = () =>
+  NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
 export async function POST(request: Request) {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
-      return unauthorizedResponse;
+      return createUnauthorizedResponse();
     }
     const body: IServerSideGetRowsRequest = await safeJson(request);
     
