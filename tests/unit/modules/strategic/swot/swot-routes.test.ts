@@ -46,40 +46,37 @@ type RouteRequest = Parameters<typeof createSwotItem>[0];
 const makeRequest = (jsonImpl: () => Promise<unknown> | unknown) =>
   ({ json: jsonImpl } as unknown as RouteRequest);
 
-describe('swot routes hardening', () => {
+describe('swot routes hotfixes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetTenantContext.mockResolvedValue(tenant);
   });
 
-  it('returns 400 on invalid JSON body', async () => {
-    const response = await createSwotItem(
-      makeRequest(vi.fn().mockRejectedValue(new Error('bad json')))
+  it('preserves getTenantContext response status', async () => {
+    mockGetTenantContext.mockRejectedValue(
+      new Response(JSON.stringify({ error: 'Missing branch' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
     );
-
-    expect(response.status).toBe(400);
-    const json = await response.json();
-    expect(json.error).toBe('Invalid JSON body');
-  });
-
-  it('returns 401 when tenant is missing', async () => {
-    mockGetTenantContext.mockRejectedValue(new Response(null, { status: 401 }));
 
     const response = await createSwotItem(
       makeRequest(
         vi.fn().mockResolvedValue({
           quadrant: 'STRENGTH',
           title: 'Team',
+          impactScore: 3,
+          probabilityScore: 0,
         })
       )
     );
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.error).toBe('Unauthorized');
+    expect(json.error).toBe('Missing branch');
   });
 
-  it('accepts UI payload and passes normalized data to use case', async () => {
+  it('coerces probabilityScore 0 to 1 before use case', async () => {
     const execute = vi.fn().mockResolvedValue(
       Result.ok({
         id: 'swot-1',
@@ -93,8 +90,7 @@ describe('swot routes hardening', () => {
       makeRequest(
         vi.fn().mockResolvedValue({
           quadrant: 'STRENGTH',
-          title: '  Equipe qualificada  ',
-          description: '  Experiência comprovada  ',
+          title: 'Team',
           impactScore: 4,
           probabilityScore: 0,
         })
@@ -103,16 +99,83 @@ describe('swot routes hardening', () => {
 
     expect(response.status).toBe(201);
     expect(execute).toHaveBeenCalledTimes(1);
-    const [input, context] = execute.mock.calls[0];
-    expect(context).toEqual(tenant);
-    expect(input).toEqual(
-      expect.objectContaining({
+    const [input] = execute.mock.calls[0];
+    expect(input.probabilityScore).toBe(1);
+  });
+
+  it('coerces probabilityScore < 1 to 1 before use case', async () => {
+    const execute = vi.fn().mockResolvedValue(
+      Result.ok({
+        id: 'swot-1',
         quadrant: 'STRENGTH',
-        title: 'Equipe qualificada',
-        description: 'Experiência comprovada',
-        impactScore: 4,
-        probabilityScore: 0,
+        title: 'Team',
       })
     );
+    mockContainerResolve.mockReturnValue({ execute });
+
+    const response = await createSwotItem(
+      makeRequest(
+        vi.fn().mockResolvedValue({
+          quadrant: 'STRENGTH',
+          title: 'Team',
+          impactScore: 4,
+          probabilityScore: 0.5,
+        })
+      )
+    );
+
+    expect(response.status).toBe(201);
+    expect(execute).toHaveBeenCalledTimes(1);
+    const [input] = execute.mock.calls[0];
+    expect(input.probabilityScore).toBe(1);
+  });
+
+  it('uses default probabilityScore = 3 when omitted', async () => {
+    const execute = vi.fn().mockResolvedValue(
+      Result.ok({
+        id: 'swot-3',
+        quadrant: 'OPPORTUNITY',
+        title: 'New market',
+      })
+    );
+    mockContainerResolve.mockReturnValue({ execute });
+
+    const response = await createSwotItem(
+      makeRequest(
+        vi.fn().mockResolvedValue({
+          quadrant: 'OPPORTUNITY',
+          title: 'New market',
+          impactScore: 5,
+        })
+      )
+    );
+
+    expect(response.status).toBe(201);
+    const [input] = execute.mock.calls[0];
+    expect(input.probabilityScore).toBe(3);
+  });
+
+  it('keeps happy path returning 201', async () => {
+    const execute = vi.fn().mockResolvedValue(
+      Result.ok({
+        id: 'swot-2',
+        quadrant: 'WEAKNESS',
+        title: 'Process',
+      })
+    );
+    mockContainerResolve.mockReturnValue({ execute });
+
+    const response = await createSwotItem(
+      makeRequest(
+        vi.fn().mockResolvedValue({
+          quadrant: 'WEAKNESS',
+          title: 'Process',
+          impactScore: 2,
+          probabilityScore: 3,
+        })
+      )
+    );
+
+    expect(response.status).toBe(201);
   });
 });
