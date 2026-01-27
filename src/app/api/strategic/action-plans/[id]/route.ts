@@ -20,6 +20,14 @@ const advancePDCASchema = z.object({
   notes: z.string().trim().optional(),
 });
 
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+};
+
 // GET /api/strategic/action-plans/[id]
 export async function GET(
   request: Request,
@@ -45,7 +53,7 @@ export async function GET(
     );
 
     if (!plan) {
-      return NextResponse.json({ error: 'Plano de ação não encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'Action plan not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -96,12 +104,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+    const body = await safeJson<unknown>(request);
 
     const validation = advancePDCASchema.safeParse(body);
 

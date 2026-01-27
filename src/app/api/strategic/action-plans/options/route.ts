@@ -47,7 +47,7 @@ export async function GET() {
         }));
       }
     } catch (error) {
-      console.warn('[action-plans/options] Erro ao buscar objetivos:', error);
+      console.warn('[action-plans/options] Error fetching goals:', error);
       // Continua com lista vazia
     }
 
