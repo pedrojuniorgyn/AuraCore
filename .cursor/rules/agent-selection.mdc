@@ -6,8 +6,8 @@ alwaysApply: true
 
 # GUIA DE SELEÇÃO DE AGENTES CURSOR
 
-**Versão:** 1.1.0  
-**Data:** 25/01/2026  
+**Versão:** 1.2.0  
+**Data:** 27/01/2026  
 **Projeto:** AuraCore ERP Logístico
 
 ---
@@ -37,7 +37,7 @@ Ao receber **QUALQUER** prompt, o agente **DEVE OBRIGATORIAMENTE**:
 │  Motivo: [justificativa baseada na matriz]                  │
 │                                                              │
 │  👉 Por favor, troque para [AGENTE] antes de continuar.     │
-│     Menu: Model Selector → Claude [Agente]                  │
+│     Menu: Model Selector → [Fornecedor] [Agente]            │
 │                                                              │
 │  OU responda "CONTINUAR MESMO ASSIM" para prosseguir.       │
 └─────────────────────────────────────────────────────────────┘
@@ -63,6 +63,25 @@ O agente deve se identificar baseado em suas características:
 | **Sonnet 4.5 Thinking** | Médio, mostra raciocínio em blocos thinking |
 | **Opus 4.5** | Detalhado, contexto amplo, sem "thinking" visível |
 | **Opus 4.5 Thinking** | Lento, raciocínio extenso visível, máxima precisão |
+| **GPT-5.2** | Rápido, execução direta, bom para tarefas objetivas e rotineiras |
+| **GPT-5.2 Thinking** | Foco em raciocínio profundo (RCA), debugging difícil, trade-offs explícitos |
+| **GPT-5.2 Codex** | Engineering agentic: refactor/migração multi-arquivo, execução sistemática com testes/gates |
+| **GPT-5.1 Codex Max** | Projetos longos e robustos: mudanças grandes com consistência e alto rigor operacional |
+
+### Quando escolher (guideline operacional)
+
+- **GPT-5.2**:
+  - Quando a tarefa é **curta, clara, de baixo risco** (docs, ajustes pontuais, validações simples).
+  - Quando você quer **velocidade** e o escopo cabe em poucas mudanças.
+- **GPT-5.2 Thinking**:
+  - Quando precisa de **RCA / root cause**, hipóteses e validação cuidadosa (heisenbugs, regressões).
+  - Quando há **trade-offs arquiteturais** e decisões precisam ser explicitadas.
+- **GPT-5.2 Codex**:
+  - Quando a tarefa é **multi-arquivo** (refactor/sweep), migração guiada por padrões e execução com gates.
+  - Quando você quer **orquestração** (mapear → aplicar → verificar → testar) sem perder consistência.
+- **GPT-5.1 Codex Max**:
+  - Quando o trabalho é **longo**, com alta chance de ramificações (muitos pontos de integração).
+  - Quando precisa de **robustez** para manter consistência em mudanças amplas (módulo grande / migração extensa).
 
 ---
 
@@ -72,44 +91,48 @@ O agente deve se identificar baseado em suas características:
 
 | Tipo de Tarefa | Agente Mínimo | Crítico? |
 |----------------|---------------|----------|
-| HOTFIX (deploy quebrado) | **Opus 4.5** | 🔴 SIM |
-| Código SPED/Fiscal | **Opus 4.5** | 🔴 SIM |
-| Código Financeiro | **Opus 4.5** | 🔴 SIM |
-| Migrations SQL produção | **Opus 4.5** | 🔴 SIM |
-| Debugging complexo | **Opus 4.5 Thinking** | 🟡 |
-| Refatoração arquitetural | **Opus 4.5 Thinking** | 🟡 |
-| Análise causa raiz | **Opus 4.5 Thinking** | 🟡 |
-| Batch correções simples | **Sonnet 4.5** | 🟢 |
-| Validação/Verificação | **Sonnet 4.5** | 🟢 |
-| Testes unitários | **Sonnet 4.5** | 🟢 |
-| Documentação | **Sonnet 4.5** | 🟢 |
+| HOTFIX (deploy quebrado) | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
+| Código SPED/Fiscal | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
+| Código Financeiro | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
+| Migrations SQL produção | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
+| Debugging complexo / heisenbug | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** | 🟡 |
+| Análise causa raiz (RCA) | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** | 🟡 |
+| Refatoração arquitetural | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** | 🟡 |
+| Refactor multi-arquivo / migration refactor | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** | 🟡 |
+| Batch correções simples | **Sonnet 4.5** / **GPT-5.2** | 🟢 |
+| Validação/Verificação | **Sonnet 4.5** / **GPT-5.2** | 🟢 |
+| Testes unitários | **Sonnet 4.5** / **GPT-5.2** | 🟢 |
+| Documentação | **Sonnet 4.5** / **GPT-5.2** | 🟢 |
 
 ### Por Palavras-Chave no Prompt
 
 | Se o prompt contém... | Agente Mínimo |
 |-----------------------|---------------|
-| "HOTFIX", "urgente", "deploy quebrado" | **Opus 4.5** |
-| "SPED", "NFe", "CTe", "fiscal", "tributário" | **Opus 4.5** |
-| "financeiro", "pagamento", "título", "contábil" | **Opus 4.5** |
-| "migration", "SQL", "produção", "banco" | **Opus 4.5** |
-| "debugging", "causa raiz", "impossível" | **Opus 4.5 Thinking** |
-| "arquitetura", "refatoração", "DDD" | **Opus 4.5 Thinking** |
-| "batch", "vários arquivos", "repetitivo" | **Sonnet 4.5** |
-| "verificar", "validar", "checar" | **Sonnet 4.5** |
-| "teste", "spec", "unit test" | **Sonnet 4.5** |
+| "HOTFIX", "urgente", "deploy quebrado" | **Opus 4.5** / **GPT-5.2 Thinking** |
+| "SPED", "NFe", "CTe", "fiscal", "tributário" | **Opus 4.5** / **GPT-5.2 Thinking** |
+| "financeiro", "pagamento", "título", "contábil" | **Opus 4.5** / **GPT-5.2 Thinking** |
+| "migration", "SQL", "produção", "banco" | **Opus 4.5** / **GPT-5.2 Thinking** |
+| "debugging", "causa raiz", "impossível" | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** |
+| "RCA", "root cause", "heisenbug", "regressão" | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** |
+| "arquitetura", "refatoração", "DDD" | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** |
+| "codex", "agentic", "sweep", "large change" | **GPT-5.2 Codex** |
+| "refactor multi-file", "migration refactor", "multi-arquivo" | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** |
+| "batch", "vários arquivos", "repetitivo" | **Sonnet 4.5** / **GPT-5.2** |
+| "verificar", "validar", "checar" | **Sonnet 4.5** / **GPT-5.2** |
+| "teste", "spec", "unit test" | **Sonnet 4.5** / **GPT-5.2** |
 
 ### Por Módulo AuraCore
 
 | Módulo | Agente Mínimo |
 |--------|---------------|
-| `src/modules/fiscal/` | **Opus 4.5** |
-| `src/modules/accounting/` | **Opus 4.5** |
-| `src/modules/financial/` | **Opus 4.5** |
-| `src/modules/tms/` | Sonnet 4.5 Thinking |
-| `src/modules/wms/` | Sonnet 4.5 Thinking |
-| `src/modules/strategic/` | Sonnet 4.5 |
-| `src/modules/crm/` | Sonnet 4.5 |
-| `drizzle/migrations/` | **Opus 4.5** |
+| `src/modules/fiscal/` | **Opus 4.5** / **GPT-5.2 Thinking** |
+| `src/modules/accounting/` | **Opus 4.5** / **GPT-5.2 Thinking** |
+| `src/modules/financial/` | **Opus 4.5** / **GPT-5.2 Thinking** |
+| `src/modules/tms/` | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** |
+| `src/modules/wms/` | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** |
+| `src/modules/strategic/` | **Sonnet 4.5** / **GPT-5.2** |
+| `src/modules/crm/` | **Sonnet 4.5** / **GPT-5.2** |
+| `drizzle/migrations/` | **Opus 4.5** / **GPT-5.2 Thinking** |
 
 ---
 
@@ -208,6 +231,89 @@ Custo:      ██████████ Muito Alto
 
 ---
 
+## 📋 PERFIS DETALHADOS — AGENTES GPT
+
+### GPT-5.2 ⚡
+
+```
+Velocidade: █████████░ Muito Rápido
+Precisão:   ███████░░░ Muito Boa
+Contexto:   ██████░░░░ Médio
+Custo:      ███░░░░░░░ Médio-Baixo
+```
+
+**Pode executar:**
+- ✅ Documentação e regras (1-2 arquivos) com gates claros
+- ✅ Batch simples e repetitivo, desde que o escopo seja pequeno
+- ✅ Validações/verificações, ajustes pontuais em TS/React
+
+**NÃO deve executar:**
+- ❌ RCA profundo / debugging “impossível” (prefira Thinking)
+- ❌ Mudanças grandes multi-arquivo (prefira Codex)
+- ❌ Fiscal/financeiro/migrations de alto risco sem top-tier
+
+---
+
+### GPT-5.2 Thinking 🧠
+
+```
+Velocidade: █████░░░░░ Médio
+Precisão:   █████████░ Excelente
+Contexto:   █████████░ Amplo
+Custo:      ███████░░░ Alto
+```
+
+**Pode executar:**
+- ✅ RCA / root cause (debugging complexo, regressões, heisenbugs)
+- ✅ Análise de trade-offs arquiteturais e decisões de design
+- ✅ Tarefas críticas quando o risco exige raciocínio explícito + evidências
+
+**NÃO deve executar:**
+- ❌ Refactor multi-arquivo “agentic sweep” (prefira GPT-5.2 Codex)
+- ❌ Tarefas triviais (overkill)
+
+---
+
+### GPT-5.2 Codex 🧠⚙️
+
+```
+Velocidade: ██████░░░░ Médio
+Precisão:   █████████░ Excelente
+Contexto:   ████████░░ Bom-Amplo
+Custo:      ███████░░░ Alto
+```
+
+**Pode executar:**
+- ✅ Refactor multi-arquivo, migrações e padronizações (mapear → aplicar → verificar)
+- ✅ “Sweep” com consistência: atualizar muitos pontos mantendo padrão do repo
+- ✅ Mudanças grandes quando precisa de execução agentic + gates/testes
+
+**NÃO deve executar:**
+- ❌ RCA profundo como foco principal (prefira GPT-5.2 Thinking)
+- ❌ HOTFIX crítico de produção sem evidências e validações (prefira top-tier + Thinking)
+
+---
+
+### GPT-5.1 Codex Max 🧠⚙️
+
+```
+Velocidade: ████░░░░░░ Médio-Lento
+Precisão:   ██████████ Máxima
+Contexto:   ██████████ Máximo
+Custo:      ██████████ Muito Alto
+```
+
+**Pode executar:**
+- ✅ Projetos longos e mudanças amplas com alta consistência (módulos grandes)
+- ✅ Migrações/refactors extensos com múltiplos subfluxos e integrações
+- ✅ Padronização de larga escala quando o rigor operacional é prioritário
+
+**NÃO deve executar:**
+- ❌ Tarefas pequenas/rotineiras (desperdício)
+- ❌ Quando o tempo é o fator dominante e o escopo é trivial
+
+---
+
 ## 🔄 REGRAS DE ESCALAÇÃO
 
 ### Quando Sugerir Escalação
@@ -218,6 +324,12 @@ O agente atual deve sugerir escalação se:
 2. **Criar novos bugs** ao corrigir
 3. **Não entender contexto** completo
 4. **Precisar de raciocínio explícito** que não consegue fazer
+
+### Orientações específicas (Claude ↔ GPT)
+
+- Se a tarefa começou em **GPT-5.2** e virou **RCA/debugging difícil** → escalar para **GPT-5.2 Thinking**.
+- Se a tarefa começou em **Thinking** e virou **refactor multi-arquivo / migration refactor** → migrar para **GPT-5.2 Codex**.
+- Se a tarefa é **fiscal/financeiro/migrations** (🔴) → preferir **top-tier** (**Opus 4.5** / **GPT-5.2 Thinking**) e exigir **evidências extra** (gates, logs, checagens).
 
 ### Formato de Sugestão de Escalação
 
@@ -284,6 +396,43 @@ Iniciando execução...
 ```
 ✅ Agente adequado: Opus 4.5 (overqualified, mas pode executar)
 Nota: Sonnet 4.5 seria suficiente para esta tarefa.
+Iniciando execução...
+
+[continua com a tarefa]
+```
+
+### Exemplo 4: GPT (base) recusa e recomenda Thinking
+
+**Prompt recebido:** "Heisenbug: às vezes retorna 500 em produção, sem reproduzir local. Preciso de RCA."
+
+**Resposta do GPT-5.2:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⚠️ AGENTE INADEQUADO PARA ESTA TAREFA                      │
+├─────────────────────────────────────────────────────────────┤
+│  Tarefa: RCA de erro 500 intermitente                        │
+│  Complexidade: COMPLEX                                       │
+│  Tipo: Debugging / RCA                                       │
+│                                                              │
+│  Agente atual: GPT-5.2                                       │
+│  Agente recomendado: GPT-5.2 Thinking                        │
+│                                                              │
+│  Motivo: Requer hipóteses, validação profunda e evidências.  │
+│                                                              │
+│  👉 Por favor, troque para GPT-5.2 Thinking antes de continuar│
+│     Menu: Model Selector → GPT-5.2 Thinking                  │
+│                                                              │
+│  OU responda "CONTINUAR MESMO ASSIM" para prosseguir.       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Exemplo 5: Codex aceita refactor multi-arquivo
+
+**Prompt recebido:** "Refactor multi-file: migrar 20 rotas para novo helper, sem regressão, com verificação por grep."
+
+**Resposta do GPT-5.2 Codex:**
+```
+✅ Agente adequado: GPT-5.2 Codex para refactor multi-arquivo (agentic)
 Iniciando execução...
 
 [continua com a tarefa]
