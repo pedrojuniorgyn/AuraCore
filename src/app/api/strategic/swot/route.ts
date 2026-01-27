@@ -4,7 +4,6 @@
  * 
  * @module app/api/strategic/swot
  */
-import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
@@ -15,20 +14,44 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
 import type { SwotQuadrant, SwotCategory, SwotStatus } from '@/modules/strategic/domain/entities/SwotItem';
 
+const swotQuadrants = ['STRENGTH', 'WEAKNESS', 'OPPORTUNITY', 'THREAT'] as const;
+const isSwotQuadrant = (value: string | undefined): value is SwotQuadrant =>
+  !!value && swotQuadrants.includes(value as SwotQuadrant);
+
 const createSWOTItemSchema = z.object({
-  quadrant: z.enum(['STRENGTH', 'WEAKNESS', 'OPPORTUNITY', 'THREAT']),
-  title: z.string().min(1, 'Título é obrigatório').max(200),
-  description: z.string().optional(),
+  quadrant: z.enum(swotQuadrants).optional(),
+  type: z.string().trim().optional(),
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  description: z.string().trim().max(2000).optional(),
+  text: z.string().trim().max(2000).optional(),
   impactScore: z.number().min(1).max(5).default(3),
-  probabilityScore: z.number().min(1).max(5).default(3),
-  category: z.string().max(50).optional(),
+  probabilityScore: z.number().min(0).max(5).default(0),
+  category: z.string().trim().max(50).optional(),
   strategyId: z.string().uuid().optional(),
+}).superRefine((data, ctx) => {
+  const typeUpper = data.type?.toUpperCase();
+  const resolvedQuadrant = data.quadrant ?? (isSwotQuadrant(typeUpper) ? typeUpper : undefined);
+  if (!resolvedQuadrant) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['quadrant'],
+      message: 'Quadrant is required',
+    });
+  }
 });
 
 // GET /api/strategic/swot
-export const GET = withDI(async (request: NextRequest) => {
+export const GET = withDI(async (request: Request) => {
   try {
-    const context = await getTenantContext();
+    const context = await getTenantContext().catch((error: unknown) => {
+      if (error instanceof Response) {
+        return null;
+      }
+      throw error;
+    });
+    if (!context) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
     const strategyId = searchParams.get('strategyId') ?? undefined;
@@ -86,7 +109,7 @@ export const GET = withDI(async (request: NextRequest) => {
       }
     }
 
-    return NextResponse.json({
+    return Response.json({
       items: items.map((item) => ({
         id: item.id,
         strategyId: item.strategyId,
@@ -116,47 +139,76 @@ export const GET = withDI(async (request: NextRequest) => {
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     console.error('GET /api/strategic/swot error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
 
 // POST /api/strategic/swot
-export const POST = withDI(async (request: NextRequest) => {
+const safeJson = async <T>(request: Request): Promise<T> => {
   try {
-    const context = await getTenantContext();
+    return (await request.json()) as T;
+  } catch {
+    throw Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+};
 
-    const body = await request.json();
-    const validation = createSWOTItemSchema.safeParse(body);
+export const POST = withDI(async (request: Request) => {
+  try {
+    const context = await getTenantContext().catch((error: unknown) => {
+      if (error instanceof Response) {
+        return null;
+      }
+      throw error;
+    });
+    if (!context) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.flatten() },
+    const parsedBody = createSWOTItemSchema.safeParse(await safeJson<unknown>(request));
+
+    if (!parsedBody.success) {
+      return Response.json(
+        { error: 'Invalid request payload', details: parsedBody.error.flatten() },
         { status: 400 }
       );
     }
 
+    const typeUpper = parsedBody.data.type?.toUpperCase();
+    const resolvedQuadrant = parsedBody.data.quadrant ?? (isSwotQuadrant(typeUpper) ? typeUpper : undefined);
+    if (!resolvedQuadrant) {
+      return Response.json(
+        { error: 'Invalid request payload', details: { quadrant: ['Quadrant is required'] } },
+        { status: 400 }
+      );
+    }
+
+    const resolvedCategory = parsedBody.data.category
+      ?? (!isSwotQuadrant(typeUpper) ? parsedBody.data.type?.trim() : undefined);
+    const resolvedDescription = parsedBody.data.description ?? parsedBody.data.text;
+    const normalizedDescription = resolvedDescription?.trim() ? resolvedDescription.trim() : undefined;
+
     const useCase = container.resolve(CreateSwotItemCommand);
     const result = await useCase.execute(
       {
-        strategyId: validation.data.strategyId,
-        quadrant: validation.data.quadrant,
-        title: validation.data.title,
-        description: validation.data.description,
-        impactScore: validation.data.impactScore,
-        probabilityScore: validation.data.probabilityScore,
-        category: validation.data.category as SwotCategory | undefined,
+        strategyId: parsedBody.data.strategyId,
+        quadrant: resolvedQuadrant,
+        title: parsedBody.data.title.trim(),
+        description: normalizedDescription,
+        impactScore: parsedBody.data.impactScore,
+        probabilityScore: parsedBody.data.probabilityScore,
+        category: resolvedCategory as SwotCategory | undefined,
       },
       context
     );
 
     if (Result.isFail(result)) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return Response.json({ error: result.error }, { status: 400 });
     }
 
-    return NextResponse.json(result.value, { status: 201 });
+    return Response.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     console.error('POST /api/strategic/swot error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
