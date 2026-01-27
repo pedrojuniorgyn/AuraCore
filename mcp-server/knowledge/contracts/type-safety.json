@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.95",
+  "version": "2.0.96",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1667,6 +1667,19 @@
         "src/modules/financial/infrastructure/persistence/expense/DrizzleExpenseReportRepository.ts"
       ],
       "pattern_created": "DRIZZLE-PAGINATION-ORDER-V2",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-894813",
+      "date": "2026-01-27",
+      "epic": "E0",
+      "error": "Regressao de typecheck no handler de trips/[id]: unauthorizedResponse indefinido e body com tipo unknown",
+      "correction": "Substituido uso de unauthorizedResponse por createUnauthorizedResponse e tipado o body do safeJson com UpdateTripBody incluindo status opcional",
+      "files_affected": [
+        "src/app/api/tms/trips/[id]/route.ts"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }
