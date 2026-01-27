@@ -6,8 +6,8 @@ alwaysApply: true
 
 # AURA CORE - REGRAS MCP OBRIGATÓRIAS v2.0
 
-**Versão:** 2.0.0  
-**Data:** 06/01/2026  
+**Versão:** 2.1.0  
+**Data:** 27/01/2026  
 **Arquitetura:** 100% DDD/Hexagonal (ADR-0015)
 
 ---
@@ -118,7 +118,7 @@ Após editar cada 3 arquivos:
 # Verificação em lote:
 grep -rn "[padrão antigo]" src/ --include="*.ts" | wc -l
 
-# Compilação:
+# Compilação (TSG-001/TSG-002):
 npx tsc --noEmit 2>&1 | head -20
 ```
 
@@ -731,11 +731,12 @@ const rule = resultData[0];
 
 ## ✅ VALIDAÇÕES PRÉ-COMMIT OBRIGATÓRIAS
 
-ANTES de commit, executar TODOS:
+ANTES de commit, executar TODOS (observando o gate condicional TSG-001..TSG-004):
 
 ```bash
-# 1. TypeScript - deve retornar 0 erros
-npx tsc --noEmit
+# 1. TypeScript (gate condicional)
+#    - Branch limpa (tsc base = 0) → HARD: npx tsc --noEmit deve finalizar com 0 erros (TSG-001)
+#    - Se já existem erros conhecidos → SOFT: npx tsc --noEmit + registrar evidência e provar que não aumentou (TSG-002)
 
 # 2. Testes - todos devem passar
 npm test -- --run
@@ -746,6 +747,32 @@ grep -r 'as any' src/
 # 4. Verificar status git
 git status
 ```
+
+### 🧩 TSG — Typecheck Gate (TSG-001 a TSG-004)
+
+| Regra | Tipo | Descrição |
+|-------|------|-----------|
+| TSG-001 | MUST (HARD) | Branch/working tree limpa (tsc base = 0): executar `npx tsc --noEmit` e somente prosseguir se retornar 0 erros. |
+| TSG-002 | MUST (SOFT) | Se já existem erros de typecheck no branch base: executar `npx tsc --noEmit`, registrar evidência (log completo, hash do commit base, contagem de erros) e garantir que a contagem NÃO aumentou. |
+| TSG-003 | MUST | Se surgirem erros novos ou contagem aumentar, corrigir ou bloquear o commit. Soft gate não permite regressão. |
+| TSG-004 | SHOULD | Adicionar nota no PR: `Typecheck gate: hard/soft; novos erros: sim/não; evidência: <path ou artifact>`. |
+
+**Evidência válida (soft gate):** salvar `npx tsc --noEmit` em `artifacts/typecheck-<data>.log` ou colar no PR, indicando quantos erros já existiam antes da mudança.
+
+### 🛡️ UI-RESILIENCE (UIR-001 a UIR-006) — APLICÁVEL APENAS EM BOUNDARIES
+
+**Boundaries obrigatórios:** páginas Next.js (`src/app/**/page.tsx`), route handlers (`src/app/api/**/route.ts` e variantes aninhadas), hooks expostos a UI (`src/hooks/**`). Componentes internos ou serviços não são alvo do UIR.
+
+| Regra | Tipo | Descrição | Checklist |
+|-------|------|-----------|-----------|
+| UIR-001 | MUST | Boundary deve ter estado de carregamento visível (spinner, skeleton) antes de dados chegarem. | `loading` state + placeholder render. |
+| UIR-002 | MUST | Boundary deve tratar erros de rede/servidor com fallback amigável e call-to-action (tentar novamente ou suporte). | try/catch ou `error` boundary + botão retry. |
+| UIR-003 | MUST | Boundary não renderiza dados indefinidos: guarda nulos/undefined antes de acessar campos. | `if (!data) return <Loading/>` ou zod safeParse. |
+| UIR-004 | SHOULD | Boundary usa placeholders resilientes para conteúdo chave (skeletons/listas) em vez de flashes vazios. | Skeletons em listas/cards. |
+| UIR-005 | SHOULD | Interações críticas têm retry/backoff ou instrução de reenvio. | `retry` action, `revalidate` ou toast com retry. |
+| UIR-006 | MUST | UI de boundary registra erro de forma observável (logger/telemetry) sem vazar dados sensíveis. | logger seguro ou metric tag. |
+
+**Escopo:** Aplicar somente em boundaries. Componentes de baixo nível e serviços seguem contratos específicos (API, domain) e não precisam do checklist UIR.
 
 ### 5. Verificar Issues do Cursor (OBRIGATÓRIO)
 
@@ -1005,7 +1032,7 @@ Ao concluir implementação, reportar:
 - check_cursor_issues (pós-commit): ✅/❌
 
 ### Verificações Código
-- npx tsc --noEmit: ✅ 0 erros
+- Typecheck gate (TSG-001..TSG-004): HARD=0 erros OU SOFT=com evidência e sem regressão
 - npm test -- --run: ✅ X/X passando
 - grep 'as any': ✅ 0 resultados
 
@@ -1275,7 +1302,7 @@ Após cada tarefa, o agente DEVE produzir:
 - check_cursor_issues (pós-commit): ✅ 0 issues / ❌ X issues
 
 ### Verificações Código
-- npx tsc --noEmit: ✅ 0 erros
+- Typecheck gate (TSG-001..TSG-004): HARD=0 erros OU SOFT=com evidência e sem regressão
 - npm test -- --run: ✅ X/X passando
 - grep 'as any': ✅ 0 resultados
 
@@ -1775,11 +1802,11 @@ Antes de QUALQUER commit, verificar:
 - [ ] npm test -- --run passa 100%
 
 ### Validações Finais
-- [ ] npx tsc --noEmit → 0 erros
+- [ ] Typecheck gate (TSG-001/TSG-002): HARD=0 erros OU SOFT=com evidência e sem regressão
 - [ ] check_cursor_issues → 0 issues
 - [ ] grep "as any" src/ → 0 resultados
 - [ ] grep "console.log" src/ (exceto testes) → 0 resultados
 
 ---
 
-**FIM DAS REGRAS v2.1 (22/01/2026) - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
+**FIM DAS REGRAS v2.1 (27/01/2026) - CONSULTAR MCP E CONFIRMAR LEITURA ANTES DE COMEÇAR**
