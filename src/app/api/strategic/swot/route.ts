@@ -1,7 +1,7 @@
 /**
  * API Routes: /api/strategic/swot
  * CRUD de análises SWOT
- * 
+ *
  * @module app/api/strategic/swot
  */
 import { z } from 'zod';
@@ -18,40 +18,49 @@ const swotQuadrants = ['STRENGTH', 'WEAKNESS', 'OPPORTUNITY', 'THREAT'] as const
 const isSwotQuadrant = (value: string | undefined): value is SwotQuadrant =>
   !!value && swotQuadrants.includes(value as SwotQuadrant);
 
-const createSWOTItemSchema = z.object({
-  quadrant: z.enum(swotQuadrants).optional(),
-  type: z.string().trim().optional(),
-  title: z.string().trim().min(1, 'Title is required').max(200),
-  description: z.string().trim().max(2000).optional(),
-  text: z.string().trim().max(2000).optional(),
-  impactScore: z.number().min(1).max(5).default(3),
-  probabilityScore: z.number().min(0).max(5).default(0),
-  category: z.string().trim().max(50).optional(),
-  strategyId: z.string().uuid().optional(),
-}).superRefine((data, ctx) => {
-  const typeUpper = data.type?.toUpperCase();
-  const resolvedQuadrant = data.quadrant ?? (isSwotQuadrant(typeUpper) ? typeUpper : undefined);
-  if (!resolvedQuadrant) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['quadrant'],
-      message: 'Quadrant is required',
-    });
-  }
-});
+const createSWOTItemSchema = z
+  .object({
+    quadrant: z.enum(swotQuadrants).optional(),
+    type: z.string().trim().optional(),
+    title: z.string().trim().min(1, 'Title is required').max(200),
+    description: z.string().trim().max(2000).optional(),
+    impactScore: z.number().min(1).max(5).default(3),
+
+    /**
+     * NOTE:
+     * - Accept 0..5 at the route boundary (UI may send 0).
+     * - Keep default = 3 when omitted (do not change effective default).
+     * - Coerce < 1 to 1 before hitting use case (use case requires min(1)).
+     */
+    probabilityScore: z.number().min(0).max(5).optional().default(3),
+
+    category: z.string().trim().max(50).optional(),
+    strategyId: z.string().uuid().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const typeUpper = data.type?.toUpperCase();
+    const resolvedQuadrant = data.quadrant ?? (isSwotQuadrant(typeUpper) ? typeUpper : undefined);
+    if (!resolvedQuadrant) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['quadrant'],
+        message: 'Quadrant is required',
+      });
+    }
+  });
 
 // GET /api/strategic/swot
 export const GET = withDI(async (request: Request) => {
   try {
-    const context = await getTenantContext().catch((error: unknown) => {
-      if (error instanceof Response) {
-        return null;
-      }
+    let context;
+    try {
+      context = await getTenantContext();
+    } catch (error: unknown) {
+      // Preserve upstream tenant errors (401/400/500) instead of masking to 401.
+      if (error instanceof Response) return error;
       throw error;
-    });
-    if (!context) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const { searchParams } = new URL(request.url);
 
     const strategyId = searchParams.get('strategyId') ?? undefined;
@@ -61,9 +70,7 @@ export const GET = withDI(async (request: Request) => {
     const page = parseInt(searchParams.get('page') ?? '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') ?? '20', 10);
 
-    const repository = container.resolve<ISwotAnalysisRepository>(
-      STRATEGIC_TOKENS.SwotAnalysisRepository
-    );
+    const repository = container.resolve<ISwotAnalysisRepository>(STRATEGIC_TOKENS.SwotAnalysisRepository);
 
     const { items, total } = await repository.findMany({
       organizationId: context.organizationId,
@@ -93,7 +100,7 @@ export const GET = withDI(async (request: Request) => {
     };
 
     for (const item of allItems.items) {
-      const key = item.quadrant.toLowerCase() + 's' as keyof typeof summary;
+      const key = (item.quadrant.toLowerCase() + 's') as keyof typeof summary;
       if (key in summary) {
         summary[key].count++;
         summary[key].totalScore += item.priorityScore;
@@ -103,9 +110,7 @@ export const GET = withDI(async (request: Request) => {
     // Calcular médias
     for (const key of Object.keys(summary) as Array<keyof typeof summary>) {
       if (summary[key].count > 0) {
-        summary[key].avgScore = Math.round(
-          (summary[key].totalScore / summary[key].count) * 100
-        ) / 100;
+        summary[key].avgScore = Math.round((summary[key].totalScore / summary[key].count) * 100) / 100;
       }
     }
 
@@ -154,49 +159,36 @@ const safeJson = async <T>(request: Request): Promise<T> => {
 
 export const POST = withDI(async (request: Request) => {
   try {
-    const context = await getTenantContext().catch((error: unknown) => {
-      if (error instanceof Response) {
-        return null;
-      }
+    let context;
+    try {
+      context = await getTenantContext();
+    } catch (error: unknown) {
+      // Preserve upstream tenant errors (401/400/500) instead of masking to 401.
+      if (error instanceof Response) return error;
       throw error;
-    });
-    if (!context) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const parsedBody = createSWOTItemSchema.safeParse(await safeJson<unknown>(request));
+    const validation = createSWOTItemSchema.safeParse(await safeJson<unknown>(request));
 
-    if (!parsedBody.success) {
-      return Response.json(
-        { error: 'Invalid request payload', details: parsedBody.error.flatten() },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return Response.json({ error: 'Invalid request payload', details: validation.error.flatten() }, { status: 400 });
     }
 
-    const typeUpper = parsedBody.data.type?.toUpperCase();
-    const resolvedQuadrant = parsedBody.data.quadrant ?? (isSwotQuadrant(typeUpper) ? typeUpper : undefined);
-    if (!resolvedQuadrant) {
-      return Response.json(
-        { error: 'Invalid request payload', details: { quadrant: ['Quadrant is required'] } },
-        { status: 400 }
-      );
-    }
-
-    const resolvedCategory = parsedBody.data.category
-      ?? (!isSwotQuadrant(typeUpper) ? parsedBody.data.type?.trim() : undefined);
-    const resolvedDescription = parsedBody.data.description ?? parsedBody.data.text;
-    const normalizedDescription = resolvedDescription?.trim() ? resolvedDescription.trim() : undefined;
+    // IMPORTANT: Coerce ALL values < 1 (e.g., 0, 0.5) to 1 before the use case.
+    // Keep default=3 when omitted (schema already defaults to 3).
+    const normalizedProbabilityScore =
+      validation.data.probabilityScore < 1 ? 1 : validation.data.probabilityScore;
 
     const useCase = container.resolve(CreateSwotItemCommand);
     const result = await useCase.execute(
       {
-        strategyId: parsedBody.data.strategyId,
-        quadrant: resolvedQuadrant,
-        title: parsedBody.data.title.trim(),
-        description: normalizedDescription,
-        impactScore: parsedBody.data.impactScore,
-        probabilityScore: parsedBody.data.probabilityScore,
-        category: resolvedCategory as SwotCategory | undefined,
+        strategyId: validation.data.strategyId,
+        quadrant: validation.data.quadrant as SwotQuadrant, // guaranteed via superRefine
+        title: validation.data.title,
+        description: validation.data.description,
+        impactScore: validation.data.impactScore,
+        probabilityScore: normalizedProbabilityScore,
+        category: validation.data.category as SwotCategory | undefined,
       },
       context
     );
