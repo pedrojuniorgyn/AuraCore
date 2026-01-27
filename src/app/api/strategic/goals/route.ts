@@ -16,23 +16,57 @@ import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/
 import { db } from '@/lib/db';
 import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
 import { eq, and } from 'drizzle-orm';
-import { createGoalSchema as baseCreateGoalSchema, queryGoalsSchema } from '@/lib/validation/strategic-schemas';
+import { createGoalSchema as baseCreateGoalSchema, queryGoalsSchema, bscPerspectiveSchema } from '@/lib/validation/strategic-schemas';
 
 // ✅ S1.1 Batch 3: Schema estendido para compatibilidade com estrutura existente
 // Mantém campos específicos do sistema (perspectiveCode, cascadeLevel) + base do strategic-schemas.ts
-const createGoalSchema = baseCreateGoalSchema.extend({
+const perspectiveLabels: Record<string, z.infer<typeof bscPerspectiveSchema>> = {
+  FINANCIAL: 'FINANCIAL',
+  FINANCEIRA: 'FINANCIAL',
+  CUSTOMER: 'CUSTOMER',
+  CLIENTES: 'CUSTOMER',
+  INTERNAL_PROCESS: 'INTERNAL_PROCESS',
+  'PROCESSOS INTERNOS': 'INTERNAL_PROCESS',
+  LEARNING_GROWTH: 'LEARNING_GROWTH',
+  'APRENDIZADO E CRESCIMENTO': 'LEARNING_GROWTH',
+};
+
+const cascadeLabels: Record<string, 'CEO' | 'DIRECTOR' | 'MANAGER' | 'TEAM'> = {
+  CEO: 'CEO',
+  'ESTRATÉGICO (CORPORATIVO)': 'CEO',
+  DIRECTOR: 'DIRECTOR',
+  'TÁTICO (DIRETORIA)': 'DIRECTOR',
+  MANAGER: 'MANAGER',
+  'TÁTICO (GESTOR)': 'MANAGER',
+  TEAM: 'TEAM',
+  OPERACIONAL: 'TEAM',
+};
+
+const createGoalSchema = z.object({
   perspectiveId: z.string().trim().uuid().optional(),
-  strategyId: z.string().trim().uuid('ID da estratégia inválido'),
+  strategyId: z.string().trim().uuid().optional(),
   title: z.string().trim().min(3).max(200),
-  description: z.string().trim().max(2000).optional(),
-  perspective: baseCreateGoalSchema.shape.perspective,
+  description: z.string().trim().max(2000).optional().default(''),
+  perspective: z
+    .string()
+    .trim()
+    .transform((value) => perspectiveLabels[value.toUpperCase()] ?? value.toUpperCase())
+    .pipe(bscPerspectiveSchema),
   perspectiveCode: z.string().trim().optional(), // Fallback se ID não for informado
-  cascadeLevel: z.enum(['CEO', 'DIRECTOR', 'MANAGER', 'TEAM']),
+  cascadeLevel: z
+    .string()
+    .trim()
+    .transform((value) => cascadeLabels[value.toUpperCase()] ?? value.toUpperCase())
+    .pipe(z.enum(['CEO', 'DIRECTOR', 'MANAGER', 'TEAM'])),
   code: z.string().trim().min(1, 'Código é obrigatório').max(20),
   baselineValue: z.number().optional(),
+  targetValue: z.number(),
+  unit: z.string().trim().min(1).max(20),
+  weight: z.number().min(0).max(100).default(1),
   polarity: z.enum(['UP', 'DOWN']).optional(),
   ownerUserId: z.string().trim().uuid().optional(),
   ownerBranchId: z.number().optional(),
+  parentGoalId: z.string().trim().uuid().optional(),
   // ✅ S1.X-BUGFIX: Validar data antes de transform (Bug 4)
   startDate: z.string().trim().datetime().or(
     z.string().trim().refine(

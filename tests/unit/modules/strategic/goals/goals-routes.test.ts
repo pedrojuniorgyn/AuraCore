@@ -95,22 +95,17 @@ describe('strategic goals routes', () => {
     const response = await createGoal(
       makeRequest(
         vi.fn().mockResolvedValue({
-          organizationId: 1,
-          branchId: 2,
           strategyId: validId,
-          perspective: 'FINANCIAL',
+          perspective: 'Financeira',
           perspectiveId: validId,
           title: 'My goal',
           description: 'desc',
           targetValue: 10,
           unit: '%',
-          weight: 1,
           code: 'G1',
-          cascadeLevel: 'CEO',
+          cascadeLevel: 'Estratégico (Corporativo)',
           startDate: '2024-01-01T00:00:00.000Z',
           dueDate: '2024-02-01T00:00:00.000Z',
-          ownerUserId: validId,
-          ownerBranchId: 2,
         })
       ) as unknown as Request
     );

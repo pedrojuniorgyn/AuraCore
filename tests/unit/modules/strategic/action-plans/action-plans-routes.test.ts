@@ -124,4 +124,43 @@ describe('action-plans routes hardening', () => {
     expect(input.whenStart instanceof Date).toBe(true);
     expect(input.whenEnd instanceof Date).toBe(true);
   });
+
+  it('accepts UI payload shape and defaults optional fields', async () => {
+    const execute = vi.fn().mockResolvedValue(
+      Result.ok({
+        id: 'ap-2',
+        code: 'AP-2',
+        what: 'Improve process',
+        pdcaCycle: 'PLAN',
+      })
+    );
+    mockContainerResolve.mockReturnValue({ execute });
+
+    const response = await createActionPlan(
+      makeRequest(
+        vi.fn().mockResolvedValue({
+          what: '   Improve process   ',
+          why: '   Efficiency   ',
+          whereLocation: undefined,
+          whenStart: '2024-05-01',
+          whenEnd: '2024-06-01',
+          who: '  Alice  ',
+          whoUserId: validId,
+          how: '   Automate   ',
+          howMuchAmount: undefined,
+          priority: undefined,
+        })
+      )
+    );
+
+    expect(response.status).toBe(201);
+    expect(execute).toHaveBeenCalledTimes(1);
+    const [input] = execute.mock.calls[0];
+    expect(input.what).toBe('Improve process');
+    expect(input.why).toBe('Efficiency');
+    expect(input.priority).toBe('MEDIUM');
+    expect(input.howMuchCurrency).toBe('BRL');
+    expect(input.whenStart instanceof Date).toBe(true);
+    expect(input.whenEnd instanceof Date).toBe(true);
+  });
 });
