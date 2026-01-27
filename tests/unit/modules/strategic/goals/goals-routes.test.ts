@@ -96,16 +96,16 @@ describe('strategic goals routes', () => {
       makeRequest(
         vi.fn().mockResolvedValue({
           strategyId: validId,
-          perspective: 'Financeira',
+          perspectiveCode: 'FIN',
+          perspective: 'FINANCIAL',
           perspectiveId: validId,
-          title: 'My goal',
           description: 'desc',
           targetValue: 10,
           unit: '%',
           code: 'G1',
-          cascadeLevel: 'Estratégico (Corporativo)',
-          startDate: '2024-01-01T00:00:00.000Z',
-          dueDate: '2024-02-01T00:00:00.000Z',
+          cascadeLevel: 'STRATEGIC',
+          startDate: '2024-01-01',
+          endDate: '2024-02-01',
         })
       ) as unknown as Request
     );
@@ -118,5 +118,15 @@ describe('strategic goals routes', () => {
     expect(input.startDate instanceof Date).toBe(true);
     expect(input.dueDate instanceof Date).toBe(true);
     expect(json.id).toBe('goal-1');
+  });
+
+  it('returns 401 when tenant is missing on create', async () => {
+    mockGetTenantContext.mockResolvedValueOnce(null);
+
+    const response = await createGoal(
+      makeRequest(vi.fn().mockResolvedValue({ code: 'G1' })) as unknown as Request
+    );
+
+    expect(response.status).toBe(401);
   });
 });
