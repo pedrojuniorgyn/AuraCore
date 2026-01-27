@@ -12,7 +12,7 @@ import type {
   UseVoiceChatReturn,
 } from '@/types/voice';
 
-const AGENTS_API_URL = process.env.NEXT_PUBLIC_AGENTS_API_URL || 'http://localhost:8000';
+const VOICE_PROCESS_URL = '/api/voice/process';
 
 /**
  * Hook para chat por voz com agentes IA
@@ -165,7 +165,7 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}): UseVoiceChatRet
       const audioBase64 = await blobToBase64(audioBlob);
 
       // Chamar endpoint /process do backend Python (pipeline completo)
-      const response = await fetch(`${AGENTS_API_URL}/api/voice/process`, {
+      const response = await fetch(VOICE_PROCESS_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,18 +173,21 @@ export function useVoiceChat(options: UseVoiceChatOptions = {}): UseVoiceChatRet
         body: JSON.stringify({
           audio_base64: audioBase64,
           encoding: 'WEBM_OPUS',
-          context: {
-            user_id: 'user-1', // TODO: Pegar do session
-            org_id: 1,
-            branch_id: 1,
-            session_id: globalThis.crypto.randomUUID(),
-          },
           respond_with_audio: true,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Voice processing failed: ${response.status}`);
+        let upstreamMessage = `Voice processing failed: ${response.status}`;
+        try {
+          const errorBody = (await response.json()) as { error?: string };
+          if (errorBody?.error) {
+            upstreamMessage = errorBody.error;
+          }
+        } catch {
+          // ignore json parse failure, keep default message
+        }
+        throw new Error(upstreamMessage);
       }
 
       const data = await response.json();
