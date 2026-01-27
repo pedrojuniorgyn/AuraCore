@@ -1,40 +1,54 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { trips } from "@/lib/db/schema";
 import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { updateTripSchema } from "@/lib/validation/tms-schemas";
-import { idParamSchema } from "@/lib/validation/common-schemas";
+import { getTenantContext } from "@/lib/auth/context";
+
+// GET - Buscar viagem específica
+const idSchema = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.coerce.number().int().positive({ message: "Invalid trip id" })
+);
+
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+};
+
+const unauthorizedResponse = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 // GET - Buscar viagem específica
 export async function GET(
-  req: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const tenant = await getTenantContext();
+    if (!tenant) {
+      return unauthorizedResponse;
     }
 
     // ✅ S1.1 Batch 3 Phase 2: Validar ID com Zod
-    const validation = idParamSchema.safeParse(resolvedParams);
+    const validation = idSchema.safeParse(resolvedParams.id);
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: "ID inválido",
-          details: validation.error.flatten().fieldErrors,
+          error: "Invalid trip id",
         },
         { status: 400 }
       );
     }
 
-    const tripId = validation.data.id;
+    const tripId = validation.data;
 
     const trip = await queryFirst<typeof trips.$inferSelect>(
       db
@@ -43,7 +57,8 @@ export async function GET(
         .where(
           and(
             eq(trips.id, tripId),
-            eq(trips.organizationId, session.user.organizationId),
+            eq(trips.organizationId, tenant.organizationId),
+            eq(trips.branchId, tenant.branchId),
             isNull(trips.deletedAt)
           )
         )
@@ -52,7 +67,7 @@ export async function GET(
 
     if (!trip) {
       return NextResponse.json(
-        { error: "Viagem não encontrada" },
+        { error: "Trip not found" },
         { status: 404 }
       );
     }
@@ -63,9 +78,9 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao buscar viagem:", error);
+    console.error("Error fetching trip:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar viagem" },
+      { error: "Failed to fetch trip" },
       { status: 500 }
     );
   }
@@ -73,40 +88,39 @@ export async function GET(
 
 // PUT - Atualizar viagem
 export async function PUT(
-  req: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const tenant = await getTenantContext();
+    if (!tenant) {
+      return unauthorizedResponse;
     }
 
     // ✅ S1.1 Batch 3 Phase 2: Validar ID com Zod
-    const idValidation = idParamSchema.safeParse(resolvedParams);
+    const idValidation = idSchema.safeParse(resolvedParams.id);
     if (!idValidation.success) {
       return NextResponse.json(
         {
-          error: "ID inválido",
-          details: idValidation.error.flatten().fieldErrors,
+          error: "Invalid trip id",
         },
         { status: 400 }
       );
     }
 
-    const tripId = idValidation.data.id;
+    const tripId = idValidation.data;
 
-    const body = await req.json();
+    const body = await safeJson<unknown>(req);
     
     // ✅ S1.1 Batch 3 Phase 2: Validar body com Zod
     const validation = updateTripSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: "Dados inválidos",
+          error: "Invalid request body",
           details: validation.error.flatten().fieldErrors,
         },
         { status: 400 }
@@ -136,7 +150,8 @@ export async function PUT(
         .where(
           and(
             eq(trips.id, tripId),
-            eq(trips.organizationId, session.user.organizationId),
+            eq(trips.organizationId, tenant.organizationId),
+            eq(trips.branchId, tenant.branchId),
             isNull(trips.deletedAt)
           )
         )
@@ -145,7 +160,7 @@ export async function PUT(
 
     if (!existing) {
       return NextResponse.json(
-        { error: "Viagem não encontrada" },
+        { error: "Trip not found" },
         { status: 404 }
       );
     }
@@ -153,14 +168,14 @@ export async function PUT(
     // Validar mudança de status
     if (body.status === "COMPLETED" && existing.status !== "IN_TRANSIT") {
       return NextResponse.json(
-        { error: "Apenas viagens em trânsito podem ser concluídas" },
+        { error: "Only trips in transit can be completed" },
         { status: 400 }
       );
     }
 
     if (body.status === "CANCELED" && existing.status === "COMPLETED") {
       return NextResponse.json(
-        { error: "Não é possível cancelar viagem já concluída" },
+        { error: "Cannot cancel a completed trip" },
         { status: 400 }
       );
     }
@@ -170,13 +185,14 @@ export async function PUT(
       .update(trips)
       .set({
         ...safeBody,
-        updatedBy: session.user.id,
+        updatedBy: tenant.userId,
         updatedAt: new Date(),
       })
       .where(
         and(
           eq(trips.id, tripId),
-          eq(trips.organizationId, session.user.organizationId),
+          eq(trips.organizationId, tenant.organizationId),
+          eq(trips.branchId, tenant.branchId),
           isNull(trips.deletedAt)
         )
       );
@@ -188,7 +204,8 @@ export async function PUT(
         .where(
           and(
             eq(trips.id, tripId),
-            eq(trips.organizationId, session.user.organizationId),
+            eq(trips.organizationId, tenant.organizationId),
+            eq(trips.branchId, tenant.branchId),
             isNull(trips.deletedAt)
           )
         )
@@ -197,7 +214,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: "Viagem atualizada com sucesso",
+      message: "Trip updated successfully",
       data: updated,
     });
   } catch (error) {
@@ -205,9 +222,9 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao atualizar viagem:", error);
+    console.error("Error updating trip:", error);
     return NextResponse.json(
-      { error: "Erro ao atualizar viagem" },
+      { error: "Failed to update trip" },
       { status: 500 }
     );
   }
@@ -215,22 +232,23 @@ export async function PUT(
 
 // DELETE - Soft delete da viagem
 export async function DELETE(
-  req: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const resolvedParams = await params;
-    const session = await auth();
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    const tenant = await getTenantContext();
+    if (!tenant) {
+      return unauthorizedResponse;
     }
 
-    const tripId = parseInt(resolvedParams.id);
-    if (isNaN(tripId)) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    const tripValidation = idSchema.safeParse(resolvedParams.id);
+    if (!tripValidation.success) {
+      return NextResponse.json({ error: "Invalid trip id" }, { status: 400 });
     }
+    const tripId = tripValidation.data;
 
     // Verificar se viagem existe
     const existing = await queryFirst<typeof trips.$inferSelect>(
@@ -240,7 +258,8 @@ export async function DELETE(
         .where(
           and(
             eq(trips.id, tripId),
-            eq(trips.organizationId, session.user.organizationId),
+            eq(trips.organizationId, tenant.organizationId),
+            eq(trips.branchId, tenant.branchId),
             isNull(trips.deletedAt)
           )
         )
@@ -249,7 +268,7 @@ export async function DELETE(
 
     if (!existing) {
       return NextResponse.json(
-        { error: "Viagem não encontrada" },
+        { error: "Trip not found" },
         { status: 404 }
       );
     }
@@ -257,14 +276,14 @@ export async function DELETE(
     // Validar status antes de excluir
     if (existing.status === "IN_TRANSIT") {
       return NextResponse.json(
-        { error: "Não é possível excluir viagem em trânsito" },
+        { error: "Cannot delete a trip in transit" },
         { status: 400 }
       );
     }
 
     if (existing.status === "COMPLETED") {
       return NextResponse.json(
-        { error: "Não é possível excluir viagem já concluída" },
+        { error: "Cannot delete a completed trip" },
         { status: 400 }
       );
     }
@@ -284,25 +303,31 @@ export async function DELETE(
       .set({
         deletedAt: new Date(),
       })
-      .where(and(eq(trips.id, tripId), eq(trips.organizationId, session.user.organizationId), isNull(trips.deletedAt)));
+      .where(
+        and(
+          eq(trips.id, tripId),
+          eq(trips.organizationId, tenant.organizationId),
+          eq(trips.branchId, tenant.branchId),
+          isNull(trips.deletedAt)
+        )
+      );
 
     return NextResponse.json({
       success: true,
-      message: "Viagem excluída com sucesso",
+      message: "Trip deleted successfully",
     });
   } catch (error) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao excluir viagem:", error);
+    console.error("Error deleting trip:", error);
     return NextResponse.json(
-      { error: "Erro ao excluir viagem" },
+      { error: "Failed to delete trip" },
       { status: 500 }
     );
   }
 }
-
 
 
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { tripCheckpoints, trips } from "@/lib/db/schema";
@@ -8,28 +8,53 @@ import { queryFirst } from "@/lib/db/query-helpers";
 
 export const runtime = "nodejs";
 
+const idSchema = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.coerce.number().int().positive({ message: "Invalid trip id" })
+);
+
 const BodySchema = z.object({
-  checkpointType: z.string().min(2).max(50),
-  description: z.string().max(500).optional(),
+  checkpointType: z.string().trim().min(2).max(50),
+  description: z.string().trim().max(500).optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-  locationAddress: z.string().max(500).optional(),
-  recordedAt: z.string().datetime().optional(), // ISO string
+  locationAddress: z.string().trim().max(500).optional(),
+  recordedAt: z
+    .string()
+    .trim()
+    .refine((value) => !Number.isNaN(Date.parse(value)), { message: "Invalid recordedAt" })
+    .transform((value) => new Date(value))
+    .optional(), // ISO string
 });
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+};
+
+const unauthorizedResponse = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getTenantContext();
-    const resolved = await params;
-    const tripId = Number(resolved.id);
-    if (!Number.isFinite(tripId) || tripId <= 0) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    if (!ctx) {
+      return unauthorizedResponse;
     }
 
-    const json = await req.json().catch(() => null);
+    const resolved = await params;
+    const tripIdValidation = idSchema.safeParse(resolved.id);
+    if (!tripIdValidation.success) {
+      return NextResponse.json({ error: "Invalid trip id" }, { status: 400 });
+    }
+    const tripId = tripIdValidation.data;
+
+    const json = await safeJson<unknown>(req);
     const parsed = BodySchema.safeParse(json ?? {});
     if (!parsed.success) {
-      return NextResponse.json({ error: "Payload inválido", issues: parsed.error.issues }, { status: 400 });
+      return NextResponse.json({ error: "Invalid payload", issues: parsed.error.issues }, { status: 400 });
     }
 
     // Garantir isolamento por organização via tabela trips (trip_checkpoints não tem organization_id)
@@ -42,12 +67,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     );
 
     if (!trip) {
-      return NextResponse.json({ error: "Viagem não encontrada" }, { status: 404 });
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    const recordedAt = parsed.data.recordedAt ? new Date(parsed.data.recordedAt) : new Date();
-    if (isNaN(recordedAt.getTime())) {
-      return NextResponse.json({ error: "recordedAt inválido" }, { status: 400 });
+    const recordedAt = parsed.data.recordedAt ?? new Date();
+    if (Number.isNaN(recordedAt.getTime())) {
+      return NextResponse.json({ error: "Invalid recordedAt" }, { status: 400 });
     }
 
     const checkpointData: typeof tripCheckpoints.$inferInsert = {
@@ -68,8 +93,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   } catch (error: unknown) {
     // getTenantContext() lança Response (401/403) quando auth falha.
     if (error instanceof Response) return error;
-    const message = error instanceof Error ? error.message : "Erro ao registrar checkpoint";
+    const message = error instanceof Error ? error.message : "Error registering checkpoint";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

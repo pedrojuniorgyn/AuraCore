@@ -18,24 +18,50 @@ function shouldRequireCiot(driverType: string): boolean {
 
 // ✅ S1.1 Batch 3: Schema de validação para criar viagem
 // Adaptado à estrutura existente (pickupOrderIds, ciotNumber, scheduledStart)
-const createTripSchema = z.object({
-  branchId: z.number().int().positive().optional(),
-  vehicleId: z.string().uuid('ID do veículo inválido'),
-  driverId: z.string().uuid('ID do motorista inválido'),
-  driverType: z.enum(['OWN', 'THIRD_PARTY', 'AGGREGATE']).default('OWN'),
-  pickupOrderIds: z.array(z.string()).optional(),
-  scheduledStart: z.string().datetime({ message: 'Data de início inválida (ISO 8601)' }).optional(),
-  ciotNumber: z.string().optional(),
-  ciotValue: z.number().nonnegative().optional(),
-}).refine(
-  (data) => {
-    // CIOT obrigatório para terceiros/agregados
-    if (['THIRD_PARTY', 'AGGREGATE'].includes(data.driverType) && !data.ciotNumber) {
-      return false;
-    }
-    return true;
-  },
-  { message: 'CIOT obrigatório para motoristas terceiros/agregados', path: ['ciotNumber'] }
+const numericIdSchema = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.coerce.number().int().positive()
+);
+
+const createTripSchema = z
+  .object({
+    branchId: z.coerce.number().int().positive().optional(),
+    vehicleId: numericIdSchema,
+    driverId: numericIdSchema,
+    driverType: z.enum(["OWN", "THIRD_PARTY", "AGGREGATE"]).default("OWN"),
+    pickupOrderIds: z.array(z.string().trim()).optional(),
+    scheduledStart: z
+      .string()
+      .trim()
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: "Invalid scheduledStart",
+      })
+      .transform((value) => new Date(value))
+      .optional(),
+    ciotNumber: z.string().trim().optional(),
+    ciotValue: z.number().nonnegative().optional(),
+  })
+  .refine(
+    (data) => {
+      if (["THIRD_PARTY", "AGGREGATE"].includes(data.driverType) && !data.ciotNumber) {
+        return false;
+      }
+      return true;
+    },
+    { message: "CIOT is required for third-party drivers", path: ["ciotNumber"] }
+  );
+
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+};
+
+const unauthorizedResponse = NextResponse.json(
+  { error: "Unauthorized" },
+  { status: 401 }
 );
 
 /**
@@ -49,6 +75,9 @@ export async function GET(req: Request) {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
+    if (!ctx) {
+      return unauthorizedResponse;
+    }
     const organizationId = ctx.organizationId;
 
     // ✅ S1.1 Batch 3: Validar query params com Zod
@@ -59,7 +88,7 @@ export async function GET(req: Request) {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: 'Parâmetros inválidos',
+          error: "Invalid query parameters",
           details: validation.error.flatten().fieldErrors,
         },
         { status: 400 }
@@ -95,9 +124,9 @@ export async function GET(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar viagens:", error);
+    console.error("❌ Error fetching trips:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar viagens", details: errorMessage },
+      { error: "Failed to fetch trips", details: errorMessage },
       { status: 500 }
     );
   }
@@ -114,10 +143,13 @@ export async function POST(req: Request) {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
+    if (!ctx) {
+      return unauthorizedResponse;
+    }
     const organizationId = ctx.organizationId;
     const createdBy = ctx.userId;
 
-    const body = await req.json();
+    const body = await safeJson<unknown>(req);
     
     // ✅ S1.1 Batch 3: Validar body com Zod
     const validation = createTripSchema.safeParse(body);
@@ -125,7 +157,7 @@ export async function POST(req: Request) {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: 'Dados inválidos',
+          error: "Invalid request body",
           details: validation.error.flatten().fieldErrors,
         },
         { status: 400 }
@@ -147,17 +179,19 @@ export async function POST(req: Request) {
     const branchIdCandidate = branchIdRaw ?? ctx.defaultBranchId;
     if (branchIdCandidate === null || branchIdCandidate === undefined) {
       return NextResponse.json(
-        { error: "branchId é obrigatório", code: "BRANCH_REQUIRED" },
+        { error: "branchId is required", code: "BRANCH_REQUIRED" },
         { status: 400 }
       );
     }
     const branchId = Number(branchIdCandidate);
     if (!hasAccessToBranch(ctx, branchId)) {
       return NextResponse.json(
-        { error: "Sem permissão para a filial", code: "BRANCH_FORBIDDEN" },
+        { error: "Branch access forbidden", code: "BRANCH_FORBIDDEN" },
         { status: 403 }
       );
     }
+
+    const requiresCiot = shouldRequireCiot(driverType);
 
     // Gerar número
     const year = new Date().getFullYear();
@@ -179,7 +213,7 @@ export async function POST(req: Request) {
         driverId,
         driverType: driverType || "OWN",
         pickupOrderIds: pickupOrderIds ? JSON.stringify(pickupOrderIds) : null,
-        scheduledStart: scheduledStart ? new Date(scheduledStart) : null,
+        scheduledStart: scheduledStart ?? null,
         requiresCiot: requiresCiot ? "true" : "false",
         ciotNumber,
         ciotValue: ciotValue?.toString(),
@@ -209,15 +243,13 @@ export async function POST(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar viagem:", error);
+    console.error("❌ Error creating trip:", error);
     return NextResponse.json(
-      { error: "Erro ao criar viagem", details: errorMessage },
+      { error: "Failed to create trip", details: errorMessage },
       { status: 500 }
     );
   }
 }
-
-
 
 
 
