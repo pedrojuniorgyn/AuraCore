@@ -43,7 +43,7 @@ export async function GET(
     );
 
     if (!kpi) {
-      return NextResponse.json({ error: 'KPI não encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'KPI not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -105,7 +105,7 @@ export async function DELETE(
     );
 
     if (!kpi) {
-      return NextResponse.json({ error: 'KPI não encontrado' }, { status: 404 });
+      return NextResponse.json({ error: 'KPI not found' }, { status: 404 });
     }
 
     await repository.delete(idResult.data, context.organizationId, context.branchId);
