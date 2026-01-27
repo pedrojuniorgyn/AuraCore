@@ -21,7 +21,8 @@ const safeJson = async <T>(request: Request): Promise<T> => {
   }
 };
 
-const unauthorizedResponse = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+const createUnauthorizedResponse = () =>
+  NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 // GET - Buscar viagem específica
 export async function GET(
@@ -34,7 +35,7 @@ export async function GET(
     const resolvedParams = await params;
     const tenant = await getTenantContext();
     if (!tenant) {
-      return unauthorizedResponse;
+      return createUnauthorizedResponse();
     }
 
     // ✅ S1.1 Batch 3 Phase 2: Validar ID com Zod

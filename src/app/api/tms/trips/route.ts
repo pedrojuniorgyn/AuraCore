@@ -59,10 +59,8 @@ const safeJson = async <T>(request: Request): Promise<T> => {
   }
 };
 
-const unauthorizedResponse = NextResponse.json(
-  { error: "Unauthorized" },
-  { status: 401 }
-);
+const createUnauthorizedResponse = () =>
+  NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 /**
  * GET /api/tms/trips
@@ -76,7 +74,7 @@ export async function GET(req: Request) {
     await ensureConnection();
     const ctx = await getTenantContext();
     if (!ctx) {
-      return unauthorizedResponse;
+      return createUnauthorizedResponse();
     }
     const organizationId = ctx.organizationId;
 
@@ -144,7 +142,7 @@ export async function POST(req: Request) {
     await ensureConnection();
     const ctx = await getTenantContext();
     if (!ctx) {
-      return unauthorizedResponse;
+      return createUnauthorizedResponse();
     }
     const organizationId = ctx.organizationId;
     const createdBy = ctx.userId;
