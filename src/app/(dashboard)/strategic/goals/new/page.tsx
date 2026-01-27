@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { FadeIn } from '@/components/ui/animated-wrappers';
-import { fetchAPI } from '@/lib/api';
+import { fetchAPI, APIResponseError } from '@/lib/api/fetch-client';
 
 const BSC_PERSPECTIVES = [
   { code: 'FIN', name: 'Financeira', color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50' },
@@ -30,6 +30,19 @@ const CASCADE_LEVELS = [
   { value: 'TACTICAL', label: 'Tático (Departamental)' },
   { value: 'OPERATIONAL', label: 'Operacional (Equipe)' },
 ];
+
+const cascadeToDomain: Record<string, 'CEO' | 'DIRECTOR' | 'TEAM'> = {
+  STRATEGIC: 'CEO',
+  TACTICAL: 'DIRECTOR',
+  OPERATIONAL: 'TEAM',
+};
+
+const perspectiveToDomain: Record<string, string> = {
+  FIN: 'FINANCIAL',
+  CLI: 'CUSTOMER',
+  INT: 'INTERNAL_PROCESS',
+  LRN: 'LEARNING_GROWTH',
+};
 
 interface StrategyOption {
   id: string;
@@ -95,8 +108,9 @@ export default function NewGoalPage() {
         body: {
           code: formData.code.trim().toUpperCase(),
           description: formData.description.trim(),
-          perspectiveCode: formData.perspectiveCode, // API agora aceita code
-          cascadeLevel: formData.cascadeLevel,
+          perspectiveCode: formData.perspectiveCode,
+          perspective: perspectiveToDomain[formData.perspectiveCode] ?? formData.perspectiveCode,
+          cascadeLevel: cascadeToDomain[formData.cascadeLevel] ?? formData.cascadeLevel,
           targetValue: Number(formData.targetValue),
           unit: formData.unit,
           startDate: formData.startDate,
@@ -109,7 +123,13 @@ export default function NewGoalPage() {
       toast.success('Objetivo criado com sucesso!');
       router.push('/strategic/goals');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erro desconhecido');
+      if (error instanceof APIResponseError) {
+        const detail =
+          (error.data?.error || error.message) ?? 'Erro ao criar objetivo';
+        toast.error(detail);
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Erro desconhecido');
+      }
     } finally {
       setIsLoading(false);
     }

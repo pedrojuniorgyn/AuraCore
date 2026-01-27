@@ -10,13 +10,14 @@ import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
+import { getErrorMessage } from '@/shared/types/type-guards';
 import { CreateStrategicGoalUseCase } from '@/modules/strategic/application/commands/CreateStrategicGoalUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import { db } from '@/lib/db';
 import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
 import { eq, and } from 'drizzle-orm';
-import { createGoalSchema as baseCreateGoalSchema, queryGoalsSchema, bscPerspectiveSchema } from '@/lib/validation/strategic-schemas';
+import { queryGoalsSchema, bscPerspectiveSchema } from '@/lib/validation/strategic-schemas';
 
 // ✅ S1.1 Batch 3: Schema estendido para compatibilidade com estrutura existente
 // Mantém campos específicos do sistema (perspectiveCode, cascadeLevel) + base do strategic-schemas.ts
@@ -42,44 +43,62 @@ const cascadeLabels: Record<string, 'CEO' | 'DIRECTOR' | 'MANAGER' | 'TEAM'> = {
   OPERACIONAL: 'TEAM',
 };
 
+const cascadeUiToDomain: Record<string, 'CEO' | 'DIRECTOR' | 'MANAGER' | 'TEAM'> = {
+  STRATEGIC: 'CEO',
+  TACTICAL: 'DIRECTOR',
+  OPERATIONAL: 'TEAM',
+};
+
+const perspectiveUiToDomain: Record<string, z.infer<typeof bscPerspectiveSchema>> = {
+  FIN: 'FINANCIAL',
+  CLI: 'CUSTOMER',
+  INT: 'INTERNAL_PROCESS',
+  LRN: 'LEARNING_GROWTH',
+};
+
 const createGoalSchema = z.object({
   perspectiveId: z.string().trim().uuid().optional(),
   strategyId: z.string().trim().uuid().optional(),
-  title: z.string().trim().min(3).max(200),
+  title: z.string().trim().min(1).max(200).optional(), // UI não envia, manter compat
   description: z.string().trim().max(2000).optional().default(''),
   perspective: z
     .string()
     .trim()
-    .transform((value) => perspectiveLabels[value.toUpperCase()] ?? value.toUpperCase())
-    .pipe(bscPerspectiveSchema),
-  perspectiveCode: z.string().trim().optional(), // Fallback se ID não for informado
+    .transform((value) => perspectiveLabels[value.toUpperCase()] ?? perspectiveUiToDomain[value.toUpperCase()] ?? value.toUpperCase())
+    .pipe(bscPerspectiveSchema)
+    .optional(),
+  perspectiveCode: z.string().trim().optional(), // UI envia FIN/CLI/INT/LRN
   cascadeLevel: z
     .string()
     .trim()
-    .transform((value) => cascadeLabels[value.toUpperCase()] ?? value.toUpperCase())
+    .transform((value) => cascadeUiToDomain[value.toUpperCase()] ?? cascadeLabels[value.toUpperCase()] ?? value.toUpperCase())
     .pipe(z.enum(['CEO', 'DIRECTOR', 'MANAGER', 'TEAM'])),
   code: z.string().trim().min(1, 'Código é obrigatório').max(20),
   baselineValue: z.number().optional(),
   targetValue: z.number(),
-  unit: z.string().trim().min(1).max(20),
+  unit: z.string().trim().min(1).max(50),
   weight: z.number().min(0).max(100).default(1),
   polarity: z.enum(['UP', 'DOWN']).optional(),
   ownerUserId: z.string().trim().uuid().optional(),
   ownerBranchId: z.number().optional(),
   parentGoalId: z.string().trim().uuid().optional(),
-  // ✅ S1.X-BUGFIX: Validar data antes de transform (Bug 4)
-  startDate: z.string().trim().datetime().or(
-    z.string().trim().refine(
-      (s) => !isNaN(Date.parse(s)),
-      { message: 'startDate deve ser uma data válida' }
-    )
-  ).transform((s) => new Date(s)),
-  dueDate: z.string().trim().datetime().or(
-    z.string().trim().refine(
-      (s) => !isNaN(Date.parse(s)),
-      { message: 'dueDate deve ser uma data válida' }
-    )
-  ).transform((s) => new Date(s)),
+  startDate: z
+    .string()
+    .trim()
+    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'startDate must be a valid date' })
+    .transform((s) => new Date(s)),
+  dueDate: z
+    .string()
+    .trim()
+    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'dueDate must be a valid date' })
+    .transform((s) => new Date(s))
+    .optional(),
+  endDate: z
+    .string()
+    .trim()
+    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'endDate must be a valid date' })
+    .transform((s) => new Date(s))
+    .optional(),
 });
 
 const goalsQuerySchema = queryGoalsSchema.and(z.object({
@@ -105,7 +124,7 @@ export const GET = withDI(async (request: Request) => {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: 'Parâmetros inválidos',
+          error: 'Invalid query parameters',
           details: validation.error.flatten().fieldErrors,
         },
         { status: 400 }
@@ -175,6 +194,14 @@ export const GET = withDI(async (request: Request) => {
 });
 
 // POST /api/strategic/goals
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+};
+
 export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
@@ -182,39 +209,46 @@ export const POST = withDI(async (request: Request) => {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+    const parsedBody = createGoalSchema.safeParse(await safeJson<unknown>(request));
 
-    const validation = createGoalSchema.safeParse(body);
-
-    if (!validation.success) {
+    if (!parsedBody.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.flatten() },
+        { error: 'Invalid request body', details: parsedBody.error.flatten() },
         { status: 400 }
       );
     }
 
-    let { perspectiveId, ownerUserId, ownerBranchId } = validation.data;
-    const { perspectiveCode, strategyId, description, ...data } = validation.data;
+    let perspectiveId = parsedBody.data.perspectiveId;
+    let ownerUserId = parsedBody.data.ownerUserId;
+    let ownerBranchId = parsedBody.data.ownerBranchId;
+
+    const {
+      endDate,
+      dueDate,
+      perspectiveCode,
+      strategyId,
+      description,
+      ...data
+    } = parsedBody.data;
+
     const ensuredDescription = description ?? '';
 
-    // Resolver ownerUserId se não informado
-    if (!ownerUserId) {
-      ownerUserId = context.userId;
-    }
-    
-    // Resolver ownerBranchId se não informado
-    if (!ownerBranchId) {
-      ownerBranchId = context.branchId;
+    // Resolver ownerUserId/ownerBranchId se não enviados
+    ownerUserId = ownerUserId ?? context.userId;
+    ownerBranchId = ownerBranchId ?? context.branchId;
+
+    // Resolver dueDate a partir de endDate (UI)
+    const resolvedDueDate = dueDate ?? endDate;
+    if (!resolvedDueDate) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: { dueDate: ['dueDate/endDate is required'] } },
+        { status: 400 }
+      );
     }
 
     // Resolver perspectiveId se não informado
     if (!perspectiveId && perspectiveCode && strategyId) {
-      const perspective = await db
+      const perspectiveRow = await db
         .select()
         .from(bscPerspectiveTable)
         .where(
@@ -224,11 +258,11 @@ export const POST = withDI(async (request: Request) => {
           )
         );
       
-      if (perspective.length > 0) {
-        perspectiveId = perspective[0].id;
+      if (perspectiveRow.length > 0) {
+        perspectiveId = perspectiveRow[0].id;
       } else {
         return NextResponse.json(
-          { error: `Perspectiva não encontrada para código ${perspectiveCode} e estratégia ${strategyId}` },
+          { error: `Perspective not found for code ${perspectiveCode} and strategy ${strategyId}` },
           { status: 400 }
         );
       }
@@ -236,19 +270,23 @@ export const POST = withDI(async (request: Request) => {
 
     if (!perspectiveId) {
       return NextResponse.json(
-        { error: 'perspectiveId é obrigatório ou par perspectiveCode/strategyId' },
+        { error: 'Invalid request body', details: { perspectiveId: ['perspectiveId or perspectiveCode/strategyId is required'] } },
         { status: 400 }
       );
     }
 
     const useCase = container.resolve(CreateStrategicGoalUseCase);
-    const result = await useCase.execute({
-      ...data,
-      description: ensuredDescription,
-      perspectiveId,
-      ownerUserId,
-      ownerBranchId
-    }, context);
+    const result = await useCase.execute(
+      {
+        ...data,
+        description: ensuredDescription,
+        perspectiveId,
+        ownerUserId,
+        ownerBranchId,
+        dueDate: resolvedDueDate,
+      },
+      context
+    );
 
     if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -257,7 +295,8 @@ export const POST = withDI(async (request: Request) => {
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
+    const message = getErrorMessage(error);
     console.error('POST /api/strategic/goals error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 });
