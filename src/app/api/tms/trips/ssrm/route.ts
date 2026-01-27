@@ -7,7 +7,7 @@
  * @see E8.4 - SSRM Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { trips, vehicles, drivers } from '@/lib/db/schema';
 import { 
@@ -67,10 +67,23 @@ interface TripSSRMRow {
   createdAt: Date | null;
 }
 
-export async function POST(request: NextRequest) {
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+};
+
+const unauthorizedResponse = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+export async function POST(request: Request) {
   try {
     const ctx = await getTenantContext();
-    const body: IServerSideGetRowsRequest = await request.json();
+    if (!ctx) {
+      return unauthorizedResponse;
+    }
+    const body: IServerSideGetRowsRequest = await safeJson(request);
     
     const { startRow, endRow, sortModel, filterModel } = body;
     
