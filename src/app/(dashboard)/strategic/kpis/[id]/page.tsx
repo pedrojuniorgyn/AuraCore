@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { fetchAPI, APIResponseError } from '@/lib/api/fetch-client';
 
 interface KpiDetail {
@@ -28,7 +27,12 @@ export default function KpiDetailPage() {
 
   useEffect(() => {
     const load = async () => {
-      if (!params?.id) return;
+      if (!params?.id) {
+        setError('Invalid KPI id');
+        setKpi(null);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
