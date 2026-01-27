@@ -13,30 +13,31 @@ import { getTenantContext } from '@/lib/auth/context';
 import { CreateActionPlanUseCase } from '@/modules/strategic/application/commands/CreateActionPlanUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
+import type { ActionPlanStatus } from '@/modules/strategic/domain/entities/ActionPlan';
 import { queryActionPlansSchema, actionPlanStatusSchema, prioritySchema, pdcaPhaseSchema } from '@/lib/validation/strategic-schemas';
 
 // ✅ S1.1 Batch 3: Schema estendido para 5W2H
 const createSchema = z.object({
   goalId: z.string().trim().uuid().optional(),
-  what: z.string().trim().min(1, 'O que fazer é obrigatório'),
-  why: z.string().trim().min(1, 'Por que fazer é obrigatório'),
+  what: z.string().trim().min(1, 'Field "what" is required'),
+  why: z.string().trim().min(1, 'Field "why" is required'),
   whereLocation: z.string().trim().min(1).optional(),
   // ✅ S1.X-BUGFIX: Validar data antes de transformar — retorna Date para o use case
-  whenStart: z.string().trim().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(
+  whenStart: z.string().trim().datetime({ message: 'Invalid start date (ISO 8601)' }).or(
     z.string().trim().refine(
       (s) => !isNaN(Date.parse(s)),
-      { message: 'whenStart deve ser uma data válida' }
+      { message: 'whenStart must be a valid date' }
     )
   ).transform((s) => new Date(s)),
-  whenEnd: z.string().trim().datetime({ message: 'Data de término inválida (ISO 8601)' }).or(
+  whenEnd: z.string().trim().datetime({ message: 'Invalid end date (ISO 8601)' }).or(
     z.string().trim().refine(
       (s) => !isNaN(Date.parse(s)),
-      { message: 'whenEnd deve ser uma data válida' }
+      { message: 'whenEnd must be a valid date' }
     )
   ).transform((s) => new Date(s)),
-  who: z.string().trim().min(1, 'Responsável é obrigatório'),
+  who: z.string().trim().min(1, 'Field "who" is required'),
   whoUserId: z.string().trim().uuid().or(z.string().trim().min(1)).optional(),
-  how: z.string().trim().min(1, 'Como fazer é obrigatório'),
+  how: z.string().trim().min(1, 'Field "how" is required'),
   howMuchAmount: z.number().optional(),
   howMuchCurrency: z.string().trim().length(3).default('BRL'),
   priority: prioritySchema.default('MEDIUM'),
@@ -53,6 +54,29 @@ const querySchema = queryActionPlansSchema.merge(z.object({
   overdueOnly: z.enum(['true', 'false']).transform((val) => val === 'true').optional(),
 }));
 
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+};
+
+const normalizeStatus = (
+  status: ActionPlanStatus,
+  pdcaCycle: string
+): ActionPlanStatus => {
+  if (status === 'DRAFT') {
+    if (pdcaCycle === 'PLAN') {
+      return 'PENDING';
+    }
+    if (pdcaCycle === 'DO' || pdcaCycle === 'CHECK' || pdcaCycle === 'ACT') {
+      return 'IN_PROGRESS';
+    }
+  }
+  return status;
+};
+
 // GET /api/strategic/action-plans
 export const GET = withDI(async (request: Request) => {
   try {
@@ -66,7 +90,7 @@ export const GET = withDI(async (request: Request) => {
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: 'Parâmetros inválidos',
+          error: 'Invalid query parameters',
           details: validation.error.flatten().fieldErrors,
         },
         { status: 400 }
@@ -102,7 +126,7 @@ export const GET = withDI(async (request: Request) => {
         pdcaCycle: plan.pdcaCycle.value,
         completionPercent: plan.completionPercent,
         priority: plan.priority,
-        status: plan.status,
+        status: normalizeStatus(plan.status, plan.pdcaCycle.value),
         isOverdue: plan.isOverdue,
         goalId: plan.goalId,
         parentActionPlanId: plan.parentActionPlanId,
@@ -124,12 +148,7 @@ export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+    const body = await safeJson<unknown>(request);
 
     const validation = createSchema.safeParse(body);
 

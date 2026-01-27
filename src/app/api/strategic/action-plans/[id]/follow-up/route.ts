@@ -19,13 +19,13 @@ const followUpSchema = z.object({
   followUpDate: z
     .string()
     .trim()
-    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'followUpDate inválida' })
+    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'followUpDate must be a valid ISO date' })
     .transform((s) => new Date(s)),
   
   // 3G (OBRIGATÓRIOS)
-  gembaLocal: z.string().trim().min(1, 'GEMBA (local) é obrigatório'),
-  gembutsuObservation: z.string().trim().min(1, 'GEMBUTSU (observação) é obrigatório'),
-  genjitsuData: z.string().trim().min(1, 'GENJITSU (dados) é obrigatório'),
+  gembaLocal: z.string().trim().min(1, 'GEMBA (location) is required'),
+  gembutsuObservation: z.string().trim().min(1, 'GEMBUTSU (observation) is required'),
+  genjitsuData: z.string().trim().min(1, 'GENJITSU (data) is required'),
   
   // Resultado
   executionStatus: z.enum(['EXECUTED_OK', 'EXECUTED_PARTIAL', 'NOT_EXECUTED', 'BLOCKED']),
@@ -41,6 +41,14 @@ const followUpSchema = z.object({
   // Evidências
   evidenceUrls: z.array(z.string().trim().url()).optional(),
 });
+
+const safeJson = async <T>(request: Request): Promise<T> => {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+};
 
 // GET /api/strategic/action-plans/[id]/follow-up - Lista follow-ups
 export async function GET(
@@ -109,12 +117,7 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
+    const body = await safeJson<unknown>(request);
 
     const validation = followUpSchema.safeParse(body);
 

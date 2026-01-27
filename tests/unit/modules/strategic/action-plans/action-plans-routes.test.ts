@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { NextRequest } from 'next/server';
-import { POST as createActionPlan } from '@/app/api/strategic/action-plans/route';
+import { GET as listActionPlans, POST as createActionPlan } from '@/app/api/strategic/action-plans/route';
 import { PATCH as updateStatus } from '@/app/api/strategic/action-plans/[id]/status/route';
 import { POST as followUp } from '@/app/api/strategic/action-plans/[id]/follow-up/route';
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { ActionPlan } from '@/modules/strategic/domain/entities/ActionPlan';
+import { PDCACycle } from '@/modules/strategic/domain/value-objects/PDCACycle';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
@@ -123,6 +125,58 @@ describe('action-plans routes hardening', () => {
     const [input] = execute.mock.calls[0];
     expect(input.whenStart instanceof Date).toBe(true);
     expect(input.whenEnd instanceof Date).toBe(true);
+  });
+
+  it('normalizes draft status to pending for kanban list', async () => {
+    const planResult = ActionPlan.reconstitute({
+      id: 'ap-3',
+      organizationId: tenant.organizationId,
+      branchId: tenant.branchId,
+      goalId: null,
+      code: 'AP-3',
+      what: 'Improve throughput',
+      why: 'Increase efficiency',
+      whereLocation: 'HQ',
+      whenStart: new Date('2024-07-01T00:00:00.000Z'),
+      whenEnd: new Date('2024-07-31T00:00:00.000Z'),
+      who: 'Alice',
+      whoUserId: 'user-1',
+      how: 'Automate steps',
+      howMuchAmount: null,
+      howMuchCurrency: 'BRL',
+      pdcaCycle: PDCACycle.PLAN,
+      completionPercent: 0,
+      parentActionPlanId: null,
+      repropositionNumber: 0,
+      repropositionReason: null,
+      priority: 'MEDIUM',
+      status: 'DRAFT',
+      evidenceUrls: [],
+      nextFollowUpDate: null,
+      createdBy: 'user-1',
+      createdAt: new Date('2024-07-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-07-01T00:00:00.000Z'),
+    });
+
+    if (Result.isFail(planResult)) {
+      throw new Error('Failed to build ActionPlan for test');
+    }
+
+    mockContainerResolve.mockReturnValue({
+      findMany: vi.fn().mockResolvedValue({
+        items: [planResult.value],
+        total: 1,
+      }),
+    });
+
+    const response = await listActionPlans(
+      new Request('http://localhost/api/strategic/action-plans')
+    );
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.items).toHaveLength(1);
+    expect(json.items[0].status).toBe('PENDING');
   });
 
   it('accepts UI payload shape and defaults optional fields', async () => {
