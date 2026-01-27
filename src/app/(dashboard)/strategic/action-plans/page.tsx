@@ -60,7 +60,7 @@ export default function ActionPlansPage() {
   const fetchActionPlans = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchAPI<ActionPlansApiResponse>('/api/strategic/action-plans?pageSize=200');
+      const data = await fetchAPI<ActionPlansApiResponse>('/api/strategic/action-plans?pageSize=100');
       // Filtrar DRAFT (não exibido no Kanban) e mapear para ActionPlanItem
       const kanbanStatuses: ActionPlanStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'CANCELLED'];
       const mapped: ActionPlanItem[] = data.items

@@ -20,7 +20,7 @@ const createSchema = z.object({
   goalId: z.string().trim().uuid().optional(),
   what: z.string().trim().min(1, 'O que fazer é obrigatório'),
   why: z.string().trim().min(1, 'Por que fazer é obrigatório'),
-  whereLocation: z.string().trim().min(1, 'Onde fazer é obrigatório'),
+  whereLocation: z.string().trim().min(1).optional(),
   // ✅ S1.X-BUGFIX: Validar data antes de transformar — retorna Date para o use case
   whenStart: z.string().trim().datetime({ message: 'Data de início inválida (ISO 8601)' }).or(
     z.string().trim().refine(
@@ -35,11 +35,11 @@ const createSchema = z.object({
     )
   ).transform((s) => new Date(s)),
   who: z.string().trim().min(1, 'Responsável é obrigatório'),
-  whoUserId: z.string().trim().uuid('whoUserId deve ser UUID'),
+  whoUserId: z.string().trim().uuid().or(z.string().trim().min(1)).optional(),
   how: z.string().trim().min(1, 'Como fazer é obrigatório'),
   howMuchAmount: z.number().optional(),
-  howMuchCurrency: z.string().trim().length(3).optional(),
-  priority: prioritySchema.optional(),
+  howMuchCurrency: z.string().trim().length(3).default('BRL'),
+  priority: prioritySchema.default('MEDIUM'),
 });
 
 // ✅ S1.1 Batch 3: Schema de query
