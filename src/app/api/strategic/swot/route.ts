@@ -14,6 +14,10 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
 import type { SwotQuadrant, SwotCategory, SwotStatus } from '@/modules/strategic/domain/entities/SwotItem';
 
+const swotQuadrants = ['STRENGTH', 'WEAKNESS', 'OPPORTUNITY', 'THREAT'] as const;
+const isSwotQuadrant = (value: string | undefined): value is SwotQuadrant =>
+  !!value && swotQuadrants.includes(value as SwotQuadrant);
+
 const createSWOTItemSchema = z.object({
   quadrant: z.enum(['STRENGTH', 'WEAKNESS', 'OPPORTUNITY', 'THREAT']),
   title: z.string().trim().min(1, 'Title is required').max(200),
@@ -22,6 +26,16 @@ const createSWOTItemSchema = z.object({
   probabilityScore: z.number().min(0).max(5).optional().default(3),
   category: z.string().trim().max(50).optional(),
   strategyId: z.string().uuid().optional(),
+}).superRefine((data, ctx) => {
+  const typeUpper = data.type?.toUpperCase();
+  const resolvedQuadrant = data.quadrant ?? (isSwotQuadrant(typeUpper) ? typeUpper : undefined);
+  if (!resolvedQuadrant) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['quadrant'],
+      message: 'Quadrant is required',
+    });
+  }
 });
 
 // GET /api/strategic/swot
