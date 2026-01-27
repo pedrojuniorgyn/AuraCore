@@ -21,6 +21,10 @@ const safeJson = async <T>(request: Request): Promise<T> => {
   }
 };
 
+type UpdateTripBody = z.infer<typeof updateTripSchema> & {
+  status?: string;
+};
+
 const createUnauthorizedResponse = () =>
   NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -98,7 +102,7 @@ export async function PUT(
     const resolvedParams = await params;
     const tenant = await getTenantContext();
     if (!tenant) {
-      return unauthorizedResponse;
+      return createUnauthorizedResponse();
     }
 
     // ✅ S1.1 Batch 3 Phase 2: Validar ID com Zod
@@ -114,7 +118,7 @@ export async function PUT(
 
     const tripId = idValidation.data;
 
-    const body = await safeJson<unknown>(req);
+    const body = await safeJson<UpdateTripBody>(req);
     
     // ✅ S1.1 Batch 3 Phase 2: Validar body com Zod
     const validation = updateTripSchema.safeParse(body);
@@ -242,7 +246,7 @@ export async function DELETE(
     const resolvedParams = await params;
     const tenant = await getTenantContext();
     if (!tenant) {
-      return unauthorizedResponse;
+      return createUnauthorizedResponse();
     }
 
     const tripValidation = idSchema.safeParse(resolvedParams.id);
