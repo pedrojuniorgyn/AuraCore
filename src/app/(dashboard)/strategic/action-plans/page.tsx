@@ -91,7 +91,7 @@ export default function ActionPlansPage() {
         });
       setPlans(mapped);
     } catch (error) {
-      console.error('Erro ao carregar action plans:', error);
+      console.error('Failed to load action plans:', error);
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ export default function ActionPlansPage() {
       
       await fetchActionPlans();
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      console.error('Failed to update status:', error);
       throw error;
     }
   }, [fetchActionPlans]); // ✅ fetchActionPlans é estável, então isso também é

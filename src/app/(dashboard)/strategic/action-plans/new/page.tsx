@@ -33,7 +33,7 @@ export default function NewActionPlanPage() {
         const data = await fetchAPI<OptionsData>('/api/strategic/action-plans/options');
         setOptions(data);
       } catch (error) {
-        console.error('Erro ao carregar opções:', error);
+        console.error('Failed to load options:', error);
       } finally {
         setOptionsLoading(false);
       }
@@ -54,7 +54,7 @@ export default function NewActionPlanPage() {
           whereLocation: formData.where, // API espera whereLocation, form tem where
           whenStart: formData.startDate,
           whenEnd: formData.endDate,
-          who: whoUser ? whoUser.name : 'Responsável',
+          who: whoUser ? whoUser.name : 'Owner',
           whoUserId: whoId,
           how: formData.how,
           howMuchAmount: formData.howMuch,
@@ -64,11 +64,11 @@ export default function NewActionPlanPage() {
         },
       });
       
-      toast.success('Plano de ação criado com sucesso!');
+      toast.success('Action plan created successfully!');
       router.push(`/strategic/action-plans/${result.id}`);
     } catch (error) {
-      console.error('Erro ao criar plano de ação:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar plano de ação');
+      console.error('Failed to create action plan:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create action plan');
     }
   };
 
