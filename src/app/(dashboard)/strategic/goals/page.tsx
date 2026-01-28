@@ -92,7 +92,7 @@ export default function GoalsPage() {
       const result = await fetchAPI<{ items: Goal[] }>('/api/strategic/goals?pageSize=100');
       setGoals(result.items || []);
     } catch (error) {
-      console.error('Erro ao carregar objetivos:', error);
+      console.error('Failed to load goals:', error);
     } finally {
       setLoading(false);
     }

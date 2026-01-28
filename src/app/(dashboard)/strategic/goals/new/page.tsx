@@ -44,6 +44,30 @@ const perspectiveToDomain: Record<string, string> = {
   LRN: 'LEARNING_GROWTH',
 };
 
+const formatErrorDetails = (details: unknown): string | null => {
+  if (!details || typeof details !== 'object') return null;
+
+  const entries = Object.entries(details as Record<string, unknown>);
+  if (entries.length === 0) return null;
+
+  const parts = entries.flatMap(([key, value]) => {
+    if (Array.isArray(value)) {
+      const msgs = value.filter((v): v is string => typeof v === 'string');
+      return msgs.length ? [`${key}: ${msgs.join(', ')}`] : [];
+    }
+    if (typeof value === 'string') return [`${key}: ${value}`];
+    return [];
+  });
+
+  if (parts.length) return parts.join(' | ');
+
+  try {
+    return JSON.stringify(details);
+  } catch {
+    return null;
+  }
+};
+
 interface StrategyOption {
   id: string;
   code: string;
@@ -76,8 +100,12 @@ export default function NewGoalPage() {
         if (data.items?.length > 0) {
           setFormData(prev => ({ ...prev, strategyId: data.items[0].id }));
         }
-      } catch (error) {
-        console.error('Erro ao carregar estratégias:', error);
+      } catch (error: unknown) {
+        if (error instanceof APIResponseError) {
+          console.error('Failed to load strategies:', error.data?.error ?? error.message);
+          return;
+        }
+        console.error('Failed to load strategies:', error);
       }
     };
     fetchStrategies();
@@ -122,13 +150,14 @@ export default function NewGoalPage() {
 
       toast.success('Objetivo criado com sucesso!');
       router.push('/strategic/goals');
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof APIResponseError) {
-        const detail =
-          (error.data?.error || error.message) ?? 'Erro ao criar objetivo';
-        toast.error(detail);
+        const baseMessage =
+          (error.data?.error || error.message) ?? 'Failed to create goal';
+        const details = formatErrorDetails(error.data?.details);
+        toast.error(details ? `${baseMessage} (${details})` : baseMessage);
       } else {
-        toast.error(error instanceof Error ? error.message : 'Erro desconhecido');
+        toast.error(error instanceof Error ? error.message : 'Unknown error');
       }
     } finally {
       setIsLoading(false);

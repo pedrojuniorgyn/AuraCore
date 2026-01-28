@@ -41,7 +41,7 @@ export async function GET(
     );
 
     if (!goal) {
-      return NextResponse.json({ error: 'Meta não encontrada' }, { status: 404 });
+        return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -125,7 +125,7 @@ export async function PATCH(
     );
 
     if (!goal) {
-      return NextResponse.json({ error: 'Meta não encontrada' }, { status: 404 });
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
     }
 
     // Atualizar progresso
@@ -171,7 +171,7 @@ export async function DELETE(
 
     await repository.delete(idResult.data, context.organizationId, context.branchId);
 
-    return NextResponse.json({ message: 'Meta removida com sucesso' });
+    return NextResponse.json({ message: 'Goal removed successfully' });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     console.error('DELETE /api/strategic/goals/[id] error:', error);
