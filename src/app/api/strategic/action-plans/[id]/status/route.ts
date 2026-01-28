@@ -89,7 +89,6 @@ export async function PATCH(
       id: plan.id,
       status: plan.status,
       completionPercent: plan.completionPercent,
-      message: 'Status atualizado com sucesso',
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;

@@ -90,7 +90,7 @@ export async function GET(
         requiresNewPlan: fu.requiresNewPlan,
         childActionPlanId: fu.childActionPlanId,
         verifiedBy: fu.verifiedBy,
-        verifiedAt: fu.verifiedAt.toISOString(),
+        verifiedAt: fu.verifiedAt ? fu.verifiedAt.toISOString() : null,
         evidenceUrls: fu.evidenceUrls,
         requiresEscalation: fu.requiresEscalation,
       })),

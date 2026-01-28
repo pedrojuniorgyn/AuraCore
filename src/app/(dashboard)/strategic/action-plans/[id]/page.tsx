@@ -6,34 +6,54 @@
  * 
  * @module app/(dashboard)/strategic/action-plans/[id]
  */
-import { useState, useEffect, use } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Card, 
-  Title, 
-  Text, 
-  Flex, 
+import {
   Badge,
+  Card,
+  Flex,
   ProgressBar,
+  Text,
+  Title,
 } from '@tremor/react';
-import { 
+import {
   ArrowLeft,
-  User,
-  MapPin,
+  CheckCircle,
   Calendar,
   DollarSign,
   FileText,
-  Target,
   AlertTriangle,
-  CheckCircle,
-  RefreshCw,
+  MapPin,
   MessageSquare,
   Plus,
+  RefreshCw,
+  Target,
+  User,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
 import { fetchAPI, APIResponseError } from '@/lib/api';
 
 interface ActionPlanDetail {
@@ -62,6 +82,39 @@ interface ActionPlanDetail {
   nextFollowUpDate: string | null;
   canRepropose: boolean;
   createdBy: string;
+}
+
+interface FollowUpItem {
+  id: string;
+  followUpNumber: number;
+  followUpDate: string;
+  gembaLocal: string;
+  gembutsuObservation: string;
+  genjitsuData: string;
+  executionStatus: 'EXECUTED_OK' | 'EXECUTED_PARTIAL' | 'NOT_EXECUTED' | 'BLOCKED';
+  executionPercent: number;
+  problemsObserved?: string;
+  problemSeverity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  requiresNewPlan?: boolean;
+  childActionPlanId?: string;
+  verifiedBy: string;
+  verifiedAt: string | null;
+  evidenceUrls?: string[];
+}
+
+interface FollowUpFormState {
+  followUpDate: string;
+  gembaLocal: string;
+  gembutsuObservation: string;
+  genjitsuData: string;
+  executionStatus: 'EXECUTED_OK' | 'EXECUTED_PARTIAL' | 'NOT_EXECUTED' | 'BLOCKED';
+  executionPercent: number;
+  problemsObserved: string;
+  problemSeverity: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  requiresNewPlan: boolean;
+  newPlanDescription: string;
+  newPlanAssignedTo: string;
+  evidenceUrls: string;
 }
 
 // Safelist pattern
@@ -94,8 +147,27 @@ export default function ActionPlanDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<ActionPlanDetail | null>(null);
+  const [followUps, setFollowUps] = useState<FollowUpItem[]>([]);
+  const [followUpsLoading, setFollowUpsLoading] = useState(true);
+  const [isFollowUpDialogOpen, setIsFollowUpDialogOpen] = useState(false);
+  const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
+  const [followUpForm, setFollowUpForm] = useState<FollowUpFormState>({
+    followUpDate: new Date().toISOString().slice(0, 10),
+    gembaLocal: '',
+    gembutsuObservation: '',
+    genjitsuData: '',
+    executionStatus: 'EXECUTED_OK',
+    executionPercent: 0,
+    problemsObserved: '',
+    problemSeverity: 'NONE',
+    requiresNewPlan: false,
+    newPlanDescription: '',
+    newPlanAssignedTo: '',
+    evidenceUrls: '',
+  });
 
   useEffect(() => {
     const loadPlan = async () => {
@@ -109,7 +181,7 @@ export default function ActionPlanDetailPage({
           router.push('/strategic/action-plans');
           return;
         }
-        console.error('Erro ao carregar plano:', error);
+        console.error('Failed to load action plan:', error);
       } finally {
         setLoading(false);
       }
@@ -123,9 +195,118 @@ export default function ActionPlanDetailPage({
       const data = await fetchAPI<ActionPlanDetail>(`/api/strategic/action-plans/${id}`);
       setPlan(data);
     } catch (error) {
-      console.error('Erro ao carregar plano:', error);
+      console.error('Failed to load action plan:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFollowUps = useCallback(async () => {
+    setFollowUpsLoading(true);
+    try {
+      const data = await fetchAPI<{ items: FollowUpItem[]; total: number }>(
+        `/api/strategic/action-plans/${id}/follow-up`
+      );
+      setFollowUps(data.items);
+    } catch (error) {
+      console.error('Failed to load follow-ups:', error);
+      const message =
+        error instanceof APIResponseError
+          ? error.data?.error || error.message
+          : 'Unexpected error while loading follow-ups';
+      toast({
+        title: 'Failed to load follow-ups',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setFollowUpsLoading(false);
+    }
+  }, [id, toast]);
+
+  useEffect(() => {
+    if (!plan) return;
+    loadFollowUps();
+  }, [plan, loadFollowUps]);
+
+  const handleFollowUpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmittingFollowUp(true);
+    try {
+      const evidenceList = followUpForm.evidenceUrls
+        .split(/[\n,]/)
+        .map((url) => url.trim())
+        .filter(Boolean);
+
+      const problemsObserved = followUpForm.problemsObserved.trim();
+      const newPlanDescription = followUpForm.newPlanDescription.trim();
+      const newPlanAssignedTo = followUpForm.newPlanAssignedTo.trim();
+
+      const problemSeverity =
+        followUpForm.problemSeverity === 'NONE'
+          ? undefined
+          : followUpForm.problemSeverity;
+
+      const payload = {
+        followUpDate: followUpForm.followUpDate,
+        gembaLocal: followUpForm.gembaLocal.trim(),
+        gembutsuObservation: followUpForm.gembutsuObservation.trim(),
+        genjitsuData: followUpForm.genjitsuData.trim(),
+        executionStatus: followUpForm.executionStatus,
+        executionPercent: followUpForm.executionPercent,
+        problemsObserved: problemsObserved || undefined,
+        problemSeverity,
+        requiresNewPlan: followUpForm.requiresNewPlan || undefined,
+        newPlanDescription:
+          followUpForm.requiresNewPlan && newPlanDescription
+            ? newPlanDescription
+            : undefined,
+        newPlanAssignedTo:
+          followUpForm.requiresNewPlan && newPlanAssignedTo
+            ? newPlanAssignedTo
+            : undefined,
+        evidenceUrls: evidenceList.length ? evidenceList : undefined,
+      };
+
+      await fetchAPI(`/api/strategic/action-plans/${id}/follow-up`, {
+        method: 'POST',
+        body: payload,
+      });
+
+      toast({
+        title: 'Follow-up saved',
+        description: 'The 3G follow-up was recorded successfully.',
+      });
+
+      setIsFollowUpDialogOpen(false);
+      setFollowUpForm({
+        followUpDate: new Date().toISOString().slice(0, 10),
+        gembaLocal: '',
+        gembutsuObservation: '',
+        genjitsuData: '',
+        executionStatus: 'EXECUTED_OK',
+        executionPercent: 0,
+        problemsObserved: '',
+        problemSeverity: 'NONE',
+        requiresNewPlan: false,
+        newPlanDescription: '',
+        newPlanAssignedTo: '',
+        evidenceUrls: '',
+      });
+
+      await refreshPlan();
+    } catch (error) {
+      const message =
+        error instanceof APIResponseError
+          ? error.data?.error || error.message
+          : 'Unexpected error while saving follow-up';
+      toast({
+        title: 'Failed to save follow-up',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmittingFollowUp(false);
     }
   };
 
@@ -374,22 +555,301 @@ export default function ActionPlanDetailPage({
               <Card className="bg-gray-900/50 border-gray-800">
                 <Flex justifyContent="between" alignItems="center" className="mb-4">
                   <Title className="text-white">Follow-ups 3G</Title>
-                  <RippleButton variant="ghost">
+                  <RippleButton
+                    variant="ghost"
+                    onClick={() => setIsFollowUpDialogOpen(true)}
+                    disabled={submittingFollowUp}
+                  >
                     <Plus className="w-4 h-4" />
                   </RippleButton>
                 </Flex>
-                <div className="text-center py-6 text-gray-500">
-                  <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                  <Text className="text-sm">Nenhum follow-up registrado</Text>
-                  <Text className="text-xs text-gray-600 mt-1">
-                    Clique em + para adicionar
-                  </Text>
-                </div>
+                {followUpsLoading ? (
+                  <div className="text-center py-6 text-gray-500">
+                    <RefreshCw className="w-5 h-5 mx-auto mb-2 animate-spin text-gray-400" />
+                    <Text className="text-sm">Loading follow-ups...</Text>
+                  </div>
+                ) : followUps.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-600" />
+                    <Text className="text-sm">No follow-ups recorded</Text>
+                    <Text className="text-xs text-gray-600 mt-1">
+                      Click + to add the first 3G follow-up
+                    </Text>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {followUps.map((followUp) => (
+                      <Card key={followUp.id} className="bg-gray-900/30 border-gray-800 p-4">
+                        <Flex justifyContent="between" alignItems="center" className="mb-2">
+                          <Text className="text-sm text-gray-400">
+                            #{followUp.followUpNumber} •{' '}
+                            {new Date(followUp.followUpDate).toLocaleDateString()}
+                          </Text>
+                          <Badge color="blue">
+                            {followUp.executionStatus.replaceAll('_', ' ')}
+                          </Badge>
+                        </Flex>
+                        <Text className="text-white text-sm font-medium mb-1">
+                          GEMBA: {followUp.gembaLocal}
+                        </Text>
+                        <Text className="text-gray-300 text-sm mb-1">
+                          GEMBUTSU: {followUp.gembutsuObservation}
+                        </Text>
+                        <Text className="text-gray-300 text-sm mb-1">
+                          GENJITSU: {followUp.genjitsuData}
+                        </Text>
+                        <Flex justifyContent="between" alignItems="center" className="mt-2">
+                          <Text className="text-xs text-gray-400">
+                            Progress: {followUp.executionPercent}%
+                          </Text>
+                          {followUp.problemSeverity && (
+                            <Badge color="amber" className="text-xs">
+                              Severity: {followUp.problemSeverity}
+                            </Badge>
+                          )}
+                        </Flex>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           </FadeIn>
         </div>
       </div>
+      <Dialog open={isFollowUpDialogOpen} onOpenChange={setIsFollowUpDialogOpen}>
+        <DialogContent className="bg-gray-950 text-white border-gray-800">
+          <DialogHeader>
+            <DialogTitle>Record 3G follow-up</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Capture GEMBA, GEMBUTSU and GENJITSU observations for this action plan.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleFollowUpSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="followUpDate">Follow-up date</Label>
+                <Input
+                  id="followUpDate"
+                  type="date"
+                  value={followUpForm.followUpDate}
+                  onChange={(event) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      followUpDate: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="executionStatus">Execution status</Label>
+                <Select
+                  value={followUpForm.executionStatus}
+                  onValueChange={(value) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      executionStatus: value as FollowUpFormState['executionStatus'],
+                    }))
+                  }
+                >
+                  <SelectTrigger id="executionStatus">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EXECUTED_OK">Executed OK</SelectItem>
+                    <SelectItem value="EXECUTED_PARTIAL">Executed partially</SelectItem>
+                    <SelectItem value="NOT_EXECUTED">Not executed</SelectItem>
+                    <SelectItem value="BLOCKED">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="executionPercent">Execution percent</Label>
+                <Input
+                  id="executionPercent"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={followUpForm.executionPercent}
+                  onChange={(event) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      executionPercent: Number(event.target.value),
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="problemSeverity">Problem severity</Label>
+                <Select
+                  value={followUpForm.problemSeverity}
+                  onValueChange={(value) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      problemSeverity: value as FollowUpFormState['problemSeverity'],
+                    }))
+                  }
+                >
+                  <SelectTrigger id="problemSeverity">
+                    <SelectValue placeholder="Select severity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Not specified</SelectItem>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="CRITICAL">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="gembaLocal">GEMBA (location)</Label>
+                <Input
+                  id="gembaLocal"
+                  value={followUpForm.gembaLocal}
+                  onChange={(event) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      gembaLocal: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="gembutsuObservation">GEMBUTSU (observation)</Label>
+                <Input
+                  id="gembutsuObservation"
+                  value={followUpForm.gembutsuObservation}
+                  onChange={(event) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      gembutsuObservation: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="genjitsuData">GENJITSU (data/facts)</Label>
+              <Textarea
+                id="genjitsuData"
+                value={followUpForm.genjitsuData}
+                onChange={(event) =>
+                  setFollowUpForm((prev) => ({
+                    ...prev,
+                    genjitsuData: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="problemsObserved">Problems observed (optional)</Label>
+              <Textarea
+                id="problemsObserved"
+                value={followUpForm.problemsObserved}
+                onChange={(event) =>
+                  setFollowUpForm((prev) => ({
+                    ...prev,
+                    problemsObserved: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded border border-gray-800 p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="requiresNewPlan">Requires new plan?</Label>
+                <Text className="text-xs text-gray-400">
+                  If enabled, provide description and assignee.
+                </Text>
+              </div>
+              <Switch
+                id="requiresNewPlan"
+                checked={followUpForm.requiresNewPlan}
+                onCheckedChange={(checked) =>
+                  setFollowUpForm((prev) => ({
+                    ...prev,
+                    requiresNewPlan: checked,
+                  }))
+                }
+              />
+            </div>
+
+            {followUpForm.requiresNewPlan && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPlanDescription">New plan description</Label>
+                  <Textarea
+                    id="newPlanDescription"
+                    value={followUpForm.newPlanDescription}
+                    onChange={(event) =>
+                      setFollowUpForm((prev) => ({
+                        ...prev,
+                        newPlanDescription: event.target.value,
+                      }))
+                    }
+                    required={followUpForm.requiresNewPlan}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPlanAssignedTo">Assign to (user id)</Label>
+                  <Input
+                    id="newPlanAssignedTo"
+                    value={followUpForm.newPlanAssignedTo}
+                    onChange={(event) =>
+                      setFollowUpForm((prev) => ({
+                        ...prev,
+                        newPlanAssignedTo: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="evidenceUrls">Evidence URLs (comma or newline separated)</Label>
+              <Textarea
+                id="evidenceUrls"
+                value={followUpForm.evidenceUrls}
+                onChange={(event) =>
+                  setFollowUpForm((prev) => ({
+                    ...prev,
+                    evidenceUrls: event.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <DialogFooter>
+              <RippleButton
+                type="button"
+                variant="ghost"
+                onClick={() => setIsFollowUpDialogOpen(false)}
+                disabled={submittingFollowUp}
+              >
+                Cancel
+              </RippleButton>
+              <RippleButton type="submit" disabled={submittingFollowUp}>
+                {submittingFollowUp ? 'Saving...' : 'Save follow-up'}
+              </RippleButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }
