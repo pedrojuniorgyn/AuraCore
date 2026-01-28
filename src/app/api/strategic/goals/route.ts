@@ -16,7 +16,8 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import { db } from '@/lib/db';
 import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
-import { eq, and } from 'drizzle-orm';
+import { strategyTable } from '@/modules/strategic/infrastructure/persistence/schemas/strategy.schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { queryGoalsSchema, bscPerspectiveSchema } from '@/lib/validation/strategic-schemas';
 
 // ✅ S1.1 Batch 3: Schema estendido para compatibilidade com estrutura existente
@@ -73,7 +74,7 @@ const createGoalSchema = z.object({
     .trim()
     .transform((value) => cascadeUiToDomain[value.toUpperCase()] ?? cascadeLabels[value.toUpperCase()] ?? value.toUpperCase())
     .pipe(z.enum(['CEO', 'DIRECTOR', 'MANAGER', 'TEAM'])),
-  code: z.string().trim().min(1, 'Código é obrigatório').max(20),
+  code: z.string().trim().min(1, 'Code is required').max(20),
   baselineValue: z.number().optional(),
   targetValue: z.number(),
   unit: z.string().trim().min(1).max(50),
@@ -202,15 +203,129 @@ const safeJson = async <T>(request: Request): Promise<T> => {
   }
 };
 
+const resolvePerspectiveId = async (input: {
+  perspectiveId?: string;
+  perspectiveCode?: string;
+  strategyId?: string;
+  organizationId: number;
+  branchId: number;
+}): Promise<{ perspectiveId: string } | { error: Response }> => {
+  if (input.perspectiveId) {
+    return { perspectiveId: input.perspectiveId };
+  }
+
+  const normalizedCode = input.perspectiveCode?.trim().toUpperCase();
+  if (!normalizedCode) {
+    return {
+      error: NextResponse.json(
+        {
+          error: 'Invalid request body',
+          details: {
+            perspectiveCode: [
+              'perspectiveCode is required when perspectiveId is not provided',
+            ],
+          },
+        },
+        { status: 400 }
+      ),
+    };
+  }
+
+  // 1) se strategyId veio do client, usa
+  let resolvedStrategyId = input.strategyId;
+
+  // 2) se não veio, tenta pegar ACTIVE mais recente do tenant
+  if (!resolvedStrategyId) {
+    const active = await db
+      .select({ id: strategyTable.id })
+      .from(strategyTable)
+      .where(
+        and(
+          eq(strategyTable.organizationId, input.organizationId),
+          eq(strategyTable.branchId, input.branchId),
+          eq(strategyTable.status, 'ACTIVE')
+        )
+      )
+      .orderBy(desc(strategyTable.createdAt))
+      .offset(0)
+      .fetch(1);
+
+    if (active.length > 0) {
+      resolvedStrategyId = active[0].id;
+    }
+  }
+
+  // 3) fallback: pega a mais recente (qualquer status)
+  if (!resolvedStrategyId) {
+    const any = await db
+      .select({ id: strategyTable.id })
+      .from(strategyTable)
+      .where(
+        and(
+          eq(strategyTable.organizationId, input.organizationId),
+          eq(strategyTable.branchId, input.branchId)
+        )
+      )
+      .orderBy(desc(strategyTable.createdAt))
+      .offset(0)
+      .fetch(1);
+
+    if (any.length > 0) {
+      resolvedStrategyId = any[0].id;
+    }
+  }
+
+  if (!resolvedStrategyId) {
+    return {
+      error: NextResponse.json(
+        {
+          error: 'Invalid request body',
+          details: {
+            strategyId: [
+              'strategyId is required because no strategy exists for this tenant to resolve perspectiveId',
+            ],
+          },
+        },
+        { status: 400 }
+      ),
+    };
+  }
+
+  // resolve bsc perspective
+  const perspectiveRow = await db
+    .select({ id: bscPerspectiveTable.id })
+    .from(bscPerspectiveTable)
+    .where(
+      and(
+        eq(bscPerspectiveTable.strategyId, resolvedStrategyId),
+        eq(bscPerspectiveTable.code, normalizedCode)
+      )
+    )
+    .orderBy(desc(bscPerspectiveTable.createdAt))
+    .offset(0)
+    .fetch(1);
+
+  if (perspectiveRow.length === 0) {
+    return {
+      error: NextResponse.json(
+        { error: `Perspective not found for code ${normalizedCode} and strategy ${resolvedStrategyId}` },
+        { status: 400 }
+      ),
+    };
+  }
+
+  return { perspectiveId: perspectiveRow[0].id };
+};
+
 export const POST = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
+    if (context instanceof Response) return context;
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const parsedBody = createGoalSchema.safeParse(await safeJson<unknown>(request));
-
     if (!parsedBody.success) {
       return NextResponse.json(
         { error: 'Invalid request body', details: parsedBody.error.flatten() },
@@ -221,65 +336,49 @@ export const POST = withDI(async (request: Request) => {
     let perspectiveId = parsedBody.data.perspectiveId;
     let ownerUserId = parsedBody.data.ownerUserId;
     let ownerBranchId = parsedBody.data.ownerBranchId;
-
     const {
-      endDate,
-      dueDate,
       perspectiveCode,
       strategyId,
+      dueDate,
+      endDate,
       description,
       ...data
     } = parsedBody.data;
 
-    const ensuredDescription = description ?? '';
-
-    // Resolver ownerUserId/ownerBranchId se não enviados
+    // defaults owner
     ownerUserId = ownerUserId ?? context.userId;
     ownerBranchId = ownerBranchId ?? context.branchId;
 
-    // Resolver dueDate a partir de endDate (UI)
+    // resolve dueDate from endDate (UI)
     const resolvedDueDate = dueDate ?? endDate;
     if (!resolvedDueDate) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: { dueDate: ['dueDate/endDate is required'] } },
+        {
+          error: 'Invalid request body',
+          details: { dueDate: ['dueDate/endDate is required'] },
+        },
         { status: 400 }
       );
     }
 
-    // Resolver perspectiveId se não informado
-    if (!perspectiveId && perspectiveCode && strategyId) {
-      const perspectiveRow = await db
-        .select()
-        .from(bscPerspectiveTable)
-        .where(
-          and(
-            eq(bscPerspectiveTable.strategyId, strategyId),
-            eq(bscPerspectiveTable.code, perspectiveCode)
-          )
-        );
-      
-      if (perspectiveRow.length > 0) {
-        perspectiveId = perspectiveRow[0].id;
-      } else {
-        return NextResponse.json(
-          { error: `Perspective not found for code ${perspectiveCode} and strategy ${strategyId}` },
-          { status: 400 }
-        );
-      }
-    }
+    // resolve perspectiveId deterministically
+    const resolved = await resolvePerspectiveId({
+      perspectiveId,
+      perspectiveCode,
+      strategyId,
+      organizationId: context.organizationId,
+      branchId: context.branchId,
+    });
 
-    if (!perspectiveId) {
-      return NextResponse.json(
-        { error: 'Invalid request body', details: { perspectiveId: ['perspectiveId or perspectiveCode/strategyId is required'] } },
-        { status: 400 }
-      );
-    }
+    if ('error' in resolved) return resolved.error;
+
+    perspectiveId = resolved.perspectiveId;
 
     const useCase = container.resolve(CreateStrategicGoalUseCase);
     const result = await useCase.execute(
       {
         ...data,
-        description: ensuredDescription,
+        description: description ?? '',
         perspectiveId,
         ownerUserId,
         ownerBranchId,
