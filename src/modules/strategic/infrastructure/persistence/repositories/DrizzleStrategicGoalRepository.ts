@@ -1,14 +1,15 @@
 /**
  * Repository: DrizzleStrategicGoalRepository
  * Implementação Drizzle do repositório de metas estratégicas
- * 
+ *
  * @module strategic/infrastructure/persistence/repositories
  */
-import { eq, and, isNull, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, sql, inArray } from 'drizzle-orm';
 import type { IStrategicGoalRepository, GoalFilter } from '../../../domain/ports/output/IStrategicGoalRepository';
 import { StrategicGoal } from '../../../domain/entities/StrategicGoal';
 import { StrategicGoalMapper } from '../mappers/StrategicGoalMapper';
 import { strategicGoalTable } from '../schemas/strategic-goal.schema';
+import { bscPerspectiveTable } from '../schemas/bsc-perspective.schema';
 import { db } from '@/lib/db';
 import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
@@ -16,11 +17,7 @@ import { injectable } from 'tsyringe';
 
 @injectable()
 export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository {
-  async findById(
-    id: string, 
-    organizationId: number, 
-    branchId: number
-  ): Promise<StrategicGoal | null> {
+  async findById(id: string, organizationId: number, branchId: number): Promise<StrategicGoal | null> {
     const rows = await db
       .select()
       .from(strategicGoalTable)
@@ -39,21 +36,42 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
     return Result.isOk(result) ? result.value : null;
   }
 
-  async findMany(filter: GoalFilter): Promise<{
-    items: StrategicGoal[];
-    total: number;
-  }> {
-    const { 
-      organizationId, branchId, perspectiveId, parentGoalId,
-      cascadeLevel, status, ownerUserId, page = 1, pageSize = 20 
+  async findMany(filter: GoalFilter): Promise<{ items: StrategicGoal[]; total: number }> {
+    const {
+      organizationId,
+      branchId,
+      strategyId, // ✅ suportado via perspectiva (não via coluna na meta)
+      perspectiveId,
+      parentGoalId,
+      cascadeLevel,
+      status,
+      ownerUserId,
+      page = 1,
+      pageSize = 20,
     } = filter;
 
     // Build conditions (multi-tenancy + soft delete)
     const conditions = [
       eq(strategicGoalTable.organizationId, organizationId),
       eq(strategicGoalTable.branchId, branchId),
-      isNull(strategicGoalTable.deletedAt)
+      isNull(strategicGoalTable.deletedAt),
     ];
+
+    /**
+     * ✅ CORREÇÃO BUG 2: Usar SUBQUERY em vez de query separada (evita N+1 em paginação)
+     * strategicGoalTable NÃO possui strategyId (coluna), então filtramos por strategyId
+     * através de subquery nas perspectivas da estratégia:
+     * - perspectiveId IN (SELECT id FROM bsc_perspective WHERE strategy_id = ?)
+     * - 100% SQL, sem materializar array em memória
+     */
+    if (strategyId) {
+      const perspectiveIdsSubquery = db
+        .select({ id: bscPerspectiveTable.id })
+        .from(bscPerspectiveTable)
+        .where(eq(bscPerspectiveTable.strategyId, strategyId));
+
+      conditions.push(inArray(strategicGoalTable.perspectiveId, perspectiveIdsSubquery));
+    }
 
     if (perspectiveId) {
       conditions.push(eq(strategicGoalTable.perspectiveId, perspectiveId));
@@ -86,24 +104,17 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       .where(and(...conditions))
       .orderBy(strategicGoalTable.code);
 
-    const rows = await queryPaginated<typeof strategicGoalTable.$inferSelect>(
-      query,
-      { page, pageSize }
-    );
+    const rows = await queryPaginated<typeof strategicGoalTable.$inferSelect>(query, { page, pageSize });
 
     const items = rows
-      .map(row => StrategicGoalMapper.toDomain(row))
+      .map((row) => StrategicGoalMapper.toDomain(row))
       .filter(Result.isOk)
-      .map(r => r.value);
+      .map((r) => r.value);
 
     return { items, total };
   }
 
-  async findByParentId(
-    parentGoalId: string,
-    organizationId: number, 
-    branchId: number
-  ): Promise<StrategicGoal[]> {
+  async findByParentId(parentGoalId: string, organizationId: number, branchId: number): Promise<StrategicGoal[]> {
     const rows = await db
       .select()
       .from(strategicGoalTable)
@@ -118,16 +129,12 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       .orderBy(strategicGoalTable.code);
 
     return rows
-      .map(row => StrategicGoalMapper.toDomain(row))
+      .map((row) => StrategicGoalMapper.toDomain(row))
       .filter(Result.isOk)
-      .map(r => r.value);
+      .map((r) => r.value);
   }
 
-  async findByPerspective(
-    perspectiveId: string,
-    organizationId: number, 
-    branchId: number
-  ): Promise<StrategicGoal[]> {
+  async findByPerspective(perspectiveId: string, organizationId: number, branchId: number): Promise<StrategicGoal[]> {
     const rows = await db
       .select()
       .from(strategicGoalTable)
@@ -142,16 +149,12 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       .orderBy(strategicGoalTable.code);
 
     return rows
-      .map(row => StrategicGoalMapper.toDomain(row))
+      .map((row) => StrategicGoalMapper.toDomain(row))
       .filter(Result.isOk)
-      .map(r => r.value);
+      .map((r) => r.value);
   }
 
-  async findByCascadeLevel(
-    cascadeLevel: string,
-    organizationId: number, 
-    branchId: number
-  ): Promise<StrategicGoal[]> {
+  async findByCascadeLevel(cascadeLevel: string, organizationId: number, branchId: number): Promise<StrategicGoal[]> {
     const rows = await db
       .select()
       .from(strategicGoalTable)
@@ -166,15 +169,12 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       .orderBy(strategicGoalTable.code);
 
     return rows
-      .map(row => StrategicGoalMapper.toDomain(row))
+      .map((row) => StrategicGoalMapper.toDomain(row))
       .filter(Result.isOk)
-      .map(r => r.value);
+      .map((r) => r.value);
   }
 
-  async findRootGoals(
-    organizationId: number, 
-    branchId: number
-  ): Promise<StrategicGoal[]> {
+  async findRootGoals(organizationId: number, branchId: number): Promise<StrategicGoal[]> {
     const rows = await db
       .select()
       .from(strategicGoalTable)
@@ -189,19 +189,15 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       .orderBy(strategicGoalTable.code);
 
     return rows
-      .map(row => StrategicGoalMapper.toDomain(row))
+      .map((row) => StrategicGoalMapper.toDomain(row))
       .filter(Result.isOk)
-      .map(r => r.value);
+      .map((r) => r.value);
   }
 
   async save(entity: StrategicGoal): Promise<void> {
     const persistence = StrategicGoalMapper.toPersistence(entity);
 
-    const existing = await this.exists(
-      entity.id,
-      entity.organizationId,
-      entity.branchId
-    );
+    const existing = await this.exists(entity.id, entity.organizationId, entity.branchId);
 
     if (existing) {
       await db
@@ -225,7 +221,7 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
           status: persistence.status,
           mapPositionX: persistence.mapPositionX,
           mapPositionY: persistence.mapPositionY,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(
           and(
@@ -239,11 +235,7 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
     }
   }
 
-  async delete(
-    id: string, 
-    organizationId: number, 
-    branchId: number
-  ): Promise<void> {
+  async delete(id: string, organizationId: number, branchId: number): Promise<void> {
     await db
       .update(strategicGoalTable)
       .set({ deletedAt: new Date() })
@@ -256,11 +248,7 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       );
   }
 
-  private async exists(
-    id: string, 
-    organizationId: number, 
-    branchId: number
-  ): Promise<boolean> {
+  private async exists(id: string, organizationId: number, branchId: number): Promise<boolean> {
     const rows = await db
       .select({ id: strategicGoalTable.id })
       .from(strategicGoalTable)

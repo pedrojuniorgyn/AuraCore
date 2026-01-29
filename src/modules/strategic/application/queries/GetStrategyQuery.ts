@@ -1,7 +1,7 @@
 /**
  * Use Case: GetStrategyQuery
  * Busca estratégia completa com objetivos e KPIs
- * 
+ *
  * @module strategic/application/queries
  */
 import { injectable, inject } from 'tsyringe';
@@ -10,6 +10,7 @@ import type { TenantContext } from '@/lib/auth/context';
 import type { IStrategyRepository } from '../../domain/ports/output/IStrategyRepository';
 import type { IStrategicGoalRepository } from '../../domain/ports/output/IStrategicGoalRepository';
 import type { IKPIRepository } from '../../domain/ports/output/IKPIRepository';
+import type { StrategicGoal } from '../../domain/entities/StrategicGoal';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 
 export interface GetStrategyInput {
@@ -55,10 +56,7 @@ export interface KpiDTO {
 }
 
 export interface IGetStrategyUseCase {
-  execute(
-    input: GetStrategyInput,
-    context: TenantContext
-  ): Promise<Result<StrategyDTO, string>>;
+  execute(input: GetStrategyInput, context: TenantContext): Promise<Result<StrategyDTO, string>>;
 }
 
 @injectable()
@@ -72,16 +70,11 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
     private readonly kpiRepository: IKPIRepository
   ) {}
 
-  async execute(
-    input: GetStrategyInput,
-    context: TenantContext
-  ): Promise<Result<StrategyDTO, string>> {
-    // 1. Validar contexto
+  async execute(input: GetStrategyInput, context: TenantContext): Promise<Result<StrategyDTO, string>> {
     if (!context.organizationId || !context.branchId) {
       return Result.fail('Contexto de organização/filial inválido');
     }
 
-    // 2. Buscar estratégia
     const strategy = await this.strategyRepository.findById(
       input.strategyId,
       context.organizationId,
@@ -92,7 +85,6 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
       return Result.fail('Estratégia não encontrada');
     }
 
-    // 3. Montar DTO base
     const dto: StrategyDTO = {
       id: strategy.id,
       name: strategy.name,
@@ -106,14 +98,14 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
       },
     };
 
-    // 4. Incluir objetivos se solicitado
     if (input.includeGoals !== false) {
-      const { items: goals } = await this.goalRepository.findMany({
-        organizationId: context.organizationId,
-        branchId: context.branchId,
-        page: 1,
-        pageSize: 100,
-      });
+      // ✅ CORREÇÃO BUG 2+3: Usar strategyId no filtro do repository (filtro SQL, não memória)
+      // + Iterar páginas para garantir todos os goals (sem limite silencioso)
+      const goals = await this.fetchAllGoalsByStrategy(
+        strategy.id,
+        context.organizationId,
+        context.branchId
+      );
 
       dto.goals = await Promise.all(
         goals.map(async (goal) => {
@@ -128,7 +120,6 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
             status: goal.status.value,
           };
 
-          // 5. Incluir KPIs do objetivo se solicitado
           if (input.includeKpis) {
             const kpis = await this.kpiRepository.findByGoalId(
               goal.id,
@@ -153,5 +144,92 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
     }
 
     return Result.ok(dto);
+  }
+
+  /**
+   * Busca TODOS os goals de uma strategy usando PAGE PLANNING.
+   *
+   * PAGE PLANNING (enterprise-grade):
+   * 1. Fetch página 1 para obter total
+   * 2. Calcular requiredPages = ceil(total / PAGE_SIZE)
+   * 3. Definir pagesToFetch = min(requiredPages, MAX_PAGES)
+   * 4. Iterar com for (page=1; page <= pagesToFetch)
+   * 5. Se requiredPages > MAX_PAGES: FAIL EXPLICITAMENTE (Modo A - Complete or Fail)
+   *
+   * Isso garante:
+   * - Nunca "pular" a última página
+   * - Nunca truncar silenciosamente
+   * - Comportamento determinístico
+   */
+  private async fetchAllGoalsByStrategy(
+    strategyId: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<StrategicGoal[]> {
+    const PAGE_SIZE = 100;
+    const MAX_PAGES = 100; // Limite de segurança (10.000 goals máximo)
+    const allGoals: StrategicGoal[] = [];
+
+    // 1. Fetch página 1 para obter total
+    const firstPage = await this.goalRepository.findMany({
+      organizationId,
+      branchId,
+      strategyId,
+      page: 1,
+      pageSize: PAGE_SIZE,
+    });
+
+    const total = firstPage.total;
+    allGoals.push(...firstPage.items);
+
+    // 2. Calcular páginas necessárias
+    const requiredPages = Math.ceil(total / PAGE_SIZE);
+    const pagesToFetch = Math.min(requiredPages, MAX_PAGES);
+
+    // 3. Se requiredPages > MAX_PAGES: FAIL EXPLICITAMENTE (Modo A - Complete or Fail)
+    // GetStrategyQuery é backend/query interna - não pode retornar parcial sem erro
+    if (requiredPages > MAX_PAGES) {
+      const errorMsg =
+        `[GetStrategyQuery] Truncamento não permitido: strategy ${strategyId} tem ${total} goals ` +
+        `(${requiredPages} páginas), mas MAX_PAGES=${MAX_PAGES}. ` +
+        `orgId=${organizationId}, branchId=${branchId}. ` +
+        `Considere aumentar MAX_PAGES ou otimizar a query.`;
+      console.error(errorMsg);
+      // Em vez de retornar parcial silenciosamente, lançamos erro controlado
+      throw new Error(errorMsg);
+    }
+
+    // Warning se quantidade atípica (>1000 goals)
+    if (total > 1000) {
+      console.warn(
+        `[GetStrategyQuery] Strategy ${strategyId} tem ${total} goals. ` +
+          `Isso é atípico para BSC - considere verificar dados.`
+      );
+    }
+
+    // 4. Iterar páginas restantes (2 até pagesToFetch) - página 1 já foi buscada
+    for (let page = 2; page <= pagesToFetch; page++) {
+      const { items } = await this.goalRepository.findMany({
+        organizationId,
+        branchId,
+        strategyId,
+        page,
+        pageSize: PAGE_SIZE,
+      });
+
+      // Proteção contra inconsistência: página vazia antes de completar
+      if (items.length === 0) {
+        console.warn(
+          `[GetStrategyQuery] Paginação inconsistente: página ${page}/${pagesToFetch} retornou 0 items, ` +
+            `mas total=${total}. allGoals.length=${allGoals.length}. ` +
+            `strategyId=${strategyId}, orgId=${organizationId}, branchId=${branchId}.`
+        );
+        break;
+      }
+
+      allGoals.push(...items);
+    }
+
+    return allGoals;
   }
 }
