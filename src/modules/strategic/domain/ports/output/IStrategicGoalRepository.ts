@@ -9,6 +9,13 @@ import type { StrategicGoal } from '../../entities/StrategicGoal';
 export interface GoalFilter {
   organizationId: number;
   branchId: number; // NUNCA opcional (SCHEMA-003)
+
+  /**
+   * Filtra goals por strategy via perspectivas (Goal não tem coluna strategyId).
+   * O repository usa subquery: perspectiveId IN (SELECT id FROM bsc_perspective WHERE strategyId = ?)
+   */
+  strategyId?: string;
+
   perspectiveId?: string;
   parentGoalId?: string;
   cascadeLevel?: string;
