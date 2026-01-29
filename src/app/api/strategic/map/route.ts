@@ -193,7 +193,8 @@ export const GET = withDI(async (request: NextRequest) => {
       const indexInPerspective = goalsInPerspective.findIndex((g) => g.id === goal.id);
 
       const x = goal.mapPositionX ?? (indexInPerspective * 280 + 100);
-      const y = goal.mapPositionY ?? PERSPECTIVE_Y[perspCode];
+      // ✅ FIX 3: Restaurar fallback para Y position (default 800)
+      const y = goal.mapPositionY ?? (PERSPECTIVE_Y[perspCode] ?? 800);
 
       return {
         id: goal.id,
@@ -210,7 +211,8 @@ export const GET = withDI(async (request: NextRequest) => {
           status: goal.status.value,
           statusColor: goal.status.color,
           progress: Math.round(goal.progress),
-          color: PERSPECTIVE_COLORS[perspCode],
+          // ✅ FIX 3: Restaurar fallback para color (default slate-500)
+          color: PERSPECTIVE_COLORS[perspCode] ?? '#64748b',
           ownerUserId: goal.ownerUserId,
         },
       };
@@ -257,7 +259,10 @@ export const GET = withDI(async (request: NextRequest) => {
         ? {
             truncated: true,
             pagination: {
-              returnedCount: allGoals.length,
+              // ✅ FIX 2: returnedCount reflete payload real (pós-filtro)
+              returnedCount: goals.length,
+              // ✅ FIX 2: invalidFilteredCount para observabilidade
+              invalidFilteredCount: invalidGoals.length,
               total,
               pagesFetched: pagesToFetch,
               pageSize: PAGE_SIZE,

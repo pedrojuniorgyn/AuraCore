@@ -480,13 +480,16 @@ export const POST = withDI(async (request: Request) => {
 
     // Resolver perspectiveId se não informado (usa strategyId resolvido)
     if (!perspectiveId && perspectiveCode) {
+      // ✅ FIX 1: Normalizar perspectiveCode (uppercase + trim) para evitar erros de case sensitivity
+      const normalizedPerspectiveCode = perspectiveCode.trim().toUpperCase();
+
       const perspectiveRow = await db
         .select()
         .from(bscPerspectiveTable)
         .where(
           and(
             eq(bscPerspectiveTable.strategyId, resolvedStrategyId),
-            eq(bscPerspectiveTable.code, perspectiveCode)
+            eq(bscPerspectiveTable.code, normalizedPerspectiveCode)
           )
         );
 
@@ -494,7 +497,9 @@ export const POST = withDI(async (request: Request) => {
         perspectiveId = perspectiveRow[0].id;
       } else {
         return NextResponse.json(
-          { error: `Perspective not found for code ${perspectiveCode} and strategy ${resolvedStrategyId}` },
+          {
+            error: `Perspective not found for code ${perspectiveCode} (normalized: ${normalizedPerspectiveCode}) and strategy ${resolvedStrategyId}`,
+          },
           { status: 400 }
         );
       }
