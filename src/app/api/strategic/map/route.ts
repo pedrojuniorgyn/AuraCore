@@ -218,9 +218,23 @@ export const GET = withDI(async (request: NextRequest) => {
       };
     });
 
+    // ✅ FIX 4: Criar Set de IDs válidos para garantir integridade das edges
+    const validGoalIds = new Set(goals.map((g) => g.id));
+    const orphanEdges: Array<{ childId: string; parentId: string }> = [];
+
     // Construir edges (relações causa-efeito entre metas)
     const edges = goals
-      .filter((goal) => goal.parentGoalId)
+      .filter((goal) => {
+        if (!goal.parentGoalId) return false;
+        
+        // Verificar se o pai existe no conjunto de goals válidos
+        if (!validGoalIds.has(goal.parentGoalId)) {
+          orphanEdges.push({ childId: goal.id, parentId: goal.parentGoalId });
+          return false;
+        }
+        
+        return true;
+      })
       .map((goal) => ({
         id: `e-${goal.parentGoalId}-${goal.id}`,
         source: goal.parentGoalId!,
@@ -233,6 +247,18 @@ export const GET = withDI(async (request: NextRequest) => {
           color: '#94a3b8',
         },
       }));
+
+    // Registrar warnings para edges órfãs
+    if (orphanEdges.length > 0) {
+      const warnMsg =
+        `${orphanEdges.length} edge(s) órfã(s) ignorada(s) (pai não encontrado ou inválido). ` +
+        `Amostra: ${orphanEdges
+          .slice(0, 5)
+          .map((e) => `${e.parentId}->${e.childId}`)
+          .join(', ')}`;
+      console.warn(`[GET /api/strategic/map] ${warnMsg}`);
+      warnings.push(warnMsg);
+    }
 
     // Perspectivas do BSC
     const perspectives = [
