@@ -5,7 +5,7 @@
  * @module strategic/infrastructure/persistence/mappers
  */
 import { Result } from '@/shared/domain';
-import { ActionPlan, type ActionPlanStatus, type Priority } from '../../../domain/entities/ActionPlan';
+import { ActionPlan, type ActionPlanStatus, type Priority, type WhoType } from '../../../domain/entities/ActionPlan';
 import { PDCACycle } from '../../../domain/value-objects/PDCACycle';
 import type { ActionPlanRow, ActionPlanInsert } from '../schemas/action-plan.schema';
 
@@ -31,7 +31,10 @@ export class ActionPlanMapper {
       whenStart: new Date(row.whenStart),
       whenEnd: new Date(row.whenEnd),
       who: row.who,
-      whoUserId: row.whoUserId,
+      whoUserId: row.whoUserId ?? null,
+      whoType: (row.whoType as WhoType) || 'USER',
+      whoEmail: row.whoEmail ?? null,
+      whoPartnerId: row.whoPartnerId ?? null,
       how: row.how,
       howMuchAmount: row.howMuchAmount ? Number(row.howMuchAmount) : null,
       howMuchCurrency: row.howMuchCurrency ?? 'BRL',
@@ -66,7 +69,10 @@ export class ActionPlanMapper {
       whenStart: entity.whenStart,
       whenEnd: entity.whenEnd,
       who: entity.who,
-      whoUserId: entity.whoUserId,
+      whoUserId: entity.whoUserId ?? null,
+      whoType: entity.whoType,
+      whoEmail: entity.whoEmail ?? null,
+      whoPartnerId: entity.whoPartnerId ?? null,
       how: entity.how,
       howMuchAmount: entity.howMuchAmount !== null ? String(entity.howMuchAmount) : null,
       howMuchCurrency: entity.howMuchCurrency,

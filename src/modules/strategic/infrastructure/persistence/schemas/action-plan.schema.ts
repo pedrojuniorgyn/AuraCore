@@ -25,8 +25,11 @@ export const actionPlanTable = mssqlTable('strategic_action_plan', {
   whereLocation: varchar('where_location', { length: 200 }).notNull(), // Onde será feito
   whenStart: datetime2('when_start').notNull(), // Quando inicia
   whenEnd: datetime2('when_end').notNull(), // Quando termina
-  who: varchar('who', { length: 100 }).notNull(), // Nome do responsável
-  whoUserId: varchar('who_user_id', { length: 36 }).notNull(), // ID do usuário responsável
+  who: varchar('who', { length: 100 }).notNull(), // Nome do responsável (display)
+  whoUserId: varchar('who_user_id', { length: 36 }), // ID se for USER interno
+  whoType: varchar('who_type', { length: 20 }).default('USER').notNull(), // 'USER' | 'EMAIL' | 'PARTNER'
+  whoEmail: varchar('who_email', { length: 255 }), // Email se whoType = 'EMAIL'
+  whoPartnerId: varchar('who_partner_id', { length: 36 }), // ID se whoType = 'PARTNER'
   how: text('how').notNull(), // Como será feito
   howMuchAmount: decimal('how_much_amount', { precision: 18, scale: 2 }), // Quanto custa (SCHEMA-007)
   howMuchCurrency: varchar('how_much_currency', { length: 3 }).default('BRL'), // Moeda (SCHEMA-007)

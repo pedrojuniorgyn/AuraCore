@@ -9,7 +9,7 @@ import { Result } from '@/shared/domain';
 import type { TenantContext } from '@/lib/auth/context';
 import type { IActionPlanRepository } from '../../domain/ports/output/IActionPlanRepository';
 import type { IStrategicGoalRepository } from '../../domain/ports/output/IStrategicGoalRepository';
-import { ActionPlan, type Priority } from '../../domain/entities/ActionPlan';
+import { ActionPlan, type Priority, type WhoType } from '../../domain/entities/ActionPlan';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 
 export interface CreateActionPlanInput {
@@ -17,11 +17,14 @@ export interface CreateActionPlanInput {
   // 5W2H
   what: string;
   why: string;
-  whereLocation: string;
+  whereLocation?: string;
   whenStart: Date;
   whenEnd: Date;
   who: string;
-  whoUserId: string;
+  whoUserId?: string;
+  whoType?: WhoType;
+  whoEmail?: string;
+  whoPartnerId?: string;
   how: string;
   howMuchAmount?: number;
   howMuchCurrency?: string;
@@ -87,11 +90,14 @@ export class CreateActionPlanUseCase implements ICreateActionPlanUseCase {
       code,
       what: input.what,
       why: input.why,
-      whereLocation: input.whereLocation,
+      whereLocation: input.whereLocation ?? 'N/A',
       whenStart: input.whenStart,
       whenEnd: input.whenEnd,
       who: input.who,
       whoUserId: input.whoUserId,
+      whoType: input.whoType,
+      whoEmail: input.whoEmail,
+      whoPartnerId: input.whoPartnerId,
       how: input.how,
       howMuchAmount: input.howMuchAmount,
       howMuchCurrency: input.howMuchCurrency ?? 'BRL',

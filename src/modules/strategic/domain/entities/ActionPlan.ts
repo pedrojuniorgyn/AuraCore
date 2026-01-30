@@ -10,6 +10,7 @@ import { PDCACycle } from '../value-objects/PDCACycle';
 
 export type ActionPlanStatus = 'DRAFT' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'BLOCKED';
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type WhoType = 'USER' | 'EMAIL' | 'PARTNER';
 
 interface ActionPlanProps {
   organizationId: number;
@@ -23,7 +24,10 @@ interface ActionPlanProps {
   whenStart: Date;
   whenEnd: Date;
   who: string;
-  whoUserId: string;
+  whoUserId: string | null;
+  whoType: WhoType;
+  whoEmail: string | null;
+  whoPartnerId: string | null;
   how: string;
   howMuchAmount: number | null;
   howMuchCurrency: string;
@@ -56,7 +60,10 @@ interface CreateActionPlanProps {
   whenStart: Date;
   whenEnd: Date;
   who: string;
-  whoUserId: string;
+  whoUserId?: string;
+  whoType?: WhoType;
+  whoEmail?: string;
+  whoPartnerId?: string;
   how: string;
   howMuchAmount?: number;
   howMuchCurrency?: string;
@@ -86,7 +93,10 @@ export class ActionPlan extends AggregateRoot<string> {
   get whenStart(): Date { return this.props.whenStart; }
   get whenEnd(): Date { return this.props.whenEnd; }
   get who(): string { return this.props.who; }
-  get whoUserId(): string { return this.props.whoUserId; }
+  get whoUserId(): string | null { return this.props.whoUserId; }
+  get whoType(): WhoType { return this.props.whoType; }
+  get whoEmail(): string | null { return this.props.whoEmail; }
+  get whoPartnerId(): string | null { return this.props.whoPartnerId; }
   get how(): string { return this.props.how; }
   get howMuchAmount(): number | null { return this.props.howMuchAmount; }
   get howMuchCurrency(): string { return this.props.howMuchCurrency; }
@@ -126,7 +136,24 @@ export class ActionPlan extends AggregateRoot<string> {
       return Result.fail('whenEnd deve ser posterior a whenStart');
     }
     if (!props.who?.trim()) return Result.fail('who é obrigatório');
-    if (!props.whoUserId) return Result.fail('whoUserId é obrigatório');
+
+    // Validar whoType
+    const validWhoTypes: WhoType[] = ['USER', 'EMAIL', 'PARTNER'];
+    const whoType = props.whoType || 'USER';
+    if (!validWhoTypes.includes(whoType)) {
+      return Result.fail(`whoType inválido. Use: ${validWhoTypes.join(', ')}`);
+    }
+
+    // Validar consistência
+    if (whoType === 'USER' && !props.whoUserId) {
+      // Não obrigar whoUserId por retrocompatibilidade
+      console.warn('[ActionPlan] whoType=USER sem whoUserId');
+    }
+
+    if (whoType === 'EMAIL' && !props.whoEmail) {
+      return Result.fail('whoEmail é obrigatório quando whoType é EMAIL');
+    }
+
     if (!props.how?.trim()) return Result.fail('how é obrigatório');
     if (!props.createdBy) return Result.fail('createdBy é obrigatório');
 
@@ -144,7 +171,10 @@ export class ActionPlan extends AggregateRoot<string> {
       whenStart: props.whenStart,
       whenEnd: props.whenEnd,
       who: props.who.trim(),
-      whoUserId: props.whoUserId,
+      whoUserId: props.whoUserId ?? null,
+      whoType: props.whoType || 'USER',
+      whoEmail: props.whoEmail ?? null,
+      whoPartnerId: props.whoPartnerId ?? null,
       how: props.how.trim(),
       howMuchAmount: props.howMuchAmount ?? null,
       howMuchCurrency: props.howMuchCurrency ?? 'BRL',
@@ -259,7 +289,10 @@ export class ActionPlan extends AggregateRoot<string> {
       whenStart: new Date(),
       whenEnd: props.newWhenEnd,
       who: props.newWho ?? this.who,
-      whoUserId: props.newWhoUserId ?? this.whoUserId,
+      whoUserId: props.newWhoUserId ?? this.whoUserId ?? undefined,
+      whoType: this.whoType,
+      whoEmail: this.whoEmail ?? undefined,
+      whoPartnerId: this.whoPartnerId ?? undefined,
       how: this.how,
       howMuchAmount: this.howMuchAmount ?? undefined,
       howMuchCurrency: this.howMuchCurrency,

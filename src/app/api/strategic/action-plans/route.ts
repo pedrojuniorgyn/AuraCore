@@ -37,10 +37,22 @@ const createSchema = z.object({
   ).transform((s) => new Date(s)),
   who: z.string().trim().min(1, 'Field "who" is required'),
   whoUserId: z.string().trim().uuid().or(z.string().trim().min(1)).optional(),
+  whoType: z.enum(['USER', 'EMAIL', 'PARTNER']).default('USER'),
+  whoEmail: z.string().email().optional(),
+  whoPartnerId: z.string().optional(),
   how: z.string().trim().min(1, 'Field "how" is required'),
   howMuchAmount: z.number().optional(),
   howMuchCurrency: z.string().trim().length(3).default('BRL'),
   priority: prioritySchema.default('MEDIUM'),
+}).refine((data) => {
+  // Validar consistência whoType
+  if (data.whoType === 'EMAIL' && !data.whoEmail) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'whoEmail é obrigatório quando whoType é EMAIL',
+  path: ['whoEmail'],
 });
 
 // ✅ S1.1 Batch 3: Schema de query
