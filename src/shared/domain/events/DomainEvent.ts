@@ -57,3 +57,24 @@ export function createDomainEvent<TPayload>(
     ...params,
   };
 }
+
+/**
+ * Base para implementar Domain Events (classe abstrata)
+ * Mantida para retrocompatibilidade com módulos existentes
+ * 
+ * @deprecated Use createDomainEvent() para novos eventos
+ */
+export abstract class BaseDomainEvent implements DomainEvent {
+  readonly eventId: string;
+  readonly occurredAt: Date;
+
+  constructor(
+    readonly aggregateId: string,
+    readonly aggregateType: string,
+    readonly eventType: string,
+    readonly payload: Record<string, unknown>
+  ) {
+    this.eventId = globalThis.crypto.randomUUID();
+    this.occurredAt = new Date();
+  }
+}

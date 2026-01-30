@@ -13,7 +13,7 @@ import type { IEventPublisher, EventHandler } from '../../domain/ports/IEventPub
 @injectable()
 export class InMemoryEventPublisher implements IEventPublisher {
   private handlers: Map<string, Set<EventHandler>> = new Map();
-  private eventLog: DomainEvent[] = [];
+  private eventLog: DomainEvent<unknown>[] = [];
   private readonly maxLogSize = 1000;
 
   async publish<T>(event: DomainEvent<T>): Promise<void> {
@@ -74,7 +74,7 @@ export class InMemoryEventPublisher implements IEventPublisher {
   /**
    * Obtém log de eventos (útil para debugging/auditoria)
    */
-  getEventLog(): DomainEvent[] {
+  getEventLog(): DomainEvent<unknown>[] {
     return [...this.eventLog];
   }
 
@@ -85,7 +85,7 @@ export class InMemoryEventPublisher implements IEventPublisher {
     this.eventLog = [];
   }
 
-  private logEvent(event: DomainEvent): void {
+  private logEvent(event: DomainEvent<unknown>): void {
     this.eventLog.push(event);
 
     // Manter apenas os últimos N eventos

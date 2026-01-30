@@ -154,6 +154,10 @@ export class ActionPlan extends AggregateRoot<string> {
       return Result.fail('whoEmail é obrigatório quando whoType é EMAIL');
     }
 
+    if (whoType === 'PARTNER' && !props.whoPartnerId) {
+      return Result.fail('whoPartnerId é obrigatório quando whoType é PARTNER');
+    }
+
     if (!props.how?.trim()) return Result.fail('how é obrigatório');
     if (!props.createdBy) return Result.fail('createdBy é obrigatório');
 
