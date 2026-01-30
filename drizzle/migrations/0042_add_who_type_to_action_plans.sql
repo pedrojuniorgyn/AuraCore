@@ -40,5 +40,5 @@ BEGIN
 END
 GO
 
-PRINT 'Migration 0030 completed: who_type fields added to action_plans';
+PRINT 'Migration 0042 completed: who_type fields added to action_plans';
 GO

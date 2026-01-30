@@ -145,10 +145,7 @@ export class ActionPlan extends AggregateRoot<string> {
     }
 
     // Validar consistência
-    if (whoType === 'USER' && !props.whoUserId) {
-      // Não obrigar whoUserId por retrocompatibilidade
-      console.warn('[ActionPlan] whoType=USER sem whoUserId');
-    }
+    // Nota: whoUserId não é obrigatório por retrocompatibilidade quando whoType=USER
 
     if (whoType === 'EMAIL' && !props.whoEmail) {
       return Result.fail('whoEmail é obrigatório quando whoType é EMAIL');

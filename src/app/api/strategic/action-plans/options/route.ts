@@ -59,6 +59,7 @@ export async function GET() {
     // ========================================
     // TODO: Refatorar para usar IUserRepository quando disponível
     let users: Array<{ id: string; name: string; email: string }> = [];
+    let usersFromDb = false;
     try {
       // Query direta na tabela de usuários
       const usersResult = await db.execute<{
@@ -87,6 +88,7 @@ export async function GET() {
         name: row.name || row.email,
         email: row.email,
       }));
+      usersFromDb = true;
     } catch (error) {
       console.warn('[action-plans/options] Error fetching users:', error);
       // Fallback: tentar buscar do contexto da sessão pelo menos
@@ -117,6 +119,7 @@ export async function GET() {
     // 4. BUSCAR FILIAIS DO TENANT
     // ========================================
     let branches: Array<{ id: string; name: string }> = [];
+    let branchesFromDb = false;
     try {
       const branchResult = await db.execute<{ id: number; name: string }>(sql`
         SELECT id, name
@@ -135,6 +138,7 @@ export async function GET() {
         id: String(row.id),
         name: row.name,
       }));
+      branchesFromDb = true;
     } catch (error) {
       console.warn('[action-plans/options] Error fetching branches:', error);
       // Fallback com filial atual
@@ -151,9 +155,9 @@ export async function GET() {
       branches,
       // Flag para UI saber se dados são reais ou fallback
       _meta: {
-        usersSource: users.length > 1 ? 'database' : 'fallback',
+        usersSource: usersFromDb ? 'database' : 'fallback',
         departmentsSource: 'fallback', // Sempre fallback até criar tabela
-        branchesSource: branches.length > 1 || branches[0]?.id !== String(branchId) ? 'database' : 'fallback',
+        branchesSource: branchesFromDb ? 'database' : 'fallback',
       },
     });
   } catch (error) {
