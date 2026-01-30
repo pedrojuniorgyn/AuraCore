@@ -4,11 +4,16 @@
  * 
  * @module app/api/strategic
  */
+import 'reflect-metadata';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { container } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { ControlItem } from '@/modules/strategic/domain/entities/ControlItem';
+import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
+import type { IControlItemRepository } from '@/modules/strategic/domain/ports/output/IControlItemRepository';
+import '@/modules/strategic/infrastructure/di/StrategicModule';
 
 const createControlItemSchema = z.object({
   code: z.string().min(1).max(20),
@@ -27,22 +32,50 @@ const createControlItemSchema = z.object({
 // GET /api/strategic/control-items
 export async function GET(request: NextRequest) {
   try {
-    await getTenantContext(); // Validates auth
+    const context = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
     const processArea = searchParams.get('processArea') ?? undefined;
-    const status = searchParams.get('status') ?? undefined;
+    const status = searchParams.get('status') as 'ACTIVE' | 'INACTIVE' | 'UNDER_REVIEW' | undefined;
+    const responsibleUserId = searchParams.get('responsibleUserId') ?? undefined;
     const page = parseInt(searchParams.get('page') ?? '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') ?? '20', 10);
 
-    // TODO: Implementar DrizzleControlItemRepository
-    // Por enquanto, retorna lista vazia
+    const repository = container.resolve<IControlItemRepository>(
+      STRATEGIC_TOKENS.ControlItemRepository
+    );
+
+    const result = await repository.findAll(
+      context.organizationId,
+      context.branchId,
+      { processArea, status, responsibleUserId },
+      page,
+      pageSize
+    );
+
     return NextResponse.json({
-      items: [],
-      total: 0,
+      items: result.items.map(item => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        description: item.description,
+        processArea: item.processArea,
+        responsibleUserId: item.responsibleUserId,
+        measurementFrequency: item.measurementFrequency,
+        unit: item.unit,
+        targetValue: item.targetValue,
+        currentValue: item.currentValue,
+        upperLimit: item.upperLimit,
+        lowerLimit: item.lowerLimit,
+        kpiId: item.kpiId,
+        status: item.status,
+        isWithinLimits: item.isWithinLimits(),
+        isOnTarget: item.isOnTarget(),
+      })),
+      total: result.total,
       page,
       pageSize,
-      filters: { processArea, status },
+      filters: { processArea, status, responsibleUserId },
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
@@ -63,6 +96,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Validation failed', details: validation.error.flatten() },
         { status: 400 }
+      );
+    }
+
+    // Verificar se código já existe
+    const repository = container.resolve<IControlItemRepository>(
+      STRATEGIC_TOKENS.ControlItemRepository
+    );
+
+    const existing = await repository.findByCode(
+      validation.data.code,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (existing) {
+      return NextResponse.json(
+        { error: `Item de controle com código ${validation.data.code} já existe` },
+        { status: 409 }
       );
     }
 
@@ -88,8 +139,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: controlItemResult.error }, { status: 400 });
     }
 
-    // TODO: Persistir via repository
     const entity = controlItemResult.value;
+
+    // Persistir via repository
+    const saveResult = await repository.save(entity);
+
+    if (Result.isFail(saveResult)) {
+      return NextResponse.json({ error: saveResult.error }, { status: 500 });
+    }
 
     return NextResponse.json({
       id: entity.id,
