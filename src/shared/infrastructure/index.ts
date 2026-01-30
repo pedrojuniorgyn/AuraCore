@@ -10,3 +10,5 @@ export * from './docling';
 export * from './audit';
 export * from './retention';
 export * from './http';
+export * from './events';
+export * from './persistence';
