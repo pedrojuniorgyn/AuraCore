@@ -9,6 +9,7 @@ export const TOKENS = {
   EventDispatcher: Symbol('EventDispatcher'),
   UuidGenerator: Symbol('UuidGenerator'),
   Logger: Symbol('Logger'),
+  UnitOfWork: Symbol('UnitOfWork'),
 
   // Financial Module - Repositories & Services
   PayableRepository: Symbol('PayableRepository'),
