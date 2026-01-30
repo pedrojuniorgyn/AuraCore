@@ -45,7 +45,7 @@ const createSchema = z.object({
   howMuchCurrency: z.string().trim().length(3).default('BRL'),
   priority: prioritySchema.default('MEDIUM'),
 }).refine((data) => {
-  // Validar consistência whoType
+  // Validar consistência whoType - EMAIL requer whoEmail
   if (data.whoType === 'EMAIL' && !data.whoEmail) {
     return false;
   }
@@ -53,6 +53,15 @@ const createSchema = z.object({
 }, {
   message: 'whoEmail é obrigatório quando whoType é EMAIL',
   path: ['whoEmail'],
+}).refine((data) => {
+  // Validar consistência whoType - PARTNER requer whoPartnerId
+  if (data.whoType === 'PARTNER' && !data.whoPartnerId) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'whoPartnerId é obrigatório quando whoType é PARTNER',
+  path: ['whoPartnerId'],
 });
 
 // ✅ S1.1 Batch 3: Schema de query
