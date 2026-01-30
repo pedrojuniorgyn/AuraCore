@@ -35,20 +35,25 @@ export function createMockNextRequest(
     url.searchParams.set(key, value);
   }
 
-  // Construir init do request
-  const init: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-  };
+  // Construir headers
+  const requestHeaders = new Headers({
+    'Content-Type': 'application/json',
+    ...headers,
+  });
 
+  // Construir NextRequest diretamente para evitar incompatibilidade de tipos RequestInit
   if (body && method !== 'GET') {
-    init.body = JSON.stringify(body);
+    return new NextRequest(url, {
+      method,
+      headers: requestHeaders,
+      body: JSON.stringify(body),
+    });
   }
 
-  return new NextRequest(url, init);
+  return new NextRequest(url, {
+    method,
+    headers: requestHeaders,
+  });
 }
 
 /**

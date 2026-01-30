@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { COFINSCalculator } from '@/modules/fiscal/domain/tax/calculators/COFINSCalculator';
 import { Aliquota } from '@/modules/fiscal/domain/tax/value-objects';
 import { Money, Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('COFINSCalculator', () => {
   const calculator = new COFINSCalculator();
@@ -71,12 +72,12 @@ describe('COFINSCalculator', () => {
 
   describe('getDefaultRate', () => {
     it('should return correct default rate for cumulativo', () => {
-      const rate = COFINSCalculator.getDefaultRate('CUMULATIVO');
+      const rate = expectOk(COFINSCalculator.getDefaultRate('CUMULATIVO'));
       expect(rate.percentual).toBe(3.0);
     });
 
     it('should return correct default rate for não cumulativo', () => {
-      const rate = COFINSCalculator.getDefaultRate('NAO_CUMULATIVO');
+      const rate = expectOk(COFINSCalculator.getDefaultRate('NAO_CUMULATIVO'));
       expect(rate.percentual).toBe(7.6);
     });
   });

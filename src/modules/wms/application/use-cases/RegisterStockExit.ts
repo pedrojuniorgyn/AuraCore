@@ -122,7 +122,7 @@ export class RegisterStockExit implements IRegisterStockExit {
       quantity: quantityResult.value.value,
       unit: quantityResult.value.unit,
       unitCost: stockItem.unitCost.amount,
-      totalCost: movementResult.value.totalCost.amount,
+      totalCost: movementResult.value.getTotalCost().value.amount,
       currency: stockItem.unitCost.currency,
       remainingQuantity: stockItem.quantity.value,
       executedAt: movementResult.value.executedAt

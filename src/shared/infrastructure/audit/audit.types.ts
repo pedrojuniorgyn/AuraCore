@@ -10,7 +10,7 @@
 /**
  * Operações auditáveis
  */
-export type AuditOperation = 'INSERT' | 'UPDATE' | 'DELETE';
+export type AuditOperation = 'INSERT' | 'UPDATE' | 'DELETE' | 'SOFT_DELETE';
 
 /**
  * Contexto da auditoria - quem/quando/onde

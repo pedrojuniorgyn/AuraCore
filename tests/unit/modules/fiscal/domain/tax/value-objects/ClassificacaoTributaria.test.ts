@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ClassificacaoTributaria } from '@/modules/fiscal/domain/tax/value-objects/ClassificacaoTributaria';
 import { Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('ClassificacaoTributaria', () => {
   describe('create', () => {
@@ -92,13 +93,13 @@ describe('ClassificacaoTributaria', () => {
 
   describe('static factories', () => {
     it('should create tributação integral via static method', () => {
-      const classif = ClassificacaoTributaria.tributacaoIntegral();
+      const classif = expectOk(ClassificacaoTributaria.tributacaoIntegral());
       expect(classif.code).toBe('10100');
       expect(classif.isTributacaoIntegral).toBe(true);
     });
 
     it('should create isenção via static method', () => {
-      const classif = ClassificacaoTributaria.isencao();
+      const classif = expectOk(ClassificacaoTributaria.isencao());
       expect(classif.code).toBe('30100');
       expect(classif.isIsento).toBe(true);
     });

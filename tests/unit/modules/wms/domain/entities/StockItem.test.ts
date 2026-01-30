@@ -44,7 +44,7 @@ describe('StockItem', () => {
     it('should calculate total cost correctly', () => {
       const stockItem = createValidStockItem().value;
       
-      expect(stockItem.totalCost.amount).toBe(1050); // 100 * 10.50
+      expect(stockItem.getTotalCost().value.amount).toBe(1050); // 100 * 10.50
     });
 
     it('should fail for negative quantity', () => {

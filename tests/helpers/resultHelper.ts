@@ -5,6 +5,7 @@
  * @module tests/helpers
  */
 import { Result } from '@/shared/domain';
+import { expect } from 'vitest';
 
 /**
  * Unwrap Result ou falha o teste com mensagem clara

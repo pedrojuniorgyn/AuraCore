@@ -6,15 +6,16 @@ import { AliquotaIBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaI
 import { AliquotaCBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaCBS';
 import { Money } from '@/shared/domain';
 import { Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('IBSCBSGroup', () => {
   const createValidProps = (): import('@/modules/fiscal/domain/tax/value-objects/IBSCBSGroup').IBSCBSGroupProps => ({
-    cst: CSTIbsCbs.tributacaoNormal(),
-    classificationCode: ClassificacaoTributaria.tributacaoIntegral(),
+    cst: expectOk(CSTIbsCbs.tributacaoNormal()),
+    classificationCode: expectOk(ClassificacaoTributaria.tributacaoIntegral()),
     baseValue: Money.create(1000, 'BRL').value as Money,
     ibsUfRate: AliquotaIBS.fromPercentage(0.1).value as AliquotaIBS,
     ibsUfValue: Money.create(1, 'BRL').value as Money, // 1000 * 0.1% = 1
-    ibsMunRate: AliquotaIBS.zero(),
+    ibsMunRate: expectOk(AliquotaIBS.zero()),
     ibsMunValue: Money.create(0, 'BRL').value as Money,
     cbsRate: AliquotaCBS.fromPercentage(0.9).value as AliquotaCBS,
     cbsValue: Money.create(9, 'BRL').value as Money, // 1000 * 0.9% = 9
@@ -40,13 +41,13 @@ describe('IBSCBSGroup', () => {
 
       const group = IBSCBSGroup.create(props).value as IBSCBSGroup;
 
-      expect(group.totalIbs.amount).toBeCloseTo(1.5);
+      expect(expectOk(group.getTotalIbs()).amount).toBeCloseTo(1.5);
     });
 
     it('should calculate total tax correctly', () => {
       const group = IBSCBSGroup.create(createValidProps()).value as IBSCBSGroup;
 
-      expect(group.totalTax.amount).toBeCloseTo(10); // 1 + 0 + 9
+      expect(expectOk(group.getTotalTax()).amount).toBeCloseTo(10); // 1 + 0 + 9
     });
 
     it('should fail with negative base value', () => {
@@ -106,7 +107,7 @@ describe('IBSCBSGroup', () => {
     it('should fail with negative IBS UF value', () => {
       const props = createValidProps();
       props.ibsUfValue = Money.create(-1, 'BRL').value as Money;
-      props.ibsUfRate = AliquotaIBS.zero();
+      props.ibsUfRate = expectOk(AliquotaIBS.zero());
 
       const result = IBSCBSGroup.create(props);
 
@@ -117,7 +118,7 @@ describe('IBSCBSGroup', () => {
     it('should fail with negative CBS value', () => {
       const props = createValidProps();
       props.cbsValue = Money.create(-1, 'BRL').value as Money;
-      props.cbsRate = AliquotaCBS.zero();
+      props.cbsRate = expectOk(AliquotaCBS.zero());
 
       const result = IBSCBSGroup.create(props);
 
@@ -351,7 +352,7 @@ describe('IBSCBSGroup', () => {
     it('should return false for different CST', () => {
       const props1 = createValidProps();
       const props2 = createValidProps();
-      props2.cst = CSTIbsCbs.isencao();
+      props2.cst = expectOk(CSTIbsCbs.isencao());
 
       const group1 = IBSCBSGroup.create(props1).value as IBSCBSGroup;
       const group2 = IBSCBSGroup.create(props2).value as IBSCBSGroup;

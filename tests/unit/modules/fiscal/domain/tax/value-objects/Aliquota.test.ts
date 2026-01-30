@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Aliquota } from '@/modules/fiscal/domain/tax/value-objects/Aliquota';
 import { Money, Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('Aliquota', () => {
   describe('fromPercentage', () => {
@@ -55,7 +56,7 @@ describe('Aliquota', () => {
 
   describe('zero', () => {
     it('should create zero aliquota', () => {
-      const aliquota = Aliquota.zero();
+      const aliquota = expectOk(Aliquota.zero());
 
       expect(aliquota.isZero).toBe(true);
       expect(aliquota.percentual).toBe(0);
@@ -78,17 +79,11 @@ describe('Aliquota', () => {
     });
 
     it('should apply zero aliquota', () => {
-      const aliquota = Aliquota.zero();
-      const value = Money.create(1000).value;
+      const aliquota = expectOk(Aliquota.zero());
+      const value = expectOk(Money.create(1000));
 
-      if (value) {
-        const result = aliquota.applyTo(value);
-
-        expect(Result.isOk(result)).toBe(true);
-        if (Result.isOk(result)) {
-          expect(result.value.amount).toBe(0);
-        }
-      }
+      const result = expectOk(aliquota.applyTo(value));
+      expect(result.amount).toBe(0);
     });
   });
 

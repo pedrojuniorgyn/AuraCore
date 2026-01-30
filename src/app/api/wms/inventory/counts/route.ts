@@ -14,7 +14,7 @@ import sql from "mssql";
 const createInventoryCountSchema = z.object({
   warehouseId: z.number().int().positive('ID do armazém obrigatório'),
   countType: z.enum(['FULL', 'CYCLE', 'SPOT'], { 
-    errorMap: () => ({ message: 'Tipo deve ser FULL, CYCLE ou SPOT' })
+    message: 'Tipo deve ser FULL, CYCLE ou SPOT'
   }),
   notes: z.string().max(500).optional(),
 });

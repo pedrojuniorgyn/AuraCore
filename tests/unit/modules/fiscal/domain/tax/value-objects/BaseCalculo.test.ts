@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BaseCalculo } from '@/modules/fiscal/domain/tax/value-objects/BaseCalculo';
 import { Aliquota } from '@/modules/fiscal/domain/tax/value-objects/Aliquota';
 import { Money, Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('BaseCalculo', () => {
   describe('create', () => {
@@ -44,7 +45,7 @@ describe('BaseCalculo', () => {
           expect(result.value.originalValue.amount).toBe(1000);
           expect(result.value.reducedValue.amount).toBe(800);
           expect(result.value.hasReduction).toBe(true);
-          expect(result.value.reductionAmount.amount).toBe(200);
+          expect(expectOk(result.value.getReductionAmount()).amount).toBe(200);
         }
       }
     });
@@ -62,7 +63,7 @@ describe('BaseCalculo', () => {
 
     it('should handle zero reduction', () => {
       const value = Money.create(1000).value;
-      const reduction = Aliquota.zero();
+      const reduction = expectOk(Aliquota.zero());
 
       if (value) {
         const result = BaseCalculo.createWithReduction(value, reduction);

@@ -30,7 +30,8 @@ import 'reflect-metadata';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withPermission } from '@/lib/auth/api-guard';
-import { auditService, AUDITABLE_ENTITIES, type AuditableEntity, type AuditOperation } from '@/shared/infrastructure/audit';
+import { auditService, AUDITABLE_ENTITIES, type AuditableEntity } from '@/shared/infrastructure/audit';
+import { type AuditOperation } from '@/shared/infrastructure/audit/audit.types';
 
 export async function GET(request: NextRequest) {
   return withPermission(request, 'admin.audit', async (_user, ctx) => {

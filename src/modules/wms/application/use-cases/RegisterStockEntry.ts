@@ -164,7 +164,7 @@ export class RegisterStockEntry implements IRegisterStockEntry {
       quantity: quantityResult.value.value,
       unit: quantityResult.value.unit,
       unitCost: unitCostResult.value.amount,
-      totalCost: movementResult.value.totalCost.amount,
+      totalCost: movementResult.value.getTotalCost().value.amount,
       currency: unitCostResult.value.currency,
       executedAt: movementResult.value.executedAt
     });

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { IPICalculator } from '@/modules/fiscal/domain/tax/calculators/IPICalculator';
 import { Aliquota } from '@/modules/fiscal/domain/tax/value-objects';
 import { Money, Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('IPICalculator', () => {
   const calculator = new IPICalculator();
@@ -37,7 +38,7 @@ describe('IPICalculator', () => {
     const result = calculator.calculate({
       baseValue: Money.create(1000).value!,
       cstIPI: '50',
-      aliquota: Aliquota.zero(),
+      aliquota: expectOk(Aliquota.zero()),
       isento: false,
     });
 

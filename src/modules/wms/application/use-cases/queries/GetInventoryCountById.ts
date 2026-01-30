@@ -39,7 +39,7 @@ export class GetInventoryCountById implements IGetInventoryCountById {
       systemUnit: count.systemQuantity.unit,
       countedQuantity: count.countedQuantity?.value ?? null,
       countedUnit: count.countedQuantity?.unit ?? null,
-      difference: count.difference?.value ?? null,
+      difference: (count.getDifference()?.value ?? null) as number | null,
       status: count.status.value,
       adjustmentMovementId: count.adjustmentMovementId ?? null,
       countedBy: count.countedBy ?? null,

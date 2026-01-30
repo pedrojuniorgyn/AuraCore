@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CSTIbsCbs } from '@/modules/fiscal/domain/tax/value-objects/CSTIbsCbs';
 import { Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('CSTIbsCbs', () => {
   describe('create', () => {
@@ -110,12 +111,12 @@ describe('CSTIbsCbs', () => {
 
   describe('static factories', () => {
     it('should create tributação normal via static method', () => {
-      const cst = CSTIbsCbs.tributacaoNormal();
+      const cst = expectOk(CSTIbsCbs.tributacaoNormal());
       expect(cst.code).toBe('00');
     });
 
     it('should create isenção via static method', () => {
-      const cst = CSTIbsCbs.isencao();
+      const cst = expectOk(CSTIbsCbs.isencao());
       expect(cst.code).toBe('40');
     });
   });

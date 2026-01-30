@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { AliquotaIBS } from '@/modules/fiscal/domain/tax/value-objects/AliquotaIBS';
 import { Money } from '@/shared/domain';
 import { Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('AliquotaIBS', () => {
   describe('fromPercentage', () => {
@@ -70,7 +71,7 @@ describe('AliquotaIBS', () => {
     });
 
     it('should create test rate via static method', () => {
-      const aliquota = AliquotaIBS.testRate();
+      const aliquota = expectOk(AliquotaIBS.testRate());
       expect(aliquota.percentual).toBe(0.1);
       expect(aliquota.isTestRate).toBe(true);
     });
@@ -83,7 +84,7 @@ describe('AliquotaIBS', () => {
     });
 
     it('should create standard rate via static method', () => {
-      const aliquota = AliquotaIBS.standardRate();
+      const aliquota = expectOk(AliquotaIBS.standardRate());
       expect(aliquota.percentual).toBe(17.7);
       expect(aliquota.isStandardRate).toBe(true);
     });
@@ -91,7 +92,7 @@ describe('AliquotaIBS', () => {
 
   describe('static factories', () => {
     it('should create zero aliquota via static method', () => {
-      const aliquota = AliquotaIBS.zero();
+      const aliquota = expectOk(AliquotaIBS.zero());
       expect(aliquota.percentual).toBe(0);
       expect(aliquota.isZero).toBe(true);
     });

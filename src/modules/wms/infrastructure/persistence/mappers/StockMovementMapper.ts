@@ -87,8 +87,14 @@ export class StockMovementMapper {
       quantityUnit: movement.quantity.unit,
       unitCostAmount: String(movement.unitCost.amount),
       unitCostCurrency: movement.unitCost.currency,
-      totalCostAmount: String(movement.totalCost.amount),
-      totalCostCurrency: movement.totalCost.currency,
+      // Cache getTotalCost() result to avoid redundant computation
+      ...(() => {
+        const totalCost = movement.getTotalCost().value;
+        return {
+          totalCostAmount: String(totalCost.amount),
+          totalCostCurrency: totalCost.currency,
+        };
+      })(),
       referenceType: movement.referenceType ?? null,
       referenceId: movement.referenceId ?? null,
       reason: movement.reason ?? null,

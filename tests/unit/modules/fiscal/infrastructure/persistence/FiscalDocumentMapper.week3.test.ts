@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Result, Money } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../helpers/resultHelper';
 import { FiscalDocumentMapper } from '@/modules/fiscal/infrastructure/persistence/FiscalDocumentMapper';
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import { TaxRegime } from '@/modules/fiscal/domain/tax/value-objects/TaxRegime';
@@ -18,7 +19,7 @@ describe('FiscalDocumentMapper - Week 3 (Tax Reform Fields)', () => {
         issuerCnpj: '12345678000195',
         issuerName: 'Empresa Teste',
         issueDate: new Date(2027, 0, 15),
-        taxRegime: TaxRegime.transition(),
+        taxRegime: expectOk(TaxRegime.transition()),
       });
 
       expect(Result.isOk(documentResult)).toBe(true);

@@ -124,7 +124,7 @@ export type ListCteQuery = z.infer<typeof ListCteQuerySchema>;
  * Ref: Manual MDFe 3.0 - SEFAZ
  */
 export const CreateMdfeSchema = z.object({
-  tripId: z.string().uuid('ID da viagem deve ser um UUID válido'),
+  tripId: z.number().int().positive('ID da viagem deve ser um número positivo'),
   cteIds: z.array(z.string().uuid('ID do CTe deve ser um UUID válido')).optional().default([]),
   modal: z.enum(['1', '2', '3', '4'], {
     message: 'Modal inválido. Use: 1=Rodoviário, 2=Aéreo, 3=Aquaviário, 4=Ferroviário'

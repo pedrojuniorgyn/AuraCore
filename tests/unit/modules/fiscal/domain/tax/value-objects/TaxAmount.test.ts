@@ -3,6 +3,7 @@ import { TaxAmount } from '@/modules/fiscal/domain/tax/value-objects/TaxAmount';
 import { BaseCalculo } from '@/modules/fiscal/domain/tax/value-objects/BaseCalculo';
 import { Aliquota } from '@/modules/fiscal/domain/tax/value-objects/Aliquota';
 import { Money, Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('TaxAmount', () => {
   describe('calculate', () => {
@@ -25,7 +26,7 @@ describe('TaxAmount', () => {
     it('should calculate zero tax for zero aliquota', () => {
       const value = Money.create(1000).value;
       const base = BaseCalculo.create(value!).value;
-      const aliquota = Aliquota.zero();
+      const aliquota = expectOk(Aliquota.zero());
 
       if (base) {
         const result = TaxAmount.calculate(base, aliquota);
@@ -107,7 +108,7 @@ describe('TaxAmount', () => {
       const base = BaseCalculo.create(value!).value;
 
       if (base) {
-        const taxAmount = TaxAmount.zero(base);
+        const taxAmount = expectOk(TaxAmount.zero(base));
 
         expect(taxAmount.isZero).toBe(true);
         expect(taxAmount.value.amount).toBe(0);
@@ -125,7 +126,7 @@ describe('TaxAmount', () => {
         const taxAmount = TaxAmount.calculate(base, aliquota).value;
 
         if (taxAmount) {
-          expect(taxAmount.effectiveRate.percentual).toBeCloseTo(18);
+          expect(expectOk(taxAmount.getEffectiveRate()).percentual).toBeCloseTo(18);
         }
       }
     });
@@ -141,7 +142,7 @@ describe('TaxAmount', () => {
 
         if (taxAmount) {
           // Effective rate = 144 / 1000 = 14.4%
-          expect(taxAmount.effectiveRate.percentual).toBeCloseTo(14.4);
+          expect(expectOk(taxAmount.getEffectiveRate()).percentual).toBeCloseTo(14.4);
         }
       }
     });

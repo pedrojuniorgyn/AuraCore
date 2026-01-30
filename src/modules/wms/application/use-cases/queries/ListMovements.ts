@@ -76,7 +76,7 @@ export class ListMovements implements IListMovements {
       unit: movement.quantity.unit,
       unitCost: movement.unitCost.amount,
       currency: movement.unitCost.currency,
-      totalCost: movement.totalCost.amount,
+      totalCost: movement.getTotalCost().value.amount,
       reason: movement.reason ?? null,
       executedBy: movement.executedBy,
       executedAt: movement.executedAt,

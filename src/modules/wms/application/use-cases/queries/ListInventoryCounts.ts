@@ -67,7 +67,7 @@ export class ListInventoryCounts implements IListInventoryCounts {
       systemQuantity: count.systemQuantity.value,
       systemUnit: count.systemQuantity.unit,
       countedQuantity: count.countedQuantity?.value ?? null,
-      difference: count.difference?.value ?? null,
+      difference: (count.getDifference()?.value ?? null) as number | null,
       status: count.status.value,
       countedBy: count.countedBy ?? null,
       countedAt: count.countedAt ?? null,

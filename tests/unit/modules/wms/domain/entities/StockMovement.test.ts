@@ -117,7 +117,7 @@ describe('StockMovement', () => {
       const type = MovementType.entry().value;
       const movement = createValidMovement(type, undefined, 'loc-001').value;
       
-      expect(movement.totalCost.amount).toBe(500); // 50 * 10
+      expect(movement.getTotalCost().value.amount).toBe(500); // 50 * 10
     });
   });
 

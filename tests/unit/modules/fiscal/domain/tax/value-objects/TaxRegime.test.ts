@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TaxRegime, TaxRegimeType } from '@/modules/fiscal/domain/tax/value-objects/TaxRegime';
 import { Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('TaxRegime', () => {
   describe('create', () => {
@@ -80,26 +81,26 @@ describe('TaxRegime', () => {
 
   describe('static factories', () => {
     it('should create current regime via static method', () => {
-      const regime = TaxRegime.current();
+      const regime = expectOk(TaxRegime.current());
       expect(regime.isCurrent).toBe(true);
     });
 
     it('should create transition regime via static method', () => {
-      const regime = TaxRegime.transition();
+      const regime = expectOk(TaxRegime.transition());
       expect(regime.isTransition).toBe(true);
     });
 
     it('should create new regime via static method', () => {
-      const regime = TaxRegime.new();
+      const regime = expectOk(TaxRegime.new());
       expect(regime.isNew).toBe(true);
     });
   });
 
   describe('description', () => {
     it('should return correct description for each regime', () => {
-      const current = TaxRegime.current();
-      const transition = TaxRegime.transition();
-      const newRegime = TaxRegime.new();
+      const current = expectOk(TaxRegime.current());
+      const transition = expectOk(TaxRegime.transition());
+      const newRegime = expectOk(TaxRegime.new());
 
       expect(current.description).toContain('Sistema Atual');
       expect(transition.description).toContain('Transição');
@@ -109,15 +110,15 @@ describe('TaxRegime', () => {
 
   describe('equals', () => {
     it('should return true for same regime type', () => {
-      const regime1 = TaxRegime.current();
-      const regime2 = TaxRegime.current();
+      const regime1 = expectOk(TaxRegime.current());
+      const regime2 = expectOk(TaxRegime.current());
 
       expect(regime1.equals(regime2)).toBe(true);
     });
 
     it('should return false for different regime types', () => {
-      const current = TaxRegime.current();
-      const transition = TaxRegime.transition();
+      const current = expectOk(TaxRegime.current());
+      const transition = expectOk(TaxRegime.transition());
 
       expect(current.equals(transition)).toBe(false);
     });

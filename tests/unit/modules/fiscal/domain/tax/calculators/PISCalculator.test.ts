@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { PISCalculator } from '@/modules/fiscal/domain/tax/calculators/PISCalculator';
 import { Aliquota } from '@/modules/fiscal/domain/tax/value-objects';
 import { Money, Result } from '@/shared/domain';
+import { expectOk, expectFail } from '../../../../../../helpers/resultHelper';
 
 describe('PISCalculator', () => {
   const calculator = new PISCalculator();
@@ -71,12 +72,12 @@ describe('PISCalculator', () => {
 
   describe('getDefaultRate', () => {
     it('should return correct default rate for cumulativo', () => {
-      const rate = PISCalculator.getDefaultRate('CUMULATIVO');
+      const rate = expectOk(PISCalculator.getDefaultRate('CUMULATIVO'));
       expect(rate.percentual).toBe(0.65);
     });
 
     it('should return correct default rate for não cumulativo', () => {
-      const rate = PISCalculator.getDefaultRate('NAO_CUMULATIVO');
+      const rate = expectOk(PISCalculator.getDefaultRate('NAO_CUMULATIVO'));
       expect(rate.percentual).toBe(1.65);
     });
   });
