@@ -9,3 +9,4 @@ export * from './di';
 export * from './docling';
 export * from './audit';
 export * from './retention';
+export * from './http';
