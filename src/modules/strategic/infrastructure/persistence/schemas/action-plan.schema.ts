@@ -66,6 +66,14 @@ export const actionPlanTable = mssqlTable('strategic_action_plan', {
   index('idx_action_plan_parent').on(table.parentActionPlanId),
   index('idx_action_plan_who').on(table.whoUserId),
   index('idx_action_plan_follow_up').on(table.nextFollowUpDate),
+
+  // Índices temporais para queries de período (YTD, QTD, MTD)
+  index('idx_action_plan_when_start').on(table.whenStart),
+  index('idx_action_plan_when_end').on(table.whenEnd),
+  index('idx_action_plan_period').on(table.organizationId, table.branchId, table.whenStart, table.whenEnd),
+
+  // Índice para queries de planos atrasados
+  index('idx_action_plan_overdue').on(table.organizationId, table.branchId, table.whenEnd, table.status),
 ]));
 
 export type ActionPlanRow = typeof actionPlanTable.$inferSelect;

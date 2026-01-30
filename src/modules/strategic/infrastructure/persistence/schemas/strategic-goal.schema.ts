@@ -55,6 +55,11 @@ export const strategicGoalTable = mssqlTable('strategic_goal', {
   index('idx_strategic_goal_cascade').on(table.cascadeLevel),
   index('idx_strategic_goal_status').on(table.status),
   index('idx_strategic_goal_owner').on(table.ownerUserId),
+
+  // Índices temporais para queries de período (YTD, QTD, MTD)
+  index('idx_strategic_goal_start_date').on(table.startDate),
+  index('idx_strategic_goal_due_date').on(table.dueDate),
+  index('idx_strategic_goal_period').on(table.organizationId, table.branchId, table.startDate, table.dueDate),
 ]));
 
 export type StrategicGoalRow = typeof strategicGoalTable.$inferSelect;

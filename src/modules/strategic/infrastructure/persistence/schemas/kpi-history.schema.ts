@@ -1,12 +1,12 @@
 /**
  * Schema: KPI History
  * Histórico de valores dos KPIs para análise de tendências
- * 
+ *
  * @module strategic/infrastructure/persistence/schemas
  * @see ADR-0020
  */
 import { sql } from 'drizzle-orm';
-import { varchar, decimal, datetime2, mssqlTable } from 'drizzle-orm/mssql-core';
+import { varchar, decimal, datetime2, mssqlTable, index } from 'drizzle-orm/mssql-core';
 import { kpiTable } from './kpi.schema';
 
 export const kpiHistoryTable = mssqlTable('strategic_kpi_history', {
@@ -34,12 +34,15 @@ export const kpiHistoryTable = mssqlTable('strategic_kpi_history', {
   sourceUserId: varchar('source_user_id', { length: 36 }),
   
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
-});
+}, (table) => ([
+  // Índices para queries de período específico (YTD, MTD, QTD)
+  index('idx_kpi_history_kpi').on(table.kpiId),
+  index('idx_kpi_history_period_date').on(table.periodDate),
+  index('idx_kpi_history_kpi_period').on(table.kpiId, table.periodDate),
 
-// Índices serão criados via migration:
-// CREATE INDEX idx_kpi_history_kpi ON strategic_kpi_history (kpi_id);
-// CREATE INDEX idx_kpi_history_period ON strategic_kpi_history (kpi_id, period_date);
-// CREATE INDEX idx_kpi_history_date ON strategic_kpi_history (period_date);
+  // Índice para queries de período com valor (análise de tendências)
+  index('idx_kpi_history_date_range').on(table.kpiId, table.periodDate, table.value),
+]));
 
 export type KPIHistoryRow = typeof kpiHistoryTable.$inferSelect;
 export type KPIHistoryInsert = typeof kpiHistoryTable.$inferInsert;

@@ -62,6 +62,9 @@ export const warRoomMeetingTable = mssqlTable('strategic_war_room_meeting', {
   index('idx_war_room_meeting_scheduled').on(table.scheduledAt),
   index('idx_war_room_meeting_status').on(table.status),
   index('idx_war_room_meeting_facilitator').on(table.facilitatorUserId),
+
+  // Índice temporal composto para agenda por tenant
+  index('idx_war_room_meeting_tenant_schedule').on(table.organizationId, table.branchId, table.scheduledAt),
 ]));
 
 export type WarRoomMeetingRow = typeof warRoomMeetingTable.$inferSelect;

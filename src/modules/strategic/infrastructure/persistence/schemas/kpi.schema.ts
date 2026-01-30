@@ -58,6 +58,10 @@ export const kpiTable = mssqlTable('strategic_kpi', {
   index('idx_kpi_code').on(table.organizationId, table.branchId, table.code),
   index('idx_kpi_status').on(table.status),
   index('idx_kpi_source').on(table.sourceModule),
+
+  // Índices temporais para busca por última atualização
+  index('idx_strategic_kpi_last_updated').on(table.updatedAt),
+  index('idx_strategic_kpi_tenant_updated').on(table.organizationId, table.branchId, table.updatedAt),
 ]));
 
 export type KPIRow = typeof kpiTable.$inferSelect;
