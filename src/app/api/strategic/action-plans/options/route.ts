@@ -72,6 +72,7 @@ export async function GET() {
           u.email
         FROM users u
         WHERE u.organization_id = ${organizationId}
+          AND u.branch_id = ${branchId}
           AND u.deleted_at IS NULL
         ORDER BY u.name
       `);
