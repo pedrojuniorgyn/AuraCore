@@ -32,17 +32,17 @@ export class Money extends ValueObject<MoneyProps> {
   get amount(): number { return this.props.amount; }
   get currency(): string { return this.props.currency; }
 
-  // Computed
-  get isZero(): boolean { return this.props.amount === 0; }
-  get isPositive(): boolean { return this.props.amount > 0; }
-  get isNegative(): boolean { return this.props.amount < 0; }
+  // Computed - métodos para consistência com StockQuantity
+  isZero(): boolean { return this.props.amount === 0; }
+  isPositive(): boolean { return this.props.amount > 0; }
+  isNegative(): boolean { return this.props.amount < 0; }
 
   /**
    * Factory method com validações
    */
   static create(amount: number, currency: string = Money.DEFAULT_CURRENCY): Result<Money, string> {
-    // Validar amount
-    if (typeof amount !== 'number' || isNaN(amount)) {
+    // Validar amount (rejeita NaN, Infinity, -Infinity)
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) {
       return Result.fail('amount deve ser um número válido');
     }
 
@@ -196,38 +196,50 @@ export class Money extends ValueObject<MoneyProps> {
 
   /**
    * Verifica se é maior que outro valor
+   * @throws Error se currencies diferentes
    */
-  isGreaterThan(other: Money): Result<boolean, string> {
-    const comparison = this.compare(other);
-    if (Result.isFail(comparison)) return comparison;
-    return Result.ok(comparison.value === 1);
+  isGreaterThan(other: Money): boolean {
+    this.assertSameCurrency(other);
+    return this.amount > other.amount;
   }
 
   /**
    * Verifica se é menor que outro valor
+   * @throws Error se currencies diferentes
    */
-  isLessThan(other: Money): Result<boolean, string> {
-    const comparison = this.compare(other);
-    if (Result.isFail(comparison)) return comparison;
-    return Result.ok(comparison.value === -1);
+  isLessThan(other: Money): boolean {
+    this.assertSameCurrency(other);
+    return this.amount < other.amount;
   }
 
   /**
    * Verifica se é maior ou igual
+   * @throws Error se currencies diferentes
    */
-  isGreaterThanOrEqual(other: Money): Result<boolean, string> {
-    const comparison = this.compare(other);
-    if (Result.isFail(comparison)) return comparison;
-    return Result.ok(comparison.value >= 0);
+  isGreaterThanOrEqual(other: Money): boolean {
+    this.assertSameCurrency(other);
+    return this.amount >= other.amount;
   }
 
   /**
    * Verifica se é menor ou igual
+   * @throws Error se currencies diferentes
    */
-  isLessThanOrEqual(other: Money): Result<boolean, string> {
-    const comparison = this.compare(other);
-    if (Result.isFail(comparison)) return comparison;
-    return Result.ok(comparison.value <= 0);
+  isLessThanOrEqual(other: Money): boolean {
+    this.assertSameCurrency(other);
+    return this.amount <= other.amount;
+  }
+
+  /**
+   * Garante que as currencies são iguais (uso interno)
+   */
+  private assertSameCurrency(other: Money): void {
+    if (this.currency !== other.currency) {
+      throw new Error(
+        `Não é possível comparar ${this.currency} com ${other.currency}. ` +
+        `Converta para a mesma moeda primeiro.`
+      );
+    }
   }
 
   /**
