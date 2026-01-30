@@ -89,12 +89,12 @@ export type ListFiscalDocumentsQuery = z.infer<typeof ListFiscalDocumentsQuerySc
  * Ref: Manual CTe 3.0 - SEFAZ
  */
 export const CreateCteSchema = z.object({
-  pickupOrderId: z.string().uuid('ID da ordem de coleta deve ser um UUID válido'),
+  pickupOrderId: z.number().int().positive('ID da ordem de coleta deve ser um número positivo'),
   modal: z.enum(['01', '02', '03', '04', '05', '06'], {
-    errorMap: () => ({ message: 'Modal inválido. Use: 01=Rodoviário, 02=Aéreo, 03=Aquaviário, 04=Ferroviário, 05=Dutoviário, 06=Multimodal' })
+    message: 'Modal inválido. Use: 01=Rodoviário, 02=Aéreo, 03=Aquaviário, 04=Ferroviário, 05=Dutoviário, 06=Multimodal'
   }).optional().default('01'), // Default: Rodoviário
   tipoServico: z.enum(['0', '1', '2', '3', '4'], {
-    errorMap: () => ({ message: 'Tipo de serviço inválido. Use: 0=Normal, 1=Subcontratação, 2=Redespacho, 3=Redespacho Intermediário, 4=Vinculado Multimodal' })
+    message: 'Tipo de serviço inválido. Use: 0=Normal, 1=Subcontratação, 2=Redespacho, 3=Redespacho Intermediário, 4=Vinculado Multimodal'
   }).optional().default('0'), // Default: Normal
   finalidade: z.enum(['1', '2', '3', '4']).optional().default('1'), // Default: Normal
   notes: z.string().max(2000).optional(),
@@ -127,13 +127,13 @@ export const CreateMdfeSchema = z.object({
   tripId: z.string().uuid('ID da viagem deve ser um UUID válido'),
   cteIds: z.array(z.string().uuid('ID do CTe deve ser um UUID válido')).optional().default([]),
   modal: z.enum(['1', '2', '3', '4'], {
-    errorMap: () => ({ message: 'Modal inválido. Use: 1=Rodoviário, 2=Aéreo, 3=Aquaviário, 4=Ferroviário' })
+    message: 'Modal inválido. Use: 1=Rodoviário, 2=Aéreo, 3=Aquaviário, 4=Ferroviário'
   }).optional().default('1'), // Default: Rodoviário
   tipoEmitente: z.enum(['1', '2'], {
-    errorMap: () => ({ message: 'Tipo de emitente inválido. Use: 1=Prestador de serviço de transporte, 2=Transportador de Carga Própria' })
+    message: 'Tipo de emitente inválido. Use: 1=Prestador de serviço de transporte, 2=Transportador de Carga Própria'
   }).optional().default('1'),
   tipoTransportador: z.enum(['1', '2', '3', '4'], {
-    errorMap: () => ({ message: 'Tipo de transportador inválido. Use: 1=ETC, 2=TAC, 3=CTC, 4=Outros' })
+    message: 'Tipo de transportador inválido. Use: 1=ETC, 2=TAC, 3=CTC, 4=Outros'
   }).optional().default('1'),
   ufInicio: z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase(),
   ufFim: z.string().length(2, 'UF deve ter 2 caracteres').toUpperCase(),

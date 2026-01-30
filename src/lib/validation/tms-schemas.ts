@@ -23,7 +23,7 @@ export const tripStatusSchema = z.enum([
   'CANCELLED',
   'DELAYED'
 ], {
-  errorMap: () => ({ message: 'Status de viagem inválido' })
+  message: 'Status de viagem inválido'
 });
 
 /**
@@ -37,7 +37,7 @@ export const vehicleTypeSchema = z.enum([
   'TRAILER',
   'SEMI_TRAILER'
 ], {
-  errorMap: () => ({ message: 'Tipo de veículo inválido' })
+  message: 'Tipo de veículo inválido'
 });
 
 /**
@@ -49,14 +49,14 @@ export const vehicleStatusSchema = z.enum([
   'MAINTENANCE',
   'INACTIVE'
 ], {
-  errorMap: () => ({ message: 'Status do veículo inválido' })
+  message: 'Status do veículo inválido'
 });
 
 /**
  * Categoria CNH
  */
 export const cnhCategorySchema = z.enum(['A', 'B', 'C', 'D', 'E', 'AB', 'AC', 'AD', 'AE'], {
-  errorMap: () => ({ message: 'Categoria CNH inválida' })
+  message: 'Categoria CNH inválida'
 });
 
 /**
@@ -70,7 +70,7 @@ export const fuelTypeSchema = z.enum([
   'ELECTRIC',
   'HYBRID'
 ], {
-  errorMap: () => ({ message: 'Tipo de combustível inválido' })
+  message: 'Tipo de combustível inválido'
 });
 
 // ============================================================

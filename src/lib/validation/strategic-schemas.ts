@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 /**
  * Strategic Module - Zod Validation Schemas
- * 
+ *
  * Schemas de validação para módulo Strategic (BSC, OKR, PDCA)
- * 
+ *
  * @see Sprint Blindagem S1.1 Batch 3
  */
 
@@ -16,7 +16,7 @@ import { z } from 'zod';
  * Validação de período BSC (trimestral, semestral, anual)
  */
 export const bscPeriodSchema = z.enum(['Q1', 'Q2', 'Q3', 'Q4', 'H1', 'H2', 'ANNUAL'], {
-  errorMap: () => ({ message: 'Período inválido. Use Q1-Q4, H1-H2 ou ANNUAL' })
+  message: 'Período BSC inválido. Use Q1-Q4, H1-H2 ou ANNUAL'
 });
 
 /**
@@ -24,11 +24,11 @@ export const bscPeriodSchema = z.enum(['Q1', 'Q2', 'Q3', 'Q4', 'H1', 'H2', 'ANNU
  */
 export const bscPerspectiveSchema = z.enum([
   'FINANCIAL',
-  'CUSTOMER', 
+  'CUSTOMER',
   'INTERNAL_PROCESS',
   'LEARNING_GROWTH'
 ], {
-  errorMap: () => ({ message: 'Perspectiva BSC inválida' })
+  message: 'Perspectiva BSC inválida'
 });
 
 /**
@@ -43,14 +43,14 @@ export const goalStatusSchema = z.enum([
   'COMPLETED',
   'CANCELLED'
 ], {
-  errorMap: () => ({ message: 'Status de meta inválido' })
+  message: 'Status de meta inválido'
 });
 
 /**
  * Fase PDCA
  */
 export const pdcaPhaseSchema = z.enum(['PLAN', 'DO', 'CHECK', 'ACT'], {
-  errorMap: () => ({ message: 'Fase PDCA inválida. Use PLAN, DO, CHECK ou ACT' })
+  message: 'Fase PDCA inválida. Use PLAN, DO, CHECK ou ACT'
 });
 
 /**
@@ -63,14 +63,14 @@ export const actionPlanStatusSchema = z.enum([
   'CANCELLED',
   'BLOCKED'
 ], {
-  errorMap: () => ({ message: 'Status de plano de ação inválido' })
+  message: 'Status de plano de ação inválido'
 });
 
 /**
  * Prioridade
  */
 export const prioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'], {
-  errorMap: () => ({ message: 'Prioridade inválida' })
+  message: 'Prioridade inválida'
 });
 
 /**
@@ -83,7 +83,7 @@ export const measurementFrequencySchema = z.enum([
   'QUARTERLY',
   'ANNUAL'
 ], {
-  errorMap: () => ({ message: 'Frequência de medição inválida' })
+  message: 'Frequência de medição inválida'
 });
 
 // ============================================================

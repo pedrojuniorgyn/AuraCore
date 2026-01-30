@@ -8,6 +8,7 @@ import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { ActionPlan } from '@/modules/strategic/domain/entities/ActionPlan';
 import { PDCACycle } from '@/modules/strategic/domain/value-objects/PDCACycle';
+import { createAuthenticatedRequest } from '@/tests/helpers/nextRequestHelper';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
@@ -45,6 +46,9 @@ const tenant = {
   allowedBranches: [2],
   isAdmin: false,
 };
+
+const ORG_ID = 'test-org-id';
+const BRANCH_ID = 1;
 
 const validId = '123e4567-e89b-12d3-a456-426614174000';
 
@@ -173,7 +177,7 @@ describe('action-plans routes hardening', () => {
     });
 
     const response = await listActionPlans(
-      new Request('http://localhost/api/strategic/action-plans')
+      createAuthenticatedRequest('/api/strategic/action-plans', ORG_ID, BRANCH_ID)
     );
 
     expect(response.status).toBe(200);

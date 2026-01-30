@@ -24,7 +24,7 @@ export const locationTypeSchema = z.enum([
   'QUARANTINE',   // Quarentena
   'DAMAGED'       // Avariados
 ], {
-  errorMap: () => ({ message: 'Tipo de localização inválido' })
+  message: 'Tipo de localização inválido'
 });
 
 /**
@@ -37,7 +37,7 @@ export const locationStatusSchema = z.enum([
   'BLOCKED',
   'MAINTENANCE'
 ], {
-  errorMap: () => ({ message: 'Status da localização inválido' })
+  message: 'Status da localização inválido'
 });
 
 /**
@@ -51,7 +51,7 @@ export const movementTypeSchema = z.enum([
   'RETURN',       // Devolução
   'INVENTORY'     // Inventário
 ], {
-  errorMap: () => ({ message: 'Tipo de movimento inválido' })
+  message: 'Tipo de movimento inválido'
 });
 
 /**
@@ -65,7 +65,7 @@ export const stockItemStatusSchema = z.enum([
   'EXPIRED',
   'BLOCKED'
 ], {
-  errorMap: () => ({ message: 'Status do item inválido' })
+  message: 'Status do item inválido'
 });
 
 /**
@@ -83,7 +83,7 @@ export const unitSchema = z.enum([
   'PAR', // Par
   'DUZIA', // Dúzia
 ], {
-  errorMap: () => ({ message: 'Unidade de medida inválida' })
+  message: 'Unidade de medida inválida'
 });
 
 // ============================================================

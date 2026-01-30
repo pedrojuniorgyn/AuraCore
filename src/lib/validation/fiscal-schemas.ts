@@ -126,7 +126,7 @@ export const fiscalDocumentStatusSchema = z.enum([
   'CONTINGENCY',     // Contingência
   'SUBMITTED',       // Submetido (alias para PENDING_AUTHORIZATION)
   'REJECTED'         // Rejeitado pela SEFAZ
-], { errorMap: () => ({ message: 'Status de documento fiscal inválido' }) });
+], { message: 'Status de documento fiscal inválido' });
 
 /**
  * Tipo de documento fiscal
@@ -137,7 +137,7 @@ export const fiscalDocumentTypeSchema = z.enum([
   'CTE',    // Conhecimento de Transporte Eletrônico (modelo 57)
   'MDFE',   // Manifesto de Documentos Fiscais Eletrônicos (modelo 58)
   'NFSE'    // Nota Fiscal de Serviço Eletrônica (municipal)
-], { errorMap: () => ({ message: 'Tipo de documento fiscal inválido' }) });
+], { message: 'Tipo de documento fiscal inválido' });
 
 /**
  * CST (Código de Situação Tributária) - ICMS
@@ -180,7 +180,7 @@ export const modalTransporteSchema = z.enum([
   '04', // Ferroviário
   '05', // Dutoviário
   '06'  // Multimodal
-], { errorMap: () => ({ message: 'Modal de transporte inválido. Use: 01=Rodoviário, 02=Aéreo, 03=Aquaviário, 04=Ferroviário, 05=Dutoviário, 06=Multimodal' }) });
+], { message: 'Modal de transporte inválido. Use: 01=Rodoviário, 02=Aéreo, 03=Aquaviário, 04=Ferroviário, 05=Dutoviário, 06=Multimodal' });
 
 /**
  * Tipo de serviço (CTe)
@@ -193,7 +193,7 @@ export const tipoServicoSchema = z.enum([
   '2', // Redespacho
   '3', // Redespacho Intermediário
   '4'  // Serviço Vinculado à Multimodal
-], { errorMap: () => ({ message: 'Tipo de serviço inválido. Use: 0=Normal, 1=Subcontratação, 2=Redespacho, 3=Redespacho Intermediário, 4=Vinculado Multimodal' }) });
+], { message: 'Tipo de serviço inválido. Use: 0=Normal, 1=Subcontratação, 2=Redespacho, 3=Redespacho Intermediário, 4=Vinculado Multimodal' });
 
 /**
  * Finalidade de emissão (NFe/CTe)
@@ -203,7 +203,7 @@ export const finalidadeEmissaoSchema = z.enum([
   '2', // Complementar
   '3', // Ajuste
   '4'  // Devolução/Retorno
-], { errorMap: () => ({ message: 'Finalidade de emissão inválida. Use: 1=Normal, 2=Complementar, 3=Ajuste, 4=Devolução' }) });
+], { message: 'Finalidade de emissão inválida. Use: 1=Normal, 2=Complementar, 3=Ajuste, 4=Devolução' });
 
 /**
  * Código de município IBGE (7 dígitos)

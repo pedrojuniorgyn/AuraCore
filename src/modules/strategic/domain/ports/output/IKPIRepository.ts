@@ -50,10 +50,27 @@ export interface IKPIRepository {
    */
   findByGoalId(
     goalId: string,
-    organizationId: number, 
+    organizationId: number,
     branchId: number
   ): Promise<KPI[]>;
-  
+
+  /**
+   * Busca KPIs de múltiplos goals em uma única query (batch)
+   * Retorna Map<goalId, KPI[]> para lookup eficiente
+   *
+   * ⚠️ MULTI-TENANCY: Filtra por organizationId E branchId
+   *
+   * @param goalIds - Array de IDs de goals
+   * @param organizationId - ID da organização (multi-tenancy)
+   * @param branchId - ID da filial (multi-tenancy)
+   * @returns Map com goalId como chave e array de KPIs como valor
+   */
+  findByGoalIds(
+    goalIds: string[],
+    organizationId: number,
+    branchId: number
+  ): Promise<Map<string, KPI[]>>;
+
   /**
    * Lista KPIs que precisam de cálculo automático
    */

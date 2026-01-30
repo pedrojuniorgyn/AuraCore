@@ -4,7 +4,7 @@
  * 
  * @module strategic/infrastructure/persistence/repositories
  */
-import { eq, and, isNull, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm';
 import type { IKPIRepository, KPIFilter } from '../../../domain/ports/output/IKPIRepository';
 import { KPI } from '../../../domain/entities/KPI';
 import { KPIMapper } from '../mappers/KPIMapper';
@@ -125,7 +125,7 @@ export class DrizzleKPIRepository implements IKPIRepository {
 
   async findByGoalId(
     goalId: string,
-    organizationId: number, 
+    organizationId: number,
     branchId: number
   ): Promise<KPI[]> {
     const rows = await db
@@ -144,6 +144,54 @@ export class DrizzleKPIRepository implements IKPIRepository {
       .map(row => KPIMapper.toDomain(row))
       .filter(Result.isOk)
       .map(r => r.value);
+  }
+
+  async findByGoalIds(
+    goalIds: string[],
+    organizationId: number,
+    branchId: number
+  ): Promise<Map<string, KPI[]>> {
+    // Retorna mapa vazio se não há goals
+    if (goalIds.length === 0) {
+      return new Map();
+    }
+
+    // ⚠️ MULTI-TENANCY: Sempre filtrar por org + branch
+    // Query única para todos os KPIs dos goals
+    const rows = await db
+      .select()
+      .from(kpiTable)
+      .where(
+        and(
+          inArray(kpiTable.goalId, goalIds),
+          eq(kpiTable.organizationId, organizationId),
+          eq(kpiTable.branchId, branchId),  // ⚠️ OBRIGATÓRIO
+          isNull(kpiTable.deletedAt)
+        )
+      )
+      .orderBy(kpiTable.code);
+
+    // Agrupa KPIs por goalId
+    const kpisByGoalId = new Map<string, KPI[]>();
+
+    // Inicializa todas as entradas do mapa (mesmo goals sem KPIs)
+    for (const goalId of goalIds) {
+      kpisByGoalId.set(goalId, []);
+    }
+
+    // Popula o mapa com os KPIs encontrados
+    for (const row of rows) {
+      if (!row.goalId) continue;
+
+      const result = KPIMapper.toDomain(row);
+      if (Result.isOk(result)) {
+        const kpis = kpisByGoalId.get(row.goalId) ?? [];
+        kpis.push(result.value);
+        kpisByGoalId.set(row.goalId, kpis);
+      }
+    }
+
+    return kpisByGoalId;
   }
 
   async findForAutoCalculation(

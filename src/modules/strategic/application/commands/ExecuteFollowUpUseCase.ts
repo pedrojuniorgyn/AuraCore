@@ -141,10 +141,13 @@ export class ExecuteFollowUpUseCase implements IExecuteFollowUpUseCase {
     let childActionPlanId: string | undefined;
 
     if (input.requiresNewPlan && input.newPlanDescription) {
+      // Fallback para assignedTo: input > actionPlan.whoUserId > context.userId
+      const assignedTo = input.newPlanAssignedTo ?? actionPlan.whoUserId ?? context.userId;
+
       // Solicitar reproposição no follow-up
       const repropositionRequest = followUp.requestReproposition(
         input.newPlanDescription,
-        input.newPlanAssignedTo ?? actionPlan.whoUserId
+        assignedTo
       );
       
       if (Result.isFail(repropositionRequest)) {
@@ -155,7 +158,7 @@ export class ExecuteFollowUpUseCase implements IExecuteFollowUpUseCase {
       const newPlanResult = actionPlan.repropose({
         reason: input.problemsObserved ?? 'Reproposição após follow-up 3G',
         newWhenEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // +14 dias
-        newWhoUserId: input.newPlanAssignedTo ?? actionPlan.whoUserId,
+        newWhoUserId: assignedTo,
         createdBy: context.userId,
       });
 

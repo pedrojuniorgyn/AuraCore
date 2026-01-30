@@ -5,6 +5,8 @@ import { GET as getTree } from '@/app/api/strategic/goals/tree/route';
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { createAuthenticatedRequest } from '@/tests/helpers/nextRequestHelper';
+import type { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
@@ -43,10 +45,13 @@ const tenant = {
   isAdmin: false,
 };
 
+const ORG_ID = 'test-org-id';
+const BRANCH_ID = 1;
+
 const validId = '123e4567-e89b-12d3-a456-426614174000';
 
 const makeRequest = (jsonImpl: () => Promise<unknown> | unknown) =>
-  ({ json: jsonImpl } as unknown as Request);
+  ({ json: jsonImpl } as unknown as NextRequest);
 
 describe('strategic goals routes', () => {
   beforeEach(() => {
@@ -56,8 +61,7 @@ describe('strategic goals routes', () => {
 
   it('returns 400 on invalid JSON body for create', async () => {
     const response = await createGoal(
-      makeRequest(vi.fn().mockRejectedValue(new Error('bad json'))) as unknown as Request
-    );
+      makeRequest(vi.fn().mockRejectedValue(new Error('bad json')))    );
 
     expect(response.status).toBe(400);
     const json = await response.json();
@@ -66,7 +70,7 @@ describe('strategic goals routes', () => {
 
   it('returns 400 when id is not uuid in patch', async () => {
     const response = await patchGoal(
-      makeRequest(vi.fn().mockResolvedValue({ currentValue: 10 })) as unknown as Request,
+      makeRequest(vi.fn().mockResolvedValue({ currentValue: 10 })),
       { params: Promise.resolve({ id: 'not-uuid' }) }
     );
 
@@ -76,7 +80,9 @@ describe('strategic goals routes', () => {
   it('returns 401 when tenant context is missing (tree)', async () => {
     mockGetTenantContext.mockResolvedValueOnce(null);
 
-    const response = await getTree({ url: 'http://localhost/api/strategic/goals/tree' } as Request);
+    const response = await getTree(
+      createAuthenticatedRequest('/api/strategic/goals/tree', ORG_ID, BRANCH_ID)
+    );
 
     expect(response.status).toBe(401);
   });
@@ -107,8 +113,7 @@ describe('strategic goals routes', () => {
           startDate: '2024-01-01',
           endDate: '2024-02-01',
         })
-      ) as unknown as Request
-    );
+      )    );
 
     const json = await response.json();
 
@@ -124,8 +129,7 @@ describe('strategic goals routes', () => {
     mockGetTenantContext.mockResolvedValueOnce(null);
 
     const response = await createGoal(
-      makeRequest(vi.fn().mockResolvedValue({ code: 'G1' })) as unknown as Request
-    );
+      makeRequest(vi.fn().mockResolvedValue({ code: 'G1' }))    );
 
     expect(response.status).toBe(401);
   });

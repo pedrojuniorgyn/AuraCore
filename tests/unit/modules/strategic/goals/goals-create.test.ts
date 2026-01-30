@@ -4,6 +4,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
+import { createAuthenticatedRequest } from '@/tests/helpers/nextRequestHelper';
+import type { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
@@ -49,10 +51,13 @@ const tenant = {
   isAdmin: false,
 };
 
+const ORG_ID = 'test-org-id';
+const BRANCH_ID = 1;
+
 const validId = '123e4567-e89b-12d3-a456-426614174000';
 
 const makeRequest = (jsonImpl: () => Promise<unknown> | unknown) =>
-  ({ json: jsonImpl } as unknown as Request);
+  ({ json: jsonImpl } as unknown as NextRequest);
 
 const createSelectChain = (result: Array<{ id: string }>) => {
   const fetch = vi.fn().mockResolvedValue(result);
@@ -79,7 +84,7 @@ describe('strategic goals create route', () => {
 
   it('returns 400 on invalid JSON body', async () => {
     const response = await createGoal(
-      makeRequest(vi.fn().mockRejectedValue(new Error('bad json'))) as unknown as Request
+      makeRequest(vi.fn().mockRejectedValue(new Error('bad json')))
     );
 
     expect(response.status).toBe(400);
@@ -93,7 +98,7 @@ describe('strategic goals create route', () => {
     );
 
     const response = await createGoal(
-      makeRequest(vi.fn().mockResolvedValue({ code: 'G1' })) as unknown as Request
+      makeRequest(vi.fn().mockResolvedValue({ code: 'G1' }))
     );
 
     expect(response.status).toBe(401);
@@ -124,7 +129,7 @@ describe('strategic goals create route', () => {
           startDate: '2024-01-01',
           endDate: '2024-02-01',
         })
-      ) as unknown as Request
+      )
     );
 
     expect(response.status).toBe(201);
@@ -157,7 +162,7 @@ describe('strategic goals create route', () => {
           startDate: '2024-01-01',
           endDate: '2024-02-01',
         })
-      ) as unknown as Request
+      )
     );
 
     expect(response.status).toBe(201);
@@ -181,7 +186,7 @@ describe('strategic goals create route', () => {
           startDate: '2024-01-01',
           endDate: '2024-02-01',
         })
-      ) as unknown as Request
+      )
     );
 
     expect(response.status).toBe(400);

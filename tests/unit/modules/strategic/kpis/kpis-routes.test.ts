@@ -4,6 +4,8 @@ import { GET as getKpi, DELETE as deleteKpi } from '@/app/api/strategic/kpis/[id
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { createAuthenticatedRequest } from '@/tests/helpers/nextRequestHelper';
+import type { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
@@ -42,10 +44,13 @@ const tenant = {
   isAdmin: false,
 };
 
+const ORG_ID = 'test-org-id';
+const BRANCH_ID = 1;
+
 const validId = '123e4567-e89b-12d3-a456-426614174000';
 
 const makeReq = (jsonImpl: () => Promise<unknown> | unknown, url = 'http://localhost/api') =>
-  ({ json: jsonImpl, url } as unknown as Request);
+  ({ json: jsonImpl, url } as unknown as NextRequest);
 
 describe('strategic kpis routes', () => {
   beforeEach(() => {
@@ -62,14 +67,16 @@ describe('strategic kpis routes', () => {
   });
 
   it('returns 400 when id is not uuid', async () => {
-    const response = await getKpi({} as Request, { params: Promise.resolve({ id: 'invalid' }) });
+    const response = await getKpi({} as NextRequest, { params: Promise.resolve({ id: 'invalid' }) });
     expect(response.status).toBe(400);
   });
 
   it('returns 401 when tenant context is missing (list)', async () => {
     mockGetTenantContext.mockResolvedValueOnce(null);
 
-    const response = await listKpis({ url: 'http://localhost/api/strategic/kpis' } as Request);
+    const response = await listKpis(
+      createAuthenticatedRequest('/api/strategic/kpis', ORG_ID, BRANCH_ID)
+    );
     expect(response.status).toBe(401);
   });
 
