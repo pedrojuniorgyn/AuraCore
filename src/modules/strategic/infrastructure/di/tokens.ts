@@ -10,6 +10,7 @@ export const STRATEGIC_TOKENS = {
   ActionPlanRepository: Symbol.for('IActionPlanRepository'),
   IdeaBoxRepository: Symbol.for('IIdeaBoxRepository'),
   KPIRepository: Symbol.for('IKPIRepository'),
+  ControlItemRepository: Symbol.for('IControlItemRepository'),
   ActionPlanFollowUpRepository: Symbol.for('IActionPlanFollowUpRepository'),
   WarRoomMeetingRepository: Symbol.for('IWarRoomMeetingRepository'),
   SwotAnalysisRepository: Symbol.for('ISwotAnalysisRepository'),

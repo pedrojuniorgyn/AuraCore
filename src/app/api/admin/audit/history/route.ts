@@ -26,6 +26,7 @@
  *   "pagination": { limit: 20, offset: 0 }
  * }
  */
+import 'reflect-metadata';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withPermission } from '@/lib/auth/api-guard';

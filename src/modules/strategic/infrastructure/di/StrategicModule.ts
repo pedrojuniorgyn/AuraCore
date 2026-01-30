@@ -7,6 +7,7 @@ import { DrizzleStrategyRepository } from '../persistence/repositories/DrizzleSt
 import { DrizzleStrategicGoalRepository } from '../persistence/repositories/DrizzleStrategicGoalRepository';
 import { DrizzleActionPlanRepository } from '../persistence/repositories/DrizzleActionPlanRepository';
 import { DrizzleKPIRepository } from '../persistence/repositories/DrizzleKPIRepository';
+import { DrizzleControlItemRepository } from '../persistence/repositories/DrizzleControlItemRepository';
 import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIdeaBoxRepository';
 import { DrizzleActionPlanFollowUpRepository } from '../persistence/repositories/DrizzleActionPlanFollowUpRepository';
 import { DrizzleSwotRepository } from '../persistence/repositories/DrizzleSwotRepository';
@@ -46,6 +47,7 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.StrategicGoalRepository, DrizzleStrategicGoalRepository);
   container.registerSingleton(STRATEGIC_TOKENS.ActionPlanRepository, DrizzleActionPlanRepository);
   container.registerSingleton(STRATEGIC_TOKENS.KPIRepository, DrizzleKPIRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.ControlItemRepository, DrizzleControlItemRepository);
   container.registerSingleton(STRATEGIC_TOKENS.IdeaBoxRepository, DrizzleIdeaBoxRepository);
   container.registerSingleton(STRATEGIC_TOKENS.ActionPlanFollowUpRepository, DrizzleActionPlanFollowUpRepository);
   container.registerSingleton(STRATEGIC_TOKENS.SwotAnalysisRepository, DrizzleSwotRepository);
@@ -87,5 +89,5 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.GetKpiHistoryUseCase, GetKpiHistoryQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, GetWarRoomDashboardQuery);
   
-  console.log('[Strategic Module] DI registrado: 9 repositories + 19 use cases + 2 integrations');
+  console.log('[Strategic Module] DI registrado: 10 repositories + 19 use cases + 2 integrations');
 }

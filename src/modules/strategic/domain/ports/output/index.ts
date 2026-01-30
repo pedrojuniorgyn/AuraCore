@@ -9,6 +9,7 @@ export type { IActionPlanRepository, ActionPlanFilter } from './IActionPlanRepos
 export type { IActionPlanFollowUpRepository, FollowUpFilter } from './IActionPlanFollowUpRepository';
 export type { IIdeaBoxRepository, IdeaBoxFilter } from './IIdeaBoxRepository';
 export type { IKPIRepository, KPIFilter } from './IKPIRepository';
+export type { IControlItemRepository, ControlItemFilters } from './IControlItemRepository';
 export type { IStandardProcedureRepository, StandardProcedureFilter } from './IStandardProcedureRepository';
 export type { ISwotAnalysisRepository, SwotAnalysisFilter } from './ISwotAnalysisRepository';
 export type { IWarRoomMeetingRepository, WarRoomMeetingFilter } from './IWarRoomMeetingRepository';

@@ -16,25 +16,26 @@ export const controlItemTable = mssqlTable('strategic_control_item', {
   code: varchar('code', { length: 20 }).notNull(),
   name: varchar('name', { length: 200 }).notNull(),
   description: text('description'),
-  
-  // Processo vinculado
-  processName: varchar('process_name', { length: 200 }).notNull(),
-  processOwner: varchar('process_owner', { length: 100 }).notNull(),
-  processOwnerUserId: varchar('process_owner_user_id', { length: 36 }).notNull(),
-  
+
+  // Processo e responsável
+  processArea: varchar('process_area', { length: 100 }).notNull(),
+  responsibleUserId: varchar('responsible_user_id', { length: 36 }).notNull(),
+
   // Configuração
   unit: varchar('unit', { length: 20 }).notNull(),
-  polarity: varchar('polarity', { length: 10 }).notNull().default('UP'), // UP | DOWN
-  frequency: varchar('frequency', { length: 20 }).notNull().default('MONTHLY'),
+  measurementFrequency: varchar('measurement_frequency', { length: 20 }).notNull().default('MONTHLY'),
   
   // Valores
   targetValue: decimal('target_value', { precision: 18, scale: 4 }).notNull(),
   currentValue: decimal('current_value', { precision: 18, scale: 4 }).notNull().default('0'),
-  upperLimit: decimal('upper_limit', { precision: 18, scale: 4 }), // Limite superior
-  lowerLimit: decimal('lower_limit', { precision: 18, scale: 4 }), // Limite inferior
-  
-  // Status: NORMAL | WARNING | ANOMALY
-  status: varchar('status', { length: 20 }).notNull().default('NORMAL'),
+  upperLimit: decimal('upper_limit', { precision: 18, scale: 4 }).notNull(),
+  lowerLimit: decimal('lower_limit', { precision: 18, scale: 4 }).notNull(),
+
+  // KPI vinculado
+  kpiId: varchar('kpi_id', { length: 36 }),
+
+  // Status: ACTIVE | INACTIVE | UNDER_REVIEW
+  status: varchar('status', { length: 20 }).notNull().default('ACTIVE'),
   lastMeasuredAt: datetime2('last_measured_at'),
   
   createdBy: varchar('created_by', { length: 36 }).notNull(),
@@ -47,7 +48,8 @@ export const controlItemTable = mssqlTable('strategic_control_item', {
   // Índices adicionais
   index('idx_control_item_code').on(table.organizationId, table.branchId, table.code),
   index('idx_control_item_status').on(table.status),
-  index('idx_control_item_owner').on(table.processOwnerUserId),
+  index('idx_control_item_responsible').on(table.responsibleUserId),
+  index('idx_control_item_kpi').on(table.kpiId),
 ]));
 
 export type ControlItemRow = typeof controlItemTable.$inferSelect;
