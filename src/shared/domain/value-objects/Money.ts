@@ -1,3 +1,11 @@
+/**
+ * Value Object: Money
+ * Representa valor monetário com currency
+ *
+ * Imutável - todas operações retornam nova instância
+ *
+ * @module shared/domain/value-objects
+ */
 import { ValueObject } from '../entities/ValueObject';
 import { Result } from '../types/Result';
 
@@ -6,43 +14,78 @@ interface MoneyProps extends Record<string, unknown> {
   currency: string;
 }
 
-/**
- * Value Object para valores monetários
- * 
- * Invariantes:
- * - Amount não pode ser NaN ou Infinity
- * - Currency deve ter 3 caracteres (ISO 4217)
- * - Operações entre moedas diferentes são proibidas
- */
 export class Money extends ValueObject<MoneyProps> {
+  // Moedas suportadas (ISO 4217)
+  static readonly SUPPORTED_CURRENCIES = ['BRL', 'USD', 'EUR', 'GBP'] as const;
+  static readonly DEFAULT_CURRENCY = 'BRL';
+
+  // Zero em cada moeda (útil para inicializações)
+  static readonly ZERO_BRL = new Money({ amount: 0, currency: 'BRL' });
+  static readonly ZERO_USD = new Money({ amount: 0, currency: 'USD' });
+
   private constructor(props: MoneyProps) {
     super(props);
+    Object.freeze(this);
   }
 
-  get amount(): number {
-    return this.props.amount;
-  }
+  // Getters
+  get amount(): number { return this.props.amount; }
+  get currency(): string { return this.props.currency; }
 
-  get currency(): string {
-    return this.props.currency;
+  // Computed
+  get isZero(): boolean { return this.props.amount === 0; }
+  get isPositive(): boolean { return this.props.amount > 0; }
+  get isNegative(): boolean { return this.props.amount < 0; }
+
+  /**
+   * Factory method com validações
+   */
+  static create(amount: number, currency: string = Money.DEFAULT_CURRENCY): Result<Money, string> {
+    // Validar amount
+    if (typeof amount !== 'number' || isNaN(amount)) {
+      return Result.fail('amount deve ser um número válido');
+    }
+
+    // Validar currency
+    const normalizedCurrency = currency?.toUpperCase().trim();
+    if (!normalizedCurrency) {
+      return Result.fail('currency é obrigatório');
+    }
+
+    if (!Money.SUPPORTED_CURRENCIES.includes(normalizedCurrency as typeof Money.SUPPORTED_CURRENCIES[number])) {
+      return Result.fail(
+        `currency '${currency}' não suportada. Use: ${Money.SUPPORTED_CURRENCIES.join(', ')}`
+      );
+    }
+
+    // Arredondar para 2 casas decimais (precisão monetária)
+    const roundedAmount = Math.round(amount * 100) / 100;
+
+    return Result.ok(new Money({
+      amount: roundedAmount,
+      currency: normalizedCurrency
+    }));
   }
 
   /**
-   * Factory method - única forma de criar Money
+   * Criar a partir de centavos (útil para evitar floating point issues)
    */
-  static create(amount: number, currency: string = 'BRL'): Result<Money, string> {
-    if (!Number.isFinite(amount)) {
-      return Result.fail('Amount must be a finite number');
+  static fromCents(cents: number, currency: string = Money.DEFAULT_CURRENCY): Result<Money, string> {
+    if (!Number.isInteger(cents)) {
+      return Result.fail('cents deve ser um número inteiro');
     }
-    if (currency.length !== 3) {
-      return Result.fail('Currency must be 3 characters (ISO 4217)');
-    }
-    return Result.ok(new Money({ amount, currency: currency.toUpperCase() }));
+    return Money.create(cents / 100, currency);
+  }
+
+  /**
+   * Reconstitute sem validações (para Mappers)
+   */
+  static reconstitute(amount: number, currency: string): Money {
+    return new Money({ amount, currency });
   }
 
   /**
    * Cria Money com valor zero
-   * Usa create() para garantir validação da moeda
    */
   static zero(currency: string = 'BRL'): Result<Money, string> {
     return Money.create(0, currency);
@@ -50,10 +93,14 @@ export class Money extends ValueObject<MoneyProps> {
 
   /**
    * Soma dois valores monetários
+   * @throws Result.fail se currencies diferentes
    */
   add(other: Money): Result<Money, string> {
     if (this.currency !== other.currency) {
-      return Result.fail(`Cannot add ${this.currency} to ${other.currency}`);
+      return Result.fail(
+        `Não é possível somar ${this.currency} com ${other.currency}. ` +
+        `Converta para a mesma moeda primeiro.`
+      );
     }
     return Money.create(this.amount + other.amount, this.currency);
   }
@@ -63,98 +110,157 @@ export class Money extends ValueObject<MoneyProps> {
    */
   subtract(other: Money): Result<Money, string> {
     if (this.currency !== other.currency) {
-      return Result.fail(`Cannot subtract ${other.currency} from ${this.currency}`);
+      return Result.fail(
+        `Não é possível subtrair ${other.currency} de ${this.currency}. ` +
+        `Converta para a mesma moeda primeiro.`
+      );
     }
     return Money.create(this.amount - other.amount, this.currency);
   }
 
   /**
-   * Multiplica por um fator
+   * Multiplica por um fator (ex: quantidade)
    */
   multiply(factor: number): Result<Money, string> {
-    if (!Number.isFinite(factor)) {
-      return Result.fail('Factor must be a finite number');
+    if (typeof factor !== 'number' || isNaN(factor)) {
+      return Result.fail('factor deve ser um número válido');
     }
     return Money.create(this.amount * factor, this.currency);
   }
 
   /**
-   * Calcula percentual
+   * Divide por um divisor
+   */
+  divide(divisor: number): Result<Money, string> {
+    if (typeof divisor !== 'number' || isNaN(divisor)) {
+      return Result.fail('divisor deve ser um número válido');
+    }
+    if (divisor === 0) {
+      return Result.fail('Divisão por zero não permitida');
+    }
+    return Money.create(this.amount / divisor, this.currency);
+  }
+
+  /**
+   * Calcula percentual do valor
    */
   percentage(percent: number): Result<Money, string> {
-    if (!Number.isFinite(percent)) {
-      return Result.fail('Percent must be a finite number');
+    if (typeof percent !== 'number' || isNaN(percent)) {
+      return Result.fail('percent deve ser um número válido');
     }
-    return Money.create(this.amount * (percent / 100), this.currency);
+    return Money.create((this.amount * percent) / 100, this.currency);
   }
 
   /**
-   * Verifica se é positivo
+   * Retorna valor absoluto
    */
-  isPositive(): boolean {
-    return this.amount > 0;
+  abs(): Money {
+    return new Money({
+      amount: Math.abs(this.amount),
+      currency: this.currency
+    });
   }
 
   /**
-   * Verifica se é negativo
+   * Nega o valor (positivo → negativo, negativo → positivo)
    */
-  isNegative(): boolean {
-    return this.amount < 0;
+  negate(): Money {
+    return new Money({
+      amount: -this.amount,
+      currency: this.currency
+    });
   }
 
   /**
-   * Verifica se é zero
+   * Converte para outra moeda usando taxa de câmbio
    */
-  isZero(): boolean {
-    return this.amount === 0;
+  convertTo(targetCurrency: string, exchangeRate: number): Result<Money, string> {
+    if (exchangeRate <= 0) {
+      return Result.fail('exchangeRate deve ser positivo');
+    }
+    return Money.create(this.amount * exchangeRate, targetCurrency);
   }
 
   /**
-   * Verifica se é maior que outro
+   * Compara valores (retorna -1, 0, ou 1)
    */
-  isGreaterThan(other: Money): boolean {
+  compare(other: Money): Result<number, string> {
     if (this.currency !== other.currency) {
-      throw new Error(`Cannot compare ${this.currency} with ${other.currency}`);
+      return Result.fail('Não é possível comparar currencies diferentes');
     }
-    return this.amount > other.amount;
+
+    if (this.amount < other.amount) return Result.ok(-1);
+    if (this.amount > other.amount) return Result.ok(1);
+    return Result.ok(0);
   }
 
   /**
-   * Verifica se é menor que outro
+   * Verifica se é maior que outro valor
    */
-  isLessThan(other: Money): boolean {
-    if (this.currency !== other.currency) {
-      throw new Error(`Cannot compare ${this.currency} with ${other.currency}`);
-    }
-    return this.amount < other.amount;
+  isGreaterThan(other: Money): Result<boolean, string> {
+    const comparison = this.compare(other);
+    if (Result.isFail(comparison)) return comparison;
+    return Result.ok(comparison.value === 1);
   }
 
   /**
-   * Formata para exibição (pt-BR)
+   * Verifica se é menor que outro valor
    */
-  format(): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: this.currency,
-    }).format(this.amount);
+  isLessThan(other: Money): Result<boolean, string> {
+    const comparison = this.compare(other);
+    if (Result.isFail(comparison)) return comparison;
+    return Result.ok(comparison.value === -1);
   }
 
   /**
-   * Converte para centavos (inteiro)
+   * Verifica se é maior ou igual
+   */
+  isGreaterThanOrEqual(other: Money): Result<boolean, string> {
+    const comparison = this.compare(other);
+    if (Result.isFail(comparison)) return comparison;
+    return Result.ok(comparison.value >= 0);
+  }
+
+  /**
+   * Verifica se é menor ou igual
+   */
+  isLessThanOrEqual(other: Money): Result<boolean, string> {
+    const comparison = this.compare(other);
+    if (Result.isFail(comparison)) return comparison;
+    return Result.ok(comparison.value <= 0);
+  }
+
+  /**
+   * Retorna valor em centavos (inteiro)
    */
   toCents(): number {
     return Math.round(this.amount * 100);
   }
 
   /**
-   * Cria a partir de centavos
+   * Formata para exibição
    */
-  static fromCents(cents: number, currency: string = 'BRL'): Result<Money, string> {
-    return Money.create(cents / 100, currency);
+  format(locale: string = 'pt-BR'): string {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: this.currency,
+    }).format(this.amount);
   }
 
+  /**
+   * Representação para debug
+   */
   toString(): string {
     return `${this.currency} ${this.amount.toFixed(2)}`;
   }
-}
 
+  /**
+   * Serializa para JSON (útil para APIs)
+   */
+  toJSON(): { amount: number; currency: string } {
+    return {
+      amount: this.amount,
+      currency: this.currency,
+    };
+  }
+}

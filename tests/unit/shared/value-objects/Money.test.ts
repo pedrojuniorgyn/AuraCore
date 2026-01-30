@@ -172,21 +172,21 @@ describe('Money', () => {
     it('isPositive should return true for positive amount', () => {
       const moneyResult = Money.create(100);
       if (Result.isOk(moneyResult)) {
-        expect(moneyResult.value.isPositive()).toBe(true);
+        expect(moneyResult.value.isPositive).toBe(true);
       }
     });
 
     it('isNegative should return true for negative amount', () => {
       const moneyResult = Money.create(-100);
       if (Result.isOk(moneyResult)) {
-        expect(moneyResult.value.isNegative()).toBe(true);
+        expect(moneyResult.value.isNegative).toBe(true);
       }
     });
 
     it('isZero should return true for zero amount', () => {
       const result = Money.zero();
       if (Result.isOk(result)) {
-        expect(result.value.isZero()).toBe(true);
+        expect(result.value.isZero).toBe(true);
       }
     });
   });
