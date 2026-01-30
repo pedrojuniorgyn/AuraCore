@@ -3310,6 +3310,7 @@ export * from '@/agent/persistence/schemas/agent-messages.schema';
 // SHARED INFRASTRUCTURE (Audit, Retention)
 // ==========================================
 export * from '@/shared/infrastructure/audit/audit.schema';
+export * from '@/shared/infrastructure/audit/audit-log.schema';
 export * from '@/shared/infrastructure/retention/retention.schema';
 
 // 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑

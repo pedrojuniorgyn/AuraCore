@@ -11,6 +11,7 @@ export const TOKENS = {
   UuidGenerator: Symbol('UuidGenerator'),
   Logger: Symbol('Logger'),
   UnitOfWork: Symbol('UnitOfWork'),
+  AuditLogger: Symbol('AuditLogger'),
 
   // Financial Module - Repositories & Services
   PayableRepository: Symbol('PayableRepository'),

@@ -29,3 +29,9 @@
 export { AuditService, auditService } from './AuditService';
 export * from './audit.types';
 export * from './audit.schema';
+
+// New Audit Logger (centralized table)
+export type { AuditLogEntry, AuditOperation, AuditContext } from './AuditLog';
+export type { IAuditLogger, AuditSearchFilters } from './IAuditLogger';
+export { DrizzleAuditLogger } from './DrizzleAuditLogger';
+export { auditLogTable } from './audit-log.schema';
