@@ -23,3 +23,4 @@ export * from './UpdateActionPlanDTO';
 export * from './CreateFollowUp3GDTO';
 export * from './CreateSwotItemDTO';
 export * from './WarRoomDTO';
+export type { ReproposeActionPlanInput, ReproposeActionPlanOutput } from './ReproposeActionPlanDTO';

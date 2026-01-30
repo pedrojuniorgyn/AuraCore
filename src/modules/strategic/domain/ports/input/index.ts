@@ -26,8 +26,10 @@ export type {
   CascadeGoalOutput 
 } from './ICascadeGoalUseCase';
 
-export type { 
-  IUpdateGoalProgressUseCase, 
-  UpdateGoalProgressInput, 
-  UpdateGoalProgressOutput 
+export type {
+  IUpdateGoalProgressUseCase,
+  UpdateGoalProgressInput,
+  UpdateGoalProgressOutput
 } from './IUpdateGoalProgressUseCase';
+
+export type { IReproposeActionPlanUseCase } from './IReproposeActionPlanUseCase';

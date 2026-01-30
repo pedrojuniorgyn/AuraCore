@@ -26,6 +26,7 @@ import { CreateActionPlanUseCase } from '../../application/commands/CreateAction
 import { AdvancePDCACycleUseCase } from '../../application/commands/AdvancePDCACycleUseCase';
 import { ExecuteFollowUpUseCase } from '../../application/commands/ExecuteFollowUpUseCase';
 import { CreateSwotItemCommand } from '../../application/commands/CreateSwotItemCommand';
+import { ReproposeActionPlanUseCase } from '../../application/commands/ReproposeActionPlanUseCase';
 
 // Use Cases - Queries
 import { GenerateAgendaUseCase } from '../../application/queries/GenerateAgendaUseCase';
@@ -73,6 +74,7 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.CreateActionPlanUseCase, CreateActionPlanUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.AdvancePDCAUseCase, AdvancePDCACycleUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.ExecuteFollowUpUseCase, ExecuteFollowUpUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.ReproposeActionPlanUseCase, ReproposeActionPlanUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.CreateSwotItemUseCase, CreateSwotItemCommand);
   
   // Use Cases - Queries (Dashboard)
@@ -85,5 +87,5 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.GetKpiHistoryUseCase, GetKpiHistoryQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, GetWarRoomDashboardQuery);
   
-  console.log('[Strategic Module] DI registrado: 9 repositories + 18 use cases + 2 integrations');
+  console.log('[Strategic Module] DI registrado: 9 repositories + 19 use cases + 2 integrations');
 }
