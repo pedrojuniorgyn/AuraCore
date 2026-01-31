@@ -20,6 +20,7 @@ FROM strategic_goal sg
 INNER JOIN bsc_perspective bp ON sg.perspective_id = bp.id
 WHERE sg.deleted_at IS NULL
 GROUP BY sg.organization_id, sg.branch_id, bp.id, bp.name;
+GO
 
 -- View 2: Performance de KPIs com status calculado
 CREATE VIEW vw_kpi_performance AS
@@ -53,6 +54,7 @@ SELECT
     k.updated_at AS last_updated
 FROM strategic_kpi k
 WHERE k.deleted_at IS NULL;
+GO
 
 -- View 3: Action Plans para Kanban com métricas
 CREATE VIEW vw_action_plans_kanban AS
@@ -67,6 +69,7 @@ SELECT
 FROM strategic_action_plan ap
 WHERE ap.deleted_at IS NULL
 GROUP BY ap.organization_id, ap.branch_id, ap.status;
+GO
 
 -- View 4: Control Items com status de verificação
 CREATE VIEW vw_control_items_status AS
@@ -95,6 +98,7 @@ SELECT
     (SELECT COUNT(*) FROM strategic_anomaly a WHERE a.source_entity_id = ci.id AND a.status = 'OPEN' AND a.deleted_at IS NULL) AS open_anomalies_count
 FROM strategic_control_item ci
 WHERE ci.deleted_at IS NULL;
+GO
 
 -- View 5: Resumo de Anomalias por severidade
 CREATE VIEW vw_anomalies_summary AS
@@ -108,3 +112,4 @@ SELECT
 FROM strategic_anomaly a
 WHERE a.deleted_at IS NULL
 GROUP BY a.organization_id, a.branch_id, a.severity, a.status;
+GO

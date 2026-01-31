@@ -23,12 +23,14 @@ CREATE TABLE strategic_kpi_value_version (
     CONSTRAINT chk_version_type
         CHECK (version_type IN ('ACTUAL', 'BUDGET', 'FORECAST'))
 );
+GO
 
 -- Índices
 CREATE INDEX idx_kpi_value_version_tenant ON strategic_kpi_value_version(organization_id, branch_id);
 CREATE INDEX idx_kpi_value_version_kpi ON strategic_kpi_value_version(kpi_id);
 CREATE INDEX idx_kpi_value_version_period ON strategic_kpi_value_version(period_year, period_month);
 CREATE UNIQUE INDEX idx_kpi_value_version_unique ON strategic_kpi_value_version(kpi_id, version_type, period_year, period_month) WHERE deleted_at IS NULL;
+GO
 
 -- Tabela para armazenar targets de Goal por versão
 CREATE TABLE strategic_goal_value_version (
@@ -52,9 +54,11 @@ CREATE TABLE strategic_goal_value_version (
     CONSTRAINT chk_goal_version_type
         CHECK (version_type IN ('ACTUAL', 'BUDGET', 'FORECAST'))
 );
+GO
 
 CREATE INDEX idx_goal_value_version_tenant ON strategic_goal_value_version(organization_id, branch_id);
 CREATE INDEX idx_goal_value_version_goal ON strategic_goal_value_version(goal_id);
+GO
 
 -- View para análise de variância KPI
 CREATE VIEW vw_kpi_variance_analysis AS
@@ -108,3 +112,4 @@ LEFT JOIN strategic_kpi_value_version f
 WHERE a.version_type = 'ACTUAL'
     AND a.deleted_at IS NULL
     AND k.deleted_at IS NULL;
+GO
