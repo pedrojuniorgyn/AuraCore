@@ -515,6 +515,34 @@ export const POST = withDI(async (request: Request) => {
       );
     }
 
+    // ✅ BUG-001 FIX: Validar que perspectiveId pertence ao tenant (via strategyId)
+    // Isso previne bypass onde alguém passa perspectiveId de outro tenant
+    if (perspectiveId) {
+      const perspectiveBelongsToStrategy = await db
+        .select({ id: bscPerspectiveTable.id })
+        .from(bscPerspectiveTable)
+        .where(
+          and(
+            eq(bscPerspectiveTable.id, perspectiveId),
+            eq(bscPerspectiveTable.strategyId, resolvedStrategyId)
+          )
+        );
+
+      if (perspectiveBelongsToStrategy.length === 0) {
+        return NextResponse.json(
+          {
+            error: 'Invalid perspectiveId',
+            details: {
+              perspectiveId: [
+                `perspectiveId (${perspectiveId}) does not belong to the resolved strategy (${resolvedStrategyId}) for this tenant`,
+              ],
+            },
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const useCase = container.resolve(CreateStrategicGoalUseCase);
 
     // ✅ PRINCIPAL CORREÇÃO: REPASSAR strategyId pro UseCase
