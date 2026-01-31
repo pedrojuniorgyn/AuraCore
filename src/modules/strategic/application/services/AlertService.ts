@@ -171,14 +171,14 @@ export class AlertService {
 
   private async checkActionPlansOverdue(orgId: number, branchId: number): Promise<Alert[]> {
     const result = await db.execute(sql`
-      SELECT ap.id, ap.code, ap.what, ap.who, ap.when_deadline,
-             DATEDIFF(day, ap.when_deadline, GETDATE()) as days_overdue
+      SELECT ap.id, ap.code, ap.what, ap.who, ap.when_end,
+             DATEDIFF(day, ap.when_end, GETDATE()) as days_overdue
       FROM strategic_action_plan ap
       WHERE ap.organization_id = ${orgId}
         AND ap.branch_id = ${branchId}
         AND ap.status NOT IN ('COMPLETED', 'CANCELLED')
-        AND ap.when_deadline < GETDATE()
-        AND DATEDIFF(day, ap.when_deadline, GETDATE()) > 7
+        AND ap.when_end < GETDATE()
+        AND DATEDIFF(day, ap.when_end, GETDATE()) > 7
         AND ap.deleted_at IS NULL
         AND ap.id NOT IN (
           SELECT entity_id FROM strategic_alert_log
@@ -198,11 +198,11 @@ export class AlertService {
       entityCode: row.code,
       entityName: row.what,
       title: `Plano de ação atrasado: ${row.code}`,
-      message: `O plano de ação "${row.what}" (responsável: ${row.who}) está atrasado há ${row.days_overdue} dias. Prazo original: ${row.when_deadline}.`,
+      message: `O plano de ação "${row.what}" (responsável: ${row.who}) está atrasado há ${row.days_overdue} dias. Prazo original: ${row.when_end}.`,
       status: 'PENDING' as AlertStatus,
       metadata: {
         responsible: row.who,
-        deadline: row.when_deadline,
+        deadline: row.when_end,
         daysOverdue: row.days_overdue
       },
     }));
