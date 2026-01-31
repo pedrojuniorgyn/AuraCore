@@ -37,16 +37,16 @@ SELECT
     k.critical_threshold,
     k.polarity,
     CASE
-        WHEN k.polarity = 'HIGHER_IS_BETTER' THEN
+        WHEN k.polarity IN ('HIGHER_IS_BETTER', 'UP') THEN
             CASE
                 WHEN k.current_value >= k.target_value THEN 'ON_TRACK'
-                WHEN k.current_value >= k.alert_threshold THEN 'AT_RISK'
+                WHEN k.current_value >= COALESCE(k.alert_threshold, k.target_value * 0.8) THEN 'AT_RISK'
                 ELSE 'CRITICAL'
             END
-        ELSE -- LOWER_IS_BETTER
+        ELSE -- LOWER_IS_BETTER or DOWN
             CASE
                 WHEN k.current_value <= k.target_value THEN 'ON_TRACK'
-                WHEN k.current_value <= k.alert_threshold THEN 'AT_RISK'
+                WHEN k.current_value <= COALESCE(k.alert_threshold, k.target_value * 1.2) THEN 'AT_RISK'
                 ELSE 'CRITICAL'
             END
     END AS calculated_status,
