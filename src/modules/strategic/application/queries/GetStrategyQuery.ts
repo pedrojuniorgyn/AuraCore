@@ -11,6 +11,7 @@ import type { IStrategyRepository } from '../../domain/ports/output/IStrategyRep
 import type { IStrategicGoalRepository } from '../../domain/ports/output/IStrategicGoalRepository';
 import type { IKPIRepository } from '../../domain/ports/output/IKPIRepository';
 import type { StrategicGoal } from '../../domain/entities/StrategicGoal';
+import type { KPI } from '../../domain/entities/KPI';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 
 export interface GetStrategyInput {
@@ -107,40 +108,44 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
         context.branchId
       );
 
-      dto.goals = await Promise.all(
-        goals.map(async (goal) => {
-          const goalDto: GoalDTO = {
-            id: goal.id,
-            code: goal.code,
-            description: goal.description,
-            perspectiveId: goal.perspectiveId,
-            targetValue: goal.targetValue,
-            currentValue: goal.currentValue,
-            progressPercent: goal.progress,
-            status: goal.status.value,
-          };
+      // ✅ OTIMIZAÇÃO N+1 QUERY: Buscar todos KPIs de uma vez (batch loading)
+      let kpisByGoal: Map<string, KPI[]> = new Map();
+      if (input.includeKpis && goals.length > 0) {
+        const goalIds = goals.map(g => g.id);
+        kpisByGoal = await this.kpiRepository.findByGoalIds(
+          goalIds,
+          context.organizationId,
+          context.branchId
+        );
+      }
 
-          if (input.includeKpis) {
-            const kpis = await this.kpiRepository.findByGoalId(
-              goal.id,
-              context.organizationId,
-              context.branchId
-            );
+      dto.goals = goals.map((goal) => {
+        const goalDto: GoalDTO = {
+          id: goal.id,
+          code: goal.code,
+          description: goal.description,
+          perspectiveId: goal.perspectiveId,
+          targetValue: goal.targetValue,
+          currentValue: goal.currentValue,
+          progressPercent: goal.progress,
+          status: goal.status.value,
+        };
 
-            goalDto.kpis = kpis.map((kpi) => ({
-              id: kpi.id,
-              code: kpi.code,
-              name: kpi.name,
-              unit: kpi.unit,
-              targetValue: kpi.targetValue,
-              currentValue: kpi.currentValue,
-              status: kpi.status,
-            }));
-          }
+        if (input.includeKpis) {
+          const kpis = kpisByGoal.get(goal.id) || [];
+          goalDto.kpis = kpis.map((kpi) => ({
+            id: kpi.id,
+            code: kpi.code,
+            name: kpi.name,
+            unit: kpi.unit,
+            targetValue: kpi.targetValue,
+            currentValue: kpi.currentValue,
+            status: kpi.status,
+          }));
+        }
 
-          return goalDto;
-        })
-      );
+        return goalDto;
+      });
     }
 
     return Result.ok(dto);
