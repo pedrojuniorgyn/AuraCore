@@ -39,7 +39,9 @@ export const STRATEGIC_TOKENS = {
   ScheduleMeetingUseCase: Symbol.for('IScheduleMeetingUseCase'),
   RecordDecisionUseCase: Symbol.for('IRecordDecisionUseCase'),
   CreateSwotItemUseCase: Symbol.for('ICreateSwotItemUseCase'),
-  
+  CreateControlItemUseCase: Symbol.for('ICreateControlItemUseCase'),
+  UpdateControlItemValueUseCase: Symbol.for('IUpdateControlItemValueUseCase'),
+
   // Use Cases - Queries
   GetDashboardDataUseCase: Symbol.for('IGetDashboardDataUseCase'),
   GetStrategyUseCase: Symbol.for('IGetStrategyUseCase'),

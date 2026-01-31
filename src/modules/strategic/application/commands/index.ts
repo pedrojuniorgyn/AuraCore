@@ -16,3 +16,5 @@ export { AdvancePDCACycleUseCase, type AdvancePDCACycleInput, type AdvancePDCACy
 export { ExecuteFollowUpUseCase, type ExecuteFollowUpInput, type ExecuteFollowUpOutput, type IExecuteFollowUpUseCase } from './ExecuteFollowUpUseCase';
 export { CreateSwotItemCommand, type CreateSwotItemInput, type CreateSwotItemOutput, type ICreateSwotItemUseCase } from './CreateSwotItemCommand';
 export { ReproposeActionPlanUseCase } from './ReproposeActionPlanUseCase';
+export { CreateControlItemUseCase } from './CreateControlItemUseCase';
+export { UpdateControlItemValueUseCase } from './UpdateControlItemValueUseCase';

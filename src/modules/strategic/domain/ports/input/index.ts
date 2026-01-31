@@ -33,3 +33,15 @@ export type {
 } from './IUpdateGoalProgressUseCase';
 
 export type { IReproposeActionPlanUseCase } from './IReproposeActionPlanUseCase';
+
+export type {
+  ICreateControlItemUseCase,
+  CreateControlItemInput,
+  CreateControlItemOutput
+} from './ICreateControlItemUseCase';
+
+export type {
+  IUpdateControlItemValueUseCase,
+  UpdateControlItemValueInput,
+  UpdateControlItemValueOutput
+} from './IUpdateControlItemValueUseCase';

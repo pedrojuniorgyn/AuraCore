@@ -37,6 +37,8 @@ import { ReviewIdeaUseCase } from '../../application/commands/ReviewIdeaUseCase'
 import { ConvertIdeaUseCase } from '../../application/commands/ConvertIdeaUseCase';
 import { ScheduleMeetingUseCase } from '../../application/commands/ScheduleMeetingUseCase';
 import { RecordDecisionUseCase } from '../../application/commands/RecordDecisionUseCase';
+import { CreateControlItemUseCase } from '../../application/commands/CreateControlItemUseCase';
+import { UpdateControlItemValueUseCase } from '../../application/commands/UpdateControlItemValueUseCase';
 
 // Use Cases - Queries
 import { GenerateAgendaUseCase } from '../../application/queries/GenerateAgendaUseCase';
@@ -96,6 +98,10 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.ExecuteFollowUpUseCase, ExecuteFollowUpUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.ReproposeActionPlanUseCase, ReproposeActionPlanUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.CreateSwotItemUseCase, CreateSwotItemCommand);
+
+  // Use Cases - Commands (GEROT - ControlItem)
+  container.registerSingleton(STRATEGIC_TOKENS.CreateControlItemUseCase, CreateControlItemUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.UpdateControlItemValueUseCase, UpdateControlItemValueUseCase);
 
   // Use Cases - Commands (IdeaBox + WarRoom)
   container.registerSingleton(STRATEGIC_TOKENS.SubmitIdeaUseCase, SubmitIdeaUseCase);
