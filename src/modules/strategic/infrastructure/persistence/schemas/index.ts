@@ -24,6 +24,12 @@ export * from './pdca-cycle.schema';
 export * from './control-item.schema';
 export * from './verification-item.schema';
 
+// GEROT Schemas (Anomaly)
+export * from './anomaly.schema';
+
+// Alert System
+export * from './alert-log.schema';
+
 // Supporting Schemas
 export * from './swot-analysis.schema';
 export * from './war-room-meeting.schema';
