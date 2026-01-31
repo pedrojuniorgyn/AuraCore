@@ -5,7 +5,7 @@
  * @module strategic/infrastructure/persistence/mappers
  */
 import { Result } from '@/shared/domain';
-import { Strategy, type StrategyStatus } from '../../../domain/entities/Strategy';
+import { Strategy, type StrategyStatus, type StrategyVersionType } from '../../../domain/entities/Strategy';
 import type { StrategyRow, StrategyInsert } from '../schemas/strategy.schema';
 
 export class StrategyMapper {
@@ -24,6 +24,12 @@ export class StrategyMapper {
       startDate: new Date(row.startDate),
       endDate: new Date(row.endDate),
       status: row.status as StrategyStatus,
+      versionType: (row.versionType as StrategyVersionType) || 'ACTUAL',
+      versionName: row.versionName || undefined,
+      parentStrategyId: row.parentStrategyId || undefined,
+      isLocked: row.isLocked || false,
+      lockedAt: row.lockedAt ? new Date(row.lockedAt) : undefined,
+      lockedBy: row.lockedBy || undefined,
       createdBy: row.createdBy,
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
@@ -45,6 +51,12 @@ export class StrategyMapper {
       startDate: entity.startDate,
       endDate: entity.endDate,
       status: entity.status,
+      versionType: entity.versionType,
+      versionName: entity.versionName || null,
+      parentStrategyId: entity.parentStrategyId || null,
+      isLocked: entity.isLocked,
+      lockedAt: entity.lockedAt || null,
+      lockedBy: entity.lockedBy || null,
       createdBy: entity.createdBy,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

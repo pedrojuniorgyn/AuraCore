@@ -8,6 +8,7 @@
 import { AggregateRoot, Result } from '@/shared/domain';
 
 export type StrategyStatus = 'DRAFT' | 'ACTIVE' | 'REVIEWING' | 'ARCHIVED';
+export type StrategyVersionType = 'ACTUAL' | 'BUDGET' | 'FORECAST' | 'SCENARIO';
 
 interface StrategyProps {
   organizationId: number;
@@ -19,6 +20,12 @@ interface StrategyProps {
   startDate: Date;
   endDate: Date;
   status: StrategyStatus;
+  versionType: StrategyVersionType;
+  versionName?: string;
+  parentStrategyId?: string;
+  isLocked: boolean;
+  lockedAt?: Date;
+  lockedBy?: string;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
@@ -54,7 +61,17 @@ export class Strategy extends AggregateRoot<string> {
   get startDate(): Date { return this.props.startDate; }
   get endDate(): Date { return this.props.endDate; }
   get status(): StrategyStatus { return this.props.status; }
+  get versionType(): StrategyVersionType { return this.props.versionType; }
+  get versionName(): string | undefined { return this.props.versionName; }
+  get parentStrategyId(): string | undefined { return this.props.parentStrategyId; }
+  get isLocked(): boolean { return this.props.isLocked; }
+  get lockedAt(): Date | undefined { return this.props.lockedAt; }
+  get lockedBy(): string | undefined { return this.props.lockedBy; }
   get createdBy(): string { return this.props.createdBy; }
+
+  get isEditable(): boolean {
+    return !this.props.isLocked && this.props.status !== 'ARCHIVED';
+  }
 
   /**
    * Factory: create() COM validações
@@ -84,6 +101,8 @@ export class Strategy extends AggregateRoot<string> {
       startDate: props.startDate,
       endDate: props.endDate,
       status: 'DRAFT',
+      versionType: 'ACTUAL',
+      isLocked: false,
       createdBy: props.createdBy,
       createdAt: now,
       updatedAt: now,
@@ -106,6 +125,12 @@ export class Strategy extends AggregateRoot<string> {
       startDate: props.startDate,
       endDate: props.endDate,
       status: props.status,
+      versionType: props.versionType,
+      versionName: props.versionName,
+      parentStrategyId: props.parentStrategyId,
+      isLocked: props.isLocked,
+      lockedAt: props.lockedAt,
+      lockedBy: props.lockedBy,
       createdBy: props.createdBy,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
@@ -186,27 +211,122 @@ export class Strategy extends AggregateRoot<string> {
     if (this.props.status === 'ARCHIVED') {
       return Result.fail('Não é possível atualizar estratégia arquivada');
     }
-    
+
     if (props.name !== undefined) {
       if (!props.name.trim()) {
         return Result.fail('name não pode ser vazio');
       }
       (this.props as { name: string }).name = props.name.trim();
     }
-    
+
     if (props.vision !== undefined) {
       (this.props as { vision: string | null }).vision = props.vision?.trim() || null;
     }
-    
+
     if (props.mission !== undefined) {
       (this.props as { mission: string | null }).mission = props.mission?.trim() || null;
     }
-    
+
     if (props.values !== undefined) {
       (this.props as { values: string[] }).values = props.values;
     }
-    
+
     this.touch();
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Cria uma nova versão a partir da estratégia atual (ACTUAL)
+   */
+  createVersion(
+    versionType: Exclude<StrategyVersionType, 'ACTUAL'>,
+    versionName: string,
+    createdBy: string
+  ): Result<Strategy, string> {
+    if (this.props.versionType !== 'ACTUAL') {
+      return Result.fail('Can only create versions from ACTUAL strategy');
+    }
+
+    const id = globalThis.crypto.randomUUID();
+    const now = new Date();
+
+    const version = new Strategy(id, {
+      ...this.props,
+      versionType,
+      versionName,
+      parentStrategyId: this.id,
+      isLocked: false,
+      lockedAt: undefined,
+      lockedBy: undefined,
+      status: 'DRAFT',
+      createdBy,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return Result.ok(version);
+  }
+
+  /**
+   * Trava a versão para impedir edições
+   */
+  lock(lockedBy: string): Result<void, string> {
+    if (this.props.isLocked) {
+      return Result.fail('Strategy already locked');
+    }
+    if (this.props.versionType === 'ACTUAL') {
+      return Result.fail('Cannot lock ACTUAL version');
+    }
+
+    (this.props as { isLocked: boolean }).isLocked = true;
+    (this.props as { lockedAt: Date }).lockedAt = new Date();
+    (this.props as { lockedBy: string }).lockedBy = lockedBy;
+    this.touch();
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Destrava a versão
+   */
+  unlock(): Result<void, string> {
+    if (!this.props.isLocked) {
+      return Result.fail('Strategy is not locked');
+    }
+
+    (this.props as { isLocked: boolean }).isLocked = false;
+    (this.props as { lockedAt: Date | undefined }).lockedAt = undefined;
+    (this.props as { lockedBy: string | undefined }).lockedBy = undefined;
+    this.touch();
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Promove a versão para ACTUAL (substitui a versão atual)
+   */
+  promoteToActual(): Result<void, string> {
+    if (this.props.versionType === 'ACTUAL') {
+      return Result.fail('Already ACTUAL version');
+    }
+    if (!this.props.isLocked) {
+      return Result.fail('Version must be locked before promoting');
+    }
+
+    // Lógica de promoção - trocar com a versão atual
+    (this.props as { versionType: StrategyVersionType }).versionType = 'ACTUAL';
+    (this.props as { parentStrategyId: string | undefined }).parentStrategyId = undefined;
+    this.touch();
+
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'STRATEGY_VERSION_PROMOTED',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'Strategy',
+      payload: { strategyId: this.id, versionName: this.props.versionName },
+    });
+
     return Result.ok(undefined);
   }
 }

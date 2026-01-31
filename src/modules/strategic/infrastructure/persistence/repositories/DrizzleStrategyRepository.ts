@@ -6,7 +6,7 @@
  */
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import type { IStrategyRepository, StrategyFilter } from '../../../domain/ports/output/IStrategyRepository';
-import { Strategy } from '../../../domain/entities/Strategy';
+import { Strategy, type StrategyVersionType } from '../../../domain/entities/Strategy';
 import { StrategyMapper } from '../mappers/StrategyMapper';
 import { strategyTable } from '../schemas/strategy.schema';
 import { db } from '@/lib/db';
@@ -40,7 +40,7 @@ export class DrizzleStrategyRepository implements IStrategyRepository {
   }
 
   async findActive(
-    organizationId: number, 
+    organizationId: number,
     branchId: number
   ): Promise<Strategy | null> {
     const rows = await db
@@ -51,6 +51,7 @@ export class DrizzleStrategyRepository implements IStrategyRepository {
           eq(strategyTable.organizationId, organizationId),
           eq(strategyTable.branchId, branchId),
           eq(strategyTable.status, 'ACTIVE'),
+          eq(strategyTable.versionType, 'ACTUAL'),
           isNull(strategyTable.deletedAt)
         )
       );
@@ -106,43 +107,55 @@ export class DrizzleStrategyRepository implements IStrategyRepository {
     return { items, total };
   }
 
-  async save(entity: Strategy): Promise<void> {
-    const persistence = StrategyMapper.toPersistence(entity);
+  async save(entity: Strategy): Promise<Result<void, string>> {
+    try {
+      const persistence = StrategyMapper.toPersistence(entity);
 
-    const existing = await this.exists(
-      entity.id,
-      entity.organizationId,
-      entity.branchId
-    );
+      const existing = await this.exists(
+        entity.id,
+        entity.organizationId,
+        entity.branchId
+      );
 
-    if (existing) {
-      await db
-        .update(strategyTable)
-        .set({
-          name: persistence.name,
-          vision: persistence.vision,
-          mission: persistence.mission,
-          values: persistence.values,
-          startDate: persistence.startDate,
-          endDate: persistence.endDate,
-          status: persistence.status,
-          updatedAt: new Date()
-        })
-        .where(
-          and(
-            eq(strategyTable.id, persistence.id),
-            eq(strategyTable.organizationId, persistence.organizationId),
-            eq(strategyTable.branchId, persistence.branchId)
-          )
-        );
-    } else {
-      await db.insert(strategyTable).values(persistence);
+      if (existing) {
+        await db
+          .update(strategyTable)
+          .set({
+            name: persistence.name,
+            vision: persistence.vision,
+            mission: persistence.mission,
+            values: persistence.values,
+            startDate: persistence.startDate,
+            endDate: persistence.endDate,
+            status: persistence.status,
+            versionType: persistence.versionType,
+            versionName: persistence.versionName,
+            parentStrategyId: persistence.parentStrategyId,
+            isLocked: persistence.isLocked,
+            lockedAt: persistence.lockedAt,
+            lockedBy: persistence.lockedBy,
+            updatedAt: new Date()
+          })
+          .where(
+            and(
+              eq(strategyTable.id, persistence.id),
+              eq(strategyTable.organizationId, persistence.organizationId),
+              eq(strategyTable.branchId, persistence.branchId)
+            )
+          );
+      } else {
+        await db.insert(strategyTable).values(persistence);
+      }
+
+      return Result.ok(undefined);
+    } catch (error) {
+      return Result.fail(`Failed to save strategy: ${error}`);
     }
   }
 
   async delete(
-    id: string, 
-    organizationId: number, 
+    id: string,
+    organizationId: number,
     branchId: number
   ): Promise<void> {
     await db
@@ -155,6 +168,55 @@ export class DrizzleStrategyRepository implements IStrategyRepository {
           eq(strategyTable.branchId, branchId)
         )
       );
+  }
+
+  async findVersionByType(
+    parentId: string,
+    versionType: StrategyVersionType,
+    orgId: number,
+    branchId: number
+  ): Promise<Strategy | null> {
+    const rows = await db
+      .select()
+      .from(strategyTable)
+      .where(
+        and(
+          eq(strategyTable.parentStrategyId, parentId),
+          eq(strategyTable.versionType, versionType),
+          eq(strategyTable.organizationId, orgId),
+          eq(strategyTable.branchId, branchId),
+          isNull(strategyTable.deletedAt)
+        )
+      );
+
+    if (rows.length === 0) return null;
+
+    const result = StrategyMapper.toDomain(rows[0]);
+    return Result.isOk(result) ? result.value : null;
+  }
+
+  async findAllVersions(
+    parentId: string,
+    orgId: number,
+    branchId: number
+  ): Promise<Strategy[]> {
+    const rows = await db
+      .select()
+      .from(strategyTable)
+      .where(
+        and(
+          eq(strategyTable.parentStrategyId, parentId),
+          eq(strategyTable.organizationId, orgId),
+          eq(strategyTable.branchId, branchId),
+          isNull(strategyTable.deletedAt)
+        )
+      )
+      .orderBy(desc(strategyTable.createdAt));
+
+    return rows
+      .map(row => StrategyMapper.toDomain(row))
+      .filter(Result.isOk)
+      .map(r => r.value!);
   }
 
   private async exists(

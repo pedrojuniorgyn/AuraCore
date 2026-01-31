@@ -21,6 +21,7 @@ export const STRATEGIC_TOKENS = {
   
   // Use Cases - Commands
   CreateStrategyUseCase: Symbol.for('ICreateStrategyUseCase'),
+  CreateStrategyVersionUseCase: Symbol.for('ICreateStrategyVersionUseCase'),
   ActivateStrategyUseCase: Symbol.for('IActivateStrategyUseCase'),
   CreateGoalUseCase: Symbol.for('ICreateGoalUseCase'),
   CascadeGoalUseCase: Symbol.for('ICascadeGoalUseCase'),

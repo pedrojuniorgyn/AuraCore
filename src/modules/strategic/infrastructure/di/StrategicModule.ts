@@ -19,6 +19,7 @@ import { DrizzleUserDashboardLayoutRepository } from '../persistence/repositorie
 
 // Use Cases - Commands
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
+import { CreateStrategyVersionUseCase } from '../../application/commands/CreateStrategyVersionUseCase';
 import { ActivateStrategyUseCase } from '../../application/commands/ActivateStrategyUseCase';
 import { CreateStrategicGoalUseCase } from '../../application/commands/CreateStrategicGoalUseCase';
 import { CascadeGoalUseCase } from '../../application/commands/CascadeGoalUseCase';
@@ -72,6 +73,7 @@ export function registerStrategicModule(): void {
   
   // Use Cases - Commands (Fase F2)
   container.registerSingleton(STRATEGIC_TOKENS.CreateStrategyUseCase, CreateStrategyUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.CreateStrategyVersionUseCase, CreateStrategyVersionUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.ActivateStrategyUseCase, ActivateStrategyUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.CreateGoalUseCase, CreateStrategicGoalUseCase);
   
