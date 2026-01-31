@@ -104,16 +104,47 @@ export async function GET() {
     // ========================================
     // 3. BUSCAR DEPARTAMENTOS DO TENANT
     // ========================================
-    // TODO: Refatorar para usar IDepartmentRepository quando disponível
-    // Tabela departments não existe ainda - usar fallback
-    const departments: Array<{ id: string; name: string }> = [
-      { id: 'operations', name: 'Operações' },
-      { id: 'commercial', name: 'Comercial' },
-      { id: 'financial', name: 'Financeiro' },
-      { id: 'it', name: 'TI' },
-      { id: 'hr', name: 'RH' },
-      { id: 'logistics', name: 'Logística' },
-    ];
+    let departments: Array<{ id: string; name: string }> = [];
+    let departmentsFromDb = false;
+    try {
+      const deptResult = await db.execute<{ id: number; name: string }>(sql`
+        SELECT id, name
+        FROM departments
+        WHERE organization_id = ${organizationId}
+          AND branch_id = ${branchId}
+          AND is_active = 1
+          AND deleted_at IS NULL
+        ORDER BY name
+      `);
+
+      const deptRows = Array.isArray(deptResult)
+        ? deptResult
+        : (deptResult as { recordset?: unknown[] }).recordset || [];
+
+      departments = (deptRows as Array<{ id: number; name: string }>).map(row => ({
+        id: String(row.id),
+        name: row.name,
+      }));
+      
+      if (departments.length > 0) {
+        departmentsFromDb = true;
+      }
+    } catch (error) {
+      console.warn('[action-plans/options] Error fetching departments:', error);
+    }
+
+    // Fallback se não encontrar departamentos
+    if (departments.length === 0) {
+      departments = [
+        { id: 'operations', name: 'Operações' },
+        { id: 'commercial', name: 'Comercial' },
+        { id: 'financial', name: 'Financeiro' },
+        { id: 'it', name: 'TI' },
+        { id: 'hr', name: 'RH' },
+        { id: 'logistics', name: 'Logística' },
+      ];
+    }
+
 
     // ========================================
     // 4. BUSCAR FILIAIS DO TENANT
@@ -156,7 +187,7 @@ export async function GET() {
       // Flag para UI saber se dados são reais ou fallback
       _meta: {
         usersSource: usersFromDb ? 'database' : 'fallback',
-        departmentsSource: 'fallback', // Sempre fallback até criar tabela
+        departmentsSource: departmentsFromDb ? 'database' : 'fallback',
         branchesSource: branchesFromDb ? 'database' : 'fallback',
       },
     });
