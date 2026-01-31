@@ -17,7 +17,7 @@ SELECT
     AVG(CAST(sg.current_value AS FLOAT) / NULLIF(CAST(sg.target_value AS FLOAT), 0) * 100) AS avg_completion_pct,
     AVG(sg.weight) AS avg_weight
 FROM strategic_goal sg
-INNER JOIN bsc_perspective bp ON sg.perspective_id = bp.id
+INNER JOIN strategic_bsc_perspective bp ON sg.perspective_id = bp.id
 WHERE sg.deleted_at IS NULL
 GROUP BY sg.organization_id, sg.branch_id, bp.id, bp.name;
 GO
@@ -63,7 +63,7 @@ SELECT
     ap.branch_id,
     ap.status,
     COUNT(ap.id) AS total_plans,
-    SUM(CASE WHEN ap.when_deadline < GETDATE() AND ap.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
+    SUM(CASE WHEN ap.when_end < GETDATE() AND ap.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) AS overdue_count,
     AVG(ap.completion_percent) AS avg_completion,
     COUNT(DISTINCT ap.who_user_id) AS unique_responsibles
 FROM strategic_action_plan ap
@@ -94,22 +94,7 @@ SELECT
         WHEN ABS(ci.current_value - ci.target_value) / NULLIF(ci.target_value, 0) <= 0.05 THEN 'NEAR_TARGET'
         ELSE 'OFF_TARGET'
     END AS target_status,
-    (SELECT COUNT(*) FROM strategic_verification_item vi WHERE vi.control_item_id = ci.id AND vi.deleted_at IS NULL) AS verification_items_count,
-    (SELECT COUNT(*) FROM strategic_anomaly a WHERE a.source_entity_id = ci.id AND a.status = 'OPEN' AND a.deleted_at IS NULL) AS open_anomalies_count
+    (SELECT COUNT(*) FROM strategic_verification_item vi WHERE vi.control_item_id = ci.id AND vi.deleted_at IS NULL) AS verification_items_count
 FROM strategic_control_item ci
 WHERE ci.deleted_at IS NULL;
-GO
-
--- View 5: Resumo de Anomalias por severidade
-CREATE VIEW vw_anomalies_summary AS
-SELECT
-    a.organization_id,
-    a.branch_id,
-    a.severity,
-    a.status,
-    COUNT(a.id) AS total_count,
-    AVG(DATEDIFF(day, a.created_at, COALESCE(a.resolved_at, GETDATE()))) AS avg_resolution_days
-FROM strategic_anomaly a
-WHERE a.deleted_at IS NULL
-GROUP BY a.organization_id, a.branch_id, a.severity, a.status;
 GO
