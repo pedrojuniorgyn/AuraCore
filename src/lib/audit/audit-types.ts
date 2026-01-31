@@ -15,7 +15,11 @@ export type AuditEntityType =
   | 'permission'
   | 'report'
   | 'comment'
-  | 'dashboard_config';
+  | 'dashboard_config'
+  | 'control_item'
+  | 'verification_item'
+  | 'anomaly'
+  | 'standard_procedure';
 
 export type AuditAction =
   | 'create'
@@ -139,6 +143,10 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   report: 'Relatório',
   comment: 'Comentário',
   dashboard_config: 'Dashboard',
+  control_item: 'Item de Controle',
+  verification_item: 'Item de Verificação',
+  anomaly: 'Anomalia',
+  standard_procedure: 'Procedimento Padrão',
 };
 
 export const ACTION_LABELS: Record<AuditAction, string> = {

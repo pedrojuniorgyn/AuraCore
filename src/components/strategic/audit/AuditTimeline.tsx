@@ -12,6 +12,9 @@ import {
   Settings,
   Eye,
   Undo2,
+  CheckSquare,
+  AlertTriangle,
+  BookOpen,
 } from 'lucide-react';
 import type { AuditLog, AuditEntityType } from '@/lib/audit/audit-types';
 import {
@@ -39,6 +42,10 @@ const entityIcons: Record<AuditEntityType, React.ElementType> = {
   report: ClipboardList,
   comment: ClipboardList,
   dashboard_config: Settings,
+  control_item: CheckSquare,
+  verification_item: CheckSquare,
+  anomaly: AlertTriangle,
+  standard_procedure: BookOpen,
 };
 
 function AuditTimelineInner({ logs, onViewDetails, onRestore }: AuditTimelineProps) {

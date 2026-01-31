@@ -1,6 +1,6 @@
 /**
- * API Routes: /api/strategic/anomalies/[id]/analyze
- * Registrar análise de causa raiz (5 Porquês)
+ * API Routes: /api/strategic/anomalies/[id]/resolve
+ * Resolver anomalia
  *
  * @module app/api/strategic
  */
@@ -19,16 +19,11 @@ registerStrategicModule();
 
 const uuidSchema = z.string().uuid();
 
-const analyzeSchema = z.object({
-  why1: z.string().trim().min(1, 'Primeiro "porquê" é obrigatório').max(500),
-  why2: z.string().trim().min(1, 'Segundo "porquê" é obrigatório').max(500),
-  why3: z.string().trim().max(500).optional(),
-  why4: z.string().trim().max(500).optional(),
-  why5: z.string().trim().max(500).optional(),
-  rootCause: z.string().trim().max(500).optional(),
+const resolveSchema = z.object({
+  resolution: z.string().min(1, 'Resolução é obrigatória'),
 });
 
-// POST /api/strategic/anomalies/[id]/analyze
+// POST /api/strategic/anomalies/[id]/resolve
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -43,14 +38,8 @@ export async function POST(
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-    }
-
-    const validation = analyzeSchema.safeParse(body);
+    const body = await request.json();
+    const validation = resolveSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -76,18 +65,14 @@ export async function POST(
       );
     }
 
-    // Registrar análise de causa raiz
-    const analyzeResult = anomaly.registerRootCauseAnalysis(
-      validation.data.why1,
-      validation.data.why2,
-      validation.data.why3,
-      validation.data.why4,
-      validation.data.why5,
-      validation.data.rootCause
+    // Resolver anomalia
+    const resolveResult = anomaly.resolve(
+      validation.data.resolution,
+      context.userId
     );
 
-    if (Result.isFail(analyzeResult)) {
-      return NextResponse.json({ error: analyzeResult.error }, { status: 400 });
+    if (Result.isFail(resolveResult)) {
+      return NextResponse.json({ error: resolveResult.error }, { status: 400 });
     }
 
     // Persistir
@@ -101,18 +86,15 @@ export async function POST(
       id: anomaly.id,
       code: anomaly.code,
       status: anomaly.status,
-      rootCauseAnalysis: anomaly.rootCauseAnalysis,
-      why1: anomaly.why1,
-      why2: anomaly.why2,
-      why3: anomaly.why3,
-      why4: anomaly.why4,
-      why5: anomaly.why5,
-      rootCause: anomaly.rootCause,
-      message: 'Análise de causa raiz registrada',
+      resolution: anomaly.resolution,
+      resolvedAt: anomaly.resolvedAt?.toISOString(),
+      resolvedBy: anomaly.resolvedBy,
+      daysOpen: anomaly.daysOpen,
+      message: 'Anomalia resolvida',
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/anomalies/[id]/analyze error:', error);
+    console.error('POST /api/strategic/anomalies/[id]/resolve error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

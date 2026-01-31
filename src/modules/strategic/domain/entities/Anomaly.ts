@@ -301,10 +301,27 @@ export class Anomaly extends AggregateRoot<string> {
     if (!this.isOpen()) {
       return Result.fail('Não é possível alterar severidade de anomalia finalizada');
     }
-    
+
     (this.props as { severity: AnomalySeverity }).severity = severity;
     (this.props as { updatedAt: Date }).updatedAt = new Date();
-    
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Atualiza o usuário responsável
+   */
+  updateResponsibleUserId(userId: string): Result<void, string> {
+    if (!this.isOpen()) {
+      return Result.fail('Não é possível alterar responsável de anomalia finalizada');
+    }
+    if (!userId) {
+      return Result.fail('userId é obrigatório');
+    }
+
+    (this.props as { responsibleUserId: string }).responsibleUserId = userId;
+    (this.props as { updatedAt: Date }).updatedAt = new Date();
+
     return Result.ok(undefined);
   }
 }

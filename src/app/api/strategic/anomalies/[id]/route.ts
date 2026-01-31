@@ -1,40 +1,92 @@
 /**
  * API Routes: /api/strategic/anomalies/[id]
  * Operações em Anomalia específica
- * 
+ *
  * @module app/api/strategic
  */
-import { NextResponse } from 'next/server';
+import 'reflect-metadata';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { container } from 'tsyringe';
+import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
+import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
+import type { IAnomalyRepository } from '@/modules/strategic/domain/ports/output/IAnomalyRepository';
+import type { AnomalySeverity } from '@/modules/strategic/domain/entities/Anomaly';
+import '@/modules/strategic/infrastructure/di/StrategicModule';
+import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
 
-const idSchema = z.string().trim().uuid();
-const resolveSchema = z.object({
-  resolution: z.string().trim().min(1),
+registerStrategicModule();
+
+const uuidSchema = z.string().uuid();
+
+const updateAnomalySchema = z.object({
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  responsibleUserId: z.string().uuid().optional(),
 });
 
 // GET /api/strategic/anomalies/[id]
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
-    if (!context) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     const { id } = await params;
-    const idResult = idSchema.safeParse(id);
-    if (!idResult.success) {
-      return NextResponse.json({ error: 'Invalid anomaly id' }, { status: 400 });
+
+    // Validar UUID
+    const idValidation = uuidSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
-    // TODO: Implementar busca via repository
+    const repository = container.resolve<IAnomalyRepository>(
+      STRATEGIC_TOKENS.AnomalyRepository
+    );
+
+    const anomaly = await repository.findById(
+      id,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (!anomaly) {
+      return NextResponse.json(
+        { error: 'Anomalia não encontrada' },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({
-      id: idResult.data,
-      message: 'Anomalia (mock)',
-      organizationId: context.organizationId,
-      branchId: context.branchId,
+      id: anomaly.id,
+      code: anomaly.code,
+      title: anomaly.title,
+      description: anomaly.description,
+      source: anomaly.source,
+      sourceEntityId: anomaly.sourceEntityId,
+      detectedAt: anomaly.detectedAt.toISOString(),
+      detectedBy: anomaly.detectedBy,
+      severity: anomaly.severity,
+      processArea: anomaly.processArea,
+      responsibleUserId: anomaly.responsibleUserId,
+      status: anomaly.status,
+      rootCauseAnalysis: anomaly.rootCauseAnalysis,
+      why1: anomaly.why1,
+      why2: anomaly.why2,
+      why3: anomaly.why3,
+      why4: anomaly.why4,
+      why5: anomaly.why5,
+      rootCause: anomaly.rootCause,
+      actionPlanId: anomaly.actionPlanId,
+      standardProcedureId: anomaly.standardProcedureId,
+      resolution: anomaly.resolution,
+      resolvedAt: anomaly.resolvedAt?.toISOString() ?? null,
+      resolvedBy: anomaly.resolvedBy,
+      daysOpen: anomaly.daysOpen,
+      isOpen: anomaly.isOpen(),
+      hasRootCauseAnalysis: anomaly.hasRootCauseAnalysis(),
+      createdAt: anomaly.createdAt.toISOString(),
+      updatedAt: anomaly.updatedAt.toISOString(),
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
@@ -43,20 +95,19 @@ export async function GET(
   }
 }
 
-// PUT /api/strategic/anomalies/[id] - Resolver anomalia
-export async function PUT(
-  request: Request,
+// PATCH /api/strategic/anomalies/[id]
+export async function PATCH(
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const context = await getTenantContext();
-    if (!context) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     const { id } = await params;
-    const idResult = idSchema.safeParse(id);
-    if (!idResult.success) {
-      return NextResponse.json({ error: 'Invalid anomaly id' }, { status: 400 });
+
+    // Validar UUID
+    const idValidation = uuidSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
     }
 
     let body: unknown;
@@ -65,7 +116,8 @@ export async function PUT(
     } catch {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
-    const validation = resolveSchema.safeParse(body);
+
+    const validation = updateAnomalySchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -74,18 +126,108 @@ export async function PUT(
       );
     }
 
-    // TODO: Implementar resolução via repository e entity
+    const repository = container.resolve<IAnomalyRepository>(
+      STRATEGIC_TOKENS.AnomalyRepository
+    );
+
+    const anomaly = await repository.findById(
+      id,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (!anomaly) {
+      return NextResponse.json(
+        { error: 'Anomalia não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // Atualizar severity se fornecido
+    if (validation.data.severity) {
+      const updateResult = anomaly.updateSeverity(validation.data.severity as AnomalySeverity);
+      if (Result.isFail(updateResult)) {
+        return NextResponse.json({ error: updateResult.error }, { status: 400 });
+      }
+    }
+
+    // Atualizar responsável se fornecido
+    if (validation.data.responsibleUserId) {
+      const updateResult = anomaly.updateResponsibleUserId(validation.data.responsibleUserId);
+      if (Result.isFail(updateResult)) {
+        return NextResponse.json({ error: updateResult.error }, { status: 400 });
+      }
+    }
+
+    // Persistir
+    const saveResult = await repository.save(anomaly);
+
+    if (Result.isFail(saveResult)) {
+      return NextResponse.json({ error: saveResult.error }, { status: 500 });
+    }
+
     return NextResponse.json({
-      id: idResult.data,
-      status: 'RESOLVED',
-      resolution: validation.data.resolution,
-      resolvedBy: context.userId,
-      resolvedAt: new Date(),
-      message: 'Anomalia resolvida',
+      id: anomaly.id,
+      code: anomaly.code,
+      severity: anomaly.severity,
+      responsibleUserId: anomaly.responsibleUserId,
+      message: 'Anomalia atualizada',
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PUT /api/strategic/anomalies/[id] error:', error);
+    console.error('PATCH /api/strategic/anomalies/[id] error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// DELETE /api/strategic/anomalies/[id]
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const context = await getTenantContext();
+    const { id } = await params;
+
+    // Validar UUID
+    const idValidation = uuidSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
+    const repository = container.resolve<IAnomalyRepository>(
+      STRATEGIC_TOKENS.AnomalyRepository
+    );
+
+    const anomaly = await repository.findById(
+      id,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (!anomaly) {
+      return NextResponse.json(
+        { error: 'Anomalia não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    // Soft delete
+    const deleteResult = await repository.delete(
+      id,
+      context.organizationId,
+      context.branchId,
+      context.userId
+    );
+
+    if (Result.isFail(deleteResult)) {
+      return NextResponse.json({ error: deleteResult.error }, { status: 500 });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error: unknown) {
+    if (error instanceof Response) return error;
+    console.error('DELETE /api/strategic/anomalies/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

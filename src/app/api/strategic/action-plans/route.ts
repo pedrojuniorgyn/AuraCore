@@ -45,6 +45,15 @@ const createSchema = z.object({
   howMuchCurrency: z.string().trim().length(3).default('BRL'),
   priority: prioritySchema.default('MEDIUM'),
 }).refine((data) => {
+  // ✅ BUG-014: Validar consistência whoType - USER requer whoUserId
+  if (data.whoType === 'USER' && !data.whoUserId) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'whoUserId é obrigatório quando whoType é USER',
+  path: ['whoUserId'],
+}).refine((data) => {
   // Validar consistência whoType - EMAIL requer whoEmail
   if (data.whoType === 'EMAIL' && !data.whoEmail) {
     return false;

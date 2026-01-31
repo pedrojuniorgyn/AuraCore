@@ -8,6 +8,8 @@ import { DrizzleStrategicGoalRepository } from '../persistence/repositories/Driz
 import { DrizzleActionPlanRepository } from '../persistence/repositories/DrizzleActionPlanRepository';
 import { DrizzleKPIRepository } from '../persistence/repositories/DrizzleKPIRepository';
 import { DrizzleControlItemRepository } from '../persistence/repositories/DrizzleControlItemRepository';
+import { DrizzleVerificationItemRepository } from '../persistence/repositories/DrizzleVerificationItemRepository';
+import { DrizzleAnomalyRepository } from '../persistence/repositories/DrizzleAnomalyRepository';
 import { DrizzleStandardProcedureRepository } from '../persistence/repositories/DrizzleStandardProcedureRepository';
 import { DrizzleIdeaBoxRepository } from '../persistence/repositories/DrizzleIdeaBoxRepository';
 import { DrizzleActionPlanFollowUpRepository } from '../persistence/repositories/DrizzleActionPlanFollowUpRepository';
@@ -29,6 +31,11 @@ import { AdvancePDCACycleUseCase } from '../../application/commands/AdvancePDCAC
 import { ExecuteFollowUpUseCase } from '../../application/commands/ExecuteFollowUpUseCase';
 import { CreateSwotItemCommand } from '../../application/commands/CreateSwotItemCommand';
 import { ReproposeActionPlanUseCase } from '../../application/commands/ReproposeActionPlanUseCase';
+import { SubmitIdeaUseCase } from '../../application/commands/SubmitIdeaUseCase';
+import { ReviewIdeaUseCase } from '../../application/commands/ReviewIdeaUseCase';
+import { ConvertIdeaUseCase } from '../../application/commands/ConvertIdeaUseCase';
+import { ScheduleMeetingUseCase } from '../../application/commands/ScheduleMeetingUseCase';
+import { RecordDecisionUseCase } from '../../application/commands/RecordDecisionUseCase';
 
 // Use Cases - Queries
 import { GenerateAgendaUseCase } from '../../application/queries/GenerateAgendaUseCase';
@@ -37,6 +44,11 @@ import { ListGoalsQuery } from '../../application/queries/ListGoalsQuery';
 import { GetKpiHistoryQuery } from '../../application/queries/GetKpiHistoryQuery';
 import { GetWarRoomDashboardQuery } from '../../application/queries/GetWarRoomDashboardQuery';
 import { GetDashboardDataQuery } from '../../application/queries/GetDashboardDataQuery';
+import { ListIdeasQuery } from '../../application/queries/ListIdeasQuery';
+import { ListActionPlansQuery } from '../../application/queries/ListActionPlansQuery';
+import { GetActionPlanTimelineQuery } from '../../application/queries/GetActionPlanTimelineQuery';
+import { GetBSCDashboardQuery } from '../../application/queries/GetBSCDashboardQuery';
+import { GetStrategicMapQuery } from '../../application/queries/GetStrategicMapQuery';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -49,6 +61,8 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.ActionPlanRepository, DrizzleActionPlanRepository);
   container.registerSingleton(STRATEGIC_TOKENS.KPIRepository, DrizzleKPIRepository);
   container.registerSingleton(STRATEGIC_TOKENS.ControlItemRepository, DrizzleControlItemRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.VerificationItemRepository, DrizzleVerificationItemRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.AnomalyRepository, DrizzleAnomalyRepository);
   container.registerSingleton(STRATEGIC_TOKENS.StandardProcedureRepository, DrizzleStandardProcedureRepository);
   container.registerSingleton(STRATEGIC_TOKENS.IdeaBoxRepository, DrizzleIdeaBoxRepository);
   container.registerSingleton(STRATEGIC_TOKENS.ActionPlanFollowUpRepository, DrizzleActionPlanFollowUpRepository);
@@ -80,7 +94,14 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.ExecuteFollowUpUseCase, ExecuteFollowUpUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.ReproposeActionPlanUseCase, ReproposeActionPlanUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.CreateSwotItemUseCase, CreateSwotItemCommand);
-  
+
+  // Use Cases - Commands (IdeaBox + WarRoom)
+  container.registerSingleton(STRATEGIC_TOKENS.SubmitIdeaUseCase, SubmitIdeaUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.ReviewIdeaUseCase, ReviewIdeaUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.ConvertIdeaUseCase, ConvertIdeaUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.ScheduleMeetingUseCase, ScheduleMeetingUseCase);
+  container.registerSingleton(STRATEGIC_TOKENS.RecordDecisionUseCase, RecordDecisionUseCase);
+
   // Use Cases - Queries (Dashboard)
   container.registerSingleton(STRATEGIC_TOKENS.GetDashboardDataUseCase, GetDashboardDataQuery);
   
@@ -90,4 +111,11 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.ListGoalsUseCase, ListGoalsQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetKpiHistoryUseCase, GetKpiHistoryQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, GetWarRoomDashboardQuery);
+
+  // Use Cases - Queries (Novos)
+  container.registerSingleton(STRATEGIC_TOKENS.ListIdeasUseCase, ListIdeasQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.ListActionPlansUseCase, ListActionPlansQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetActionPlanTimelineUseCase, GetActionPlanTimelineQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetBSCDashboardUseCase, GetBSCDashboardQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetStrategicMapUseCase, GetStrategicMapQuery);
 }
