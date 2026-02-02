@@ -20,6 +20,7 @@ export const STRATEGIC_TOKENS = {
   UserDashboardLayoutRepository: Symbol.for('IUserDashboardLayoutRepository'),
   AlertRepository: Symbol.for('IAlertRepository'),
   ApprovalHistoryRepository: Symbol.for('IApprovalHistoryRepository'),
+  ApprovalPermissionRepository: Symbol.for('IApprovalPermissionRepository'),
 
   // Use Cases - Commands
   CreateStrategyUseCase: Symbol.for('ICreateStrategyUseCase'),
@@ -64,6 +65,7 @@ export const STRATEGIC_TOKENS = {
   AgendaGeneratorService: Symbol.for('IAgendaGeneratorService'),
   AlertService: Symbol.for('AlertService'),
   BudgetImportService: Symbol.for('BudgetImportService'),
+  ApprovalPermissionService: Symbol.for('ApprovalPermissionService'),
   
   // Integrations
   FinancialKPIAdapter: Symbol.for('IFinancialKPIAdapter'),

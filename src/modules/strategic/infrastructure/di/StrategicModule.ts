@@ -18,6 +18,7 @@ import { DrizzleWarRoomMeetingRepository } from '../persistence/repositories/Dri
 import { DrizzleUserDashboardLayoutRepository } from '../persistence/repositories/DrizzleUserDashboardLayoutRepository';
 import { DrizzleAlertRepository } from '../persistence/repositories/DrizzleAlertRepository';
 import { DrizzleApprovalHistoryRepository } from '../persistence/repositories/DrizzleApprovalHistoryRepository';
+import { DrizzleApprovalPermissionRepository } from '../persistence/repositories/DrizzleApprovalPermissionRepository';
 
 // Use Cases - Commands
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
@@ -59,6 +60,7 @@ import { GetDrilldownQuery } from '../../application/queries/GetDrilldownQuery';
 // Services
 import { AlertService } from '../../application/services/AlertService';
 import { BudgetImportService } from '../../application/services/BudgetImportService';
+import { ApprovalPermissionService } from '../../application/services/ApprovalPermissionService';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -81,6 +83,7 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.UserDashboardLayoutRepository, DrizzleUserDashboardLayoutRepository);
   container.registerSingleton(STRATEGIC_TOKENS.AlertRepository, DrizzleAlertRepository);
   container.registerSingleton(STRATEGIC_TOKENS.ApprovalHistoryRepository, DrizzleApprovalHistoryRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.ApprovalPermissionRepository, DrizzleApprovalPermissionRepository);
 
   // Use Cases - Commands (Fase F2)
   container.registerSingleton(STRATEGIC_TOKENS.CreateStrategyUseCase, CreateStrategyUseCase);
@@ -140,4 +143,5 @@ export function registerStrategicModule(): void {
   // Application Services
   container.registerSingleton(STRATEGIC_TOKENS.AlertService, AlertService);
   container.registerSingleton(STRATEGIC_TOKENS.BudgetImportService, BudgetImportService);
+  container.registerSingleton(STRATEGIC_TOKENS.ApprovalPermissionService, ApprovalPermissionService);
 }

@@ -14,3 +14,4 @@ export type { IStandardProcedureRepository, StandardProcedureFilter } from './IS
 export type { ISwotAnalysisRepository, SwotAnalysisFilter } from './ISwotAnalysisRepository';
 export type { IWarRoomMeetingRepository, WarRoomMeetingFilter } from './IWarRoomMeetingRepository';
 export type { IUserDashboardLayoutRepository, DashboardLayoutItem } from './IUserDashboardLayoutRepository';
+export type { IApprovalPermissionRepository } from './IApprovalPermissionRepository';

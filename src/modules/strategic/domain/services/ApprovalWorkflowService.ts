@@ -67,12 +67,26 @@ export class ApprovalWorkflowService {
   /**
    * Aprova estratégia
    * PENDING_APPROVAL → APPROVED
+   * 
+   * IMPORTANTE: Chamar ApprovalPermissionService.canApprove() ANTES
+   * de invocar este método para validar permissões de aprovação
+   * 
+   * @param strategy Estratégia a aprovar
+   * @param userId ID do usuário aprovador
+   * @param hasPermission Resultado de ApprovalPermissionService.canApprove()
+   * @param comments Comentários opcionais
    */
   static approve(
     strategy: Strategy,
     userId: number,
+    hasPermission: boolean,
     comments?: string
   ): Result<WorkflowTransitionResult, string> {
+    // Validar permissão de aprovação
+    if (!hasPermission) {
+      return Result.fail('Usuário não tem permissão para aprovar esta estratégia');
+    }
+
     // Validar que aprovador não é o mesmo que submeteu
     if (strategy.submittedByUserId === userId) {
       return Result.fail('Usuário não pode aprovar estratégia que ele mesmo submeteu');
@@ -112,13 +126,28 @@ export class ApprovalWorkflowService {
   /**
    * Rejeita estratégia
    * PENDING_APPROVAL → REJECTED
+   * 
+   * IMPORTANTE: Chamar ApprovalPermissionService.canApprove() ANTES
+   * de invocar este método para validar permissões de aprovação
+   * 
+   * @param strategy Estratégia a rejeitar
+   * @param userId ID do usuário rejeitador
+   * @param hasPermission Resultado de ApprovalPermissionService.canApprove()
+   * @param reason Motivo da rejeição (obrigatório)
+   * @param comments Comentários opcionais
    */
   static reject(
     strategy: Strategy,
     userId: number,
+    hasPermission: boolean,
     reason: string,
     comments?: string
   ): Result<WorkflowTransitionResult, string> {
+    // Validar permissão de aprovação
+    if (!hasPermission) {
+      return Result.fail('Usuário não tem permissão para rejeitar esta estratégia');
+    }
+
     if (!reason?.trim()) {
       return Result.fail('Motivo da rejeição é obrigatório');
     }
@@ -157,13 +186,28 @@ export class ApprovalWorkflowService {
   /**
    * Solicita alterações na estratégia
    * PENDING_APPROVAL → CHANGES_REQUESTED
+   * 
+   * IMPORTANTE: Chamar ApprovalPermissionService.canApprove() ANTES
+   * de invocar este método para validar permissões de aprovação
+   * 
+   * @param strategy Estratégia a solicitar mudanças
+   * @param userId ID do usuário solicitante
+   * @param hasPermission Resultado de ApprovalPermissionService.canApprove()
+   * @param reason Motivo da solicitação (obrigatório)
+   * @param comments Comentários opcionais
    */
   static requestChanges(
     strategy: Strategy,
     userId: number,
+    hasPermission: boolean,
     reason: string,
     comments?: string
   ): Result<WorkflowTransitionResult, string> {
+    // Validar permissão de aprovação
+    if (!hasPermission) {
+      return Result.fail('Usuário não tem permissão para solicitar alterações nesta estratégia');
+    }
+
     if (!reason?.trim()) {
       return Result.fail('Motivo para solicitação de alterações é obrigatório');
     }

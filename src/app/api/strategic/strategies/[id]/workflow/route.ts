@@ -11,12 +11,14 @@ import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
+import { resolveBranchIdOrThrow } from '@/lib/tenant/branch';
 import { ApprovalWorkflowService } from '@/modules/strategic/domain/services/ApprovalWorkflowService';
 import { Strategy } from '@/modules/strategic/domain/entities/Strategy';
 import { ApprovalHistory } from '@/modules/strategic/domain/entities/ApprovalHistory';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import type { IApprovalHistoryRepository } from '@/modules/strategic/domain/ports/output/IApprovalHistoryRepository';
+import type { ApprovalPermissionService } from '@/modules/strategic/application/services/ApprovalPermissionService';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
 const workflowActionSchema = z.object({
@@ -40,8 +42,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const params = await context.params;
-    const { id: strategyId } = params;
+    const branchId = resolveBranchIdOrThrow(request);
+    const { id: strategyId } = await context.params;
 
     if (!strategyId) {
       return NextResponse.json(
@@ -62,19 +64,22 @@ export async function POST(
 
     const { action, userId, reason, comments } = parsed.data;
 
-    // Get repositories
+    // Get repositories and services
     const strategyRepo = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
     );
     const historyRepo = container.resolve<IApprovalHistoryRepository>(
       STRATEGIC_TOKENS.ApprovalHistoryRepository
     );
+    const permissionService = container.resolve<ApprovalPermissionService>(
+      STRATEGIC_TOKENS.ApprovalPermissionService
+    );
 
     // Find strategy
     const strategy = await strategyRepo.findById(
       strategyId,
       tenantContext.organizationId,
-      tenantContext.branchId
+      branchId
     );
 
     if (!strategy) {
@@ -98,39 +103,75 @@ export async function POST(
         );
         break;
 
-      case 'approve':
-        result = ApprovalWorkflowService.approve(strategy, userId, comments);
-        break;
+      case 'approve': {
+        // Validar permissão de aprovação
+        const hasPermission = await permissionService.canApprove(
+          userId,
+          strategyId,
+          tenantContext.organizationId,
+          branchId
+        );
 
-      case 'reject':
+        result = ApprovalWorkflowService.approve(
+          strategy,
+          userId,
+          hasPermission,
+          comments
+        );
+        break;
+      }
+
+      case 'reject': {
         if (!reason) {
           return NextResponse.json(
             { error: 'Reason is required for rejection' },
             { status: 400 }
           );
         }
+
+        // Validar permissão de aprovação
+        const hasPermission = await permissionService.canApprove(
+          userId,
+          strategyId,
+          tenantContext.organizationId,
+          branchId
+        );
+
         result = ApprovalWorkflowService.reject(
           strategy,
           userId,
+          hasPermission,
           reason,
           comments
         );
         break;
+      }
 
-      case 'requestChanges':
+      case 'requestChanges': {
         if (!reason) {
           return NextResponse.json(
             { error: 'Reason is required for requesting changes' },
             { status: 400 }
           );
         }
+
+        // Validar permissão de aprovação
+        const hasPermission = await permissionService.canApprove(
+          userId,
+          strategyId,
+          tenantContext.organizationId,
+          branchId
+        );
+
         result = ApprovalWorkflowService.requestChanges(
           strategy,
           userId,
+          hasPermission,
           reason,
           comments
         );
         break;
+      }
     }
 
     if (!Result.isOk(result)) {
@@ -181,8 +222,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const params = await context.params;
-    const { id: strategyId } = params;
+    const branchId = resolveBranchIdOrThrow(request);
+    const { id: strategyId } = await context.params;
 
     if (!strategyId) {
       return NextResponse.json(
@@ -198,7 +239,7 @@ export async function GET(
     const history = await historyRepo.findByStrategyId(
       strategyId,
       tenantContext.organizationId,
-      tenantContext.branchId
+      branchId
     );
 
     const historyData = history.map((h) => ({

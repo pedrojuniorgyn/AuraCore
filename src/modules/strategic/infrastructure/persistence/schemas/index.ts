@@ -30,6 +30,11 @@ export * from './anomaly.schema';
 // Alert System
 export * from './alert-log.schema';
 
+// Approval System (Workflow)
+export * from './approval-history.schema';
+export * from './approval-delegate.schema';
+export * from './approval-approver.schema';
+
 // Supporting Schemas
 export * from './swot-analysis.schema';
 export * from './war-room-meeting.schema';

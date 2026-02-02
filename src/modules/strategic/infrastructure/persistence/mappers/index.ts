@@ -13,3 +13,4 @@ export { ControlItemMapper } from './ControlItemMapper';
 export { StandardProcedureMapper } from './StandardProcedureMapper';
 export { SwotMapper } from './SwotMapper';
 export { WarRoomMeetingMapper } from './WarRoomMeetingMapper';
+export { ApprovalDelegateMapper } from './ApprovalDelegateMapper';
