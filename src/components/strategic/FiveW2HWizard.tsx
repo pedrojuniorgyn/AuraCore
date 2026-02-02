@@ -5,7 +5,7 @@
  * 
  * @module components/strategic
  */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Target, HelpCircle, MapPin, Calendar, Users, Wrench, DollarSign,
@@ -52,6 +52,7 @@ interface Props {
   users?: OptionItem[];
   departments?: OptionItem[];
   branches?: OptionItem[];
+  initialData?: Partial<FiveW2HFormData>;
 }
 
 const PRIORITY_CONFIG = {
@@ -61,16 +62,21 @@ const PRIORITY_CONFIG = {
   CRITICAL: { label: 'Crítica', bg: 'bg-red-500/30', border: 'border-red-500', text: 'text-red-300' },
 } as const;
 
-export function FiveW2HWizard({ 
-  onSubmit, 
-  onCancel, 
-  objectives = [], 
-  users = [], 
-  departments = [], 
-  branches = [] 
+export function FiveW2HWizard({
+  onSubmit,
+  onCancel,
+  objectives = [],
+  users = [],
+  departments = [],
+  branches = [],
+  initialData = {}
 }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Não usar initialData aqui para evitar hydration mismatch
+  // initialData pode mudar entre server render e client hydration
+  // O useEffect abaixo irá sincronizar os valores quando necessário
   const [formData, setFormData] = useState<FiveW2HFormData>({
     what: '',
     why: '',
@@ -83,14 +89,94 @@ export function FiveW2HWizard({
     how: '',
     howMuch: 0,
     priority: 'MEDIUM',
+    linkedObjective: undefined,
   });
+
+  // Rastrear o último initialData aplicado para detectar mudanças reais
+  const lastAppliedInitialDataRef = useRef<Partial<FiveW2HFormData>>({});
+
+  // Rastrear quais campos o USUÁRIO editou manualmente (independente de initialData)
+  const userEditedFieldsRef = useRef<Set<keyof FiveW2HFormData>>(new Set());
+
+  // Atualizar formData quando initialData mudar, mas proteger edições do usuário
+  useEffect(() => {
+    // Se initialData não mudou desde a última aplicação, não fazer nada
+    const hasInitialDataChanged = JSON.stringify(lastAppliedInitialDataRef.current) !== JSON.stringify(initialData);
+    if (!hasInitialDataChanged) {
+      return;
+    }
+
+    // Atualizar ref ANTES de qualquer return, para manter consistência
+    lastAppliedInitialDataRef.current = { ...initialData };
+
+    // Se initialData está vazio, apenas atualizar ref e não modificar form
+    if (Object.keys(initialData).length === 0) {
+      return;
+    }
+
+    setFormData(prev => {
+      // FIX Bug 1: Verificar se campo foi editado ANTES de deletar do ref
+      // A ordem correta é: verificar → aplicar → deletar (apenas não-editados)
+      // Ordem ERRADA era: deletar → verificar → aplicar (perdia edições do usuário)
+      const isFieldEdited = (field: keyof FiveW2HFormData): boolean => {
+        return userEditedFieldsRef.current.has(field);
+      };
+
+      // Verificar quais campos foram editados pelo usuário
+      const edited = {
+        what: isFieldEdited('what'),
+        why: isFieldEdited('why'),
+        where: isFieldEdited('where'),
+        department: isFieldEdited('department'),
+        branch: isFieldEdited('branch'),
+        startDate: isFieldEdited('startDate'),
+        endDate: isFieldEdited('endDate'),
+        who: isFieldEdited('who'),
+        how: isFieldEdited('how'),
+        howMuch: isFieldEdited('howMuch'),
+        priority: isFieldEdited('priority'),
+        linkedObjective: isFieldEdited('linkedObjective'),
+      };
+
+      // Limpar marcadores de edição APENAS para campos que NÃO foram editados pelo usuário
+      // e que estão presentes no novo initialData
+      // Isso permite que esses campos sejam sobrescritos por futuros initialData
+      Object.keys(initialData).forEach((key) => {
+        const fieldKey = key as keyof FiveW2HFormData;
+        if (!edited[fieldKey]) {
+          userEditedFieldsRef.current.delete(fieldKey);
+        }
+      });
+
+      // Usar ?? (nullish coalescing) em vez de || (logical OR)
+      // ?? só descarta null/undefined, || descarta qualquer valor falsy (empty string, 0, [])
+      // Aplicar initialData apenas em campos que o usuário NÃO editou
+      return {
+        what: edited.what ? prev.what : (initialData.what ?? prev.what),
+        why: edited.why ? prev.why : (initialData.why ?? prev.why),
+        where: edited.where ? prev.where : (initialData.where ?? prev.where),
+        department: edited.department ? prev.department : (initialData.department ?? prev.department),
+        branch: edited.branch ? prev.branch : (initialData.branch ?? prev.branch),
+        startDate: edited.startDate ? prev.startDate : (initialData.startDate ?? prev.startDate),
+        endDate: edited.endDate ? prev.endDate : (initialData.endDate ?? prev.endDate),
+        who: edited.who ? prev.who : (initialData.who ?? prev.who),
+        how: edited.how ? prev.how : (initialData.how ?? prev.how),
+        howMuch: edited.howMuch ? prev.howMuch : (initialData.howMuch ?? prev.howMuch),
+        priority: edited.priority ? prev.priority : (initialData.priority ?? prev.priority),
+        linkedObjective: edited.linkedObjective ? prev.linkedObjective : (initialData.linkedObjective ?? prev.linkedObjective),
+      };
+    });
+  }, [initialData]);
 
   const step = STEPS[currentStep];
 
   const updateField = <K extends keyof FiveW2HFormData>(
-    field: K, 
+    field: K,
     value: FiveW2HFormData[K]
   ) => {
+    // Marcar campo como editado pelo usuário IMEDIATAMENTE
+    // Isso protege contra sobrescrita futura de initialData
+    userEditedFieldsRef.current.add(field);
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

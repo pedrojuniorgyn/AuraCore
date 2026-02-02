@@ -3,11 +3,11 @@
 /**
  * Página: Novo Plano de Ação 5W2H
  * Wizard interativo para criação de planos de ação
- * 
+ *
  * @module app/(dashboard)/strategic/action-plans/new
  */
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FileText, ArrowLeft, Loader2 } from 'lucide-react';
 import { FiveW2HWizard, type FiveW2HFormData } from '@/components/strategic/FiveW2HWizard';
@@ -22,11 +22,44 @@ interface OptionsData {
   branches: Array<{ id: string; name: string }>;
 }
 
-export default function NewActionPlanPage() {
+// FIX Bug 1: Extrair lógica de searchParams para componente separado com Suspense
+// No Next.js 15, useSearchParams() requer Suspense boundary para evitar hydration mismatch
+function NewActionPlanPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Extrair valores primitivos dos searchParams para usar como dependências
+  const fromIdea = searchParams.get('fromIdea');
+  const title = searchParams.get('title');
+
+  // Memoizar initialData para evitar criar novo objeto a cada render
+  // Só recria quando fromIdea ou title mudarem de fato
+  const initialData = useMemo<Partial<FiveW2HFormData>>(() => {
+    if (fromIdea && title) {
+      // FIX Bug 1: decodeURIComponent pode lançar URIError em sequências inválidas
+      // URLs malformadas (e.g., %2, %E0%A, %ZZ) causariam crash do componente
+      // Usar try-catch para retornar string original se decodificação falhar
+      let decodedTitle = title;
+      try {
+        decodedTitle = decodeURIComponent(title);
+      } catch (error) {
+        // Se decodificação falhar, usar string original
+        // Isso previne crash em URLs malformadas (malicious ou acidentais)
+        console.warn('Failed to decode title parameter:', error);
+      }
+      return { what: decodedTitle };
+    }
+    return {};
+  }, [fromIdea, title]);
+
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [optionsLoading, setOptionsLoading] = useState(true);
 
+  // FIX Bug 2: Rastrear se toast já foi mostrado para evitar duplicatas
+  // Após Suspense resolver, o componente pode re-renderizar e useEffect pode disparar novamente
+  const toastShownRef = useRef(false);
+
+  // Fetch options apenas uma vez no mount
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -40,6 +73,14 @@ export default function NewActionPlanPage() {
     };
     fetchOptions();
   }, []);
+
+  // Mostrar toast quando vem de conversão de Ideia (apenas uma vez)
+  useEffect(() => {
+    if (fromIdea && title && !toastShownRef.current) {
+      toast.info('Plano criado a partir de uma Ideia');
+      toastShownRef.current = true;
+    }
+  }, [fromIdea, title]);
 
   const handleSubmit = async (formData: FiveW2HFormData) => {
     const whoId = formData.who[0];
@@ -119,8 +160,29 @@ export default function NewActionPlanPage() {
           users={options?.users || []}
           departments={options?.departments || []}
           branches={options?.branches || []}
+          initialData={initialData}
         />
       )}
     </div>
+  );
+}
+
+// Wrapper com Suspense boundary para evitar hydration mismatch
+export default function NewActionPlanPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6">
+          <div className="flex items-center justify-center h-[500px]">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
+              <p className="text-white/60">Carregando...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <NewActionPlanPageContent />
+    </Suspense>
   );
 }
