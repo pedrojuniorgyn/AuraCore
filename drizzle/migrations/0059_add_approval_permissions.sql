@@ -64,6 +64,60 @@ END
 GO
 
 -- =====================================================
+-- Tabela: strategic_approval_delegate
+-- Descrição: Delegações temporárias de permissões de aprovação
+-- =====================================================
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'strategic_approval_delegate')
+BEGIN
+  CREATE TABLE strategic_approval_delegate (
+    id VARCHAR(36) NOT NULL DEFAULT NEWID(),
+    organization_id INT NOT NULL,
+    branch_id INT NOT NULL,
+    delegator_user_id INT NOT NULL, -- Quem delega
+    delegate_user_id INT NOT NULL,  -- Quem recebe
+    start_date DATETIME2 NOT NULL,
+    end_date DATETIME2 NULL,        -- NULL = sem data fim
+    is_active BIT NOT NULL DEFAULT 1,
+    created_by VARCHAR(36) NULL,
+    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+    updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+    
+    CONSTRAINT pk_strategic_approval_delegate PRIMARY KEY (id),
+    CONSTRAINT fk_delegate_org FOREIGN KEY (organization_id) REFERENCES organizations(id)
+  );
+  
+  PRINT 'Tabela strategic_approval_delegate criada com sucesso';
+END
+ELSE
+BEGIN
+  PRINT 'Tabela strategic_approval_delegate já existe';
+END
+GO
+
+-- Índice composto tenant (SCHEMA-003)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_approval_delegate_tenant')
+BEGIN
+  CREATE NONCLUSTERED INDEX idx_approval_delegate_tenant
+  ON strategic_approval_delegate (organization_id, branch_id)
+  WHERE is_active = 1;
+  
+  PRINT 'Índice idx_approval_delegate_tenant criado';
+END
+GO
+
+-- Índice para queries de delegação ativa
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_delegate_delegator_delegate_active')
+BEGIN
+  CREATE NONCLUSTERED INDEX idx_delegate_delegator_delegate_active
+  ON strategic_approval_delegate (delegator_user_id, delegate_user_id, organization_id, branch_id, is_active)
+  WHERE is_active = 1;
+  
+  PRINT 'Índice idx_delegate_delegator_delegate_active criado';
+END
+GO
+
+-- =====================================================
 -- Seed data: Criar aprovador admin para org 1
 -- =====================================================
 
@@ -116,6 +170,13 @@ GO
 /*
 -- Para reverter esta migration:
 
+-- Tabela strategic_approval_delegate
+DROP INDEX IF EXISTS idx_delegate_delegator_delegate_active ON strategic_approval_delegate;
+DROP INDEX IF EXISTS idx_approval_delegate_tenant ON strategic_approval_delegate;
+DROP TABLE IF EXISTS strategic_approval_delegate;
+GO
+
+-- Tabela strategic_approval_approvers
 DROP INDEX IF EXISTS idx_approvers_user ON strategic_approval_approvers;
 DROP INDEX IF EXISTS idx_approvers_org_branch_active ON strategic_approval_approvers;
 DROP TABLE IF EXISTS strategic_approval_approvers;
