@@ -143,20 +143,25 @@ export class ApprovalDelegate extends Entity<string> {
 
   /**
    * Revoga delegação (soft delete via isActive)
+   * 
+   * @see ENTITY-005 - Usa type assertion para mutação controlada
    */
   revoke(): Result<void, string> {
     if (!this.props.isActive) {
       return Result.fail('Delegação já está inativa');
     }
 
-    this.props.isActive = false;
-    this.props.updatedAt = new Date();
+    // Type assertion explícita para mutação controlada (padrão do projeto)
+    (this.props as { isActive: boolean }).isActive = false;
+    (this.props as { updatedAt: Date }).updatedAt = new Date();
 
     return Result.ok(undefined);
   }
 
   /**
    * Estende período de delegação
+   * 
+   * @see ENTITY-005 - Usa type assertion para mutação controlada
    */
   extendUntil(newEndDate: Date): Result<void, string> {
     if (!this.props.isActive) {
@@ -172,8 +177,9 @@ export class ApprovalDelegate extends Entity<string> {
       return Result.fail('Nova data fim deve ser >= data atual');
     }
 
-    this.props.endDate = newEndDate;
-    this.props.updatedAt = new Date();
+    // Type assertion explícita para mutação controlada (padrão do projeto)
+    (this.props as { endDate: Date | null }).endDate = newEndDate;
+    (this.props as { updatedAt: Date }).updatedAt = new Date();
 
     return Result.ok(undefined);
   }
