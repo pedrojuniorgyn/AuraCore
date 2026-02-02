@@ -352,7 +352,8 @@ export class GetDrilldownQuery {
   async getKPIDetail(
     organizationId: number,
     branchId: number,
-    kpiId: string
+    kpiId: string,
+    months: number = 12
   ): Promise<Result<KPIDetailDrilldown, string>> {
     // Get KPI info
     const kpiQuery = sql`
@@ -392,7 +393,7 @@ export class GetDrilldownQuery {
         AND deleted_at IS NULL
       GROUP BY period_year, period_month
       ORDER BY period_year DESC, period_month DESC
-      OFFSET 0 ROWS FETCH NEXT 12 ROWS ONLY
+      OFFSET 0 ROWS FETCH NEXT ${months} ROWS ONLY
     `;
 
     const valuesResult = await db.execute(valuesQuery);

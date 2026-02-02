@@ -14,8 +14,11 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
 /**
- * GET /api/strategic/dashboard/drilldown/{kpiId}
+ * GET /api/strategic/dashboard/drilldown/{kpiId}?months=12
  * Get detailed KPI data with history and action plans
+ * 
+ * @param kpiId - KPI UUID
+ * @param months - Number of months of history to return (default: 12, range: 1-36)
  */
 export async function GET(
   request: NextRequest,
@@ -37,6 +40,19 @@ export async function GET(
       );
     }
 
+    // Extract 'months' query parameter (default: 12)
+    const { searchParams } = new URL(request.url);
+    const monthsParam = searchParams.get('months');
+    const months = monthsParam ? parseInt(monthsParam, 10) : 12;
+
+    // Validate months parameter
+    if (isNaN(months) || months < 1 || months > 36) {
+      return NextResponse.json(
+        { error: 'months must be between 1 and 36' },
+        { status: 400 }
+      );
+    }
+
     const query = container.resolve<GetDrilldownQuery>(
       STRATEGIC_TOKENS.GetDrilldownQuery
     );
@@ -44,7 +60,8 @@ export async function GET(
     const result = await query.getKPIDetail(
       tenantContext.organizationId,
       tenantContext.branchId,
-      kpiId
+      kpiId,
+      months
     );
 
     if (!Result.isOk(result)) {
