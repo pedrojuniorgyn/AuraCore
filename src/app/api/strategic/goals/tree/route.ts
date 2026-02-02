@@ -26,10 +26,10 @@ function formatForTreemap(node: CascadeTreeNode): {
   children?: ReturnType<typeof formatForTreemap>[];
 } {
   return {
-    name: node.goal.code,
-    value: node.goal.weight,
-    progress: node.goal.progress,
-    status: node.goal.status.value,
+    name: node.code,
+    value: node.weight,
+    progress: node.progress,
+    status: node.status,
     ...(node.children.length > 0 && {
       children: node.children.map(formatForTreemap),
     }),

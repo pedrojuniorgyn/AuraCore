@@ -10,6 +10,7 @@ import { Alert, type AlertType } from '../../../domain/entities/Alert';
 import { AlertMapper } from '../mappers/AlertMapper';
 import { strategicAlertTable } from '../schemas/alert.schema';
 import { db } from '@/lib/db';
+import { queryPaginated } from '@/lib/db/query-helpers';
 import { Result } from '@/shared/domain';
 import { injectable } from 'tsyringe';
 
@@ -127,19 +128,18 @@ export class DrizzleAlertRepository implements IAlertRepository {
     const total = Number(countResult[0]?.count ?? 0);
 
     // Get paginated items
-    const offset = (page - 1) * pageSize;
-    const rows = await db
+    const query = db
       .select()
       .from(strategicAlertTable)
       .where(and(...conditions))
-      .orderBy(desc(strategicAlertTable.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+      .orderBy(desc(strategicAlertTable.createdAt));
+
+    const rows = await queryPaginated<typeof strategicAlertTable.$inferSelect>(query, { page, pageSize });
 
     const items = rows
-      .map(row => AlertMapper.toDomain(row))
+      .map((row) => AlertMapper.toDomain(row))
       .filter(Result.isOk)
-      .map(r => r.value);
+      .map((r) => r.value);
 
     return { items, total };
   }

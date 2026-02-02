@@ -15,7 +15,7 @@ describe('ControlItem Entity', () => {
     upperLimit: 110,
     lowerLimit: 90,
     unit: 'un',
-    kpiId: null,
+    kpiId: undefined,
     createdBy: 'user-123',
   };
 
@@ -47,7 +47,7 @@ describe('ControlItem Entity', () => {
     it('should return true when value is within limits', () => {
       const result = ControlItem.create(validProps);
       if (Result.isOk(result)) {
-        result.value.updateValue(100, new Date());
+        result.value.updateValue(100);
         expect(result.value.isWithinLimits()).toBe(true);
       }
     });
@@ -55,7 +55,7 @@ describe('ControlItem Entity', () => {
     it('should return false when value exceeds upper limit', () => {
       const result = ControlItem.create(validProps);
       if (Result.isOk(result)) {
-        result.value.updateValue(120, new Date());
+        result.value.updateValue(120);
         expect(result.value.isWithinLimits()).toBe(false);
       }
     });
@@ -63,7 +63,7 @@ describe('ControlItem Entity', () => {
     it('should return false when value is below lower limit', () => {
       const result = ControlItem.create(validProps);
       if (Result.isOk(result)) {
-        result.value.updateValue(80, new Date());
+        result.value.updateValue(80);
         expect(result.value.isWithinLimits()).toBe(false);
       }
     });
@@ -73,7 +73,7 @@ describe('ControlItem Entity', () => {
     it('should return true when value equals target', () => {
       const result = ControlItem.create(validProps);
       if (Result.isOk(result)) {
-        result.value.updateValue(100, new Date());
+        result.value.updateValue(100);
         expect(result.value.isOnTarget()).toBe(true);
       }
     });
@@ -81,7 +81,7 @@ describe('ControlItem Entity', () => {
     it('should return true when value is within 5% of target', () => {
       const result = ControlItem.create(validProps);
       if (Result.isOk(result)) {
-        result.value.updateValue(103, new Date()); // 3% above
+        result.value.updateValue(103); // 3% above
         expect(result.value.isOnTarget()).toBe(true);
       }
     });
@@ -89,7 +89,7 @@ describe('ControlItem Entity', () => {
     it('should return false when value is more than 5% off target', () => {
       const result = ControlItem.create(validProps);
       if (Result.isOk(result)) {
-        result.value.updateValue(85, new Date()); // 15% below
+        result.value.updateValue(85); // 15% below
         expect(result.value.isOnTarget()).toBe(false);
       }
     });

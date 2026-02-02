@@ -19,7 +19,7 @@ export class UpdateControlItemValueUseCase implements IUpdateControlItemValueUse
     input: UpdateControlItemValueInput,
     organizationId: number,
     branchId: number,
-    updatedBy: string
+    _updatedBy: string
   ): Promise<Result<UpdateControlItemValueOutput, string>> {
     // 1. Buscar Control Item
     const controlItem = await this.repository.findById(
@@ -36,7 +36,7 @@ export class UpdateControlItemValueUseCase implements IUpdateControlItemValueUse
     const previousValue = controlItem.currentValue;
 
     // 3. Atualizar valor
-    const updateResult = controlItem.updateValue(input.value, input.measuredAt);
+    const updateResult = controlItem.updateValue(input.value);
     if (Result.isFail(updateResult)) {
       return Result.fail(updateResult.error);
     }

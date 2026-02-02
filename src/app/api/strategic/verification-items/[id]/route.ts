@@ -4,7 +4,7 @@
  *
  * @module app/api/strategic/verification-items/[id]
  */
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
@@ -12,6 +12,10 @@ import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IVerificationItemRepository } from '@/modules/strategic/domain/ports/output/IVerificationItemRepository';
+
+interface RouteContext {
+  params: Promise<Record<string, string>>;
+}
 
 const updateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -24,12 +28,9 @@ const updateSchema = z.object({
   status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
 });
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 // GET /api/strategic/verification-items/[id]
-export const GET = withDI(async (_request: Request, { params }: RouteParams) => {
+export const GET = withDI(async (_request: NextRequest, context: RouteContext) => {
+  const params = context.params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -77,7 +78,8 @@ export const GET = withDI(async (_request: Request, { params }: RouteParams) => 
 });
 
 // PATCH /api/strategic/verification-items/[id]
-export const PATCH = withDI(async (request: Request, { params }: RouteParams) => {
+export const PATCH = withDI(async (request: NextRequest, context: RouteContext) => {
+  const params = context.params;
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -145,7 +147,8 @@ export const PATCH = withDI(async (request: Request, { params }: RouteParams) =>
 });
 
 // DELETE /api/strategic/verification-items/[id]
-export const DELETE = withDI(async (_request: Request, { params }: RouteParams) => {
+export const DELETE = withDI(async (_request: NextRequest, context: RouteContext) => {
+  const params = context.params;
   try {
     const context = await getTenantContext();
     if (!context) {

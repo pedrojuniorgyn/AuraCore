@@ -55,7 +55,7 @@ export class CreateControlItemUseCase implements ICreateControlItemUseCase {
       upperLimit: input.upperLimit,
       lowerLimit: input.lowerLimit,
       unit: input.unit,
-      kpiId: input.kpiId || null,
+      kpiId: input.kpiId ?? undefined,
       description: input.description,
       createdBy,
     });
