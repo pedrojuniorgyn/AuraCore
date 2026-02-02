@@ -49,6 +49,8 @@ import {
   
   // Navegação
   ChevronDown, ChevronRight, Star, History, Search,
+  // Strategic extras
+  Trophy, Award, Link2, FileStack,
 } from "lucide-react";
 import { BranchSwitcher } from "./branch-switcher";
 import { UserMenu } from "./user-menu";
@@ -193,15 +195,30 @@ const sidebarGroups: SidebarGroup[] = [
     icon: Target,
     color: "text-rose-400",
     items: [
+      // Visão Geral
       { title: "Dashboard Estratégico", href: "/strategic/dashboard", icon: LayoutDashboard, color: "text-rose-400" },
+      { title: "Analytics", href: "/strategic/analytics", icon: BarChart, color: "text-sky-400" },
+      // Metodologias de Metas
       { title: "Mapa Estratégico (BSC)", href: "/strategic/map", icon: Grid3x3, color: "text-purple-400" },
-      { title: "Objetivos", href: "/strategic/goals", icon: Target, color: "text-green-400" },
+      { title: "Objetivos (BSC)", href: "/strategic/goals", icon: Target, color: "text-green-400" },
+      { title: "OKRs", href: "/strategic/okrs", icon: Target, color: "text-violet-400" },
       { title: "KPIs", href: "/strategic/kpis", icon: TrendingUp, color: "text-blue-400" },
+      // Execução
       { title: "PDCA", href: "/strategic/pdca", icon: Activity, color: "text-amber-400" },
       { title: "Planos de Ação (5W2H)", href: "/strategic/action-plans", icon: ClipboardList, color: "text-cyan-400" },
       { title: "Análise SWOT", href: "/strategic/swot", icon: Grid3x3, color: "text-indigo-400" },
-      { title: "Caixa de Ideias", href: "/strategic/ideas", icon: Star, color: "text-yellow-400" },
       { title: "War Room", href: "/strategic/war-room", icon: Radio, color: "text-red-400" },
+      // Engajamento
+      { title: "Caixa de Ideias", href: "/strategic/ideas", icon: Star, color: "text-yellow-400" },
+      { title: "Ranking", href: "/strategic/leaderboard", icon: Trophy, color: "text-amber-400" },
+      { title: "Conquistas", href: "/strategic/achievements", icon: Award, color: "text-pink-400" },
+      // Relatórios
+      { title: "Relatórios", href: "/strategic/reports", icon: FileText, color: "text-slate-400" },
+      // Configurações do Módulo
+      { title: "Templates", href: "/strategic/templates", icon: FileStack, color: "text-teal-400" },
+      { title: "Integrações", href: "/strategic/integrations", icon: Link2, color: "text-orange-400" },
+      { title: "Auditoria Estratégica", href: "/strategic/audit", icon: History, color: "text-gray-400" },
+      { title: "Configurações", href: "/strategic/settings", icon: Settings, color: "text-slate-400" },
     ],
   },
   {
