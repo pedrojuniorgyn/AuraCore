@@ -7,6 +7,7 @@ import { DoclingClient } from '../docling';
 import { DrizzleUnitOfWork } from '../persistence/DrizzleUnitOfWork';
 import { InMemoryEventPublisher } from '../events/InMemoryEventPublisher';
 import { DrizzleAuditLogger } from '../audit/DrizzleAuditLogger';
+import { DrizzleDepartmentRepository } from '../persistence/repositories/DrizzleDepartmentRepository';
 import { ImportDANFeUseCase } from '@/modules/fiscal/application/commands/import-danfe';
 import { ImportDACTeUseCase } from '@/modules/fiscal/application/commands/import-dacte';
 
@@ -51,6 +52,7 @@ export function registerGlobalDependencies() {
   container.registerSingleton(TOKENS.UnitOfWork, DrizzleUnitOfWork);
   container.registerSingleton(TOKENS.EventPublisher, InMemoryEventPublisher);
   container.registerSingleton(TOKENS.AuditLogger, DrizzleAuditLogger);
+  container.registerSingleton(TOKENS.DepartmentRepository, DrizzleDepartmentRepository);
 
   // ============================================================================
   // DOCLING INTEGRATION (E-Agent-Fase-D1/D2/D3)

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDynamicBreadcrumbLabel } from "@/hooks/useDynamicBreadcrumbLabel";
 
 // Mapa de rotas para nomes legíveis
 const routeNames: Record<string, string> = {
@@ -99,22 +100,66 @@ const routeNames: Record<string, string> = {
   // Sustentabilidade
   "sustentabilidade": "Sustentabilidade",
   "carbono": "Pegada de Carbono",
-  
+
+  // Gestão Estratégica
+  "strategic": "Gestão Estratégica",
+  "dashboard": "Dashboard",
+  "goals": "Objetivos (BSC)",
+  "kpis": "KPIs",
+  "okrs": "OKRs",
+  "action-plans": "Planos de Ação",
+  "pdca": "PDCA",
+  "swot": "Análise SWOT",
+  "war-room": "War Room",
+  "map": "Mapa BSC",
+  "analytics": "Analytics",
+  "reports": "Relatórios",
+  "ideas": "Caixa de Ideias",
+  "leaderboard": "Ranking",
+  "achievements": "Conquistas",
+  "templates": "Templates",
+  "integrations": "Integrações",
+  "audit": "Auditoria",
+  "audit-log": "Log de Auditoria",
+  "settings": "Configurações",
+
   // Configurações
   "configuracoes": "Configurações",
   "backoffice": "Backoffice",
   "certificado": "Certificado Digital",
   "enterprise": "Enterprise",
   "usuarios": "Usuários",
-  
+
   // Ações comuns
   "create": "Criar",
   "edit": "Editar",
   "baixar": "Baixar",
+  "new": "Novo",
 };
 
 interface BreadcrumbsProps {
   className?: string;
+}
+
+/**
+ * Componente interno que resolve o label de um breadcrumb dinamicamente
+ */
+function BreadcrumbLabel({
+  segment,
+  pathname,
+  fallbackLabel,
+}: {
+  segment: string;
+  pathname: string;
+  fallbackLabel: string;
+}) {
+  const { label, isLoading } = useDynamicBreadcrumbLabel(segment, pathname);
+
+  if (isLoading) {
+    return <span className="opacity-50">{fallbackLabel}</span>;
+  }
+
+  return <span>{label}</span>;
 }
 
 export function Breadcrumbs({ className }: BreadcrumbsProps) {
@@ -129,26 +174,49 @@ export function Breadcrumbs({ className }: BreadcrumbsProps) {
   }
 
   // Construir breadcrumbs
-  const breadcrumbs = [
-    { label: "Dashboard", href: "/" },
+  const breadcrumbs: Array<{
+    label: string;
+    href: string;
+    segment: string;
+    isDynamic: boolean;
+  }> = [
+    { label: "Dashboard", href: "/", segment: "", isDynamic: false },
   ];
 
   let currentPath = "";
   segments.forEach((segment, index) => {
     currentPath += `/${segment}`;
-    
-    // Pular IDs numéricos (rotas dinâmicas)
+
+    // Pular IDs numéricos (rotas dinâmicas antigas)
     if (!isNaN(Number(segment))) {
       return;
     }
 
-    const label = routeNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
     const isLast = index === segments.length - 1;
 
-    breadcrumbs.push({
-      label,
-      href: isLast ? "" : currentPath, // Último item não é clicável
-    });
+    // Verificar se é UUID (rota dinâmica)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isDynamic = uuidRegex.test(segment);
+
+    if (isDynamic) {
+      // Para UUIDs, usar label genérico como fallback
+      const fallbackLabel = segment.slice(0, 8) + '…';
+      breadcrumbs.push({
+        label: fallbackLabel,
+        href: isLast ? "" : currentPath,
+        segment,
+        isDynamic: true,
+      });
+    } else {
+      // Para segmentos normais, usar o mapa de nomes
+      const label = routeNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+      breadcrumbs.push({
+        label,
+        href: isLast ? "" : currentPath,
+        segment,
+        isDynamic: false,
+      });
+    }
   });
 
   return (
@@ -161,17 +229,35 @@ export function Breadcrumbs({ className }: BreadcrumbsProps) {
       </Link>
 
       {breadcrumbs.slice(1).map((crumb, index) => (
-        <div key={crumb.label} className="flex items-center space-x-2">
+        <div key={`${crumb.segment}-${index}`} className="flex items-center space-x-2">
           <ChevronRight className="h-4 w-4" />
           {crumb.href ? (
             <Link
               href={crumb.href}
               className="hover:text-foreground transition-colors"
             >
-              {crumb.label}
+              {crumb.isDynamic ? (
+                <BreadcrumbLabel
+                  segment={crumb.segment}
+                  pathname={pathname}
+                  fallbackLabel={crumb.label}
+                />
+              ) : (
+                crumb.label
+              )}
             </Link>
           ) : (
-            <span className="text-foreground font-medium">{crumb.label}</span>
+            <span className="text-foreground font-medium">
+              {crumb.isDynamic ? (
+                <BreadcrumbLabel
+                  segment={crumb.segment}
+                  pathname={pathname}
+                  fallbackLabel={crumb.label}
+                />
+              ) : (
+                crumb.label
+              )}
+            </span>
           )}
         </div>
       ))}

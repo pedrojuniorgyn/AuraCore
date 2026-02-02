@@ -30,11 +30,20 @@ export interface IStrategicGoalRepository {
    * Busca meta por ID
    */
   findById(
-    id: string, 
-    organizationId: number, 
+    id: string,
+    organizationId: number,
     branchId: number
   ): Promise<StrategicGoal | null>;
-  
+
+  /**
+   * Busca meta por código
+   */
+  findByCode(
+    code: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<StrategicGoal | null>;
+
   /**
    * Lista metas com paginação
    */
@@ -87,8 +96,21 @@ export interface IStrategicGoalRepository {
    * Soft delete
    */
   delete(
-    id: string, 
-    organizationId: number, 
+    id: string,
+    organizationId: number,
     branchId: number
   ): Promise<void>;
+
+  /**
+   * Adiciona uma versão de valor (ACTUAL, BUDGET, FORECAST)
+   */
+  addValueVersion(params: {
+    goalId: string;
+    organizationId: number;
+    branchId: number;
+    valueType: 'ACTUAL' | 'BUDGET' | 'FORECAST';
+    periodStart: Date;
+    periodEnd: Date;
+    targetValue: number;
+  }): Promise<void>;
 }

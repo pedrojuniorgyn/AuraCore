@@ -1,145 +1,233 @@
-import { injectable } from 'tsyringe';
-import { db, getFirstRow } from '@/lib/db';
-import { sql } from 'drizzle-orm';
-import { VarianceAnalysisService } from './VarianceAnalysisService';
+/**
+ * Service: BudgetImportService
+ * Serviço de importação de valores de orçamento via CSV
+ *
+ * @module strategic/application/services
+ */
+import { inject, injectable } from 'tsyringe';
+import { Result } from '@/shared/domain';
+import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
+import type { IKPIRepository } from '../../domain/ports/output/IKPIRepository';
+import type { IStrategicGoalRepository } from '../../domain/ports/output/IStrategicGoalRepository';
 import { parse } from 'csv-parse/sync';
 
-export interface ImportRow {
+export interface KPIValueRow {
   kpi_code: string;
-  year: string;
-  month: string;
-  budget_value: string;
-  forecast_value?: string;
-  notes?: string;
+  period_start: string;
+  period_end: string;
+  value_type: 'ACTUAL' | 'BUDGET' | 'FORECAST';
+  value: string;
+}
+
+export interface GoalValueRow {
+  goal_code: string;
+  period_start: string;
+  period_end: string;
+  value_type: 'ACTUAL' | 'BUDGET' | 'FORECAST';
+  target_value: string;
 }
 
 export interface ImportResult {
-  totalRows: number;
-  successCount: number;
-  errorCount: number;
+  success: number;
+  failed: number;
   errors: Array<{
     row: number;
-    kpiCode: string;
+    code: string;
     error: string;
   }>;
 }
 
 @injectable()
 export class BudgetImportService {
-  private varianceService = new VarianceAnalysisService();
+  constructor(
+    @inject(STRATEGIC_TOKENS.KPIRepository)
+    private kpiRepository: IKPIRepository,
+    @inject(STRATEGIC_TOKENS.StrategicGoalRepository)
+    private goalRepository: IStrategicGoalRepository
+  ) {}
 
-  async importFromCSV(
+  async importKPIValues(
     organizationId: number,
     branchId: number,
-    csvContent: string,
-    userId: string
-  ): Promise<ImportResult> {
-    const result: ImportResult = {
-      totalRows: 0,
-      successCount: 0,
-      errorCount: 0,
-      errors: [],
-    };
-
-    // Parse CSV
-    let rows: ImportRow[];
+    csvContent: string
+  ): Promise<Result<ImportResult, string>> {
     try {
-      rows = parse(csvContent, {
+      const records = parse(csvContent, {
         columns: true,
         skip_empty_lines: true,
         trim: true,
-      });
-    } catch (error) {
-      throw new Error(`Erro ao parsear CSV: ${error}`);
-    }
+      }) as KPIValueRow[];
 
-    result.totalRows = rows.length;
+      const result: ImportResult = {
+        success: 0,
+        failed: 0,
+        errors: [],
+      };
 
-    // Processar cada linha
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowNumber = i + 2; // +2 porque linha 1 é header
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        const rowNum = i + 2; // +2 for header and 0-index
 
-      try {
-        // Validar campos obrigatórios
-        if (!row.kpi_code?.trim()) {
-          throw new Error('kpi_code é obrigatório');
-        }
-        if (!row.year || isNaN(parseInt(row.year))) {
-          throw new Error('year inválido');
-        }
-        if (!row.month || isNaN(parseInt(row.month)) || parseInt(row.month) < 1 || parseInt(row.month) > 12) {
-          throw new Error('month inválido (1-12)');
-        }
-        if (!row.budget_value || isNaN(parseFloat(row.budget_value))) {
-          throw new Error('budget_value inválido');
-        }
+        try {
+          // Validate row
+          if (!row.kpi_code?.trim()) {
+            throw new Error('kpi_code is required');
+          }
+          if (!row.period_start || !row.period_end) {
+            throw new Error('period_start and period_end are required');
+          }
+          if (!['ACTUAL', 'BUDGET', 'FORECAST'].includes(row.value_type)) {
+            throw new Error(`Invalid value_type: ${row.value_type}`);
+          }
 
-        // Buscar KPI pelo código
-        const kpiResult = await db.execute(sql`
-          SELECT id FROM strategic_kpi
-          WHERE code = ${row.kpi_code.trim()}
-            AND organization_id = ${organizationId}
-            AND branch_id = ${branchId}
-            AND deleted_at IS NULL
-        `);
+          const value = parseFloat(row.value);
+          if (isNaN(value)) {
+            throw new Error(`Invalid value: ${row.value}`);
+          }
 
-        const kpi = getFirstRow(kpiResult);
-        if (!kpi) {
-          throw new Error(`KPI não encontrado: ${row.kpi_code}`);
-        }
+          // Find KPI by code
+          const kpi = await this.kpiRepository.findByCode(
+            row.kpi_code.trim(),
+            organizationId,
+            branchId
+          );
 
-        // Salvar BUDGET
-        await this.varianceService.saveVersionValue(organizationId, branchId, {
-          kpiId: kpi.id,
-          versionType: 'BUDGET',
-          year: parseInt(row.year),
-          month: parseInt(row.month),
-          value: parseFloat(row.budget_value),
-          notes: row.notes?.trim() || undefined,
-          createdBy: userId,
-        });
+          if (!kpi) {
+            throw new Error(`KPI not found: ${row.kpi_code}`);
+          }
 
-        // Salvar FORECAST (se fornecido)
-        if (row.forecast_value && !isNaN(parseFloat(row.forecast_value))) {
-          await this.varianceService.saveVersionValue(organizationId, branchId, {
+          // Create value version
+          await this.kpiRepository.addValueVersion({
             kpiId: kpi.id,
-            versionType: 'FORECAST',
-            year: parseInt(row.year),
-            month: parseInt(row.month),
-            value: parseFloat(row.forecast_value),
-            notes: row.notes?.trim() || undefined,
-            createdBy: userId,
+            organizationId,
+            branchId,
+            valueType: row.value_type,
+            periodStart: new Date(row.period_start),
+            periodEnd: new Date(row.period_end),
+            value,
+          });
+
+          result.success++;
+        } catch (error) {
+          result.failed++;
+          result.errors.push({
+            row: rowNum,
+            code: row.kpi_code || 'UNKNOWN',
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
-
-        result.successCount++;
-      } catch (error) {
-        result.errorCount++;
-        result.errors.push({
-          row: rowNumber,
-          kpiCode: row.kpi_code || 'N/A',
-          error: error instanceof Error ? error.message : String(error),
-        });
       }
-    }
 
-    return result;
+      return Result.ok(result);
+    } catch (error) {
+      return Result.fail(
+        error instanceof Error ? error.message : 'Failed to parse CSV'
+      );
+    }
   }
 
-  /**
-   * Gera template CSV para download
-   */
-  generateTemplate(kpiCodes: string[]): string {
-    const header = 'kpi_code,year,month,budget_value,forecast_value,notes';
+  async importGoalValues(
+    organizationId: number,
+    branchId: number,
+    csvContent: string
+  ): Promise<Result<ImportResult, string>> {
+    try {
+      const records = parse(csvContent, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+      }) as GoalValueRow[];
+
+      const result: ImportResult = {
+        success: 0,
+        failed: 0,
+        errors: [],
+      };
+
+      for (let i = 0; i < records.length; i++) {
+        const row = records[i];
+        const rowNum = i + 2;
+
+        try {
+          if (!row.goal_code?.trim()) {
+            throw new Error('goal_code is required');
+          }
+          if (!row.period_start || !row.period_end) {
+            throw new Error('period_start and period_end are required');
+          }
+          if (!['ACTUAL', 'BUDGET', 'FORECAST'].includes(row.value_type)) {
+            throw new Error(`Invalid value_type: ${row.value_type}`);
+          }
+
+          const targetValue = parseFloat(row.target_value);
+          if (isNaN(targetValue)) {
+            throw new Error(`Invalid target_value: ${row.target_value}`);
+          }
+
+          const goal = await this.goalRepository.findByCode(
+            row.goal_code.trim(),
+            organizationId,
+            branchId
+          );
+
+          if (!goal) {
+            throw new Error(`Goal not found: ${row.goal_code}`);
+          }
+
+          await this.goalRepository.addValueVersion({
+            goalId: goal.id,
+            organizationId,
+            branchId,
+            valueType: row.value_type,
+            periodStart: new Date(row.period_start),
+            periodEnd: new Date(row.period_end),
+            targetValue,
+          });
+
+          result.success++;
+        } catch (error) {
+          result.failed++;
+          result.errors.push({
+            row: rowNum,
+            code: row.goal_code || 'UNKNOWN',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+
+      return Result.ok(result);
+    } catch (error) {
+      return Result.fail(
+        error instanceof Error ? error.message : 'Failed to parse CSV'
+      );
+    }
+  }
+
+  generateKPITemplate(kpiCodes?: string[]): string {
+    const header = 'kpi_code,period_start,period_end,value_type,value';
+
+    // Se não houver códigos, retornar apenas header + exemplo
+    if (!kpiCodes || kpiCodes.length === 0) {
+      return `${header}
+KPI-001,2026-01-01,2026-01-31,BUDGET,100000.00
+KPI-001,2026-02-01,2026-02-28,BUDGET,120000.00`;
+    }
+
+    // Gerar linhas personalizadas com os KPIs reais da organização
     const currentYear = new Date().getFullYear();
+    const rows: string[] = [header];
 
-    const rows = kpiCodes.flatMap(code =>
-      Array.from({ length: 12 }, (_, i) =>
-        `${code},${currentYear},${i + 1},0,,`
-      )
-    );
+    // Para cada KPI, criar 2 linhas exemplo (Jan e Fev)
+    kpiCodes.forEach((code) => {
+      rows.push(`${code},${currentYear}-01-01,${currentYear}-01-31,BUDGET,0.00`);
+      rows.push(`${code},${currentYear}-02-01,${currentYear}-02-28,BUDGET,0.00`);
+    });
 
-    return [header, ...rows].join('\n');
+    return rows.join('\n');
+  }
+
+  generateGoalTemplate(): string {
+    return `goal_code,period_start,period_end,value_type,target_value
+GOAL-FIN-01,2026-01-01,2026-12-31,BUDGET,5000000.00`;
   }
 }

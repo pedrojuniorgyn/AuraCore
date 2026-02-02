@@ -1,106 +1,141 @@
 /**
  * API Routes: /api/strategic/alerts
- * Sistema de alertas automáticos para KPI/Anomaly/Variance/Action Plans
+ * GET - Lista alertas pendentes
+ * POST - Executa verificações de alertas
  *
  * @module app/api/strategic
  */
-import 'reflect-metadata';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { container } from '@/shared/infrastructure/di/container';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
-import { AlertService } from '@/modules/strategic/application/services/AlertService';
-import '@/modules/strategic/infrastructure/di/StrategicModule';
-import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
+import { AlertService, type PartialAlertConfig } from '@/modules/strategic/application/services/AlertService';
+import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
+import type { IAlertRepository } from '@/modules/strategic/domain/ports/output/IAlertRepository';
 
-registerStrategicModule();
-
-const postSchema = z.object({
-  action: z.enum(['check', 'acknowledge', 'resolve']),
-  alertId: z.string().uuid().optional(),
+const runAlertsSchema = z.object({
+  config: z.object({
+    kpiCriticalThreshold: z.number().min(0).max(100).optional(),
+    kpiWarningThreshold: z.number().min(0).max(100).optional(),
+    varianceUnfavorableThreshold: z.number().min(0).max(100).optional(),
+    overdueDaysWarning: z.number().int().min(1).optional(),
+    overdueDaysCritical: z.number().int().min(1).optional(),
+    staleDaysThreshold: z.number().int().min(1).optional(),
+  }).optional(),
 });
 
-// GET /api/strategic/alerts - Listar alertas pendentes
-export async function GET(request: NextRequest) {
+/**
+ * GET /api/strategic/alerts
+ * Lista alertas pendentes
+ */
+export const GET = withDI(async () => {
   try {
-    const ctx = await getTenantContext();
-    if (!ctx) {
+    const context = await getTenantContext();
+    if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const alertService = new AlertService();
-    const alerts = await alertService.getPendingAlerts(ctx.organizationId, ctx.branchId);
+    const alertRepository = container.resolve<IAlertRepository>(
+      STRATEGIC_TOKENS.AlertRepository
+    );
 
-    return NextResponse.json({ data: alerts });
-  } catch (error: unknown) {
-    if (error instanceof Response) return error;
-    console.error('[alerts] GET error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const alerts = await alertRepository.findPending(
+      context.organizationId,
+      context.branchId
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: alerts.map((alert) => ({
+        id: alert.id,
+        alertType: alert.alertType,
+        severity: alert.severity,
+        entityType: alert.entityType,
+        entityId: alert.entityId,
+        entityName: alert.entityName,
+        title: alert.title,
+        message: alert.message,
+        currentValue: alert.currentValue,
+        thresholdValue: alert.thresholdValue,
+        status: alert.status,
+        createdAt: alert.createdAt,
+      })),
+      count: alerts.length,
+    });
+  } catch (error) {
+    console.error('Error fetching alerts:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-}
+});
 
-// POST /api/strategic/alerts - Executar verificação ou atualizar status
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/strategic/alerts
+ * Executa verificações de alertas e cria novos alertas
+ */
+export const POST = withDI(async (request: Request) => {
   try {
-    const ctx = await getTenantContext();
-    if (!ctx) {
+    const context = await getTenantContext();
+    if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let body: unknown;
+    let body;
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+      body = {};
     }
 
-    const parseResult = postSchema.safeParse(body);
-    if (!parseResult.success) {
+    const parsed = runAlertsSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Validation failed', details: parseResult.error.flatten() },
+        { error: 'Invalid input', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
 
-    const { action, alertId } = parseResult.data;
-    const alertService = new AlertService();
+    const alertService = container.resolve<AlertService>(
+      STRATEGIC_TOKENS.AlertService
+    );
 
-    switch (action) {
-      case 'check': {
-        const results = await alertService.checkAllAlerts(ctx.organizationId, ctx.branchId);
+    // Config pode ser undefined ou um objeto parcial - será mesclado com defaults no service
+    const config: PartialAlertConfig | undefined = parsed.data.config;
 
-        // Salvar alertas gerados
-        for (const result of results) {
-          await alertService.saveAlerts(ctx.organizationId, ctx.branchId, result.alerts);
-        }
+    const result = await alertService.runAllChecks(
+      context.organizationId,
+      context.branchId,
+      config
+    );
 
-        const totalAlerts = results.reduce((sum, r) => sum + r.count, 0);
-        return NextResponse.json({
-          data: {
-            totalAlerts,
-            byType: results.map(r => ({ type: r.alertType, count: r.count }))
-          }
-        });
-      }
-
-      case 'acknowledge': {
-        if (!alertId) {
-          return NextResponse.json({ error: 'alertId required' }, { status: 400 });
-        }
-        await alertService.acknowledgeAlert(alertId, ctx.userId);
-        return NextResponse.json({ success: true });
-      }
-
-      case 'resolve': {
-        if (!alertId) {
-          return NextResponse.json({ error: 'alertId required' }, { status: 400 });
-        }
-        await alertService.resolveAlert(alertId, ctx.userId);
-        return NextResponse.json({ success: true });
-      }
+    if (!Result.isOk(result)) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
-  } catch (error: unknown) {
-    if (error instanceof Response) return error;
-    console.error('[alerts] POST error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        alertsCreated: result.value.created,
+        alerts: result.value.alerts.map((alert) => ({
+          id: alert.id,
+          type: alert.alertType,
+          severity: alert.severity,
+          title: alert.title,
+          entityType: alert.entityType,
+          entityId: alert.entityId,
+          message: alert.message,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error('Error running alert checks:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-}
+});

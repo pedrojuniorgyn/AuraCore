@@ -10,3 +10,4 @@ export { PDCACycle } from './PDCACycle';
 export { ExecutionStatus } from './ExecutionStatus';
 export { KPITarget } from './KPITarget';
 export { IdeaStatus } from './IdeaStatus';
+export { WorkflowStatus } from './WorkflowStatus';

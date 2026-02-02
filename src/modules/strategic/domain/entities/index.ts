@@ -15,3 +15,5 @@ export { VerificationItem, type VerificationItemStatus, type VerificationFrequen
 export { Anomaly, type AnomalyStatus, type AnomalySeverity, type AnomalySource } from './Anomaly';
 export { SwotItem, type SwotQuadrant, type SwotStatus, type SwotCategory } from './SwotItem';
 export { WarRoomMeeting, type MeetingType, type MeetingStatus } from './WarRoomMeeting';
+export { ApprovalHistory, type ApprovalAction } from './ApprovalHistory';
+export { Alert, type AlertType, type AlertSeverity, type AlertStatus } from './Alert';

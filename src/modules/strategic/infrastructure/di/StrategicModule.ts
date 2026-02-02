@@ -16,6 +16,8 @@ import { DrizzleActionPlanFollowUpRepository } from '../persistence/repositories
 import { DrizzleSwotRepository } from '../persistence/repositories/DrizzleSwotRepository';
 import { DrizzleWarRoomMeetingRepository } from '../persistence/repositories/DrizzleWarRoomMeetingRepository';
 import { DrizzleUserDashboardLayoutRepository } from '../persistence/repositories/DrizzleUserDashboardLayoutRepository';
+import { DrizzleAlertRepository } from '../persistence/repositories/DrizzleAlertRepository';
+import { DrizzleApprovalHistoryRepository } from '../persistence/repositories/DrizzleApprovalHistoryRepository';
 
 // Use Cases - Commands
 import { CreateStrategyUseCase } from '../../application/commands/CreateStrategyUseCase';
@@ -52,6 +54,11 @@ import { ListActionPlansQuery } from '../../application/queries/ListActionPlansQ
 import { GetActionPlanTimelineQuery } from '../../application/queries/GetActionPlanTimelineQuery';
 import { GetBSCDashboardQuery } from '../../application/queries/GetBSCDashboardQuery';
 import { GetStrategicMapQuery } from '../../application/queries/GetStrategicMapQuery';
+import { GetDrilldownQuery } from '../../application/queries/GetDrilldownQuery';
+
+// Services
+import { AlertService } from '../../application/services/AlertService';
+import { BudgetImportService } from '../../application/services/BudgetImportService';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -72,7 +79,9 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.SwotAnalysisRepository, DrizzleSwotRepository);
   container.registerSingleton(STRATEGIC_TOKENS.WarRoomMeetingRepository, DrizzleWarRoomMeetingRepository);
   container.registerSingleton(STRATEGIC_TOKENS.UserDashboardLayoutRepository, DrizzleUserDashboardLayoutRepository);
-  
+  container.registerSingleton(STRATEGIC_TOKENS.AlertRepository, DrizzleAlertRepository);
+  container.registerSingleton(STRATEGIC_TOKENS.ApprovalHistoryRepository, DrizzleApprovalHistoryRepository);
+
   // Use Cases - Commands (Fase F2)
   container.registerSingleton(STRATEGIC_TOKENS.CreateStrategyUseCase, CreateStrategyUseCase);
   container.registerSingleton(STRATEGIC_TOKENS.CreateStrategyVersionUseCase, CreateStrategyVersionUseCase);
@@ -126,4 +135,9 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.GetActionPlanTimelineUseCase, GetActionPlanTimelineQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetBSCDashboardUseCase, GetBSCDashboardQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetStrategicMapUseCase, GetStrategicMapQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetDrilldownQuery, GetDrilldownQuery);
+
+  // Application Services
+  container.registerSingleton(STRATEGIC_TOKENS.AlertService, AlertService);
+  container.registerSingleton(STRATEGIC_TOKENS.BudgetImportService, BudgetImportService);
 }

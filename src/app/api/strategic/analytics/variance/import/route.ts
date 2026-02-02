@@ -6,8 +6,12 @@
  */
 import 'reflect-metadata';
 import { NextRequest, NextResponse } from 'next/server';
+import { container } from '@/shared/infrastructure/di/container';
+import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { BudgetImportService } from '@/modules/strategic/application/services/BudgetImportService';
+import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
+import '@/modules/strategic/infrastructure/di/StrategicModule';
 
 // POST - Importar CSV
 export async function POST(request: NextRequest) {
@@ -35,18 +39,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Arquivo CSV vazio' }, { status: 400 });
     }
 
-    const importService = new BudgetImportService();
-    const result = await importService.importFromCSV(
+    const importService = container.resolve<BudgetImportService>(
+      STRATEGIC_TOKENS.BudgetImportService
+    );
+    const result = await importService.importKPIValues(
       ctx.organizationId,
       ctx.branchId,
-      csvContent,
-      ctx.userId
+      csvContent
     );
 
-    const status = result.errorCount === 0 ? 200 :
-                   result.successCount === 0 ? 400 : 207; // 207 Multi-Status
+    if (!Result.isOk(result)) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
 
-    return NextResponse.json({ data: result }, { status });
+    const status = result.value.failed === 0 ? 200 :
+                   result.value.success === 0 ? 400 : 207; // 207 Multi-Status
+
+    return NextResponse.json({
+      data: {
+        totalRows: result.value.success + result.value.failed,
+        successCount: result.value.success,
+        errorCount: result.value.failed,
+        errors: result.value.errors,
+      }
+    }, { status });
   } catch (error) {
     console.error('[variance/import] Error:', error);
     return NextResponse.json({

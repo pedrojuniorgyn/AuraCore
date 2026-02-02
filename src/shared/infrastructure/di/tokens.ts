@@ -12,6 +12,7 @@ export const TOKENS = {
   Logger: Symbol('Logger'),
   UnitOfWork: Symbol('UnitOfWork'),
   AuditLogger: Symbol('AuditLogger'),
+  DepartmentRepository: Symbol('DepartmentRepository'),
 
   // Financial Module - Repositories & Services
   PayableRepository: Symbol('PayableRepository'),

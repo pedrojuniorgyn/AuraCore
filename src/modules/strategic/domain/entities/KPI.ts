@@ -1,11 +1,12 @@
 /**
  * Entity: KPI (Key Performance Indicator)
  * Indicadores de desempenho vinculados às metas estratégicas
- * 
+ *
  * @module strategic/domain/entities
  * @see ADR-0020
  */
 import { Entity, Result } from '@/shared/domain';
+import { KPICalculatorService } from '../services/KPICalculatorService';
 
 export type KPIPolarity = 'UP' | 'DOWN';
 export type KPIFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
@@ -202,36 +203,29 @@ export class KPI extends Entity<string> {
   }
 
   /**
-   * Recalcula o status baseado nos thresholds
+   * Recalcula o status baseado nos thresholds usando KPICalculatorService
+   *
+   * Converte alertThreshold de percentual para ratio:
+   * - alertThreshold=10 significa "alerta quando estiver 10% abaixo da meta"
+   * - Isso equivale a warningRatio=0.9 (90% da meta)
    */
   private recalculateStatus(): void {
-    const deviation = Math.abs(this.deviationPercent);
-    
-    let newStatus: KPIStatus;
-    if (this.props.polarity === 'UP') {
-      // Para KPIs onde maior é melhor
-      if (this.props.currentValue >= this.props.targetValue) {
-        newStatus = 'GREEN';
-      } else if (deviation <= this.props.alertThreshold) {
-        newStatus = 'GREEN';
-      } else if (deviation <= this.props.criticalThreshold) {
-        newStatus = 'YELLOW';
-      } else {
-        newStatus = 'RED';
-      }
-    } else {
-      // Para KPIs onde menor é melhor
-      if (this.props.currentValue <= this.props.targetValue) {
-        newStatus = 'GREEN';
-      } else if (deviation <= this.props.alertThreshold) {
-        newStatus = 'GREEN';
-      } else if (deviation <= this.props.criticalThreshold) {
-        newStatus = 'YELLOW';
-      } else {
-        newStatus = 'RED';
-      }
-    }
-    
+    // Converter alertThreshold (percentual) para warningRatio
+    // alertThreshold=10 → warningRatio=0.9 (90% da meta)
+    const warningRatio = 1.0 - (this.props.alertThreshold / 100);
+
+    const statusResult = KPICalculatorService.calculateStatus(
+      this.props.currentValue,
+      this.props.targetValue,
+      this.props.polarity,
+      warningRatio
+    );
+
+    // Se o cálculo falhar (valores nulos), manter status atual ou definir como RED
+    const newStatus: KPIStatus = Result.isOk(statusResult)
+      ? statusResult.value
+      : 'RED';
+
     (this.props as { status: KPIStatus }).status = newStatus;
   }
 

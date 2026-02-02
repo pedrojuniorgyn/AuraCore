@@ -96,8 +96,21 @@ export interface IKPIRepository {
    * Soft delete
    */
   delete(
-    id: string, 
-    organizationId: number, 
+    id: string,
+    organizationId: number,
     branchId: number
   ): Promise<void>;
+
+  /**
+   * Adiciona uma versão de valor (ACTUAL, BUDGET, FORECAST)
+   */
+  addValueVersion(params: {
+    kpiId: string;
+    organizationId: number;
+    branchId: number;
+    valueType: 'ACTUAL' | 'BUDGET' | 'FORECAST';
+    periodStart: Date;
+    periodEnd: Date;
+    value: number;
+  }): Promise<void>;
 }

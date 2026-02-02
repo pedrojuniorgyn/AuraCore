@@ -73,4 +73,13 @@ export interface IStrategyRepository {
     orgId: number,
     branchId: number
   ): Promise<Strategy[]>;
+
+  /**
+   * Busca estratégias por status de workflow
+   */
+  findByWorkflowStatus(
+    workflowStatus: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<Strategy[]>;
 }

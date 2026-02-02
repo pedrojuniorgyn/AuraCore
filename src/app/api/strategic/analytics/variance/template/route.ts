@@ -5,14 +5,17 @@
  * @module app/api/strategic/analytics
  */
 import 'reflect-metadata';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { container } from '@/shared/infrastructure/di/container';
 import { db, getDbRows } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { getTenantContext } from '@/lib/auth/context';
 import { BudgetImportService } from '@/modules/strategic/application/services/BudgetImportService';
+import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
+import '@/modules/strategic/infrastructure/di/StrategicModule';
 
 // GET - Download template CSV
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -36,8 +39,10 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const importService = new BudgetImportService();
-    const csvContent = importService.generateTemplate(kpiCodes);
+    const importService = container.resolve<BudgetImportService>(
+      STRATEGIC_TOKENS.BudgetImportService
+    );
+    const csvContent = importService.generateKPITemplate(kpiCodes);
 
     return new NextResponse(csvContent, {
       headers: {

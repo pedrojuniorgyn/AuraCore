@@ -248,6 +248,69 @@ export class DrizzleStrategicGoalRepository implements IStrategicGoalRepository 
       );
   }
 
+  async findByCode(code: string, organizationId: number, branchId: number): Promise<StrategicGoal | null> {
+    const rows = await db
+      .select()
+      .from(strategicGoalTable)
+      .where(
+        and(
+          eq(strategicGoalTable.code, code.toUpperCase()),
+          eq(strategicGoalTable.organizationId, organizationId),
+          eq(strategicGoalTable.branchId, branchId),
+          isNull(strategicGoalTable.deletedAt)
+        )
+      );
+
+    if (rows.length === 0) return null;
+
+    const result = StrategicGoalMapper.toDomain(rows[0]);
+    return Result.isOk(result) ? result.value : null;
+  }
+
+  async addValueVersion(params: {
+    goalId: string;
+    organizationId: number;
+    branchId: number;
+    valueType: 'ACTUAL' | 'BUDGET' | 'FORECAST';
+    periodStart: Date;
+    periodEnd: Date;
+    targetValue: number;
+  }): Promise<void> {
+    const { goalId, organizationId, branchId, valueType, periodStart, targetValue } = params;
+
+    // Extrair year do periodStart (Goals usam period_year sem month)
+    const year = periodStart.getFullYear();
+
+    // Usar SQL raw pois não há schema Drizzle para goal_value_version
+    await db.execute(sql`
+      MERGE INTO strategic_goal_value_version AS target
+      USING (
+        SELECT
+          ${goalId} as goal_id,
+          ${organizationId} as organization_id,
+          ${branchId} as branch_id,
+          ${valueType} as version_type,
+          ${year} as period_year,
+          ${targetValue} as target_value
+      ) AS source
+      ON (
+        target.goal_id = source.goal_id
+        AND target.version_type = source.version_type
+        AND target.period_year = source.period_year
+        AND target.organization_id = source.organization_id
+        AND target.branch_id = source.branch_id
+        AND target.deleted_at IS NULL
+      )
+      WHEN MATCHED THEN
+        UPDATE SET
+          target_value = source.target_value,
+          updated_at = GETDATE()
+      WHEN NOT MATCHED THEN
+        INSERT (id, organization_id, branch_id, goal_id, version_type, period_year, period_quarter, target_value, created_by, created_at, updated_at)
+        VALUES (NEWID(), source.organization_id, source.branch_id, source.goal_id, source.version_type, source.period_year, NULL, source.target_value, 'system', GETDATE(), GETDATE());
+    `);
+  }
+
   private async exists(id: string, organizationId: number, branchId: number): Promise<boolean> {
     const rows = await db
       .select({ id: strategicGoalTable.id })

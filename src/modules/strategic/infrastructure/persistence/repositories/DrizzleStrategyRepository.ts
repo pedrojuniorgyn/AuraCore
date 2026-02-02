@@ -134,6 +134,14 @@ export class DrizzleStrategyRepository implements IStrategyRepository {
             isLocked: persistence.isLocked,
             lockedAt: persistence.lockedAt,
             lockedBy: persistence.lockedBy,
+            workflowStatus: persistence.workflowStatus,
+            submittedAt: persistence.submittedAt,
+            submittedByUserId: persistence.submittedByUserId,
+            approvedAt: persistence.approvedAt,
+            approvedByUserId: persistence.approvedByUserId,
+            rejectedAt: persistence.rejectedAt,
+            rejectedByUserId: persistence.rejectedByUserId,
+            rejectionReason: persistence.rejectionReason,
             updatedAt: new Date()
           })
           .where(
@@ -217,6 +225,30 @@ export class DrizzleStrategyRepository implements IStrategyRepository {
       .map(row => StrategyMapper.toDomain(row))
       .filter(Result.isOk)
       .map(r => r.value!);
+  }
+
+  async findByWorkflowStatus(
+    workflowStatus: string,
+    organizationId: number,
+    branchId: number
+  ): Promise<Strategy[]> {
+    const rows = await db
+      .select()
+      .from(strategyTable)
+      .where(
+        and(
+          eq(strategyTable.workflowStatus, workflowStatus),
+          eq(strategyTable.organizationId, organizationId),
+          eq(strategyTable.branchId, branchId),
+          isNull(strategyTable.deletedAt)
+        )
+      )
+      .orderBy(desc(strategyTable.submittedAt));
+
+    return rows
+      .map(row => StrategyMapper.toDomain(row))
+      .filter(Result.isOk)
+      .map(r => r.value);
   }
 
   private async exists(

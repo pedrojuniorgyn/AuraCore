@@ -1,11 +1,12 @@
 /**
  * Entity: Strategy (Aggregate Root)
  * Representa o planejamento estratégico da organização
- * 
+ *
  * @module strategic/domain/entities
  * @see ADR-0020
  */
 import { AggregateRoot, Result } from '@/shared/domain';
+import { WorkflowStatus } from '../value-objects/WorkflowStatus';
 
 export type StrategyStatus = 'DRAFT' | 'ACTIVE' | 'REVIEWING' | 'ARCHIVED';
 export type StrategyVersionType = 'ACTUAL' | 'BUDGET' | 'FORECAST' | 'SCENARIO';
@@ -26,6 +27,15 @@ interface StrategyProps {
   isLocked: boolean;
   lockedAt?: Date;
   lockedBy?: string;
+  // Workflow de aprovação
+  workflowStatus: WorkflowStatus;
+  submittedAt?: Date;
+  submittedByUserId?: number;
+  approvedAt?: Date;
+  approvedByUserId?: number;
+  rejectedAt?: Date;
+  rejectedByUserId?: number;
+  rejectionReason?: string;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
@@ -67,6 +77,14 @@ export class Strategy extends AggregateRoot<string> {
   get isLocked(): boolean { return this.props.isLocked; }
   get lockedAt(): Date | undefined { return this.props.lockedAt; }
   get lockedBy(): string | undefined { return this.props.lockedBy; }
+  get workflowStatus(): WorkflowStatus { return this.props.workflowStatus; }
+  get submittedAt(): Date | undefined { return this.props.submittedAt; }
+  get submittedByUserId(): number | undefined { return this.props.submittedByUserId; }
+  get approvedAt(): Date | undefined { return this.props.approvedAt; }
+  get approvedByUserId(): number | undefined { return this.props.approvedByUserId; }
+  get rejectedAt(): Date | undefined { return this.props.rejectedAt; }
+  get rejectedByUserId(): number | undefined { return this.props.rejectedByUserId; }
+  get rejectionReason(): string | undefined { return this.props.rejectionReason; }
   get createdBy(): string { return this.props.createdBy; }
 
   get isEditable(): boolean {
@@ -103,6 +121,7 @@ export class Strategy extends AggregateRoot<string> {
       status: 'DRAFT',
       versionType: 'ACTUAL',
       isLocked: false,
+      workflowStatus: WorkflowStatus.DRAFT,
       createdBy: props.createdBy,
       createdAt: now,
       updatedAt: now,
@@ -131,6 +150,14 @@ export class Strategy extends AggregateRoot<string> {
       isLocked: props.isLocked,
       lockedAt: props.lockedAt,
       lockedBy: props.lockedBy,
+      workflowStatus: props.workflowStatus,
+      submittedAt: props.submittedAt,
+      submittedByUserId: props.submittedByUserId,
+      approvedAt: props.approvedAt,
+      approvedByUserId: props.approvedByUserId,
+      rejectedAt: props.rejectedAt,
+      rejectedByUserId: props.rejectedByUserId,
+      rejectionReason: props.rejectionReason,
       createdBy: props.createdBy,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
@@ -325,6 +352,120 @@ export class Strategy extends AggregateRoot<string> {
       aggregateId: this.id,
       aggregateType: 'Strategy',
       payload: { strategyId: this.id, versionName: this.props.versionName },
+    });
+
+    return Result.ok(undefined);
+  }
+
+  // Métodos de Workflow de Aprovação
+
+  /**
+   * Submete a estratégia para aprovação (DRAFT → PENDING_APPROVAL)
+   */
+  submitForApproval(userId: number): Result<void, string> {
+    if (!this.props.workflowStatus.canTransitionTo(WorkflowStatus.PENDING_APPROVAL)) {
+      return Result.fail(
+        `Não é possível submeter estratégia com status ${this.props.workflowStatus.value}`
+      );
+    }
+
+    (this.props as { workflowStatus: WorkflowStatus }).workflowStatus = WorkflowStatus.PENDING_APPROVAL;
+    (this.props as { submittedAt: Date }).submittedAt = new Date();
+    (this.props as { submittedByUserId: number }).submittedByUserId = userId;
+    this.touch();
+
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'STRATEGY_SUBMITTED_FOR_APPROVAL',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'Strategy',
+      payload: { strategyId: this.id, submittedByUserId: userId },
+    });
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Aprova a estratégia (PENDING_APPROVAL → APPROVED)
+   */
+  approve(userId: number): Result<void, string> {
+    if (!this.props.workflowStatus.canTransitionTo(WorkflowStatus.APPROVED)) {
+      return Result.fail(
+        `Não é possível aprovar estratégia com status ${this.props.workflowStatus.value}`
+      );
+    }
+
+    (this.props as { workflowStatus: WorkflowStatus }).workflowStatus = WorkflowStatus.APPROVED;
+    (this.props as { approvedAt: Date }).approvedAt = new Date();
+    (this.props as { approvedByUserId: number }).approvedByUserId = userId;
+    this.touch();
+
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'STRATEGY_APPROVED',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'Strategy',
+      payload: { strategyId: this.id, approvedByUserId: userId },
+    });
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Rejeita a estratégia (PENDING_APPROVAL → REJECTED)
+   */
+  reject(userId: number, reason?: string): Result<void, string> {
+    if (!this.props.workflowStatus.canTransitionTo(WorkflowStatus.REJECTED)) {
+      return Result.fail(
+        `Não é possível rejeitar estratégia com status ${this.props.workflowStatus.value}`
+      );
+    }
+
+    (this.props as { workflowStatus: WorkflowStatus }).workflowStatus = WorkflowStatus.REJECTED;
+    (this.props as { rejectedAt: Date }).rejectedAt = new Date();
+    (this.props as { rejectedByUserId: number }).rejectedByUserId = userId;
+    (this.props as { rejectionReason: string | undefined }).rejectionReason = reason;
+    this.touch();
+
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'STRATEGY_REJECTED',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'Strategy',
+      payload: { strategyId: this.id, rejectedByUserId: userId, reason },
+    });
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Solicita alterações na estratégia (PENDING_APPROVAL → CHANGES_REQUESTED)
+   */
+  requestChanges(userId: number, reason: string): Result<void, string> {
+    if (!this.props.workflowStatus.canTransitionTo(WorkflowStatus.CHANGES_REQUESTED)) {
+      return Result.fail(
+        `Não é possível solicitar alterações para estratégia com status ${this.props.workflowStatus.value}`
+      );
+    }
+
+    if (!reason?.trim()) {
+      return Result.fail('Motivo para solicitação de alterações é obrigatório');
+    }
+
+    (this.props as { workflowStatus: WorkflowStatus }).workflowStatus = WorkflowStatus.CHANGES_REQUESTED;
+    (this.props as { rejectionReason: string }).rejectionReason = reason;
+    this.touch();
+
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'STRATEGY_CHANGES_REQUESTED',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'Strategy',
+      payload: { strategyId: this.id, requestedByUserId: userId, reason },
     });
 
     return Result.ok(undefined);

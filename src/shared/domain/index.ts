@@ -19,6 +19,7 @@ export type {
 export { AggregateRoot } from './entities/AggregateRoot';
 export { Entity } from './entities/Entity';
 export { ValueObject } from './entities/ValueObject';
+export { Department, type DepartmentProps } from './entities/Department';
 
 // Value Objects
 export { Money, CNPJ, CPF, Email, DateRange, TaxRate } from './value-objects';

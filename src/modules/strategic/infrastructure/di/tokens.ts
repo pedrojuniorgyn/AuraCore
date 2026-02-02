@@ -18,7 +18,9 @@ export const STRATEGIC_TOKENS = {
   WarRoomMeetingRepository: Symbol.for('IWarRoomMeetingRepository'),
   SwotAnalysisRepository: Symbol.for('ISwotAnalysisRepository'),
   UserDashboardLayoutRepository: Symbol.for('IUserDashboardLayoutRepository'),
-  
+  AlertRepository: Symbol.for('IAlertRepository'),
+  ApprovalHistoryRepository: Symbol.for('IApprovalHistoryRepository'),
+
   // Use Cases - Commands
   CreateStrategyUseCase: Symbol.for('ICreateStrategyUseCase'),
   CreateStrategyVersionUseCase: Symbol.for('ICreateStrategyVersionUseCase'),
@@ -54,11 +56,14 @@ export const STRATEGIC_TOKENS = {
   GetWarRoomDashboardUseCase: Symbol.for('IGetWarRoomDashboardUseCase'),
   GenerateAgendaUseCase: Symbol.for('IGenerateAgendaUseCase'),
   GetKpiHistoryUseCase: Symbol.for('IGetKpiHistoryUseCase'),
-  
+  GetDrilldownQuery: Symbol.for('IGetDrilldownQuery'),
+
   // Domain Services
   GoalCascadeService: Symbol.for('IGoalCascadeService'),
   KPICalculatorService: Symbol.for('IKPICalculatorService'),
   AgendaGeneratorService: Symbol.for('IAgendaGeneratorService'),
+  AlertService: Symbol.for('AlertService'),
+  BudgetImportService: Symbol.for('BudgetImportService'),
   
   // Integrations
   FinancialKPIAdapter: Symbol.for('IFinancialKPIAdapter'),

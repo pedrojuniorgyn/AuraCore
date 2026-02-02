@@ -33,29 +33,55 @@ export class KPICalculatorService {
 
   /**
    * Calcula status do KPI baseado em valor atual e meta
+   *
+   * Regra baseada em ratio:
+   * - Para HIGHER_IS_BETTER (UP): ratio = actual / target
+   * - Para LOWER_IS_BETTER (DOWN): ratio = target / actual
+   * - GREEN: ratio >= 1.0 (meta atingida ou superada)
+   * - YELLOW: ratio >= warningRatio (próximo da meta)
+   * - RED: ratio < warningRatio (crítico)
+   *
+   * @param currentValue Valor atual do KPI
+   * @param target Meta/objetivo
+   * @param polarity Direção ('UP' = maior melhor, 'DOWN' = menor melhor)
+   * @param warningRatio Limite para status YELLOW (default 0.9 = 90%)
    */
   static calculateStatus(
-    currentValue: number,
-    target: number,
+    currentValue: number | null,
+    target: number | null,
     polarity: 'UP' | 'DOWN',
-    alertThreshold: number,
-    criticalThreshold: number
+    warningRatio: number = 0.9
   ): Result<KPIStatusValue, string> {
-    if (target === 0) {
-      return Result.fail('Meta não pode ser zero');
+    // Validações de entrada
+    if (currentValue === null || currentValue === undefined) {
+      return Result.fail('Valor atual não disponível');
+    }
+    if (target === null || target === undefined || target === 0) {
+      return Result.fail('Meta inválida ou não definida');
     }
 
-    const variance = ((currentValue - target) / target) * 100;
+    // Calcular ratio baseado na polaridade
+    let ratio: number;
 
     if (polarity === 'UP') {
-      // Maior é melhor
-      if (variance >= 0) return Result.ok('GREEN');
-      if (Math.abs(variance) <= alertThreshold) return Result.ok('YELLOW');
-      return Result.ok('RED');
+      // Maior é melhor: ratio = atual / meta
+      ratio = currentValue / target;
     } else {
-      // Menor é melhor
-      if (variance <= 0) return Result.ok('GREEN');
-      if (variance <= alertThreshold) return Result.ok('YELLOW');
+      // Menor é melhor: ratio = meta / atual
+      // Proteger divisão por zero
+      if (currentValue === 0) {
+        // Se atual é zero e meta > 0, é excelente (infinitamente melhor)
+        return Result.ok('GREEN');
+      }
+      ratio = target / currentValue;
+    }
+
+    // Determinar status baseado no ratio
+    if (ratio >= 1.0) {
+      return Result.ok('GREEN');
+    } else if (ratio >= warningRatio) {
+      return Result.ok('YELLOW');
+    } else {
       return Result.ok('RED');
     }
   }
@@ -150,25 +176,33 @@ export class KPICalculatorService {
 
   /**
    * Análise completa de KPI
+   *
+   * @param currentValue Valor atual do KPI
+   * @param target Meta/objetivo
+   * @param polarity Direção ('UP' = maior melhor, 'DOWN' = menor melhor)
+   * @param warningRatio Limite para status YELLOW (default 0.9 = 90%)
+   * @param history Histórico de valores para cálculo de tendência
    */
   static analyzeKPI(
-    currentValue: number,
-    target: number,
+    currentValue: number | null,
+    target: number | null,
     polarity: 'UP' | 'DOWN',
-    alertThreshold: number,
-    criticalThreshold: number,
+    warningRatio: number = 0.9,
     history: KPIHistoryPoint[] = []
   ): Result<KPIAnalysis, string> {
     // Calcular status
     const statusResult = this.calculateStatus(
-      currentValue, target, polarity, alertThreshold, criticalThreshold
+      currentValue, target, polarity, warningRatio
     );
     if (Result.isFail(statusResult)) {
       return Result.fail(statusResult.error);
     }
 
-    // Calcular variância
-    const varianceResult = this.calculateVariance(currentValue, target);
+    // Calcular variância (permite null)
+    const varianceResult = this.calculateVariance(
+      currentValue ?? 0,
+      target ?? 0
+    );
     if (Result.isFail(varianceResult)) {
       return Result.fail(varianceResult.error);
     }
@@ -180,8 +214,8 @@ export class KPICalculatorService {
     }
 
     // Calcular progresso percentual
-    const progressPercent = target !== 0 
-      ? Math.min(100, Math.max(0, (currentValue / target) * 100))
+    const progressPercent = (target !== null && target !== 0)
+      ? Math.min(100, Math.max(0, ((currentValue ?? 0) / target) * 100))
       : 0;
 
     return Result.ok({

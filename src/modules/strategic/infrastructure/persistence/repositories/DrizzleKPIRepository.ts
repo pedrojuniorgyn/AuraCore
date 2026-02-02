@@ -284,8 +284,8 @@ export class DrizzleKPIRepository implements IKPIRepository {
   }
 
   async delete(
-    id: string, 
-    organizationId: number, 
+    id: string,
+    organizationId: number,
     branchId: number
   ): Promise<void> {
     await db
@@ -298,6 +298,53 @@ export class DrizzleKPIRepository implements IKPIRepository {
           eq(kpiTable.branchId, branchId)
         )
       );
+  }
+
+  async addValueVersion(params: {
+    kpiId: string;
+    organizationId: number;
+    branchId: number;
+    valueType: 'ACTUAL' | 'BUDGET' | 'FORECAST';
+    periodStart: Date;
+    periodEnd: Date;
+    value: number;
+  }): Promise<void> {
+    const { kpiId, organizationId, branchId, valueType, periodStart, value } = params;
+
+    // Extrair year e month do periodStart
+    const year = periodStart.getFullYear();
+    const month = periodStart.getMonth() + 1;
+
+    // Usar SQL raw pois não há schema Drizzle para value_version
+    await db.execute(sql`
+      MERGE INTO strategic_kpi_value_version AS target
+      USING (
+        SELECT
+          ${kpiId} as kpi_id,
+          ${organizationId} as organization_id,
+          ${branchId} as branch_id,
+          ${valueType} as version_type,
+          ${year} as period_year,
+          ${month} as period_month,
+          ${value} as value
+      ) AS source
+      ON (
+        target.kpi_id = source.kpi_id
+        AND target.version_type = source.version_type
+        AND target.period_year = source.period_year
+        AND target.period_month = source.period_month
+        AND target.organization_id = source.organization_id
+        AND target.branch_id = source.branch_id
+        AND target.deleted_at IS NULL
+      )
+      WHEN MATCHED THEN
+        UPDATE SET
+          value = source.value,
+          updated_at = GETDATE()
+      WHEN NOT MATCHED THEN
+        INSERT (id, organization_id, branch_id, kpi_id, version_type, period_year, period_month, value, created_by, created_at, updated_at)
+        VALUES (NEWID(), source.organization_id, source.branch_id, source.kpi_id, source.version_type, source.period_year, source.period_month, source.value, 'system', GETDATE(), GETDATE());
+    `);
   }
 
   private async exists(
