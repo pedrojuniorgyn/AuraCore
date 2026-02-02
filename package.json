@@ -159,7 +159,7 @@
     "@types/swagger-ui-react": "^5.18.0",
     "@types/webpack": "^5.28.5",
     "@vitest/coverage-v8": "^4.0.16",
-    "@vitest/ui": "^4.0.16",
+    "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.22",
     "drizzle-kit": "^1.0.0-beta.2-b782ae1",
     "eslint": "^9",
