@@ -5,6 +5,7 @@
  */
 export { GoalCascadeService, type CascadeTreeNode } from './GoalCascadeService';
 export { KPICalculatorService, type KPIStatusValue, type Trend } from './KPICalculatorService';
+export { KPIStatusCalculator, type KPIStatus, type KPIStatusThresholds } from './KPIStatusCalculator';
 export {
   AgendaGeneratorService,
   type MeetingType,

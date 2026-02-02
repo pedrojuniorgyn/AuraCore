@@ -8,6 +8,7 @@ import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { db, getDbRows } from '@/lib/db';
 import { sql } from 'drizzle-orm';
+import { KPIStatusCalculator } from '../../domain/services/KPIStatusCalculator';
 
 export type DrilldownLevel = 'strategy' | 'perspective' | 'goal' | 'kpi';
 
@@ -209,7 +210,7 @@ export class GetDrilldownQuery {
         goalCount: Number(row.goalCount),
         kpiCount: Number(row.kpiCount),
         avgProgress: Number(row.avgProgress),
-        status: this.calculateStatus(Number(row.avgProgress)),
+        status: KPIStatusCalculator.calculateStatus(Number(row.avgProgress)) as 'ON_TRACK' | 'AT_RISK' | 'CRITICAL',
       }))
     );
   }
@@ -279,7 +280,7 @@ export class GetDrilldownQuery {
         currentValue: row.currentValue ? Number(row.currentValue) : null,
         unit: row.unit,
         progress: Number(row.progress),
-        status: this.calculateStatus(Number(row.progress)),
+        status: KPIStatusCalculator.calculateStatus(Number(row.progress)) as 'ON_TRACK' | 'AT_RISK' | 'CRITICAL',
         kpiCount: Number(row.kpiCount),
         actionPlanCount: Number(row.actionPlanCount),
         overdueActionPlans: Number(row.overdueActionPlans),
@@ -341,7 +342,7 @@ export class GetDrilldownQuery {
         targetValue: row.targetValue ? Number(row.targetValue) : null,
         baselineValue: row.baselineValue ? Number(row.baselineValue) : null,
         progress: Number(row.progress),
-        status: this.calculateStatus(Number(row.progress)),
+        status: KPIStatusCalculator.calculateStatus(Number(row.progress)) as 'ON_TRACK' | 'AT_RISK' | 'CRITICAL',
         trend: 'STABLE' as const,
         trendPercent: 0,
         lastUpdated: row.lastUpdated ? new Date(row.lastUpdated) : null,
@@ -433,7 +434,7 @@ export class GetDrilldownQuery {
         targetValue: kpiRow.targetValue ? Number(kpiRow.targetValue) : null,
         baselineValue: kpiRow.baselineValue ? Number(kpiRow.baselineValue) : null,
         progress,
-        status: this.calculateStatus(progress),
+        status: KPIStatusCalculator.calculateStatus(progress) as 'ON_TRACK' | 'AT_RISK' | 'CRITICAL',
         trend: 'STABLE' as const,
         trendPercent: 0,
         lastUpdated: kpiRow.lastUpdated ? new Date(kpiRow.lastUpdated) : null,
@@ -466,11 +467,4 @@ export class GetDrilldownQuery {
     });
   }
 
-  private calculateStatus(
-    progress: number
-  ): 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' {
-    if (progress >= 85) return 'ON_TRACK';
-    if (progress >= 70) return 'AT_RISK';
-    return 'CRITICAL';
-  }
 }
