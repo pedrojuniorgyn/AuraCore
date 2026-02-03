@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Target, TrendingUp, Calendar } from 'lucide-react';
 import { fetchAPI, APIResponseError } from '@/lib/api/fetch-client';
+import { DeleteResourceButton } from '@/components/strategic/DeleteResourceButton';
 
 interface GoalDetail {
   id: string;
@@ -69,18 +70,28 @@ export default function GoalDetailPage() {
 
   return (
     <div className="min-h-screen -m-6 p-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={goBack}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          aria-label="Voltar"
-        >
-          <ArrowLeft size={20} className="text-white/70" />
-        </button>
-        <div>
-          <p className="text-sm text-white/50">Meta Estratégica</p>
-          <h1 className="text-2xl font-semibold text-white">Detalhe da Meta</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={goBack}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft size={20} className="text-white/70" />
+          </button>
+          <div>
+            <p className="text-sm text-white/50">Meta Estratégica</p>
+            <h1 className="text-2xl font-semibold text-white">Detalhe da Meta</h1>
+          </div>
         </div>
+        {goal && (
+          <DeleteResourceButton
+            id={goal.id}
+            resourceType="goals"
+            redirectTo="/strategic/goals"
+            resourceName={goal.description}
+          />
+        )}
       </div>
 
       {loading && (

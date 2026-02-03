@@ -48,6 +48,7 @@ interface ActionPlanKanbanProps {
   columns: StatusColumn[];
   onStatusChange?: (planId: string, newStatus: ActionPlanStatus) => Promise<void>;
   onCardClick?: (planId: string) => void;
+  onRefresh?: () => void;
   isLoading?: boolean;
 }
 
@@ -103,6 +104,7 @@ export function ActionPlanKanban({
   columns,
   onStatusChange,
   onCardClick,
+  onRefresh,
 }: ActionPlanKanbanProps) {
   const [localColumns, setLocalColumns] = useState(columns);
   const [movingCard, setMovingCard] = useState<string | null>(null);
@@ -216,6 +218,7 @@ export function ActionPlanKanban({
                               {...item}
                               onClick={() => onCardClick?.(item.id)}
                               isDragging={snapshot.isDragging}
+                              onRefresh={onRefresh}
                             />
                           </div>
                         )}

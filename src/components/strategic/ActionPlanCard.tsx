@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { ProgressBar } from '@tremor/react';
+import { ResourceActionMenu } from './ResourceActionMenu';
 
 type ActionPlanStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED' | 'CANCELLED';
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -39,6 +40,7 @@ interface ActionPlanCardProps {
   followUpCount?: number;
   onClick?: () => void;
   isDragging?: boolean;
+  onRefresh?: () => void;
 }
 
 // Safelist pattern - classes explícitas
@@ -97,6 +99,7 @@ const PRIORITY_DOTS = {
 } as const;
 
 export function ActionPlanCard({
+  id,
   code,
   what,
   who,
@@ -114,6 +117,7 @@ export function ActionPlanCard({
   followUpCount = 0,
   onClick,
   isDragging = false,
+  onRefresh,
 }: ActionPlanCardProps) {
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.PENDING;
   const pdcaStyle = PDCA_BADGE_STYLES[pdcaCycle];
@@ -154,6 +158,13 @@ export function ActionPlanCard({
           <span className={`text-xs px-1.5 py-0.5 rounded ${statusStyle.bg} ${statusStyle.text}`}>
             {statusStyle.label}
           </span>
+          <ResourceActionMenu
+            id={id}
+            resourceType="action-plans"
+            basePath="/strategic/action-plans"
+            resourceName={what}
+            onDeleteSuccess={onRefresh}
+          />
         </div>
       </div>
 

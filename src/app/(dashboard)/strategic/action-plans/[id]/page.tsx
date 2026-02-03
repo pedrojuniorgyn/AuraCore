@@ -34,6 +34,7 @@ import {
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { DeleteResourceButton } from '@/components/strategic/DeleteResourceButton';
 import {
   Dialog,
   DialogContent,
@@ -379,6 +380,12 @@ export default function ActionPlanDetailPage({
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
               </RippleButton>
+              <DeleteResourceButton
+                id={plan.id}
+                resourceType="action-plans"
+                redirectTo="/strategic/action-plans"
+                resourceName={plan.what}
+              />
             </Flex>
           </Flex>
         </FadeIn>

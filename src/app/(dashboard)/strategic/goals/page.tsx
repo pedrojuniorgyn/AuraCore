@@ -9,10 +9,11 @@ import { AllEnterpriseModule } from 'ag-grid-enterprise';
 
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-import { Target, Plus, Download, CheckCircle2, Clock, AlertTriangle, TrendingUp, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { Target, Plus, Download, CheckCircle2, Clock, AlertTriangle, TrendingUp, FileSpreadsheet, FileText, Loader2, Eye, Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchAPI } from '@/lib/api';
 import { useAgGridExport } from '@/hooks/useAgGridExport';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
 
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
@@ -97,6 +98,9 @@ export default function GoalsPage() {
   
   // Hook de exportação para AG-Grid
   const { exportToExcel, exportToCSV } = useAgGridExport(gridRef);
+  
+  // Hook de delete
+  const { handleDelete, isDeleting } = useDeleteResource('goals');
 
   // Handler de exportação com loading e toast
   const handleExport = useCallback(async (format: 'excel' | 'csv') => {
@@ -199,6 +203,61 @@ export default function GoalsPage() {
       width: 120,
       valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString('pt-BR') : '-',
       filter: 'agDateColumnFilter',
+    },
+    {
+      headerName: 'Ações',
+      width: 130,
+      pinned: 'right',
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: ICellRendererParams<Goal>) => {
+        if (!params.data) return null;
+        
+        return (
+          <div className="flex gap-1 h-full items-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (params.data) {
+                  router.push(`/strategic/goals/${params.data.id}`);
+                }
+              }}
+              className="p-1 hover:bg-gray-700 rounded transition-colors"
+              title="Visualizar"
+            >
+              <Eye className="h-4 w-4 text-gray-400" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (params.data) {
+                  router.push(`/strategic/goals/${params.data.id}/edit`);
+                }
+              }}
+              className="p-1 hover:bg-gray-700 rounded transition-colors"
+              title="Editar"
+            >
+              <Edit className="h-4 w-4 text-gray-400" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (params.data) {
+                  handleDelete(params.data.id, {
+                    confirmMessage: `Excluir objetivo "${params.data.description}"?`,
+                    onSuccess: fetchGoals,
+                  });
+                }
+              }}
+              disabled={isDeleting}
+              className="p-1 hover:bg-red-700 rounded transition-colors text-red-600 disabled:opacity-50"
+              title="Excluir"
+            >
+              <Trash className="h-4 w-4" />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 

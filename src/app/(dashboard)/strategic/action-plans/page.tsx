@@ -315,6 +315,7 @@ export default function ActionPlansPage() {
                 columns={columns}
                 onStatusChange={handleStatusChange}
                 onCardClick={handleCardClick}
+                onRefresh={fetchActionPlans}
               />
             ) : (
               <div className="flex items-center justify-center h-[400px]">
