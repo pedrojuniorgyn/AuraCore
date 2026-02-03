@@ -103,7 +103,6 @@ export async function POST(
         // Validar permissão de aprovação
         const hasPermission = await permissionService.canApprove(
           userId,
-          strategyId,
           tenantContext.organizationId,
           branchId
         );
@@ -128,7 +127,6 @@ export async function POST(
         // Validar permissão de aprovação
         const hasPermission = await permissionService.canApprove(
           userId,
-          strategyId,
           tenantContext.organizationId,
           branchId
         );
@@ -154,7 +152,6 @@ export async function POST(
         // Validar permissão de aprovação
         const hasPermission = await permissionService.canApprove(
           userId,
-          strategyId,
           tenantContext.organizationId,
           branchId
         );

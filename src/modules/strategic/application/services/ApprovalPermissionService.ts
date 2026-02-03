@@ -18,15 +18,17 @@ export class ApprovalPermissionService {
   ) {}
 
   /**
-   * Verifica se usuário pode aprovar uma estratégia
+   * Verifica se usuário pode aprovar estratégias
    * 
    * Lógica:
    * 1. Verificar se é aprovador direto (configurado)
    * 2. Verificar se tem delegação ativa
+   * 
+   * NOTA: Permissão é a nível de organização/filial, não por estratégia específica.
+   * Se houver necessidade de permissões por estratégia no futuro, adicionar lógica aqui.
    */
   async canApprove(
     userId: number,
-    strategyId: string,
     organizationId: number,
     branchId: number
   ): Promise<boolean> {
@@ -68,7 +70,6 @@ export class ApprovalPermissionService {
     // Verificar se delegator é aprovador
     const canDelegate = await this.canApprove(
       from,
-      '', // strategyId não usado aqui
       organizationId,
       branchId
     );
@@ -129,7 +130,7 @@ export class ApprovalPermissionService {
     // Verificar se usuário é o delegator ou aprovador
     const canRevoke =
       delegate.delegatorUserId === userId ||
-      (await this.canApprove(userId, '', organizationId, branchId));
+      (await this.canApprove(userId, organizationId, branchId));
 
     if (!canRevoke) {
       return Result.fail('Usuário não tem permissão para revogar esta delegação');
