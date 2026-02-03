@@ -33,7 +33,8 @@ export function useNotifications() {
       const response = await fetch("/api/notifications?limit=50");
       if (response.ok) {
         const data = await response.json();
-        setNotifications(data);
+        // API retorna { success: true, total: N, notifications: [...] }
+        setNotifications(data.notifications || []);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -58,12 +59,12 @@ export function useNotifications() {
 
   const markAsRead = useCallback(async (notificationId: number) => {
     try {
-      const response = await fetch("/api/notifications/mark-read", {
+      // Novo endpoint: POST /api/notifications/[id]/read
+      const response = await fetch(`/api/notifications/${notificationId}/read`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ notificationId }),
       });
 
       if (response.ok) {
@@ -84,31 +85,36 @@ export function useNotifications() {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      const response = await fetch("/api/notifications/mark-read", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ markAll: true }),
-      });
+      // Não há endpoint bulk - marcar cada notificação não lida
+      const unreadNotifications = notifications.filter((n) => n.isRead === 0);
+      
+      // Marcar localmente primeiro (otimista)
+      setNotifications((prev) =>
+        prev.map((notif) => ({
+          ...notif,
+          isRead: 1,
+          readAt: new Date(),
+        }))
+      );
+      setUnreadCount(0);
+      // FIX: Limpar toasted IDs ao marcar todas como lidas
+      toastedIdsRef.current.clear();
 
-      if (response.ok) {
-        // Atualizar localmente
-        setNotifications((prev) =>
-          prev.map((notif) => ({
-            ...notif,
-            isRead: 1,
-            readAt: new Date(),
-          }))
-        );
-        setUnreadCount(0);
-        // FIX: Limpar toasted IDs ao marcar todas como lidas
-        toastedIdsRef.current.clear();
-      }
+      // Chamar API para cada notificação não lida em background
+      await Promise.allSettled(
+        unreadNotifications.map((notif) =>
+          fetch(`/api/notifications/${notif.id}/read`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+        )
+      );
     } catch (error) {
       console.error("Error marking all as read:", error);
     }
-  }, []);
+  }, [notifications]);
 
   const dismiss = useCallback(async (notificationId: number) => {
     try {
