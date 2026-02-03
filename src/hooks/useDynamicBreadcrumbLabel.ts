@@ -29,10 +29,10 @@ function truncateUUID(uuid: string): string {
  * Identifica o tipo de recurso e a API baseado no pathname
  */
 function getResourceInfo(pathname: string, segment: string): {
-  type: 'goal' | 'kpi' | 'action-plan' | 'okr' | 'idea' | null;
+  type: 'goal' | 'kpi' | 'action-plan' | 'okr' | 'idea' | 'strategy' | 'swot' | 'pdca' | 'war-room' | 'partner' | 'product' | null;
   apiUrl: string | null;
 } {
-  // Analisar o pathname para determinar o tipo de recurso
+  // Módulo Strategic
   if (pathname.includes('/strategic/goals/')) {
     return {
       type: 'goal',
@@ -68,6 +68,49 @@ function getResourceInfo(pathname: string, segment: string): {
     };
   }
 
+  if (pathname.includes('/strategic/strategies/')) {
+    return {
+      type: 'strategy',
+      apiUrl: `/api/strategic/strategies/${segment}`,
+    };
+  }
+
+  if (pathname.includes('/strategic/swot/')) {
+    return {
+      type: 'swot',
+      apiUrl: `/api/strategic/swot/${segment}`,
+    };
+  }
+
+  if (pathname.includes('/strategic/pdca/')) {
+    return {
+      type: 'pdca',
+      apiUrl: `/api/strategic/pdca/${segment}`,
+    };
+  }
+
+  if (pathname.includes('/strategic/war-room/')) {
+    return {
+      type: 'war-room',
+      apiUrl: `/api/strategic/war-room/${segment}`,
+    };
+  }
+
+  // Módulo Cadastros
+  if (pathname.includes('/cadastros/parceiros/')) {
+    return {
+      type: 'partner',
+      apiUrl: `/api/partners/${segment}`,
+    };
+  }
+
+  if (pathname.includes('/cadastros/produtos/')) {
+    return {
+      type: 'product',
+      apiUrl: `/api/products/${segment}`,
+    };
+  }
+
   return { type: null, apiUrl: null };
 }
 
@@ -78,24 +121,48 @@ function extractLabel(data: Record<string, unknown>, type: string): string {
   switch (type) {
     case 'goal':
       // Goals usam 'description' como label principal
-      return data.description || data.code || 'Objetivo';
+      return (data.description as string) || (data.code as string) || 'Objetivo';
 
     case 'kpi':
       // KPIs mostram código + nome
       if (data.code && data.name) {
         return `${data.code} - ${data.name}`;
       }
-      return data.name || data.code || 'KPI';
+      return (data.name as string) || (data.code as string) || 'KPI';
 
     case 'action-plan':
       // Action Plans usam 'what' (o que será feito)
-      return data.what || data.title || 'Plano de Ação';
+      return (data.what as string) || (data.title as string) || 'Plano de Ação';
 
     case 'okr':
-      return data.name || data.title || 'OKR';
+      return (data.name as string) || (data.title as string) || 'OKR';
 
     case 'idea':
-      return data.title || 'Ideia';
+      return (data.title as string) || 'Ideia';
+
+    case 'strategy':
+      // Strategies usam 'description' ou 'name'
+      return (data.description as string) || (data.name as string) || (data.code as string) || 'Estratégia';
+
+    case 'swot':
+      // SWOT analysis pode ter 'title' ou 'description'
+      return (data.title as string) || (data.description as string) || 'Análise SWOT';
+
+    case 'pdca':
+      // PDCA cycles usam 'title' ou 'what'
+      return (data.title as string) || (data.what as string) || 'Ciclo PDCA';
+
+    case 'war-room':
+      // War room meetings usam 'title' ou 'theme'
+      return (data.title as string) || (data.theme as string) || 'War Room';
+
+    case 'partner':
+      // Parceiros usam 'tradeName' ou 'legalName'
+      return (data.tradeName as string) || (data.legalName as string) || 'Parceiro';
+
+    case 'product':
+      // Produtos usam 'description' ou 'name'
+      return (data.description as string) || (data.name as string) || (data.code as string) || 'Produto';
 
     default:
       return 'Item';

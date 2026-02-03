@@ -107,6 +107,7 @@ const routeNames: Record<string, string> = {
   "goals": "Objetivos (BSC)",
   "kpis": "KPIs",
   "okrs": "OKRs",
+  "strategies": "Estratégias",
   "action-plans": "Planos de Ação",
   "pdca": "PDCA",
   "swot": "Análise SWOT",
@@ -122,6 +123,10 @@ const routeNames: Record<string, string> = {
   "audit": "Auditoria",
   "audit-log": "Log de Auditoria",
   "settings": "Configurações",
+  "perspectives": "Perspectivas BSC",
+  "cascades": "Cascateamento",
+  "alerts": "Alertas",
+  "approvals": "Aprovações",
 
   // Configurações
   "configuracoes": "Configurações",

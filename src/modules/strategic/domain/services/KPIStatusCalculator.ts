@@ -7,9 +7,9 @@
  * - KPIStatusCalculator: calcula status baseado apenas em progress % (ON_TRACK/AT_RISK/CRITICAL)
  * 
  * Regras:
- * - >= 85% = ON_TRACK (verde) - Meta sendo cumprida
- * - >= 70% = AT_RISK (amarelo) - Atenção necessária
- * - < 70% = CRITICAL (vermelho) - Intervenção urgente
+ * - >= 100% = ON_TRACK (verde) - Meta atingida ou superada
+ * - >= 80% = AT_RISK (amarelo) - Atenção necessária (80-99%)
+ * - < 80% = CRITICAL (vermelho) - Intervenção urgente
  * - null/undefined = NO_DATA (cinza) - Dados insuficientes
  * 
  * @module strategic/domain/services
@@ -19,15 +19,15 @@
 export type KPIStatus = 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' | 'NO_DATA';
 
 export interface KPIStatusThresholds {
-  /** Threshold para ON_TRACK (default: 85%) */
+  /** Threshold para ON_TRACK (default: 100%) */
   onTrackThreshold: number;
-  /** Threshold para AT_RISK (default: 70%) */
+  /** Threshold para AT_RISK (default: 80%) */
   atRiskThreshold: number;
 }
 
 const DEFAULT_THRESHOLDS: KPIStatusThresholds = {
-  onTrackThreshold: 85,
-  atRiskThreshold: 70,
+  onTrackThreshold: 100,
+  atRiskThreshold: 80,
 };
 
 export class KPIStatusCalculator {
@@ -196,9 +196,9 @@ export class KPIStatusCalculator {
    */
   static getStatusDescription(status: KPIStatus): string {
     const descriptions: Record<KPIStatus, string> = {
-      ON_TRACK: 'KPI está dentro da meta esperada (≥85%)',
-      AT_RISK: 'KPI requer atenção e pode precisar de ajustes (70-85%)',
-      CRITICAL: 'KPI crítico, intervenção urgente necessária (<70%)',
+      ON_TRACK: 'KPI está dentro da meta esperada (≥100%)',
+      AT_RISK: 'KPI requer atenção e pode precisar de ajustes (80-99%)',
+      CRITICAL: 'KPI crítico, intervenção urgente necessária (<80%)',
       NO_DATA: 'Dados insuficientes para calcular status',
     };
     return descriptions[status];

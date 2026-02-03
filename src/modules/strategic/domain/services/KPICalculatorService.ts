@@ -44,13 +44,13 @@ export class KPICalculatorService {
    * @param currentValue Valor atual do KPI
    * @param target Meta/objetivo
    * @param polarity Direção ('UP' = maior melhor, 'DOWN' = menor melhor)
-   * @param warningRatio Limite para status YELLOW (default 0.9 = 90%)
+   * @param warningRatio Limite para status YELLOW (default 0.8 = 80%)
    */
   static calculateStatus(
     currentValue: number | null,
     target: number | null,
     polarity: 'UP' | 'DOWN',
-    warningRatio: number = 0.9
+    warningRatio: number = 0.8
   ): Result<KPIStatusValue, string> {
     // Validações de entrada
     if (currentValue === null || currentValue === undefined) {
@@ -180,14 +180,14 @@ export class KPICalculatorService {
    * @param currentValue Valor atual do KPI
    * @param target Meta/objetivo
    * @param polarity Direção ('UP' = maior melhor, 'DOWN' = menor melhor)
-   * @param warningRatio Limite para status YELLOW (default 0.9 = 90%)
+   * @param warningRatio Limite para status YELLOW (default 0.8 = 80%)
    * @param history Histórico de valores para cálculo de tendência
    */
   static analyzeKPI(
     currentValue: number | null,
     target: number | null,
     polarity: 'UP' | 'DOWN',
-    warningRatio: number = 0.9,
+    warningRatio: number = 0.8,
     history: KPIHistoryPoint[] = []
   ): Result<KPIAnalysis, string> {
     // Calcular status
