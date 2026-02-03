@@ -24,7 +24,6 @@ import {
   FileText,
   AlertTriangle,
   MapPin,
-  MessageSquare,
   Plus,
   RefreshCw,
   Target,
@@ -35,6 +34,7 @@ import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { DeleteResourceButton } from '@/components/strategic/DeleteResourceButton';
+import { FollowUpTimeline } from '@/components/strategic/FollowUpTimeline';
 import {
   Dialog,
   DialogContent,
@@ -216,7 +216,7 @@ export default function ActionPlanDetailPage({
           ? error.data?.error || error.message
           : 'Unexpected error while loading follow-ups';
       toast({
-        title: 'Failed to load follow-ups',
+        title: 'Erro ao carregar acompanhamentos',
         description: message,
         variant: 'destructive',
       });
@@ -275,8 +275,8 @@ export default function ActionPlanDetailPage({
       });
 
       toast({
-        title: 'Follow-up saved',
-        description: 'The 3G follow-up was recorded successfully.',
+        title: 'Acompanhamento salvo',
+        description: 'O follow-up 3G foi registrado com sucesso.',
       });
 
       setIsFollowUpDialogOpen(false);
@@ -561,7 +561,7 @@ export default function ActionPlanDetailPage({
               {/* Follow-ups 3G */}
               <Card className="bg-gray-900/50 border-gray-800">
                 <Flex justifyContent="between" alignItems="center" className="mb-4">
-                  <Title className="text-white">Follow-ups 3G</Title>
+                  <Title className="text-white">Acompanhamentos 3G</Title>
                   <RippleButton
                     variant="ghost"
                     onClick={() => setIsFollowUpDialogOpen(true)}
@@ -573,51 +573,10 @@ export default function ActionPlanDetailPage({
                 {followUpsLoading ? (
                   <div className="text-center py-6 text-gray-500">
                     <RefreshCw className="w-5 h-5 mx-auto mb-2 animate-spin text-gray-400" />
-                    <Text className="text-sm">Loading follow-ups...</Text>
-                  </div>
-                ) : followUps.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                    <Text className="text-sm">No follow-ups recorded</Text>
-                    <Text className="text-xs text-gray-600 mt-1">
-                      Click + to add the first 3G follow-up
-                    </Text>
+                    <Text className="text-sm">Carregando acompanhamentos...</Text>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {followUps.map((followUp) => (
-                      <Card key={followUp.id} className="bg-gray-900/30 border-gray-800 p-4">
-                        <Flex justifyContent="between" alignItems="center" className="mb-2">
-                          <Text className="text-sm text-gray-400">
-                            #{followUp.followUpNumber} •{' '}
-                            {new Date(followUp.followUpDate).toLocaleDateString()}
-                          </Text>
-                          <Badge color="blue">
-                            {followUp.executionStatus.replaceAll('_', ' ')}
-                          </Badge>
-                        </Flex>
-                        <Text className="text-white text-sm font-medium mb-1">
-                          GEMBA: {followUp.gembaLocal}
-                        </Text>
-                        <Text className="text-gray-300 text-sm mb-1">
-                          GEMBUTSU: {followUp.gembutsuObservation}
-                        </Text>
-                        <Text className="text-gray-300 text-sm mb-1">
-                          GENJITSU: {followUp.genjitsuData}
-                        </Text>
-                        <Flex justifyContent="between" alignItems="center" className="mt-2">
-                          <Text className="text-xs text-gray-400">
-                            Progress: {followUp.executionPercent}%
-                          </Text>
-                          {followUp.problemSeverity && (
-                            <Badge color="amber" className="text-xs">
-                              Severity: {followUp.problemSeverity}
-                            </Badge>
-                          )}
-                        </Flex>
-                      </Card>
-                    ))}
-                  </div>
+                  <FollowUpTimeline followUps={followUps} />
                 )}
               </Card>
             </div>
@@ -627,15 +586,15 @@ export default function ActionPlanDetailPage({
       <Dialog open={isFollowUpDialogOpen} onOpenChange={setIsFollowUpDialogOpen}>
         <DialogContent className="bg-gray-950 text-white border-gray-800">
           <DialogHeader>
-            <DialogTitle>Record 3G follow-up</DialogTitle>
+            <DialogTitle>Registrar Acompanhamento 3G</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Capture GEMBA, GEMBUTSU and GENJITSU observations for this action plan.
+              Capture as observações GEMBA, GEMBUTSU e GENJITSU para este plano de ação.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleFollowUpSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="followUpDate">Follow-up date</Label>
+                <Label htmlFor="followUpDate">Data do Acompanhamento</Label>
                 <Input
                   id="followUpDate"
                   type="date"
@@ -650,7 +609,7 @@ export default function ActionPlanDetailPage({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="executionStatus">Execution status</Label>
+                <Label htmlFor="executionStatus">Status de Execução</Label>
                 <Select
                   value={followUpForm.executionStatus}
                   onValueChange={(value) =>
@@ -661,13 +620,13 @@ export default function ActionPlanDetailPage({
                   }
                 >
                   <SelectTrigger id="executionStatus">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="EXECUTED_OK">Executed OK</SelectItem>
-                    <SelectItem value="EXECUTED_PARTIAL">Executed partially</SelectItem>
-                    <SelectItem value="NOT_EXECUTED">Not executed</SelectItem>
-                    <SelectItem value="BLOCKED">Blocked</SelectItem>
+                    <SelectItem value="EXECUTED_OK">Executado OK</SelectItem>
+                    <SelectItem value="EXECUTED_PARTIAL">Executado Parcialmente</SelectItem>
+                    <SelectItem value="NOT_EXECUTED">Não Executado</SelectItem>
+                    <SelectItem value="BLOCKED">Bloqueado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -675,7 +634,7 @@ export default function ActionPlanDetailPage({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="executionPercent">Execution percent</Label>
+                <Label htmlFor="executionPercent">Percentual de Execução (%)</Label>
                 <Input
                   id="executionPercent"
                   type="number"
@@ -692,7 +651,7 @@ export default function ActionPlanDetailPage({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="problemSeverity">Problem severity</Label>
+                <Label htmlFor="problemSeverity">Severidade do Problema</Label>
                 <Select
                   value={followUpForm.problemSeverity}
                   onValueChange={(value) =>
@@ -703,14 +662,14 @@ export default function ActionPlanDetailPage({
                   }
                 >
                   <SelectTrigger id="problemSeverity">
-                    <SelectValue placeholder="Select severity" />
+                    <SelectValue placeholder="Selecione a severidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NONE">Not specified</SelectItem>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="CRITICAL">Critical</SelectItem>
+                    <SelectItem value="NONE">Não especificado</SelectItem>
+                    <SelectItem value="LOW">Baixa</SelectItem>
+                    <SelectItem value="MEDIUM">Média</SelectItem>
+                    <SelectItem value="HIGH">Alta</SelectItem>
+                    <SelectItem value="CRITICAL">Crítica</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -763,7 +722,7 @@ export default function ActionPlanDetailPage({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="problemsObserved">Problems observed (optional)</Label>
+              <Label htmlFor="problemsObserved">Problemas Observados (opcional)</Label>
               <Textarea
                 id="problemsObserved"
                 value={followUpForm.problemsObserved}
@@ -773,14 +732,15 @@ export default function ActionPlanDetailPage({
                     problemsObserved: event.target.value,
                   }))
                 }
+                placeholder="Descreva os problemas encontrados durante a execução..."
               />
             </div>
 
             <div className="flex items-center justify-between rounded border border-gray-800 p-3">
               <div className="space-y-0.5">
-                <Label htmlFor="requiresNewPlan">Requires new plan?</Label>
+                <Label htmlFor="requiresNewPlan">Requer Novo Plano?</Label>
                 <Text className="text-xs text-gray-400">
-                  If enabled, provide description and assignee.
+                  Se ativado, forneça descrição e responsável.
                 </Text>
               </div>
               <Switch
