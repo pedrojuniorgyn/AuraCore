@@ -43,6 +43,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 // Cell Renderer para Items Count (5F, 3W, 7O, 2T)
 function ItemsCountCellRenderer(params: { data: SwotAnalysis }) {
+  // Fix: Verificar se é linha de grupo (params.data undefined)
+  if (!params.data) return null;
+  
   const { strengths, weaknesses, opportunities, threats } = params.data.itemsCount;
   const total = strengths + weaknesses + opportunities + threats;
 

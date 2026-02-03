@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridReadyEvent, GridOptions } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
+// Theming API v34 (sem ag-grid.css - conflito #239)
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import 'ag-grid-enterprise';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -33,7 +33,7 @@ export function BaseGrid<T = Record<string, unknown>>({
   loading = false,
   paginationPageSize = 50,
   enableExport = true,
-  enableCharts = true,
+  enableCharts = false, // Desativado até registrar IntegratedChartsModule (#200)
   moduleName = 'Dados',
   mobileColumns = ['code', 'title', 'name', 'status', 'actions'],
 }: BaseGridProps<T>) {
@@ -73,7 +73,7 @@ export function BaseGrid<T = Record<string, unknown>>({
       detailCellRenderer: !isMobile ? detailCellRenderer : undefined,
       detailCellRendererParams: !isMobile ? detailCellRendererParams : undefined,
       enableRangeSelection: !isMobile && enableExport,
-      enableCharts: !isMobile && enableCharts,
+      enableCharts: false, // Sempre desativado até registrar módulo (#200)
       rowGroupPanelShow: isMobile ? undefined : 'always',
       suppressMovableColumns: isMobile, // Travar colunas em mobile
       defaultExcelExportParams: enableExport

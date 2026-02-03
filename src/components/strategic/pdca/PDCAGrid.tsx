@@ -70,6 +70,9 @@ function PhaseCellRenderer(params: { value: string }) {
 
 // Cell Renderer para Efetividade (%) na fase Act
 function EffectivenessCellRenderer(params: { value: number | null; data: PDCACycle }) {
+  // Fix: Verificar se é linha de grupo (params.data undefined)
+  if (!params.data) return null;
+  
   if (params.value === null || params.data.currentPhase !== 'ACT') {
     return (
       <span className="text-xs text-gray-400 italic">

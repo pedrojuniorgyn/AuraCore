@@ -150,6 +150,8 @@ export function IdeasGrid({ data, loading }: IdeasGridProps) {
         width: 140,
         valueGetter: (params) => params.data?.statusLabel || params.data?.status || '',
         cellRenderer: (params: { data: Idea }) => {
+          // Fix: Verificar se é linha de grupo (params.data undefined)
+          if (!params.data) return null;
           return StatusBadgeCell({
             value: STATUS_MAP[params.data.status] || 'neutral',
           } as Parameters<typeof StatusBadgeCell>[0]);
