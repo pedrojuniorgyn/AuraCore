@@ -31,10 +31,15 @@ export async function POST(
     // Resolver NotificationService
     const notificationService = container.resolve(NotificationService);
 
-    // Marcar como lida
-    const result = await notificationService.markAsRead(notificationId);
+    // Marcar como lida (com multi-tenancy - REPO-005)
+    const result = await notificationService.markAsRead(
+      notificationId,
+      authContext.userId,
+      authContext.organizationId,
+      authContext.branchId
+    );
 
-    if (!Result.isOk(result)) {
+    if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 

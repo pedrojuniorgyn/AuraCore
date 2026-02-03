@@ -100,13 +100,16 @@ export async function POST(
         break;
 
       case 'approve': {
-        // Validar permissão de aprovação
+        // SECURITY-CRITICAL: Validar permissão de aprovação
+        // Este check é obrigatório antes de chamar ApprovalWorkflowService.approve()
         const hasPermission = await permissionService.canApprove(
           userId,
           tenantContext.organizationId,
           branchId
         );
 
+        // ApprovalWorkflowService.approve() valida hasPermission internamente,
+        // mas a validação real DEVE ser feita aqui com permissionService
         result = ApprovalWorkflowService.approve(
           strategy,
           userId,
@@ -124,7 +127,7 @@ export async function POST(
           );
         }
 
-        // Validar permissão de aprovação
+        // SECURITY-CRITICAL: Validar permissão de aprovação
         const hasPermission = await permissionService.canApprove(
           userId,
           tenantContext.organizationId,
@@ -149,7 +152,7 @@ export async function POST(
           );
         }
 
-        // Validar permissão de aprovação
+        // SECURITY-CRITICAL: Validar permissão de aprovação
         const hasPermission = await permissionService.canApprove(
           userId,
           tenantContext.organizationId,

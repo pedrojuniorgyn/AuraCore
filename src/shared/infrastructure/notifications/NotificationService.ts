@@ -181,16 +181,39 @@ export class NotificationService {
 
   /**
    * Marca notificação como lida
+   * 
+   * REPO-005: SEMPRE filtra por organizationId + branchId + userId
+   * para garantir isolamento multi-tenant
+   * 
+   * @param notificationId ID da notificação
+   * @param userId ID do usuário (string ou number)
+   * @param organizationId ID da organização
+   * @param branchId ID da filial
    */
-  async markAsRead(notificationId: number): Promise<Result<void, string>> {
+  async markAsRead(
+    notificationId: number,
+    userId: number | string,
+    organizationId: number,
+    branchId: number
+  ): Promise<Result<void, string>> {
     try {
+      const userIdString = String(userId);
+
+      // REPO-005: SEMPRE filtrar por multi-tenancy (organizationId + branchId + userId)
       await db
         .update(notifications)
         .set({
           isRead: 1,
           readAt: new Date(),
         })
-        .where(eq(notifications.id, notificationId));
+        .where(
+          and(
+            eq(notifications.id, notificationId),
+            eq(notifications.userId, userIdString),
+            eq(notifications.organizationId, organizationId),
+            eq(notifications.branchId, branchId)
+          )
+        );
 
       return Result.ok(undefined);
     } catch (error) {

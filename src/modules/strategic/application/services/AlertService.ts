@@ -427,7 +427,7 @@ export class AlertService {
       threshold: thresholdVal,
       target: String(thresholdVal),
       actual: String(currentVal),
-      variance: currentVal && thresholdVal 
+      variance: (currentVal !== undefined && currentVal !== null && thresholdVal !== undefined && thresholdVal !== null)
         ? String(Math.round(((currentVal - thresholdVal) / thresholdVal) * 100)) + '%'
         : 'N/A',
       date: new Date().toLocaleDateString('pt-BR'),

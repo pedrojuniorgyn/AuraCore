@@ -68,12 +68,24 @@ export class ApprovalWorkflowService {
    * Aprova estratégia
    * PENDING_APPROVAL → APPROVED
    * 
-   * IMPORTANTE: Chamar ApprovalPermissionService.canApprove() ANTES
-   * de invocar este método para validar permissões de aprovação
+   * ⚠️ SECURITY-CRITICAL: SEMPRE validar permissões ANTES de chamar este método!
+   * 
+   * Este método recebe `hasPermission` como parâmetro para manter o domain service
+   * stateless (DOMAIN-SVC-001), mas a validação de permissão DEVE ser feita pelo
+   * caller usando ApprovalPermissionService.canApprove().
+   * 
+   * NUNCA chamar este método com hasPermission=true sem validar primeiro!
+   * Isso permitiria bypass de autorização.
+   * 
+   * Exemplo de uso correto:
+   * ```typescript
+   * const hasPermission = await permissionService.canApprove(userId, orgId, branchId);
+   * const result = ApprovalWorkflowService.approve(strategy, userId, hasPermission, comments);
+   * ```
    * 
    * @param strategy Estratégia a aprovar
    * @param userId ID do usuário aprovador
-   * @param hasPermission Resultado de ApprovalPermissionService.canApprove()
+   * @param hasPermission Resultado de ApprovalPermissionService.canApprove() - DEVE ser validado pelo caller!
    * @param comments Comentários opcionais
    */
   static approve(
@@ -82,7 +94,8 @@ export class ApprovalWorkflowService {
     hasPermission: boolean,
     comments?: string
   ): Result<WorkflowTransitionResult, string> {
-    // Validar permissão de aprovação
+    // SECURITY: Validar permissão de aprovação
+    // Este check depende de validação externa - ver documentação acima
     if (!hasPermission) {
       return Result.fail('Usuário não tem permissão para aprovar esta estratégia');
     }
@@ -127,12 +140,12 @@ export class ApprovalWorkflowService {
    * Rejeita estratégia
    * PENDING_APPROVAL → REJECTED
    * 
-   * IMPORTANTE: Chamar ApprovalPermissionService.canApprove() ANTES
-   * de invocar este método para validar permissões de aprovação
+   * ⚠️ SECURITY-CRITICAL: SEMPRE validar permissões ANTES de chamar este método!
+   * Ver documentação do método approve() para detalhes de segurança.
    * 
    * @param strategy Estratégia a rejeitar
    * @param userId ID do usuário rejeitador
-   * @param hasPermission Resultado de ApprovalPermissionService.canApprove()
+   * @param hasPermission Resultado de ApprovalPermissionService.canApprove() - DEVE ser validado pelo caller!
    * @param reason Motivo da rejeição (obrigatório)
    * @param comments Comentários opcionais
    */
@@ -187,12 +200,12 @@ export class ApprovalWorkflowService {
    * Solicita alterações na estratégia
    * PENDING_APPROVAL → CHANGES_REQUESTED
    * 
-   * IMPORTANTE: Chamar ApprovalPermissionService.canApprove() ANTES
-   * de invocar este método para validar permissões de aprovação
+   * ⚠️ SECURITY-CRITICAL: SEMPRE validar permissões ANTES de chamar este método!
+   * Ver documentação do método approve() para detalhes de segurança.
    * 
    * @param strategy Estratégia a solicitar mudanças
    * @param userId ID do usuário solicitante
-   * @param hasPermission Resultado de ApprovalPermissionService.canApprove()
+   * @param hasPermission Resultado de ApprovalPermissionService.canApprove() - DEVE ser validado pelo caller!
    * @param reason Motivo da solicitação (obrigatório)
    * @param comments Comentários opcionais
    */
@@ -203,7 +216,8 @@ export class ApprovalWorkflowService {
     reason: string,
     comments?: string
   ): Result<WorkflowTransitionResult, string> {
-    // Validar permissão de aprovação
+    // SECURITY: Validar permissão de aprovação
+    // Este check depende de validação externa - ver documentação acima
     if (!hasPermission) {
       return Result.fail('Usuário não tem permissão para solicitar alterações nesta estratégia');
     }
