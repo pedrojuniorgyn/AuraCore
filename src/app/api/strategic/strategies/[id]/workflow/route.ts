@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
-import { resolveBranchIdOrThrow } from '@/lib/tenant/branch';
+import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { ApprovalWorkflowService } from '@/modules/strategic/domain/services/ApprovalWorkflowService';
 import { Strategy } from '@/modules/strategic/domain/entities/Strategy';
 import { ApprovalHistory } from '@/modules/strategic/domain/entities/ApprovalHistory';
@@ -42,7 +42,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const branchId = resolveBranchIdOrThrow(request);
+    const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
     const { id: strategyId } = await context.params;
 
     if (!strategyId) {
@@ -222,7 +222,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const branchId = resolveBranchIdOrThrow(request);
+    const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
     const { id: strategyId } = await context.params;
 
     if (!strategyId) {
