@@ -364,12 +364,13 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
         }
       );
 
-      // Deve falhar se user 3 não é aprovador configurado
-      // Nota: Se ApprovalPermissionService retornar false, deve rejeitar
-      if (!response.ok()) {
-        const json = await response.json();
-        expect(json.error).toMatch(/não tem permissão|unauthorized|permission/i);
-      }
+      // ✅ MUST explicitly assert failure (security check)
+      // Se response.ok() = true, é falha de segurança!
+      expect(response.ok()).toBeFalsy();
+      
+      // Verificar mensagem de erro
+      const json = await response.json();
+      expect(json.error).toMatch(/não tem permissão|unauthorized|permission/i);
     });
   });
 

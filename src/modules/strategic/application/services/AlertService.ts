@@ -402,31 +402,44 @@ export class AlertService {
 
   /**
    * Extrai variáveis do alerta para substituir no template de email
+   * 
+   * NOTA: Alert entity atualmente só tem campos básicos (currentValue, 
+   * thresholdValue, entityName, entityId). Para emails mais ricos com 
+   * dados específicos (percentage, variance, daysOverdue, etc.), essas
+   * informações devem ser passadas no campo 'message' ou seria necessário
+   * adicionar um campo 'data: Record<string, unknown>' no Alert.
    */
   private getEmailVariables(alert: Alert): Record<string, string | number> {
-    // Usar currentValue e thresholdValue da entity Alert
-    const data: Record<string, unknown> = {
-      currentValue: alert.currentValue,
-      thresholdValue: alert.thresholdValue,
-      entityName: alert.entityName,
-      entityId: alert.entityId,
-    };
+    // Usar valores disponíveis diretamente do Alert
+    // Valores não disponíveis usarão fallbacks genéricos
+    const currentVal = alert.currentValue ?? 0;
+    const thresholdVal = alert.thresholdValue ?? 0;
+    
+    // Calcular percentage se ambos valores existirem
+    const percentage = thresholdVal > 0 
+      ? Math.round((currentVal / thresholdVal) * 100)
+      : 0;
 
     return {
-      kpiName: String(data.kpiName || alert.entityName || 'KPI'),
-      percentage: Number(data.percentage || data.achievementPercent || 0),
-      threshold: Number(data.threshold || 70),
-      target: String(data.target || 'N/A'),
-      actual: String(data.actual || 'N/A'),
-      variance: String(data.variance || 'N/A'),
+      // KPI variables (disponíveis)
+      kpiName: alert.entityName || 'KPI',
+      percentage,
+      threshold: thresholdVal,
+      target: String(thresholdVal),
+      actual: String(currentVal),
+      variance: currentVal && thresholdVal 
+        ? String(Math.round(((currentVal - thresholdVal) / thresholdVal) * 100)) + '%'
+        : 'N/A',
       date: new Date().toLocaleDateString('pt-BR'),
       dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/strategic/dashboard`,
-      planName: String(data.planName || alert.entityName || 'Plano de Ação'),
-      daysOverdue: Number(data.daysOverdue || 0),
-      what: String(data.what || 'N/A'),
-      who: String(data.who || 'N/A'),
-      dueDate: String(data.dueDate || 'N/A'),
-      where: String(data.whereLocation || 'N/A'),
+      
+      // Action Plan variables (fallbacks - dados não disponíveis no Alert atual)
+      planName: alert.entityName || 'Plano de Ação',
+      daysOverdue: 0, // ⚠️ Não disponível - seria necessário calcular ou passar no Alert
+      what: 'Ver detalhes no sistema', // ⚠️ Não disponível
+      who: 'Ver responsável no sistema', // ⚠️ Não disponível
+      dueDate: 'Ver prazo no sistema', // ⚠️ Não disponível
+      where: 'Ver localização no sistema', // ⚠️ Não disponível
       actionPlanUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/strategic/action-plans/${alert.entityId}`,
     };
   }
