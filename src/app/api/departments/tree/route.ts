@@ -46,9 +46,6 @@ interface DepartmentTreeNode {
 export async function GET(request: NextRequest) {
   try {
     const tenantContext = await getTenantContext();
-    if (!tenantContext) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const { searchParams } = new URL(request.url);
     const isActive = searchParams.get('active');
@@ -86,6 +83,10 @@ export async function GET(request: NextRequest) {
       count: tree.length,
     });
   } catch (error) {
+    // API-ERR-001: getTenantContext() throws NextResponse on auth failure
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403 response
+    }
     console.error('Error building department tree:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

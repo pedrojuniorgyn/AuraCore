@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       limit
     );
 
-    if (!Result.isOk(result)) {
+    if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
