@@ -262,7 +262,7 @@ export class AlertService {
       // Enviar notificação in-app para cada aprovador
       if (approverUserIds.length > 0) {
         for (const userId of approverUserIds) {
-          await this.notificationService.createInAppNotification({
+          const inAppResult = await this.notificationService.createInAppNotification({
             organizationId,
             branchId,
             userId,
@@ -278,6 +278,15 @@ export class AlertService {
             },
             actionUrl: `/strategic/dashboard?alert=${alert.id}`,
           });
+
+          // Verificar Result (OBRIGATÓRIO - regrasmcp.mdc)
+          if (Result.isFail(inAppResult)) {
+            console.error(
+              `❌ Falha ao enviar notificação in-app para user ${userId}: ${inAppResult.error}`,
+              { alertId: alert.id, userId, organizationId, branchId }
+            );
+            // Continuar para próximo usuário (não bloquear)
+          }
         }
       } else {
         console.warn(
@@ -292,18 +301,27 @@ export class AlertService {
       const template = this.getEmailTemplate(alert.alertType);
       const variables = this.getEmailVariables(alert);
 
-      await this.notificationService.sendEmail({
+      const emailResult = await this.notificationService.sendEmail({
         to: config.emailRecipients,
         subject: `🔔 ${alert.title}`,
         body: alert.message,
         template,
         variables,
       });
+
+      // Verificar Result (OBRIGATÓRIO - regrasmcp.mdc)
+      if (Result.isFail(emailResult)) {
+        console.error(
+          `❌ Falha ao enviar email para alerta ${alert.id}: ${emailResult.error}`,
+          { alertId: alert.id, recipients: config.emailRecipients, organizationId, branchId }
+        );
+        // Continuar para webhook (não bloquear)
+      }
     }
 
     // Webhook Notification
     if (config.webhookEnabled && config.webhookUrl) {
-      await this.notificationService.sendWebhook({
+      const webhookResult = await this.notificationService.sendWebhook({
         url: config.webhookUrl,
         payload: {
           type: alert.alertType,
@@ -319,6 +337,15 @@ export class AlertService {
         },
         retryAttempts: 3,
       });
+
+      // Verificar Result (OBRIGATÓRIO - regrasmcp.mdc)
+      if (Result.isFail(webhookResult)) {
+        console.error(
+          `❌ Falha ao enviar webhook para alerta ${alert.id}: ${webhookResult.error}`,
+          { alertId: alert.id, webhookUrl: config.webhookUrl, organizationId, branchId }
+        );
+        // Continuar (não bloquear fluxo de alertas)
+      }
     }
   }
 
