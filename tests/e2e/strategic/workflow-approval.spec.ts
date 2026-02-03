@@ -684,7 +684,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
         
         // Pode haver notificação de STRATEGY_APPROVED
         const strategyNotification = notifications.data?.find(
-          (n: any) => n.event === 'STRATEGY_APPROVED' && n.data?.strategyId === strategy.id
+          (n: { event: string; data?: { strategyId?: string } }) => n.event === 'STRATEGY_APPROVED' && n.data?.strategyId === strategy.id
         );
 
         // Se implementado, deve existir
@@ -733,7 +733,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       await approve(authenticatedPage, strategy.id, user2.id);
 
       // 2. Verificar status = APPROVED
-      let updated = await getStrategy(authenticatedPage, strategy.id);
+      const updated = await getStrategy(authenticatedPage, strategy.id);
       expect(updated.workflowStatus).toBe('APPROVED');
 
       // 3. Tentar aprovar novamente (deve falhar)

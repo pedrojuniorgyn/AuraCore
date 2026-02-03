@@ -8,7 +8,8 @@
  * @since E9 - Strategic Module E2E Tests
  */
 
-import { test as base, expect, type Page, type BrowserContext } from '@playwright/test';
+/* eslint-disable react-hooks/rules-of-hooks */
+import { test as base, expect, type Page } from '@playwright/test';
 import { 
   DashboardPage, 
   KpisPage, 

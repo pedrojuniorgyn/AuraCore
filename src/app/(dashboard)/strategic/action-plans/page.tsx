@@ -28,11 +28,7 @@ import {
   Layers,
   Download,
   TrendingUp,
-  FileSpreadsheet,
-  FileText,
-  Loader2,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
@@ -45,19 +41,13 @@ import {
 } from '@/components/strategic/ActionPlanKanban';
 import type { ActionPlanStatus } from '@/components/strategic/ActionPlanCard';
 import { fetchAPI } from '@/lib/api';
+import { toast } from 'sonner';
 
 // Tipos compartilhados (Single Source of Truth)
 import type { 
   ActionPlanApiItem, 
   ActionPlansApiResponse,
 } from '@/types/strategic';
-import { exportArrayToExcel, exportArrayToCSV } from '@/hooks/useAgGridExport';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 export default function ActionPlansPage() {
   const router = useRouter();
@@ -65,7 +55,6 @@ export default function ActionPlansPage() {
   const [plans, setPlans] = useState<ActionPlanItem[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [pdcaFilter, setPdcaFilter] = useState<string>('all');
-  const [isExporting, setIsExporting] = useState(false);
 
   // fetchActionPlans é estável (sem dependencies que mudam)
   // Isso garante que handleStatusChange também seja estável
@@ -161,48 +150,6 @@ export default function ActionPlansPage() {
     router.push(`/strategic/action-plans/${planId}`);
   }, [router]);
 
-  // Exportar planos de ação para Excel ou CSV
-  const handleExport = useCallback(async (format: 'excel' | 'csv') => {
-    setIsExporting(true);
-    try {
-      const exportData = filteredPlans.map(plan => ({
-        'Código': plan.code,
-        'O que (What)': plan.what,
-        'Quem (Who)': plan.who,
-        'Onde (Where)': plan.whereLocation,
-        'Início': new Date(plan.whenStart).toLocaleDateString('pt-BR'),
-        'Fim': new Date(plan.whenEnd).toLocaleDateString('pt-BR'),
-        'Como (How)': plan.how,
-        'Custo': plan.howMuchAmount && plan.howMuchCurrency 
-          ? `${plan.howMuchCurrency} ${plan.howMuchAmount}` 
-          : plan.howMuchAmount 
-            ? `BRL ${plan.howMuchAmount}` 
-            : '-',
-        'Ciclo PDCA': plan.pdcaCycle,
-        'Status': plan.status,
-        'Progresso (%)': plan.completionPercent,
-        'Prioridade': plan.priority,
-        'Atrasado': plan.isOverdue ? 'Sim' : 'Não',
-      }));
-      
-      const result = format === 'excel'
-        ? await exportArrayToExcel(exportData, 'planos_acao_5w2h', 'Planos de Ação')
-        : await exportArrayToCSV(exportData, 'planos_acao_5w2h');
-      
-      toast.success(`Arquivo ${format.toUpperCase()} exportado!`, {
-        description: `${result.recordCount} planos de ação exportados`,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error('Erro ao exportar arquivo', {
-        description: message,
-      });
-      console.error('Export error:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  }, [filteredPlans]);
-
   // Stats
   const stats = {
     total: plans.length,
@@ -234,36 +181,15 @@ export default function ActionPlansPage() {
                   Ver por PDCA
                 </RippleButton>
               </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <RippleButton
-                    disabled={isExporting}
-                    className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:opacity-50"
-                  >
-                    {isExporting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Exportando...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Exportar
-                      </>
-                    )}
-                  </RippleButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => handleExport('excel')}>
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Excel (.xlsx)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('csv')}>
-                    <FileText className="w-4 h-4 mr-2" />
-                    CSV (.csv)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <RippleButton
+                onClick={() => toast.info('Exportação em desenvolvimento', {
+                  description: 'A funcionalidade de exportação Excel/CSV para Planos de Ação estará disponível em breve'
+                })}
+                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </RippleButton>
               <Link href="/strategic/action-plans/new">
                 <RippleButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500">
                   <Plus className="w-4 h-4 mr-2" />

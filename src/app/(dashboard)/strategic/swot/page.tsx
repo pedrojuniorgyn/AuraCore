@@ -34,6 +34,7 @@ import {
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { ViewToggle } from '@/components/strategic/shared/ViewToggle';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -146,6 +147,8 @@ export default function SwotMatrixPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<SwotItem[]>([]);
   const [summary, setSummary] = useState<SwotSummary | null>(null);
+  // Esta página SEMPRE mostra cards (Matrix), então view é sempre 'cards'
+  const view = 'cards' as const;
   
   // Estado para modal de adicionar
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -236,6 +239,14 @@ export default function SwotMatrixPage() {
     // Navegar para página de edição do item SWOT
     router.push(`/strategic/swot/${item.id}`);
   }, [router]);
+
+  // Redirecionar quando mudar para Grid
+  const handleViewChange = (newView: 'cards' | 'grid') => {
+    if (newView === 'grid') {
+      router.push('/strategic/swot/grid');
+    }
+    // Se newView === 'cards', já estamos na página cards, nada a fazer
+  };
 
   // Agrupar items por quadrante
   const groupedItems = items.reduce((acc, item) => {
@@ -398,6 +409,12 @@ export default function SwotMatrixPage() {
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </RippleButton>
+              
+              <ViewToggle 
+                module="swot" 
+                currentView={view} 
+                onViewChange={handleViewChange} 
+              />
             </Flex>
           </motion.div>
         </FadeIn>

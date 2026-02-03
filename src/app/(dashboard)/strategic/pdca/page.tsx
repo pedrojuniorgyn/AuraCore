@@ -32,6 +32,7 @@ import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animat
 import { RippleButton } from '@/components/ui/ripple-button';
 import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
+import { ViewToggle } from '@/components/strategic/shared/ViewToggle';
 import { PdcaKanban, type KanbanColumn, type PdcaPhase } from '@/components/strategic/PdcaKanban';
 import { fetchAPI } from '@/lib/api';
 
@@ -80,6 +81,8 @@ export default function PdcaKanbanPage() {
     overdue: 0,
     completedThisMonth: 0,
   });
+  // Esta página SEMPRE mostra cards (Kanban), então view é sempre 'cards'
+  const view = 'cards' as const;
 
   useEffect(() => {
     fetchKanbanData();
@@ -124,6 +127,14 @@ export default function PdcaKanbanPage() {
     router.push(`/strategic/action-plans/${cardId}`);
   }, [router]);
 
+  // Redirecionar quando mudar para Grid
+  const handleViewChange = (newView: 'cards' | 'grid') => {
+    if (newView === 'grid') {
+      router.push('/strategic/pdca/grid');
+    }
+    // Se newView === 'cards', já estamos na página cards, nada a fazer
+  };
+
   // Calcular totais por fase
   const phaseStats = columns.reduce((acc, col) => {
     acc[col.id] = col.items.length;
@@ -164,6 +175,12 @@ export default function PdcaKanbanPage() {
                   Novo Plano
                 </RippleButton>
               </Link>
+
+              <ViewToggle 
+                module="pdca" 
+                currentView={view} 
+                onViewChange={handleViewChange} 
+              />
             </>
           }
         />

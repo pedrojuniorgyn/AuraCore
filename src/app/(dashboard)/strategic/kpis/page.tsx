@@ -20,10 +20,7 @@ import {
   AlertTriangle,
   HelpCircle,
   Download,
-  FileSpreadsheet,
-  FileText,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { KpiCard, type KpiData } from '@/components/strategic/KpiCard';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { PageHeader } from '@/components/ui/page-header';
@@ -31,13 +28,7 @@ import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StaggerContainer } from '@/components/ui/animated-wrappers';
 import { fetchAPI } from '@/lib/api';
-import { exportArrayToExcel, exportArrayToCSV } from '@/hooks/useAgGridExport';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 type KpiStatus = 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' | 'NO_DATA';
 type Perspective = 'FINANCIAL' | 'CUSTOMER' | 'INTERNAL' | 'LEARNING';
@@ -72,7 +63,6 @@ export default function KpisPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [perspectiveFilter, setPerspectiveFilter] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
 
   const fetchKpis = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -147,39 +137,6 @@ export default function KpisPage() {
     router.push(`/strategic/kpis/${id}`);
   };
 
-  // Exportar KPIs para Excel ou CSV
-  const handleExport = useCallback(async (format: 'excel' | 'csv') => {
-    setIsExporting(true);
-    try {
-      const exportData = filteredKpis.map(kpi => ({
-        'Código': kpi.code,
-        'Nome': kpi.name,
-        'Valor Atual': kpi.currentValue,
-        'Meta': kpi.targetValue,
-        'Unidade': kpi.unit,
-        'Status': kpi.status,
-        'Variação (%)': kpi.variance,
-        'Perspectiva': kpi.perspective,
-      }));
-      
-      const result = format === 'excel'
-        ? await exportArrayToExcel(exportData, 'indicadores_kpis', 'KPIs')
-        : await exportArrayToCSV(exportData, 'indicadores_kpis');
-      
-      toast.success(`Arquivo ${format.toUpperCase()} exportado!`, {
-        description: `${result.recordCount} indicadores exportados`,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error('Erro ao exportar arquivo', {
-        description: message,
-      });
-      console.error('Export error:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  }, [filteredKpis]);
-
   return (
     <div className="min-h-screen -m-6 p-8 space-y-6">
       {/* Header */}
@@ -219,36 +176,15 @@ export default function KpisPage() {
               ))}
             </select>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <RippleButton
-                  disabled={isExporting}
-                  className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:opacity-50"
-                >
-                  {isExporting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Exportando...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Exportar
-                    </>
-                  )}
-                </RippleButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleExport('excel')}>
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Excel (.xlsx)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  CSV (.csv)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RippleButton
+              onClick={() => toast.info('Exportação em desenvolvimento', {
+                description: 'A funcionalidade de exportação Excel/CSV para KPIs estará disponível em breve'
+              })}
+              className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </RippleButton>
             
             <Link href="/strategic/kpis/new">
               <RippleButton className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500">

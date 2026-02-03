@@ -1,0 +1,160 @@
+'use client';
+
+import { useCallback, useMemo } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef, GridReadyEvent, GridOptions } from 'ag-grid-community';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
+import 'ag-grid-enterprise';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
+interface BaseGridProps<T = Record<string, unknown>> {
+  rowData: T[];
+  columnDefs: ColDef[];
+  onRowClicked?: (data: T) => void;
+  masterDetail?: boolean;
+  detailCellRenderer?: unknown;
+  detailCellRendererParams?: unknown;
+  loading?: boolean;
+  paginationPageSize?: number;
+  enableExport?: boolean;
+  enableCharts?: boolean;
+  moduleName?: string; // Para ARIA labels
+  mobileColumns?: string[]; // Colunas prioritárias em mobile
+}
+
+export function BaseGrid<T = Record<string, unknown>>({
+  rowData,
+  columnDefs,
+  onRowClicked,
+  masterDetail = false,
+  detailCellRenderer,
+  detailCellRendererParams,
+  loading = false,
+  paginationPageSize = 50,
+  enableExport = true,
+  enableCharts = true,
+  moduleName = 'Dados',
+  mobileColumns = ['code', 'title', 'name', 'status', 'actions'],
+}: BaseGridProps<T>) {
+  // Detectar mobile para ajustar colunas
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+
+  // Colunas responsivas: em mobile, mostrar apenas colunas prioritárias
+  const responsiveColumnDefs = useMemo<ColDef[]>(() => {
+    if (!isMobile) return columnDefs;
+
+    // Em mobile, filtrar apenas colunas prioritárias
+    return columnDefs.filter((col) => {
+      const field = typeof col.field === 'string' ? col.field : '';
+      return mobileColumns.some((mobileCol) => field.includes(mobileCol));
+    });
+  }, [isMobile, columnDefs, mobileColumns]);
+
+  const defaultColDef = useMemo<ColDef>(
+    () => ({
+      sortable: true,
+      filter: !isMobile, // Desabilitar filtros em mobile (usar filtros globais)
+      resizable: !isMobile,
+      flex: 1,
+      minWidth: isMobile ? 80 : 100,
+    }),
+    [isMobile]
+  );
+
+  const gridOptions = useMemo<GridOptions>(
+    () => ({
+      pagination: true,
+      paginationPageSize: isMobile ? 10 : paginationPageSize, // Menos linhas em mobile
+      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [10, 25, 50, 100],
+      animateRows: !isMobile, // Desabilitar animações em mobile (performance)
+      masterDetail: !isMobile && masterDetail, // Master-detail apenas em desktop
+      detailCellRenderer: !isMobile ? detailCellRenderer : undefined,
+      detailCellRendererParams: !isMobile ? detailCellRendererParams : undefined,
+      enableRangeSelection: !isMobile && enableExport,
+      enableCharts: !isMobile && enableCharts,
+      rowGroupPanelShow: isMobile ? undefined : 'always',
+      suppressMovableColumns: isMobile, // Travar colunas em mobile
+      defaultExcelExportParams: enableExport
+        ? {
+            fileName: `export_${new Date().toISOString().split('T')[0]}.xlsx`,
+            sheetName: 'Dados',
+          }
+        : undefined,
+      defaultCsvExportParams: enableExport
+        ? {
+            fileName: `export_${new Date().toISOString().split('T')[0]}.csv`,
+          }
+        : undefined,
+      // Acessibilidade
+      enableAccessibility: true,
+    }),
+    [masterDetail, detailCellRenderer, detailCellRendererParams, paginationPageSize, enableExport, enableCharts, isMobile]
+  );
+
+  const onGridReady = useCallback(
+    (params: GridReadyEvent) => {
+      // Auto-ajustar colunas em desktop, manter tamanhos fixos em mobile
+      if (!isMobile) {
+        params.api.sizeColumnsToFit();
+      }
+    },
+    [isMobile]
+  );
+
+  if (loading) {
+    return (
+      <div
+        className="flex h-[600px] items-center justify-center"
+        role="status"
+        aria-live="polite"
+        aria-label={`Carregando ${moduleName}`}
+      >
+        <div className="text-center">
+          <div
+            className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"
+            aria-hidden="true"
+          ></div>
+          <p className="text-gray-600">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!rowData || rowData.length === 0) {
+    return (
+      <div
+        className="flex h-[600px] items-center justify-center"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="text-center">
+          <p className="text-gray-600">Nenhum registro encontrado</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Altura responsiva
+  const gridHeight = isMobile ? '500px' : isTablet ? '550px' : '600px';
+
+  return (
+    <div
+      className="ag-theme-quartz"
+      style={{ height: gridHeight, width: '100%' }}
+      role="region"
+      aria-label={`Tabela de ${moduleName}`}
+    >
+      <AgGridReact<T>
+        rowData={rowData}
+        columnDefs={responsiveColumnDefs}
+        defaultColDef={defaultColDef}
+        gridOptions={gridOptions}
+        onGridReady={onGridReady}
+        onRowClicked={(event) => onRowClicked?.(event.data)}
+        getRowId={(params) => (params.data as { id?: string })?.id || String(params.node.id)}
+      />
+    </div>
+  );
+}

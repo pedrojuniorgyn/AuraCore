@@ -21,6 +21,7 @@ import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
+import { ViewToggle } from '@/components/strategic/shared/ViewToggle';
 import { 
   Dialog, 
   DialogContent, 
@@ -78,6 +79,8 @@ export default function IdeasPage() {
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  // Esta página SEMPRE mostra cards, então view é sempre 'cards'
+  const view = 'cards' as const;
   
   const [newIdea, setNewIdea] = useState({
     title: '',
@@ -163,6 +166,14 @@ export default function IdeasPage() {
     }
   };
 
+  // Redirecionar quando mudar para Grid
+  const handleViewChange = (newView: 'cards' | 'grid') => {
+    if (newView === 'grid') {
+      router.push('/strategic/ideas/grid');
+    }
+    // Se newView === 'cards', já estamos na página cards, nada a fazer
+  };
+
   const stats = {
     total: ideas.length,
     submitted: ideas.filter(i => i.status === 'SUBMITTED').length,
@@ -202,13 +213,21 @@ export default function IdeasPage() {
           onRefresh={fetchIdeas}
           isLoading={isLoading}
           actions={
-            <Button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
-            >
-              <Plus size={16} className="mr-2" />
-              Nova Ideia
-            </Button>
+            <>
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
+              >
+                <Plus size={16} className="mr-2" />
+                Nova Ideia
+              </Button>
+              
+              <ViewToggle 
+                module="ideas" 
+                currentView={view} 
+                onViewChange={handleViewChange} 
+              />
+            </>
           }
         />
 
