@@ -22,8 +22,8 @@ export async function GET() {
     // Teste 2: GET
     const cached = await CacheService.get(testKey);
 
-    // Teste 3: Info
-    const info = await CacheService.info();
+    // Teste 3: Stats
+    const stats = await CacheService.getStats();
 
     return NextResponse.json({
       success: true,
@@ -34,7 +34,7 @@ export async function GET() {
       },
       cache: {
         retrieved: cached,
-        info,
+        stats,
       },
       timestamp: new Date().toISOString(),
     });
