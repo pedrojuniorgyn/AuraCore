@@ -63,7 +63,7 @@ export default function BranchesPage() {
 
   const handleEdit = useCallback((data: unknown) => {
     const branch = data as Branch;
-    router.push(`/configuracoes/filiais/${branch.id}`);
+    router.push(`/configuracoes/filiais/edit/${branch.id}`);
   }, [router]);
 
   const handleView = useCallback((branch: Branch) => {
