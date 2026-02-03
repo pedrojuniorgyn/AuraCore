@@ -86,13 +86,21 @@ export class ApprovalDelegate extends Entity<string> {
       return Result.fail('startDate obrigatória');
     }
 
+    const now = new Date();
+
+    // startDate não deve estar no passado
+    // Permitir margem de 1 minuto para evitar race conditions com relógios levemente dessincronizados
+    const oneMinuteAgo = new Date(now.getTime() - 60000);
+    if (props.startDate < oneMinuteAgo) {
+      return Result.fail('startDate não pode estar no passado');
+    }
+
     // Se endDate existe, deve ser >= startDate
     if (props.endDate && props.endDate < props.startDate) {
       return Result.fail('endDate deve ser >= startDate');
     }
 
     const id = globalThis.crypto.randomUUID();
-    const now = new Date();
 
     return Result.ok(
       new ApprovalDelegate(id, {
