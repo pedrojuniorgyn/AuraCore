@@ -49,6 +49,7 @@ import { GetStrategyQuery } from '../../application/queries/GetStrategyQuery';
 import { ListGoalsQuery } from '../../application/queries/ListGoalsQuery';
 import { GetKpiHistoryQuery } from '../../application/queries/GetKpiHistoryQuery';
 import { GetWarRoomDashboardQuery } from '../../application/queries/GetWarRoomDashboardQuery';
+import { GetExecutiveDashboardQuery } from '../../application/queries/GetExecutiveDashboardQuery';
 import { GetDashboardDataQuery } from '../../application/queries/GetDashboardDataQuery';
 import { ListIdeasQuery } from '../../application/queries/ListIdeasQuery';
 import { ListActionPlansQuery } from '../../application/queries/ListActionPlansQuery';
@@ -61,6 +62,9 @@ import { GetDrilldownQuery } from '../../application/queries/GetDrilldownQuery';
 import { AlertService } from '../../application/services/AlertService';
 import { BudgetImportService } from '../../application/services/BudgetImportService';
 import { ApprovalPermissionService } from '../../application/services/ApprovalPermissionService';
+import { ReportGeneratorService } from '../../application/services/reports/ReportGeneratorService';
+import { SlackNotificationService } from '../../application/services/integrations/SlackNotificationService';
+import { CacheInvalidationService } from '../../application/services/CacheInvalidationService';
 
 // Integrations
 import { FinancialKPIDataSource } from '../integrations/FinancialKPIDataSource';
@@ -131,6 +135,7 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.ListGoalsUseCase, ListGoalsQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetKpiHistoryUseCase, GetKpiHistoryQuery);
   container.registerSingleton(STRATEGIC_TOKENS.GetWarRoomDashboardUseCase, GetWarRoomDashboardQuery);
+  container.registerSingleton(STRATEGIC_TOKENS.GetExecutiveDashboardUseCase, GetExecutiveDashboardQuery);
 
   // Use Cases - Queries (Novos)
   container.registerSingleton(STRATEGIC_TOKENS.ListIdeasUseCase, ListIdeasQuery);
@@ -144,4 +149,7 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.AlertService, AlertService);
   container.registerSingleton(STRATEGIC_TOKENS.BudgetImportService, BudgetImportService);
   container.registerSingleton(STRATEGIC_TOKENS.ApprovalPermissionService, ApprovalPermissionService);
+  container.registerSingleton(STRATEGIC_TOKENS.ReportGeneratorService, ReportGeneratorService);
+  container.registerSingleton(STRATEGIC_TOKENS.SlackNotificationService, SlackNotificationService);
+  container.registerSingleton(STRATEGIC_TOKENS.CacheInvalidationService, CacheInvalidationService);
 }

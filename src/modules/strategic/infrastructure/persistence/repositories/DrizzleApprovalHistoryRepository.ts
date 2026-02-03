@@ -4,7 +4,7 @@
  *
  * @module strategic/infrastructure/persistence/repositories
  */
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, gte, lte } from 'drizzle-orm';
 import type { IApprovalHistoryRepository } from '../../../domain/ports/output/IApprovalHistoryRepository';
 import { ApprovalHistory } from '../../../domain/entities/ApprovalHistory';
 import { ApprovalHistoryMapper } from '../mappers/ApprovalHistoryMapper';
@@ -89,5 +89,31 @@ export class DrizzleApprovalHistoryRepository implements IApprovalHistoryReposit
 
     const result = ApprovalHistoryMapper.toDomain(rows[0]);
     return Result.isOk(result) ? result.value : null;
+  }
+
+  async findByPeriod(
+    from: Date,
+    to: Date,
+    organizationId: number,
+    branchId: number
+  ): Promise<ApprovalHistory[]> {
+    const rows = await db
+      .select()
+      .from(approvalHistoryTable)
+      .where(
+        and(
+          eq(approvalHistoryTable.organizationId, organizationId),
+          eq(approvalHistoryTable.branchId, branchId),
+          gte(approvalHistoryTable.createdAt, from),
+          lte(approvalHistoryTable.createdAt, to),
+          isNull(approvalHistoryTable.deletedAt)
+        )
+      )
+      .orderBy(desc(approvalHistoryTable.createdAt));
+
+    return rows
+      .map((row) => ApprovalHistoryMapper.toDomain(row))
+      .filter(Result.isOk)
+      .map((r) => r.value);
   }
 }

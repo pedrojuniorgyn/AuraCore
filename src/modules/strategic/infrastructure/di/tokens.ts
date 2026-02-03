@@ -55,6 +55,7 @@ export const STRATEGIC_TOKENS = {
   GetActionPlanTimelineUseCase: Symbol.for('IGetActionPlanTimelineUseCase'),
   ListIdeasUseCase: Symbol.for('IListIdeasUseCase'),
   GetWarRoomDashboardUseCase: Symbol.for('IGetWarRoomDashboardUseCase'),
+  GetExecutiveDashboardUseCase: Symbol.for('IGetExecutiveDashboardUseCase'),
   GenerateAgendaUseCase: Symbol.for('IGenerateAgendaUseCase'),
   GetKpiHistoryUseCase: Symbol.for('IGetKpiHistoryUseCase'),
   GetDrilldownQuery: Symbol.for('IGetDrilldownQuery'),
@@ -66,6 +67,9 @@ export const STRATEGIC_TOKENS = {
   AlertService: Symbol.for('AlertService'),
   BudgetImportService: Symbol.for('BudgetImportService'),
   ApprovalPermissionService: Symbol.for('ApprovalPermissionService'),
+  ReportGeneratorService: Symbol.for('ReportGeneratorService'),
+  SlackNotificationService: Symbol.for('SlackNotificationService'),
+  CacheInvalidationService: Symbol.for('CacheInvalidationService'),
   
   // Integrations
   FinancialKPIAdapter: Symbol.for('IFinancialKPIAdapter'),

@@ -57,6 +57,14 @@ export async function register() {
     console.error("[Instrumentation] Failed to initialize DDD modules:", error);
   }
 
+  // === 1.5. Inicializar Redis Cache ===
+  try {
+    const { initRedisCache } = await import("@/lib/cache");
+    initRedisCache();
+  } catch (error) {
+    console.error("[Instrumentation] Failed to initialize Redis cache:", error);
+  }
+
   // === 2. Inicializar CRON jobs (se habilitado) ===
   if (process.env.ENABLE_CRON !== "true") return;
 

@@ -14,6 +14,7 @@ import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 import type { KPI } from '../../domain/entities/KPI';
 import type { ActionPlan } from '../../domain/entities/ActionPlan';
 import type { StrategicGoal } from '../../domain/entities/StrategicGoal';
+import { redisCache } from '@/lib/cache';
 
 // ============================================================================
 // INPUT/OUTPUT TYPES
@@ -96,6 +97,14 @@ export class GetDashboardDataQuery implements IGetDashboardDataUseCase {
 
     const { organizationId, branchId } = context;
 
+    // 2. Verificar cache (TTL: 5 minutos)
+    const cacheKey = `dashboard-data:${organizationId}:${branchId}`;
+    
+    const cached = await redisCache.get<DashboardDataOutput>(cacheKey, 'strategic:');
+    if (cached) {
+      return Result.ok(cached);
+    }
+
     try {
       // 2. Buscar KPIs (para alertas)
       const { items: kpis } = await this.kpiRepository.findMany({
@@ -143,7 +152,7 @@ export class GetDashboardDataQuery implements IGetDashboardDataUseCase {
         minute: '2-digit',
       });
 
-      return Result.ok({
+      const output: DashboardDataOutput = {
         healthScore,
         previousHealthScore: Math.max(0, healthScore - 3), // TODO: Buscar do histórico
         lastUpdate,
@@ -152,7 +161,15 @@ export class GetDashboardDataQuery implements IGetDashboardDataUseCase {
         actions,
         trendData,
         auroraInsight,
+      };
+
+      // Cachear resultado (5 minutos)
+      await redisCache.set(cacheKey, output, { 
+        ttl: 300, // 5 minutos
+        prefix: 'strategic:' 
       });
+
+      return Result.ok(output);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro ao buscar dados do dashboard';
       return Result.fail(message);

@@ -39,4 +39,14 @@ export interface IApprovalHistoryRepository {
     organizationId: number,
     branchId: number
   ): Promise<ApprovalHistory | null>;
+
+  /**
+   * Busca histórico por período
+   */
+  findByPeriod(
+    from: Date,
+    to: Date,
+    organizationId: number,
+    branchId: number
+  ): Promise<ApprovalHistory[]>;
 }
