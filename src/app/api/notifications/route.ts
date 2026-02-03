@@ -33,9 +33,11 @@ export async function GET(request: NextRequest) {
 
     // Buscar notificações não lidas
     // userId pode ser string (context.userId) - service aceita ambos
+    // REPO-005: SEMPRE passar branchId para isolamento multi-tenant
     const result = await notificationService.getUnreadNotifications(
       context.userId,
       context.organizationId,
+      context.branchId,
       limit
     );
 

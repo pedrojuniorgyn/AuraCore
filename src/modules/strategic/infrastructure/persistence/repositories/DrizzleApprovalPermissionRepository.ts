@@ -133,15 +133,23 @@ export class DrizzleApprovalPermissionRepository
 
       // Verificar se já existe
       // Type assertion para .limit() conforme BP-SQL-004
+      // REPO-005: SEMPRE filtrar por organizationId + branchId
       type QueryWithLimit = { limit(n: number): Promise<typeof approvalDelegateTable.$inferSelect[]> };
 
       const existing = await (db
         .select()
         .from(approvalDelegateTable)
-        .where(eq(approvalDelegateTable.id, delegate.id)) as unknown as QueryWithLimit).limit(1);
+        .where(
+          and(
+            eq(approvalDelegateTable.id, delegate.id),
+            eq(approvalDelegateTable.organizationId, delegate.organizationId),
+            eq(approvalDelegateTable.branchId, delegate.branchId)
+          )
+        ) as unknown as QueryWithLimit).limit(1);
 
       if (existing.length > 0) {
         // Update
+        // REPO-005: SEMPRE filtrar por organizationId + branchId no UPDATE
         await db
           .update(approvalDelegateTable)
           .set({
@@ -149,7 +157,13 @@ export class DrizzleApprovalPermissionRepository
             endDate: data.endDate,
             updatedAt: new Date(),
           })
-          .where(eq(approvalDelegateTable.id, delegate.id));
+          .where(
+            and(
+              eq(approvalDelegateTable.id, delegate.id),
+              eq(approvalDelegateTable.organizationId, delegate.organizationId),
+              eq(approvalDelegateTable.branchId, delegate.branchId)
+            )
+          );
       } else {
         // Insert
         await db.insert(approvalDelegateTable).values(data);

@@ -203,15 +203,19 @@ export class NotificationService {
    * 
    * @param userId ID do usuário (number ou string)
    * @param organizationId ID da organização
+   * @param branchId ID da filial (obrigatório para isolamento multi-tenant)
    * @param limit Limite de resultados (padrão: 50, máx: 200)
    * @returns Result com lista de notificações ou erro
    * 
    * NOTA: API anterior permitia ?limit=N query param (1-200).
    * Este parâmetro restaura essa funcionalidade.
+   * 
+   * @see REPO-005: TODA query filtra organizationId + branchId
    */
   async getUnreadNotifications(
     userId: number | string,
     organizationId: number,
+    branchId: number,
     limit: number = 50
   ): Promise<Result<unknown[], string>> {
     try {
@@ -228,6 +232,7 @@ export class NotificationService {
           and(
             eq(notifications.userId, userIdString),
             eq(notifications.organizationId, organizationId),
+            eq(notifications.branchId, branchId), // REPO-005: filtro obrigatório
             eq(notifications.isRead, 0)
           )
         )
