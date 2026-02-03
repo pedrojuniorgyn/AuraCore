@@ -26,6 +26,14 @@ export const DELETE = withDI(
       const branchId = resolveBranchIdOrThrow(request.headers, authContext);
       const { id: delegateId } = await context.params;
       const userId = parseInt(authContext.userId, 10);
+      
+      // Validar userId (consistente com GET/POST handlers)
+      if (isNaN(userId) || userId <= 0) {
+        return NextResponse.json(
+          { error: 'Invalid user ID' },
+          { status: 400 }
+        );
+      }
 
       // Resolver service
       const service = container.resolve<ApprovalPermissionService>(
