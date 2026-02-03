@@ -72,6 +72,12 @@ async function createStrategy(
 
   expect(response.ok()).toBeTruthy();
   const json = await response.json();
+  
+  // Validar estrutura da resposta (Bug 2 fix)
+  expect(json).toHaveProperty('data');
+  expect(json.data).toHaveProperty('id');
+  expect(json.data).toHaveProperty('workflowStatus');
+  
   return json.data;
 }
 
@@ -223,7 +229,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       const history = await getApprovalHistory(authenticatedPage, strategy.id);
       expect(history.length).toBeGreaterThanOrEqual(1);
       
-      const submitEntry = history.find(h => h.action === 'SUBMIT');
+      const submitEntry = history.find(h => h.action === 'SUBMITTED');
       expect(submitEntry).toBeDefined();
       expect(submitEntry?.actorUserId).toBe(user1.id);
       expect(submitEntry?.comments).toBe('Ready for review');
@@ -249,11 +255,11 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       const history = await getApprovalHistory(authenticatedPage, strategy.id);
       expect(history.length).toBeGreaterThanOrEqual(2); // SUBMIT + APPROVE
 
-      const submitEntry = history.find(h => h.action === 'SUBMIT');
+      const submitEntry = history.find(h => h.action === 'SUBMITTED');
       expect(submitEntry).toBeDefined();
       expect(submitEntry?.actorUserId).toBe(user1.id);
 
-      const approveEntry = history.find(h => h.action === 'APPROVE');
+      const approveEntry = history.find(h => h.action === 'APPROVED');
       expect(approveEntry).toBeDefined();
       expect(approveEntry?.actorUserId).toBe(user2.id);
       expect(approveEntry?.comments).toBe('Excellent strategy!');
@@ -279,7 +285,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
 
       // 4. Verificar histórico
       const history = await getApprovalHistory(authenticatedPage, strategy.id);
-      const rejectEntry = history.find(h => h.action === 'REJECT');
+      const rejectEntry = history.find(h => h.action === 'REJECTED');
       expect(rejectEntry).toBeDefined();
       expect(rejectEntry?.actorUserId).toBe(user2.id);
       expect(rejectEntry?.reason).toBe(rejectionReason);
@@ -454,14 +460,14 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       const history = await getApprovalHistory(authenticatedPage, strategy.id);
       expect(history.length).toBeGreaterThanOrEqual(2);
 
-      // Verificar SUBMIT entry
-      const submitEntry = history.find(h => h.action === 'SUBMIT');
+      // Verificar SUBMITTED entry
+      const submitEntry = history.find(h => h.action === 'SUBMITTED');
       expect(submitEntry).toBeDefined();
       expect(submitEntry?.actorUserId).toBe(user1.id);
       expect(submitEntry?.comments).toBe('Initial submission');
 
-      // Verificar REQUEST_CHANGES entry
-      const changesEntry = history.find(h => h.action === 'REQUEST_CHANGES');
+      // Verificar CHANGES_REQUESTED entry
+      const changesEntry = history.find(h => h.action === 'CHANGES_REQUESTED');
       expect(changesEntry).toBeDefined();
       expect(changesEntry?.actorUserId).toBe(user2.id);
       expect(changesEntry?.reason).toBe('Add budget details');
@@ -510,10 +516,10 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       // 3. Verificar histórico preserva comentários
       const history = await getApprovalHistory(authenticatedPage, strategy.id);
 
-      const submitEntry = history.find(h => h.action === 'SUBMIT');
+      const submitEntry = history.find(h => h.action === 'SUBMITTED');
       expect(submitEntry?.comments).toBe(submitComments);
 
-      const approveEntry = history.find(h => h.action === 'APPROVE');
+      const approveEntry = history.find(h => h.action === 'APPROVED');
       expect(approveEntry?.comments).toBe(approveComments);
     });
   });

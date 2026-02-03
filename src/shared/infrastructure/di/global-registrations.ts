@@ -86,6 +86,19 @@ export function registerGlobalDependencies() {
   // ============================================================================
   // NOTIFICATION SYSTEM (FASE7-06)
   // ============================================================================
-
+  
+  // IMPORTANTE: NotificationService DEVE ser registrado em global-registrations
+  // ANTES de módulos que dependem dele (Strategic, etc).
+  // 
+  // Ordem de registro (instrumentation.ts):
+  // 1. registerGlobalDependencies() ← NotificationService registrado aqui
+  // 2. registerStrategicModule()    ← AlertService injeta NotificationService
+  //
+  // Se registrado dentro do Strategic module, pode causar:
+  // - Duplicate registration errors
+  // - Timing issues (resolved before registered)
+  // - Module isolation problems
+  //
+  // Solução: Manter como singleton global compartilhado entre módulos
   container.registerSingleton(NotificationService);
 }

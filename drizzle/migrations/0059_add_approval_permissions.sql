@@ -92,12 +92,10 @@ GO
 -- =====================================================
 -- Tabela: strategic_approval_delegate
 -- Descrição: Delegações temporárias de permissões de aprovação
--- NOTA: Tabela JÁ CRIADA na migration 0053 com UNIQUEIDENTIFIER
+-- NOTA: Migration 0053 criou com UNIQUEIDENTIFIER, mas podemos usar VARCHAR(36)
 -- =====================================================
 
--- Tabela já existe da migration 0053, mas com schema diferente (UNIQUEIDENTIFIER vs VARCHAR)
--- Verificar se precisa converter para VARCHAR(36) para match com Drizzle ORM
-
+-- Cenário 1: Tabela existe com UNIQUEIDENTIFIER (migration 0053)
 IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
            WHERE TABLE_NAME = 'strategic_approval_delegate' 
            AND COLUMN_NAME = 'id' 
@@ -105,26 +103,36 @@ IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
 BEGIN
   PRINT '⚠️  AVISO: strategic_approval_delegate.id é UNIQUEIDENTIFIER (migration 0053)';
   PRINT '⚠️  Drizzle ORM espera VARCHAR(36)';
-  PRINT '⚠️  CONVERSÃO NECESSÁRIA (não executada automaticamente para segurança)';
-  PRINT '⚠️  Execute manualmente se necessário:';
-  PRINT '⚠️  ALTER TABLE strategic_approval_delegate ALTER COLUMN id VARCHAR(36) NOT NULL;';
-  
-  -- NOTA: Não executar ALTER automaticamente pois pode quebrar dados existentes
-  -- Se houver delegações ativas, precisa migração de dados cuidadosa:
-  -- 1. Criar coluna temporária VARCHAR(36)
-  -- 2. Copiar CAST(id AS VARCHAR(36))
-  -- 3. Dropar PK e FK
-  -- 4. Dropar coluna id antiga
-  -- 5. Renomear coluna temporária
-  -- 6. Recriar PK e FK
+  PRINT '⚠️  Tabela funciona, mas com type mismatch';
+  PRINT '⚠️  Para converter: ver comentários na migration 0053';
 END
+-- Cenário 2: Tabela existe com VARCHAR(36) (já convertida)
 ELSE IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'strategic_approval_delegate')
 BEGIN
-  PRINT '✅ strategic_approval_delegate já existe com schema correto';
+  PRINT '✅ strategic_approval_delegate já existe com schema correto (VARCHAR)';
 END
+-- Cenário 3: Tabela NÃO existe (criar agora)
 ELSE
 BEGIN
-  PRINT '❌ ERROR: strategic_approval_delegate não existe (esperada da migration 0053)';
+  CREATE TABLE strategic_approval_delegate (
+    id VARCHAR(36) NOT NULL DEFAULT CAST(NEWID() AS VARCHAR(36)),
+    organization_id INT NOT NULL,
+    branch_id INT NOT NULL,
+    delegator_user_id INT NOT NULL, -- Quem delega
+    delegate_user_id INT NOT NULL,  -- Quem recebe
+    start_date DATETIME2 NOT NULL,
+    end_date DATETIME2 NULL,        -- NULL = sem data fim
+    is_active BIT NOT NULL DEFAULT 1,
+    created_by VARCHAR(36) NULL,
+    created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+    updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+    
+    CONSTRAINT pk_strategic_approval_delegate PRIMARY KEY (id),
+    CONSTRAINT fk_delegate_org FOREIGN KEY (organization_id) REFERENCES organizations(id),
+    CONSTRAINT chk_delegate_dates CHECK (end_date IS NULL OR end_date > start_date)
+  );
+  
+  PRINT '✅ strategic_approval_delegate criada com sucesso (VARCHAR(36))';
 END
 GO
 
