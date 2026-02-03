@@ -9,8 +9,8 @@ export default function TestDeleteHookPage() {
     handleDelete, 
     isDeleting,
     showDeleteDialog,
-    setShowDeleteDialog,
     confirmDelete,
+    cancelDelete,
     pendingOptions,
   } = useDeleteResource('action-plans');
   const [testId] = useState('test-abc-123');
@@ -99,7 +99,11 @@ export default function TestDeleteHookPage() {
       {/* Modal de confirmação */}
       <DeleteConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            cancelDelete(); // Limpa estado pendente ao fechar modal
+          }
+        }}
         onConfirm={confirmDelete}
         itemName={pendingOptions.itemName}
         resourceType={pendingOptions.resourceType}

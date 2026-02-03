@@ -70,8 +70,8 @@ export function DeleteResourceButton({
     handleDelete, 
     isDeleting,
     showDeleteDialog,
-    setShowDeleteDialog,
     confirmDelete,
+    cancelDelete,
     pendingOptions,
   } = useDeleteResource(resourceType);
 
@@ -134,7 +134,11 @@ export function DeleteResourceButton({
       {/* Modal de confirmação */}
       <DeleteConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            cancelDelete(); // Limpa estado pendente ao fechar modal
+          }
+        }}
         onConfirm={confirmDelete}
         itemName={pendingOptions.itemName}
         resourceType={pendingOptions.resourceType}
@@ -161,8 +165,8 @@ export function DeleteResourceButtonCompact({
     handleDelete, 
     isDeleting,
     showDeleteDialog,
-    setShowDeleteDialog,
     confirmDelete,
+    cancelDelete,
     pendingOptions,
   } = useDeleteResource(resourceType);
 
@@ -206,7 +210,11 @@ export function DeleteResourceButtonCompact({
       {/* Modal de confirmação */}
       <DeleteConfirmationDialog
         open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            cancelDelete(); // Limpa estado pendente ao fechar modal
+          }
+        }}
         onConfirm={confirmDelete}
         itemName={pendingOptions.itemName}
         resourceType={pendingOptions.resourceType}

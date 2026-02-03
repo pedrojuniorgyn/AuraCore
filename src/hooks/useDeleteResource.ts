@@ -82,6 +82,11 @@ export interface UseDeleteResourceReturn {
    * Confirmar exclusão (quando usando modal)
    */
   confirmDelete: () => Promise<void>;
+
+  /**
+   * Cancelar exclusão e limpar estado pendente (quando usando modal)
+   */
+  cancelDelete: () => void;
 }
 
 /**
@@ -206,11 +211,21 @@ export function useDeleteResource(resourceType: string): UseDeleteResourceReturn
     [executeDelete]
   );
 
+  // Função para cancelar delete (limpa estado pendente)
+  const cancelDelete = useCallback(() => {
+    setShowDeleteDialog(false);
+    setPendingDeleteId(null);
+    setPendingOptions({});
+  }, []);
+
   // Função para confirmar delete (chamada pelo modal)
   const confirmDelete = useCallback(async () => {
     if (pendingDeleteId) {
-      setShowDeleteDialog(false);
+      // NÃO fechar modal aqui - deixar aberto durante execução
       await executeDelete(pendingDeleteId, pendingOptions);
+      
+      // Fechar modal e limpar estado APÓS delete completar (sucesso ou erro)
+      setShowDeleteDialog(false);
       setPendingDeleteId(null);
       setPendingOptions({});
     }
@@ -224,5 +239,6 @@ export function useDeleteResource(resourceType: string): UseDeleteResourceReturn
     pendingDeleteId,
     pendingOptions,
     confirmDelete,
+    cancelDelete,
   };
 }
