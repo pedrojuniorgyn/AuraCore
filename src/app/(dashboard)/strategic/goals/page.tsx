@@ -9,14 +9,22 @@ import { AllEnterpriseModule } from 'ag-grid-enterprise';
 
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
-import { Target, Plus, Download, CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Target, Plus, Download, CheckCircle2, Clock, AlertTriangle, TrendingUp, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { fetchAPI } from '@/lib/api';
+import { useAgGridExport } from '@/hooks/useAgGridExport';
 
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { PageHeader } from '@/components/ui/page-header';
 import { EnterpriseMetricCard } from '@/components/ui/enterprise-metric-card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -85,6 +93,32 @@ export default function GoalsPage() {
   const gridRef = useRef<AgGridReact>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  
+  // Hook de exportação para AG-Grid
+  const { exportToExcel, exportToCSV } = useAgGridExport(gridRef);
+
+  // Handler de exportação com loading e toast
+  const handleExport = useCallback(async (format: 'excel' | 'csv') => {
+    setIsExporting(true);
+    try {
+      const result = format === 'excel' 
+        ? await exportToExcel('objetivos_estrategicos')
+        : await exportToCSV('objetivos_estrategicos');
+      
+      toast.success(`Arquivo ${format.toUpperCase()} exportado!`, {
+        description: `${result.recordCount} objetivos exportados`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro ao exportar arquivo', {
+        description: message,
+      });
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [exportToExcel, exportToCSV]);
 
   const fetchGoals = useCallback(async () => {
     setLoading(true);
@@ -188,12 +222,36 @@ export default function GoalsPage() {
           isLoading={loading}
           actions={
             <>
-              <RippleButton
-                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar
-              </RippleButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <RippleButton
+                    disabled={isExporting}
+                    className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:opacity-50"
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Exportando...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Exportar
+                      </>
+                    )}
+                  </RippleButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleExport('excel')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('csv')}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    CSV (.csv)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Link href="/strategic/map">
                 <RippleButton
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
