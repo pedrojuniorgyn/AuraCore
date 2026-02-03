@@ -44,7 +44,10 @@ export function BranchSwitcher() {
    */
   const handleBranchSwitch = React.useCallback(
     async (branchId: number) => {
+      console.log("[DEBUG] handleBranchSwitch called:", branchId, "current:", currentBranch?.id);
+      
       if (branchId === currentBranch?.id) {
+        console.log("[DEBUG] Same branch, closing popover");
         setOpen(false);
         return;
       }
@@ -52,12 +55,15 @@ export function BranchSwitcher() {
       try {
         // 1️⃣ Invalida TODOS os recursos do Refine antes de trocar
         // Isso garante que os dados antigos não sejam exibidos
+        console.log("[DEBUG] Invalidating Refine cache");
         invalidate({
           invalidates: ["all"],
         });
 
         // 2️⃣ Troca de filial (atualiza contexto e localStorage)
+        console.log("[DEBUG] Calling switchBranch");
         await switchBranch(branchId);
+        console.log("[DEBUG] switchBranch completed");
 
         // 3️⃣ Fecha o popover
         setOpen(false);

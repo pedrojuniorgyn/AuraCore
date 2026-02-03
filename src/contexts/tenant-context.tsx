@@ -61,13 +61,27 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
    */
   const persistBranchCookie = useCallback(async (branchId: number) => {
     try {
-      await fetch("/api/tenant/branch", {
+      const response = await fetch("/api/tenant/branch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ branchId }),
       });
-    } catch {
-      // ignore
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("❌ Erro ao persistir cookie de filial:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        return false;
+      }
+      
+      console.log("✅ Cookie de filial persistido com sucesso:", branchId);
+      return true;
+    } catch (error) {
+      console.error("❌ Exceção ao persistir cookie de filial:", error);
+      return false;
     }
   }, []);
 
@@ -183,36 +197,49 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
    */
   const switchBranch = useCallback(
     async (branchId: number) => {
-      if (!session?.user) return;
+      console.log("[DEBUG] switchBranch called:", branchId);
+      
+      if (!session?.user) {
+        console.error("❌ switchBranch: usuário não autenticado");
+        return;
+      }
 
       const user = session.user as User;
+      console.log("[DEBUG] User:", { id: user.id, role: user.role, allowedBranches: user.allowedBranches });
 
       // Valida permissão
       const hasPermission =
         user.role === "ADMIN" || user.allowedBranches.includes(branchId);
 
       if (!hasPermission) {
+        console.error("❌ switchBranch: sem permissão para filial", branchId);
         toast.error("Você não tem permissão para acessar esta filial.");
         return;
       }
 
       const branch = availableBranches.find((b) => b.id === branchId);
       if (!branch) {
+        console.error("❌ switchBranch: filial não encontrada", branchId);
         toast.error("Filial não encontrada.");
         return;
       }
 
+      console.log("[DEBUG] Trocando para filial:", { id: branch.id, name: branch.tradeName });
+
       // Atualiza estado e localStorage
       setCurrentBranch(branch);
       localStorage.setItem(STORAGE_KEY, branchId.toString());
+      console.log("[DEBUG] Estado local e localStorage atualizados");
 
       // Atualiza cookie (backend/middleware)
-      await persistBranchCookie(branchId);
+      const cookieSuccess = await persistBranchCookie(branchId);
+      console.log("[DEBUG] Cookie persistido:", cookieSuccess);
 
       toast.success(`Filial alterada: ${branch.tradeName}`);
 
       // 🔄 Recarrega a página para atualizar todos os dados
       // Alternativa: Invalidar queries do React Query/Refine
+      console.log("[DEBUG] Chamando router.refresh()");
       router.refresh();
     },
     [session, availableBranches, router, persistBranchCookie]
