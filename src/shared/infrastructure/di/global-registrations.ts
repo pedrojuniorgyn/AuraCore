@@ -87,5 +87,5 @@ export function registerGlobalDependencies() {
   // NOTIFICATION SYSTEM (FASE7-06)
   // ============================================================================
 
-  container.registerSingleton('NotificationService', NotificationService);
+  container.registerSingleton(NotificationService);
 }

@@ -63,7 +63,6 @@ export class AlertService {
     private kpiRepository: IKPIRepository,
     @inject(STRATEGIC_TOKENS.ActionPlanRepository)
     private actionPlanRepository: IActionPlanRepository,
-    @inject('NotificationService')
     private notificationService: NotificationService
   ) {}
 
