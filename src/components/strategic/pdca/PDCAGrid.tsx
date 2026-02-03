@@ -220,8 +220,8 @@ export function PDCAGrid({ data, loading }: PDCAGridProps) {
         headerName: 'Ações',
         cellRenderer: ActionsCell,
         cellRendererParams: {
-          onView: (data: PDCACycle) => router.push(`/strategic/action-plans/${data.id}`),
-          onEdit: (data: PDCACycle) => router.push(`/strategic/action-plans/${data.id}/edit`),
+          onView: (data: PDCACycle) => router.push(`/strategic/pdca/${data.id}`),
+          onEdit: (data: PDCACycle) => router.push(`/strategic/pdca/${data.id}/edit`),
         },
         width: 120,
         pinned: 'right',

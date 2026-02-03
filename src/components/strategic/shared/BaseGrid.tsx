@@ -152,8 +152,15 @@ export function BaseGrid<T = Record<string, unknown>>({
         defaultColDef={defaultColDef}
         gridOptions={gridOptions}
         onGridReady={onGridReady}
-        onRowClicked={(event) => onRowClicked?.(event.data)}
-        getRowId={(params) => (params.data as { id?: string })?.id || String(params.node.id)}
+        onRowClicked={(event) => {
+          if (event.data && onRowClicked) {
+            onRowClicked(event.data);
+          }
+        }}
+        getRowId={(params) => {
+          const data = params.data as { id?: string } | undefined;
+          return data?.id || `row-${Math.random().toString(36).substring(2, 11)}`;
+        }}
       />
     </div>
   );
