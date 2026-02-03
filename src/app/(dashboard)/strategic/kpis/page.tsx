@@ -83,6 +83,9 @@ export default function KpisPage() {
         history: (kpi.history as number[]) || generateMockHistory(),
         variance: Number(kpi.variance) || Number(kpi.deviationPercent) || 0,
         perspective: kpi.perspective as string || 'INTERNAL',
+        goalId: kpi.goalId as string | null | undefined,
+        sourceModule: kpi.sourceModule as string | null | undefined,
+        autoCalculate: Boolean(kpi.autoCalculate),
       }));
       setKpis(normalizedKpis);
     } catch (error) {
@@ -135,6 +138,38 @@ export default function KpisPage() {
 
   const handleKpiClick = (id: string) => {
     router.push(`/strategic/kpis/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/strategic/kpis/${id}/edit`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este KPI? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/strategic/kpis/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir KPI');
+      }
+
+      toast.success('KPI excluído com sucesso!');
+      
+      // Recarregar lista
+      await fetchKpis(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro ao excluir KPI', {
+        description: message,
+      });
+      console.error('Delete KPI error:', error);
+    }
   };
 
   return (
@@ -324,7 +359,12 @@ export default function KpisPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <KpiCard kpi={kpi} onClick={handleKpiClick} />
+                      <KpiCard 
+                        kpi={kpi} 
+                        onClick={handleKpiClick}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
                     </motion.div>
                   ))}
                 </div>

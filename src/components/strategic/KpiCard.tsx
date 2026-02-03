@@ -7,7 +7,7 @@
  * @module components/strategic
  */
 import { motion } from 'framer-motion';
-import { AlertTriangle, CheckCircle, TrendingUp, TrendingDown, ExternalLink, Minus } from 'lucide-react';
+import { AlertTriangle, CheckCircle, TrendingUp, TrendingDown, ExternalLink, Minus, Pencil, Trash2, Link as LinkIcon, Target } from 'lucide-react';
 import { KpiSparkline } from './KpiSparkline';
 
 type KpiStatus = 'ON_TRACK' | 'AT_RISK' | 'CRITICAL' | 'NO_DATA';
@@ -24,11 +24,16 @@ export interface KpiData {
   history: number[];
   variance: number;
   perspective?: string;
+  goalId?: string | null;
+  sourceModule?: string | null;
+  autoCalculate?: boolean;
 }
 
 interface Props {
   kpi: KpiData;
   onClick?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const STATUS_CONFIG: Record<KpiStatus, {
@@ -88,6 +93,34 @@ function formatValue(value: number, unit: string): string {
   if (unit === 'h/func') return `${value}h`;
   if (unit === 'un') return `${value} un`;
   return `${value.toLocaleString('pt-BR')} ${unit}`;
+}
+
+// ✅ Função de validação de permissões
+function canEditDelete(kpi: KpiData): boolean {
+  // NÃO pode se derivado de goal
+  if (kpi.goalId) return false;
+  
+  // NÃO pode se vinculado a módulo
+  if (kpi.sourceModule) return false;
+  
+  // NÃO pode se for auto-calculado
+  if (kpi.autoCalculate) return false;
+  
+  return true;
+}
+
+// ✅ Função para gerar mensagem explicativa
+function getDisabledReason(kpi: KpiData): string {
+  if (kpi.goalId) {
+    return 'KPI vinculado a objetivo estratégico. Edite pelo objetivo.';
+  }
+  if (kpi.sourceModule) {
+    return `KPI vinculado ao módulo "${kpi.sourceModule}". Edite pelo módulo de origem.`;
+  }
+  if (kpi.autoCalculate) {
+    return 'KPI com cálculo automático. Apenas KPIs manuais podem ser editados.';
+  }
+  return 'KPI não pode ser editado.';
 }
 
 // Componente Gauge circular animado
@@ -156,19 +189,41 @@ function GaugeCircle({
   );
 }
 
-export function KpiCard({ kpi, onClick }: Props) {
+export function KpiCard({ kpi, onClick, onEdit, onDelete }: Props) {
   const config = STATUS_CONFIG[kpi.status];
   const StatusIcon = config.icon;
   const percentage = kpi.targetValue !== 0 
     ? (kpi.currentValue / kpi.targetValue) * 100 
     : 0;
+  
+  const canEdit = canEditDelete(kpi);
+  const disabledReason = !canEdit ? getDisabledReason(kpi) : '';
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Não navegar se clicar nos botões de ação
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      return;
+    }
+    onClick?.(kpi.id);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit?.(kpi.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete?.(kpi.id);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02, y: -4 }}
-      onClick={() => onClick?.(kpi.id)}
+      onClick={handleCardClick}
       className={`
         relative p-5 rounded-2xl cursor-pointer overflow-hidden
         bg-white/5 border border-white/10 backdrop-blur-xl
@@ -243,6 +298,55 @@ export function KpiCard({ kpi, onClick }: Props) {
           status={kpi.status} 
         />
       </div>
+
+      {/* Action Buttons */}
+      {(onEdit || onDelete) && (
+        <div className="pt-3 mt-3 border-t border-white/10 relative">
+          {canEdit ? (
+            <div className="flex items-center gap-2">
+              {onEdit && (
+                <button
+                  onClick={handleEdit}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 
+                    rounded-lg bg-blue-500/20 hover:bg-blue-500/30 
+                    text-blue-400 hover:text-blue-300 text-xs font-medium
+                    transition-colors duration-200"
+                  title="Editar KPI"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Editar
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 
+                    rounded-lg bg-red-500/20 hover:bg-red-500/30 
+                    text-red-400 hover:text-red-300 text-xs font-medium
+                    transition-colors duration-200"
+                  title="Excluir KPI"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Excluir
+                </button>
+              )}
+            </div>
+          ) : (
+            <div 
+              className="flex items-center gap-2 text-white/40 text-xs cursor-help"
+              title={disabledReason}
+            >
+              {kpi.goalId && <Target className="w-3 h-3" />}
+              {kpi.sourceModule && <LinkIcon className="w-3 h-3" />}
+              <span className="flex-1 truncate">
+                {kpi.goalId && 'Vinculado a Objetivo'}
+                {kpi.sourceModule && `Vinculado a ${kpi.sourceModule}`}
+                {!kpi.goalId && !kpi.sourceModule && kpi.autoCalculate && 'Cálculo Automático'}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* External link indicator */}
       <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
