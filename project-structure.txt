@@ -1,0 +1,1942 @@
+.
+├── _documentation
+│   ├── planning
+│   │   ├── PLANEJAMENTO_A_B_C.md
+│   │   ├── PLANEJAMENTO_CENÁRIO_MULTICTE.md
+│   │   ├── PLANEJAMENTO_CONTAS_PAGAR_RECEBER.md
+│   │   ├── PLANEJAMENTO_REMOCAO_ESTRUTURA_ANTIGA.md
+│   │   ├── PLANEJAMENTO_VISUAL_CONTAS_PAGAR.md
+│   │   ├── ROADMAP_E7.12_A_E7.17.md
+│   │   ├── ROADMAP_MASTER_AURACORE.md
+│   │   ├── ROADMAP_MELHORIAS_FUTURAS.md
+│   │   ├── ROADMAP_ONDAS_5A_A_9_ATUALIZADO.md
+│   │   ├── ROADMAP_ONDAS_5A_A_9_EXECUTIVO.md
+│   │   ├── SPRINT1_COMPLETA.md
+│   │   └── SPRINTS_2_3_4_COMPLETAS.md
+│   ├── reports
+│   │   ├── _work
+│   │   │   ├── diag_20260202.commands.log
+│   │   │   └── diag_20260202.tail2.log
+│   │   ├── DIAGNOSTICO_ARQUITETURAL_20260202.md
+│   │   ├── MARATONA_100_COMPLETA_FINAL.md
+│   │   ├── MARATONA_AURORA_100_PERCENT_COMPLETO.md
+│   │   ├── MARATONA_AURORA_COMPLETA.md
+│   │   ├── MARATONA_AURORA_EXECUCAO_LOG.md
+│   │   ├── MARATONA_AURORA_FINAL_REPORT.md
+│   │   ├── MARATONA_AURORA_GUIA_COMPLETO.md
+│   │   ├── MARATONA_COMPLETA_100_PERCENT.md
+│   │   ├── MARATONA_COMPLETA_PROGRESSO.md
+│   │   ├── MARATONA_COMPLETA_RELATORIO_PARCIAL.md
+│   │   ├── MARATONA_ENTERPRISE_PREMIUM_RELATORIO_FINAL.md
+│   │   ├── MARATONA_ENTERPRISE_RELATORIO_FINAL.md
+│   │   ├── MARATONA_FASE2_RELATORIO_FINAL.md
+│   │   ├── MARATONA_FINALIZADA.md
+│   │   ├── MARATONA_OPCAO_A_RELATORIO_FINAL.md
+│   │   ├── ONDAS_5PLUS_EXECUCAO_LOG.md
+│   │   ├── RELATORIO_DETALHADO_FRONTENDS.md
+│   │   ├── RELATORIO_ENGENHARIA_CORRECOES.md
+│   │   ├── RELATORIO_EXECUTIVO_FINAL.md
+│   │   ├── RELATORIO_FINAL_IMPLEMENTACAO_CONTABIL.md
+│   │   ├── RELATORIO_FINAL_OPCAO_A.md
+│   │   ├── RELATORIO_FINAL_STATUS_656.md
+│   │   ├── RELATORIO_INVESTIGACAO_IMPORT_NFE.md
+│   │   ├── RELATORIO_LIMPEZA_ESTRUTURA.md
+│   │   ├── RELATORIO_SEED_NCM.md
+│   │   ├── RESULTADO_FINAL_MARATONA.md
+│   │   ├── RESULTADO_TESTES_IMPORT_NFE.md
+│   │   ├── STATUS_CONTAS_RECEBER_CRIADO.md
+│   │   ├── STATUS_FINAL_COMPLETO.md
+│   │   ├── STATUS_FINAL_CONTAS_PAGAR.md
+│   │   ├── STATUS_IMPLEMENTAÇÃO_CRÍTICA.md
+│   │   ├── STATUS_IMPLEMENTACAO_FASE1_COMPLETA.md
+│   │   ├── STATUS_MARATONA.md
+│   │   └── STATUS_RAPIDO_IMPLEMENTACAO.md
+│   ├── technical
+│   │   ├── AG_GRID_ENTERPRISE_FINAL_REPORT.md
+│   │   ├── AG_GRID_FILTROS_PLANEJAMENTO.md
+│   │   ├── AG_GRID_SOLUCAO_FINAL.md
+│   │   ├── AG_GRID_V34_CORRECAO.md
+│   │   ├── ANALISE_CENTROS_DE_CUSTO.md
+│   │   ├── ANALISE_CLASSIFICACAO_CONTABIL_AUTOMATICA.md
+│   │   ├── ANALISE_COMPLETA_AG_GRID_COMPONENTES.md
+│   │   ├── ANALISE_COMPLETA_OPCAO_A.md
+│   │   ├── ANALISE_CRITICA_ERRO_IMPORTACAO.md
+│   │   ├── ANALISE_CRITICA_IMPORTACAO_SEFAZ.md
+│   │   ├── ANALISE_CRUD_INCOMPLETO.md
+│   │   ├── ANALISE_DETALHADA_IMPORTACAO_XML.md
+│   │   ├── ANALISE_DRIZZLE_ATUALIZACAO.md
+│   │   ├── ANÁLISE_REPOSITÓRIO_CARGAS.md
+│   │   ├── ANÁLISE_SENIOR_AURACORE.md
+│   │   ├── ANALISE_SIDEBAR_COMPLETA.md
+│   │   ├── ANALISE_VISUAL_FRONTENDS.md
+│   │   ├── APLICACAO_AURORA_CARDS_GRIDS.md
+│   │   ├── APPLY_ADVANCED_FILTERS.md
+│   │   ├── apply-filters-all-grids.sh
+│   │   ├── AUDITORIA_MASTER_DATA_12_12_2025.md
+│   │   ├── AUDITORIA_NCM_12_12_2025.md
+│   │   ├── AUDITORIA_PLANO_CONTAS_AURA_CORE.md
+│   │   ├── AUDITORIA_SEGURANCA_COMPLETA_12_12_2025.md
+│   │   ├── AURORA_APLICACAO_FINAL.md
+│   │   ├── AURORA_CARDS_GRIDS_RELATORIO_FINAL.md
+│   │   ├── AURORA_PREMIUM_GRID_SHOWCASE.md
+│   │   ├── AURORA_REVISAO_TELAS_ADICIONAIS.md
+│   │   ├── AURORA_RODADA_2_RELATORIO_FINAL.md
+│   │   ├── AUTENTICACAO_CORRIGIDA.md
+│   │   ├── BENCHMARK_ESTRUTURA_CONTABIL_FISCAL.md
+│   │   ├── BTG_AMBIENTES.md
+│   │   ├── BTG_CHECKLIST_FINAL.md
+│   │   ├── BTG_CONFIGURACAO_COMPLETA.md
+│   │   ├── BTG_DDA_STATUS.md
+│   │   ├── BTG_IMPLEMENTACAO_COMPLETA.md
+│   │   ├── BTG_PIX_CORRECAO.md
+│   │   ├── BTG_PLANO_DE_TESTES.md
+│   │   ├── BTG_SETUP.md
+│   │   ├── BTG_STATUS_E_PROXIMOS_PASSOS.md
+│   │   ├── BTG_STATUS_FINAL.md
+│   │   ├── CHECKPOINT_MARATONA_COMPLETO.md
+│   │   ├── COMANDOS_TERMINAL_IMPORTACAO.md
+│   │   ├── CONFIGURATION.md
+│   │   ├── CONFIRMACAO_AMBIENTE_HOMOLOGACAO.md
+│   │   ├── CONTRIBUTING.md
+│   │   ├── CORRECAO_COMPLETA_PCG_COLUNAS.md
+│   │   ├── CORRECAO_ERRO_401_CRON.md
+│   │   ├── CORRECAO_FISCAL_COMPLETA.md
+│   │   ├── CORRECAO_MASSIVA_AG_GRID_NEXTJS16.md
+│   │   ├── CORRECAO_PCG_DELETED_AT.md
+│   │   ├── CORRECAO_TEMA_ESCURO_GRIDS.md
+│   │   ├── CORRECOES_APLICADAS_SUCESSO.md
+│   │   ├── CORRECOES_BUILD_TEMA_ESCURO.md
+│   │   ├── CORRECOES_COMPLETAS_FISCAL_DOCUMENTS.md
+│   │   ├── CORRECOES_FINAIS_A_B_C.md
+│   │   ├── CRUD_COMPLETO_IMPLEMENTADO.md
+│   │   ├── DESIGN_SYSTEM_AURA_CORE.md
+│   │   ├── DIAGNOSTICO_CONEXAO_DB.md
+│   │   ├── DIAGRAMA_FLUXO_CARGAS.md
+│   │   ├── ENTREGA_FINAL_CRUD_COMPLETO.md
+│   │   ├── EXECUCAO_MIGRACAO_COMPLETA_12_12_2025.md
+│   │   ├── EXEMPLO_USO_PCG_NCM.md
+│   │   ├── EXPLICACAO_COLUNA_PARCEIRO.md
+│   │   ├── EXPLICACAO_STATUS_656_SEFAZ.md
+│   │   ├── FASES_A_B_C_E_COMPLETAS.md
+│   │   ├── FILTROS_AG_GRID_APLICACAO_MASSA.md
+│   │   ├── FILTROS_AG_GRID_RELATORIO_FINAL.md
+│   │   ├── FILTROS_ENTERPRISE_COMPLETO.md
+│   │   ├── FINALIZACAO_19_TELAS_COMPLETA.md
+│   │   ├── FINALIZACAO_COMPLETA_100_PERCENT.md
+│   │   ├── FLUXO_COMPLETO_IMPORTACAO_NFE_CTE.md
+│   │   ├── FRONTEND_ENTERPRISE_PREMIUM_EXECUTADO.md
+│   │   ├── GITHUB_SETUP.md
+│   │   ├── GUIA_BOTOES_MODERNOS.md
+│   │   ├── GUIA_COMPLETO_SISTEMA.md
+│   │   ├── GUIA_IMPLEMENTACAO_CRUD_FRONTEND.md
+│   │   ├── GUIA_TESTES_COMPLETO.md
+│   │   ├── IMPLEMENTACAO_100_COMPLETA_FINAL.md
+│   │   ├── IMPLEMENTACAO_100_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_5_FUNCIONALIDADES_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_83_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_A_B_C_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_AURORA_DEMONSTRACAO.md
+│   │   ├── IMPLEMENTACAO_BACKEND_APIS_SERVICES_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_BATCH_19_TELAS.md
+│   │   ├── IMPLEMENTACAO_COMPLETA_IMPORT_NFE_CTE.md
+│   │   ├── IMPLEMENTACAO_COMPLETA_PCC_PCG_CC.md
+│   │   ├── IMPLEMENTACAO_FINAL_100_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_FINAL_COMPLETA.md
+│   │   ├── IMPLEMENTACAO_RAPIDA_ONDAS.md
+│   │   ├── IMPLEMENTACAO_SIDEBAR_COMPLETA.md
+│   │   ├── INITIAL_TASKS.md
+│   │   ├── INSTRUCOES_EXECUTAR_MIGRATION_0022.md
+│   │   ├── INVENTÁRIO_DEFINITIVO_AURACORE.md
+│   │   ├── LICENCA_AG_GRID_ENTERPRISE_ANALISE.md
+│   │   ├── MASTER_DATA_SEED_EXECUTADO.md
+│   │   ├── MASTER_PLAN_MARATONA.md
+│   │   ├── MELHORIAS_CONTAS_PAGAR_RECEBER.md
+│   │   ├── MIGRACAO_CATEGORIAS_FINANCEIRAS_DFC.md
+│   │   ├── MODULO_AUDITORIA_GLOBALTCL_AUDITFINDB.md
+│   │   ├── ONDA_5A_OBSERVABILIDADE.md
+│   │   ├── OPCAO_A_100_COMPLETO.md
+│   │   ├── PENDENCIAS_IMPLEMENTACAO_CRUD.md
+│   │   ├── PROGRESSO_IMPLEMENTACAO_CONTABIL.md
+│   │   ├── PROGRESSO_OPCAO_A_URGENTE.md
+│   │   ├── PROJETO_FINAL_COMPLETO.md
+│   │   ├── PRÓXIMOS_PASSOS_IMPLEMENTADOS.md
+│   │   ├── REFATORACAO_NCM_PCG.md
+│   │   ├── RELATORIO_FINAL_CRUD_COMPLETO.md
+│   │   ├── RELATÓRIO_TESTES_COMPLETO.md
+│   │   ├── RESTART_NEXTJS.md
+│   │   ├── RESTAURACAO_ARQUIVOS_VAZIOS.md
+│   │   ├── RESUMO_EXECUTIVO_APROVAÇÃO.md
+│   │   ├── RESUMO_EXECUTIVO_IMPLEMENTACAO.md
+│   │   ├── RESUMO_FINAL_MIGRACAO_12_12_2025.md
+│   │   ├── RESUMO_FINAL_SESSAO.md
+│   │   ├── RETROSPECTIVA_2025-12-14_A_2025-12-23.md
+│   │   ├── SCRIPTS_AUTOMATIZADOS_CRUD.md
+│   │   ├── SESSAO_DESIGN_AURORA_RESUMO_FINAL.md
+│   │   ├── STARTUP.sh
+│   │   ├── SUCESSO_FINAL_MARATONA.md
+│   │   ├── TABELAS_TRANSACIONAIS_CRIADAS.md
+│   │   ├── test-sefaz.md
+│   │   ├── TESTES_AUTENTICACAO_FINAL.md
+│   │   ├── VALIDACAO_OPCAO_C.md
+│   │   ├── VERIFICACAO_AMBIENTE_SEFAZ.md
+│   │   ├── VERIFICACAO_ESTRUTURAS_PCC_PCG_CC.md
+│   │   └── VINCULO_INTELIGENCIA_FINANCEIRA_PCG_DFC.md
+│   ├── 00_INDICE_MASTER.md
+│   ├── README.md
+│   └── REORGANIZACAO_2025-12-10.md
+├── agents
+│   ├── data
+│   │   ├── logs
+│   │   └── memory
+│   ├── docs
+│   │   ├── api
+│   │   │   ├── README.md
+│   │   │   └── webhooks.md
+│   │   ├── architecture
+│   │   │   ├── adr
+│   │   │   └── README.md
+│   │   ├── deployment
+│   │   │   └── README.md
+│   │   ├── sdk
+│   │   │   └── python.md
+│   │   └── PROJECT_SUMMARY.md
+│   ├── k8s
+│   │   ├── configmap.yaml
+│   │   ├── deployment.yaml
+│   │   ├── hpa.yaml
+│   │   ├── ingress.yaml
+│   │   ├── namespace.yaml
+│   │   ├── pdb.yaml
+│   │   ├── pvc-data.yaml
+│   │   ├── secret.yaml.template
+│   │   ├── service.yaml
+│   │   └── serviceaccount.yaml
+│   ├── scripts
+│   │   ├── __pycache__
+│   │   │   └── index_legislation.cpython-313.pyc
+│   │   ├── deploy.sh
+│   │   ├── index_legislation.py
+│   │   ├── migrate.sh
+│   │   ├── run_scheduler.py
+│   │   ├── run_tests.sh
+│   │   └── run_worker.sh
+│   ├── sdk
+│   │   ├── python
+│   │   │   ├── auracore
+│   │   │   ├── pyproject.toml
+│   │   │   └── README.md
+│   │   └── typescript
+│   │       ├── src
+│   │       ├── tests
+│   │       ├── package-lock.json
+│   │       ├── package.json
+│   │       ├── README.md
+│   │       ├── tsconfig.json
+│   │       ├── tsup.config.ts
+│   │       └── vitest.config.ts
+│   ├── src
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-313.pyc
+│   │   │   ├── config.cpython-313.pyc
+│   │   │   └── main.cpython-313.pyc
+│   │   ├── agents
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── accounting.py
+│   │   │   ├── crm.py
+│   │   │   ├── financial.py
+│   │   │   ├── fiscal.py
+│   │   │   ├── fleet.py
+│   │   │   ├── qa.py
+│   │   │   ├── strategic.py
+│   │   │   └── tms.py
+│   │   ├── api
+│   │   │   ├── __pycache__
+│   │   │   ├── routes
+│   │   │   ├── __init__.py
+│   │   │   ├── analytics.py
+│   │   │   ├── audit.py
+│   │   │   ├── auth.py
+│   │   │   ├── cache.py
+│   │   │   ├── health.py
+│   │   │   ├── integrations.py
+│   │   │   ├── knowledge.py
+│   │   │   ├── locales.py
+│   │   │   ├── observability.py
+│   │   │   ├── openapi.py
+│   │   │   ├── push.py
+│   │   │   ├── tasks.py
+│   │   │   ├── voice.py
+│   │   │   └── webhooks.py
+│   │   ├── core
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   ├── guardrails.py
+│   │   │   ├── health.py
+│   │   │   ├── observability.py
+│   │   │   └── orchestrator.py
+│   │   ├── integrations
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── auracore_client.py
+│   │   │   └── mcp_bridge.py
+│   │   ├── middleware
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── audit.py
+│   │   │   ├── auth.py
+│   │   │   ├── locale.py
+│   │   │   └── rate_limit.py
+│   │   ├── services
+│   │   │   ├── __pycache__
+│   │   │   ├── analytics
+│   │   │   ├── audit
+│   │   │   ├── auth
+│   │   │   ├── cache
+│   │   │   ├── document_processing
+│   │   │   ├── i18n
+│   │   │   ├── integrations
+│   │   │   ├── knowledge
+│   │   │   ├── pwa
+│   │   │   ├── tasks
+│   │   │   ├── voice
+│   │   │   ├── webhooks
+│   │   │   └── __init__.py
+│   │   ├── tools
+│   │   │   ├── __pycache__
+│   │   │   ├── accounting
+│   │   │   ├── crm
+│   │   │   ├── financial
+│   │   │   ├── fiscal
+│   │   │   ├── fleet
+│   │   │   ├── qa
+│   │   │   ├── strategic
+│   │   │   ├── tms
+│   │   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   └── main.py
+│   ├── tests
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-313.pyc
+│   │   │   └── conftest.cpython-313.pyc
+│   │   ├── agents
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── test_fiscal_agent.py
+│   │   │   └── test_orchestrator.py
+│   │   ├── api
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   └── test_voice_api.py
+│   │   ├── e2e
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── test_agents_api.py
+│   │   │   ├── test_analytics_api.py
+│   │   │   ├── test_audit_api.py
+│   │   │   ├── test_rag_api.py
+│   │   │   └── test_voice_api.py
+│   │   ├── fixtures
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── agents.py
+│   │   │   ├── auth.py
+│   │   │   └── documents.py
+│   │   ├── integration
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── test_agent_flow.py
+│   │   │   └── test_document_processing.py
+│   │   ├── load
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   └── test_api_load.py
+│   │   ├── services
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   ├── test_document_processing.py
+│   │   │   ├── test_knowledge.py
+│   │   │   └── test_voice_services.py
+│   │   ├── unit
+│   │   │   ├── __pycache__
+│   │   │   ├── __init__.py
+│   │   │   └── test_agents.py
+│   │   ├── __init__.py
+│   │   └── conftest.py
+│   ├── CHANGELOG.md
+│   ├── CONTRIBUTING.md
+│   ├── docker-compose.coolify.yml
+│   ├── docker-compose.dev.yml
+│   ├── docker-compose.prod.yml
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   ├── Dockerfile.dev
+│   ├── Dockerfile.docling
+│   ├── Makefile
+│   ├── pyproject.toml
+│   ├── pytest.ini
+│   └── README.md
+├── coverage
+│   ├── lcov-report
+│   │   ├── modules
+│   │   │   ├── accounting
+│   │   │   ├── financial
+│   │   │   ├── fiscal
+│   │   │   ├── integrations
+│   │   │   ├── tms
+│   │   │   └── wms
+│   │   ├── shared
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── base.css
+│   │   ├── block-navigation.js
+│   │   ├── favicon.png
+│   │   ├── index.html
+│   │   ├── prettify.css
+│   │   ├── prettify.js
+│   │   ├── sort-arrow-sprite.png
+│   │   └── sorter.js
+│   ├── modules
+│   │   ├── accounting
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   └── presentation
+│   │   ├── financial
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   └── presentation
+│   │   ├── fiscal
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── integrations
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── tms
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   └── wms
+│   │       ├── application
+│   │       ├── domain
+│   │       └── infrastructure
+│   ├── shared
+│   │   ├── domain
+│   │   │   ├── entities
+│   │   │   ├── errors
+│   │   │   ├── events
+│   │   │   ├── types
+│   │   │   └── value-objects
+│   │   └── infrastructure
+│   │       └── di
+│   ├── base.css
+│   ├── block-navigation.js
+│   ├── favicon.png
+│   ├── index.html
+│   ├── lcov.info
+│   ├── prettify.css
+│   ├── prettify.js
+│   ├── sort-arrow-sprite.png
+│   └── sorter.js
+├── cursor
+│   └── rules
+│       └── regrasmcp.mdc
+├── data
+│   └── knowledge
+│       └── legislation
+│           ├── cte
+│           ├── icms
+│           ├── pis_cofins
+│           └── reforma_2026
+├── docker
+│   ├── chroma
+│   │   └── docker-compose.yml
+│   └── docling
+│       ├── app
+│       │   ├── __init__.py
+│       │   ├── main.py
+│       │   └── processor.py
+│       ├── uploads
+│       ├── docker-compose.yml
+│       ├── Dockerfile
+│       └── requirements.txt
+├── docs
+│   ├── agent
+│   │   ├── ENV_VARIABLES.md
+│   │   ├── GOOGLE_INTEGRATION.md
+│   │   ├── README.md
+│   │   └── TOOLS_SPEC.md
+│   ├── agents
+│   │   ├── ACCOUNTING_AGENT.md
+│   │   ├── CRM_AGENT.md
+│   │   ├── DOCLING_INTEGRATION.md
+│   │   ├── FISCAL_AGENT.md
+│   │   ├── FLEET_AGENT.md
+│   │   ├── GUARDRAILS.md
+│   │   ├── PLANEJAMENTO.md
+│   │   ├── QA_AGENT.md
+│   │   ├── README.md
+│   │   ├── STRATEGIC_AGENT.md
+│   │   └── TMS_AGENT.md
+│   ├── api
+│   │   ├── standards.md
+│   │   └── wms.openapi.yaml
+│   ├── architecture
+│   │   ├── adr
+│   │   │   ├── 0001-sqlserver-only.md
+│   │   │   ├── 0002-tenant-context-as-source-of-truth.md
+│   │   │   ├── 0003-userid-is-uuid-string.md
+│   │   │   ├── 0004-admin-http-off-in-prod.md
+│   │   │   ├── 0005-transactions-required-financial-accounting.md
+│   │   │   ├── 0006-pagination-and-search-sqlserver.md
+│   │   │   ├── 0010-ibs-cbs-implementation.md
+│   │   │   ├── 0011-split-payment-structure.md
+│   │   │   ├── 0012-full-ddd-migration.md
+│   │   │   ├── 0013-eliminate-hybrid-architecture.md
+│   │   │   ├── ADR-0015-100-percent-ddd.md
+│   │   │   ├── ADR-0016-iuuidgenerator-port.md
+│   │   │   ├── ADR-0020-modulo-strategic-management.md
+│   │   │   ├── ADR-0021-bsc-implementation.md
+│   │   │   ├── ADR-0022-follow-up-3g-pattern.md
+│   │   │   └── ADR-0023-real-time-war-room.md
+│   │   ├── contracts
+│   │   │   ├── API_CONTRACT.md
+│   │   │   ├── API_ERROR_HANDLING_CONTRACT.md
+│   │   │   ├── DEBUG_500_CONTRACT.md
+│   │   │   ├── ERROR_CONTRACT.md
+│   │   │   ├── FIXED_POSITIONING_CONTRACT.md
+│   │   │   ├── INPUT_VALIDATION_CONTRACT.md
+│   │   │   ├── RBAC_CONTRACT.md
+│   │   │   ├── SQLSERVER_PERFORMANCE_CONTRACT.md
+│   │   │   ├── TENANT_BRANCH_CONTRACT.md
+│   │   │   ├── TRANSACTIONS_CONTRACT.md
+│   │   │   ├── TYPE_GUARD_PATTERNS_CONTRACT.md
+│   │   │   ├── TYPECHECK_GATE_POLICY.md
+│   │   │   └── UI_RESILIENCE_BOUNDARIES.md
+│   │   ├── diagrams
+│   │   │   ├── C4_COMPONENT_BACKEND.md
+│   │   │   ├── C4_CONTAINER.md
+│   │   │   ├── C4_CONTEXT.md
+│   │   │   ├── SEQ_ACCOUNTING_POSTING.md
+│   │   │   ├── SEQ_BTG_WEBHOOK.md
+│   │   │   ├── SEQ_FINANCEIRO_BAIXA_CP.md
+│   │   │   ├── SEQ_TMS_JORNADA.md
+│   │   │   └── STATE_FISCAL_ACCOUNTING_FINANCIAL.md
+│   │   ├── domains
+│   │   │   ├── strategic
+│   │   │   ├── ADMIN.md
+│   │   │   ├── AUDITORIA_V2.md
+│   │   │   ├── CONTABIL.md
+│   │   │   ├── FINANCEIRO.md
+│   │   │   ├── TENANCY_BRANCH_SCOPING.md
+│   │   │   └── TMS.md
+│   │   ├── performance
+│   │   │   ├── E13-FINAL-REPORT.md
+│   │   │   └── E13-PERFORMANCE-BASELINE.md
+│   │   ├── runbooks
+│   │   │   ├── RUNBOOK_AUDITORIA_V2.md
+│   │   │   ├── RUNBOOK_COOLIFY_DEPLOY.md
+│   │   │   ├── RUNBOOK_INCIDENTS.md
+│   │   │   ├── RUNBOOK_MIGRATIONS_SEEDS.md
+│   │   │   └── RUNBOOK_SQLSERVER_2022.md
+│   │   ├── E7_DDD_HEXAGONAL.md
+│   │   ├── GLOSSARY.md
+│   │   ├── INDEX.md
+│   │   ├── ORGANIZATIONAL_STRUCTURES.md
+│   │   ├── OWNERSHIP.md
+│   │   ├── PR_TEMPLATE.md
+│   │   ├── README.md
+│   │   └── SPED_ARCHITECTURE.md
+│   ├── audit
+│   │   ├── audit_raw_data.txt
+│   │   ├── AUDIT-2026-01-25.md
+│   │   ├── issues-critical.md
+│   │   └── roadmap.md
+│   ├── database
+│   │   ├── migrations
+│   │   │   ├── manual
+│   │   │   └── rollback
+│   │   └── queries
+│   │       └── e13-top-queries.sql
+│   ├── debito-tecnico
+│   │   └── DT-001-SCHEMA-OBSOLETO-FISCAL.md
+│   ├── epics
+│   │   └── E12.1-SPED-ECD-VALIDATION.md
+│   ├── fiscal
+│   │   ├── TAX_REFORM_2026_README.md
+│   │   └── TRANSITION_RATES.md
+│   ├── mcp
+│   │   ├── contracts
+│   │   │   ├── api-response-001.json
+│   │   │   ├── data-array-001.json
+│   │   │   ├── index.json
+│   │   │   ├── nextjs-ssc-001.json
+│   │   │   ├── react-callback-001.json
+│   │   │   ├── react-cleanup-001.json
+│   │   │   ├── react-instance-001.json
+│   │   │   └── react-prop-sync-001.json
+│   │   ├── epics
+│   │   │   └── E10-strategic-management.json
+│   │   ├── patterns
+│   │   │   └── strategic-module-patterns.md
+│   │   ├── contracts.md
+│   │   ├── E715_EXECUTIVE_REPORT.md
+│   │   ├── E715_VERIFICATION_CHECKLIST.md
+│   │   ├── LESSONS_LEARNED.md
+│   │   ├── PHASE_2_COMPLETE.md
+│   │   ├── PHASE_2_PLAN.md
+│   │   ├── README.md
+│   │   ├── REFORMA_TRIBUTARIA_2026_ARUACORE.md
+│   │   ├── SMP_ANTI_PATTERNS.md
+│   │   ├── SMP_LESSONS_LEARNED.md
+│   │   ├── SMP_METHODOLOGY.md
+│   │   ├── SMP_PATTERNS_CATALOG.md
+│   │   ├── SYSTEM_GUIDE.md
+│   │   ├── TOOLS_REFERENCE.md
+│   │   └── tools.md
+│   ├── modules
+│   │   └── strategic
+│   │       ├── PROMPTS
+│   │       ├── API.md
+│   │       ├── ARCHITECTURE.md
+│   │       ├── BENCHMARKS.md
+│   │       ├── README.md
+│   │       ├── ROADMAP.md
+│   │       ├── SCREENS_STATUS.md
+│   │       ├── SCREENS.md
+│   │       └── TESTS.md
+│   ├── next15
+│   │   └── PLAYBOOK_NEXT15_ROUTES.md
+│   ├── performance
+│   │   ├── E8_BASELINE.md
+│   │   ├── E8.1_INDEX_AUDIT.md
+│   │   └── E8.2_EXECUTION_GUIDE.md
+│   ├── planning
+│   │   ├── E7.17_ANALISE_SPED.md
+│   │   ├── E7.17_INDEX.md
+│   │   ├── E7.17_PLANO_MIGRACAO.md
+│   │   ├── E7.17_RELATORIO_FINAL.md
+│   │   ├── E7.17_RESUMO_EXECUTIVO.md
+│   │   ├── E7.17_SUMARIO_VISUAL.txt
+│   │   ├── E7.20_ANALISE_INPUT_PORTS.md
+│   │   └── E7.20_PLANO_CRIACAO.md
+│   ├── reports
+│   │   ├── ANALISE_GAPS_2026-01-13.md
+│   │   ├── RESUMO_EXECUTIVO_2026-01-13.md
+│   │   ├── SNAPSHOT_2026-01-13.md
+│   │   ├── STATUS_DOCLING_D1-D9_2025-01-19.md
+│   │   └── STATUS_PROJETO_2025-01-19.md
+│   ├── runbooks
+│   │   └── PERFORMANCE_MONITORING_NOTIFICATIONS.md
+│   ├── sdk
+│   │   ├── python_example.py
+│   │   └── webhook_receiver.py
+│   ├── strategic
+│   │   ├── api-reference.md
+│   │   ├── architecture.md
+│   │   ├── components.md
+│   │   ├── deployment.md
+│   │   └── README.md
+│   ├── technical-debt
+│   │   └── SCHEMA_GAPS_E8.4.md
+│   ├── testing
+│   │   └── E7.11_TEST_INFRASTRUCTURE.md
+│   ├── ACAO_CORRETIVA_TYPESCRIPT.md
+│   ├── BUG_REPORT_PROMPTS_1_27.md
+│   ├── BUSINESS_PARTNERS_MODULE.md
+│   ├── DATA_SCOPING_BY_BRANCH.md
+│   ├── DIAGNOSTICO_PRODUCAO_BUG_FASE6_COMPLETO.md
+│   ├── DOCUMENT_PIPELINE.md
+│   ├── E7_STATUS_FINAL.md
+│   ├── E7.12_DOCUMENTATION_MASTER.md
+│   ├── E7.4.1_REFORMA_TRIBUTARIA_PROMPT_V2.md
+│   ├── ENTERPRISE_BASE_PATTERN.md
+│   ├── ERROR_HANDLING.md
+│   ├── fase6-bugs-analysis.md
+│   ├── HOTFIX-FASE6-DIRECT-SERVER.md
+│   ├── HOTFIX-FASE6-RUNBOOK.md
+│   ├── HOTFIXES_FASE6_APLICADOS.md
+│   ├── MULTI_BRANCH_SYSTEM.md
+│   ├── MULTI_TENANT_ARCHITECTURE.md
+│   ├── PARECER_FASE6_CONCLUSAO.md
+│   ├── PARTNERS_MODULE.md
+│   ├── PLANO_CORRECAO_BUG_022.md
+│   ├── PROMPT_VERIFICACAO_TYPESCRIPT.md
+│   ├── QUALITY_CHECKLIST.md
+│   ├── SECURITY_LAYER.md
+│   ├── STATUS_BUGS_FASE6_FINAL.md
+│   └── TECH_DEBT.md
+├── e2e
+│   ├── fixtures
+│   │   └── strategic-fixtures.ts
+│   ├── pages
+│   │   └── strategic-pages.ts
+│   ├── strategic
+│   │   ├── action-plans.spec.ts
+│   │   ├── dashboard.spec.ts
+│   │   ├── integrations.spec.ts
+│   │   ├── kpis.spec.ts
+│   │   ├── mobile.spec.ts
+│   │   ├── onboarding.spec.ts
+│   │   ├── pdca.spec.ts
+│   │   ├── reports.spec.ts
+│   │   └── workflow-approval.spec.ts
+│   └── tsconfig.json
+├── mcp-server
+│   ├── coverage
+│   │   ├── resources
+│   │   │   ├── adrs.ts.html
+│   │   │   ├── contracts.ts.html
+│   │   │   └── index.html
+│   │   ├── tools
+│   │   │   ├── check-compliance.ts.html
+│   │   │   ├── check-cursor-issues.ts.html
+│   │   │   ├── get-contract-tool.ts.html
+│   │   │   ├── get-epic-status.ts.html
+│   │   │   ├── index.html
+│   │   │   ├── propose-pattern.ts.html
+│   │   │   ├── search-patterns.ts.html
+│   │   │   └── validate-code.ts.html
+│   │   ├── utils
+│   │   │   ├── index.html
+│   │   │   └── sanitize.ts.html
+│   │   ├── base.css
+│   │   ├── block-navigation.js
+│   │   ├── coverage-final.json
+│   │   ├── favicon.png
+│   │   ├── index.html
+│   │   ├── prettify.css
+│   │   ├── prettify.js
+│   │   ├── sort-arrow-sprite.png
+│   │   └── sorter.js
+│   ├── knowledge
+│   │   ├── adrs
+│   │   │   ├── 0001-sqlserver-only.json
+│   │   │   ├── 0002-tenant-context-as-source-of-truth.json
+│   │   │   ├── 0003-userid-is-uuid-string.json
+│   │   │   ├── 0004-admin-http-off-in-prod.json
+│   │   │   ├── 0005-transactions-required-financial-accounting.json
+│   │   │   ├── 0006-pagination-and-search-sqlserver.json
+│   │   │   └── 0016-e715-type-safety.json
+│   │   ├── contracts
+│   │   │   ├── aggregate-pattern.json
+│   │   │   ├── api-contract.json
+│   │   │   ├── architecture-layers.json
+│   │   │   ├── best-practices-enterprise.json
+│   │   │   ├── callback-array-consistency.json
+│   │   │   ├── code-consistency.json
+│   │   │   ├── csv-export.json
+│   │   │   ├── domain-service-pattern.json
+│   │   │   ├── dto-pattern.json
+│   │   │   ├── enforcement-protocol.json
+│   │   │   ├── entity-pattern.json
+│   │   │   ├── entity-pattern.json.bak
+│   │   │   ├── error-contract.json
+│   │   │   ├── error-handling.json
+│   │   │   ├── infrastructure-layer.json
+│   │   │   ├── known-bugs-registry.json
+│   │   │   ├── lesson-learned.json
+│   │   │   ├── mapper-pattern.json
+│   │   │   ├── mcp-enforcement-rules.json
+│   │   │   ├── migrations-contract.json
+│   │   │   ├── pre-implementation-checklist.json
+│   │   │   ├── rbac-contract.json
+│   │   │   ├── repository-pattern.json
+│   │   │   ├── schema-pattern.json
+│   │   │   ├── schema-pattern.json.bak
+│   │   │   ├── security.json
+│   │   │   ├── smp-methodology.json
+│   │   │   ├── sped-contract.json
+│   │   │   ├── sqlserver-performance-contract.json
+│   │   │   ├── tenant-branch-contract.json
+│   │   │   ├── tenant-security.json
+│   │   │   ├── transactions-contract.json
+│   │   │   ├── type-safety.json
+│   │   │   ├── use-case-pattern.json
+│   │   │   ├── validate-infrastructure-tool.json
+│   │   │   ├── validator-pattern.json
+│   │   │   ├── value-object-pattern.json
+│   │   │   └── verify-before-code.json
+│   │   ├── corrections
+│   │   │   ├── d1-corrections.json
+│   │   │   ├── e-agent-fase2-corrections.json
+│   │   │   ├── e-agent-fase4-corrections.json
+│   │   │   ├── e-agent-fase6-corrections.json
+│   │   │   ├── e0-1-corrections.json
+│   │   │   ├── e0-corrections.json
+│   │   │   ├── e10-1-corrections.json
+│   │   │   ├── e10-2-1-corrections.json
+│   │   │   ├── e10-auditoriaarquitetural-corrections.json
+│   │   │   ├── e10-f2-corrections.json
+│   │   │   ├── e10-f4-corrections.json
+│   │   │   ├── e10-ts-complete-corrections.json
+│   │   │   ├── e10-ts-corrections.json
+│   │   │   ├── e10-ts-summary.json
+│   │   │   ├── e11-1-fixnfexmlparserhashalgorithm-corrections.json
+│   │   │   ├── e11-correesarquiteturaiscrticas-corrections.json
+│   │   │   ├── e11-correesarquiteturaiscrticasfinal-corrections.json
+│   │   │   ├── e12-1-spedecdvalidation-corrections.json
+│   │   │   ├── e13-corrections.json
+│   │   │   ├── e13-performanceoptimizationphase0-3-corrections.json
+│   │   │   ├── e14-1-corrections.json
+│   │   │   ├── e14-2-corrections.json
+│   │   │   ├── e14-3-corrections.json
+│   │   │   ├── e14-4-corrections.json
+│   │   │   ├── e14-5-corrections.json
+│   │   │   ├── e14-6-corrections.json
+│   │   │   ├── e14-6-fix-corrections.json
+│   │   │   ├── e14-7-2-corrections.json
+│   │   │   ├── e14-8-corrections.json
+│   │   │   ├── e2-batch2-temp.json
+│   │   │   ├── e2-corrections.json
+│   │   │   ├── e3-corrections.json
+│   │   │   ├── e4-corrections.json
+│   │   │   ├── e5-corrections.json
+│   │   │   ├── e6-corrections.json
+│   │   │   ├── e7-10-corrections.json
+│   │   │   ├── e7-13-corrections.json
+│   │   │   ├── e7-14-corrections.json
+│   │   │   ├── e7-15-corrections.json
+│   │   │   ├── e7-16-corrections.json
+│   │   │   ├── e7-2-corrections.json
+│   │   │   ├── e7-22-2-corrections.json
+│   │   │   ├── e7-26-corrections.json
+│   │   │   ├── e7-27-corrections.json
+│   │   │   ├── e7-3-corrections.json
+│   │   │   ├── e7-4-1-corrections.json
+│   │   │   ├── e7-4-1-week3-corrections.json
+│   │   │   ├── e7-4-1semana4-corrections.json
+│   │   │   ├── e7-4-1semana6-corrections.json
+│   │   │   ├── e7-4-corrections.json
+│   │   │   ├── e7-4week3-corrections.json
+│   │   │   ├── e7-4week4-corrections.json
+│   │   │   ├── e7-4week5-corrections.json
+│   │   │   ├── e7-6-corrections.json
+│   │   │   ├── e7-7-corrections.json
+│   │   │   ├── e7-8-corrections.json
+│   │   │   ├── e7-8-wms-corrections.json
+│   │   │   ├── e7-8-wms-week2-corrections.json
+│   │   │   ├── e7-9-corrections.json
+│   │   │   ├── e7-ddd-corrections.json
+│   │   │   ├── e7-padronizacao-corrections.json
+│   │   │   ├── e7-ts-corrections.json
+│   │   │   ├── e8-4-corrections.json
+│   │   │   ├── e8-corrections.json
+│   │   │   ├── e8-ts-corrections.json
+│   │   │   ├── e9-3-corrections.json
+│   │   │   ├── e9-corrections.json
+│   │   │   ├── e9-ts-complete-corrections.json
+│   │   │   ├── e9-ts-corrections.json
+│   │   │   ├── fase-0-emergency-recovery-corrections.json
+│   │   │   ├── hotfix-critical-corrections.json
+│   │   │   ├── hotfix-helper-functions-v1-0-corrections.json
+│   │   │   ├── hotfix-strategic-500-corrections.json
+│   │   │   ├── hotfix-strategic-v2-0-corrections.json
+│   │   │   ├── hotfix-warroom-stream-v1-0-corrections.json
+│   │   │   ├── mcp-corrections.json
+│   │   │   ├── p0-productioncriticalfixes-corrections.json
+│   │   │   ├── p1-a-codeconsistency-corrections.json
+│   │   │   ├── p1-b-notificationsbugfixesround2-corrections.json
+│   │   │   ├── p1-b-notificationsexhaustivereturnroundfinal-corrections.json
+│   │   │   ├── p1-b-notificationsinputvalidationround3-corrections.json
+│   │   │   ├── p1-b-performanceimprovements-corrections.json
+│   │   │   ├── quick-win-4-corrections.json
+│   │   │   ├── quick-win-5-corrections.json
+│   │   │   ├── s1-1-corrections.json
+│   │   │   ├── s3-corrections.json
+│   │   │   └── smp-api-err-001-corrections.json
+│   │   └── patterns
+│   │       ├── approved
+│   │       └── proposed
+│   ├── scripts
+│   │   ├── exemplo-extrato.ofx
+│   │   └── test-bank-statement.ts
+│   ├── src
+│   │   ├── contracts
+│   │   │   ├── aggregate-pattern.json
+│   │   │   ├── architecture-layers.json
+│   │   │   ├── callback-array-consistency.json
+│   │   │   ├── code-consistency.json
+│   │   │   ├── csv-export.json
+│   │   │   ├── domain-service-pattern.json
+│   │   │   ├── dto-pattern.json
+│   │   │   ├── enforcement-protocol.json
+│   │   │   ├── entity-pattern.json
+│   │   │   ├── index.ts
+│   │   │   ├── infrastructure-layer.json
+│   │   │   ├── known-bugs-registry.json
+│   │   │   ├── lesson-learned.json
+│   │   │   ├── mapper-pattern.json
+│   │   │   ├── mcp-enforcement-rules.json
+│   │   │   ├── process-document.contract.ts
+│   │   │   ├── repository-pattern.json
+│   │   │   ├── schema-pattern.json
+│   │   │   ├── smp-methodology.json
+│   │   │   ├── tenant-security.json
+│   │   │   ├── type-safety.json
+│   │   │   ├── use-case-pattern.json
+│   │   │   ├── validator-pattern.json
+│   │   │   ├── value-object-pattern.json
+│   │   │   └── verify-before-code.json
+│   │   ├── parsers
+│   │   │   └── bank-statement-parser.ts
+│   │   ├── resources
+│   │   │   ├── adrs.ts
+│   │   │   └── contracts.ts
+│   │   ├── tools
+│   │   │   ├── analyze-contract.ts
+│   │   │   ├── analyze-module-dependencies.ts
+│   │   │   ├── calculate-tax-scenario.ts
+│   │   │   ├── check-compliance.ts
+│   │   │   ├── check-cursor-issues.ts
+│   │   │   ├── check-migration-status.ts
+│   │   │   ├── create-feature.ts
+│   │   │   ├── generate-api-route.ts
+│   │   │   ├── generate-entity.ts
+│   │   │   ├── generate-module-docs.ts
+│   │   │   ├── generate-repository.ts
+│   │   │   ├── generate-use-case.ts
+│   │   │   ├── get-contract-tool.ts
+│   │   │   ├── get-epic-status.ts
+│   │   │   ├── migrate-legacy-service.ts
+│   │   │   ├── process-document.ts
+│   │   │   ├── propose-pattern.ts
+│   │   │   ├── register-correction.ts
+│   │   │   ├── search-legislation.ts
+│   │   │   ├── search-patterns.ts
+│   │   │   ├── validate-code.ts
+│   │   │   ├── validate-fiscal-compliance.ts
+│   │   │   └── validate-schema.ts
+│   │   ├── utils
+│   │   │   └── sanitize.ts
+│   │   ├── index.ts
+│   │   └── server.ts
+│   ├── tests
+│   │   ├── fixtures
+│   │   │   ├── contracts.ts
+│   │   │   ├── epics.ts
+│   │   │   └── patterns.ts
+│   │   ├── integration
+│   │   │   ├── mcp-server.test.ts
+│   │   │   └── workflows.test.ts
+│   │   └── unit
+│   │       ├── analyze-module-dependencies.test.ts
+│   │       ├── calculate-tax-scenario.test.ts
+│   │       ├── check-compliance.test.ts
+│   │       ├── check-migration-status.test.ts
+│   │       ├── create-feature.test.ts
+│   │       ├── generate-api-route.test.ts
+│   │       ├── generate-entity.test.ts
+│   │       ├── generate-module-docs.test.ts
+│   │       ├── generate-repository.test.ts
+│   │       ├── generate-use-case.test.ts
+│   │       ├── get-contract-tool.test.ts
+│   │       ├── get-epic-status.test.ts
+│   │       ├── migrate-legacy-service.test.ts
+│   │       ├── process-document-bank-statement.test.ts
+│   │       ├── process-document.test.ts
+│   │       ├── propose-pattern.test.ts
+│   │       ├── sanitize.test.ts
+│   │       ├── search-patterns.test.ts
+│   │       ├── validate-code.test.ts
+│   │       ├── validate-fiscal-compliance.test.ts
+│   │       └── validate-schema.test.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── README.md
+│   ├── tsconfig.json
+│   └── vitest.config.ts
+├── memory
+├── migrations
+│   ├── add_strategic_tables.sql
+│   ├── create_all_marathon_tables.sql
+│   └── create_strategic_tables_complete.sql
+├── monitoring
+│   ├── alertmanager
+│   │   └── alertmanager.yml
+│   ├── grafana
+│   │   ├── dashboards
+│   │   │   ├── agents-overview.json
+│   │   │   ├── rag-knowledge.json
+│   │   │   └── voice-interface.json
+│   │   └── provisioning
+│   │       ├── dashboards
+│   │       └── datasources
+│   ├── prometheus
+│   │   ├── alerts.yml
+│   │   └── prometheus.yml
+│   ├── docker-compose.yml
+│   ├── README.md
+│   ├── start.sh
+│   └── stop.sh
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── scripts
+│   ├── mcp
+│   │   └── sync-contracts.ts
+│   ├── sql
+│   │   ├── audit-tables-setup.sql
+│   │   ├── enable-query-store.sql
+│   │   ├── fix-missing-branch-id.sql
+│   │   ├── query-store-setup.sql
+│   │   ├── retention-policies-setup.sql
+│   │   └── verify-branch-id.sql
+│   ├── add-product-fields.sql
+│   ├── analyze-frontend.sh
+│   ├── apply-dark-theme-all-grids.sh
+│   ├── apply-dark-theme-grids.ts
+│   ├── apply-hotfix-bug-022.sh
+│   ├── audit-master-data.ts
+│   ├── audit-security-complete.ts
+│   ├── check-admin-user.ts
+│   ├── check-branches-data.ts
+│   ├── check-branches-structure.ts
+│   ├── check-database-status.ts
+│   ├── commit-hotfix-fase6.sh
+│   ├── create-audit-tables.ts
+│   ├── debug-reflect.mjs
+│   ├── e13-benchmark.ts
+│   ├── execute-full-migration-pcc-ncm.ts
+│   ├── final-full-implementation.ts
+│   ├── final-populate-all.ts
+│   ├── fix-branch-unique-index.ts
+│   ├── fix-circular-errorMessage.ts
+│   ├── fix-error-handling.ts
+│   ├── fix-error-message-access.ts
+│   ├── fix-error-message-inline.ts
+│   ├── fix-error-optional-message.ts
+│   ├── fix-financial-titles-multi-tenancy.ts
+│   ├── fix-inline-simple.sh
+│   ├── fix-last-3-grids.ts
+│   ├── fix-limit-batch3.sh
+│   ├── fix-limit-vehicles-tires.ts
+│   ├── fix-missing-errorMessage.ts
+│   ├── fix-nested-errorMessage.ts
+│   ├── fix-pcc-migration.ts
+│   ├── fix-remaining-grids.ts
+│   ├── import-master-data-5-telas.ts
+│   ├── index-legislation.ts
+│   ├── load-pcc-73-correct.ts
+│   ├── padronizar-altura-grids.ts
+│   ├── reset-admin-password.ts
+│   ├── reset-db.ts
+│   ├── run-all-migrations.ts
+│   ├── run-financial-migration.ts
+│   ├── run-migration.ts
+│   ├── run-migrations.ts
+│   ├── run-nfe-migration.ts
+│   ├── run-product-migration.ts
+│   ├── seed-financial.ts
+│   ├── seed-permissions.ts
+│   ├── seed.ts
+│   ├── setup-chromadb.sh
+│   ├── test-all-apis-complete.sh
+│   ├── test-all-apis.sh
+│   ├── test-apis.py
+│   ├── test-financial-di.ts
+│   ├── validate-hotfix-fase6.sh
+│   ├── validate-quality.sh
+│   ├── validate-sped-migration.sh
+│   ├── verify-multi-tenancy.sh
+│   └── wms-benchmark.ts
+├── src
+│   ├── agent
+│   │   ├── core
+│   │   │   ├── AgentConfig.ts
+│   │   │   ├── AgentContext.ts
+│   │   │   ├── AuraAgent.ts
+│   │   │   ├── index.ts
+│   │   │   └── VoiceEnabledAgent.ts
+│   │   ├── integrations
+│   │   │   ├── auracore
+│   │   │   ├── google
+│   │   │   └── index.ts
+│   │   ├── observability
+│   │   │   ├── AgentLogger.ts
+│   │   │   └── index.ts
+│   │   ├── persistence
+│   │   │   ├── schemas
+│   │   │   ├── index.ts
+│   │   │   └── SessionStore.ts
+│   │   ├── tools
+│   │   │   ├── base
+│   │   │   ├── financial
+│   │   │   ├── fiscal
+│   │   │   ├── tms
+│   │   │   ├── wms
+│   │   │   ├── workspace
+│   │   │   └── index.ts
+│   │   ├── voice
+│   │   │   ├── index.ts
+│   │   │   ├── StreamingVoiceHandler.ts
+│   │   │   ├── types.ts
+│   │   │   └── VoiceHandler.ts
+│   │   ├── workflows
+│   │   │   ├── BankReconciliationWorkflow.ts
+│   │   │   ├── FiscalImportWorkflow.ts
+│   │   │   ├── index.ts
+│   │   │   └── types.ts
+│   │   └── index.ts
+│   ├── app
+│   │   ├── (auth)
+│   │   │   └── login
+│   │   ├── (dashboard)
+│   │   │   ├── agents
+│   │   │   ├── auditoria
+│   │   │   ├── cadastros
+│   │   │   ├── comercial
+│   │   │   ├── configuracoes
+│   │   │   ├── financeiro
+│   │   │   ├── fiscal
+│   │   │   ├── frota
+│   │   │   ├── gerencial
+│   │   │   ├── operacional
+│   │   │   ├── perfil
+│   │   │   ├── rh
+│   │   │   ├── strategic
+│   │   │   ├── sustentabilidade
+│   │   │   ├── tms
+│   │   │   ├── wms
+│   │   │   ├── layout.tsx
+│   │   │   └── page.tsx
+│   │   ├── api
+│   │   │   ├── accounting
+│   │   │   ├── admin
+│   │   │   ├── agent
+│   │   │   ├── agents
+│   │   │   ├── auth
+│   │   │   ├── backoffice
+│   │   │   ├── branches
+│   │   │   ├── btg
+│   │   │   ├── business-partners
+│   │   │   ├── ciap
+│   │   │   ├── claims
+│   │   │   ├── comercial
+│   │   │   ├── commercial
+│   │   │   ├── contracts
+│   │   │   ├── cost-centers
+│   │   │   ├── dashboard
+│   │   │   ├── departments
+│   │   │   ├── docs
+│   │   │   ├── documents
+│   │   │   ├── esg
+│   │   │   ├── financial
+│   │   │   ├── fiscal
+│   │   │   ├── fleet
+│   │   │   ├── health
+│   │   │   ├── hr
+│   │   │   ├── intercompany
+│   │   │   ├── knowledge
+│   │   │   ├── management
+│   │   │   ├── notifications
+│   │   │   ├── pcg-ncm-rules
+│   │   │   ├── products
+│   │   │   ├── reports
+│   │   │   ├── seed
+│   │   │   ├── sefaz
+│   │   │   ├── sped
+│   │   │   ├── strategic
+│   │   │   ├── tax
+│   │   │   ├── tenant
+│   │   │   ├── tms
+│   │   │   ├── users
+│   │   │   ├── v2
+│   │   │   ├── voice
+│   │   │   └── wms
+│   │   ├── docs
+│   │   │   └── page.tsx
+│   │   ├── logout
+│   │   │   └── page.tsx
+│   │   ├── global-error.tsx
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── manifest.ts
+│   │   ├── not-found.tsx
+│   │   └── providers.tsx
+│   ├── components
+│   │   ├── accounting
+│   │   │   ├── AccountingAIWidget.tsx
+│   │   │   └── index.ts
+│   │   ├── aceternity
+│   │   │   ├── aurora-background.tsx
+│   │   │   ├── tailwind-config-snippet.txt
+│   │   │   └── wavy-background.tsx
+│   │   ├── admin
+│   │   │   ├── AdminAIWidget.tsx
+│   │   │   └── index.ts
+│   │   ├── ag-grid
+│   │   │   └── renderers
+│   │   ├── agent
+│   │   │   ├── ChatInterface.tsx
+│   │   │   ├── ChatMessage.tsx
+│   │   │   ├── index.ts
+│   │   │   ├── SessionList.tsx
+│   │   │   └── VoiceChat.tsx
+│   │   ├── agents
+│   │   │   └── AgentChat.tsx
+│   │   ├── ai
+│   │   │   ├── AIInsightWidget.tsx
+│   │   │   └── index.ts
+│   │   ├── auth
+│   │   │   └── login-form.tsx
+│   │   ├── commercial
+│   │   │   ├── CommercialAIWidget.tsx
+│   │   │   ├── freight-simulator.tsx
+│   │   │   └── index.ts
+│   │   ├── financial
+│   │   │   ├── financial-summary.tsx
+│   │   │   ├── FinancialCharts.tsx
+│   │   │   ├── FinancialSummary.tsx
+│   │   │   ├── ModernFinancialSummary.tsx
+│   │   │   ├── payment-modal.tsx
+│   │   │   └── PaymentModal.tsx
+│   │   ├── fiscal
+│   │   │   ├── document-detail-modal.tsx
+│   │   │   ├── FiscalAIWidget.tsx
+│   │   │   ├── index.ts
+│   │   │   ├── item-linker-modal.tsx
+│   │   │   ├── LegislationWidget.tsx
+│   │   │   ├── NFeDetailPanel.tsx
+│   │   │   └── pcg-ncm-selector.tsx
+│   │   ├── fleet
+│   │   │   ├── DriverStatusBadge.tsx
+│   │   │   ├── FleetAIWidget.tsx
+│   │   │   ├── index.ts
+│   │   │   └── LicensePlate.tsx
+│   │   ├── forms
+│   │   │   ├── branch-form.tsx
+│   │   │   ├── partner-form.tsx
+│   │   │   └── product-form.tsx
+│   │   ├── hr
+│   │   │   ├── HRAIWidget.tsx
+│   │   │   └── index.ts
+│   │   ├── integrations
+│   │   │   ├── index.ts
+│   │   │   └── IntegrationsAIWidget.tsx
+│   │   ├── layout
+│   │   │   ├── aura-glass-sidebar.tsx
+│   │   │   ├── branch-switcher.tsx
+│   │   │   ├── breadcrumbs.tsx
+│   │   │   ├── grouped-sidebar-updated.tsx
+│   │   │   ├── grouped-sidebar.tsx
+│   │   │   ├── sidebar.tsx
+│   │   │   └── user-menu.tsx
+│   │   ├── notifications
+│   │   │   ├── notification-bell.tsx
+│   │   │   ├── notification-dropdown.tsx
+│   │   │   ├── notification-item.tsx
+│   │   │   ├── notification-toast-provider.tsx
+│   │   │   └── notification-toast.tsx
+│   │   ├── operational
+│   │   │   ├── index.ts
+│   │   │   └── OperationalAIWidget.tsx
+│   │   ├── strategic
+│   │   │   ├── analytics
+│   │   │   ├── audit
+│   │   │   ├── comments
+│   │   │   ├── dashboard
+│   │   │   ├── dashboard-showcase
+│   │   │   ├── export
+│   │   │   ├── gamification
+│   │   │   ├── integrations
+│   │   │   ├── okrs
+│   │   │   ├── permissions
+│   │   │   ├── search
+│   │   │   ├── templates
+│   │   │   ├── war-room
+│   │   │   ├── widgets
+│   │   │   ├── AchievementBadge.tsx
+│   │   │   ├── ActionPlanCard.tsx
+│   │   │   ├── ActionPlanKanban.tsx
+│   │   │   ├── ActiveChallenges.tsx
+│   │   │   ├── ActivityFeed.tsx
+│   │   │   ├── ApprovalActionsForm.tsx
+│   │   │   ├── ApprovalHistoryTimeline.tsx
+│   │   │   ├── AuditLogDetail.tsx
+│   │   │   ├── AuditLogFilters.tsx
+│   │   │   ├── AuditLogTable.tsx
+│   │   │   ├── AuraChat.tsx
+│   │   │   ├── AuraChatButton.tsx
+│   │   │   ├── AuroraInsightCard.tsx
+│   │   │   ├── BottomSheet.tsx
+│   │   │   ├── BscPerspectiveCard.tsx
+│   │   │   ├── ChangesDiff.tsx
+│   │   │   ├── CommentInput.tsx
+│   │   │   ├── CommentItem.tsx
+│   │   │   ├── CommentSection.tsx
+│   │   │   ├── CriticalAlertPanel.tsx
+│   │   │   ├── CriticalAlerts.tsx
+│   │   │   ├── DashboardGrid.tsx
+│   │   │   ├── DashboardWidget.tsx
+│   │   │   ├── EntityTimeline.tsx
+│   │   │   ├── ExportButton.tsx
+│   │   │   ├── ExportModal.tsx
+│   │   │   ├── FiveW2HWizard.tsx
+│   │   │   ├── GoalNode.tsx
+│   │   │   ├── HealthScoreRing.tsx
+│   │   │   ├── ImportModal.tsx
+│   │   │   ├── index.ts
+│   │   │   ├── IntegrationCard.tsx
+│   │   │   ├── IntegrationLogs.tsx
+│   │   │   ├── IntegrationSetup.tsx
+│   │   │   ├── KpiCard.tsx
+│   │   │   ├── KpiGauge.tsx
+│   │   │   ├── KpiSparkline.tsx
+│   │   │   ├── KpiSummaryCards.tsx
+│   │   │   ├── LazyWidget.tsx
+│   │   │   ├── Leaderboard.tsx
+│   │   │   ├── MentionInput.tsx
+│   │   │   ├── MobileHeader.tsx
+│   │   │   ├── MobileNav.tsx
+│   │   │   ├── NotificationBell.tsx
+│   │   │   ├── NotificationCenter.tsx
+│   │   │   ├── NotificationToast.tsx
+│   │   │   ├── OnboardingChecklist.tsx
+│   │   │   ├── OnboardingTour.tsx
+│   │   │   ├── PdcaCard.tsx
+│   │   │   ├── PdcaKanban.tsx
+│   │   │   ├── PerspectiveCardSimple.tsx
+│   │   │   ├── PlayerProfile.tsx
+│   │   │   ├── PriorityActionsCard.tsx
+│   │   │   ├── PullToRefresh.tsx
+│   │   │   ├── PWAInstallPrompt.tsx
+│   │   │   ├── QuickActions.tsx
+│   │   │   ├── ReportBuilder.tsx
+│   │   │   ├── ReportCard.tsx
+│   │   │   ├── ReportHistory.tsx
+│   │   │   ├── ReportPreview.tsx
+│   │   │   ├── ReportScheduler.tsx
+│   │   │   ├── SettingsItem.tsx
+│   │   │   ├── SettingsRadioGroup.tsx
+│   │   │   ├── SettingsSection.tsx
+│   │   │   ├── SettingsToggle.tsx
+│   │   │   ├── StrategicLayoutClient.tsx
+│   │   │   ├── StrategicMap.tsx
+│   │   │   ├── StrategyApprovalCard.tsx
+│   │   │   ├── SwipeableCard.tsx
+│   │   │   ├── TemplateCard.tsx
+│   │   │   ├── TemplateEditor.tsx
+│   │   │   ├── TemplatePreview.tsx
+│   │   │   ├── ThresholdConfig.tsx
+│   │   │   ├── TourTooltip.tsx
+│   │   │   ├── TrendChart.tsx
+│   │   │   ├── VirtualizedKpiList.tsx
+│   │   │   ├── WarRoomHeader.tsx
+│   │   │   ├── WeeklyTrendChart.tsx
+│   │   │   ├── WelcomeModal.tsx
+│   │   │   ├── WidgetPicker.tsx
+│   │   │   └── WizardStep.tsx
+│   │   ├── tms
+│   │   │   ├── index.ts
+│   │   │   └── TmsAIWidget.tsx
+│   │   ├── ui
+│   │   │   ├── 3d-button.tsx
+│   │   │   ├── alert-dialog.tsx
+│   │   │   ├── animated-background.tsx
+│   │   │   ├── animated-wrappers.tsx
+│   │   │   ├── aurora-background.tsx
+│   │   │   ├── avatar.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── checkbox.tsx
+│   │   │   ├── command.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── empty-state.tsx
+│   │   │   ├── enterprise-metric-card.tsx
+│   │   │   ├── file-upload.tsx
+│   │   │   ├── floating-dock.tsx
+│   │   │   ├── form.tsx
+│   │   │   ├── glassmorphism-card.tsx
+│   │   │   ├── glow-border.tsx
+│   │   │   ├── glow-button.tsx
+│   │   │   ├── gradient-border-button.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── magic-components.tsx
+│   │   │   ├── magnetic-button.tsx
+│   │   │   ├── masked-input.tsx
+│   │   │   ├── modal.tsx
+│   │   │   ├── page-header.tsx
+│   │   │   ├── popover.tsx
+│   │   │   ├── pulsating-badge.tsx
+│   │   │   ├── ripple-button.tsx
+│   │   │   ├── scroll-area.tsx
+│   │   │   ├── searchable-select.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── separator.tsx
+│   │   │   ├── shimmer-button.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── spotlight-effect.tsx
+│   │   │   ├── switch.tsx
+│   │   │   ├── table.tsx
+│   │   │   ├── tabs.tsx
+│   │   │   ├── textarea.tsx
+│   │   │   ├── toast.tsx
+│   │   │   ├── toaster.tsx
+│   │   │   └── use-toast.ts
+│   │   ├── voice
+│   │   │   ├── index.ts
+│   │   │   ├── VoiceChatButton.tsx
+│   │   │   └── VoiceChatPanel.tsx
+│   │   ├── wms
+│   │   │   ├── index.ts
+│   │   │   └── WmsAIWidget.tsx
+│   │   └── theme-provider.tsx
+│   ├── contexts
+│   │   ├── NotificationContext.tsx
+│   │   ├── OnboardingContext.tsx
+│   │   └── tenant-context.tsx
+│   ├── db
+│   │   └── migrations
+│   │       └── 0057_create_notifications.sql
+│   ├── hooks
+│   │   ├── strategic
+│   │   │   ├── index.ts
+│   │   │   ├── useApprovalHistory.ts
+│   │   │   ├── usePendingApprovals.ts
+│   │   │   └── useStrategyById.ts
+│   │   ├── useAchievements.ts
+│   │   ├── useAgentChat.ts
+│   │   ├── useAgentInsights.ts
+│   │   ├── useAnalytics.ts
+│   │   ├── useAnalyticsData.ts
+│   │   ├── useAuditLogs.ts
+│   │   ├── useComments.ts
+│   │   ├── useDashboardBuilder.ts
+│   │   ├── useDashboardLayout.ts
+│   │   ├── useDebouncedValue.ts
+│   │   ├── useDynamicBreadcrumbLabel.ts
+│   │   ├── useExport.ts
+│   │   ├── useGlobalSearch.ts
+│   │   ├── useImport.ts
+│   │   ├── useInfiniteScroll.ts
+│   │   ├── useIntegrations.ts
+│   │   ├── useIntersectionObserver.ts
+│   │   ├── useLiveUpdates.ts
+│   │   ├── useMentions.ts
+│   │   ├── useNotifications.ts
+│   │   ├── useOKRs.ts
+│   │   ├── useOnboarding.ts
+│   │   ├── usePermissions.ts
+│   │   ├── useRoles.ts
+│   │   ├── useSearchHistory.ts
+│   │   ├── useSSE.ts
+│   │   ├── useSSRMDatasource.ts
+│   │   ├── useStrategicNotifications.ts
+│   │   ├── useTemplates.ts
+│   │   ├── useUserPoints.ts
+│   │   ├── useVoiceChat.ts
+│   │   ├── useWarRoom.ts
+│   │   └── useWidgets.ts
+│   ├── lib
+│   │   ├── ag-grid
+│   │   │   ├── aurora-premium-cells.tsx
+│   │   │   ├── aurora-premium-theme.ts
+│   │   │   ├── cell-renderers.tsx
+│   │   │   ├── sparkline-renderers.tsx
+│   │   │   ├── ssrm-helper.ts
+│   │   │   └── theme.ts
+│   │   ├── analytics
+│   │   │   ├── analytics-service.ts
+│   │   │   ├── analytics-types.ts
+│   │   │   └── metrics-calculator.ts
+│   │   ├── api
+│   │   │   ├── boolean-params.ts
+│   │   │   ├── date-params.ts
+│   │   │   ├── error-status.ts
+│   │   │   ├── fetch-client.ts
+│   │   │   ├── index.ts
+│   │   │   ├── number-params.ts
+│   │   │   └── pagination.ts
+│   │   ├── audit
+│   │   │   ├── audit-service.ts
+│   │   │   └── audit-types.ts
+│   │   ├── audit-v2
+│   │   │   ├── db.ts
+│   │   │   └── env.ts
+│   │   ├── auth
+│   │   │   ├── api-guard.ts
+│   │   │   ├── branch.ts
+│   │   │   ├── context.ts
+│   │   │   ├── mssql-adapter.ts
+│   │   │   └── permissions.ts
+│   │   ├── cache
+│   │   │   ├── CacheManager.ts
+│   │   │   └── strategic-cache.ts
+│   │   ├── comments
+│   │   │   └── comment-types.ts
+│   │   ├── dashboard
+│   │   │   ├── dashboard-service.ts
+│   │   │   ├── dashboard-types.ts
+│   │   │   └── widget-registry.ts
+│   │   ├── db
+│   │   │   ├── schema
+│   │   │   ├── helpers.ts
+│   │   │   ├── index.ts
+│   │   │   ├── mssql-transaction.ts
+│   │   │   ├── query-helpers.ts
+│   │   │   └── schema.ts
+│   │   ├── documents
+│   │   │   ├── document-db.ts
+│   │   │   └── jobs-worker.ts
+│   │   ├── email
+│   │   │   └── send-invite.ts
+│   │   ├── export
+│   │   │   ├── export-service.ts
+│   │   │   └── export-types.ts
+│   │   ├── financial
+│   │   │   └── ofx-import.ts
+│   │   ├── gamification
+│   │   │   ├── achievement-definitions.ts
+│   │   │   ├── gamification-service.ts
+│   │   │   └── gamification-types.ts
+│   │   ├── idempotency
+│   │   │   └── sql-idempotency.ts
+│   │   ├── integrations
+│   │   │   ├── index.ts
+│   │   │   ├── integration-service.ts
+│   │   │   ├── integration-types.ts
+│   │   │   ├── slack.ts
+│   │   │   ├── teams.ts
+│   │   │   └── webhook.ts
+│   │   ├── notifications
+│   │   │   ├── notification-service.ts
+│   │   │   ├── notification-store.ts
+│   │   │   └── notification-types.ts
+│   │   ├── observability
+│   │   │   ├── index.ts
+│   │   │   ├── logger.ts
+│   │   │   ├── metrics.ts
+│   │   │   ├── performance-tracker.ts
+│   │   │   ├── query-logger.ts
+│   │   │   ├── request-buffer.ts
+│   │   │   └── request-id.ts
+│   │   ├── okrs
+│   │   │   ├── okr-service.ts
+│   │   │   └── okr-types.ts
+│   │   ├── ops
+│   │   │   ├── auto-smoke.ts
+│   │   │   ├── ops-health-db.ts
+│   │   │   └── ops-health-runner.ts
+│   │   ├── permissions
+│   │   │   ├── permission-guard.tsx
+│   │   │   ├── permission-service.ts
+│   │   │   └── permission-types.ts
+│   │   ├── search
+│   │   │   ├── search-service.ts
+│   │   │   └── search-types.ts
+│   │   ├── services
+│   │   │   └── financial-init.ts
+│   │   ├── storage
+│   │   │   └── s3.ts
+│   │   ├── strategic
+│   │   │   └── export-utils.ts
+│   │   ├── swagger
+│   │   │   └── config.ts
+│   │   ├── templates
+│   │   │   ├── default-templates.ts
+│   │   │   └── template-types.ts
+│   │   ├── tenant
+│   │   │   └── branch-cookie.ts
+│   │   ├── utils
+│   │   │   ├── status-colors.ts
+│   │   │   └── type-guards.ts
+│   │   ├── validation
+│   │   │   ├── common-schemas.ts
+│   │   │   ├── fiscal-schemas.ts
+│   │   │   ├── strategic-schemas.ts
+│   │   │   ├── tms-schemas.ts
+│   │   │   └── wms-schemas.ts
+│   │   ├── validators
+│   │   │   ├── branch.ts
+│   │   │   ├── business-partner.ts
+│   │   │   ├── fleet-validators.ts
+│   │   │   ├── organization.ts
+│   │   │   ├── product.ts
+│   │   │   └── tax-reform.ts
+│   │   ├── war-room
+│   │   │   ├── war-room-service.ts
+│   │   │   └── war-room-types.ts
+│   │   ├── ag-grid-config.ts
+│   │   ├── ag-grid-theme.ts
+│   │   ├── auth.config.ts
+│   │   ├── auth.ts
+│   │   ├── cron-setup.ts
+│   │   └── utils.ts
+│   ├── modules
+│   │   ├── accounting
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   ├── presentation
+│   │   │   └── index.ts
+│   │   ├── commercial
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── contracts
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── documents
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   └── index.ts
+│   │   ├── financial
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   ├── presentation
+│   │   │   └── index.ts
+│   │   ├── fiscal
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   ├── presentation
+│   │   │   └── index.ts
+│   │   ├── fleet
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── integrations
+│   │   │   ├── __tests__
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   ├── index.ts
+│   │   │   └── README_ENV_VARS.md
+│   │   ├── knowledge
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   └── infrastructure
+│   │   ├── strategic
+│   │   │   ├── __tests__
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   ├── presentation
+│   │   │   ├── index.ts
+│   │   │   └── README.md
+│   │   ├── tms
+│   │   │   ├── application
+│   │   │   ├── domain
+│   │   │   ├── infrastructure
+│   │   │   └── index.ts
+│   │   └── wms
+│   │       ├── application
+│   │       ├── domain
+│   │       ├── infrastructure
+│   │       └── index.ts
+│   ├── providers
+│   │   ├── data-provider.ts
+│   │   └── refine-provider.tsx
+│   ├── scripts
+│   │   └── run-migration-021.ts
+│   ├── services
+│   │   ├── accounting
+│   │   │   └── pcg-ncm-classifier.ts
+│   │   ├── banking
+│   │   │   ├── btg-dda-service.ts
+│   │   │   └── cnab-generator.ts
+│   │   ├── btg
+│   │   │   ├── btg-auth.ts
+│   │   │   ├── btg-boleto.ts
+│   │   │   ├── btg-client.ts
+│   │   │   ├── btg-dda.ts
+│   │   │   ├── btg-payments.ts
+│   │   │   └── btg-pix.ts
+│   │   ├── commercial
+│   │   │   └── proposal-pdf-generator.ts
+│   │   ├── financial
+│   │   │   ├── billing-pdf-generator.ts
+│   │   │   └── boleto-generator.ts
+│   │   ├── fiscal
+│   │   │   ├── certificate-manager.ts
+│   │   │   ├── cte-builder.ts
+│   │   │   ├── cte-parser.ts
+│   │   │   ├── sefaz-client.ts
+│   │   │   ├── sefaz-cte-client.ts
+│   │   │   ├── tax-calculator.ts
+│   │   │   └── xml-signer.ts
+│   │   ├── fleet
+│   │   │   └── vehicle-service.ts
+│   │   ├── pricing
+│   │   │   └── freight-calculator.ts
+│   │   ├── tms
+│   │   │   └── workflow-automator.ts
+│   │   ├── validators
+│   │   │   └── insurance-validator.ts
+│   │   ├── accounting-engine.ts
+│   │   ├── ciap-engine.ts
+│   │   ├── claims-workflow-engine.ts
+│   │   ├── cost-center-allocation.ts
+│   │   ├── esg-carbon-calculator.ts
+│   │   ├── financial-title-generator.ts
+│   │   ├── fiscal-classification-service.ts
+│   │   ├── intercompany-allocation-engine.ts
+│   │   ├── management-accounting.ts
+│   │   ├── ncm-categorization-service.ts
+│   │   ├── nfe-parser.ts
+│   │   ├── notification-service.ts
+│   │   ├── sefaz-processor.ts
+│   │   ├── sefaz-service.ts
+│   │   ├── tax-credit-engine.ts
+│   │   └── wms-billing-engine.ts
+│   ├── shared
+│   │   ├── application
+│   │   │   ├── index.ts
+│   │   │   └── IUseCase.ts
+│   │   ├── domain
+│   │   │   ├── entities
+│   │   │   ├── errors
+│   │   │   ├── events
+│   │   │   ├── ports
+│   │   │   ├── types
+│   │   │   ├── value-objects
+│   │   │   └── index.ts
+│   │   ├── infrastructure
+│   │   │   ├── adapters
+│   │   │   ├── audit
+│   │   │   ├── database
+│   │   │   ├── di
+│   │   │   ├── docling
+│   │   │   ├── events
+│   │   │   ├── http
+│   │   │   ├── logging
+│   │   │   ├── notifications
+│   │   │   ├── persistence
+│   │   │   ├── retention
+│   │   │   ├── time
+│   │   │   └── index.ts
+│   │   ├── types
+│   │   │   ├── index.ts
+│   │   │   └── type-guards.ts
+│   │   └── index.ts
+│   ├── styles
+│   │   └── aurora-premium-grid.css
+│   ├── types
+│   │   ├── ag-grid-ssrm.ts
+│   │   ├── agents.ts
+│   │   ├── ai-insight.ts
+│   │   ├── next-auth.d.ts
+│   │   ├── ofx-js.d.ts
+│   │   ├── strategic.ts
+│   │   └── voice.ts
+│   ├── global.d.ts
+│   ├── instrumentation.ts
+│   └── middleware.ts
+├── stories
+│   └── strategic
+│       ├── AlertsWidget.stories.tsx
+│       ├── AuroraInsightWidget.stories.tsx
+│       ├── DashboardWidget.stories.tsx
+│       ├── HealthScoreWidget.stories.tsx
+│       ├── Introduction.mdx
+│       ├── KpiSummaryWidget.stories.tsx
+│       └── VirtualizedKpiList.stories.tsx
+├── tests
+│   ├── architecture
+│   │   └── schema-composite-index.test.ts
+│   ├── contract
+│   │   ├── accounting
+│   │   │   ├── add-line.contract.test.ts
+│   │   │   ├── create-journal-entry.contract.test.ts
+│   │   │   ├── list-journal-entries.contract.test.ts
+│   │   │   ├── post-journal-entry.contract.test.ts
+│   │   │   └── reverse-journal-entry.contract.test.ts
+│   │   ├── financial
+│   │   │   ├── cancel-receivable.contract.test.ts
+│   │   │   ├── create-payable.contract.test.ts
+│   │   │   ├── create-receivable.contract.test.ts
+│   │   │   ├── list-receivables.contract.test.ts
+│   │   │   └── receive-payment.contract.test.ts
+│   │   ├── fiscal
+│   │   │   ├── calculate-taxes.contract.test.ts
+│   │   │   ├── cancel-fiscal-document.contract.test.ts
+│   │   │   ├── create-fiscal-document.contract.test.ts
+│   │   │   ├── generate-sped.contract.test.ts
+│   │   │   ├── list-fiscal-documents.contract.test.ts
+│   │   │   └── submit-fiscal-document.contract.test.ts
+│   │   ├── strategic
+│   │   │   ├── action-plan-5w2h.contract.test.ts
+│   │   │   ├── advance-pdca-phase.contract.test.ts
+│   │   │   ├── create-kpi.contract.test.ts
+│   │   │   ├── create-objective.contract.test.ts
+│   │   │   ├── create-pdca-cycle.contract.test.ts
+│   │   │   ├── follow-up-3g.contract.test.ts
+│   │   │   ├── pdca-action.contract.test.ts
+│   │   │   ├── record-measurement.contract.test.ts
+│   │   │   ├── swot.contract.test.ts
+│   │   │   └── war-room.contract.test.ts
+│   │   └── tms
+│   │       ├── cancel-trip.contract.test.ts
+│   │       ├── complete-trip.contract.test.ts
+│   │       ├── create-trip.contract.test.ts
+│   │       └── list-trips.contract.test.ts
+│   ├── e2e
+│   │   ├── fiscal
+│   │   │   └── tax-reform
+│   │   └── wms
+│   │       ├── inventory-count.e2e.test.ts
+│   │       ├── locations.e2e.test.ts
+│   │       ├── movements.e2e.test.ts
+│   │       ├── stock-operations.e2e.test.ts
+│   │       └── stock-queries.e2e.test.ts
+│   ├── fixtures
+│   │   └── financial
+│   │       └── bank-statement-fixtures.ts
+│   ├── helpers
+│   │   ├── mocks
+│   │   │   └── repositories
+│   │   ├── integration-db.ts
+│   │   ├── nextRequestHelper.ts
+│   │   ├── resultHelper.ts
+│   │   ├── test-client.ts
+│   │   └── test-context.ts
+│   ├── integration
+│   │   ├── accounting
+│   │   │   └── journal-entries.integration.test.ts
+│   │   ├── api
+│   │   │   └── fiscal
+│   │   ├── contracts
+│   │   │   └── AnalyzeFreightContractUseCase.test.ts
+│   │   ├── docling
+│   │   │   └── DoclingClient.test.ts
+│   │   ├── document-pipeline
+│   │   │   └── persistence.test.ts
+│   │   ├── financial
+│   │   │   └── payables.integration.test.ts
+│   │   ├── fiscal
+│   │   │   ├── import-dacte
+│   │   │   ├── import-danfe
+│   │   │   ├── rag
+│   │   │   └── fiscal-document.integration.test.ts
+│   │   ├── knowledge
+│   │   │   └── GeminiEmbeddingService.integration.test.ts
+│   │   ├── modules
+│   │   │   └── fiscal
+│   │   └── wms
+│   │       ├── inventory-count.integration.test.ts
+│   │       ├── locations.integration.test.ts
+│   │       ├── movements.integration.test.ts
+│   │       ├── multi-tenancy.integration.test.ts
+│   │       ├── README.md
+│   │       └── stock-flow.integration.test.ts
+│   ├── modules
+│   │   └── fiscal
+│   │       └── domain
+│   ├── performance
+│   │   └── ssrm-endpoints.perf.test.ts
+│   ├── unit
+│   │   ├── agent
+│   │   │   ├── core
+│   │   │   ├── observability
+│   │   │   ├── persistence
+│   │   │   ├── tools
+│   │   │   ├── voice
+│   │   │   └── workflows
+│   │   ├── api
+│   │   │   └── voice
+│   │   ├── lib
+│   │   │   └── cache
+│   │   ├── modules
+│   │   │   ├── accounting
+│   │   │   ├── contracts
+│   │   │   ├── financial
+│   │   │   ├── fiscal
+│   │   │   ├── knowledge
+│   │   │   ├── strategic
+│   │   │   ├── tms
+│   │   │   └── wms
+│   │   └── shared
+│   │       ├── time
+│   │       └── value-objects
+│   └── setup.ts
+├── adicionar-colunas-acoes.sh
+├── AGENTS.md
+├── audit_runner.sh
+├── AURACORE_COGNITIVE_ENTERPRISE_ARCHITECTURE_V1.md
+├── BOOTSTRAP.md
+├── BTG_ENV_VARS.txt
+├── build-errors.log
+├── catalog-info.yaml
+├── CLAUDE.md
+├── cliff.toml
+├── COMO_SALVAR_E_FECHAR_CURSOR.md
+├── components.json
+├── CONTEXT_E0.1.md.
+├── CONTINUACAO_13_12_2025.md
+├── CORRECAO_IMPORTS_COMPLETA.md
+├── create-idempotency-table-simple.sql
+├── debug-healthcheck-details.sh
+├── diagnostico-504.sh
+├── diagnostico-env-vars.sh
+├── diagnostico-healthcheck.sh
+├── diagnostico-producao.sh
+├── docker-compose.coolify.yml
+├── docker-compose.dev.yml
+├── docker-compose.test.yml
+├── docker-compose.yml
+├── Dockerfile
+├── drizzle.config.ts
+├── E7.10_BREAKING_CHANGE_WARNING.md
+├── E7.10_FASE1_TYPESCRIPT_ERRORS_RESOLVED.md
+├── E7.10_FASE2_TESTS_RESOLVED.md
+├── E7.10_FASE2.5_FINAL_REPORT.md
+├── E7.10_ISSUE_CRITICA_RESOLVIDA.md
+├── E7.10_MCP_DOCUMENTATION_FIX.md
+├── E7.10_RESUMO_COMPLETO.md
+├── E7.10_VALIDACAO_FINAL.md
+├── E7.13_DIA1_RELATORIO.md
+├── E7.9_PUSH_SUCCESS_REPORT.md
+├── E7.9_SEMANA2_RELATORIO_FINAL.md
+├── eslint.config.mjs
+├── EXECUTAR_MIGRATION_0033.sh
+├── FASE6_CHECKLIST.md
+├── FASE6_PROXIMOS_PASSOS.md
+├── fix-healthcheck.md
+├── fix-idempotency-table.sh
+├── frontend-analysis-report-20260120-021632.md
+├── HEARTBEAT.md
+├── HOTFIX-MIGRATIONS.md
+├── IDENTITY.md
+├── implementar-crud-19-telas.sh
+├── INSTRUCOES_MIGRATION_CLASS.md
+├── middleware.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── PLANEJAMENTO_AGNO_AURACORE_V2.md
+├── playwright.config.ts
+├── postcss.config.mjs
+├── project-structure.txt
+├── quick-check-healthcheck.sh
+├── README.md
+├── RELATORIO_SESSAO_E7.16.md
+├── RELATORIO_STATUS_AURACORE.md
+├── RESULTADO_FINAL_CRUD.md
+├── RESUMO_AUDITORIA_SEGURANCA.md
+├── run-migration-0032.ts
+├── run-quick-migration.ts
+├── salvar-e-fechar.sh
+├── SOUL.md
+├── tailwind.config.ts
+├── test-db-connection.js
+├── TOOLS.md
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+├── typecheck-errors.log
+├── typecheck-output.log
+├── USER.md
+├── verify-quick-wins.sh
+└── vitest.config.ts
+
+534 directories, 1406 files

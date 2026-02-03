@@ -47,7 +47,6 @@ interface ApprovalHistoryEntry {
   action: string;
   actorUserId: number;
   comments?: string;
-  reason?: string;
   createdAt: string;
 }
 
@@ -288,7 +287,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       const rejectEntry = history.find(h => h.action === 'REJECTED');
       expect(rejectEntry).toBeDefined();
       expect(rejectEntry?.actorUserId).toBe(user2.id);
-      expect(rejectEntry?.reason).toBe(rejectionReason);
+      expect(rejectEntry?.comments).toBe(rejectionReason);
     });
 
     test('deve solicitar alterações com motivo', async ({ authenticatedPage }) => {
@@ -311,7 +310,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       const changesEntry = history.find(h => h.action === 'REQUEST_CHANGES');
       expect(changesEntry).toBeDefined();
       expect(changesEntry?.actorUserId).toBe(user2.id);
-      expect(changesEntry?.reason).toBe(changesReason);
+      expect(changesEntry?.comments).toBe(changesReason);
     });
   });
 
@@ -470,7 +469,7 @@ test.describe('Workflow de Aprovação - Fluxo Completo', () => {
       const changesEntry = history.find(h => h.action === 'CHANGES_REQUESTED');
       expect(changesEntry).toBeDefined();
       expect(changesEntry?.actorUserId).toBe(user2.id);
-      expect(changesEntry?.reason).toBe('Add budget details');
+      expect(changesEntry?.comments).toBe('Add budget details');
     });
 
     test('histórico deve ter timestamps ordenados', async ({ authenticatedPage }) => {
