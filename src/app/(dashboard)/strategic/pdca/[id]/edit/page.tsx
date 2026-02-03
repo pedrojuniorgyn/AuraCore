@@ -114,9 +114,17 @@ export default function PDCAEditPage() {
   const handleChange = (field: keyof PDCACycle, value: string | number) => {
     if (!data) return;
     
+    // Convert date strings (YYYY-MM-DD) to ISO datetime to preserve timezone
+    let processedValue = value;
+    if (typeof value === 'string' && (field === 'startDate' || field === 'endDate')) {
+      // Parse as local date and convert to ISO string
+      const date = new Date(value + 'T00:00:00');
+      processedValue = date.toISOString();
+    }
+    
     setData({
       ...data,
-      [field]: value,
+      [field]: processedValue,
     });
   };
 

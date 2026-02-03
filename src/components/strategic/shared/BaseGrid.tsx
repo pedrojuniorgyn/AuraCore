@@ -159,7 +159,18 @@ export function BaseGrid<T = Record<string, unknown>>({
         }}
         getRowId={(params) => {
           const data = params.data as { id?: string } | undefined;
-          return data?.id || `row-${Math.random().toString(36).substring(2, 11)}`;
+          if (data?.id) return data.id;
+          
+          // Use a stable hash of the data as fallback instead of random ID
+          // This ensures the same data always gets the same ID across renders
+          const dataStr = JSON.stringify(data || {});
+          let hash = 0;
+          for (let i = 0; i < dataStr.length; i++) {
+            const char = dataStr.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+          }
+          return `row-${Math.abs(hash)}`;
         }}
       />
     </div>
