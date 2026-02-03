@@ -99,3 +99,6 @@ data/knowledge/**/*.csv
 
 # Generated reports (auto-generated, should not be committed)
 frontend-analysis-report-*.md
+
+# PDFs de teste
+report_*.pdf

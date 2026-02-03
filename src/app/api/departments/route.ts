@@ -14,6 +14,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import type { IDepartmentRepository } from '@/shared/domain/ports/output/IDepartmentRepository';
 import { Department } from '@/shared/domain';
 import { Result } from '@/shared/domain';
+import { CacheService } from '@/services/cache.service';
 
 const createDepartmentSchema = z.object({
   code: z.string().trim().min(1).max(20),
@@ -135,6 +136,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Invalidar cache de departments após mutation
+    await CacheService.invalidatePattern('tree:*', 'departments:');
 
     return NextResponse.json(
       {

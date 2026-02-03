@@ -34,7 +34,8 @@
     "test:integration:docker": "npm run docker:test:up && sleep 30 && npm run docker:test:init-db && npm run docker:test:migrate && (npm run test:integration; TEST_EXIT=$?; npm run docker:test:down; exit $TEST_EXIT)",
     "test:all": "npm run test:unit && npm run test:integration:docker",
     "test:playwright:strategic": "playwright test tests/e2e/strategic/",
-    "test:playwright:mobile": "playwright test tests/e2e/strategic/mobile.spec.ts"
+    "test:playwright:mobile": "playwright test tests/e2e/strategic/mobile.spec.ts",
+    "test:redis": "tsx --env-file=.env scripts/test-redis.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

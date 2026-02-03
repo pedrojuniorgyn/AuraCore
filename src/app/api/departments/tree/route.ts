@@ -13,6 +13,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { getTenantContext } from '@/lib/auth/context';
 import type { IDepartmentRepository } from '@/shared/domain/ports/output/IDepartmentRepository';
 import type { Department } from '@/shared/domain';
+import { CacheService, CacheTTL } from '@/services/cache.service';
 
 /**
  * Estrutura de Department Tree (recursiva)
@@ -77,6 +78,11 @@ interface DepartmentsTreeResponse {
  *   flat: DepartmentFlatItem[] (lista plana com níveis),
  *   metadata: { totalDepartments, maxDepth, rootDepartments }
  * }
+ *
+ * Cache:
+ * - TTL: 30 minutos (CacheTTL.MEDIUM)
+ * - Key: departments:tree:{orgId}:{branchId}:{activeFilter}
+ * - Headers: X-Cache (HIT/MISS), X-Cache-Key, X-Cache-TTL
  */
 export async function GET(request: NextRequest) {
   try {
@@ -102,6 +108,25 @@ export async function GET(request: NextRequest) {
     } else {
       isActive = undefined; // Default: todos (manter comportamento original)
     }
+
+    // Cache key (inclui activeFilter para cache diferenciado)
+    const activeFilter = isActive === true ? 'active' : isActive === false ? 'inactive' : 'all';
+    const cacheKey = `tree:${tenantContext.organizationId}:${tenantContext.branchId}:${activeFilter}`;
+
+    // 1. Tentar buscar do cache
+    const cached = await CacheService.get<DepartmentsTreeResponse>(cacheKey, 'departments:');
+    
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'X-Cache': 'HIT',
+          'X-Cache-Key': `departments:${cacheKey}`,
+          'X-Cache-TTL': String(CacheTTL.MEDIUM),
+        },
+      });
+    }
+
+    // 2. Cache MISS - buscar do banco
 
     const repository = container.resolve<IDepartmentRepository>(
       TOKENS.DepartmentRepository
@@ -149,7 +174,16 @@ export async function GET(request: NextRequest) {
       metadata,
     };
 
-    return NextResponse.json(response);
+    // 3. Salvar no cache
+    await CacheService.set(cacheKey, response, CacheTTL.MEDIUM, 'departments:');
+
+    return NextResponse.json(response, {
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-Key': `departments:${cacheKey}`,
+        'X-Cache-TTL': String(CacheTTL.MEDIUM),
+      },
+    });
   } catch (error) {
     // API-ERR-001: getTenantContext() throws NextResponse on auth failure
     if (error instanceof NextResponse) {
