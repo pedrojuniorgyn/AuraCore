@@ -6,14 +6,14 @@
  */
 import { inject, injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
-import { Alert, type AlertSeverity } from '../../domain/entities/Alert';
+import { Alert, type AlertSeverity, type AlertType } from '../../domain/entities/Alert';
 import type { IAlertRepository } from '../../domain/ports/output/IAlertRepository';
 import type { IKPIRepository } from '../../domain/ports/output/IKPIRepository';
 import type { IActionPlanRepository } from '../../domain/ports/output/IActionPlanRepository';
 import type { IApprovalPermissionRepository } from '../../domain/ports/output/IApprovalPermissionRepository';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
-import type { NotificationType } from '@/shared/infrastructure/notifications/types';
+import type { NotificationType, NotificationEvent } from '@/shared/infrastructure/notifications/types';
 
 export interface AlertConfig {
   kpiCriticalThreshold: number;
@@ -39,7 +39,33 @@ const DEFAULT_CONFIG: AlertConfig = {
   overdueDaysWarning: 3,
   overdueDaysCritical: 7,
   staleDaysThreshold: 14,
+  // Notification defaults
+  emailEnabled: false,
+  webhookEnabled: false,
+  inAppEnabled: true,
+  webhookUrl: undefined,
+  emailRecipients: [],
 };
+
+/**
+ * Mapeia AlertType para NotificationEvent
+ * BUG-FIX: AlertType e NotificationEvent têm valores diferentes
+ */
+function mapAlertTypeToNotificationEvent(alertType: AlertType): NotificationEvent {
+  switch (alertType) {
+    case 'KPI_CRITICAL':
+      return 'KPI_CRITICAL';
+    case 'VARIANCE_UNFAVORABLE':
+      return 'KPI_WARNING'; // Variance unfavorable é tipo de warning
+    case 'ACTION_PLAN_OVERDUE':
+      return 'ACTION_PLAN_OVERDUE';
+    case 'GOAL_STALE':
+      return 'ACTION_PLAN_STALE'; // Goal stale é similar a action plan stale
+    default:
+      // Fallback para type-safety (never deveria chegar aqui)
+      return 'INFO' as NotificationEvent;
+  }
+}
 
 /**
  * Mescla configuração parcial com valores padrão
@@ -52,6 +78,12 @@ function mergeWithDefaults(config?: PartialAlertConfig): AlertConfig {
     overdueDaysWarning: config?.overdueDaysWarning ?? DEFAULT_CONFIG.overdueDaysWarning,
     overdueDaysCritical: config?.overdueDaysCritical ?? DEFAULT_CONFIG.overdueDaysCritical,
     staleDaysThreshold: config?.staleDaysThreshold ?? DEFAULT_CONFIG.staleDaysThreshold,
+    // Notification config (BUG-FIX: include notification fields)
+    emailEnabled: config?.emailEnabled ?? DEFAULT_CONFIG.emailEnabled,
+    webhookEnabled: config?.webhookEnabled ?? DEFAULT_CONFIG.webhookEnabled,
+    inAppEnabled: config?.inAppEnabled ?? DEFAULT_CONFIG.inAppEnabled,
+    webhookUrl: config?.webhookUrl ?? DEFAULT_CONFIG.webhookUrl,
+    emailRecipients: config?.emailRecipients ?? DEFAULT_CONFIG.emailRecipients,
   };
 }
 
@@ -268,7 +300,7 @@ export class AlertService {
             branchId,
             userId,
             type: notificationType,
-            event: alert.alertType as never,
+            event: mapAlertTypeToNotificationEvent(alert.alertType),
             title: alert.title,
             message: alert.message,
             data: {
