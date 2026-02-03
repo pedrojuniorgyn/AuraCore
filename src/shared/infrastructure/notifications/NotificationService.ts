@@ -298,6 +298,10 @@ export class NotificationService {
       // Schema usa nvarchar para userId
       const userIdString = typeof userId === 'string' ? userId : String(userId);
 
+      // MSSQL: Usar .orderBy().offset().fetch() ao invés de .limit()
+      // .limit() NÃO EXISTE em runtime no Drizzle MSSQL
+      // @see LC-BUG-026 - 03/02/2026
+      // @see src/lib/db/query-helpers.ts (documentação HOTFIX Sprint S3 v5)
       const query = db
         .select()
         .from(notifications)
@@ -311,9 +315,9 @@ export class NotificationService {
         )
         .orderBy(desc(notifications.createdAt));
 
-      // Type assertion for limit (Drizzle SQL Server pattern - BP-SQL-004)
-      type QueryWithLimit = { limit(n: number): Promise<unknown[]> };
-      const notificationsList = await (query as unknown as QueryWithLimit).limit(clampedLimit);
+      // MSSQL paginação: .offset(0).fetch(n) - pattern correto para SQL Server
+      type QueryWithOffsetFetch = { offset(n: number): { fetch(m: number): Promise<unknown[]> } };
+      const notificationsList = await (query as unknown as QueryWithOffsetFetch).offset(0).fetch(clampedLimit);
 
       return Result.ok(notificationsList);
     } catch (error) {
