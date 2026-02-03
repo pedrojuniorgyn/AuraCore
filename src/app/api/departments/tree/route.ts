@@ -48,7 +48,17 @@ export async function GET(request: NextRequest) {
     const tenantContext = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
-    const isActive = searchParams.get('active');
+    const isActiveParam = searchParams.get('active');
+
+    // Converter query param 'active' para boolean ou undefined
+    // - 'true' → true (apenas ativos)
+    // - 'false' → false (apenas inativos)
+    // - null/undefined/outros → undefined (todos)
+    const isActive = isActiveParam === 'true' 
+      ? true 
+      : isActiveParam === 'false' 
+        ? false 
+        : undefined;
 
     const repository = container.resolve<IDepartmentRepository>(
       TOKENS.DepartmentRepository
@@ -59,7 +69,7 @@ export async function GET(request: NextRequest) {
       organizationId: tenantContext.organizationId,
       branchId: tenantContext.branchId,
       parentId: null,
-      isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+      isActive,
     });
 
     // 2. Construir árvore recursiva para cada root
@@ -110,14 +120,14 @@ async function buildChildren(
   repository: IDepartmentRepository,
   organizationId: number,
   branchId: number,
-  isActive: string | null
+  isActive: boolean | undefined
 ): Promise<DepartmentTreeNode[]> {
   // Buscar children diretos
   const children = await repository.findAll({
     organizationId,
     branchId,
     parentId,
-    isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
+    isActive,
   });
 
   // Recursão: construir children de cada child

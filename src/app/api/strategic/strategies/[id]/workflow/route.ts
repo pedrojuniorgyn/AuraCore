@@ -199,16 +199,21 @@ export async function POST(
     } catch (historyError) {
       const errorMsg = historyError instanceof Error ? historyError.message : String(historyError);
       console.error('❌ Falha ao salvar histórico de aprovação:', errorMsg);
-      // Estratégia já foi salva - retornar warning mas não falhar request
-      return NextResponse.json({
-        success: true,
-        warning: 'Ação executada mas histórico não foi registrado',
-        data: {
-          strategyId: updatedStrategy.id,
-          workflowStatus: updatedStrategy.workflowStatus.value,
-          action,
+      // Estratégia já foi salva - retornar status 207 Multi-Status para indicar
+      // sucesso parcial. Clients DEVEM verificar partialSuccess e warning.
+      return NextResponse.json(
+        {
+          success: false,
+          partialSuccess: true,
+          warning: 'Ação executada mas histórico não foi registrado. Audit trail incompleto.',
+          data: {
+            strategyId: updatedStrategy.id,
+            workflowStatus: updatedStrategy.workflowStatus.value,
+            action,
+          },
         },
-      });
+        { status: 207 } // Multi-Status: indica que a request teve múltiplos resultados
+      );
     }
 
     return NextResponse.json({

@@ -15,8 +15,6 @@
 │   │   └── SPRINTS_2_3_4_COMPLETAS.md
 │   ├── reports
 │   │   ├── _work
-│   │   │   ├── diag_20260202.commands.log
-│   │   │   └── diag_20260202.tail2.log
 │   │   ├── DIAGNOSTICO_ARQUITETURAL_20260202.md
 │   │   ├── MARATONA_100_COMPLETA_FINAL.md
 │   │   ├── MARATONA_AURORA_100_PERCENT_COMPLETO.md
@@ -181,9 +179,52 @@
 │   │   ├── VERIFICACAO_AMBIENTE_SEFAZ.md
 │   │   ├── VERIFICACAO_ESTRUTURAS_PCC_PCG_CC.md
 │   │   └── VINCULO_INTELIGENCIA_FINANCEIRA_PCG_DFC.md
+│   ├── .DS_Store
 │   ├── 00_INDICE_MASTER.md
 │   ├── README.md
 │   └── REORGANIZACAO_2025-12-10.md
+├── .claude
+│   └── settings.local.json
+├── .cursor
+│   ├── rules
+│   │   ├── agent-selection.mdc
+│   │   └── regrasmcp.mdc
+│   └── .DS_Store
+├── .github
+│   ├── workflows
+│   │   ├── cd-deploy.yml
+│   │   ├── ci-build.yml
+│   │   ├── ci.yml
+│   │   └── release.yml
+│   ├── BRANCH_PROTECTION.md
+│   ├── CODEOWNERS
+│   ├── dependabot.yml
+│   └── pull_request_template.md
+├── .husky
+│   ├── _
+│   │   ├── .gitignore
+│   │   ├── applypatch-msg
+│   │   ├── commit-msg
+│   │   ├── h
+│   │   ├── husky.sh
+│   │   ├── post-applypatch
+│   │   ├── post-checkout
+│   │   ├── post-commit
+│   │   ├── post-merge
+│   │   ├── post-rewrite
+│   │   ├── pre-applypatch
+│   │   ├── pre-auto-gc
+│   │   ├── pre-commit
+│   │   ├── pre-merge-commit
+│   │   ├── pre-push
+│   │   ├── pre-rebase
+│   │   └── prepare-commit-msg
+│   └── pre-commit
+├── .storybook
+│   ├── main.ts
+│   └── preview.tsx
+├── .vscode
+│   └── settings.json
 ├── agents
 │   ├── data
 │   │   ├── logs
@@ -194,6 +235,7 @@
 │   │   │   └── webhooks.md
 │   │   ├── architecture
 │   │   │   ├── adr
+│   │   │   │   └── 001-fastapi.md
 │   │   │   └── README.md
 │   │   ├── deployment
 │   │   │   └── README.md
@@ -223,11 +265,27 @@
 │   ├── sdk
 │   │   ├── python
 │   │   │   ├── auracore
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── resources
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── cli.py
+│   │   │   │   ├── client.py
+│   │   │   │   ├── config.py
+│   │   │   │   ├── exceptions.py
+│   │   │   │   └── types.py
 │   │   │   ├── pyproject.toml
 │   │   │   └── README.md
 │   │   └── typescript
 │   │       ├── src
+│   │       │   ├── resources
+│   │       │   ├── client.ts
+│   │       │   ├── config.ts
+│   │       │   ├── errors.ts
+│   │       │   ├── index.ts
+│   │       │   └── types.ts
 │   │       ├── tests
+│   │       │   └── client.test.ts
+│   │       ├── .gitignore
 │   │       ├── package-lock.json
 │   │       ├── package.json
 │   │       ├── README.md
@@ -241,6 +299,15 @@
 │   │   │   └── main.cpython-313.pyc
 │   │   ├── agents
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── accounting.cpython-313.pyc
+│   │   │   │   ├── crm.cpython-313.pyc
+│   │   │   │   ├── financial.cpython-313.pyc
+│   │   │   │   ├── fiscal.cpython-313.pyc
+│   │   │   │   ├── fleet.cpython-313.pyc
+│   │   │   │   ├── qa.cpython-313.pyc
+│   │   │   │   ├── strategic.cpython-313.pyc
+│   │   │   │   └── tms.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── accounting.py
 │   │   │   ├── crm.py
@@ -252,7 +319,27 @@
 │   │   │   └── tms.py
 │   │   ├── api
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── analytics.cpython-313.pyc
+│   │   │   │   ├── audit.cpython-313.pyc
+│   │   │   │   ├── auth.cpython-313.pyc
+│   │   │   │   ├── cache.cpython-313.pyc
+│   │   │   │   ├── health.cpython-313.pyc
+│   │   │   │   ├── integrations.cpython-313.pyc
+│   │   │   │   ├── knowledge.cpython-313.pyc
+│   │   │   │   ├── locales.cpython-313.pyc
+│   │   │   │   ├── observability.cpython-313.pyc
+│   │   │   │   ├── openapi.cpython-313.pyc
+│   │   │   │   ├── push.cpython-313.pyc
+│   │   │   │   ├── tasks.cpython-313.pyc
+│   │   │   │   ├── voice.cpython-313.pyc
+│   │   │   │   └── webhooks.cpython-313.pyc
 │   │   │   ├── routes
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── agents.py
+│   │   │   │   ├── chat.py
+│   │   │   │   └── health.py
 │   │   │   ├── __init__.py
 │   │   │   ├── analytics.py
 │   │   │   ├── audit.py
@@ -270,6 +357,12 @@
 │   │   │   └── webhooks.py
 │   │   ├── core
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── base.cpython-313.pyc
+│   │   │   │   ├── guardrails.cpython-313.pyc
+│   │   │   │   ├── health.cpython-313.pyc
+│   │   │   │   ├── observability.cpython-313.pyc
+│   │   │   │   └── orchestrator.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── base.py
 │   │   │   ├── guardrails.py
@@ -278,11 +371,19 @@
 │   │   │   └── orchestrator.py
 │   │   ├── integrations
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── auracore_client.cpython-313.pyc
+│   │   │   │   └── mcp_bridge.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── auracore_client.py
 │   │   │   └── mcp_bridge.py
 │   │   ├── middleware
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── audit.cpython-313.pyc
+│   │   │   │   ├── auth.cpython-313.pyc
+│   │   │   │   ├── locale.cpython-313.pyc
+│   │   │   │   └── rate_limit.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── audit.py
 │   │   │   ├── auth.py
@@ -290,29 +391,143 @@
 │   │   │   └── rate_limit.py
 │   │   ├── services
 │   │   │   ├── __pycache__
+│   │   │   │   └── __init__.cpython-313.pyc
 │   │   │   ├── analytics
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── analytics_service.py
+│   │   │   │   ├── event_tracker.py
+│   │   │   │   ├── events.py
+│   │   │   │   └── usage_aggregator.py
 │   │   │   ├── audit
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── audit_events.py
+│   │   │   │   ├── audit_service.py
+│   │   │   │   ├── audit_storage.py
+│   │   │   │   └── compliance.py
 │   │   │   ├── auth
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── api_key.py
+│   │   │   │   ├── audit.py
+│   │   │   │   ├── jwt_service.py
+│   │   │   │   ├── password.py
+│   │   │   │   └── permissions.py
 │   │   │   ├── cache
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── cache_keys.py
+│   │   │   │   ├── decorators.py
+│   │   │   │   └── redis_cache.py
 │   │   │   ├── document_processing
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── dacte_extractor.py
+│   │   │   │   ├── danfe_extractor.py
+│   │   │   │   └── docling_processor.py
 │   │   │   ├── i18n
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── translations
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── locales.py
+│   │   │   │   ├── messages.py
+│   │   │   │   └── translator.py
 │   │   │   ├── integrations
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── providers
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── base.py
+│   │   │   │   └── integration_hub.py
 │   │   │   ├── knowledge
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── document_indexer.py
+│   │   │   │   ├── embedding_service.py
+│   │   │   │   ├── rag_pipeline.py
+│   │   │   │   └── vector_store.py
 │   │   │   ├── pwa
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── push_notifications.py
+│   │   │   │   └── subscription_manager.py
 │   │   │   ├── tasks
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── task_definitions.py
+│   │   │   │   ├── task_queue.py
+│   │   │   │   ├── task_scheduler.py
+│   │   │   │   └── task_worker.py
 │   │   │   ├── voice
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── speech_to_text.py
+│   │   │   │   ├── text_to_speech.py
+│   │   │   │   └── voice_processor.py
 │   │   │   ├── webhooks
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── webhook_delivery.py
+│   │   │   │   ├── webhook_events.py
+│   │   │   │   └── webhook_service.py
 │   │   │   └── __init__.py
 │   │   ├── tools
 │   │   │   ├── __pycache__
+│   │   │   │   └── __init__.cpython-313.pyc
 │   │   │   ├── accounting
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── account_reconciliation.py
+│   │   │   │   ├── journal_entry_generator.py
+│   │   │   │   └── period_closing.py
 │   │   │   ├── crm
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── customer_health.py
+│   │   │   │   ├── lead_scorer.py
+│   │   │   │   └── proposal_generator.py
 │   │   │   ├── financial
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── forecast_cashflow.py
+│   │   │   │   ├── reconcile_bank.py
+│   │   │   │   └── suggest_payments.py
 │   │   │   ├── fiscal
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── calculate_icms.py
+│   │   │   │   ├── check_nfe.py
+│   │   │   │   ├── document_importer.py
+│   │   │   │   ├── legislation_rag.py
+│   │   │   │   ├── query_legislation.py
+│   │   │   │   ├── simulate_tax.py
+│   │   │   │   └── validate_cte.py
 │   │   │   ├── fleet
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── document_tracker.py
+│   │   │   │   ├── fuel_monitor.py
+│   │   │   │   └── maintenance_scheduler.py
 │   │   │   ├── qa
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── code_analyzer.py
+│   │   │   │   ├── component_scanner.py
+│   │   │   │   ├── report_generator.py
+│   │   │   │   └── visual_auditor.py
 │   │   │   ├── strategic
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── bsc_dashboard.py
+│   │   │   │   ├── kpi_analyzer.py
+│   │   │   │   ├── pdca_tracker.py
+│   │   │   │   └── war_room.py
 │   │   │   ├── tms
+│   │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── delivery_scheduler.py
+│   │   │   │   ├── route_optimizer.py
+│   │   │   │   └── tracking.py
 │   │   │   └── __init__.py
 │   │   ├── __init__.py
 │   │   ├── config.py
@@ -323,15 +538,26 @@
 │   │   │   └── conftest.cpython-313.pyc
 │   │   ├── agents
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── test_fiscal_agent.cpython-313.pyc
+│   │   │   │   └── test_orchestrator.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── test_fiscal_agent.py
 │   │   │   └── test_orchestrator.py
 │   │   ├── api
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   └── test_voice_api.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   └── test_voice_api.py
 │   │   ├── e2e
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── test_agents_api.cpython-313.pyc
+│   │   │   │   ├── test_analytics_api.cpython-313.pyc
+│   │   │   │   ├── test_audit_api.cpython-313.pyc
+│   │   │   │   ├── test_rag_api.cpython-313.pyc
+│   │   │   │   └── test_voice_api.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── test_agents_api.py
 │   │   │   ├── test_analytics_api.py
@@ -340,31 +566,50 @@
 │   │   │   └── test_voice_api.py
 │   │   ├── fixtures
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── agents.cpython-313.pyc
+│   │   │   │   ├── auth.cpython-313.pyc
+│   │   │   │   └── documents.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── agents.py
 │   │   │   ├── auth.py
 │   │   │   └── documents.py
 │   │   ├── integration
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── test_agent_flow.cpython-313.pyc
+│   │   │   │   └── test_document_processing.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── test_agent_flow.py
 │   │   │   └── test_document_processing.py
 │   │   ├── load
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   └── test_api_load.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   └── test_api_load.py
 │   │   ├── services
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── test_document_processing.cpython-313.pyc
+│   │   │   │   ├── test_knowledge.cpython-313.pyc
+│   │   │   │   └── test_voice_services.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── test_document_processing.py
 │   │   │   ├── test_knowledge.py
 │   │   │   └── test_voice_services.py
 │   │   ├── unit
 │   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   └── test_agents.cpython-313.pyc
 │   │   │   ├── __init__.py
 │   │   │   └── test_agents.py
 │   │   ├── __init__.py
 │   │   └── conftest.py
+│   ├── .dockerignore
+│   ├── .DS_Store
+│   ├── .env.example
+│   ├── .gitignore
 │   ├── CHANGELOG.md
 │   ├── CONTRIBUTING.md
 │   ├── docker-compose.coolify.yml
@@ -378,69 +623,6 @@
 │   ├── pyproject.toml
 │   ├── pytest.ini
 │   └── README.md
-├── coverage
-│   ├── lcov-report
-│   │   ├── modules
-│   │   │   ├── accounting
-│   │   │   ├── financial
-│   │   │   ├── fiscal
-│   │   │   ├── integrations
-│   │   │   ├── tms
-│   │   │   └── wms
-│   │   ├── shared
-│   │   │   ├── domain
-│   │   │   └── infrastructure
-│   │   ├── base.css
-│   │   ├── block-navigation.js
-│   │   ├── favicon.png
-│   │   ├── index.html
-│   │   ├── prettify.css
-│   │   ├── prettify.js
-│   │   ├── sort-arrow-sprite.png
-│   │   └── sorter.js
-│   ├── modules
-│   │   ├── accounting
-│   │   │   ├── application
-│   │   │   ├── domain
-│   │   │   ├── infrastructure
-│   │   │   └── presentation
-│   │   ├── financial
-│   │   │   ├── application
-│   │   │   ├── domain
-│   │   │   ├── infrastructure
-│   │   │   └── presentation
-│   │   ├── fiscal
-│   │   │   ├── application
-│   │   │   ├── domain
-│   │   │   └── infrastructure
-│   │   ├── integrations
-│   │   │   ├── domain
-│   │   │   └── infrastructure
-│   │   ├── tms
-│   │   │   ├── domain
-│   │   │   └── infrastructure
-│   │   └── wms
-│   │       ├── application
-│   │       ├── domain
-│   │       └── infrastructure
-│   ├── shared
-│   │   ├── domain
-│   │   │   ├── entities
-│   │   │   ├── errors
-│   │   │   ├── events
-│   │   │   ├── types
-│   │   │   └── value-objects
-│   │   └── infrastructure
-│   │       └── di
-│   ├── base.css
-│   ├── block-navigation.js
-│   ├── favicon.png
-│   ├── index.html
-│   ├── lcov.info
-│   ├── prettify.css
-│   ├── prettify.js
-│   ├── sort-arrow-sprite.png
-│   └── sorter.js
 ├── cursor
 │   └── rules
 │       └── regrasmcp.mdc
@@ -448,21 +630,27 @@
 │   └── knowledge
 │       └── legislation
 │           ├── cte
+│           │   └── conhecimento_transporte.md
 │           ├── icms
+│           │   └── lei_kandir.md
 │           ├── pis_cofins
+│           │   └── regime_nao_cumulativo.md
 │           └── reforma_2026
+│               └── ibs_cbs.md
 ├── docker
 │   ├── chroma
 │   │   └── docker-compose.yml
-│   └── docling
-│       ├── app
-│       │   ├── __init__.py
-│       │   ├── main.py
-│       │   └── processor.py
-│       ├── uploads
-│       ├── docker-compose.yml
-│       ├── Dockerfile
-│       └── requirements.txt
+│   ├── docling
+│   │   ├── app
+│   │   │   ├── __init__.py
+│   │   │   ├── main.py
+│   │   │   └── processor.py
+│   │   ├── uploads
+│   │   │   └── .gitkeep
+│   │   ├── docker-compose.yml
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   └── .DS_Store
 ├── docs
 │   ├── agent
 │   │   ├── ENV_VARIABLES.md
@@ -527,6 +715,12 @@
 │   │   │   └── STATE_FISCAL_ACCOUNTING_FINANCIAL.md
 │   │   ├── domains
 │   │   │   ├── strategic
+│   │   │   │   ├── domain-services.md
+│   │   │   │   ├── entities.md
+│   │   │   │   ├── events.md
+│   │   │   │   ├── integrations.md
+│   │   │   │   ├── README.md
+│   │   │   │   └── value-objects.md
 │   │   │   ├── ADMIN.md
 │   │   │   ├── AUDITORIA_V2.md
 │   │   │   ├── CONTABIL.md
@@ -542,6 +736,7 @@
 │   │   │   ├── RUNBOOK_INCIDENTS.md
 │   │   │   ├── RUNBOOK_MIGRATIONS_SEEDS.md
 │   │   │   └── RUNBOOK_SQLSERVER_2022.md
+│   │   ├── .DS_Store
 │   │   ├── E7_DDD_HEXAGONAL.md
 │   │   ├── GLOSSARY.md
 │   │   ├── INDEX.md
@@ -558,7 +753,11 @@
 │   ├── database
 │   │   ├── migrations
 │   │   │   ├── manual
+│   │   │   │   ├── e13-enable-query-store.sql
+│   │   │   │   ├── e13-indexes-batch1-financial.sql
+│   │   │   │   └── e13-indexes-batch2-fiscal.sql
 │   │   │   └── rollback
+│   │   │       └── e13-rollback-indexes.sql
 │   │   └── queries
 │   │       └── e13-top-queries.sql
 │   ├── debito-tecnico
@@ -600,6 +799,7 @@
 │   ├── modules
 │   │   └── strategic
 │   │       ├── PROMPTS
+│   │       │   └── README.md
 │   │       ├── API.md
 │   │       ├── ARCHITECTURE.md
 │   │       ├── BENCHMARKS.md
@@ -644,6 +844,7 @@
 │   │   └── SCHEMA_GAPS_E8.4.md
 │   ├── testing
 │   │   └── E7.11_TEST_INFRASTRUCTURE.md
+│   ├── .DS_Store
 │   ├── ACAO_CORRETIVA_TYPESCRIPT.md
 │   ├── BUG_REPORT_PROMPTS_1_27.md
 │   ├── BUSINESS_PARTNERS_MODULE.md
@@ -684,34 +885,9 @@
 │   │   ├── pdca.spec.ts
 │   │   ├── reports.spec.ts
 │   │   └── workflow-approval.spec.ts
+│   ├── .DS_Store
 │   └── tsconfig.json
 ├── mcp-server
-│   ├── coverage
-│   │   ├── resources
-│   │   │   ├── adrs.ts.html
-│   │   │   ├── contracts.ts.html
-│   │   │   └── index.html
-│   │   ├── tools
-│   │   │   ├── check-compliance.ts.html
-│   │   │   ├── check-cursor-issues.ts.html
-│   │   │   ├── get-contract-tool.ts.html
-│   │   │   ├── get-epic-status.ts.html
-│   │   │   ├── index.html
-│   │   │   ├── propose-pattern.ts.html
-│   │   │   ├── search-patterns.ts.html
-│   │   │   └── validate-code.ts.html
-│   │   ├── utils
-│   │   │   ├── index.html
-│   │   │   └── sanitize.ts.html
-│   │   ├── base.css
-│   │   ├── block-navigation.js
-│   │   ├── coverage-final.json
-│   │   ├── favicon.png
-│   │   ├── index.html
-│   │   ├── prettify.css
-│   │   ├── prettify.js
-│   │   ├── sort-arrow-sprite.png
-│   │   └── sorter.js
 │   ├── knowledge
 │   │   ├── adrs
 │   │   │   ├── 0001-sqlserver-only.json
@@ -848,9 +1024,14 @@
 │   │   │   ├── s1-1-corrections.json
 │   │   │   ├── s3-corrections.json
 │   │   │   └── smp-api-err-001-corrections.json
-│   │   └── patterns
-│   │       ├── approved
-│   │       └── proposed
+│   │   ├── patterns
+│   │   │   ├── approved
+│   │   │   │   ├── error-handling-unknown.json
+│   │   │   │   ├── repository-pattern.json
+│   │   │   │   └── sql-query-typing.json
+│   │   │   └── proposed
+│   │   │       └── enterprise-best-practices-gaps.json
+│   │   └── .DS_Store
 │   ├── scripts
 │   │   ├── exemplo-extrato.ofx
 │   │   └── test-bank-statement.ts
@@ -912,6 +1093,7 @@
 │   │   │   └── validate-schema.ts
 │   │   ├── utils
 │   │   │   └── sanitize.ts
+│   │   ├── .DS_Store
 │   │   ├── index.ts
 │   │   └── server.ts
 │   ├── tests
@@ -944,6 +1126,8 @@
 │   │       ├── validate-code.test.ts
 │   │       ├── validate-fiscal-compliance.test.ts
 │   │       └── validate-schema.test.ts
+│   ├── .DS_Store
+│   ├── .gitignore
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── README.md
@@ -964,10 +1148,13 @@
 │   │   │   └── voice-interface.json
 │   │   └── provisioning
 │   │       ├── dashboards
+│   │       │   └── dashboards.yml
 │   │       └── datasources
+│   │           └── datasources.yml
 │   ├── prometheus
 │   │   ├── alerts.yml
 │   │   └── prometheus.yml
+│   ├── .DS_Store
 │   ├── docker-compose.yml
 │   ├── README.md
 │   ├── start.sh
@@ -988,6 +1175,7 @@
 │   │   ├── query-store-setup.sql
 │   │   ├── retention-policies-setup.sql
 │   │   └── verify-branch-id.sql
+│   ├── .DS_Store
 │   ├── add-product-fields.sql
 │   ├── analyze-frontend.sh
 │   ├── apply-dark-theme-all-grids.sh
@@ -1056,22 +1244,41 @@
 │   │   │   └── VoiceEnabledAgent.ts
 │   │   ├── integrations
 │   │   │   ├── auracore
+│   │   │   │   └── index.ts
 │   │   │   ├── google
+│   │   │   │   ├── GoogleCloudClient.ts
+│   │   │   │   ├── GoogleWorkspaceClient.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── types.ts
 │   │   │   └── index.ts
 │   │   ├── observability
 │   │   │   ├── AgentLogger.ts
 │   │   │   └── index.ts
 │   │   ├── persistence
 │   │   │   ├── schemas
+│   │   │   │   ├── agent-messages.schema.ts
+│   │   │   │   ├── agent-sessions.schema.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── index.ts
 │   │   │   └── SessionStore.ts
 │   │   ├── tools
 │   │   │   ├── base
+│   │   │   │   ├── BaseTool.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── financial
+│   │   │   │   └── index.ts
 │   │   │   ├── fiscal
+│   │   │   │   ├── CalculateTaxTool.ts
+│   │   │   │   ├── ConsultSPEDTool.ts
+│   │   │   │   ├── ImportNFeTool.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── tms
+│   │   │   │   └── index.ts
 │   │   │   ├── wms
+│   │   │   │   └── index.ts
 │   │   │   ├── workspace
+│   │   │   │   ├── index.ts
+│   │   │   │   └── SearchEmailTool.ts
 │   │   │   └── index.ts
 │   │   ├── voice
 │   │   │   ├── index.ts
@@ -1086,74 +1293,391 @@
 │   │   └── index.ts
 │   ├── app
 │   │   ├── (auth)
-│   │   │   └── login
+│   │   │   ├── login
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── user-auth-form.tsx
+│   │   │   └── .DS_Store
 │   │   ├── (dashboard)
 │   │   │   ├── agents
+│   │   │   │   └── page.tsx
 │   │   │   ├── auditoria
+│   │   │   │   └── page.tsx
 │   │   │   ├── cadastros
+│   │   │   │   ├── filiais
+│   │   │   │   ├── parceiros
+│   │   │   │   └── produtos
 │   │   │   ├── comercial
+│   │   │   │   ├── cotacoes
+│   │   │   │   ├── crm
+│   │   │   │   ├── propostas
+│   │   │   │   ├── simulador
+│   │   │   │   └── tabelas-frete
 │   │   │   ├── configuracoes
+│   │   │   │   ├── backoffice
+│   │   │   │   ├── certificado
+│   │   │   │   ├── documentos
+│   │   │   │   ├── enterprise
+│   │   │   │   ├── filiais
+│   │   │   │   ├── fiscal
+│   │   │   │   ├── operacoes
+│   │   │   │   ├── usuarios
+│   │   │   │   └── page.tsx
 │   │   │   ├── financeiro
+│   │   │   │   ├── btg-dashboard
+│   │   │   │   ├── btg-testes
+│   │   │   │   ├── categorias
+│   │   │   │   ├── centros-custo
+│   │   │   │   ├── conciliacao
+│   │   │   │   ├── contas-pagar
+│   │   │   │   ├── contas-receber
+│   │   │   │   ├── dda
+│   │   │   │   ├── dre
+│   │   │   │   ├── dre-dashboard
+│   │   │   │   ├── faturamento
+│   │   │   │   ├── fluxo-caixa
+│   │   │   │   ├── impostos-recuperaveis
+│   │   │   │   ├── intercompany
+│   │   │   │   ├── pcg-ncm-rules
+│   │   │   │   ├── plano-contas
+│   │   │   │   ├── radar-dda
+│   │   │   │   └── remessas
 │   │   │   ├── fiscal
+│   │   │   │   ├── ciap
+│   │   │   │   ├── creditos-tributarios
+│   │   │   │   ├── cte
+│   │   │   │   ├── documentos
+│   │   │   │   ├── entrada-notas
+│   │   │   │   ├── matriz-tributaria
+│   │   │   │   ├── ncm-categorias
+│   │   │   │   ├── sped
+│   │   │   │   ├── upload-xml
+│   │   │   │   └── page.tsx
 │   │   │   ├── frota
+│   │   │   │   ├── documentacao
+│   │   │   │   ├── manutencao
+│   │   │   │   ├── motoristas
+│   │   │   │   ├── pneus
+│   │   │   │   └── veiculos
 │   │   │   ├── gerencial
+│   │   │   │   ├── centros-custo-3d
+│   │   │   │   ├── dre
+│   │   │   │   └── plano-contas
 │   │   │   ├── operacional
+│   │   │   │   ├── margem-cte
+│   │   │   │   └── sinistros
 │   │   │   ├── perfil
+│   │   │   │   └── page.tsx
 │   │   │   ├── rh
+│   │   │   │   └── motoristas
 │   │   │   ├── strategic
+│   │   │   │   ├── achievements
+│   │   │   │   ├── action-plans
+│   │   │   │   ├── analytics
+│   │   │   │   ├── audit
+│   │   │   │   ├── audit-log
+│   │   │   │   ├── dashboard
+│   │   │   │   ├── goals
+│   │   │   │   ├── ideas
+│   │   │   │   ├── integrations
+│   │   │   │   ├── kpis
+│   │   │   │   ├── leaderboard
+│   │   │   │   ├── map
+│   │   │   │   ├── okrs
+│   │   │   │   ├── pdca
+│   │   │   │   ├── reports
+│   │   │   │   ├── settings
+│   │   │   │   ├── strategies
+│   │   │   │   ├── swot
+│   │   │   │   ├── templates
+│   │   │   │   ├── war-room
+│   │   │   │   ├── workflow
+│   │   │   │   ├── .DS_Store
+│   │   │   │   ├── layout.tsx
+│   │   │   │   └── page.tsx
 │   │   │   ├── sustentabilidade
+│   │   │   │   └── carbono
 │   │   │   ├── tms
+│   │   │   │   ├── cockpit
+│   │   │   │   ├── ocorrencias
+│   │   │   │   ├── repositorio-cargas
+│   │   │   │   ├── torre-controle
+│   │   │   │   └── viagens
 │   │   │   ├── wms
+│   │   │   │   ├── enderecos
+│   │   │   │   ├── faturamento
+│   │   │   │   └── inventario
 │   │   │   ├── layout.tsx
 │   │   │   └── page.tsx
 │   │   ├── api
 │   │   │   ├── accounting
+│   │   │   │   └── journal-entries
 │   │   │   ├── admin
+│   │   │   │   ├── add-fiscal-fk-columns
+│   │   │   │   ├── audit
+│   │   │   │   ├── branches
+│   │   │   │   ├── cache
+│   │   │   │   ├── check-chart-accounts
+│   │   │   │   ├── check-deleted-documents
+│   │   │   │   ├── check-environment
+│   │   │   │   ├── clean-fiscal-complete
+│   │   │   │   ├── clean-fiscal-tables
+│   │   │   │   ├── clean-mock-data
+│   │   │   │   ├── debug-sefaz
+│   │   │   │   ├── debug-sefaz-response
+│   │   │   │   ├── diagnostics
+│   │   │   │   ├── fix-accounting-userid-columns
+│   │   │   │   ├── fix-branch-index
+│   │   │   │   ├── fix-environment
+│   │   │   │   ├── fix-fiscal-matrix
+│   │   │   │   ├── fix-partners-from-bp
+│   │   │   │   ├── force-auto-import
+│   │   │   │   ├── list-ncm-categories
+│   │   │   │   ├── migrate-fiscal-data
+│   │   │   │   ├── migrate-fiscal-data-v2
+│   │   │   │   ├── migrate-nfe-only
+│   │   │   │   ├── migrations
+│   │   │   │   ├── ops
+│   │   │   │   ├── performance
+│   │   │   │   ├── reset-nsu-homologacao
+│   │   │   │   ├── retention
+│   │   │   │   ├── roles
+│   │   │   │   ├── run-accounting-migration
+│   │   │   │   ├── run-banking-migration
+│   │   │   │   ├── run-btg-migration
+│   │   │   │   ├── run-dda-migration
+│   │   │   │   ├── run-enterprise-migration
+│   │   │   │   ├── run-enterprise-seed
+│   │   │   │   ├── run-external-ctes-migration
+│   │   │   │   ├── run-final-migration
+│   │   │   │   ├── run-migration-021
+│   │   │   │   ├── run-migration-022
+│   │   │   │   ├── run-ncm-migration
+│   │   │   │   ├── run-notifications-migration
+│   │   │   │   ├── seed-accounting
+│   │   │   │   ├── seed-enterprise-accounts
+│   │   │   │   ├── seed-ncm-categories
+│   │   │   │   ├── test-classification
+│   │   │   │   ├── test-fiscal-fk
+│   │   │   │   ├── test-import-nfe
+│   │   │   │   ├── update-fiscal-partners
+│   │   │   │   ├── update-nsu
+│   │   │   │   └── users
 │   │   │   ├── agent
+│   │   │   │   ├── chat
+│   │   │   │   ├── sessions
+│   │   │   │   └── voice
 │   │   │   ├── agents
+│   │   │   │   ├── chat
+│   │   │   │   ├── documents
+│   │   │   │   ├── health
+│   │   │   │   ├── rag
+│   │   │   │   ├── voice
+│   │   │   │   └── route.ts
 │   │   │   ├── auth
+│   │   │   │   ├── [...nextauth]
+│   │   │   │   └── permissions
 │   │   │   ├── backoffice
+│   │   │   │   ├── accounts
+│   │   │   │   └── cost-centers
 │   │   │   ├── branches
+│   │   │   │   ├── [id]
+│   │   │   │   └── route.ts
 │   │   │   ├── btg
+│   │   │   │   ├── boletos
+│   │   │   │   ├── dda
+│   │   │   │   ├── health
+│   │   │   │   ├── payments
+│   │   │   │   ├── pix
+│   │   │   │   └── webhook
 │   │   │   ├── business-partners
+│   │   │   │   ├── [id]
+│   │   │   │   └── route.ts
 │   │   │   ├── ciap
+│   │   │   │   ├── [id]
+│   │   │   │   ├── appropriate
+│   │   │   │   ├── assets
+│   │   │   │   └── sped-block-g
 │   │   │   ├── claims
+│   │   │   │   ├── [id]
+│   │   │   │   └── route.ts
 │   │   │   ├── comercial
+│   │   │   │   ├── crm
+│   │   │   │   ├── freight-tables
+│   │   │   │   └── proposals
 │   │   │   ├── commercial
+│   │   │   │   ├── calculate
+│   │   │   │   ├── freight-tables
+│   │   │   │   └── quotes
 │   │   │   ├── contracts
+│   │   │   │   └── freight
 │   │   │   ├── cost-centers
+│   │   │   │   └── 3d
 │   │   │   ├── dashboard
+│   │   │   │   └── stats
 │   │   │   ├── departments
+│   │   │   │   ├── seed
+│   │   │   │   ├── tree
+│   │   │   │   └── route.ts
 │   │   │   ├── docs
+│   │   │   │   └── route.ts
 │   │   │   ├── documents
+│   │   │   │   └── jobs
 │   │   │   ├── esg
+│   │   │   │   ├── batch-calculate
+│   │   │   │   └── emissions
 │   │   │   ├── financial
+│   │   │   │   ├── bank-accounts
+│   │   │   │   ├── bank-statement
+│   │   │   │   ├── bank-transactions
+│   │   │   │   ├── billing
+│   │   │   │   ├── cash-flow
+│   │   │   │   ├── categories
+│   │   │   │   ├── chart-accounts
+│   │   │   │   ├── chart-of-accounts
+│   │   │   │   ├── cost-centers
+│   │   │   │   ├── dda
+│   │   │   │   ├── payables
+│   │   │   │   ├── receivables
+│   │   │   │   ├── remittances
+│   │   │   │   ├── reports
+│   │   │   │   ├── tax-credits
+│   │   │   │   └── .DS_Store
 │   │   │   ├── fiscal
+│   │   │   │   ├── chart-of-accounts
+│   │   │   │   ├── cte
+│   │   │   │   ├── documents
+│   │   │   │   ├── import
+│   │   │   │   ├── legislation
+│   │   │   │   ├── mdfe
+│   │   │   │   ├── ncm-categories
+│   │   │   │   ├── nfe
+│   │   │   │   ├── settings
+│   │   │   │   ├── simulate
+│   │   │   │   ├── tax-matrix
+│   │   │   │   └── tax-reform
 │   │   │   ├── fleet
+│   │   │   │   ├── documents
+│   │   │   │   ├── drivers
+│   │   │   │   ├── fuel
+│   │   │   │   ├── maintenance
+│   │   │   │   ├── maintenance-plans
+│   │   │   │   ├── tires
+│   │   │   │   └── vehicles
 │   │   │   ├── health
+│   │   │   │   ├── embeddings
+│   │   │   │   ├── wms
+│   │   │   │   └── route.ts
 │   │   │   ├── hr
+│   │   │   │   └── driver-journey
 │   │   │   ├── intercompany
+│   │   │   │   └── allocations
 │   │   │   ├── knowledge
+│   │   │   │   ├── search
+│   │   │   │   └── stats
 │   │   │   ├── management
+│   │   │   │   ├── allocate
+│   │   │   │   ├── chart-accounts
+│   │   │   │   └── dre
 │   │   │   ├── notifications
+│   │   │   │   ├── [id]
+│   │   │   │   ├── count
+│   │   │   │   └── route.ts
 │   │   │   ├── pcg-ncm-rules
+│   │   │   │   ├── [id]
+│   │   │   │   ├── fiscal-flags
+│   │   │   │   └── route.ts
 │   │   │   ├── products
+│   │   │   │   ├── [id]
+│   │   │   │   └── route.ts
 │   │   │   ├── reports
+│   │   │   │   ├── cte-margin
+│   │   │   │   └── export
 │   │   │   ├── seed
+│   │   │   │   └── route.ts
 │   │   │   ├── sefaz
+│   │   │   │   ├── download-nfes
+│   │   │   │   ├── process-saved-xml
+│   │   │   │   ├── test-connection
+│   │   │   │   └── upload-xml
 │   │   │   ├── sped
+│   │   │   │   ├── contributions
+│   │   │   │   ├── ecd
+│   │   │   │   └── fiscal
 │   │   │   ├── strategic
+│   │   │   │   ├── achievements
+│   │   │   │   ├── action-plans
+│   │   │   │   ├── activity
+│   │   │   │   ├── alerts
+│   │   │   │   ├── analytics
+│   │   │   │   ├── anomalies
+│   │   │   │   ├── audit
+│   │   │   │   ├── audit-history
+│   │   │   │   ├── audit-log
+│   │   │   │   ├── chat
+│   │   │   │   ├── comments
+│   │   │   │   ├── control-items
+│   │   │   │   ├── dashboard
+│   │   │   │   ├── dashboards
+│   │   │   │   ├── export
+│   │   │   │   ├── goals
+│   │   │   │   ├── ideas
+│   │   │   │   ├── import
+│   │   │   │   ├── integrations
+│   │   │   │   ├── kpis
+│   │   │   │   ├── leaderboard
+│   │   │   │   ├── map
+│   │   │   │   ├── notifications
+│   │   │   │   ├── okrs
+│   │   │   │   ├── onboarding
+│   │   │   │   ├── pdca
+│   │   │   │   ├── permissions
+│   │   │   │   ├── points
+│   │   │   │   ├── reports
+│   │   │   │   ├── roles
+│   │   │   │   ├── search
+│   │   │   │   ├── settings
+│   │   │   │   ├── standard-procedures
+│   │   │   │   ├── strategies
+│   │   │   │   ├── swot
+│   │   │   │   ├── templates
+│   │   │   │   ├── users
+│   │   │   │   ├── verification-items
+│   │   │   │   ├── war-room
+│   │   │   │   ├── webhooks
+│   │   │   │   ├── workflow
+│   │   │   │   ├── .DS_Store
+│   │   │   │   └── README.md
 │   │   │   ├── tax
+│   │   │   │   └── credits
 │   │   │   ├── tenant
+│   │   │   │   └── branch
 │   │   │   ├── tms
+│   │   │   │   ├── cargo-repository
+│   │   │   │   ├── cockpit
+│   │   │   │   ├── control-tower
+│   │   │   │   ├── drivers
+│   │   │   │   ├── occurrences
+│   │   │   │   ├── pickup-orders
+│   │   │   │   └── trips
 │   │   │   ├── users
+│   │   │   │   └── [id]
 │   │   │   ├── v2
+│   │   │   │   └── financial
 │   │   │   ├── voice
-│   │   │   └── wms
+│   │   │   │   └── process
+│   │   │   ├── wms
+│   │   │   │   ├── billing-events
+│   │   │   │   ├── inventory
+│   │   │   │   ├── locations
+│   │   │   │   ├── movements
+│   │   │   │   ├── pre-invoices
+│   │   │   │   └── stock
+│   │   │   └── .DS_Store
 │   │   ├── docs
 │   │   │   └── page.tsx
 │   │   ├── logout
 │   │   │   └── page.tsx
+│   │   ├── .DS_Store
 │   │   ├── global-error.tsx
 │   │   ├── globals.css
 │   │   ├── layout.tsx
@@ -1173,6 +1697,7 @@
 │   │   │   └── index.ts
 │   │   ├── ag-grid
 │   │   │   └── renderers
+│   │   │       └── aurora-renderers.tsx
 │   │   ├── agent
 │   │   │   ├── ChatInterface.tsx
 │   │   │   ├── ChatMessage.tsx
@@ -1239,19 +1764,111 @@
 │   │   │   └── OperationalAIWidget.tsx
 │   │   ├── strategic
 │   │   │   ├── analytics
+│   │   │   │   ├── EngagementChart.tsx
+│   │   │   │   ├── EngagementHeatmap.tsx
+│   │   │   │   ├── FeatureUsageChart.tsx
+│   │   │   │   ├── FunnelChart.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── PredictiveInsights.tsx
+│   │   │   │   └── UsageMetrics.tsx
 │   │   │   ├── audit
+│   │   │   │   ├── AuditFilters.tsx
+│   │   │   │   ├── AuditTimeline.tsx
+│   │   │   │   ├── ChangeComparison.tsx
+│   │   │   │   ├── EntityHistory.tsx
+│   │   │   │   └── index.ts
 │   │   │   ├── comments
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── ReactionPicker.tsx
+│   │   │   │   └── ThreadView.tsx
 │   │   │   ├── dashboard
+│   │   │   │   ├── widgets
+│   │   │   │   ├── DashboardBuilder.tsx
+│   │   │   │   ├── DashboardGrid.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── SaveLayoutModal.tsx
+│   │   │   │   ├── WidgetConfig.tsx
+│   │   │   │   ├── WidgetLibrary.tsx
+│   │   │   │   └── WidgetWrapper.tsx
 │   │   │   ├── dashboard-showcase
+│   │   │   │   ├── AIInsightsCard.tsx
+│   │   │   │   ├── AlertsCard.tsx
+│   │   │   │   ├── HealthScoreCard.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── MetricCard.tsx
+│   │   │   │   ├── PerspectivesCard.tsx
+│   │   │   │   ├── PlansCard.tsx
+│   │   │   │   └── QuickActionsCard.tsx
 │   │   │   ├── export
+│   │   │   │   ├── ExportModal.tsx
+│   │   │   │   ├── ImportMapping.tsx
+│   │   │   │   ├── ImportPreview.tsx
+│   │   │   │   ├── ImportWizard.tsx
+│   │   │   │   └── index.ts
 │   │   │   ├── gamification
+│   │   │   │   ├── AchievementCard.tsx
+│   │   │   │   ├── AchievementUnlock.tsx
+│   │   │   │   ├── BadgeDisplay.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── Leaderboard.tsx
+│   │   │   │   ├── LevelProgress.tsx
+│   │   │   │   ├── PointsCounter.tsx
+│   │   │   │   ├── StreakTracker.tsx
+│   │   │   │   └── UserStats.tsx
 │   │   │   ├── integrations
+│   │   │   │   ├── EmailConfig.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── SlackConfig.tsx
+│   │   │   │   ├── TeamsConfig.tsx
+│   │   │   │   └── WebhookBuilder.tsx
 │   │   │   ├── okrs
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── KeyResultCard.tsx
+│   │   │   │   ├── KeyResultForm.tsx
+│   │   │   │   ├── OKRAlignment.tsx
+│   │   │   │   ├── OKRCard.tsx
+│   │   │   │   ├── OKRForm.tsx
+│   │   │   │   ├── OKRProgress.tsx
+│   │   │   │   ├── OKRTimeline.tsx
+│   │   │   │   └── OKRTree.tsx
 │   │   │   ├── permissions
+│   │   │   │   ├── AccessDenied.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── PermissionMatrix.tsx
+│   │   │   │   ├── RoleEditor.tsx
+│   │   │   │   ├── RoleManager.tsx
+│   │   │   │   └── UserRoleAssignment.tsx
 │   │   │   ├── search
+│   │   │   │   ├── GlobalSearch.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── QuickFilters.tsx
+│   │   │   │   ├── RecentSearches.tsx
+│   │   │   │   ├── SearchModal.tsx
+│   │   │   │   ├── SearchResults.tsx
+│   │   │   │   └── SearchSuggestions.tsx
 │   │   │   ├── templates
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── TemplateCard.tsx
+│   │   │   │   ├── TemplateGallery.tsx
+│   │   │   │   └── UseTemplateModal.tsx
 │   │   │   ├── war-room
+│   │   │   │   ├── ActionBoard.tsx
+│   │   │   │   ├── CrisisIndicators.tsx
+│   │   │   │   ├── CrisisTimeline.tsx
+│   │   │   │   ├── EscalationPath.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── TeamPanel.tsx
+│   │   │   │   ├── WarRoomCard.tsx
+│   │   │   │   ├── WarRoomDashboard.tsx
+│   │   │   │   └── WarRoomForm.tsx
 │   │   │   ├── widgets
+│   │   │   │   ├── ActionsWidget.tsx
+│   │   │   │   ├── AlertsWidget.tsx
+│   │   │   │   ├── AuroraInsightWidget.tsx
+│   │   │   │   ├── HealthScoreWidget.tsx
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── KpiSummaryWidget.tsx
+│   │   │   │   └── TrendChartWidget.tsx
 │   │   │   ├── AchievementBadge.tsx
 │   │   │   ├── ActionPlanCard.tsx
 │   │   │   ├── ActionPlanKanban.tsx
@@ -1390,6 +2007,7 @@
 │   │   ├── wms
 │   │   │   ├── index.ts
 │   │   │   └── WmsAIWidget.tsx
+│   │   ├── .DS_Store
 │   │   └── theme-provider.tsx
 │   ├── contexts
 │   │   ├── NotificationContext.tsx
@@ -1480,6 +2098,8 @@
 │   │   │   └── widget-registry.ts
 │   │   ├── db
 │   │   │   ├── schema
+│   │   │   │   ├── accounting.ts
+│   │   │   │   └── base.ts
 │   │   │   ├── helpers.ts
 │   │   │   ├── index.ts
 │   │   │   ├── mssql-transaction.ts
@@ -1566,6 +2186,7 @@
 │   │   ├── war-room
 │   │   │   ├── war-room-service.ts
 │   │   │   └── war-room-types.ts
+│   │   ├── .DS_Store
 │   │   ├── ag-grid-config.ts
 │   │   ├── ag-grid-theme.ts
 │   │   ├── auth.config.ts
@@ -1575,65 +2196,217 @@
 │   ├── modules
 │   │   ├── accounting
 │   │   │   ├── application
+│   │   │   │   ├── dtos
+│   │   │   │   ├── use-cases
+│   │   │   │   └── index.ts
 │   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   ├── errors
+│   │   │   │   ├── events
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   ├── types
+│   │   │   │   ├── value-objects
+│   │   │   │   └── index.ts
 │   │   │   ├── infrastructure
+│   │   │   │   ├── adapters
+│   │   │   │   ├── di
+│   │   │   │   ├── persistence
+│   │   │   │   └── index.ts
 │   │   │   ├── presentation
+│   │   │   │   ├── controllers
+│   │   │   │   ├── bootstrap.ts
+│   │   │   │   └── index.ts
 │   │   │   └── index.ts
 │   │   ├── commercial
 │   │   │   ├── domain
+│   │   │   │   └── ports
 │   │   │   └── infrastructure
+│   │   │       ├── adapters
+│   │   │       └── di
 │   │   ├── contracts
 │   │   │   ├── application
+│   │   │   │   └── commands
 │   │   │   ├── domain
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   └── types
 │   │   │   └── infrastructure
+│   │   │       └── di
 │   │   ├── documents
 │   │   │   ├── application
+│   │   │   │   ├── commands
+│   │   │   │   └── queries
 │   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   ├── errors
+│   │   │   │   ├── events
+│   │   │   │   ├── ports
+│   │   │   │   ├── value-objects
+│   │   │   │   └── index.ts
 │   │   │   ├── infrastructure
+│   │   │   │   ├── di
+│   │   │   │   ├── persistence
+│   │   │   │   └── storage
 │   │   │   └── index.ts
 │   │   ├── financial
 │   │   │   ├── application
+│   │   │   │   ├── commands
+│   │   │   │   ├── dtos
+│   │   │   │   ├── services
+│   │   │   │   ├── use-cases
+│   │   │   │   └── index.ts
 │   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   ├── errors
+│   │   │   │   ├── events
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   ├── types
+│   │   │   │   ├── value-objects
+│   │   │   │   └── index.ts
 │   │   │   ├── infrastructure
+│   │   │   │   ├── adapters
+│   │   │   │   ├── di
+│   │   │   │   ├── events
+│   │   │   │   ├── pdf
+│   │   │   │   ├── persistence
+│   │   │   │   ├── services
+│   │   │   │   └── index.ts
 │   │   │   ├── presentation
+│   │   │   │   ├── controllers
+│   │   │   │   ├── bootstrap.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── .DS_Store
 │   │   │   └── index.ts
 │   │   ├── fiscal
 │   │   │   ├── application
+│   │   │   │   ├── commands
+│   │   │   │   ├── dtos
+│   │   │   │   ├── queries
+│   │   │   │   ├── services
+│   │   │   │   ├── use-cases
+│   │   │   │   └── index.ts
 │   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   ├── errors
+│   │   │   │   ├── events
+│   │   │   │   ├── nfse
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   ├── split-payment
+│   │   │   │   ├── tax
+│   │   │   │   ├── value-objects
+│   │   │   │   └── index.ts
 │   │   │   ├── infrastructure
+│   │   │   │   ├── adapters
+│   │   │   │   ├── di
+│   │   │   │   ├── nfse
+│   │   │   │   ├── persistence
+│   │   │   │   ├── rag
+│   │   │   │   ├── services
+│   │   │   │   ├── xml
+│   │   │   │   ├── bootstrap.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── presentation
+│   │   │   │   ├── validators
+│   │   │   │   └── index.ts
 │   │   │   └── index.ts
 │   │   ├── fleet
 │   │   │   ├── domain
+│   │   │   │   └── ports
 │   │   │   └── infrastructure
+│   │   │       ├── adapters
+│   │   │       ├── di
+│   │   │       └── jobs
 │   │   ├── integrations
 │   │   │   ├── __tests__
+│   │   │   │   ├── integration
+│   │   │   │   ├── IBankingGateway.test.ts
+│   │   │   │   ├── IBankStatementParser.test.ts
+│   │   │   │   ├── INotificationService.test.ts
+│   │   │   │   ├── ISefazGateway.test.ts
+│   │   │   │   └── ValueObjects.test.ts
 │   │   │   ├── domain
+│   │   │   │   ├── errors
+│   │   │   │   ├── events
+│   │   │   │   ├── ports
+│   │   │   │   └── value-objects
 │   │   │   ├── infrastructure
+│   │   │   │   ├── adapters
+│   │   │   │   ├── di
+│   │   │   │   └── jobs
 │   │   │   ├── index.ts
 │   │   │   └── README_ENV_VARS.md
 │   │   ├── knowledge
 │   │   │   ├── application
+│   │   │   │   ├── commands
+│   │   │   │   └── queries
 │   │   │   ├── domain
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   └── types
 │   │   │   └── infrastructure
+│   │   │       ├── di
+│   │   │       ├── embeddings
+│   │   │       └── vector-store
 │   │   ├── strategic
 │   │   │   ├── __tests__
+│   │   │   │   └── e2e
 │   │   │   ├── application
+│   │   │   │   ├── commands
+│   │   │   │   ├── dtos
+│   │   │   │   ├── queries
+│   │   │   │   └── services
 │   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   └── value-objects
 │   │   │   ├── infrastructure
+│   │   │   │   ├── di
+│   │   │   │   ├── integrations
+│   │   │   │   └── persistence
 │   │   │   ├── presentation
+│   │   │   │   └── components
 │   │   │   ├── index.ts
 │   │   │   └── README.md
 │   │   ├── tms
 │   │   │   ├── application
+│   │   │   │   ├── commands
+│   │   │   │   ├── dtos
+│   │   │   │   └── queries
 │   │   │   ├── domain
+│   │   │   │   ├── entities
+│   │   │   │   ├── ports
+│   │   │   │   └── value-objects
 │   │   │   ├── infrastructure
+│   │   │   │   ├── adapters
+│   │   │   │   ├── di
+│   │   │   │   ├── pdf
+│   │   │   │   └── persistence
 │   │   │   └── index.ts
-│   │   └── wms
-│   │       ├── application
-│   │       ├── domain
-│   │       ├── infrastructure
-│   │       └── index.ts
+│   │   ├── wms
+│   │   │   ├── application
+│   │   │   │   ├── dtos
+│   │   │   │   ├── use-cases
+│   │   │   │   └── index.ts
+│   │   │   ├── domain
+│   │   │   │   ├── aggregates
+│   │   │   │   ├── entities
+│   │   │   │   ├── errors
+│   │   │   │   ├── events
+│   │   │   │   ├── ports
+│   │   │   │   ├── services
+│   │   │   │   ├── types
+│   │   │   │   └── value-objects
+│   │   │   ├── infrastructure
+│   │   │   │   ├── adapters
+│   │   │   │   ├── di
+│   │   │   │   ├── persistence
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts
+│   │   └── .DS_Store
 │   ├── providers
 │   │   ├── data-provider.ts
 │   │   └── refine-provider.tsx
@@ -1673,6 +2446,7 @@
 │   │   │   └── workflow-automator.ts
 │   │   ├── validators
 │   │   │   └── insurance-validator.ts
+│   │   ├── .DS_Store
 │   │   ├── accounting-engine.ts
 │   │   ├── ciap-engine.ts
 │   │   ├── claims-workflow-engine.ts
@@ -1695,25 +2469,95 @@
 │   │   │   └── IUseCase.ts
 │   │   ├── domain
 │   │   │   ├── entities
+│   │   │   │   ├── AggregateRoot.ts
+│   │   │   │   ├── Department.ts
+│   │   │   │   ├── Entity.ts
+│   │   │   │   └── ValueObject.ts
 │   │   │   ├── errors
+│   │   │   │   └── DomainError.ts
 │   │   │   ├── events
+│   │   │   │   ├── DomainEvent.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── ports
+│   │   │   │   ├── output
+│   │   │   │   ├── IEventPublisher.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── IUnitOfWork.ts
+│   │   │   │   └── IUuidGenerator.ts
 │   │   │   ├── types
+│   │   │   │   ├── document-extraction.types.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── Result.ts
 │   │   │   ├── value-objects
+│   │   │   │   ├── CNPJ.ts
+│   │   │   │   ├── CPF.ts
+│   │   │   │   ├── DateRange.ts
+│   │   │   │   ├── Email.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── Money.ts
+│   │   │   │   └── TaxRate.ts
 │   │   │   └── index.ts
 │   │   ├── infrastructure
 │   │   │   ├── adapters
+│   │   │   │   ├── __tests__
+│   │   │   │   ├── CryptoUuidGenerator.ts
+│   │   │   │   ├── DeterministicUuidGenerator.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── audit
+│   │   │   │   ├── audit-log.schema.ts
+│   │   │   │   ├── audit.schema.ts
+│   │   │   │   ├── audit.types.ts
+│   │   │   │   ├── AuditLog.ts
+│   │   │   │   ├── AuditService.ts
+│   │   │   │   ├── DrizzleAuditLogger.ts
+│   │   │   │   ├── IAuditLogger.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── database
+│   │   │   │   └── views
 │   │   │   ├── di
+│   │   │   │   ├── container.ts
+│   │   │   │   ├── ensure-initialized.ts
+│   │   │   │   ├── global-registrations.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── reflect-polyfill.ts
+│   │   │   │   ├── tokens.ts
+│   │   │   │   └── with-di.ts
 │   │   │   ├── docling
+│   │   │   │   ├── DoclingClient.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── types.ts
 │   │   │   ├── events
+│   │   │   │   ├── index.ts
+│   │   │   │   └── InMemoryEventPublisher.ts
 │   │   │   ├── http
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── rate-limit.ts
+│   │   │   │   └── with-rate-limit.ts
 │   │   │   ├── logging
+│   │   │   │   ├── ConsoleLogger.ts
+│   │   │   │   ├── ILogger.ts
+│   │   │   │   └── index.ts
 │   │   │   ├── notifications
+│   │   │   │   ├── templates
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── NotificationService.ts
+│   │   │   │   ├── README.md
+│   │   │   │   └── types.ts
 │   │   │   ├── persistence
+│   │   │   │   ├── mappers
+│   │   │   │   ├── repositories
+│   │   │   │   ├── schemas
+│   │   │   │   ├── DrizzleUnitOfWork.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── withTransaction.ts
 │   │   │   ├── retention
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── retention.schema.ts
+│   │   │   │   ├── retention.types.ts
+│   │   │   │   └── RetentionService.ts
 │   │   │   ├── time
+│   │   │   │   ├── TimeIntelligence.ts
+│   │   │   │   └── TimeIntelligenceQueries.ts
 │   │   │   └── index.ts
 │   │   ├── types
 │   │   │   ├── index.ts
@@ -1729,6 +2573,7 @@
 │   │   ├── ofx-js.d.ts
 │   │   ├── strategic.ts
 │   │   └── voice.ts
+│   ├── .DS_Store
 │   ├── global.d.ts
 │   ├── instrumentation.ts
 │   └── middleware.ts
@@ -1783,6 +2628,12 @@
 │   ├── e2e
 │   │   ├── fiscal
 │   │   │   └── tax-reform
+│   │   │       ├── calculate-ibs-cbs-e2e.test.ts
+│   │   │       ├── compensation-calculation-e2e.test.ts
+│   │   │       ├── regime-detection-e2e.test.ts
+│   │   │       ├── simulate-tax-scenario-e2e.test.ts
+│   │   │       ├── tax-transition-audit-e2e.test.ts
+│   │   │       └── xml-generation-e2e.test.ts
 │   │   └── wms
 │   │       ├── inventory-count.e2e.test.ts
 │   │       ├── locations.e2e.test.ts
@@ -1795,6 +2646,7 @@
 │   ├── helpers
 │   │   ├── mocks
 │   │   │   └── repositories
+│   │   │       └── InMemoryRepository.ts
 │   │   ├── integration-db.ts
 │   │   ├── nextRequestHelper.ts
 │   │   ├── resultHelper.ts
@@ -1805,6 +2657,8 @@
 │   │   │   └── journal-entries.integration.test.ts
 │   │   ├── api
 │   │   │   └── fiscal
+│   │   │       ├── tax-reform
+│   │   │       └── documents.test.ts
 │   │   ├── contracts
 │   │   │   └── AnalyzeFreightContractUseCase.test.ts
 │   │   ├── docling
@@ -1815,13 +2669,18 @@
 │   │   │   └── payables.integration.test.ts
 │   │   ├── fiscal
 │   │   │   ├── import-dacte
+│   │   │   │   └── ImportDACTeUseCase.test.ts
 │   │   │   ├── import-danfe
+│   │   │   │   └── ImportDANFeUseCase.test.ts
 │   │   │   ├── rag
+│   │   │   │   ├── IndexLegislationUseCase.test.ts
+│   │   │   │   └── QueryLegislationUseCase.test.ts
 │   │   │   └── fiscal-document.integration.test.ts
 │   │   ├── knowledge
 │   │   │   └── GeminiEmbeddingService.integration.test.ts
 │   │   ├── modules
 │   │   │   └── fiscal
+│   │   │       └── fiscal-sefaz-accounting-integration.test.ts
 │   │   └── wms
 │   │       ├── inventory-count.integration.test.ts
 │   │       ├── locations.integration.test.ts
@@ -1832,40 +2691,92 @@
 │   ├── modules
 │   │   └── fiscal
 │   │       └── domain
+│   │           └── services
 │   ├── performance
 │   │   └── ssrm-endpoints.perf.test.ts
 │   ├── unit
 │   │   ├── agent
 │   │   │   ├── core
+│   │   │   │   ├── AgentConfig.test.ts
+│   │   │   │   ├── AgentContext.test.ts
+│   │   │   │   └── VoiceEnabledAgent.test.ts
 │   │   │   ├── observability
+│   │   │   │   └── AgentLogger.test.ts
 │   │   │   ├── persistence
+│   │   │   │   └── SessionStore.test.ts
 │   │   │   ├── tools
+│   │   │   │   └── fiscal
 │   │   │   ├── voice
+│   │   │   │   ├── StreamingVoiceHandler.test.ts
+│   │   │   │   └── VoiceHandler.test.ts
 │   │   │   └── workflows
+│   │   │       ├── BankReconciliationWorkflow.test.ts
+│   │   │       └── FiscalImportWorkflow.test.ts
 │   │   ├── api
 │   │   │   └── voice
+│   │   │       └── process-route.test.ts
 │   │   ├── lib
 │   │   │   └── cache
+│   │   │       └── CacheManager.test.ts
 │   │   ├── modules
 │   │   │   ├── accounting
+│   │   │   │   ├── application
+│   │   │   │   ├── domain
+│   │   │   │   └── infrastructure
 │   │   │   ├── contracts
+│   │   │   │   └── domain
 │   │   │   ├── financial
+│   │   │   │   ├── application
+│   │   │   │   ├── domain
+│   │   │   │   └── infrastructure
 │   │   │   ├── fiscal
+│   │   │   │   ├── application
+│   │   │   │   ├── domain
+│   │   │   │   └── infrastructure
 │   │   │   ├── knowledge
+│   │   │   │   ├── domain
+│   │   │   │   └── infrastructure
 │   │   │   ├── strategic
+│   │   │   │   ├── action-plans
+│   │   │   │   ├── anomalies
+│   │   │   │   ├── entities
+│   │   │   │   ├── goals
+│   │   │   │   ├── ideas
+│   │   │   │   ├── kpis
+│   │   │   │   ├── services
+│   │   │   │   ├── strategies
+│   │   │   │   ├── swot
+│   │   │   │   └── value-objects
 │   │   │   ├── tms
+│   │   │   │   ├── domain
+│   │   │   │   ├── infrastructure
+│   │   │   │   └── trips
 │   │   │   └── wms
+│   │   │       └── domain
 │   │   └── shared
 │   │       ├── time
+│   │       │   └── TimeIntelligence.test.ts
 │   │       └── value-objects
+│   │           ├── CNPJ.test.ts
+│   │           ├── CPF.test.ts
+│   │           ├── DateRange.test.ts
+│   │           ├── Email.test.ts
+│   │           ├── Money.test.ts
+│   │           └── TaxRate.test.ts
+│   ├── .DS_Store
 │   └── setup.ts
+├── .DS_Store
+├── .env
+├── .eslintignore
+├── .gitignore
+├── .npmrc
+├── .nvmrc
 ├── adicionar-colunas-acoes.sh
 ├── AGENTS.md
 ├── audit_runner.sh
 ├── AURACORE_COGNITIVE_ENTERPRISE_ARCHITECTURE_V1.md
 ├── BOOTSTRAP.md
 ├── BTG_ENV_VARS.txt
-├── build-errors.log
 ├── catalog-info.yaml
 ├── CLAUDE.md
 ├── cliff.toml
@@ -1933,10 +2844,8 @@
 ├── TOOLS.md
 ├── tsconfig.json
 ├── tsconfig.tsbuildinfo
-├── typecheck-errors.log
-├── typecheck-output.log
 ├── USER.md
 ├── verify-quick-wins.sh
 └── vitest.config.ts
 
-534 directories, 1406 files
+973 directories, 1876 files

@@ -85,9 +85,6 @@ export function useNotifications() {
 
   const markAllAsRead = useCallback(async () => {
     try {
-      // Não há endpoint bulk - marcar cada notificação não lida
-      const unreadNotifications = notifications.filter((n) => n.isRead === 0);
-      
       // Marcar localmente primeiro (otimista)
       setNotifications((prev) =>
         prev.map((notif) => ({
@@ -97,24 +94,28 @@ export function useNotifications() {
         }))
       );
       setUnreadCount(0);
-      // FIX: Limpar toasted IDs ao marcar todas como lidas
+      // Limpar toasted IDs ao marcar todas como lidas
       toastedIdsRef.current.clear();
 
-      // Chamar API para cada notificação não lida em background
-      await Promise.allSettled(
-        unreadNotifications.map((notif) =>
-          fetch(`/api/notifications/${notif.id}/read`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
-        )
-      );
+      // Endpoint bulk - marca todas em uma única query (evita N+1)
+      const response = await fetch("/api/notifications/mark-all-read", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        // Reverter estado otimista em caso de erro
+        console.error("Error marking all as read, refetching...");
+        await fetchNotifications();
+      }
     } catch (error) {
       console.error("Error marking all as read:", error);
+      // Reverter estado otimista em caso de erro
+      await fetchNotifications();
     }
-  }, [notifications]);
+  }, [fetchNotifications]);
 
   const dismiss = useCallback(async (notificationId: number) => {
     try {

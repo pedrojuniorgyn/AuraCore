@@ -72,7 +72,7 @@ async function createStrategy(
   expect(response.ok()).toBeTruthy();
   const json = await response.json();
   
-  // Validar estrutura da resposta (Bug 2 fix)
+  // Validar estrutura da resposta API conforme contrato
   expect(json).toHaveProperty('data');
   expect(json.data).toHaveProperty('id');
   expect(json.data).toHaveProperty('workflowStatus');

@@ -223,6 +223,55 @@ export class NotificationService {
   }
 
   /**
+   * Marca TODAS as notificações não lidas do usuário como lidas
+   * 
+   * Esta é uma operação bulk que atualiza todas as notificações em uma única query,
+   * evitando o problema N+1 de marcar cada notificação individualmente.
+   * 
+   * REPO-005: SEMPRE filtra por organizationId + branchId + userId
+   * para garantir isolamento multi-tenant
+   * 
+   * @param userId ID do usuário (string ou number)
+   * @param organizationId ID da organização
+   * @param branchId ID da filial
+   * @returns Result com número de notificações atualizadas ou erro
+   */
+  async markAllAsRead(
+    userId: number | string,
+    organizationId: number,
+    branchId: number
+  ): Promise<Result<{ count: number }, string>> {
+    try {
+      const userIdString = String(userId);
+
+      // REPO-005: SEMPRE filtrar por multi-tenancy (organizationId + branchId + userId)
+      // Marcar todas notificações não lidas do usuário como lidas em uma única query
+      const result = await db
+        .update(notifications)
+        .set({
+          isRead: 1,
+          readAt: new Date(),
+        })
+        .where(
+          and(
+            eq(notifications.userId, userIdString),
+            eq(notifications.organizationId, organizationId),
+            eq(notifications.branchId, branchId),
+            eq(notifications.isRead, 0) // Apenas não lidas
+          )
+        );
+
+      // SQL Server retorna rowsAffected
+      const count = (result as unknown as { rowsAffected: number[] })?.rowsAffected?.[0] ?? 0;
+
+      return Result.ok({ count });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      return Result.fail(`Falha ao marcar todas notificações como lidas: ${message}`);
+    }
+  }
+
+  /**
    * Busca notificações não lidas de um usuário
    * 
    * @param userId ID do usuário (number ou string)
