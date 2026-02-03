@@ -168,6 +168,13 @@ export async function POST(
         );
         break;
       }
+
+      default:
+        // Exhaustive check: se chegar aqui, Zod validation falhou
+        return NextResponse.json(
+          { error: `Invalid action: ${action}` },
+          { status: 400 }
+        );
     }
 
     if (!Result.isOk(result)) {

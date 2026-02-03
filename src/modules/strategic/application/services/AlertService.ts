@@ -62,8 +62,10 @@ function mapAlertTypeToNotificationEvent(alertType: AlertType): NotificationEven
     case 'GOAL_STALE':
       return 'ACTION_PLAN_STALE'; // Goal stale é similar a action plan stale
     default:
-      // Fallback para type-safety (never deveria chegar aqui)
-      return 'INFO' as NotificationEvent;
+      // Exhaustive check: se chegar aqui, é bug de código
+      console.error(`❌ BUG: AlertType não mapeado: ${alertType}`);
+      // Fallback seguro: usar KPI_WARNING como genérico
+      return 'KPI_WARNING';
   }
 }
 

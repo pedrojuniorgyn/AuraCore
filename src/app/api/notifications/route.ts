@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
     // Ler query param limit (default 50, clamped 1-200)
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get('limit');
-    const limit = limitParam ? parseInt(limitParam, 10) : 50;
+    const parsedLimit = limitParam ? parseInt(limitParam, 10) : 50;
+    // Validar que parseInt não retornou NaN
+    const limit = isNaN(parsedLimit) ? 50 : parsedLimit;
 
     // Resolver NotificationService
     const notificationService = container.resolve(NotificationService);

@@ -35,6 +35,12 @@ export const GET = withDI(async (request: NextRequest) => {
     );
 
     const userId = parseInt(context.userId, 10);
+    if (isNaN(userId) || userId <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
 
     let delegates;
     if (type === 'given') {
@@ -115,6 +121,12 @@ export const POST = withDI(async (request: NextRequest) => {
     );
 
     const userId = parseInt(context.userId, 10);
+    if (isNaN(userId) || userId <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
 
     // Criar delegação
     const result = await service.delegate(
