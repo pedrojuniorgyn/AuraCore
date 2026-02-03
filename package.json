@@ -129,6 +129,7 @@
     "reactflow": "^11.11.4",
     "recharts": "^3.5.1",
     "reflect-metadata": "^0.2.2",
+    "resend": "^3.5.0",
     "simplex-noise": "^4.0.3",
     "soap": "^1.6.1",
     "sonner": "^2.0.7",

@@ -1,0 +1,19 @@
+{
+  "epic": "BUG-026/BUG-027",
+  "corrections": [
+    {
+      "id": "LC-849948",
+      "date": "2026-02-03",
+      "epic": "BUG-026/BUG-027",
+      "error": "BUG-026: NotificationService usava .limit() que não existe no Drizzle MSSQL. BUG-027: Coluna approved_by_user_id faltando na tabela strategic_strategy (migration não aplicada).",
+      "correction": "BUG-026: Substituído .limit() por .orderBy().offset(0).fetch() padrão correto para SQL Server. BUG-027: Criada migration idempotente 0060 com IF NOT EXISTS para adicionar todas as colunas de workflow.",
+      "files_affected": [
+        "src/shared/infrastructure/notifications/NotificationService.ts",
+        "drizzle/migrations/0060_fix_workflow_approval_columns.sql"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

@@ -1,10 +1,12 @@
 /**
  * Service: NotificationService
- * Serviço centralizado para envio de notificações (Email, Webhook, InApp)
+ * Serviço centralizado para envio de notificações (Email via Resend, Webhook, InApp)
  * 
  * @module shared/infrastructure/notifications
+ * @see TASK01-RESEND-NOTIFICATIONS
  */
 import { injectable } from 'tsyringe';
+import { Resend } from 'resend';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
@@ -13,17 +15,397 @@ import type {
   EmailParams,
   WebhookParams,
   InAppNotificationParams,
+  ApprovalPendingEmailParams,
+  ApprovalDecisionEmailParams,
+  KpiAlertEmailParams,
+  DelegationEmailParams,
+  EmailSendResult,
 } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
 
 @injectable()
 export class NotificationService {
+  private resend: Resend | null = null;
+  private fromEmail: string;
+  private baseUrl: string;
+
+  constructor() {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey) {
+      this.resend = new Resend(apiKey);
+    }
+    this.fromEmail = process.env.RESEND_FROM_EMAIL || 'AuraCore <noreply@auracore.cloud>';
+    this.baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+  }
+
   /**
-   * Envia email usando template HTML
+   * Verifica se Resend está configurado
+   */
+  isEmailEnabled(): boolean {
+    return this.resend !== null;
+  }
+
+  /**
+   * Envia email usando Resend API
    * 
-   * NOTA: Requer configuração de SMTP ou Resend
-   * Para desenvolvimento, loga no console
+   * @param to Destinatário(s)
+   * @param subject Assunto
+   * @param html Conteúdo HTML
+   * @returns Resultado com messageId ou erro
+   */
+  async sendEmailViaResend(
+    to: string | string[],
+    subject: string,
+    html: string
+  ): Promise<EmailSendResult> {
+    if (!this.resend) {
+      console.log('📧 [DEV] Email (Resend não configurado):', { to, subject });
+      return { success: true, messageId: 'dev-mode' };
+    }
+
+    try {
+      const response = await this.resend.emails.send({
+        from: this.fromEmail,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      });
+
+      if (response.error) {
+        console.error('❌ Resend API error:', response.error);
+        return { success: false, error: response.error.message };
+      }
+
+      console.log('✅ Email enviado via Resend:', { 
+        messageId: response.data?.id, 
+        to 
+      });
+      return { success: true, messageId: response.data?.id };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      console.error('❌ Erro ao enviar email:', message);
+      return { success: false, error: message };
+    }
+  }
+
+  // ========================================
+  // EMAILS ESPECIALIZADOS (WORKFLOW)
+  // ========================================
+
+  /**
+   * Envia email de aprovação pendente para aprovador
+   */
+  async sendApprovalPendingEmail(params: ApprovalPendingEmailParams): Promise<EmailSendResult> {
+    const html = this.buildApprovalPendingTemplate(params);
+    return this.sendEmailViaResend(
+      params.to,
+      `⏳ Nova aprovação pendente - ${params.strategyTitle}`,
+      html
+    );
+  }
+
+  /**
+   * Envia email de decisão de aprovação para submitter
+   */
+  async sendApprovalDecisionEmail(params: ApprovalDecisionEmailParams): Promise<EmailSendResult> {
+    const html = this.buildApprovalDecisionTemplate(params);
+    const emoji = params.status === 'approved' ? '✅' : params.status === 'rejected' ? '❌' : '🔄';
+    const statusLabel = params.status === 'approved' ? 'aprovada' : 
+                        params.status === 'rejected' ? 'rejeitada' : 'requer alterações';
+    
+    return this.sendEmailViaResend(
+      params.to,
+      `${emoji} Estratégia ${statusLabel} - ${params.strategyTitle}`,
+      html
+    );
+  }
+
+  /**
+   * Envia email de alerta de KPI fora da meta
+   */
+  async sendKpiAlertEmail(params: KpiAlertEmailParams): Promise<EmailSendResult> {
+    const html = this.buildKpiAlertTemplate(params);
+    return this.sendEmailViaResend(
+      params.to,
+      `🚨 Alerta: KPI ${params.kpiName} fora da meta`,
+      html
+    );
+  }
+
+  /**
+   * Envia email de delegação de aprovação
+   */
+  async sendDelegationEmail(params: DelegationEmailParams): Promise<EmailSendResult> {
+    const html = this.buildDelegationTemplate(params);
+    return this.sendEmailViaResend(
+      params.to,
+      `👤 Aprovação delegada - ${params.strategyTitle}`,
+      html
+    );
+  }
+
+  // ========================================
+  // TEMPLATES HTML
+  // ========================================
+
+  private buildApprovalPendingTemplate(params: ApprovalPendingEmailParams): string {
+    // Usar toLocaleString() para incluir hora e minuto (toLocaleDateString ignora opções de hora)
+    const formattedDate = new Date(params.submittedAt).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; padding: 20px; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    .content { padding: 30px; }
+    .info-box { background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); border-left: 4px solid #667eea; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0; }
+    .info-box p { margin: 8px 0; }
+    .info-label { color: #666; font-size: 14px; }
+    .info-value { font-weight: 600; color: #333; }
+    .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; transition: transform 0.2s; }
+    .cta-button:hover { transform: translateY(-2px); }
+    .footer { background: #f8f9fa; padding: 24px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
+    .logo { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⏳ Nova Aprovação Pendente</h1>
+    </div>
+    <div class="content">
+      <p>Olá <strong>${params.approverName}</strong>,</p>
+      <p>Uma nova estratégia foi submetida para sua aprovação no AuraCore:</p>
+      
+      <div class="info-box">
+        <p><span class="info-label">📋 Estratégia:</span> <span class="info-value">${params.strategyTitle}</span></p>
+        <p><span class="info-label">🔢 Código:</span> <span class="info-value">${params.strategyCode}</span></p>
+        <p><span class="info-label">👤 Submetida por:</span> <span class="info-value">${params.submittedBy}</span></p>
+        <p><span class="info-label">📅 Data:</span> <span class="info-value">${formattedDate}</span></p>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${params.approvalUrl}" class="cta-button">
+          Aprovar ou Rejeitar
+        </a>
+      </p>
+
+      <p style="font-size: 13px; color: #888; margin-top: 32px;">
+        Este email foi enviado automaticamente pelo AuraCore. Por favor, não responda.
+      </p>
+    </div>
+    <div class="footer">
+      <div class="logo">🎯 AuraCore</div>
+      © ${new Date().getFullYear()} AuraCore ERP. Todos os direitos reservados.
+    </div>
+  </div>
+</body>
+</html>`.trim();
+  }
+
+  private buildApprovalDecisionTemplate(params: ApprovalDecisionEmailParams): string {
+    const isApproved = params.status === 'approved';
+    const isRejected = params.status === 'rejected';
+    const emoji = isApproved ? '✅' : isRejected ? '❌' : '🔄';
+    const statusLabel = isApproved ? 'Aprovada' : isRejected ? 'Rejeitada' : 'Requer Alterações';
+    const statusColor = isApproved ? '#10b981' : isRejected ? '#ef4444' : '#f59e0b';
+    // Usar toLocaleString() para incluir hora e minuto (toLocaleDateString ignora opções de hora)
+    const formattedDate = new Date(params.decisionAt).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; padding: 20px; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { background: ${statusColor}; color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    .content { padding: 30px; }
+    .info-box { background: #f8f9fa; border-left: 4px solid ${statusColor}; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0; }
+    .info-box p { margin: 8px 0; }
+    .footer { background: #f8f9fa; padding: 24px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${emoji} Estratégia ${statusLabel}</h1>
+    </div>
+    <div class="content">
+      <p>Olá <strong>${params.recipientName}</strong>,</p>
+      <p>Sua estratégia foi <strong>${statusLabel.toLowerCase()}</strong>:</p>
+      
+      <div class="info-box">
+        <p><strong>📋 Estratégia:</strong> ${params.strategyTitle}</p>
+        <p><strong>🔢 Código:</strong> ${params.strategyCode}</p>
+        <p><strong>👤 ${isApproved ? 'Aprovada' : isRejected ? 'Rejeitada' : 'Analisada'} por:</strong> ${params.decisionBy}</p>
+        <p><strong>📅 Data:</strong> ${formattedDate}</p>
+        ${params.comment ? `<p><strong>💬 Comentário:</strong> ${params.comment}</p>` : ''}
+        ${params.reason ? `<p><strong>📝 Motivo:</strong> ${params.reason}</p>` : ''}
+      </div>
+
+      <p style="font-size: 13px; color: #888; margin-top: 32px;">
+        Este email foi enviado automaticamente pelo AuraCore. Por favor, não responda.
+      </p>
+    </div>
+    <div class="footer">
+      <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">🎯 AuraCore</div>
+      © ${new Date().getFullYear()} AuraCore ERP. Todos os direitos reservados.
+    </div>
+  </div>
+</body>
+</html>`.trim();
+  }
+
+  private buildKpiAlertTemplate(params: KpiAlertEmailParams): string {
+    const varianceColor = params.variance < 0 ? '#ef4444' : '#10b981';
+    const varianceSign = params.variance > 0 ? '+' : '';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; padding: 20px; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    .content { padding: 30px; }
+    .metric { text-align: center; padding: 30px; background: linear-gradient(135deg, #fef3c7 0%, #fee2e2 100%); border-radius: 12px; margin: 24px 0; }
+    .metric-value { font-size: 48px; font-weight: bold; color: ${varianceColor}; }
+    .metric-label { font-size: 14px; color: #666; margin-top: 8px; }
+    .alert-box { background: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0; }
+    .cta-button { display: inline-block; background: #dc2626; color: white !important; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; }
+    .footer { background: #f8f9fa; padding: 24px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚨 Alerta de KPI</h1>
+    </div>
+    <div class="content">
+      <p>Olá <strong>${params.ownerName}</strong>,</p>
+      <p>O KPI <strong>${params.kpiName}</strong> (${params.kpiCode}) está fora da meta:</p>
+      
+      <div class="metric">
+        <div class="metric-label">VALOR ATUAL</div>
+        <div class="metric-value">${params.currentValue.toFixed(2)} ${params.unit}</div>
+        <div class="metric-label">Meta: ${params.targetValue.toFixed(2)} ${params.unit}</div>
+      </div>
+
+      <div class="alert-box">
+        <p><strong>📊 Variação:</strong> <span style="color: ${varianceColor}; font-weight: bold;">${varianceSign}${params.variance.toFixed(2)}%</span></p>
+        <p><strong>⚠️ Status:</strong> Fora da meta</p>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${params.alertUrl}" class="cta-button">
+          Ver Detalhes e Planos de Ação
+        </a>
+      </p>
+
+      <p style="font-size: 13px; color: #888; margin-top: 32px;">
+        Este email foi enviado automaticamente pelo AuraCore. Por favor, não responda.
+      </p>
+    </div>
+    <div class="footer">
+      <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">🎯 AuraCore</div>
+      © ${new Date().getFullYear()} AuraCore ERP. Todos os direitos reservados.
+    </div>
+  </div>
+</body>
+</html>`.trim();
+  }
+
+  private buildDelegationTemplate(params: DelegationEmailParams): string {
+    const expiresText = params.expiresAt 
+      ? `até ${new Date(params.expiresAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`
+      : 'sem prazo definido';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; background: #f4f4f4; padding: 20px; margin: 0; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    .content { padding: 30px; }
+    .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0; }
+    .cta-button { display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white !important; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; }
+    .footer { background: #f8f9fa; padding: 24px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>👤 Aprovação Delegada</h1>
+    </div>
+    <div class="content">
+      <p>Olá <strong>${params.delegateName}</strong>,</p>
+      <p><strong>${params.delegatorName}</strong> delegou a você a aprovação de uma estratégia:</p>
+      
+      <div class="info-box">
+        <p><strong>📋 Estratégia:</strong> ${params.strategyTitle}</p>
+        <p><strong>🔢 Código:</strong> ${params.strategyCode}</p>
+        <p><strong>⏰ Válido:</strong> ${expiresText}</p>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${params.delegationUrl}" class="cta-button">
+          Ver Estratégia
+        </a>
+      </p>
+
+      <p style="font-size: 13px; color: #888; margin-top: 32px;">
+        Este email foi enviado automaticamente pelo AuraCore. Por favor, não responda.
+      </p>
+    </div>
+    <div class="footer">
+      <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">🎯 AuraCore</div>
+      © ${new Date().getFullYear()} AuraCore ERP. Todos os direitos reservados.
+    </div>
+  </div>
+</body>
+</html>`.trim();
+  }
+
+  // ========================================
+  // MÉTODO LEGADO (mantido para compatibilidade)
+  // ========================================
+
+  /**
+   * Envia email usando template HTML (método legado)
+   * 
+   * @deprecated Use sendEmailViaResend ou métodos especializados
    */
   async sendEmail(params: EmailParams): Promise<Result<void, string>> {
     try {
@@ -52,33 +434,22 @@ export class NotificationService {
         }
       }
 
-      // TODO: Integrar com serviço de email real (Resend, SendGrid, SMTP)
-      // Por ora, logar no console para desenvolvimento
-      console.log('📧 Email enviado:', {
+      // Usar Resend se configurado
+      if (this.resend) {
+        const result = await this.sendEmailViaResend(to, subject, emailBody);
+        if (!result.success) {
+          return Result.fail(result.error || 'Erro ao enviar email');
+        }
+        return Result.ok(undefined);
+      }
+
+      // Fallback: log no console em dev
+      console.log('📧 [DEV] Email:', {
         to,
         subject,
         bodyPreview: emailBody.substring(0, 100) + '...',
         hasTemplate: Boolean(template),
       });
-
-      // PRODUÇÃO: Descomentar quando configurar serviço de email
-      /*
-      const emailService = process.env.EMAIL_SERVICE; // 'resend' | 'smtp'
-      
-      if (emailService === 'resend') {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'noreply@auracore.com.br',
-          to,
-          subject,
-          html: emailBody,
-        });
-      } else if (emailService === 'smtp') {
-        // Implementar SMTP com nodemailer
-      }
-      */
 
       return Result.ok(undefined);
     } catch (error) {
