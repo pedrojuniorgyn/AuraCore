@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreVertical, Eye, Edit, Trash } from 'lucide-react';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface ResourceActionMenuProps {
   /**
@@ -73,70 +74,103 @@ export function ResourceActionMenu({
   disableView = false,
 }: ResourceActionMenuProps) {
   const router = useRouter();
-  const { handleDelete, isDeleting } = useDeleteResource(resourceType);
+  const { 
+    handleDelete, 
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    pendingOptions,
+  } = useDeleteResource(resourceType);
 
   const handleDeleteClick = async () => {
+    // Determinar tipo de recurso em português
+    const resourceTypeLabel = resourceType === 'action-plans' ? 'plano de ação'
+      : resourceType === 'goals' ? 'objetivo'
+      : resourceType === 'kpis' ? 'KPI'
+      : resourceType === 'okrs' ? 'OKR'
+      : resourceType === 'ideas' ? 'ideia'
+      : resourceType === 'strategies' ? 'estratégia'
+      : resourceType === 'swot' ? 'análise SWOT'
+      : resourceType === 'pdca' ? 'ciclo PDCA'
+      : resourceType === 'war-room' ? 'war room'
+      : resourceType === 'integrations' ? 'integração'
+      : resourceType === 'templates' ? 'template'
+      : resourceType === 'reports' ? 'relatório'
+      : 'item';
+
     await handleDelete(id, {
-      confirmMessage: deleteConfirmMessage || 
-        (resourceName 
-          ? `Excluir "${resourceName}"? Esta ação não pode ser desfeita.`
-          : undefined
-        ),
+      confirmMessage: deleteConfirmMessage,
+      itemName: resourceName,
+      resourceType: resourceTypeLabel,
       onSuccess: onDeleteSuccess,
     });
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="p-2 hover:bg-gray-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
-          aria-label="Ações"
-          onClick={(e) => e.stopPropagation()} // Evita propagar click para card pai
-        >
-          <MoreVertical className="h-4 w-4 text-gray-400" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        {!disableView && (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="p-2 hover:bg-gray-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+            aria-label="Ações"
+            onClick={(e) => e.stopPropagation()} // Evita propagar click para card pai
+          >
+            <MoreVertical className="h-4 w-4 text-gray-400" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {!disableView && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`${basePath}/${id}`);
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Visualizar
+            </DropdownMenuItem>
+          )}
+          
+          {!disableEdit && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`${basePath}/${id}/edit`);
+              }}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </DropdownMenuItem>
+          )}
+          
+          <DropdownMenuSeparator />
+          
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`${basePath}/${id}`);
+              handleDeleteClick();
             }}
+            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+            disabled={isDeleting}
           >
-            <Eye className="mr-2 h-4 w-4" />
-            Visualizar
+            <Trash className="mr-2 h-4 w-4" />
+            {isDeleting ? 'Excluindo...' : 'Excluir'}
           </DropdownMenuItem>
-        )}
-        
-        {!disableEdit && (
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`${basePath}/${id}/edit`);
-            }}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
-          </DropdownMenuItem>
-        )}
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteClick();
-          }}
-          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-          disabled={isDeleting}
-        >
-          <Trash className="mr-2 h-4 w-4" />
-          {isDeleting ? 'Excluindo...' : 'Excluir'}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Modal de confirmação */}
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        customMessage={pendingOptions.confirmMessage}
+        isDeleting={isDeleting}
+      />
+    </>
   );
 }
 

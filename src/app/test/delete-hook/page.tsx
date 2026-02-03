@@ -2,9 +2,17 @@
 
 import { useState } from 'react';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 export default function TestDeleteHookPage() {
-  const { handleDelete, isDeleting } = useDeleteResource('action-plans');
+  const { 
+    handleDelete, 
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    pendingOptions,
+  } = useDeleteResource('action-plans');
   const [testId] = useState('test-abc-123');
 
   return (
@@ -19,33 +27,48 @@ export default function TestDeleteHookPage() {
 
       <div className="space-y-2">
         <button
-          onClick={() => handleDelete(testId)}
+          onClick={() => handleDelete(testId, {
+            itemName: 'Plano de Teste ABC-123',
+            resourceType: 'plano de ação',
+          })}
           disabled={isDeleting}
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isDeleting ? 'Excluindo...' : 'Excluir Action Plan'}
+          {isDeleting ? 'Excluindo...' : 'Excluir com Modal Elegante'}
         </button>
 
         <button
           onClick={() => handleDelete(testId, {
-            confirmMessage: 'Deletar MESMO?',
+            itemName: 'Plano de Teste ABC-123',
+            resourceType: 'plano de ação',
+            confirmMessage: 'Mensagem customizada: Deletar MESMO?',
             onSuccess: () => alert('Deletado!'),
             onError: (e) => alert(`Erro: ${e.message}`),
           })}
           disabled={isDeleting}
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
         >
-          Excluir (com callbacks)
+          Excluir (mensagem custom)
+        </button>
+
+        <button
+          onClick={() => handleDelete(testId, {
+            useModal: false,
+            confirmMessage: 'Usando window.confirm (fallback)',
+          })}
+          disabled={isDeleting}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+        >
+          Excluir com window.confirm
         </button>
 
         <button
           onClick={() => handleDelete(testId, {
             skipConfirmation: true,
-            confirmMessage: 'Isso não será exibido',
             onSuccess: () => console.log('Deletado sem confirmação!'),
           })}
           disabled={isDeleting}
-          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
         >
           Excluir sem confirmação
         </button>
@@ -54,12 +77,14 @@ export default function TestDeleteHookPage() {
       <div className="mt-8 p-4 bg-muted rounded-lg">
         <h2 className="text-lg font-semibold mb-2">Como testar:</h2>
         <ol className="list-decimal list-inside space-y-1 text-sm">
-          <li>Clique no botão &quot;Excluir Action Plan&quot;</li>
-          <li>Verifique se aparece o window.confirm</li>
-          <li>Confirme → deve mostrar toast de sucesso/erro</li>
-          <li>Verifique se a página dá refresh automático</li>
-          <li>Teste os callbacks customizados com o segundo botão</li>
-          <li>Teste skip de confirmação com o terceiro botão</li>
+          <li>Clique no botão &quot;Excluir com Modal Elegante&quot;</li>
+          <li>Verifique se aparece modal bonito (não window.confirm)</li>
+          <li>Verifique nome do item no modal</li>
+          <li>Clique &quot;Cancelar&quot; → modal fecha</li>
+          <li>Clique novamente e confirme → toast aparece</li>
+          <li>Teste mensagem customizada com segundo botão</li>
+          <li>Teste fallback (window.confirm) com terceiro botão</li>
+          <li>Teste skip de confirmação com quarto botão</li>
         </ol>
       </div>
 
@@ -70,6 +95,17 @@ export default function TestDeleteHookPage() {
           não existe, então você verá um erro 404 (esperado).
         </p>
       </div>
+
+      {/* Modal de confirmação */}
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        customMessage={pendingOptions.confirmMessage}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
