@@ -69,7 +69,11 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
 
     const { id } = await context.params;
     const body = await request.json();
-    const validated = updateSwotItemSchema.parse(body);
+    
+    // ✅ HOTFIX: Extrair props se vier como Domain Entity
+    const payload = body.props ? body.props : body;
+    
+    const validated = updateSwotItemSchema.parse(payload);
 
     const repository = container.resolve<ISwotAnalysisRepository>(STRATEGIC_TOKENS.SwotAnalysisRepository);
     
