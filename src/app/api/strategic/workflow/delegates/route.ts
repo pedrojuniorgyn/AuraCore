@@ -9,8 +9,8 @@ import { z } from 'zod';
 import { container } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
-import { resolveBranchIdOrThrow } from '@/lib/tenant/branch';
-import { withDI } from '@/lib/di/with-di';
+import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import type { ApprovalPermissionService } from '@/modules/strategic/application/services/ApprovalPermissionService';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
@@ -21,12 +21,9 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
 export const GET = withDI(async (request: NextRequest) => {
   try {
-    const context = getTenantContext(request);
-    if (!context) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const context = await getTenantContext();
 
-    const branchId = resolveBranchIdOrThrow(request);
+    const branchId = resolveBranchIdOrThrow(request.headers, context);
 
     // Parse query params
     const { searchParams } = new URL(request.url);
@@ -37,18 +34,20 @@ export const GET = withDI(async (request: NextRequest) => {
       STRATEGIC_TOKENS.ApprovalPermissionService
     );
 
+    const userId = parseInt(context.userId, 10);
+
     let delegates;
     if (type === 'given') {
       // Delegações criadas pelo usuário (ele delegou para outros)
       delegates = await service.listDelegationsBy(
-        context.userId,
+        userId,
         context.organizationId,
         branchId
       );
     } else {
       // Delegações recebidas pelo usuário (outros delegaram para ele)
       delegates = await service.listDelegationsFor(
-        context.userId,
+        userId,
         context.organizationId,
         branchId
       );
@@ -89,12 +88,9 @@ const createDelegateSchema = z.object({
 
 export const POST = withDI(async (request: NextRequest) => {
   try {
-    const context = getTenantContext(request);
-    if (!context) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const context = await getTenantContext();
 
-    const branchId = resolveBranchIdOrThrow(request);
+    const branchId = resolveBranchIdOrThrow(request.headers, context);
 
     // Parse e validar body
     const body = await request.json();
@@ -114,15 +110,17 @@ export const POST = withDI(async (request: NextRequest) => {
       STRATEGIC_TOKENS.ApprovalPermissionService
     );
 
+    const userId = parseInt(context.userId, 10);
+
     // Criar delegação
     const result = await service.delegate(
-      context.userId,              // from (delegator)
+      userId,                      // from (delegator)
       delegateUserId,              // to (delegate)
       new Date(startDate),
       endDate ? new Date(endDate) : null,
       context.organizationId,
       branchId,
-      context.userId.toString()
+      context.userId               // já é string
     );
 
     if (!Result.isOk(result)) {

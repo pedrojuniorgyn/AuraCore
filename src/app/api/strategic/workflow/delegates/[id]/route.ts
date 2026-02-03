@@ -7,8 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from 'tsyringe';
 import { getTenantContext } from '@/lib/auth/context';
-import { resolveBranchIdOrThrow } from '@/lib/tenant/branch';
-import { withDI } from '@/lib/di/with-di';
+import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+import { Result } from '@/shared/domain';
 import type { ApprovalPermissionService } from '@/modules/strategic/application/services/ApprovalPermissionService';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
@@ -18,15 +19,13 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 // ====================================
 
 export const DELETE = withDI(
-  async (request: NextRequest, context: { params: { id: string } }) => {
+  async (request: NextRequest, context: { params: Promise<Record<string, string>> | Record<string, string> }) => {
     try {
-      const authContext = getTenantContext(request);
-      if (!authContext) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+      const authContext = await getTenantContext();
 
-      const branchId = resolveBranchIdOrThrow(request);
-      const { id: delegateId } = context.params;
+      const branchId = resolveBranchIdOrThrow(request.headers, authContext);
+      const { id: delegateId } = await context.params;
+      const userId = parseInt(authContext.userId, 10);
 
       // Resolver service
       const service = container.resolve<ApprovalPermissionService>(
@@ -36,12 +35,12 @@ export const DELETE = withDI(
       // Revogar delegação
       const result = await service.revokeDelegate(
         delegateId,
-        authContext.userId,
+        userId,
         authContext.organizationId,
         branchId
       );
 
-      if (!result.isOk) {
+      if (!Result.isOk(result)) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
 
