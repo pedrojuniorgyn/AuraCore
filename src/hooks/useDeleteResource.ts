@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -128,6 +128,11 @@ export function useDeleteResource(resourceType: string): UseDeleteResourceReturn
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pendingOptions, setPendingOptions] = useState<UseDeleteResourceOptions>({});
+  
+  // Refs para capturar valores no momento da abertura do modal
+  // Isso previne race condition se múltiplos deletes forem iniciados
+  const confirmedDeleteIdRef = useRef<string | null>(null);
+  const confirmedOptionsRef = useRef<UseDeleteResourceOptions>({});
 
   // Função interna que executa o DELETE
   const executeDelete = useCallback(
@@ -198,6 +203,9 @@ export function useDeleteResource(resourceType: string): UseDeleteResourceReturn
       if (useModal) {
         setPendingDeleteId(id);
         setPendingOptions(options);
+        // Capturar valores nos refs para prevenir race condition
+        confirmedDeleteIdRef.current = id;
+        confirmedOptionsRef.current = options;
         setShowDeleteDialog(true);
         return;
       }
@@ -216,20 +224,29 @@ export function useDeleteResource(resourceType: string): UseDeleteResourceReturn
     setShowDeleteDialog(false);
     setPendingDeleteId(null);
     setPendingOptions({});
+    confirmedDeleteIdRef.current = null;
+    confirmedOptionsRef.current = {};
   }, []);
 
   // Função para confirmar delete (chamada pelo modal)
   const confirmDelete = useCallback(async () => {
-    if (pendingDeleteId) {
+    // Usar valores dos refs (capturados no momento da abertura do modal)
+    // Isso previne race condition se múltiplos deletes forem iniciados
+    const idToDelete = confirmedDeleteIdRef.current;
+    const optionsToUse = confirmedOptionsRef.current;
+    
+    if (idToDelete) {
       // NÃO fechar modal aqui - deixar aberto durante execução
-      await executeDelete(pendingDeleteId, pendingOptions);
+      await executeDelete(idToDelete, optionsToUse);
       
       // Fechar modal e limpar estado APÓS delete completar (sucesso ou erro)
       setShowDeleteDialog(false);
       setPendingDeleteId(null);
       setPendingOptions({});
+      confirmedDeleteIdRef.current = null;
+      confirmedOptionsRef.current = {};
     }
-  }, [pendingDeleteId, pendingOptions, executeDelete]);
+  }, [executeDelete]);
 
   return {
     handleDelete,
