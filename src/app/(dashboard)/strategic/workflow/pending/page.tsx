@@ -14,8 +14,16 @@ import { PageHeader } from '@/components/ui/page-header';
 import { StrategyApprovalCard } from '@/components/strategic/StrategyApprovalCard';
 import { usePendingApprovals } from '@/hooks/strategic/usePendingApprovals';
 
-const getDaysAgo = (submittedAt: string): number => {
-  return Math.ceil((Date.now() - new Date(submittedAt).getTime()) / (1000 * 60 * 60 * 24));
+/**
+ * Calcula dias desde a submissão
+ * Retorna 0 se submittedAt não está definido (dados legados/edge case)
+ */
+const getDaysAgo = (submittedAt: string | undefined): number => {
+  if (!submittedAt) return 0;
+  const date = new Date(submittedAt);
+  // Validar que a data é válida (evita NaN de Invalid Date)
+  if (isNaN(date.getTime())) return 0;
+  return Math.ceil((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
 };
 
 export default function PendingApprovalsPage() {

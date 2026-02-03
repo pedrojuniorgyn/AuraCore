@@ -13,8 +13,12 @@ export interface PendingStrategy {
   versionType: 'ACTUAL' | 'BUDGET' | 'FORECAST' | 'SCENARIO';
   versionName?: string;
   workflowStatus: string;
-  submittedAt: string;
-  submittedByUserId: number;
+  /**
+   * Data de submissão - pode ser undefined se estratégia foi criada
+   * mas nunca submetida (edge case, mas possível em dados legados)
+   */
+  submittedAt?: string;
+  submittedByUserId?: number;
   createdAt: string;
   updatedAt: string;
 }
