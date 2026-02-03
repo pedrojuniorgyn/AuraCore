@@ -201,6 +201,13 @@ export function useDeleteResource(resourceType: string): UseDeleteResourceReturn
 
       // Se usar modal, armazenar dados e abrir modal
       if (useModal) {
+        // CRÍTICO: Prevenir sobrescrita de refs se já existe operação em andamento
+        // Se modal já está aberto ou deletando, ignorar nova tentativa
+        if (showDeleteDialog || isDeleting) {
+          console.warn('Delete operation already in progress. Ignoring new request.');
+          return;
+        }
+        
         setPendingDeleteId(id);
         setPendingOptions(options);
         // Capturar valores nos refs para prevenir race condition

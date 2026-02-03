@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { fetchAPI } from '@/lib/api';
 import { useAgGridExport } from '@/hooks/useAgGridExport';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
@@ -100,7 +101,14 @@ export default function GoalsPage() {
   const { exportToExcel, exportToCSV } = useAgGridExport(gridRef);
   
   // Hook de delete
-  const { handleDelete, isDeleting } = useDeleteResource('goals');
+  const { 
+    handleDelete, 
+    isDeleting,
+    showDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('goals');
 
   // Handler de exportação com loading e toast
   const handleExport = useCallback(async (format: 'excel' | 'csv') => {
@@ -244,7 +252,8 @@ export default function GoalsPage() {
                 e.stopPropagation();
                 if (params.data) {
                   handleDelete(params.data.id, {
-                    confirmMessage: `Excluir objetivo "${params.data.description}"?`,
+                    itemName: params.data.description,
+                    resourceType: 'objetivo',
                     onSuccess: fetchGoals,
                   });
                 }
@@ -412,6 +421,21 @@ export default function GoalsPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
+
+      {/* Modal de confirmação de exclusão */}
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            cancelDelete();
+          }
+        }}
+        onConfirm={confirmDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        customMessage={pendingOptions.confirmMessage}
+        isDeleting={isDeleting}
+      />
     </PageTransition>
   );
 }
