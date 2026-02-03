@@ -66,6 +66,7 @@ export class AlertService {
     private actionPlanRepository: IActionPlanRepository,
     @inject(STRATEGIC_TOKENS.ApprovalPermissionRepository)
     private approvalPermissionRepository: IApprovalPermissionRepository,
+    @inject(NotificationService)
     private notificationService: NotificationService
   ) {}
 

@@ -43,6 +43,10 @@ export async function POST(
       message: 'Notificação marcada como lida',
     });
   } catch (error) {
+    // API-ERR-001: getTenantContext() throws NextResponse on auth failure
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403 response
+    }
     console.error('Error marking notification as read:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

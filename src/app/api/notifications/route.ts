@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
       notifications: result.value,
     });
   } catch (error) {
+    // API-ERR-001: getTenantContext() throws NextResponse on auth failure
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403 response
+    }
     console.error('Error fetching notifications:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

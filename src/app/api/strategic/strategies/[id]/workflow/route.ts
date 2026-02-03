@@ -38,10 +38,6 @@ export async function POST(
 ) {
   try {
     const tenantContext = await getTenantContext();
-    if (!tenantContext) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
     const { id: strategyId } = await context.params;
 
@@ -200,6 +196,10 @@ export async function POST(
       },
     });
   } catch (error) {
+    // API-ERR-001: getTenantContext() and resolveBranchIdOrThrow() throw NextResponse
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403/400 response
+    }
     console.error('Error executing workflow action:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -218,10 +218,6 @@ export async function GET(
 ) {
   try {
     const tenantContext = await getTenantContext();
-    if (!tenantContext) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
     const { id: strategyId } = await context.params;
 
@@ -257,6 +253,10 @@ export async function GET(
       data: historyData,
     });
   } catch (error) {
+    // API-ERR-001: getTenantContext() and resolveBranchIdOrThrow() throw NextResponse
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403/400 response
+    }
     console.error('Error getting workflow history:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
