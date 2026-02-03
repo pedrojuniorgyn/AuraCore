@@ -102,3 +102,12 @@ frontend-analysis-report-*.md
 
 # PDFs de teste
 report_*.pdf
+
+# Workspace files (belong in /clawd/, not here)
+/AGENTS.md
+/BOOTSTRAP.md
+/HEARTBEAT.md
+/IDENTITY.md
+/SOUL.md
+/TOOLS.md
+/USER.md
