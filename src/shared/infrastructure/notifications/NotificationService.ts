@@ -155,9 +155,10 @@ export class NotificationService {
       // Schema usa nvarchar para userId, então converter para string
       const userIdString = typeof userId === 'string' ? userId : String(userId);
 
+      // REPO-005: branchId NUNCA pode ser null (multi-tenancy obrigatório)
       await db.insert(notifications).values({
         organizationId,
-        branchId: branchId || null,
+        branchId, // Sem fallback || null - validação deve garantir valor
         userId: userIdString,
         type,
         event,

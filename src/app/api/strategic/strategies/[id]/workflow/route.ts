@@ -192,7 +192,24 @@ export async function POST(
       );
     }
 
-    await historyRepo.save(historyEntry);
+    // Salvar histórico de aprovação (audit trail)
+    // Nota: historyRepo.save() faz throw em caso de erro (não retorna Result)
+    try {
+      await historyRepo.save(historyEntry);
+    } catch (historyError) {
+      const errorMsg = historyError instanceof Error ? historyError.message : String(historyError);
+      console.error('❌ Falha ao salvar histórico de aprovação:', errorMsg);
+      // Estratégia já foi salva - retornar warning mas não falhar request
+      return NextResponse.json({
+        success: true,
+        warning: 'Ação executada mas histórico não foi registrado',
+        data: {
+          strategyId: updatedStrategy.id,
+          workflowStatus: updatedStrategy.workflowStatus.value,
+          action,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
