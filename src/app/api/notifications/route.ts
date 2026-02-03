@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get('limit');
     const parsedLimit = limitParam ? parseInt(limitParam, 10) : 50;
-    // Validar que parseInt não retornou NaN
-    const limit = isNaN(parsedLimit) ? 50 : parsedLimit;
+    // Validar que parseInt não retornou NaN e clampar para 1-200
+    const limit = isNaN(parsedLimit) ? 50 : Math.max(1, Math.min(200, parsedLimit));
 
     // Resolver NotificationService
     const notificationService = container.resolve(NotificationService);

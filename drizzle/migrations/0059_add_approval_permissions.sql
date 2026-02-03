@@ -29,8 +29,8 @@ BEGIN
     updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
     
     CONSTRAINT pk_strategic_approval_approvers PRIMARY KEY (id),
-    CONSTRAINT fk_approvers_org FOREIGN KEY (organization_id) REFERENCES organizations(id),
-    CONSTRAINT uq_approver_user UNIQUE (organization_id, branch_id, user_id, scope, department_id)
+    CONSTRAINT fk_approvers_org FOREIGN KEY (organization_id) REFERENCES organizations(id)
+    -- NOTA: UNIQUE constraint sem department_id - índices filtrados abaixo garantem unicidade
   );
   
   PRINT 'Tabela strategic_approval_approvers criada com sucesso';
@@ -38,6 +38,32 @@ END
 ELSE
 BEGIN
   PRINT 'Tabela strategic_approval_approvers já existe';
+END
+GO
+
+-- =====================================================
+-- Índices de unicidade (resolvem NULL != NULL em UNIQUE)
+-- =====================================================
+
+-- Índice único para scope='ALL' (garante 1 aprovador ALL por user/org/branch)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'uq_approver_all_scope')
+BEGIN
+  CREATE UNIQUE NONCLUSTERED INDEX uq_approver_all_scope
+  ON strategic_approval_approvers (organization_id, branch_id, user_id, scope)
+  WHERE scope = 'ALL' AND department_id IS NULL;
+  
+  PRINT 'Índice único uq_approver_all_scope criado';
+END
+GO
+
+-- Índice único para scope='DEPARTMENT' (garante 1 aprovador por user/org/branch/dept)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'uq_approver_department_scope')
+BEGIN
+  CREATE UNIQUE NONCLUSTERED INDEX uq_approver_department_scope
+  ON strategic_approval_approvers (organization_id, branch_id, user_id, scope, department_id)
+  WHERE scope = 'DEPARTMENT' AND department_id IS NOT NULL;
+  
+  PRINT 'Índice único uq_approver_department_scope criado';
 END
 GO
 
