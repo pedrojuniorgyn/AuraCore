@@ -137,16 +137,28 @@ export class NotificationService {
   /**
    * Cria notificação in-app no banco de dados
    */
+  /**
+   * Cria notificação in-app para usuário
+   * 
+   * @param params Parâmetros da notificação
+   * @returns Result vazio (success) ou erro
+   * 
+   * NOTA: userId pode ser number ou string. Schema do banco requer string (nvarchar),
+   * então conversão é aplicada se necessário.
+   */
   async createInAppNotification(
     params: InAppNotificationParams
   ): Promise<Result<void, string>> {
     try {
       const { organizationId, branchId, userId, type, event, title, message, data, actionUrl } = params;
 
+      // Schema usa nvarchar para userId, então converter para string
+      const userIdString = typeof userId === 'string' ? userId : String(userId);
+
       await db.insert(notifications).values({
         organizationId,
         branchId: branchId || null,
-        userId: String(userId),
+        userId: userIdString,
         type,
         event,
         title,
@@ -156,7 +168,7 @@ export class NotificationService {
         isRead: 0,
       });
 
-      console.log(`📬 Notificação in-app criada para userId=${userId}, type=${type}`);
+      console.log(`📬 Notificação in-app criada para userId=${userIdString}, type=${type}`);
 
       return Result.ok(undefined);
     } catch (error) {
@@ -188,18 +200,33 @@ export class NotificationService {
 
   /**
    * Busca notificações não lidas de um usuário
+   * 
+   * @param userId ID do usuário (number ou string)
+   * @param organizationId ID da organização
+   * @param limit Limite de resultados (padrão: 50, máx: 200)
+   * @returns Result com lista de notificações ou erro
+   * 
+   * NOTA: API anterior permitia ?limit=N query param (1-200).
+   * Este parâmetro restaura essa funcionalidade.
    */
   async getUnreadNotifications(
-    userId: number,
-    organizationId: number
+    userId: number | string,
+    organizationId: number,
+    limit: number = 50
   ): Promise<Result<unknown[], string>> {
     try {
+      // Validar e clampar limit (1-200)
+      const clampedLimit = Math.max(1, Math.min(200, limit));
+
+      // Schema usa nvarchar para userId
+      const userIdString = typeof userId === 'string' ? userId : String(userId);
+
       const query = db
         .select()
         .from(notifications)
         .where(
           and(
-            eq(notifications.userId, String(userId)),
+            eq(notifications.userId, userIdString),
             eq(notifications.organizationId, organizationId),
             eq(notifications.isRead, 0)
           )
@@ -208,7 +235,7 @@ export class NotificationService {
 
       // Type assertion for limit (Drizzle SQL Server pattern - BP-SQL-004)
       type QueryWithLimit = { limit(n: number): Promise<unknown[]> };
-      const notificationsList = await (query as unknown as QueryWithLimit).limit(50);
+      const notificationsList = await (query as unknown as QueryWithLimit).limit(clampedLimit);
 
       return Result.ok(notificationsList);
     } catch (error) {

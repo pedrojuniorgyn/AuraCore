@@ -13,18 +13,28 @@ import { Result } from '@/shared/domain';
 /**
  * GET /api/notifications
  * Lista notificações não lidas do usuário
+ * 
+ * Query params:
+ * - limit: Número de resultados (padrão: 50, máx: 200)
  */
 export async function GET(request: NextRequest) {
   try {
     const context = await getTenantContext();
 
+    // Ler query param limit (default 50, clamped 1-200)
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : 50;
+
     // Resolver NotificationService
     const notificationService = container.resolve(NotificationService);
 
-    // Buscar notificações não lidas (converter userId para number)
+    // Buscar notificações não lidas
+    // userId pode ser string (context.userId) - service aceita ambos
     const result = await notificationService.getUnreadNotifications(
-      parseInt(context.userId, 10),
-      context.organizationId
+      context.userId,
+      context.organizationId,
+      limit
     );
 
     if (!Result.isOk(result)) {

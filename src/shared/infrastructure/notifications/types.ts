@@ -39,7 +39,14 @@ export interface WebhookParams {
 export interface InAppNotificationParams {
   organizationId: number;
   branchId: number;
-  userId: number;
+  /**
+   * User ID - aceita number ou string
+   * 
+   * NOTA: O schema do banco (notifications.userId) é nvarchar (string).
+   * Se passar number, será convertido para string automaticamente.
+   * Aceita ambos para compatibilidade com diferentes partes do sistema.
+   */
+  userId: number | string;
   type: NotificationType;
   event: NotificationEvent;
   title: string;
