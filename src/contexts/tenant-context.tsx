@@ -235,6 +235,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       const cookieSuccess = await persistBranchCookie(branchId);
       console.log("[DEBUG] Cookie persistido:", cookieSuccess);
 
+      if (!cookieSuccess) {
+        toast.error("Erro ao persistir filial no servidor. Tente novamente.");
+        // Reverte estado local
+        setCurrentBranch(currentBranch);
+        if (currentBranch) {
+          localStorage.setItem(STORAGE_KEY, currentBranch.id.toString());
+        }
+        return;
+      }
+
       toast.success(`Filial alterada: ${branch.tradeName}`);
 
       // 🔄 Recarrega a página para atualizar todos os dados

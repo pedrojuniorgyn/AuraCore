@@ -91,14 +91,14 @@ export const userBranches = mssqlTable(
 export const accounts = mssqlTable(
   "accounts",
   {
-    userId: nvarchar("user_id", { length: 255 })
+    userId: nvarchar("userId", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     type: nvarchar("type", { length: 255 })
       .$type<AdapterAccount["type"]>()
       .notNull(),
     provider: nvarchar("provider", { length: 255 }).notNull(),
-    providerAccountId: nvarchar("provider_account_id", { length: 255 }).notNull(),
+    providerAccountId: nvarchar("providerAccountId", { length: 255 }).notNull(),
     refresh_token: nvarchar("refresh_token", { length: "max" }),
     access_token: nvarchar("access_token", { length: "max" }),
     expires_at: int("expires_at"),
@@ -115,8 +115,8 @@ export const accounts = mssqlTable(
 );
 
 export const sessions = mssqlTable("sessions", {
-  sessionToken: nvarchar("session_token", { length: 255 }).primaryKey(),
-  userId: nvarchar("user_id", { length: 255 })
+  sessionToken: nvarchar("sessionToken", { length: 255 }).primaryKey(),
+  userId: nvarchar("userId", { length: 255 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: datetime2("expires", { precision: 3 }).notNull(),
