@@ -10,6 +10,7 @@ import { Alert, type AlertSeverity } from '../../domain/entities/Alert';
 import type { IAlertRepository } from '../../domain/ports/output/IAlertRepository';
 import type { IKPIRepository } from '../../domain/ports/output/IKPIRepository';
 import type { IActionPlanRepository } from '../../domain/ports/output/IActionPlanRepository';
+import type { IApprovalPermissionRepository } from '../../domain/ports/output/IApprovalPermissionRepository';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 import type { NotificationType } from '@/shared/infrastructure/notifications/types';
@@ -63,6 +64,8 @@ export class AlertService {
     private kpiRepository: IKPIRepository,
     @inject(STRATEGIC_TOKENS.ActionPlanRepository)
     private actionPlanRepository: IActionPlanRepository,
+    @inject(STRATEGIC_TOKENS.ApprovalPermissionRepository)
+    private approvalPermissionRepository: IApprovalPermissionRepository,
     private notificationService: NotificationService
   ) {}
 
@@ -250,22 +253,38 @@ export class AlertService {
         alert.severity === 'HIGH' ? 'WARNING' :
         'INFO';
 
-      await this.notificationService.createInAppNotification({
+      // Buscar aprovadores configurados para notificar
+      const approverUserIds = await this.approvalPermissionRepository.findApproversByOrg(
         organizationId,
-        branchId,
-        userId: 1, // TODO: Pegar do contexto ou configuração
-        type: notificationType,
-        event: alert.alertType as never,
-        title: alert.title,
-        message: alert.message,
-        data: {
-          alertId: alert.id,
-          entityType: alert.entityType,
-          entityId: alert.entityId,
-          severity: alert.severity,
-        },
-        actionUrl: `/strategic/dashboard?alert=${alert.id}`,
-      });
+        branchId
+      );
+
+      // Enviar notificação in-app para cada aprovador
+      if (approverUserIds.length > 0) {
+        for (const userId of approverUserIds) {
+          await this.notificationService.createInAppNotification({
+            organizationId,
+            branchId,
+            userId,
+            type: notificationType,
+            event: alert.alertType as never,
+            title: alert.title,
+            message: alert.message,
+            data: {
+              alertId: alert.id,
+              entityType: alert.entityType,
+              entityId: alert.entityId,
+              severity: alert.severity,
+            },
+            actionUrl: `/strategic/dashboard?alert=${alert.id}`,
+          });
+        }
+      } else {
+        console.warn(
+          `⚠️ Nenhum aprovador configurado para org ${organizationId}, branch ${branchId}. ` +
+          `Notificação in-app não enviada para alerta ${alert.id}.`
+        );
+      }
     }
 
     // Email Notification

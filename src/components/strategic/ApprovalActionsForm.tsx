@@ -11,6 +11,7 @@ import { Card, Title, Text, Textarea } from '@tremor/react';
 import { CheckCircle, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTenant } from '@/contexts/tenant-context';
 
 export interface ApprovalActionsFormProps {
   strategyId: string;
@@ -27,6 +28,7 @@ export const ApprovalActionsForm: React.FC<ApprovalActionsFormProps> = ({
   onSuccess,
   onError,
 }) => {
+  const { user } = useTenant();
   const [selectedAction, setSelectedAction] = useState<ApprovalAction>(null);
   const [comments, setComments] = useState('');
   const [reason, setReason] = useState('');
@@ -43,13 +45,27 @@ export const ApprovalActionsForm: React.FC<ApprovalActionsFormProps> = ({
 
     setIsSubmitting(true);
 
+    // Validar user
+    if (!user?.id) {
+      onError?.('Usuário não autenticado');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const userId = parseInt(user.id, 10);
+    if (isNaN(userId)) {
+      onError?.('ID de usuário inválido');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/strategic/strategies/${strategyId}/workflow`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: selectedAction,
-          userId: 1, // TODO: Pegar do contexto de autenticação
+          userId,
           comments: comments.trim() || undefined,
           reason: reason.trim() || undefined,
         }),
