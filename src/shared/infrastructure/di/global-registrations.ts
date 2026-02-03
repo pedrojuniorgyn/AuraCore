@@ -23,6 +23,9 @@ import { QueryLegislationUseCase } from '@/modules/fiscal/application/queries/qu
 import { ImportBankStatementUseCase, type IBankTransactionRepository } from '@/modules/financial/application/commands/import-bank-statement';
 import type { BankTransaction } from '@/modules/financial/domain/types';
 
+// Notification Service (FASE7-06)
+import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
+
 // Stub Repository for Bank Transactions (to be replaced with real implementation)
 class StubBankTransactionRepository implements IBankTransactionRepository {
   async findByFitId(): Promise<BankTransaction | null> {
@@ -79,4 +82,10 @@ export function registerGlobalDependencies() {
 
   container.register(TOKENS.BankTransactionRepository, { useClass: StubBankTransactionRepository });
   container.register(TOKENS.ImportBankStatementUseCase, { useClass: ImportBankStatementUseCase });
+
+  // ============================================================================
+  // NOTIFICATION SYSTEM (FASE7-06)
+  // ============================================================================
+
+  container.registerSingleton('NotificationService', NotificationService);
 }

@@ -11,6 +11,8 @@ import type { IAlertRepository } from '../../domain/ports/output/IAlertRepositor
 import type { IKPIRepository } from '../../domain/ports/output/IKPIRepository';
 import type { IActionPlanRepository } from '../../domain/ports/output/IActionPlanRepository';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
+import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
+import type { NotificationType } from '@/shared/infrastructure/notifications/types';
 
 export interface AlertConfig {
   kpiCriticalThreshold: number;
@@ -19,6 +21,12 @@ export interface AlertConfig {
   overdueDaysWarning: number;
   overdueDaysCritical: number;
   staleDaysThreshold: number;
+  // Configurações de notificação
+  emailEnabled?: boolean;
+  webhookEnabled?: boolean;
+  inAppEnabled?: boolean;
+  webhookUrl?: string;
+  emailRecipients?: string[];
 }
 
 export type PartialAlertConfig = Partial<AlertConfig>;
@@ -54,7 +62,9 @@ export class AlertService {
     @inject(STRATEGIC_TOKENS.KPIRepository)
     private kpiRepository: IKPIRepository,
     @inject(STRATEGIC_TOKENS.ActionPlanRepository)
-    private actionPlanRepository: IActionPlanRepository
+    private actionPlanRepository: IActionPlanRepository,
+    @inject('NotificationService')
+    private notificationService: NotificationService
   ) {}
 
   /**
@@ -213,9 +223,131 @@ export class AlertService {
       await this.alertRepository.save(alert);
     }
 
+    // Enviar notificações para cada alerta criado
+    const effectiveConfig = mergeWithDefaults(config);
+    for (const alert of allAlerts) {
+      await this.sendNotifications(alert, effectiveConfig, organizationId, branchId);
+    }
+
     return Result.ok({
       created: allAlerts.length,
       alerts: allAlerts,
     });
+  }
+
+  /**
+   * Envia notificações (email, webhook, in-app) para um alerta
+   */
+  private async sendNotifications(
+    alert: Alert,
+    config: AlertConfig,
+    organizationId: number,
+    branchId: number
+  ): Promise<void> {
+    // In-App Notification (sempre ativa por padrão)
+    if (config.inAppEnabled !== false) {
+      const notificationType: NotificationType = 
+        alert.severity === 'CRITICAL' ? 'ERROR' :
+        alert.severity === 'HIGH' ? 'WARNING' :
+        'INFO';
+
+      await this.notificationService.createInAppNotification({
+        organizationId,
+        branchId,
+        userId: 1, // TODO: Pegar do contexto ou configuração
+        type: notificationType,
+        event: alert.alertType as never,
+        title: alert.title,
+        message: alert.message,
+        data: {
+          alertId: alert.id,
+          entityType: alert.entityType,
+          entityId: alert.entityId,
+          severity: alert.severity,
+        },
+        actionUrl: `/strategic/dashboard?alert=${alert.id}`,
+      });
+    }
+
+    // Email Notification
+    if (config.emailEnabled && config.emailRecipients && config.emailRecipients.length > 0) {
+      const template = this.getEmailTemplate(alert.alertType);
+      const variables = this.getEmailVariables(alert);
+
+      await this.notificationService.sendEmail({
+        to: config.emailRecipients,
+        subject: `🔔 ${alert.title}`,
+        body: alert.message,
+        template,
+        variables,
+      });
+    }
+
+    // Webhook Notification
+    if (config.webhookEnabled && config.webhookUrl) {
+      await this.notificationService.sendWebhook({
+        url: config.webhookUrl,
+        payload: {
+          type: alert.alertType,
+          severity: alert.severity,
+          entity: {
+            type: alert.entityType,
+            id: alert.entityId,
+            name: alert.entityName,
+          },
+          title: alert.title,
+          message: alert.message,
+          createdAt: alert.createdAt.toISOString(),
+        },
+        retryAttempts: 3,
+      });
+    }
+  }
+
+  /**
+   * Determina qual template de email usar baseado no tipo de alerta
+   */
+  private getEmailTemplate(alertType: string): string {
+    switch (alertType) {
+      case 'KPI_CRITICAL':
+      case 'KPI_WARNING':
+        return 'alert-kpi-critical';
+      case 'ACTION_PLAN_OVERDUE':
+      case 'ACTION_PLAN_STALE':
+        return 'alert-overdue';
+      default:
+        return 'alert-kpi-critical'; // fallback
+    }
+  }
+
+  /**
+   * Extrai variáveis do alerta para substituir no template de email
+   */
+  private getEmailVariables(alert: Alert): Record<string, string | number> {
+    // Usar currentValue e thresholdValue da entity Alert
+    const data: Record<string, unknown> = {
+      currentValue: alert.currentValue,
+      thresholdValue: alert.thresholdValue,
+      entityName: alert.entityName,
+      entityId: alert.entityId,
+    };
+
+    return {
+      kpiName: String(data.kpiName || alert.entityName || 'KPI'),
+      percentage: Number(data.percentage || data.achievementPercent || 0),
+      threshold: Number(data.threshold || 70),
+      target: String(data.target || 'N/A'),
+      actual: String(data.actual || 'N/A'),
+      variance: String(data.variance || 'N/A'),
+      date: new Date().toLocaleDateString('pt-BR'),
+      dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/strategic/dashboard`,
+      planName: String(data.planName || alert.entityName || 'Plano de Ação'),
+      daysOverdue: Number(data.daysOverdue || 0),
+      what: String(data.what || 'N/A'),
+      who: String(data.who || 'N/A'),
+      dueDate: String(data.dueDate || 'N/A'),
+      where: String(data.whereLocation || 'N/A'),
+      actionPlanUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/strategic/action-plans/${alert.entityId}`,
+    };
   }
 }
