@@ -67,6 +67,10 @@ export const GET = withDI(async (request: NextRequest) => {
 
     return NextResponse.json(serialized);
   } catch (error) {
+    // API-ERR-001: getTenantContext() and resolveBranchIdOrThrow() throw NextResponse
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403/400 response
+    }
     console.error('Error listing delegates:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -142,6 +146,10 @@ export const POST = withDI(async (request: NextRequest) => {
       { status: 201 }
     );
   } catch (error) {
+    // API-ERR-001: getTenantContext() and resolveBranchIdOrThrow() throw NextResponse
+    if (error instanceof NextResponse) {
+      return error; // Return original 401/403/400 response
+    }
     console.error('Error creating delegate:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

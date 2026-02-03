@@ -7,4 +7,3 @@
 
 export { NotificationService } from './NotificationService';
 export * from './types';
-export * from './schemas/notification.schema';

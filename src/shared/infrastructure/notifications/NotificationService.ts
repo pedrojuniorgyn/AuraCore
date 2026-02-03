@@ -7,7 +7,7 @@
 import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
-import { notificationTable } from './schemas/notification.schema';
+import { notifications } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import type {
   EmailParams,
@@ -143,17 +143,17 @@ export class NotificationService {
     try {
       const { organizationId, branchId, userId, type, event, title, message, data, actionUrl } = params;
 
-      await db.insert(notificationTable).values({
+      await db.insert(notifications).values({
         organizationId,
         branchId: branchId || null,
-        userId: userId || null,
+        userId: String(userId),
         type,
         event,
         title,
         message: message || null,
         data: data ? JSON.stringify(data) : null,
         actionUrl: actionUrl || null,
-        isRead: false,
+        isRead: 0,
       });
 
       console.log(`📬 Notificação in-app criada para userId=${userId}, type=${type}`);
@@ -172,12 +172,12 @@ export class NotificationService {
   async markAsRead(notificationId: number): Promise<Result<void, string>> {
     try {
       await db
-        .update(notificationTable)
+        .update(notifications)
         .set({
-          isRead: true,
+          isRead: 1,
           readAt: new Date(),
         })
-        .where(eq(notificationTable.id, notificationId));
+        .where(eq(notifications.id, notificationId));
 
       return Result.ok(undefined);
     } catch (error) {
@@ -196,21 +196,21 @@ export class NotificationService {
     try {
       const query = db
         .select()
-        .from(notificationTable)
+        .from(notifications)
         .where(
           and(
-            eq(notificationTable.userId, userId),
-            eq(notificationTable.organizationId, organizationId),
-            eq(notificationTable.isRead, false)
+            eq(notifications.userId, String(userId)),
+            eq(notifications.organizationId, organizationId),
+            eq(notifications.isRead, 0)
           )
         )
-        .orderBy(desc(notificationTable.createdAt));
+        .orderBy(desc(notifications.createdAt));
 
       // Type assertion for limit (Drizzle SQL Server pattern - BP-SQL-004)
       type QueryWithLimit = { limit(n: number): Promise<unknown[]> };
-      const notifications = await (query as unknown as QueryWithLimit).limit(50);
+      const notificationsList = await (query as unknown as QueryWithLimit).limit(50);
 
-      return Result.ok(notifications);
+      return Result.ok(notificationsList);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro desconhecido';
       return Result.fail(`Falha ao buscar notificações: ${message}`);

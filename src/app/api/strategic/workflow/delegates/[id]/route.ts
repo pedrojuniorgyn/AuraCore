@@ -49,6 +49,10 @@ export const DELETE = withDI(
         { status: 200 }
       );
     } catch (error) {
+      // API-ERR-001: getTenantContext() and resolveBranchIdOrThrow() throw NextResponse
+      if (error instanceof NextResponse) {
+        return error; // Return original 401/403/400 response
+      }
       console.error('Error revoking delegate:', error);
       return NextResponse.json(
         { error: 'Internal server error' },
