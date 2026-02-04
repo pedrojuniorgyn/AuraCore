@@ -154,15 +154,28 @@ export class DrizzleOkrRepository implements IOkrRepository {
         .orderBy(okrKeyResultTable.orderIndex);
     }
 
-    // Map para Domain Entities
+    // Map para Domain Entities - Bug Fix: Não ignorar erros de mapeamento
     const items: OKR[] = [];
+    const mappingErrors: string[] = [];
+    
     for (const okrRow of okrRows) {
       const krs = keyResultRows.filter((kr) => kr.okrId === okrRow.id);
       const result = OkrMapper.toDomain(okrRow, krs);
       
       if (Result.isOk(result)) {
         items.push(result.value);
+      } else {
+        // Bug Fix: Coletar erros ao invés de ignorar silenciosamente
+        mappingErrors.push(`OKR ${okrRow.id}: ${result.error}`);
       }
+    }
+
+    // Se houve erros de mapeamento, logar para observabilidade
+    if (mappingErrors.length > 0) {
+      console.error(
+        `[DrizzleOkrRepository.findMany] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
+        mappingErrors
+      );
     }
 
     return { items, total };
@@ -202,13 +215,26 @@ export class DrizzleOkrRepository implements IOkrRepository {
     }
 
     const items: OKR[] = [];
+    const mappingErrors: string[] = [];
+    
     for (const okrRow of okrRows) {
       const krs = keyResultRows.filter((kr) => kr.okrId === okrRow.id);
       const result = OkrMapper.toDomain(okrRow, krs);
       
       if (Result.isOk(result)) {
         items.push(result.value);
+      } else {
+        // Bug Fix: Coletar erros ao invés de ignorar silenciosamente
+        mappingErrors.push(`OKR ${okrRow.id}: ${result.error}`);
       }
+    }
+
+    // Se houve erros de mapeamento, logar para observabilidade
+    if (mappingErrors.length > 0) {
+      console.error(
+        `[DrizzleOkrRepository.findByParentId] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
+        mappingErrors
+      );
     }
 
     return items;
@@ -249,13 +275,26 @@ export class DrizzleOkrRepository implements IOkrRepository {
     }
 
     const items: OKR[] = [];
+    const mappingErrors: string[] = [];
+    
     for (const okrRow of okrRows) {
       const krs = keyResultRows.filter((kr) => kr.okrId === okrRow.id);
       const result = OkrMapper.toDomain(okrRow, krs);
       
       if (Result.isOk(result)) {
         items.push(result.value);
+      } else {
+        // Bug Fix: Coletar erros ao invés de ignorar silenciosamente
+        mappingErrors.push(`OKR ${okrRow.id}: ${result.error}`);
       }
+    }
+
+    // Se houve erros de mapeamento, logar para observabilidade
+    if (mappingErrors.length > 0) {
+      console.error(
+        `[DrizzleOkrRepository.findRootsByLevel] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
+        mappingErrors
+      );
     }
 
     return items;
@@ -295,13 +334,26 @@ export class DrizzleOkrRepository implements IOkrRepository {
     }
 
     const items: OKR[] = [];
+    const mappingErrors: string[] = [];
+    
     for (const okrRow of okrRows) {
       const krs = keyResultRows.filter((kr) => kr.okrId === okrRow.id);
       const result = OkrMapper.toDomain(okrRow, krs);
       
       if (Result.isOk(result)) {
         items.push(result.value);
+      } else {
+        // Bug Fix: Coletar erros ao invés de ignorar silenciosamente
+        mappingErrors.push(`OKR ${okrRow.id}: ${result.error}`);
       }
+    }
+
+    // Se houve erros de mapeamento, logar para observabilidade
+    if (mappingErrors.length > 0) {
+      console.error(
+        `[DrizzleOkrRepository.findByOwnerId] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
+        mappingErrors
+      );
     }
 
     return items;
@@ -346,13 +398,26 @@ export class DrizzleOkrRepository implements IOkrRepository {
     }
 
     const items: OKR[] = [];
+    const mappingErrors: string[] = [];
+    
     for (const okrRow of okrRows) {
       const krs = keyResultRows.filter((kr) => kr.okrId === okrRow.id);
       const result = OkrMapper.toDomain(okrRow, krs);
       
       if (Result.isOk(result)) {
         items.push(result.value);
+      } else {
+        // Bug Fix: Coletar erros ao invés de ignorar silenciosamente
+        mappingErrors.push(`OKR ${okrRow.id}: ${result.error}`);
       }
+    }
+
+    // Se houve erros de mapeamento, logar para observabilidade
+    if (mappingErrors.length > 0) {
+      console.error(
+        `[DrizzleOkrRepository.findActiveInPeriod] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
+        mappingErrors
+      );
     }
 
     return items;
@@ -371,14 +436,20 @@ export class DrizzleOkrRepository implements IOkrRepository {
       // REPO-008: Transações para operações múltiplas
       await db.transaction(async (tx) => {
         if (exists) {
-          // UPDATE
+          // UPDATE - Bug Fix: Adicionar multi-tenancy (REPO-005)
           await tx
             .update(okrTable)
             .set({
               ...okrData,
               updatedAt: new Date(),
             })
-            .where(eq(okrTable.id, okr.id));
+            .where(
+              and(
+                eq(okrTable.id, okr.id),
+                eq(okrTable.organizationId, okr.organizationId),
+                eq(okrTable.branchId, okr.branchId)
+              )
+            );
 
           // Deletar Key Results antigos
           await tx
