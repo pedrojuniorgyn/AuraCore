@@ -74,7 +74,7 @@ export class OkrMapper {
    */
   static toPersistence(entity: OKR): {
     okr: OkrInsert;
-    keyResults: Omit<KeyResultInsert, 'id' | 'okrId'>[];
+    keyResults: Omit<KeyResultInsert, 'okrId'>[]; // Bug Fix: Manter 'id' (opcional), omitir apenas 'okrId'
   } {
     return {
       okr: {
