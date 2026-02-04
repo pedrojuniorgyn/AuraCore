@@ -190,13 +190,12 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   /**
    * Retorna nova instância com status atualizado (VO-006: Imutável)
    * Value Objects não mutam - retornam nova instância
+   * Bug Fix: Usar KeyResult.create() ao invés de constructor privado
    */
   withStatus(newStatus: KeyResultStatus): Result<KeyResult, string> {
-    return Result.ok(
-      new KeyResult({
-        ...(this.props as unknown as KeyResultProps),
-        status: newStatus,
-      })
-    );
+    return KeyResult.create({
+      ...(this.props as unknown as KeyResultProps),
+      status: newStatus,
+    });
   }
 }
