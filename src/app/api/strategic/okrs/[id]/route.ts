@@ -81,8 +81,9 @@ export async function PATCH(
     }
 
     // Atualizar OKR no store centralizado
+    // ✅ SECURITY: Usar validation.data (validado) ao invés de body (bruto)
     const { updateOkr } = await import('@/lib/okrs/mock-store');
-    const updatedOKR = updateOkr(id, body);
+    const updatedOKR = updateOkr(id, validation.data);
 
     if (!updatedOKR) {
       return NextResponse.json({ error: 'OKR not found' }, { status: 404 });
