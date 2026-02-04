@@ -31,7 +31,7 @@ export function BaseGrid<T = Record<string, unknown>>({
   detailCellRenderer,
   detailCellRendererParams,
   loading = false,
-  paginationPageSize = 50,
+  paginationPageSize = 20,
   enableExport = true,
   enableCharts = false, // Desativado até registrar IntegratedChartsModule (#200)
   moduleName = 'Dados',
@@ -67,7 +67,12 @@ export function BaseGrid<T = Record<string, unknown>>({
     () => ({
       pagination: true,
       paginationPageSize: isMobile ? 10 : paginationPageSize, // Menos linhas em mobile
-      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [10, 25, 50, 100],
+      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [20, 50, 100],
+      rowSelection: {
+        mode: 'singleRow',
+        checkboxes: false,
+        enableClickSelection: true,
+      },
       animateRows: !isMobile, // Desabilitar animações em mobile (performance)
       masterDetail: !isMobile && masterDetail, // Master-detail apenas em desktop
       detailCellRenderer: !isMobile ? detailCellRenderer : undefined,
