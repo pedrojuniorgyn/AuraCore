@@ -11,6 +11,9 @@ export * from './bsc-perspective.schema';
 export * from './strategic-goal.schema';
 export * from './goal-cascade.schema';
 
+// OKR Schemas
+export * from '../../okr/infrastructure/persistence/schemas/okr.schema';
+
 // KPI Schemas
 export * from './kpi.schema';
 export * from './kpi-history.schema';
