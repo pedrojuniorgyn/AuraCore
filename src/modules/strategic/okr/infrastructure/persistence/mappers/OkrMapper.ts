@@ -99,7 +99,7 @@ export class OkrMapper {
         updatedAt: entity.updatedAt,
         deletedAt: null,
       },
-      keyResults: entity.keyResults.map((kr, index) => ({
+      keyResults: entity.keyResults.map((kr) => ({
         id: kr.id, // Bug Fix: Preservar ID existente (undefined para novos)
         title: kr.title,
         description: kr.description || null,
@@ -110,7 +110,7 @@ export class OkrMapper {
         unit: kr.unit || null,
         status: kr.status,
         weight: kr.weight,
-        orderIndex: index,
+        orderIndex: kr.order, // Bug Fix: Usar kr.order ao invés de index
         linkedKpiId: kr.linkedKpiId || null,
         linkedActionPlanId: kr.linkedActionPlanId || null,
         createdBy: entity.createdBy,
