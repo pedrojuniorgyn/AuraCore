@@ -33,7 +33,7 @@ interface OKRProps {
   ownerType: 'user' | 'team' | 'department';
 
   // Key Results
-  keyResults: KeyResult[];
+  readonly keyResults: readonly KeyResult[]; // VO-006 + ENTITY-005: Immutable array
 
   // Progress & Status
   progress: number; // 0-100
@@ -271,7 +271,11 @@ export class OKR extends AggregateRoot<string> {
       return Result.fail('OKR não pode ter mais de 5 Key Results');
     }
 
-    (this.props.keyResults as KeyResult[]).push(keyResult);
+    // VO-006 + ENTITY-005: Create new array instead of mutating
+    (this.props as { keyResults: readonly KeyResult[] }).keyResults = [
+      ...this.props.keyResults,
+      keyResult,
+    ];
     this.updateProgress();
 
     this.addDomainEvent({
@@ -299,7 +303,12 @@ export class OKR extends AggregateRoot<string> {
     }
 
     const removed = this.props.keyResults[index];
-    (this.props.keyResults as KeyResult[]).splice(index, 1);
+    
+    // VO-006 + ENTITY-005: Create new array instead of mutating
+    (this.props as { keyResults: readonly KeyResult[] }).keyResults = [
+      ...this.props.keyResults.slice(0, index),
+      ...this.props.keyResults.slice(index + 1),
+    ];
     this.updateProgress();
 
     this.addDomainEvent({
@@ -326,7 +335,10 @@ export class OKR extends AggregateRoot<string> {
       return Result.fail('Índice de Key Result inválido');
     }
 
-    (this.props.keyResults as KeyResult[])[index] = keyResult;
+    // VO-006 + ENTITY-005: Create new array instead of mutating
+    const updatedKeyResults = [...this.props.keyResults];
+    updatedKeyResults[index] = keyResult;
+    (this.props as { keyResults: readonly KeyResult[] }).keyResults = updatedKeyResults;
     this.updateProgress();
 
     this.addDomainEvent({

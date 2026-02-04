@@ -28,6 +28,7 @@ interface KeyResultProps extends Record<string, unknown> {
 export class KeyResult extends ValueObject<KeyResultProps> {
   private constructor(props: KeyResultProps) {
     super(props);
+    Object.freeze(this); // VO-005: Enforce immutability
   }
 
   // Getters
@@ -181,10 +182,12 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   /**
    * Atualiza o status manualmente
    */
-  updateStatus(newStatus: KeyResultStatus): KeyResult {
-    return new KeyResult({
-      ...(this.props as unknown as KeyResultProps),
-      status: newStatus,
-    });
+  updateStatus(newStatus: KeyResultStatus): Result<KeyResult, string> {
+    return Result.ok(
+      new KeyResult({
+        ...(this.props as unknown as KeyResultProps),
+        status: newStatus,
+      })
+    );
   }
 }
