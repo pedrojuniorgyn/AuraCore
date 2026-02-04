@@ -78,6 +78,7 @@ export default function IdeasPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   // Esta página SEMPRE mostra cards, então view é sempre 'cards'
   const view = 'cards' as const;
@@ -105,6 +106,45 @@ export default function IdeasPage() {
       setIsLoading(false);
     }
   }, [filterStatus]);
+
+  const handleConvert = async (targetType: 'ACTION_PLAN' | 'GOAL' | 'KPI' | 'PDCA') => {
+    if (!selectedIdea) return;
+
+    setIsConverting(true);
+    try {
+      const response = await fetchAPI<{
+        success: boolean;
+        id: string;
+        redirectUrl: string;
+        targetType: string;
+      }>(`/api/strategic/ideas/${selectedIdea.id}/convert`, {
+        method: 'POST',
+        body: JSON.stringify({ targetType }),
+      });
+
+      if (response.success) {
+        const targetLabel = {
+          ACTION_PLAN: 'Plano de Ação',
+          GOAL: 'Objetivo',
+          KPI: 'KPI',
+          PDCA: 'PDCA',
+        }[targetType];
+
+        toast.success(`Ideia convertida em ${targetLabel}!`);
+        setShowConvertModal(false);
+        
+        // Aguardar um pouco antes de redirecionar para o toast aparecer
+        setTimeout(() => {
+          router.push(response.redirectUrl);
+        }, 500);
+      }
+    } catch (error) {
+      console.error('[Convert Error]', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao converter ideia');
+    } finally {
+      setIsConverting(false);
+    }
+  };
 
   useEffect(() => {
     fetchIdeas();
@@ -513,14 +553,19 @@ export default function IdeasPage() {
               {CONVERT_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
-                  <a
+                  <button
                     key={option.value}
-                    href={`${option.href}?fromIdea=${selectedIdea?.id}&title=${encodeURIComponent(selectedIdea?.title || '')}`}
-                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all flex flex-col items-center gap-2 text-white/70 hover:text-white"
+                    onClick={() => handleConvert(option.value as 'ACTION_PLAN' | 'GOAL' | 'KPI' | 'PDCA')}
+                    disabled={isConverting}
+                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all flex flex-col items-center gap-2 text-white/70 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Icon size={24} />
+                    {isConverting ? (
+                      <Loader2 className="animate-spin" size={24} />
+                    ) : (
+                      <Icon size={24} />
+                    )}
                     <span className="text-sm">{option.label}</span>
-                  </a>
+                  </button>
                 );
               })}
             </div>

@@ -8,7 +8,6 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { 
   Lightbulb, ArrowLeft, Clock, CheckCircle2, XCircle,
   Target, BarChart3, RefreshCw, Loader2, Edit2, Trash2, Save
@@ -25,7 +24,6 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter,
   DialogDescription 
 } from '@/components/ui/dialog';
 import { fetchAPI } from '@/lib/api';
@@ -103,12 +101,11 @@ export default function IdeaDetailPage() {
     showDeleteDialog,
     setShowDeleteDialog,
     confirmDelete,
-    cancelDelete,
     pendingOptions,
   } = useDeleteResource('ideas');
   const [isSaving, setIsSaving] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const [editForm, setEditForm] = useState({
     title: '',
@@ -142,6 +139,45 @@ export default function IdeaDetailPage() {
       fetchIdea();
     }
   }, [id, fetchIdea]);
+
+  const handleConvert = async (targetType: 'ACTION_PLAN' | 'GOAL' | 'KPI' | 'PDCA') => {
+    if (!idea) return;
+
+    setIsConverting(true);
+    try {
+      const response = await fetchAPI<{
+        success: boolean;
+        id: string;
+        redirectUrl: string;
+        targetType: string;
+      }>(`/api/strategic/ideas/${idea.id}/convert`, {
+        method: 'POST',
+        body: JSON.stringify({ targetType }),
+      });
+
+      if (response.success) {
+        const targetLabel = {
+          ACTION_PLAN: 'Plano de Ação',
+          GOAL: 'Objetivo',
+          KPI: 'KPI',
+          PDCA: 'PDCA',
+        }[targetType];
+
+        toast.success(`Ideia convertida em ${targetLabel}!`);
+        setShowConvertModal(false);
+        
+        // Aguardar um pouco antes de redirecionar para o toast aparecer
+        setTimeout(() => {
+          router.push(response.redirectUrl);
+        }, 500);
+      }
+    } catch (error) {
+      console.error('[Convert Error]', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao converter ideia');
+    } finally {
+      setIsConverting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!editForm.title.trim()) {
@@ -493,14 +529,19 @@ export default function IdeaDetailPage() {
               {CONVERT_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 return (
-                  <a
+                  <button
                     key={option.value}
-                    href={`${option.href}?fromIdea=${idea.id}&title=${encodeURIComponent(idea.title)}`}
-                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all flex flex-col items-center gap-2 text-white/70 hover:text-white"
+                    onClick={() => handleConvert(option.value as 'ACTION_PLAN' | 'GOAL' | 'KPI' | 'PDCA')}
+                    disabled={isConverting}
+                    className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all flex flex-col items-center gap-2 text-white/70 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Icon size={24} />
+                    {isConverting ? (
+                      <Loader2 className="animate-spin" size={24} />
+                    ) : (
+                      <Icon size={24} />
+                    )}
                     <span className="text-sm">{option.label}</span>
-                  </a>
+                  </button>
                 );
               })}
             </div>
