@@ -19,6 +19,7 @@ export class OkrMapper {
     
     for (const krRow of keyResultRows) {
       const krResult = KeyResult.create({
+        id: krRow.id, // Bug Fix: Preservar ID do banco
         title: krRow.title,
         description: krRow.description || undefined,
         metricType: krRow.metricType as KeyResultMetricType,
@@ -99,6 +100,7 @@ export class OkrMapper {
         deletedAt: null,
       },
       keyResults: entity.keyResults.map((kr, index) => ({
+        id: kr.id, // Bug Fix: Preservar ID existente (undefined para novos)
         title: kr.title,
         description: kr.description || null,
         metricType: kr.metricType,

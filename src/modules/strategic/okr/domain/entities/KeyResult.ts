@@ -11,6 +11,7 @@ export type KeyResultMetricType = 'number' | 'percentage' | 'currency' | 'boolea
 export type KeyResultStatus = 'not_started' | 'on_track' | 'at_risk' | 'behind' | 'completed';
 
 interface KeyResultProps extends Record<string, unknown> {
+  id?: string; // ID do banco (opcional para novos KRs, obrigatório para existentes)
   title: string;
   description?: string;
   metricType: KeyResultMetricType;
@@ -32,6 +33,10 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   }
 
   // Getters
+  get id(): string | undefined {
+    return this.props.id as string | undefined;
+  }
+
   get title(): string {
     return this.props.title as string;
   }
@@ -168,6 +173,7 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   /**
    * Retorna nova instância com currentValue atualizado (VO-006: Imutável)
    * Value Objects não mutam - retornam nova instância
+   * Bug Fix: Preservar status explícito ao invés de recalcular
    */
   withCurrentValue(newValue: number): Result<KeyResult, string> {
     if (newValue < 0) {
@@ -177,6 +183,7 @@ export class KeyResult extends ValueObject<KeyResultProps> {
     return KeyResult.create({
       ...(this.props as unknown as Omit<KeyResultProps, 'status'>),
       currentValue: newValue,
+      status: this.status, // Bug Fix: Preservar status atual
     });
   }
 

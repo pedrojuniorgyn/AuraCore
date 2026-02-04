@@ -451,24 +451,48 @@ export class DrizzleOkrRepository implements IOkrRepository {
               )
             );
 
-          // Deletar Key Results antigos
-          await tx
-            .delete(okrKeyResultTable)
+          // Bug Fix: Atualizar Key Results ao invés de deletar/recriar
+          // Buscar IDs existentes
+          const existingKRs = await tx
+            .select({ id: okrKeyResultTable.id })
+            .from(okrKeyResultTable)
             .where(eq(okrKeyResultTable.okrId, okr.id));
+          
+          const existingIds = new Set(existingKRs.map(kr => kr.id));
+
+          // Deletar Key Results que não existem mais na entidade
+          const currentIds = new Set(
+            keyResultsData.map(kr => kr.id).filter(Boolean) as string[]
+          );
+          const idsToDelete = [...existingIds].filter(id => !currentIds.has(id));
+          
+          if (idsToDelete.length > 0) {
+            await tx
+              .delete(okrKeyResultTable)
+              .where(inArray(okrKeyResultTable.id, idsToDelete));
+          }
         } else {
           // INSERT
           await tx.insert(okrTable).values(okrData);
         }
 
-        // Inserir Key Results
+        // Inserir ou Atualizar Key Results
         if (keyResultsData.length > 0) {
-          await tx.insert(okrKeyResultTable).values(
-            keyResultsData.map((kr) => ({
-              ...kr,
-              id: globalThis.crypto.randomUUID(),
-              okrId: okr.id,
-            }))
-          );
+          for (const kr of keyResultsData) {
+            const krId = kr.id || globalThis.crypto.randomUUID();
+            const krData = { ...kr, id: krId, okrId: okr.id };
+
+            if (kr.id && exists) {
+              // UPDATE Key Result existente
+              await tx
+                .update(okrKeyResultTable)
+                .set(krData)
+                .where(eq(okrKeyResultTable.id, krId));
+            } else {
+              // INSERT novo Key Result
+              await tx.insert(okrKeyResultTable).values(krData);
+            }
+          }
         }
       });
 

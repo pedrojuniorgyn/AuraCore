@@ -2,6 +2,9 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { STRATEGIC_TOKENS } from './tokens';
 
+// OKR Module (Bug Fix: Registrar módulo OKR)
+import { OkrModule } from '../../okr/infrastructure/di/OkrModule';
+
 // Repositories
 import { DrizzleStrategyRepository } from '../persistence/repositories/DrizzleStrategyRepository';
 import { DrizzleStrategicGoalRepository } from '../persistence/repositories/DrizzleStrategicGoalRepository';
@@ -152,4 +155,7 @@ export function registerStrategicModule(): void {
   container.registerSingleton(STRATEGIC_TOKENS.ReportGeneratorService, ReportGeneratorService);
   container.registerSingleton(STRATEGIC_TOKENS.SlackNotificationService, SlackNotificationService);
   container.registerSingleton(STRATEGIC_TOKENS.CacheInvalidationService, CacheInvalidationService);
+
+  // Bug Fix: Registrar módulo OKR (OkrModule.register())
+  OkrModule.register();
 }
