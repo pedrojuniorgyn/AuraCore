@@ -544,11 +544,19 @@ export default function SwotDetailPage() {
         <DeleteConfirmationDialog
           open={showDeleteDialog}
           onOpenChange={(open) => {
-            // ✅ BUG-FIX: Atualizar estado do modal PRIMEIRO (síncrono)
-            setShowDeleteDialog(open);
-            if (!open) {
-              // Depois limpar refs internos
+            // ✅ BUG-FIX: Apenas cancelar se modal foi fechado manualmente (não após confirmDelete)
+            // confirmDelete() já chama setShowDeleteDialog(false) e limpa refs internos
+            // Chamar cancelDelete() aqui causaria double-cleanup
+            if (!open && !isDeleting) {
+              // Modal fechado manualmente (botão X ou Cancel) → limpar estado
               cancelDelete();
+            } else if (!open && isDeleting) {
+              // Modal fechado após confirmDelete → não fazer nada (confirmDelete já limpou)
+              // Apenas sincronizar estado do modal
+              setShowDeleteDialog(false);
+            } else {
+              // Modal aberto → apenas atualizar estado
+              setShowDeleteDialog(open);
             }
           }}
           onConfirm={confirmDelete}

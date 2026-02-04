@@ -17,7 +17,10 @@ const updateSwotItemSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(200).optional(),
   description: z.string().trim().max(2000).optional(),
   impactScore: z.number().min(1).max(5).optional(),
-  probabilityScore: z.number().min(0).max(5).optional(),
+  // ✅ BUG-FIX: probabilityScore deve ser min(1) para alinhar com domain entity
+  // Domain SwotItem valida: probabilityScore entre 1 e 5 (inclusive)
+  // Permitir min(0) causaria bypass de domain validation, salvando dados inválidos
+  probabilityScore: z.number().min(1, 'probabilityScore must be between 1 and 5').max(5).optional(),
   category: z.string().trim().max(50).optional(),
   // ✅ BUG-FIX: strategyId é .optional() no schema (permite omitir em updates parciais)
   // Validação manual rejeita null/empty se fornecido explicitamente

@@ -71,8 +71,25 @@ function saveToFile(store: Map<string, OKR>): void {
   }
 }
 
-// Store singleton (carrega do arquivo ao inicializar)
-export const okrsStore = loadFromFile();
+// ✅ BUG-FIX: Lazy initialization para evitar falhas em serverless/containers
+// Store singleton (inicializado sob demanda ao invés de module load time)
+let okrsStore: Map<string, OKR> | null = null;
+
+/**
+ * Obter store singleton com lazy initialization
+ * Garante que file system está pronto antes de carregar
+ */
+function getStore(): Map<string, OKR> {
+  if (okrsStore === null) {
+    okrsStore = loadFromFile();
+    
+    // Se store vazio após carregar, inicializar com dados mock
+    if (okrsStore.size === 0) {
+      initializeMockOkrs();
+    }
+  }
+  return okrsStore;
+}
 
 /**
  * Inicializa dados mock com UUIDs reais
@@ -81,8 +98,9 @@ export const okrsStore = loadFromFile();
  * 
  * ✅ FIX BUG-002: Salva dados no arquivo após inicialização
  */
-export function initializeMockOkrs(): void {
-  if (okrsStore.size > 0) return;
+function initializeMockOkrs(): void {
+  const store = getStore();
+  if (store.size > 0) return;
 
   const now = new Date();
   const startQ1 = new Date('2026-01-01');
@@ -359,38 +377,32 @@ export function initializeMockOkrs(): void {
   };
 
   // Populate store
-  okrsStore.set(corporateOKR.id, corporateOKR);
-  okrsStore.set(logisticsOKR.id, logisticsOKR);
-  okrsStore.set(financeOKR.id, financeOKR);
-  okrsStore.set(commercialOKR.id, commercialOKR);
-  okrsStore.set(teamNorthOKR.id, teamNorthOKR);
+  store.set(corporateOKR.id, corporateOKR);
+  store.set(logisticsOKR.id, logisticsOKR);
+  store.set(financeOKR.id, financeOKR);
+  store.set(commercialOKR.id, commercialOKR);
+  store.set(teamNorthOKR.id, teamNorthOKR);
   
   // ✅ FIX BUG-002: Persistir dados iniciais no arquivo
-  saveToFile(okrsStore);
+  saveToFile(store);
 }
 
 /**
  * Get all OKRs from store
- * ✅ FIX BUG-002: Inicializa dados mock se store estiver vazio
+ * ✅ FIX BUG-002: Lazy initialization garantida
  */
 export function getAllOkrs(): OKR[] {
-  // Se store vazio, inicializar com dados mock
-  if (okrsStore.size === 0) {
-    initializeMockOkrs();
-  }
-  return Array.from(okrsStore.values());
+  const store = getStore();
+  return Array.from(store.values());
 }
 
 /**
  * Get OKR by ID
- * ✅ FIX BUG-002: Inicializa dados mock se store estiver vazio
+ * ✅ FIX BUG-002: Lazy initialization garantida
  */
 export function getOkrById(id: string): OKR | undefined {
-  // Se store vazio, inicializar com dados mock
-  if (okrsStore.size === 0) {
-    initializeMockOkrs();
-  }
-  return okrsStore.get(id);
+  const store = getStore();
+  return store.get(id);
 }
 
 /**
@@ -398,15 +410,11 @@ export function getOkrById(id: string): OKR | undefined {
  * ✅ FIX BUG-002: Persiste no arquivo após criar
  */
 export function createOkr(okr: OKR): OKR {
-  // Se store vazio, inicializar com dados mock
-  if (okrsStore.size === 0) {
-    initializeMockOkrs();
-  }
-  
-  okrsStore.set(okr.id, okr);
+  const store = getStore();
+  store.set(okr.id, okr);
   
   // ✅ FIX BUG-002: Salvar no arquivo
-  saveToFile(okrsStore);
+  saveToFile(store);
   
   return okr;
 }
@@ -416,12 +424,8 @@ export function createOkr(okr: OKR): OKR {
  * ✅ FIX BUG-002: Persiste no arquivo após atualizar
  */
 export function updateOkr(id: string, updates: Partial<OKR>): OKR | undefined {
-  // Se store vazio, inicializar com dados mock
-  if (okrsStore.size === 0) {
-    initializeMockOkrs();
-  }
-  
-  const existing = okrsStore.get(id);
+  const store = getStore();
+  const existing = store.get(id);
   if (!existing) return undefined;
 
   const updated = {
@@ -430,10 +434,10 @@ export function updateOkr(id: string, updates: Partial<OKR>): OKR | undefined {
     updatedAt: new Date(),
   };
 
-  okrsStore.set(id, updated);
+  store.set(id, updated);
   
   // ✅ FIX BUG-002: Salvar no arquivo
-  saveToFile(okrsStore);
+  saveToFile(store);
   
   return updated;
 }
@@ -443,16 +447,12 @@ export function updateOkr(id: string, updates: Partial<OKR>): OKR | undefined {
  * ✅ FIX BUG-002: Persiste no arquivo após deletar
  */
 export function deleteOkr(id: string): boolean {
-  // Se store vazio, inicializar com dados mock
-  if (okrsStore.size === 0) {
-    initializeMockOkrs();
-  }
-  
-  const result = okrsStore.delete(id);
+  const store = getStore();
+  const result = store.delete(id);
   
   // ✅ FIX BUG-002: Salvar no arquivo se deletou com sucesso
   if (result) {
-    saveToFile(okrsStore);
+    saveToFile(store);
   }
   
   return result;
