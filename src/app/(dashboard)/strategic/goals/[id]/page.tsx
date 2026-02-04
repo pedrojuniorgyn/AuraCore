@@ -277,7 +277,7 @@ export default function GoalDetailPage() {
                     type="number"
                     min="0"
                     max="100"
-                    value={editedGoal.weight ?? ''}
+                    value={editedGoal.weight !== null && editedGoal.weight !== undefined ? editedGoal.weight : ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
                       // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
@@ -333,7 +333,7 @@ export default function GoalDetailPage() {
                 ) : (
                   <Input
                     type="number"
-                    value={editedGoal.currentValue ?? ''}
+                    value={editedGoal.currentValue !== null && editedGoal.currentValue !== undefined ? editedGoal.currentValue : ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
                       // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
@@ -354,7 +354,7 @@ export default function GoalDetailPage() {
                 ) : (
                   <Input
                     type="number"
-                    value={editedGoal.targetValue ?? ''}
+                    value={editedGoal.targetValue !== null && editedGoal.targetValue !== undefined ? editedGoal.targetValue : ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
                       // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
@@ -375,7 +375,7 @@ export default function GoalDetailPage() {
                 ) : (
                   <Input
                     type="number"
-                    value={editedGoal.baselineValue ?? ''}
+                    value={editedGoal.baselineValue !== null && editedGoal.baselineValue !== undefined ? editedGoal.baselineValue : ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
                       // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido

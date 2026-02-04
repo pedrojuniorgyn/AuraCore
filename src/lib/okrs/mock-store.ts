@@ -22,6 +22,7 @@ const DATA_FILE = path.join(DATA_DIR, 'okrs.json');
 /**
  * Carregar OKRs do arquivo JSON
  * Se arquivo não existe ou está corrompido, retorna Map vazio
+ * ✅ BUG-FIX: Converte date strings para Date objects ao deserializar
  */
 function loadFromFile(): Map<string, OKR> {
   try {
@@ -38,7 +39,20 @@ function loadFromFile(): Map<string, OKR> {
       // Converter objeto para Map
       const store = new Map<string, OKR>();
       Object.entries(data).forEach(([id, okr]) => {
-        store.set(id, okr as OKR);
+        const okrData = okr as OKR;
+        
+        // ✅ BUG-FIX: Converter date strings para Date objects
+        // JSON.parse deserializa dates como strings ISO, mas tipo espera Date
+        // Sem conversão, métodos como .toISOString() falham em runtime
+        const okrWithDates: OKR = {
+          ...okrData,
+          startDate: new Date(okrData.startDate),
+          endDate: new Date(okrData.endDate),
+          createdAt: new Date(okrData.createdAt),
+          updatedAt: new Date(okrData.updatedAt),
+        };
+        
+        store.set(id, okrWithDates);
       });
       
       console.log(`[OKR Store] Loaded ${store.size} OKRs from file`);
