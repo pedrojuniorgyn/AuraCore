@@ -74,13 +74,40 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
     // ✅ HOTFIX: Extrair props se vier como Domain Entity
     const payload = body.props ? body.props : body;
     
-    // ✅ VALIDAÇÃO CRÍTICA: strategyId não pode ser null explicitamente
-    if (payload.strategyId === null) {
+    // ✅ BUG-003: VALIDAÇÃO CRÍTICA - strategyId é obrigatório
+    if (payload.strategyId === null || payload.strategyId === undefined || payload.strategyId === '') {
+      console.error('[PUT /api/strategic/swot/[id]] BUG-003: strategyId null/undefined/empty:', {
+        payload: JSON.stringify(payload, null, 2),
+        strategyId: payload.strategyId
+      });
+      
       return Response.json(
         { 
           success: false, 
-          error: 'strategyId cannot be null',
-          details: { strategyId: ['Estratégia é obrigatória'] }
+          error: 'Estratégia é obrigatória',
+          details: { 
+            strategyId: [
+              'O campo "estratégia" é obrigatório para salvar um item SWOT.',
+              'Por favor, selecione uma estratégia antes de continuar.'
+            ] 
+          }
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Validar formato UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(payload.strategyId)) {
+      console.error('[PUT /api/strategic/swot/[id]] BUG-003: strategyId formato inválido:', payload.strategyId);
+      
+      return Response.json(
+        { 
+          success: false, 
+          error: 'Estratégia inválida',
+          details: { 
+            strategyId: ['O identificador da estratégia está em formato inválido.'] 
+          }
         },
         { status: 400 }
       );

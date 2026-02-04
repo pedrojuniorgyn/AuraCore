@@ -21,14 +21,6 @@ import { toast } from 'sonner';
 import { GlassmorphismCard } from '@/components/ui/glassmorphism-card';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { PageHeader } from '@/components/ui/page-header';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription
-} from '@/components/ui/dialog';
 import { fetchAPI } from '@/lib/api';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
@@ -78,7 +70,6 @@ export default function SwotDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Estados para strategies
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -92,7 +83,6 @@ export default function SwotDetailPage() {
     showDeleteDialog,
     setShowDeleteDialog,
     confirmDelete,
-    cancelDelete,
     pendingOptions,
   } = useDeleteResource('swot');
 
@@ -147,10 +137,12 @@ export default function SwotDetailPage() {
   useEffect(() => {
     if (id) {
       fetchSwot();
+      // ✅ BUG-003: Carregar strategies junto com SWOT (não esperar modo edição)
+      fetchStrategies();
     }
-  }, [id, fetchSwot]);
+  }, [id, fetchSwot, fetchStrategies]);
 
-  // Carregar strategies quando entrar no modo de edição
+  // Carregar strategies quando entrar no modo de edição (fallback)
   useEffect(() => {
     if (isEditing && strategies.length === 0) {
       fetchStrategies();
@@ -164,8 +156,20 @@ export default function SwotDetailPage() {
       return;
     }
 
-    if (!selectedStrategyId) {
+    // ✅ BUG-003: Validação reforçada de strategyId
+    if (isLoadingStrategies) {
+      toast.error('Aguarde o carregamento das estratégias');
+      return;
+    }
+
+    if (!selectedStrategyId || selectedStrategyId.trim() === '') {
       toast.error('Selecione uma estratégia antes de salvar');
+      return;
+    }
+
+    // Validar que strategyId não é null explicitamente
+    if (selectedStrategyId === 'null' || selectedStrategyId === null) {
+      toast.error('Estratégia inválida. Por favor, selecione uma estratégia válida.');
       return;
     }
 
@@ -304,17 +308,39 @@ export default function SwotDetailPage() {
                         id="strategy"
                         value={selectedStrategyId || ''}
                         onChange={(e) => setSelectedStrategyId(e.target.value || null)}
-                        className="w-full mt-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className={`w-full mt-2 px-3 py-2 bg-white/5 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                          isLoadingStrategies 
+                            ? 'border-yellow-500/30 opacity-60' 
+                            : !selectedStrategyId && strategies.length > 0
+                              ? 'border-red-500/30'
+                              : 'border-white/10'
+                        }`}
                         required
                         disabled={isLoadingStrategies}
                       >
-                        <option value="">Selecione uma estratégia</option>
+                        <option value="">
+                          {isLoadingStrategies 
+                            ? 'Carregando estratégias...' 
+                            : strategies.length === 0 
+                              ? 'Nenhuma estratégia disponível'
+                              : 'Selecione uma estratégia'}
+                        </option>
                         {strategies.map((strategy) => (
                           <option key={strategy.id} value={strategy.id}>
                             {strategy.name}
                           </option>
                         ))}
                       </select>
+                      {!isLoadingStrategies && !selectedStrategyId && strategies.length > 0 && (
+                        <p className="text-red-400 text-xs mt-1">
+                          ⚠️ Selecione uma estratégia para continuar
+                        </p>
+                      )}
+                      {!isLoadingStrategies && strategies.length === 0 && (
+                        <p className="text-amber-400 text-xs mt-1">
+                          ⚠️ Nenhuma estratégia encontrada. Crie uma estratégia primeiro.
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -382,20 +408,28 @@ export default function SwotDetailPage() {
                         onClick={() => setIsEditing(false)}
                         variant="outline"
                         className="border-white/10"
+                        disabled={isSaving}
                       >
                         Cancelar
                       </Button>
                       <Button
                         onClick={handleSave}
-                        disabled={isSaving}
+                        disabled={isSaving || isLoadingStrategies || !selectedStrategyId}
                         className="bg-gradient-to-r from-purple-600 to-pink-600"
+                        title={
+                          isLoadingStrategies 
+                            ? 'Carregando estratégias...' 
+                            : !selectedStrategyId 
+                              ? 'Selecione uma estratégia' 
+                              : 'Salvar alterações'
+                        }
                       >
                         {isSaving ? (
                           <Loader2 className="animate-spin mr-2" size={16} />
                         ) : (
                           <Save size={16} className="mr-2" />
                         )}
-                        Salvar
+                        {isLoadingStrategies ? 'Carregando...' : 'Salvar'}
                       </Button>
                     </div>
                   </div>
