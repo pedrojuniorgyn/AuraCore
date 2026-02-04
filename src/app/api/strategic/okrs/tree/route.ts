@@ -21,8 +21,14 @@ registerStrategicModule();
 /**
  * Converte DDD KeyResult ValueObject para Legacy DTO
  * Bug Fix (Task 04 - Bug 1): Adicionar propriedades ausentes (okrId, progress, valueHistory)
+ * Bug Fix (Task 04 - Bug 3): Usar timestamps do OKR parent para consistência
  */
-function toLegacyKeyResultDTO(kr: DomainKeyResult, okrId: string): LegacyKeyResult {
+function toLegacyKeyResultDTO(
+  kr: DomainKeyResult,
+  okrId: string,
+  okrCreatedAt: Date,
+  okrUpdatedAt: Date
+): LegacyKeyResult {
   return {
     id: kr.id ?? globalThis.crypto.randomUUID(), // Fallback para novos KRs
     okrId, // Bug Fix: Adicionar okrId (não existe no DDD ValueObject)
@@ -42,8 +48,8 @@ function toLegacyKeyResultDTO(kr: DomainKeyResult, okrId: string): LegacyKeyResu
     weight: kr.weight,
     valueHistory: [], // Bug Fix: Adicionar array vazio (histórico não implementado ainda)
     order: kr.order,
-    createdAt: new Date(), // Placeholder (não existe no DDD ValueObject)
-    updatedAt: new Date(), // Placeholder (não existe no DDD ValueObject)
+    createdAt: okrCreatedAt, // Bug Fix: Usar timestamp do OKR parent (consistente)
+    updatedAt: okrUpdatedAt, // Bug Fix: Usar timestamp do OKR parent (consistente)
   };
 }
 
@@ -88,7 +94,7 @@ export async function GET(request: NextRequest) {
         ownerId: okr.ownerId,
         ownerName: okr.ownerName,
         ownerType: okr.ownerType,
-        keyResults: okr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, okr.id)),
+        keyResults: okr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, okr.id, okr.createdAt, okr.updatedAt)),
         progress: okr.progress,
         status: okr.status,
         organizationId: okr.organizationId,
