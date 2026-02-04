@@ -41,6 +41,7 @@ function convertKeyResult(mockKr: MockKeyResult): Result<KeyResult, string> {
 
 /**
  * Converte OKR do Mock Store para Domain Entity
+ * Bug Fix: Usar reconstitute() ao invés de create() para preservar estado completo
  */
 function convertOkr(mockOkr: MockOKR): Result<OKR, string> {
   // Converter Key Results primeiro
@@ -60,8 +61,10 @@ function convertOkr(mockOkr: MockOKR): Result<OKR, string> {
     return Result.fail(`Failed to convert Key Results:\n${krErrors.join('\n')}`);
   }
 
-  // Converter OKR
-  return OKR.create({
+  // Bug Fix: Usar reconstitute() para migração (preserva estado completo)
+  // create() gera novos IDs, inicializa keyResults=[], progress=0, status='draft'
+  // reconstitute() aceita TODAS as propriedades (id, keyResults, progress, status, timestamps)
+  return OKR.reconstitute({
     id: mockOkr.id, // Preservar ID original (UUIDs do mock)
     title: mockOkr.title,
     description: mockOkr.description || undefined,
@@ -74,14 +77,14 @@ function convertOkr(mockOkr: MockOKR): Result<OKR, string> {
     ownerId: mockOkr.ownerId,
     ownerName: mockOkr.ownerName,
     ownerType: mockOkr.ownerType,
-    keyResults,
-    progress: mockOkr.progress,
-    status: mockOkr.status as OKRStatus,
+    keyResults, // reconstitute() aceita keyResults
+    progress: mockOkr.progress, // reconstitute() aceita progress
+    status: mockOkr.status as OKRStatus, // reconstitute() aceita status
     organizationId: mockOkr.organizationId,
     branchId: mockOkr.branchId,
     createdBy: mockOkr.createdBy,
-    createdAt: new Date(mockOkr.createdAt),
-    updatedAt: new Date(mockOkr.updatedAt),
+    createdAt: new Date(mockOkr.createdAt), // reconstitute() aceita createdAt
+    updatedAt: new Date(mockOkr.updatedAt), // reconstitute() aceita updatedAt
   });
 }
 
