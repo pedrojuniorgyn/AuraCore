@@ -7,6 +7,8 @@ import { RippleButton } from '@/components/ui/ripple-button';
 import { ArrowLeft, Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface PDCACycle {
   id: string;
@@ -51,6 +53,17 @@ export default function PDCADetailPage() {
   const [data, setData] = useState<PDCACycle | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Hook de delete
+  const {
+    handleDelete,
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('pdca');
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -78,29 +91,7 @@ export default function PDCADetailPage() {
     }
   }, [id]);
 
-  const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja excluir este ciclo PDCA?')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/strategic/pdca/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao excluir ciclo PDCA');
-      }
-
-      toast.success('Ciclo PDCA excluído com sucesso');
-      router.push('/strategic/pdca');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro desconhecido';
-      toast.error('Erro ao excluir', {
-        description: message,
-      });
-    }
-  };
+  // Função de delete agora usa o hook useDeleteResource
 
   if (loading) {
     return (
@@ -156,11 +147,15 @@ export default function PDCADetailPage() {
             </Link>
 
             <RippleButton
-              onClick={handleDelete}
+              onClick={() => handleDelete(id, {
+                itemName: data.title || data.code,
+                resourceType: 'Ciclo PDCA',
+              })}
+              disabled={isDeleting}
               className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400"
             >
               <Trash className="w-4 h-4 mr-2" />
-              Excluir
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
             </RippleButton>
           </>
         }
@@ -233,6 +228,16 @@ export default function PDCADetailPage() {
           </dl>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

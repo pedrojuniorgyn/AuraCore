@@ -29,6 +29,8 @@ import {
   DialogDescription 
 } from '@/components/ui/dialog';
 import { fetchAPI } from '@/lib/api';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface Idea {
   id: string;
@@ -93,6 +95,17 @@ export default function IdeaDetailPage() {
   const [idea, setIdea] = useState<Idea | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Hook de delete
+  const {
+    handleDelete,
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('ideas');
   const [isSaving, setIsSaving] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -182,17 +195,7 @@ export default function IdeaDetailPage() {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      await fetchAPI(`/api/strategic/ideas/${id}`, {
-        method: 'DELETE',
-      });
-      toast.success('Ideia removida');
-      router.push('/strategic/ideas');
-    } catch {
-      toast.error('Erro ao remover ideia');
-    }
-  };
+  // Função de delete agora usa o hook useDeleteResource
 
   if (isLoading) {
     return (
@@ -252,12 +255,16 @@ export default function IdeaDetailPage() {
                     Editar
                   </Button>
                   <Button
-                    onClick={() => setShowDeleteModal(true)}
+                    onClick={() => handleDelete(id, {
+                      itemName: idea.title,
+                      resourceType: 'Ideia',
+                    })}
+                    disabled={isDeleting}
                     variant="outline"
                     className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                   >
                     <Trash2 size={16} className="mr-2" />
-                    Excluir
+                    {isDeleting ? 'Excluindo...' : 'Excluir'}
                   </Button>
                 </>
               )}
@@ -501,33 +508,15 @@ export default function IdeaDetailPage() {
         </Dialog>
 
         {/* Modal Excluir */}
-        <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-          <DialogContent className="bg-[#1a1a2e] border-white/10">
-            <DialogHeader>
-              <DialogTitle className="text-white">Excluir Ideia</DialogTitle>
-              <DialogDescription className="text-white/60">
-                Tem certeza que deseja excluir esta ideia? Esta ação não pode ser desfeita.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <DialogFooter className="pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteModal(false)}
-                className="border-white/10"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-500"
-              >
-                <Trash2 size={16} className="mr-2" />
-                Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DeleteConfirmationDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          itemName={pendingOptions.itemName}
+          resourceType={pendingOptions.resourceType}
+          isDeleting={isDeleting}
+        />
       </div>
     </PageTransition>
   );

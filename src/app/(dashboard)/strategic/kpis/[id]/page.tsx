@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { fetchAPI, APIResponseError } from '@/lib/api/fetch-client';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface KpiDetail {
   id: string;
@@ -24,6 +26,17 @@ export default function KpiDetailPage() {
   const [loading, setLoading] = useState(true);
   const [kpi, setKpi] = useState<KpiDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Hook de delete
+  const {
+    handleDelete,
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('kpis');
 
   useEffect(() => {
     const load = async () => {
@@ -55,18 +68,33 @@ export default function KpiDetailPage() {
 
   return (
     <div className="min-h-screen -m-6 p-8 space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={goBack}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-          aria-label="Voltar"
-        >
-          <ArrowLeft size={20} className="text-white/70" />
-        </button>
-        <div>
-          <p className="text-sm text-white/50">KPI</p>
-          <h1 className="text-2xl font-semibold text-white">Detalhe do KPI</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={goBack}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Voltar"
+          >
+            <ArrowLeft size={20} className="text-white/70" />
+          </button>
+          <div>
+            <p className="text-sm text-white/50">KPI</p>
+            <h1 className="text-2xl font-semibold text-white">Detalhe do KPI</h1>
+          </div>
         </div>
+        {kpi && (
+          <button
+            onClick={() => handleDelete(kpi.id, {
+              itemName: kpi.name || kpi.code,
+              resourceType: 'KPI',
+            })}
+            disabled={isDeleting}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="h-4 w-4" />
+            {isDeleting ? 'Excluindo...' : 'Excluir'}
+          </button>
+        )}
       </div>
 
       {loading && (
@@ -138,6 +166,16 @@ export default function KpiDetailPage() {
           KPI not found.
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
