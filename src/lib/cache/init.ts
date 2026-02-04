@@ -24,7 +24,29 @@ export function initRedisCache(): void {
   }
 
   try {
-    const redisUrl = process.env.REDIS_URL;
+    // Construir URL a partir de variáveis individuais se REDIS_URL não existir
+    let redisUrl = process.env.REDIS_URL;
+    
+    if (!redisUrl) {
+      const host = process.env.REDIS_HOST;
+      const port = process.env.REDIS_PORT || '6379';
+      const password = process.env.REDIS_PASSWORD;
+      const username = process.env.REDIS_USERNAME || 'default';
+      const db = process.env.REDIS_DB || '0';
+
+      if (host) {
+        // Construir URL: redis://[username]:[password]@[host]:[port]/[db]
+        const auth = password ? `${username}:${password}@` : '';
+        redisUrl = `redis://${auth}${host}:${port}/${db}`;
+        console.log(`[Cache] Built Redis URL from individual vars: redis://${username}:***@${host}:${port}/${db}`);
+      }
+    }
+
+    if (!redisUrl) {
+      console.warn('[Cache] No REDIS_URL or REDIS_HOST configured. Cache disabled.');
+      return;
+    }
+
     redisCache.connect(redisUrl);
     isInitialized = true;
     console.log('[Cache] Redis cache initialized');
