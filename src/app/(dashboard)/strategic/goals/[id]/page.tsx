@@ -280,7 +280,9 @@ export default function GoalDetailPage() {
                     value={editedGoal.weight ?? ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
-                      weight: e.target.value ? Number(e.target.value) : null
+                      // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
+                      // (e.target.value é sempre string, "" = campo vazio)
+                      weight: e.target.value !== '' ? Number(e.target.value) : null
                     })}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="0-100"
@@ -334,7 +336,8 @@ export default function GoalDetailPage() {
                     value={editedGoal.currentValue ?? ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
-                      currentValue: e.target.value ? Number(e.target.value) : null
+                      // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
+                      currentValue: e.target.value !== '' ? Number(e.target.value) : null
                     })}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Valor atual"
@@ -354,7 +357,8 @@ export default function GoalDetailPage() {
                     value={editedGoal.targetValue ?? ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
-                      targetValue: e.target.value ? Number(e.target.value) : null
+                      // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
+                      targetValue: e.target.value !== '' ? Number(e.target.value) : null
                     })}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Valor alvo"
@@ -374,7 +378,8 @@ export default function GoalDetailPage() {
                     value={editedGoal.baselineValue ?? ''}
                     onChange={(e) => setEditedGoal({
                       ...editedGoal,
-                      baselineValue: e.target.value ? Number(e.target.value) : null
+                      // ✅ BUG-FIX: Usar !== '' para aceitar "0" como válido
+                      baselineValue: e.target.value !== '' ? Number(e.target.value) : null
                     })}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Linha de base"
