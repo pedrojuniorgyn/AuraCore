@@ -97,6 +97,10 @@ data/knowledge/**/*.csv
 !data/knowledge/legislation/**/*.md
 !data/knowledge/legislation/**/*.txt
 
+# ===== OKR Mock Data (BUG-002) =====
+# Dados temporários de OKRs (será substituído por DDD + SQL em épico futuro)
+data/okrs.json
+
 # Generated reports (auto-generated, should not be committed)
 frontend-analysis-report-*.md
 
