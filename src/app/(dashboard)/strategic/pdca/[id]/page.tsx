@@ -233,7 +233,6 @@ export default function PDCADetailPage() {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={confirmDelete}
-        onCancel={cancelDelete}
         itemName={pendingOptions.itemName}
         resourceType={pendingOptions.resourceType}
         isDeleting={isDeleting}

@@ -512,7 +512,6 @@ export default function IdeaDetailPage() {
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
           onConfirm={confirmDelete}
-          onCancel={cancelDelete}
           itemName={pendingOptions.itemName}
           resourceType={pendingOptions.resourceType}
           isDeleting={isDeleting}

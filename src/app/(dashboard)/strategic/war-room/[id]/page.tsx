@@ -160,7 +160,6 @@ export default function WarRoomDetailPage({ params }: Props) {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={confirmDelete}
-        onCancel={cancelDelete}
         itemName={pendingOptions.itemName}
         resourceType={pendingOptions.resourceType}
         isDeleting={isDeleting}
