@@ -1,10 +1,12 @@
 /**
  * API Routes: /api/strategic/okrs/[id]
  * 
+ * ⚠️ BUG-002: Store centralizado para evitar fetch interno (erro SSL)
  * ⚠️ S1.1 Batch 3 Phase 2: Zod validation added
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getOkrById } from '@/lib/okrs/mock-store';
 
 // ✅ S1.1 Batch 3 Phase 2: Schemas
 const idParamSchema = z.object({
@@ -21,10 +23,6 @@ const updateOkrSchema = z.object({
   ownerId: z.string().optional(),
   ownerName: z.string().optional(),
 });
-
-// Import shared store from main route (in real app, this would be a database)
-// For this mock, we'll use a simple in-memory store
-const okrsStore = new Map<string, Record<string, unknown>>();
 
 export async function GET(
   request: NextRequest,
@@ -43,12 +41,8 @@ export async function GET(
   
   const { id } = validation.data;
 
-  // Fetch from main store or return mock data
-  const response = await fetch(
-    new URL('/api/strategic/okrs', request.url).toString()
-  );
-  const { okrs } = await response.json();
-  const okr = okrs.find((o: Record<string, unknown>) => o.id === id);
+  // Buscar OKR do store centralizado (sem fetch interno)
+  const okr = getOkrById(id);
 
   if (!okr) {
     return NextResponse.json({ error: 'OKR not found' }, { status: 404 });
@@ -86,26 +80,13 @@ export async function PATCH(
       );
     }
 
-    // Get existing OKR
-    const response = await fetch(
-      new URL('/api/strategic/okrs', request.url).toString()
-    );
-    const { okrs } = await response.json();
-    const existingOKR = okrs.find((o: Record<string, unknown>) => o.id === id);
+    // Atualizar OKR no store centralizado
+    const { updateOkr } = await import('@/lib/okrs/mock-store');
+    const updatedOKR = updateOkr(id, body);
 
-    if (!existingOKR) {
+    if (!updatedOKR) {
       return NextResponse.json({ error: 'OKR not found' }, { status: 404 });
     }
-
-    // Update OKR
-    const updatedOKR = {
-      ...existingOKR,
-      ...body,
-      updatedAt: new Date(),
-    };
-
-    // In real implementation, save to database
-    okrsStore.set(id, updatedOKR);
 
     return NextResponse.json(updatedOKR);
   } catch (error) {
@@ -135,8 +116,13 @@ export async function DELETE(
   
   const { id } = validation.data;
 
-  // In real implementation, delete from database
-  okrsStore.delete(id);
+  // Deletar OKR do store centralizado
+  const { deleteOkr } = await import('@/lib/okrs/mock-store');
+  const success = deleteOkr(id);
+
+  if (!success) {
+    return NextResponse.json({ error: 'OKR not found' }, { status: 404 });
+  }
 
   return NextResponse.json({ success: true });
 }
