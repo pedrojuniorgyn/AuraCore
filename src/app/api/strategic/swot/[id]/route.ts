@@ -11,7 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { Result } from '@/shared/domain';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
-import { SwotItem } from '@/modules/strategic/domain/entities/SwotItem';
+import { SwotItem, type SwotCategory } from '@/modules/strategic/domain/entities/SwotItem';
 
 const updateSwotItemSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(200).optional(),
@@ -154,18 +154,24 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
 
     // ✅ BUG-FIX: Atualizar usando reconstitute para manter domain entity válida
     // (Mapper.toPersistence espera entity completa, não plain object)
+    
+    // ⚠️ IMPORTANTE: Recalcular priorityScore quando impact/probability mudam
+    const finalImpactScore = validated.impactScore ?? existing.impactScore;
+    const finalProbabilityScore = validated.probabilityScore ?? existing.probabilityScore;
+    const recalculatedPriorityScore = finalImpactScore * finalProbabilityScore;
+    
     const updatedEntityResult = SwotItem.reconstitute({
       id: existing.id,
       organizationId: existing.organizationId,
       branchId: existing.branchId,
       strategyId: validated.strategyId ?? existing.strategyId,
-      quadrant: validated.quadrant ?? existing.quadrant,
+      quadrant: existing.quadrant, // Quadrant não é editável via PUT
       title: validated.title ?? existing.title,
       description: validated.description ?? existing.description,
-      impactScore: validated.impactScore ?? existing.impactScore,
-      probabilityScore: validated.probabilityScore ?? existing.probabilityScore,
-      priorityScore: existing.priorityScore, // Recalculated by domain logic
-      category: validated.category ?? existing.category,
+      impactScore: finalImpactScore,
+      probabilityScore: finalProbabilityScore,
+      priorityScore: recalculatedPriorityScore, // ✅ Recalculado (não usar existing)
+      category: (validated.category ?? existing.category) as SwotCategory | null,
       convertedToActionPlanId: existing.convertedToActionPlanId,
       convertedToGoalId: existing.convertedToGoalId,
       status: existing.status,

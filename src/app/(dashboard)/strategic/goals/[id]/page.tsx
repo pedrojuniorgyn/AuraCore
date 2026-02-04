@@ -90,18 +90,27 @@ export default function GoalDetailPage() {
 
     setIsSaving(true);
     try {
+      // ⚠️ BUG-FIX: Construir payload omitindo null para campos NOT NULL
+      // (targetValue, currentValue, unit, weight são NOT NULL no banco)
+      // Apenas baselineValue pode ser null
+      const payload: Record<string, unknown> = {
+        description: editedGoal.description,
+      };
+
+      // Campos NOT NULL: apenas incluir se tiver valor (omitir se null/undefined)
+      if (editedGoal.targetValue != null) payload.targetValue = editedGoal.targetValue;
+      if (editedGoal.currentValue != null) payload.currentValue = editedGoal.currentValue;
+      if (editedGoal.unit != null) payload.unit = editedGoal.unit;
+      if (editedGoal.weight != null) payload.weight = editedGoal.weight;
+      if (editedGoal.polarity) payload.polarity = editedGoal.polarity;
+      if (editedGoal.dueDate) payload.dueDate = editedGoal.dueDate;
+
+      // Campo nullable: incluir explicitamente (pode ser null)
+      payload.baselineValue = editedGoal.baselineValue;
+
       await fetchAPI(`/api/strategic/goals/${params.id}`, {
         method: 'PUT',
-        body: {
-          description: editedGoal.description,
-          targetValue: editedGoal.targetValue,
-          currentValue: editedGoal.currentValue,
-          baselineValue: editedGoal.baselineValue,
-          unit: editedGoal.unit,
-          weight: editedGoal.weight,
-          polarity: editedGoal.polarity,
-          dueDate: editedGoal.dueDate,
-        },
+        body: payload,
       });
 
       toast.success('Meta atualizada com sucesso!');
