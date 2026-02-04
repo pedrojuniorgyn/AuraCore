@@ -17,7 +17,8 @@ const updateSwotItemSchema = z.object({
   impactScore: z.number().min(1).max(5).optional(),
   probabilityScore: z.number().min(0).max(5).optional(),
   category: z.string().trim().max(50).optional(),
-  strategyId: z.string().uuid('Invalid strategy ID').optional(),
+  // ✅ BUG-FIX: strategyId é obrigatório (não .optional())
+  strategyId: z.string().uuid('Invalid strategy ID'),
 });
 
 // GET /api/strategic/swot/[id]
@@ -74,9 +75,10 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
     // ✅ HOTFIX: Extrair props se vier como Domain Entity
     const payload = body.props ? body.props : body;
     
-    // ✅ BUG-003: VALIDAÇÃO CRÍTICA - strategyId é obrigatório
-    if (payload.strategyId === null || payload.strategyId === undefined || payload.strategyId === '') {
-      console.error('[PUT /api/strategic/swot/[id]] BUG-003: strategyId null/undefined/empty:', {
+    // ✅ BUG-FIX: Defense-in-depth - Validar null/empty antes de Zod parse
+    // (Zod agora exige strategyId obrigatório, mas validação extra previne null/empty)
+    if (payload.strategyId === null || payload.strategyId === '') {
+      console.error('[PUT /api/strategic/swot/[id]] strategyId null/empty:', {
         payload: JSON.stringify(payload, null, 2),
         strategyId: payload.strategyId
       });
@@ -96,23 +98,7 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
       );
     }
     
-    // Validar formato UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(payload.strategyId)) {
-      console.error('[PUT /api/strategic/swot/[id]] BUG-003: strategyId formato inválido:', payload.strategyId);
-      
-      return Response.json(
-        { 
-          success: false, 
-          error: 'Estratégia inválida',
-          details: { 
-            strategyId: ['O identificador da estratégia está em formato inválido.'] 
-          }
-        },
-        { status: 400 }
-      );
-    }
-    
+    // ✅ Zod validation: Valida formato UUID, tipo, e obrigatoriedade
     const validated = updateSwotItemSchema.parse(payload);
 
     const repository = container.resolve<ISwotAnalysisRepository>(STRATEGIC_TOKENS.SwotAnalysisRepository);
@@ -131,8 +117,9 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
       );
     }
 
-    // ✅ VALIDAÇÃO: Se strategyId for fornecido, verificar se a strategy existe
-    if (validated.strategyId && validated.strategyId !== existing.strategyId) {
+    // ✅ VALIDAÇÃO: Se strategyId mudou, verificar se a nova strategy existe
+    // (strategyId é sempre obrigatório via schema Zod)
+    if (validated.strategyId !== existing.strategyId) {
       try {
         const strategyRepository = container.resolve(STRATEGIC_TOKENS.StrategyRepository);
         const strategyExists = await strategyRepository.findById(
