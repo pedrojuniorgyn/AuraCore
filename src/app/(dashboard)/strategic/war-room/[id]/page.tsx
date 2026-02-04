@@ -7,6 +7,8 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useWarRoom } from '@/hooks/useWarRoom';
 import { WarRoomDashboard } from '@/components/strategic/war-room';
 import { toast } from 'sonner';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -32,6 +34,17 @@ export default function WarRoomDetailPage({ params }: Props) {
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  // Hook de delete
+  const {
+    handleDelete,
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('war-room');
 
   const handleCreateAction = async () => {
     // For now, create a simple action
@@ -141,6 +154,16 @@ export default function WarRoomDetailPage({ params }: Props) {
         onRemoveMember={handleRemoveMember}
         onEscalate={handleEscalate}
         onAddUpdate={handleAddUpdate}
+      />
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        isDeleting={isDeleting}
       />
     </div>
   );

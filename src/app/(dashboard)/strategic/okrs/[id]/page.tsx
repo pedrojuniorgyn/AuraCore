@@ -28,6 +28,8 @@ import {
 import { LEVEL_LABELS, STATUS_LABELS } from '@/lib/okrs/okr-types';
 import type { OKR, KeyResult } from '@/lib/okrs/okr-types';
 import { toast } from 'sonner';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 export default function OKRDetailPage() {
   const params = useParams();
@@ -42,6 +44,17 @@ export default function OKRDetailPage() {
   const [showNewKRForm, setShowNewKRForm] = useState(false);
   const [selectedKRHistory, setSelectedKRHistory] = useState<KeyResult | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+
+  // Hook de delete
+  const {
+    handleDelete,
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('okrs');
 
   useEffect(() => {
     async function loadOKR() {
@@ -80,16 +93,7 @@ export default function OKRDetailPage() {
     }
   };
 
-  const handleDeleteOKR = async () => {
-    if (!okr || !confirm('Tem certeza que deseja excluir este OKR?')) return;
-    try {
-      await okrService.deleteOKR(okr.id);
-      toast.success('OKR excluído');
-      router.push('/strategic/okrs');
-    } catch {
-      toast.error('Erro ao excluir OKR');
-    }
-  };
+  // Função de delete agora usa o hook useDeleteResource
 
   const handleAddKeyResult = async (data: Partial<KeyResult>) => {
     if (!okr) return;
@@ -239,11 +243,15 @@ export default function OKRDetailPage() {
                     Editar
                   </button>
                   <button
-                    onClick={handleDeleteOKR}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-red-400 hover:bg-red-500/10"
+                    onClick={() => handleDelete(okrId, {
+                      itemName: okr.title,
+                      resourceType: 'OKR',
+                    })}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
                   >
                     <Trash2 size={16} />
-                    Excluir
+                    {isDeleting ? 'Excluindo...' : 'Excluir'}
                   </button>
                 </motion.div>
               )}
@@ -368,6 +376,16 @@ export default function OKRDetailPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
