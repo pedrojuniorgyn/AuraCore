@@ -32,10 +32,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Role {
   id: number;
   name: string;
+  description: string | null;
+}
+
+interface Permission {
+  id: number;
+  slug: string;
   description: string | null;
 }
 
@@ -56,6 +63,16 @@ export default function RolesManagementPage() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Estado do modal de permissões
+  const [permissionsOpen, setPermissionsOpen] = useState(false);
+  const [managingRole, setManagingRole] = useState<Role | null>(null);
+  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>(
+    []
+  );
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [savingPermissions, setSavingPermissions] = useState(false);
 
   /**
    * Busca lista de roles do backend
@@ -221,6 +238,88 @@ export default function RolesManagementPage() {
     }
   };
 
+  /**
+   * Abre modal de gerenciar permissões
+   */
+  const openPermissions = async (role: Role) => {
+    setManagingRole(role);
+    setPermissionsOpen(true);
+    setLoadingPermissions(true);
+    setSavingPermissions(false);
+
+    try {
+      // Buscar todas permissões e permissões do role em paralelo
+      const [allRes, roleRes] = await Promise.all([
+        fetch("/api/admin/permissions", { credentials: "include" }),
+        fetch(`/api/admin/roles/${role.id}/permissions`, {
+          credentials: "include",
+        }),
+      ]);
+
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        setAllPermissions(allData.data || []);
+      }
+
+      if (roleRes.ok) {
+        const roleData = await roleRes.json();
+        const permIds = (roleData.data?.permissions || []).map(
+          (p: Permission) => p.id
+        );
+        setSelectedPermissionIds(permIds);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar permissões:", error);
+      toast.error("Erro ao carregar permissões");
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
+
+  /**
+   * Toggle de permissão no checkbox
+   */
+  const togglePermission = (permId: number) => {
+    setSelectedPermissionIds((prev) =>
+      prev.includes(permId)
+        ? prev.filter((id) => id !== permId)
+        : [...prev, permId]
+    );
+  };
+
+  /**
+   * Salva permissões do role
+   */
+  const submitPermissions = async () => {
+    if (!managingRole) return;
+
+    setSavingPermissions(true);
+    try {
+      const res = await fetch(
+        `/api/admin/roles/${managingRole.id}/permissions`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ permissionIds: selectedPermissionIds }),
+        }
+      );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Falha ao atualizar permissões");
+      }
+
+      toast.success("Permissões atualizadas com sucesso");
+      setPermissionsOpen(false);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast.error("Erro ao atualizar permissões", { description: errorMessage });
+    } finally {
+      setSavingPermissions(false);
+    }
+  };
+
   // Loading state
   if (permissionsLoading || loading) {
     return (
@@ -362,6 +461,81 @@ export default function RolesManagementPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog Gerenciar Permissões */}
+      <Dialog open={permissionsOpen} onOpenChange={setPermissionsOpen}>
+        <DialogContent className="sm:max-w-[720px]">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Permissões</DialogTitle>
+            <DialogDescription>
+              Role: <strong>{managingRole?.name}</strong>
+              {managingRole?.description && (
+                <span className="ml-2 text-xs">
+                  ({managingRole.description})
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingPermissions ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Carregando permissões...
+            </div>
+          ) : allPermissions.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Nenhuma permissão encontrada no sistema.
+            </div>
+          ) : (
+            <div className="grid gap-2 max-h-[400px] overflow-y-auto py-4">
+              {allPermissions.map((perm) => (
+                <label
+                  key={perm.id}
+                  className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <Checkbox
+                    checked={selectedPermissionIds.includes(perm.id)}
+                    onCheckedChange={() => togglePermission(perm.id)}
+                    disabled={savingPermissions}
+                  />
+                  <div className="leading-tight">
+                    <div className="font-medium font-mono text-sm">
+                      {perm.slug}
+                    </div>
+                    {perm.description && (
+                      <div className="text-xs text-muted-foreground">
+                        {perm.description}
+                      </div>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <DialogFooter>
+            <div className="flex items-center justify-between w-full">
+              <div className="text-xs text-muted-foreground">
+                {selectedPermissionIds.length} permissão(ões) selecionada(s)
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setPermissionsOpen(false)}
+                  disabled={savingPermissions}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={submitPermissions}
+                  disabled={savingPermissions || loadingPermissions}
+                >
+                  {savingPermissions ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Tabela de Roles */}
       <Card>
         <CardHeader>
@@ -417,8 +591,8 @@ export default function RolesManagementPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          title="Gerenciar permissões (Task 10)"
-                          disabled
+                          onClick={() => openPermissions(role)}
+                          title="Gerenciar permissões"
                         >
                           <Shield className="h-4 w-4" />
                         </Button>

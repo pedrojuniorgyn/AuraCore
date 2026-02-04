@@ -452,13 +452,20 @@ export class DrizzleOkrRepository implements IOkrRepository {
             );
 
           // Bug Fix: Atualizar Key Results ao invés de deletar/recriar
-          // Buscar IDs existentes
+          // Buscar IDs existentes com timestamps (para preservar createdAt)
           const existingKRs = await tx
-            .select({ id: okrKeyResultTable.id })
+            .select({ 
+              id: okrKeyResultTable.id,
+              createdAt: okrKeyResultTable.createdAt,
+              createdBy: okrKeyResultTable.createdBy,
+            })
             .from(okrKeyResultTable)
             .where(eq(okrKeyResultTable.okrId, okr.id));
           
           const existingIds = new Set(existingKRs.map(kr => kr.id));
+          const timestampMap = new Map(
+            existingKRs.map(kr => [kr.id, { createdAt: kr.createdAt, createdBy: kr.createdBy }])
+          );
 
           // Deletar Key Results que não existem mais na entidade
           const currentIds = new Set(
@@ -484,9 +491,16 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
             if (kr.id && exists) {
               // UPDATE Key Result existente
+              // Bug Fix: Preservar createdAt e createdBy originais
+              const original = timestampMap.get(kr.id);
               await tx
                 .update(okrKeyResultTable)
-                .set(krData)
+                .set({
+                  ...krData,
+                  createdAt: original?.createdAt || krData.createdAt,
+                  createdBy: original?.createdBy || krData.createdBy,
+                  updatedAt: new Date(), // Sempre atualizar updatedAt
+                })
                 .where(eq(okrKeyResultTable.id, krId));
             } else {
               // INSERT novo Key Result
