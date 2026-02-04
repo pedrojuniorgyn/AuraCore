@@ -17,6 +17,7 @@ const updateSwotItemSchema = z.object({
   impactScore: z.number().min(1).max(5).optional(),
   probabilityScore: z.number().min(0).max(5).optional(),
   category: z.string().trim().max(50).optional(),
+  strategyId: z.string().uuid('Invalid strategy ID').optional(),
 });
 
 // GET /api/strategic/swot/[id]
@@ -73,6 +74,18 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
     // ✅ HOTFIX: Extrair props se vier como Domain Entity
     const payload = body.props ? body.props : body;
     
+    // ✅ VALIDAÇÃO CRÍTICA: strategyId não pode ser null explicitamente
+    if (payload.strategyId === null) {
+      return Response.json(
+        { 
+          success: false, 
+          error: 'strategyId cannot be null',
+          details: { strategyId: ['Estratégia é obrigatória'] }
+        },
+        { status: 400 }
+      );
+    }
+    
     const validated = updateSwotItemSchema.parse(payload);
 
     const repository = container.resolve<ISwotAnalysisRepository>(STRATEGIC_TOKENS.SwotAnalysisRepository);
@@ -89,6 +102,38 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
         { success: false, error: 'SWOT item not found' },
         { status: 404 }
       );
+    }
+
+    // ✅ VALIDAÇÃO: Se strategyId for fornecido, verificar se a strategy existe
+    if (validated.strategyId && validated.strategyId !== existing.strategyId) {
+      try {
+        const strategyRepository = container.resolve(STRATEGIC_TOKENS.StrategyRepository);
+        const strategyExists = await strategyRepository.findById(
+          validated.strategyId,
+          tenantCtx.organizationId
+        );
+        
+        if (!strategyExists) {
+          return Response.json(
+            { 
+              success: false, 
+              error: 'Strategy not found',
+              details: { strategyId: ['Estratégia inválida ou não encontrada'] }
+            },
+            { status: 400 }
+          );
+        }
+      } catch (error) {
+        console.error('[PUT /api/strategic/swot/[id]] Error validating strategy:', error);
+        return Response.json(
+          { 
+            success: false, 
+            error: 'Failed to validate strategy',
+            details: { strategyId: ['Erro ao validar estratégia'] }
+          },
+          { status: 500 }
+        );
+      }
     }
 
     // Atualizar propriedades (reconstitute mantém a entity válida)

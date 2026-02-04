@@ -42,10 +42,16 @@ interface SwotItem {
   probabilityScore: number;
   priorityScore: number;
   category: string | null;
+  strategyId: string | null;
   status: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+interface Strategy {
+  id: string;
+  name: string;
 }
 
 const QUADRANT_CONFIG: Record<string, { label: string; icon: LucideIcon; color: string; bg: string }> = {
@@ -73,6 +79,11 @@ export default function SwotDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
+  // Estados para strategies
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null);
+  const [isLoadingStrategies, setIsLoadingStrategies] = useState(false);
 
   // Hook de delete
   const {
@@ -105,6 +116,11 @@ export default function SwotDetailPage() {
         probabilityScore: Number(data.probabilityScore) || 3,
         category: data.category || '',
       });
+      
+      // Pré-selecionar strategy atual
+      if (data.strategyId) {
+        setSelectedStrategyId(data.strategyId);
+      }
     } catch (error) {
       console.error('Erro ao carregar SWOT:', error);
       toast.error('Erro ao carregar análise SWOT');
@@ -114,15 +130,42 @@ export default function SwotDetailPage() {
     }
   }, [id, router]);
 
+  // Carregar strategies disponíveis
+  const fetchStrategies = useCallback(async () => {
+    setIsLoadingStrategies(true);
+    try {
+      const data = await fetchAPI<{ items: Strategy[] }>('/api/strategic/strategies');
+      setStrategies(data.items || []);
+    } catch (error) {
+      console.error('Erro ao carregar strategies:', error);
+      toast.error('Erro ao carregar estratégias disponíveis');
+    } finally {
+      setIsLoadingStrategies(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (id) {
       fetchSwot();
     }
   }, [id, fetchSwot]);
 
+  // Carregar strategies quando entrar no modo de edição
+  useEffect(() => {
+    if (isEditing && strategies.length === 0) {
+      fetchStrategies();
+    }
+  }, [isEditing, strategies.length, fetchStrategies]);
+
   const handleSave = async () => {
+    // Validações
     if (!editForm.title.trim()) {
       toast.error('Título é obrigatório');
+      return;
+    }
+
+    if (!selectedStrategyId) {
+      toast.error('Selecione uma estratégia antes de salvar');
       return;
     }
 
@@ -136,6 +179,7 @@ export default function SwotDetailPage() {
           impactScore: editForm.impactScore,
           probabilityScore: editForm.probabilityScore,
           category: editForm.category.trim() || undefined,
+          strategyId: selectedStrategyId, // ✅ Incluir strategyId
         },
       });
 
@@ -248,6 +292,31 @@ export default function SwotDetailPage() {
 
                 {isEditing ? (
                   <div className="space-y-4">
+                    {/* Campo de Estratégia */}
+                    <div>
+                      <Label htmlFor="strategy" className="text-white/70">
+                        Estratégia * 
+                        {isLoadingStrategies && (
+                          <Loader2 className="inline ml-2 w-3 h-3 animate-spin" />
+                        )}
+                      </Label>
+                      <select
+                        id="strategy"
+                        value={selectedStrategyId || ''}
+                        onChange={(e) => setSelectedStrategyId(e.target.value || null)}
+                        className="w-full mt-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        required
+                        disabled={isLoadingStrategies}
+                      >
+                        <option value="">Selecione uma estratégia</option>
+                        {strategies.map((strategy) => (
+                          <option key={strategy.id} value={strategy.id}>
+                            {strategy.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div>
                       <Label htmlFor="title" className="text-white/70">Título *</Label>
                       <Input
