@@ -121,13 +121,10 @@ export default function UsersManagementPage() {
   useEffect(() => {
     fetchUsers();
     // Carregar roles ao montar para exibir na seção "Roles Disponíveis"
+    // Também carrega branches para o modal de convite
     loadInviteData();
-  }, [loadInviteData]);
-
-  useEffect(() => {
-    if (!inviteOpen) return;
-    loadInviteData();
-  }, [inviteOpen, loadInviteData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openPassword = (u: User) => {
     setPasswordUser(u);
