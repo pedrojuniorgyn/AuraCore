@@ -893,7 +893,7 @@ export default function ActionPlanDetailPage({
                             const statusConfig = {
                               EXECUTED_OK: { label: 'Executado OK', color: 'green' },
                               EXECUTED_PARTIAL: { label: 'Parcial', color: 'blue' },
-                              NOT_EXECUTED: { label: 'Não Executado', color: 'gray' },
+                              NOT_EXECUTED: { label: 'Não Executado', color: 'slate' },
                               BLOCKED: { label: 'Bloqueado', color: 'red' },
                             } as const;
                             
