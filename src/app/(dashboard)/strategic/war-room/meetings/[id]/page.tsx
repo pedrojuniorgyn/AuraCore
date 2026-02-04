@@ -29,12 +29,15 @@ import {
   Plus,
   User,
   FileText,
+  Trash,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
 import { PageTransition, FadeIn } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
 import { fetchAPI } from '@/lib/api';
+import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 // Tipos compartilhados (Single Source of Truth)
 import type { 
@@ -85,6 +88,17 @@ export default function MeetingDetailPage({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [meeting, setMeeting] = useState<MeetingDetail | null>(null);
+
+  // Hook de delete
+  const {
+    handleDelete,
+    isDeleting,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    confirmDelete,
+    cancelDelete,
+    pendingOptions,
+  } = useDeleteResource('war-room/meetings');
 
   const loadMeetingData = useCallback(async () => {
     setLoading(true);
@@ -206,6 +220,17 @@ export default function MeetingDetailPage({
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
+              </RippleButton>
+              <RippleButton
+                onClick={() => handleDelete(id, {
+                  itemName: meeting.title,
+                  resourceType: 'Reunião',
+                })}
+                disabled={isDeleting}
+                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400"
+              >
+                <Trash size={16} className="mr-2" />
+                {isDeleting ? 'Excluindo...' : 'Excluir'}
               </RippleButton>
             </Flex>
           </Flex>
@@ -395,6 +420,16 @@ export default function MeetingDetailPage({
           </div>
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        itemName={pendingOptions.itemName}
+        resourceType={pendingOptions.resourceType}
+        isDeleting={isDeleting}
+      />
     </PageTransition>
   );
 }
