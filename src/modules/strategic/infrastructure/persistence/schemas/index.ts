@@ -12,7 +12,7 @@ export * from './strategic-goal.schema';
 export * from './goal-cascade.schema';
 
 // OKR Schemas
-export * from '../../okr/infrastructure/persistence/schemas/okr.schema';
+export * from '@/modules/strategic/okr/infrastructure/persistence/schemas';
 
 // KPI Schemas
 export * from './kpi.schema';
