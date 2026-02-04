@@ -173,17 +173,20 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   /**
    * Retorna nova instância com currentValue atualizado (VO-006: Imutável)
    * Value Objects não mutam - retornam nova instância
-   * Bug Fix: Preservar status explícito ao invés de recalcular
+   * Bug Fix: Remover status para permitir recálculo automático baseado no novo progresso
    */
   withCurrentValue(newValue: number): Result<KeyResult, string> {
     if (newValue < 0) {
       return Result.fail('Current value não pode ser negativo');
     }
 
+    // Bug Fix: Não passar status - deixar create() recalcular baseado no novo currentValue
+    // Isso garante que status sempre reflete o progresso atual
+    // Se usuário quer status manual diferente, deve chamar withStatus() após
     return KeyResult.create({
       ...(this.props as unknown as Omit<KeyResultProps, 'status'>),
       currentValue: newValue,
-      status: this.status, // Bug Fix: Preservar status atual
+      // status removido - será recalculado por create()
     });
   }
 
