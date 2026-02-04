@@ -19,8 +19,9 @@ const updateSwotItemSchema = z.object({
   impactScore: z.number().min(1).max(5).optional(),
   probabilityScore: z.number().min(0).max(5).optional(),
   category: z.string().trim().max(50).optional(),
-  // ✅ BUG-FIX: strategyId é obrigatório (não .optional())
-  strategyId: z.string().uuid('Invalid strategy ID'),
+  // ✅ BUG-FIX: strategyId é .optional() no schema (permite omitir em updates parciais)
+  // Validação manual rejeita null/empty se fornecido explicitamente
+  strategyId: z.string().uuid('Invalid strategy ID').optional(),
 });
 
 // GET /api/strategic/swot/[id]
@@ -77,9 +78,9 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
     // ✅ HOTFIX: Extrair props se vier como Domain Entity
     const payload = body.props ? body.props : body;
     
-    // ✅ BUG-FIX: Defense-in-depth - Validar null/empty antes de Zod parse
-    // (Zod agora exige strategyId obrigatório, mas validação extra previne null/empty)
-    if (payload.strategyId === null || payload.strategyId === '') {
+    // ✅ BUG-FIX: Defense-in-depth - Validar null/empty SE fornecido explicitamente
+    // (undefined = campo omitido = OK, null/'' = campo fornecido inválido = ERRO)
+    if (payload.strategyId !== undefined && (payload.strategyId === null || payload.strategyId === '')) {
       console.error('[PUT /api/strategic/swot/[id]] strategyId null/empty:', {
         payload: JSON.stringify(payload, null, 2),
         strategyId: payload.strategyId
@@ -88,11 +89,11 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
       return Response.json(
         { 
           success: false, 
-          error: 'Estratégia é obrigatória',
+          error: 'Estratégia inválida',
           details: { 
             strategyId: [
-              'O campo "estratégia" é obrigatório para salvar um item SWOT.',
-              'Por favor, selecione uma estratégia antes de continuar.'
+              'O campo "estratégia" não pode ser vazio ou nulo.',
+              'Omita o campo para manter o valor existente ou forneça um UUID válido.'
             ] 
           }
         },
@@ -100,7 +101,7 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
       );
     }
     
-    // ✅ Zod validation: Valida formato UUID, tipo, e obrigatoriedade
+    // ✅ Zod validation: Valida formato UUID e tipos (strategyId é opcional)
     const validated = updateSwotItemSchema.parse(payload);
 
     const repository = container.resolve<ISwotAnalysisRepository>(STRATEGIC_TOKENS.SwotAnalysisRepository);
@@ -119,9 +120,8 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
       );
     }
 
-    // ✅ VALIDAÇÃO: Se strategyId mudou, verificar se a nova strategy existe
-    // (strategyId é sempre obrigatório via schema Zod)
-    if (validated.strategyId !== existing.strategyId) {
+    // ✅ VALIDAÇÃO: Se strategyId foi fornecido E mudou, verificar se a nova strategy existe
+    if (validated.strategyId !== undefined && validated.strategyId !== existing.strategyId) {
       try {
         const strategyRepository = container.resolve(STRATEGIC_TOKENS.StrategyRepository);
         const strategyExists = await strategyRepository.findById(
