@@ -28,6 +28,11 @@ import {
   RefreshCw,
   Target,
   User,
+  List,
+  Grid3x3,
+  Edit,
+  Save,
+  X,
 } from 'lucide-react';
 
 import { GradientText } from '@/components/ui/magic-components';
@@ -56,6 +61,14 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchAPI, APIResponseError } from '@/lib/api';
+import { AgGridReact } from 'ag-grid-react';
+import { ModuleRegistry, ColDef, ICellRendererParams } from 'ag-grid-community';
+import { AllEnterpriseModule } from 'ag-grid-enterprise';
+import { Button } from '@/components/ui/button';
+
+import 'ag-grid-community/styles/ag-theme-quartz.css';
+
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 
 interface ActionPlanDetail {
   id: string;
@@ -155,6 +168,20 @@ export default function ActionPlanDetailPage({
   const [followUpsLoading, setFollowUpsLoading] = useState(true);
   const [isFollowUpDialogOpen, setIsFollowUpDialogOpen] = useState(false);
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
+  const [followUpViewMode, setFollowUpViewMode] = useState<'timeline' | 'grid'>('timeline');
+  const [isEditing5W2H, setIsEditing5W2H] = useState(false);
+  const [saving5W2H, setSaving5W2H] = useState(false);
+  const [w5h2EditForm, setW5h2EditForm] = useState({
+    what: '',
+    why: '',
+    whereLocation: '',
+    whenStart: '',
+    whenEnd: '',
+    who: '',
+    how: '',
+    howMuchAmount: 0,
+    howMuchCurrency: 'BRL',
+  });
   const [followUpForm, setFollowUpForm] = useState<FollowUpFormState>({
     followUpDate: new Date().toISOString().slice(0, 10),
     gembaLocal: '',
@@ -176,6 +203,18 @@ export default function ActionPlanDetailPage({
       try {
         const data = await fetchAPI<ActionPlanDetail>(`/api/strategic/action-plans/${id}`);
         setPlan(data);
+        // Inicializar form de edição 5W2H com dados atuais
+        setW5h2EditForm({
+          what: data.what,
+          why: data.why,
+          whereLocation: data.whereLocation,
+          whenStart: data.whenStart,
+          whenEnd: data.whenEnd,
+          who: data.who,
+          how: data.how,
+          howMuchAmount: data.howMuchAmount || 0,
+          howMuchCurrency: data.howMuchCurrency || 'BRL',
+        });
       } catch (error) {
         // Se for 404, redirecionar
         if (error instanceof APIResponseError && error.status === 404) {
@@ -200,6 +239,54 @@ export default function ActionPlanDetailPage({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handle5W2HSave = async () => {
+    setSaving5W2H(true);
+    try {
+      await fetchAPI(`/api/strategic/action-plans/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(w5h2EditForm),
+      });
+      
+      toast({
+        title: 'Sucesso',
+        description: '5W2H atualizado com sucesso!',
+      });
+      
+      setIsEditing5W2H(false);
+      await refreshPlan();
+    } catch (error) {
+      console.error('Failed to save 5W2H:', error);
+      const message =
+        error instanceof APIResponseError
+          ? error.data?.error || error.message
+          : 'Erro ao salvar 5W2H';
+      toast({
+        title: 'Erro',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving5W2H(false);
+    }
+  };
+
+  const handle5W2HCancel = () => {
+    if (!plan) return;
+    // Restaurar valores originais
+    setW5h2EditForm({
+      what: plan.what,
+      why: plan.why,
+      whereLocation: plan.whereLocation,
+      whenStart: plan.whenStart,
+      whenEnd: plan.whenEnd,
+      who: plan.who,
+      how: plan.how,
+      howMuchAmount: plan.howMuchAmount || 0,
+      howMuchCurrency: plan.howMuchCurrency || 'BRL',
+    });
+    setIsEditing5W2H(false);
   };
 
   const loadFollowUps = useCallback(async () => {
@@ -409,9 +496,182 @@ export default function ActionPlanDetailPage({
           {/* 5W2H Details */}
           <FadeIn delay={0.1} className="lg:col-span-2">
             <Card className="bg-gray-900/50 border-gray-800">
-              <Title className="text-white mb-4">Detalhes 5W2H</Title>
+              <Flex justifyContent="between" alignItems="center" className="mb-4">
+                <Title className="text-white">Detalhes 5W2H</Title>
+                {!isEditing5W2H ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing5W2H(true)}
+                    className="text-white/70 hover:text-white"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                ) : (
+                  <Flex className="gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handle5W2HSave}
+                      disabled={saving5W2H}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {saving5W2H ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handle5W2HCancel}
+                      disabled={saving5W2H}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancelar
+                    </Button>
+                  </Flex>
+                )}
+              </Flex>
               
-              <div className="space-y-4">
+              {isEditing5W2H ? (
+                /* Editor Mode */
+                <div className="space-y-4">
+                  {/* WHAT */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-what" className="text-blue-400 font-medium text-sm">
+                      WHAT - O que será feito
+                    </Label>
+                    <Textarea
+                      id="edit-what"
+                      value={w5h2EditForm.what}
+                      onChange={(e) => setW5h2EditForm({...w5h2EditForm, what: e.target.value})}
+                      className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]"
+                      placeholder="Descreva o que será feito"
+                    />
+                  </div>
+
+                  {/* WHY */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-why" className="text-blue-400 font-medium text-sm">
+                      WHY - Por que será feito
+                    </Label>
+                    <Textarea
+                      id="edit-why"
+                      value={w5h2EditForm.why}
+                      onChange={(e) => setW5h2EditForm({...w5h2EditForm, why: e.target.value})}
+                      className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]"
+                      placeholder="Explique por que será feito"
+                    />
+                  </div>
+
+                  {/* WHERE */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-where" className="text-blue-400 font-medium text-sm">
+                      WHERE - Onde será feito
+                    </Label>
+                    <Input
+                      id="edit-where"
+                      value={w5h2EditForm.whereLocation}
+                      onChange={(e) => setW5h2EditForm({...w5h2EditForm, whereLocation: e.target.value})}
+                      className="bg-gray-800/50 border-gray-700 text-white"
+                      placeholder="Local de execução"
+                    />
+                  </div>
+
+                  {/* WHEN */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-when-start" className="text-blue-400 font-medium text-sm">
+                        WHEN - Data Início
+                      </Label>
+                      <Input
+                        id="edit-when-start"
+                        type="date"
+                        value={w5h2EditForm.whenStart}
+                        onChange={(e) => setW5h2EditForm({...w5h2EditForm, whenStart: e.target.value})}
+                        className="bg-gray-800/50 border-gray-700 text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-when-end" className="text-blue-400 font-medium text-sm">
+                        WHEN - Data Fim
+                      </Label>
+                      <Input
+                        id="edit-when-end"
+                        type="date"
+                        value={w5h2EditForm.whenEnd}
+                        onChange={(e) => setW5h2EditForm({...w5h2EditForm, whenEnd: e.target.value})}
+                        className="bg-gray-800/50 border-gray-700 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* WHO */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-who" className="text-emerald-400 font-medium text-sm">
+                      WHO - Quem fará
+                    </Label>
+                    <Input
+                      id="edit-who"
+                      value={w5h2EditForm.who}
+                      onChange={(e) => setW5h2EditForm({...w5h2EditForm, who: e.target.value})}
+                      className="bg-gray-800/50 border-gray-700 text-white"
+                      placeholder="Responsável"
+                    />
+                  </div>
+
+                  {/* HOW */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-how" className="text-emerald-400 font-medium text-sm">
+                      HOW - Como será feito
+                    </Label>
+                    <Textarea
+                      id="edit-how"
+                      value={w5h2EditForm.how}
+                      onChange={(e) => setW5h2EditForm({...w5h2EditForm, how: e.target.value})}
+                      className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]"
+                      placeholder="Método de execução"
+                    />
+                  </div>
+
+                  {/* HOW MUCH */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-how-much-amount" className="text-amber-400 font-medium text-sm">
+                        HOW MUCH - Valor
+                      </Label>
+                      <Input
+                        id="edit-how-much-amount"
+                        type="number"
+                        step="0.01"
+                        value={w5h2EditForm.howMuchAmount}
+                        onChange={(e) => setW5h2EditForm({...w5h2EditForm, howMuchAmount: parseFloat(e.target.value) || 0})}
+                        className="bg-gray-800/50 border-gray-700 text-white"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-how-much-currency" className="text-amber-400 font-medium text-sm">
+                        HOW MUCH - Moeda
+                      </Label>
+                      <Select
+                        value={w5h2EditForm.howMuchCurrency}
+                        onValueChange={(value) => setW5h2EditForm({...w5h2EditForm, howMuchCurrency: value})}
+                      >
+                        <SelectTrigger className="bg-gray-800/50 border-gray-700 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="BRL">BRL (R$)</SelectItem>
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* View Mode */
+                <div className="space-y-4">
                 {/* WHAT */}
                 <div className="p-4 bg-gray-800/50 rounded-lg">
                   <Flex alignItems="start" className="gap-3">
@@ -500,6 +760,7 @@ export default function ActionPlanDetailPage({
                   </div>
                 )}
               </div>
+              )}
             </Card>
           </FadeIn>
 
@@ -561,7 +822,27 @@ export default function ActionPlanDetailPage({
               {/* Follow-ups 3G */}
               <Card className="bg-gray-900/50 border-gray-800">
                 <Flex justifyContent="between" alignItems="center" className="mb-4">
-                  <Title className="text-white">Acompanhamentos 3G</Title>
+                  <Flex alignItems="center" className="gap-3">
+                    <Title className="text-white">Acompanhamentos 3G</Title>
+                    <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFollowUpViewMode('timeline')}
+                        className={`h-7 px-2 ${followUpViewMode === 'timeline' ? 'bg-purple-500/20 text-purple-400' : 'text-white/50'}`}
+                      >
+                        <List className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFollowUpViewMode('grid')}
+                        className={`h-7 px-2 ${followUpViewMode === 'grid' ? 'bg-purple-500/20 text-purple-400' : 'text-white/50'}`}
+                      >
+                        <Grid3x3 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Flex>
                   <RippleButton
                     variant="ghost"
                     onClick={() => setIsFollowUpDialogOpen(true)}
@@ -575,8 +856,85 @@ export default function ActionPlanDetailPage({
                     <RefreshCw className="w-5 h-5 mx-auto mb-2 animate-spin text-gray-400" />
                     <Text className="text-sm">Carregando acompanhamentos...</Text>
                   </div>
-                ) : (
+                ) : followUpViewMode === 'timeline' ? (
                   <FollowUpTimeline followUps={followUps} />
+                ) : (
+                  /* Grid View */
+                  <div className="ag-theme-quartz-dark" style={{ height: '400px', width: '100%' }}>
+                    <AgGridReact
+                      rowData={followUps}
+                      columnDefs={[
+                        {
+                          field: 'followUpNumber',
+                          headerName: '#',
+                          width: 60,
+                          cellStyle: { textAlign: 'center' },
+                        },
+                        {
+                          field: 'followUpDate',
+                          headerName: 'Data',
+                          width: 120,
+                          valueFormatter: (params) => {
+                            if (!params.value) return '-';
+                            return new Date(params.value).toLocaleDateString('pt-BR');
+                          },
+                        },
+                        {
+                          field: 'gembaLocal',
+                          headerName: 'GEMBA (Local)',
+                          flex: 1,
+                          minWidth: 150,
+                        },
+                        {
+                          field: 'executionStatus',
+                          headerName: 'Status',
+                          width: 150,
+                          cellRenderer: (params: ICellRendererParams) => {
+                            const statusConfig = {
+                              EXECUTED_OK: { label: 'Executado OK', color: 'text-green-400 bg-green-500/20' },
+                              EXECUTED_PARTIAL: { label: 'Parcial', color: 'text-blue-400 bg-blue-500/20' },
+                              NOT_EXECUTED: { label: 'Não Executado', color: 'text-gray-400 bg-gray-500/20' },
+                              BLOCKED: { label: 'Bloqueado', color: 'text-red-400 bg-red-500/20' },
+                            };
+                            const config = statusConfig[params.value as keyof typeof statusConfig];
+                            if (!config) return params.value;
+                            return `<span class="px-2 py-1 rounded text-xs ${config.color}">${config.label}</span>`;
+                          },
+                        },
+                        {
+                          field: 'executionPercent',
+                          headerName: 'Progresso',
+                          width: 120,
+                          valueFormatter: (params) => `${params.value}%`,
+                          cellStyle: (params) => {
+                            const percent = params.value || 0;
+                            return {
+                              color: percent >= 80 ? '#10b981' : percent >= 50 ? '#3b82f6' : '#eab308',
+                              fontWeight: 'bold',
+                            };
+                          },
+                        },
+                        {
+                          field: 'verifiedBy',
+                          headerName: 'Verificado Por',
+                          width: 140,
+                        },
+                      ]}
+                      defaultColDef={{
+                        sortable: true,
+                        filter: true,
+                        resizable: true,
+                      }}
+                      pagination={true}
+                      paginationPageSize={5}
+                      domLayout="autoHeight"
+                      rowHeight={48}
+                      headerHeight={40}
+                      suppressCellFocus={true}
+                      enableCellTextSelection={true}
+                      className="text-sm"
+                    />
+                  </div>
                 )}
               </Card>
             </div>
