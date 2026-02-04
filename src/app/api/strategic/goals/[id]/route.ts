@@ -83,6 +83,130 @@ const updateProgressSchema = z.object({
   currentValue: z.number(),
 });
 
+// Schema para atualizar goal completo (PUT)
+const updateGoalSchema = z.object({
+  description: z.string().trim().min(1, 'Description is required').max(500).optional(),
+  targetValue: z.number().nullable().optional(),
+  currentValue: z.number().nullable().optional(),
+  baselineValue: z.number().nullable().optional(),
+  unit: z.string().trim().max(20).nullable().optional(),
+  weight: z.number().min(0).max(100).nullable().optional(),
+  polarity: z.enum(['POSITIVE', 'NEGATIVE']).optional(),
+  dueDate: z.string().datetime().optional(),
+});
+
+// PUT /api/strategic/goals/[id]
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const context = await getTenantContext();
+    if (!context) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { id } = await params;
+    const idResult = idSchema.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    
+    // ✅ BUG-001: Extrair props se vier como Domain Entity
+    const payload = (body as { props?: unknown }).props ?? body;
+    
+    const validation = updateGoalSchema.safeParse(payload);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const repository = container.resolve<IStrategicGoalRepository>(
+      STRATEGIC_TOKENS.StrategicGoalRepository
+    );
+
+    const goal = await repository.findById(
+      idResult.data,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (!goal) {
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    }
+
+    // Atualizar campos editáveis
+    const data = validation.data;
+    
+    // Create updated entity (using reconstitute to maintain domain consistency)
+    const updatedGoal = {
+      ...goal,
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.targetValue !== undefined && { targetValue: data.targetValue }),
+      ...(data.currentValue !== undefined && { currentValue: data.currentValue }),
+      ...(data.baselineValue !== undefined && { baselineValue: data.baselineValue }),
+      ...(data.unit !== undefined && { unit: data.unit }),
+      ...(data.weight !== undefined && { weight: data.weight }),
+      ...(data.polarity !== undefined && { polarity: data.polarity }),
+      ...(data.dueDate !== undefined && { dueDate: new Date(data.dueDate) }),
+      updatedAt: new Date(),
+    };
+
+    await repository.save(updatedGoal);
+
+    // Buscar goal atualizado para retornar
+    const refreshedGoal = await repository.findById(
+      idResult.data,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (!refreshedGoal) {
+      return NextResponse.json({ error: 'Goal not found after update' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      id: refreshedGoal.id,
+      perspectiveId: refreshedGoal.perspectiveId,
+      parentGoalId: refreshedGoal.parentGoalId,
+      code: refreshedGoal.code,
+      description: refreshedGoal.description,
+      cascadeLevel: refreshedGoal.cascadeLevel.value,
+      targetValue: refreshedGoal.targetValue,
+      currentValue: refreshedGoal.currentValue,
+      baselineValue: refreshedGoal.baselineValue,
+      unit: refreshedGoal.unit,
+      polarity: refreshedGoal.polarity,
+      weight: refreshedGoal.weight,
+      ownerUserId: refreshedGoal.ownerUserId,
+      ownerBranchId: refreshedGoal.ownerBranchId,
+      status: refreshedGoal.status.value,
+      statusLabel: refreshedGoal.status.label,
+      statusColor: refreshedGoal.status.color,
+      progress: refreshedGoal.progress,
+      mapPositionX: refreshedGoal.mapPositionX,
+      mapPositionY: refreshedGoal.mapPositionY,
+      startDate: refreshedGoal.startDate.toISOString(),
+      dueDate: refreshedGoal.dueDate.toISOString(),
+      createdBy: refreshedGoal.createdBy,
+      createdAt: refreshedGoal.createdAt.toISOString(),
+      updatedAt: refreshedGoal.updatedAt.toISOString(),
+    });
+  } catch (error: unknown) {
+    if (error instanceof Response) return error;
+    console.error('PUT /api/strategic/goals/[id] error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
 // PATCH /api/strategic/goals/[id]
 export async function PATCH(
   request: Request,
