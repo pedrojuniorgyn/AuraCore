@@ -87,11 +87,13 @@ const updateProgressSchema = z.object({
 // Schema para atualizar goal completo (PUT)
 const updateGoalSchema = z.object({
   description: z.string().trim().min(1, 'Description is required').max(500).optional(),
-  targetValue: z.number().nullable().optional(),
-  currentValue: z.number().nullable().optional(),
+  // ✅ BUG-FIX: Remover .nullable() de campos NOT NULL no banco
+  // (apenas baselineValue é nullable na tabela)
+  targetValue: z.number().optional(),
+  currentValue: z.number().optional(),
   baselineValue: z.number().nullable().optional(),
-  unit: z.string().trim().max(20).nullable().optional(),
-  weight: z.number().min(0).max(100).nullable().optional(),
+  unit: z.string().trim().max(20).optional(),
+  weight: z.number().min(0).max(100).optional(),
   // ✅ BUG-FIX: Domain entity usa 'UP' | 'DOWN', não 'POSITIVE' | 'NEGATIVE'
   polarity: z.enum(['UP', 'DOWN']).optional(),
   dueDate: z.string().datetime().optional(),
@@ -150,7 +152,8 @@ export async function PUT(
     const data = validation.data;
     
     // Reconstitute domain entity com campos atualizados
-    // (usa valores existentes quando data é undefined/null)
+    // ⚠️ IMPORTANTE: Usar !== undefined para campos nullable (apenas baselineValue)
+    // Demais campos usam ?? pois são NOT NULL no banco
     const updatedGoalResult = StrategicGoal.reconstitute({
       id: goal.id,
       organizationId: goal.organizationId,
