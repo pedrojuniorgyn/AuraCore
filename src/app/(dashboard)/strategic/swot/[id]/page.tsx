@@ -162,14 +162,9 @@ export default function SwotDetailPage() {
       return;
     }
 
+    // Valida null, undefined, empty string, e whitespace-only
     if (!selectedStrategyId || selectedStrategyId.trim() === '') {
       toast.error('Selecione uma estratégia antes de salvar');
-      return;
-    }
-
-    // Validar que strategyId não é null explicitamente
-    if (selectedStrategyId === 'null' || selectedStrategyId === null) {
-      toast.error('Estratégia inválida. Por favor, selecione uma estratégia válida.');
       return;
     }
 
