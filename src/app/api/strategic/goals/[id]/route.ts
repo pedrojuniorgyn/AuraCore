@@ -11,6 +11,7 @@ import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
+import { StrategicGoal } from '@/modules/strategic/domain/entities/StrategicGoal';
 
 const idSchema = z.string().trim().uuid();
 
@@ -91,7 +92,8 @@ const updateGoalSchema = z.object({
   baselineValue: z.number().nullable().optional(),
   unit: z.string().trim().max(20).nullable().optional(),
   weight: z.number().min(0).max(100).nullable().optional(),
-  polarity: z.enum(['POSITIVE', 'NEGATIVE']).optional(),
+  // ✅ BUG-FIX: Domain entity usa 'UP' | 'DOWN', não 'POSITIVE' | 'NEGATIVE'
+  polarity: z.enum(['UP', 'DOWN']).optional(),
   dueDate: z.string().datetime().optional(),
 });
 
@@ -143,24 +145,47 @@ export async function PUT(
       return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
     }
 
-    // Atualizar campos editáveis
+    // ✅ BUG-FIX: Atualizar usando reconstitute para manter domain entity válida
+    // (Mapper.toPersistence espera entity com value objects como cascadeLevel.value)
     const data = validation.data;
     
-    // Create updated entity (using reconstitute to maintain domain consistency)
-    const updatedGoal = {
-      ...goal,
-      ...(data.description !== undefined && { description: data.description }),
-      ...(data.targetValue !== undefined && { targetValue: data.targetValue }),
-      ...(data.currentValue !== undefined && { currentValue: data.currentValue }),
-      ...(data.baselineValue !== undefined && { baselineValue: data.baselineValue }),
-      ...(data.unit !== undefined && { unit: data.unit }),
-      ...(data.weight !== undefined && { weight: data.weight }),
-      ...(data.polarity !== undefined && { polarity: data.polarity }),
-      ...(data.dueDate !== undefined && { dueDate: new Date(data.dueDate) }),
+    // Reconstitute domain entity com campos atualizados
+    // (usa valores existentes quando data é undefined/null)
+    const updatedGoalResult = StrategicGoal.reconstitute({
+      id: goal.id,
+      organizationId: goal.organizationId,
+      branchId: goal.branchId,
+      perspectiveId: goal.perspectiveId,
+      parentGoalId: goal.parentGoalId,
+      code: goal.code,
+      description: data.description ?? goal.description,
+      cascadeLevel: goal.cascadeLevel,
+      targetValue: data.targetValue ?? goal.targetValue,
+      currentValue: data.currentValue ?? goal.currentValue,
+      baselineValue: data.baselineValue !== undefined ? data.baselineValue : goal.baselineValue,
+      unit: data.unit ?? goal.unit,
+      weight: data.weight ?? goal.weight,
+      polarity: data.polarity ?? goal.polarity,
+      ownerUserId: goal.ownerUserId,
+      ownerBranchId: goal.ownerBranchId,
+      startDate: goal.startDate,
+      dueDate: data.dueDate !== undefined ? new Date(data.dueDate) : goal.dueDate,
+      status: goal.status,
+      mapPositionX: goal.mapPositionX,
+      mapPositionY: goal.mapPositionY,
+      createdBy: goal.createdBy,
+      createdAt: goal.createdAt,
       updatedAt: new Date(),
-    };
+    });
 
-    await repository.save(updatedGoal);
+    if (Result.isFail(updatedGoalResult)) {
+      return NextResponse.json(
+        { error: 'Failed to reconstitute goal', details: updatedGoalResult.error },
+        { status: 500 }
+      );
+    }
+
+    await repository.save(updatedGoalResult.value);
 
     // Buscar goal atualizado para retornar
     const refreshedGoal = await repository.findById(

@@ -291,8 +291,9 @@ export default function GoalDetailPage() {
                     })}
                     className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
-                    <option value="POSITIVE">Positiva (↑ melhor)</option>
-                    <option value="NEGATIVE">Negativa (↓ melhor)</option>
+                    {/* ✅ BUG-FIX: Domain entity usa 'UP' | 'DOWN', não 'POSITIVE' | 'NEGATIVE' */}
+                    <option value="UP">Positiva (↑ melhor)</option>
+                    <option value="DOWN">Negativa (↓ melhor)</option>
                   </select>
                 )}
               </div>
