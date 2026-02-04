@@ -120,7 +120,9 @@ export default function UsersManagementPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+    // Carregar roles ao montar para exibir na seção "Roles Disponíveis"
+    loadInviteData();
+  }, [loadInviteData]);
 
   useEffect(() => {
     if (!inviteOpen) return;
@@ -657,44 +659,35 @@ export default function UsersManagementPage() {
         <CardHeader>
           <CardTitle>Roles Disponíveis</CardTitle>
           <CardDescription>
-            Perfis de acesso configurados no sistema
+            Perfis de acesso configurados no sistema ({roles.length} role
+            {roles.length !== 1 ? "s" : ""})
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-red-500" />
-                Administrador
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Acesso total ao sistema
-              </p>
-              <Badge className="mt-2" variant="destructive">Admin</Badge>
+          {roles.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-4 text-center">
+              Carregando roles...
             </div>
-
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-blue-500" />
-                Gerente
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Gestão operacional e financeira
-              </p>
-              <Badge className="mt-2" variant="default">Manager</Badge>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {roles.map((role) => (
+                <div key={role.id} className="border rounded-lg p-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    {role.name}
+                  </h3>
+                  {role.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {role.description}
+                    </p>
+                  )}
+                  <Badge className="mt-2" variant="secondary">
+                    {role.name}
+                  </Badge>
+                </div>
+              ))}
             </div>
-
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4 text-green-500" />
-                Operador TMS
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Gestão de viagens e cargas
-              </p>
-              <Badge className="mt-2" variant="secondary">Operator</Badge>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
       
