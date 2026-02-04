@@ -12,9 +12,40 @@ import { registerStrategicModule } from '@/modules/strategic/infrastructure/di';
 import type { IOkrRepository } from '@/modules/strategic/okr/domain/ports/output/IOkrRepository';
 import { OKR_TOKENS } from '@/modules/strategic/okr/infrastructure/di/tokens';
 import type { OKR } from '@/modules/strategic/okr/domain/entities/OKR';
+import type { KeyResult as DomainKeyResult } from '@/modules/strategic/okr/domain/entities/KeyResult';
+import type { KeyResult as LegacyKeyResult } from '@/lib/okrs/okr-types';
 
 // Ensure DI container is registered
 registerStrategicModule();
+
+/**
+ * Converte DDD KeyResult ValueObject para Legacy DTO
+ * Bug Fix (Task 04 - Bug 1): Adicionar propriedades ausentes (okrId, progress, valueHistory)
+ */
+function toLegacyKeyResultDTO(kr: DomainKeyResult, okrId: string): LegacyKeyResult {
+  return {
+    id: kr.id ?? globalThis.crypto.randomUUID(), // Fallback para novos KRs
+    okrId, // Bug Fix: Adicionar okrId (não existe no DDD ValueObject)
+    title: kr.title,
+    description: kr.description,
+    metricType: kr.metricType,
+    startValue: kr.startValue,
+    targetValue: kr.targetValue,
+    currentValue: kr.currentValue,
+    unit: kr.unit,
+    progress: kr.progress, // Bug Fix: Usar progress do ValueObject
+    status: kr.status,
+    linkedKpiId: kr.linkedKpiId,
+    linkedKpiName: undefined, // Legacy field (não existe no DDD)
+    linkedActionPlanId: kr.linkedActionPlanId,
+    linkedActionPlanName: undefined, // Legacy field (não existe no DDD)
+    weight: kr.weight,
+    valueHistory: [], // Bug Fix: Adicionar array vazio (histórico não implementado ainda)
+    order: kr.order,
+    createdAt: new Date(), // Placeholder (não existe no DDD ValueObject)
+    updatedAt: new Date(), // Placeholder (não existe no DDD ValueObject)
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,7 +88,7 @@ export async function GET(request: NextRequest) {
         ownerId: okr.ownerId,
         ownerName: okr.ownerName,
         ownerType: okr.ownerType,
-        keyResults: okr.keyResults as unknown as OKRTreeNode['keyResults'],
+        keyResults: okr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, okr.id)),
         progress: okr.progress,
         status: okr.status,
         organizationId: okr.organizationId,

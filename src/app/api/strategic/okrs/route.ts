@@ -12,10 +12,41 @@ import { registerStrategicModule } from '@/modules/strategic/infrastructure/di';
 import type { IOkrRepository } from '@/modules/strategic/okr/domain/ports/output/IOkrRepository';
 import { OKR_TOKENS } from '@/modules/strategic/okr/infrastructure/di/tokens';
 import { OKR } from '@/modules/strategic/okr/domain/entities/OKR';
+import type { KeyResult as DomainKeyResult } from '@/modules/strategic/okr/domain/entities/KeyResult';
+import type { KeyResult as LegacyKeyResult } from '@/lib/okrs/okr-types';
 import { Result } from '@/shared/domain/types/Result';
 
 // Ensure DI container is registered
 registerStrategicModule();
+
+/**
+ * Converte DDD KeyResult ValueObject para Legacy DTO
+ * Bug Fix (Task 04 - Bug 1): Adicionar propriedades ausentes (okrId, progress, valueHistory)
+ */
+function toLegacyKeyResultDTO(kr: DomainKeyResult, okrId: string): LegacyKeyResult {
+  return {
+    id: kr.id ?? globalThis.crypto.randomUUID(),
+    okrId,
+    title: kr.title,
+    description: kr.description,
+    metricType: kr.metricType,
+    startValue: kr.startValue,
+    targetValue: kr.targetValue,
+    currentValue: kr.currentValue,
+    unit: kr.unit,
+    progress: kr.progress,
+    status: kr.status,
+    linkedKpiId: kr.linkedKpiId,
+    linkedKpiName: undefined,
+    linkedActionPlanId: kr.linkedActionPlanId,
+    linkedActionPlanName: undefined,
+    weight: kr.weight,
+    valueHistory: [],
+    order: kr.order,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
 
 // Zod schema for creating OKR
 const createOkrSchema = z.object({
@@ -103,21 +134,7 @@ export async function GET(request: NextRequest) {
       ownerId: okr.ownerId,
       ownerName: okr.ownerName,
       ownerType: okr.ownerType,
-      keyResults: okr.keyResults.map((kr) => ({
-        id: kr.id,
-        title: kr.title,
-        description: kr.description,
-        metricType: kr.metricType,
-        startValue: kr.startValue,
-        targetValue: kr.targetValue,
-        currentValue: kr.currentValue,
-        unit: kr.unit,
-        status: kr.status,
-        weight: kr.weight,
-        order: kr.order,
-        linkedKpiId: kr.linkedKpiId,
-        linkedActionPlanId: kr.linkedActionPlanId,
-      })),
+      keyResults: okr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, okr.id)),
       progress: okr.progress,
       status: okr.status,
       organizationId: okr.organizationId,

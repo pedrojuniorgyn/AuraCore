@@ -12,11 +12,41 @@ import { registerStrategicModule } from '@/modules/strategic/infrastructure/di';
 import type { IOkrRepository } from '@/modules/strategic/okr/domain/ports/output/IOkrRepository';
 import { OKR_TOKENS } from '@/modules/strategic/okr/infrastructure/di/tokens';
 import { OKR } from '@/modules/strategic/okr/domain/entities/OKR';
-import type { KeyResult } from '@/modules/strategic/okr/domain/entities/KeyResult';
+import type { KeyResult as DomainKeyResult } from '@/modules/strategic/okr/domain/entities/KeyResult';
+import type { KeyResult as LegacyKeyResult } from '@/lib/okrs/okr-types';
 import { Result } from '@/shared/domain/types/Result';
 
 // Ensure DI container is registered
 registerStrategicModule();
+
+/**
+ * Converte DDD KeyResult ValueObject para Legacy DTO
+ * Bug Fix (Task 04 - Bug 1): Adicionar propriedades ausentes (okrId, progress, valueHistory)
+ */
+function toLegacyKeyResultDTO(kr: DomainKeyResult, okrId: string): LegacyKeyResult {
+  return {
+    id: kr.id ?? globalThis.crypto.randomUUID(),
+    okrId,
+    title: kr.title,
+    description: kr.description,
+    metricType: kr.metricType,
+    startValue: kr.startValue,
+    targetValue: kr.targetValue,
+    currentValue: kr.currentValue,
+    unit: kr.unit,
+    progress: kr.progress,
+    status: kr.status,
+    linkedKpiId: kr.linkedKpiId,
+    linkedKpiName: undefined,
+    linkedActionPlanId: kr.linkedActionPlanId,
+    linkedActionPlanName: undefined,
+    weight: kr.weight,
+    valueHistory: [],
+    order: kr.order,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
 
 // Zod schemas
 const idParamSchema = z.object({
@@ -79,21 +109,7 @@ export async function GET(
       ownerId: okr.ownerId,
       ownerName: okr.ownerName,
       ownerType: okr.ownerType,
-      keyResults: okr.keyResults.map((kr) => ({
-        id: kr.id,
-        title: kr.title,
-        description: kr.description,
-        metricType: kr.metricType,
-        startValue: kr.startValue,
-        targetValue: kr.targetValue,
-        currentValue: kr.currentValue,
-        unit: kr.unit,
-        status: kr.status,
-        weight: kr.weight,
-        order: kr.order,
-        linkedKpiId: kr.linkedKpiId,
-        linkedActionPlanId: kr.linkedActionPlanId,
-      })),
+      keyResults: okr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, okr.id)),
       progress: okr.progress,
       status: okr.status,
       organizationId: okr.organizationId,
@@ -159,8 +175,64 @@ export async function PATCH(
       return NextResponse.json({ error: 'OKR not found' }, { status: 404 });
     }
 
-    // Update OKR using reconstitute (PATCH updates)
-    // For partial updates, reconstitute with merged properties
+    // Bug Fix (Task 04 - Bug 2): Use domain methods for status transitions
+    // Do NOT use reconstitute() for status changes - it bypasses state machine validation
+    
+    // Handle status transitions using domain methods
+    if (validated.status !== undefined && validated.status !== okr.status) {
+      let transitionResult: Result<void, string> | undefined;
+
+      // Validate and execute state transitions using domain methods
+      switch (validated.status) {
+        case 'active':
+          if (okr.status !== 'draft') {
+            return NextResponse.json(
+              { error: `Cannot activate OKR with status ${okr.status}. Only draft OKRs can be activated.` },
+              { status: 400 }
+            );
+          }
+          transitionResult = okr.activate();
+          break;
+
+        case 'completed':
+          if (okr.status !== 'active') {
+            return NextResponse.json(
+              { error: `Cannot complete OKR with status ${okr.status}. Only active OKRs can be completed.` },
+              { status: 400 }
+            );
+          }
+          transitionResult = okr.complete();
+          break;
+
+        case 'cancelled':
+          transitionResult = okr.cancel();
+          break;
+
+        case 'draft':
+          // No transition method for draft (only initial state)
+          return NextResponse.json(
+            { error: 'Cannot change status back to draft. Status transitions: draft→active→completed or any→cancelled.' },
+            { status: 400 }
+          );
+
+        default:
+          return NextResponse.json(
+            { error: `Invalid status: ${validated.status}` },
+            { status: 400 }
+          );
+      }
+
+      // Check if transition was successful
+      if (transitionResult && Result.isFail(transitionResult)) {
+        return NextResponse.json(
+          { error: transitionResult.error },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Apply other updates using reconstitute (safe for non-status fields)
+    // Note: Status was already updated via domain methods above
     const updatedOkrResult = OKR.reconstitute({
       id: okr.id,
       title: validated.title ?? okr.title,
@@ -176,7 +248,7 @@ export async function PATCH(
       ownerType: okr.ownerType,
       keyResults: okr.keyResults,
       progress: okr.progress,
-      status: validated.status ?? okr.status,
+      status: okr.status, // Use current status (already updated by domain methods)
       organizationId: okr.organizationId,
       branchId: okr.branchId,
       createdBy: okr.createdBy,
@@ -211,21 +283,7 @@ export async function PATCH(
       ownerId: updatedOkr.ownerId,
       ownerName: updatedOkr.ownerName,
       ownerType: updatedOkr.ownerType,
-      keyResults: updatedOkr.keyResults.map((kr: KeyResult) => ({
-        id: kr.id,
-        title: kr.title,
-        description: kr.description,
-        metricType: kr.metricType,
-        startValue: kr.startValue,
-        targetValue: kr.targetValue,
-        currentValue: kr.currentValue,
-        unit: kr.unit,
-        status: kr.status,
-        weight: kr.weight,
-        order: kr.order,
-        linkedKpiId: kr.linkedKpiId,
-        linkedActionPlanId: kr.linkedActionPlanId,
-      })),
+      keyResults: updatedOkr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, updatedOkr.id)),
       progress: updatedOkr.progress,
       status: updatedOkr.status,
       organizationId: updatedOkr.organizationId,
