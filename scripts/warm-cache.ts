@@ -9,6 +9,7 @@
  * - Automático via instrumentation.ts (se CACHE_WARMING_ENABLED=true)
  */
 import 'reflect-metadata';
+import { fileURLToPath } from 'url';
 import { CacheService, CacheTTL } from '../src/services/cache.service';
 import { db } from '../src/lib/db';
 import { users } from '../src/lib/db/schema';
@@ -190,7 +191,10 @@ export async function warmCache(): Promise<void> {
 }
 
 // Se executado diretamente (não via import)
-if (require.main === module) {
+// ES modules: verificar se é o script principal
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
   warmCache()
     .then(() => {
       console.log('[Cache Warming] Success!');

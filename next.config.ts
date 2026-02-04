@@ -5,6 +5,11 @@ import withPWA from "next-pwa";
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
+  // Habilitar instrumentation.ts para inicialização de módulos e cache
+  experimental: {
+    instrumentationHook: true,
+  },
+
   // Pacotes externos que não devem ser bundleados (carregados via require)
   serverExternalPackages: [
     "mssql",
