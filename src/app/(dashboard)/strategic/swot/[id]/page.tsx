@@ -81,8 +81,8 @@ export default function SwotDetailPage() {
     handleDelete,
     isDeleting,
     showDeleteDialog,
-    setShowDeleteDialog,
     confirmDelete,
+    cancelDelete, // ✅ BUG-FIX: Necessário para limpar refs internos ao cancelar
     pendingOptions,
   } = useDeleteResource('swot');
 
@@ -542,7 +542,12 @@ export default function SwotDetailPage() {
         {/* Modal Excluir */}
         <DeleteConfirmationDialog
           open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              // ✅ BUG-FIX: Chamar cancelDelete ao fechar modal para limpar refs
+              cancelDelete();
+            }
+          }}
           onConfirm={confirmDelete}
           itemName={pendingOptions.itemName}
           resourceType={pendingOptions.resourceType}
