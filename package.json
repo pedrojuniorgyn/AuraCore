@@ -35,7 +35,8 @@
     "test:all": "npm run test:unit && npm run test:integration:docker",
     "test:playwright:strategic": "playwright test tests/e2e/strategic/",
     "test:playwright:mobile": "playwright test tests/e2e/strategic/mobile.spec.ts",
-    "test:redis": "tsx --env-file=.env scripts/test-redis.ts"
+    "test:redis": "tsx --env-file=.env scripts/test-redis.ts",
+    "warm:cache": "tsx scripts/warm-cache.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
