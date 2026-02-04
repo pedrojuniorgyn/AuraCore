@@ -166,9 +166,10 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   }
 
   /**
-   * Atualiza o valor atual e recalcula status
+   * Retorna nova instância com currentValue atualizado (VO-006: Imutável)
+   * Value Objects não mutam - retornam nova instância
    */
-  updateCurrentValue(newValue: number): Result<KeyResult, string> {
+  withCurrentValue(newValue: number): Result<KeyResult, string> {
     if (newValue < 0) {
       return Result.fail('Current value não pode ser negativo');
     }
@@ -180,9 +181,10 @@ export class KeyResult extends ValueObject<KeyResultProps> {
   }
 
   /**
-   * Atualiza o status manualmente
+   * Retorna nova instância com status atualizado (VO-006: Imutável)
+   * Value Objects não mutam - retornam nova instância
    */
-  updateStatus(newStatus: KeyResultStatus): Result<KeyResult, string> {
+  withStatus(newStatus: KeyResultStatus): Result<KeyResult, string> {
     return Result.ok(
       new KeyResult({
         ...(this.props as unknown as KeyResultProps),

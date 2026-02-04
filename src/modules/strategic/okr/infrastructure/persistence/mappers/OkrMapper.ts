@@ -14,7 +14,7 @@ export class OkrMapper {
    * DB → Domain (usa reconstitute, NUNCA create) - MAPPER-004
    */
   static toDomain(row: OkrRow, keyResultRows: KeyResultRow[]): Result<OKR, string> {
-    // Map Key Results
+    // Map Key Results - FALHA se algum KeyResult for inválido (Bug Fix)
     const keyResults: KeyResult[] = [];
     
     for (const krRow of keyResultRows) {
@@ -36,7 +36,10 @@ export class OkrMapper {
       if (Result.isOk(krResult)) {
         keyResults.push(krResult.value);
       } else {
-        console.warn(`[OkrMapper] Failed to create KeyResult: ${krResult.error}`);
+        // Bug Fix: Falhar ao invés de ignorar silenciosamente
+        return Result.fail(
+          `Failed to map KeyResult (okrId: ${row.id}, title: "${krRow.title}"): ${krResult.error}`
+        );
       }
     }
 
