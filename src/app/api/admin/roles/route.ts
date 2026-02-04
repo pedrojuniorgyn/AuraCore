@@ -94,4 +94,61 @@ export async function GET(request: NextRequest) {
   });
 }
 
+/**
+ * POST /api/admin/roles
+ * 🔐 Requer permissão: admin.roles.manage
+ *
+ * Cria novo role customizado.
+ */
+export async function POST(request: NextRequest) {
+  return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
+    const { ensureConnection } = await import("@/lib/db");
+    await ensureConnection();
 
+    const body = await request.json();
+    const { name, description } = body;
+
+    // Validação de nome (min 2 caracteres)
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
+      return NextResponse.json(
+        { success: false, error: "Nome inválido (mínimo 2 caracteres)" },
+        { status: 400 }
+      );
+    }
+
+    const trimmedName = name.trim();
+
+    // Verificar duplicado
+    const [exists] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, trimmedName));
+
+    if (exists) {
+      return NextResponse.json(
+        { success: false, error: "Role já existe com este nome" },
+        { status: 409 }
+      );
+    }
+
+    // Criar role
+    await db.insert(roles).values({
+      name: trimmedName,
+      description: description?.trim() || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Buscar role criada (SQL Server não suporta .returning())
+    const [created] = await db
+      .select({
+        id: roles.id,
+        name: roles.name,
+        description: roles.description,
+      })
+      .from(roles)
+      .where(eq(roles.name, trimmedName));
+
+    return NextResponse.json({ success: true, data: created }, { status: 201 });
+  });
+}
