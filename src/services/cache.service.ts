@@ -26,10 +26,30 @@ export class CacheService {
    * @returns null se não encontrado ou erro
    */
   static async get<T>(key: string, prefix?: string): Promise<T | null> {
+    const start = Date.now();
     try {
-      return await redisCache.get<T>(key, prefix);
+      const result = await redisCache.get<T>(key, prefix);
+      const duration = Date.now() - start;
+      
+      // Log estruturado
+      console.log(JSON.stringify({
+        event: 'cache.get',
+        key: `${prefix || 'aura:'}${key}`,
+        hit: result !== null,
+        durationMs: duration,
+        timestamp: new Date().toISOString(),
+      }));
+      
+      return result;
     } catch (error) {
-      console.error(`[CacheService] GET error for key "${key}":`, error);
+      const duration = Date.now() - start;
+      console.error(JSON.stringify({
+        event: 'cache.get.error',
+        key: `${prefix || 'aura:'}${key}`,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: duration,
+        timestamp: new Date().toISOString(),
+      }));
       return null;
     }
   }
@@ -44,10 +64,28 @@ export class CacheService {
     ttl: number = CacheTTL.MEDIUM,
     prefix?: string
   ): Promise<void> {
+    const start = Date.now();
     try {
       await redisCache.set(key, value, { ttl, prefix });
+      const duration = Date.now() - start;
+      
+      // Log estruturado
+      console.log(JSON.stringify({
+        event: 'cache.set',
+        key: `${prefix || 'aura:'}${key}`,
+        ttl,
+        durationMs: duration,
+        timestamp: new Date().toISOString(),
+      }));
     } catch (error) {
-      console.error(`[CacheService] SET error for key "${key}":`, error);
+      const duration = Date.now() - start;
+      console.error(JSON.stringify({
+        event: 'cache.set.error',
+        key: `${prefix || 'aura:'}${key}`,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: duration,
+        timestamp: new Date().toISOString(),
+      }));
     }
   }
 

@@ -3,6 +3,12 @@
  * GET - Lista KPIs
  * POST - Cria novo KPI
  * 
+ * Cache (GET):
+ * - TTL: 5 minutos (CacheTTL.SHORT)
+ * - Key: org:{organizationId}:branch:{branchId}:filters:{hash}
+ * - Prefix: kpis:
+ * - Invalidação: POST/PUT/DELETE em /api/strategic/kpis
+ * 
  * @module app/api/strategic
  */
 import { NextResponse } from 'next/server';
@@ -14,6 +20,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { CreateKPIUseCase } from '@/modules/strategic/application/commands/CreateKPIUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
+import { CacheService, CacheTTL } from '@/services/cache.service';
 
 const createKPISchema = z.object({
   goalId: z.string().trim().uuid().optional(),
@@ -48,6 +55,29 @@ export const GET = withDI(async (request: Request) => {
     const page = parseInt(searchParams.get('page') ?? '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') ?? '20', 10);
 
+    // Construir chave de cache incluindo filtros
+    const filters = JSON.stringify({ goalId, status, ownerUserId, page, pageSize });
+    const filtersHash = Buffer.from(filters).toString('base64').slice(0, 16);
+    const cacheKey = `org:${context.organizationId}:branch:${context.branchId}:filters:${filtersHash}`;
+    
+    // Tentar buscar do cache
+    const cached = await CacheService.get<{
+      items: unknown[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }>(cacheKey, 'kpis:');
+    
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'X-Cache': 'HIT',
+          'X-Cache-Key': `kpis:${cacheKey}`,
+        },
+      });
+    }
+
+    // Cache MISS - buscar do banco
     const repository = container.resolve<IKPIRepository>(
       STRATEGIC_TOKENS.KPIRepository
     );
@@ -62,7 +92,7 @@ export const GET = withDI(async (request: Request) => {
       pageSize,
     });
 
-    return NextResponse.json({
+    const response = {
       items: result.items.map((kpi) => ({
         id: kpi.id,
         goalId: kpi.goalId,
@@ -86,6 +116,16 @@ export const GET = withDI(async (request: Request) => {
       total: result.total,
       page,
       pageSize,
+    };
+
+    // Cachear resultado
+    await CacheService.set(cacheKey, response, CacheTTL.SHORT, 'kpis:');
+
+    return NextResponse.json(response, {
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-TTL': String(CacheTTL.SHORT),
+      },
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
@@ -128,6 +168,9 @@ export const POST = withDI(async (request: Request) => {
     if (Result.isFail(result)) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
+
+    // Invalidar cache de KPIs após criação
+    await CacheService.invalidatePattern('*', 'kpis:');
 
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {

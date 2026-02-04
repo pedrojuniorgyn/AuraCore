@@ -4,6 +4,7 @@ import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { accounts, branches, roles, userBranches, userRoles, users } from "@/lib/db/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { CacheService } from "@/services/cache.service";
 
 const putSchema = z.object({
   roleIds: z.array(z.number().int().positive()).min(1),
@@ -151,6 +152,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
           updatedAt: new Date(),
         })
         .where(eq(users.id, id));
+
+      // Invalidar caches de users e permissions após atualização de acesso
+      await Promise.all([
+        CacheService.invalidatePattern('*', 'users:'),
+        CacheService.invalidatePattern('*', 'permissions:'),
+      ]);
 
       return NextResponse.json({ success: true });
     } catch (error: unknown) {

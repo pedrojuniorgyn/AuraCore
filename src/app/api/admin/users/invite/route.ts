@@ -4,6 +4,7 @@ import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { branches, roles, userBranches, userRoles, users } from "@/lib/db/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { CacheService } from "@/services/cache.service";
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -169,6 +170,9 @@ export async function POST(request: NextRequest) {
       } catch (e) {
         console.warn("⚠️ Invite email failed (non-fatal):", e);
       }
+
+      // Invalidar cache de users após criação
+      await CacheService.invalidatePattern('*', 'users:');
 
       return NextResponse.json({
         success: true,

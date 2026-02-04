@@ -3,16 +3,42 @@ import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { users, userRoles, roles, accounts } from "@/lib/db/schema";
 import { eq, isNull, and, inArray } from "drizzle-orm";
+import { CacheService, CacheTTL } from "@/services/cache.service";
 
 /**
  * GET /api/admin/users
  * 🔐 Requer permissão: admin.users.manage
+ * 
+ * Cache:
+ * - TTL: 30 minutos (CacheTTL.MEDIUM)
+ * - Key: org:{organizationId}
+ * - Prefix: users:
+ * - Invalidação: POST/PUT/DELETE em /api/admin/users
  */
 export async function GET(request: NextRequest) {
   return withPermission(request, "admin.users.manage", async (user, ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
+    const cacheKey = `org:${ctx.organizationId}`;
+    
+    // Tentar buscar do cache
+    const cached = await CacheService.get<{
+      success: boolean;
+      users: unknown[];
+      total: number;
+    }>(cacheKey, 'users:');
+    
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'X-Cache': 'HIT',
+          'X-Cache-Key': `users:${cacheKey}`,
+        },
+      });
+    }
+
+    // Cache MISS - buscar do banco
     // 🔐 Buscar todos os usuários da organização (Multi-tenant)
     const allUsers = await db
       .select({
@@ -64,10 +90,20 @@ export async function GET(request: NextRequest) {
       hasPassword: Boolean(passwordHash),
     }));
 
-    return NextResponse.json({
+    const response = {
       success: true,
       users: usersWithRoles,
       total: allUsers.length,
+    };
+
+    // Cachear resultado
+    await CacheService.set(cacheKey, response, CacheTTL.MEDIUM, 'users:');
+
+    return NextResponse.json(response, {
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-TTL': String(CacheTTL.MEDIUM),
+      },
     });
   });
 }

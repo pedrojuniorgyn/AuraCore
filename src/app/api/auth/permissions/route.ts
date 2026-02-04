@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getUserPermissions } from "@/lib/auth/permissions";
+import { CacheService, CacheTTL } from "@/services/cache.service";
 
 /**
  * GET /api/auth/permissions
  * Retorna as permissões do usuário logado
+ * 
+ * Cache:
+ * - TTL: 24 horas (CacheTTL.LONG)
+ * - Key: user:{userId}
+ * - Prefix: permissions:
+ * - Invalidação: POST/PUT/DELETE em /api/admin/users/[id]/access
  */
 export async function GET() {
   try {
@@ -22,7 +29,30 @@ export async function GET() {
       return NextResponse.json({ permissions: [], message: "Não autenticado" });
     }
 
+    const cacheKey = `user:${session.user.id}`;
+    
+    // Tentar buscar do cache
+    const cached = await CacheService.get<string[]>(cacheKey, 'permissions:');
+    if (cached) {
+      console.log("✅ [API /auth/permissions] Cache HIT");
+      return NextResponse.json({
+        success: true,
+        permissions: cached,
+        userId: session.user.id,
+      }, {
+        headers: {
+          'X-Cache': 'HIT',
+          'X-Cache-Key': `permissions:${cacheKey}`,
+        },
+      });
+    }
+
+    // Cache MISS - buscar do banco
+    console.log("⚠️ [API /auth/permissions] Cache MISS - fetching from DB");
     const permissions = await getUserPermissions(session.user.id);
+
+    // Cachear resultado
+    await CacheService.set(cacheKey, permissions, CacheTTL.LONG, 'permissions:');
 
     console.log("✅ [API /auth/permissions] Permissões retornadas:", permissions.length, permissions);
 
@@ -30,6 +60,11 @@ export async function GET() {
       success: true,
       permissions,
       userId: session.user.id,
+    }, {
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-TTL': String(CacheTTL.LONG),
+      },
     });
   } catch (error: unknown) {
     // Propagar erros de auth (getTenantContext throws Response)
