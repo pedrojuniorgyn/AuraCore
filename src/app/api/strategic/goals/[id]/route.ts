@@ -152,8 +152,8 @@ export async function PUT(
     const data = validation.data;
     
     // Reconstitute domain entity com campos atualizados
-    // ⚠️ IMPORTANTE: Usar !== undefined para campos nullable (apenas baselineValue)
-    // Demais campos usam ?? pois são NOT NULL no banco
+    // ⚠️ IMPORTANTE: Usar !== undefined para campos numéricos (aceita 0 como válido)
+    // Campos que podem ser 0: targetValue, currentValue, weight, baselineValue
     const updatedGoalResult = StrategicGoal.reconstitute({
       id: goal.id,
       organizationId: goal.organizationId,
@@ -163,11 +163,11 @@ export async function PUT(
       code: goal.code,
       description: data.description ?? goal.description,
       cascadeLevel: goal.cascadeLevel,
-      targetValue: data.targetValue ?? goal.targetValue,
-      currentValue: data.currentValue ?? goal.currentValue,
+      targetValue: data.targetValue !== undefined ? data.targetValue : goal.targetValue,
+      currentValue: data.currentValue !== undefined ? data.currentValue : goal.currentValue,
       baselineValue: data.baselineValue !== undefined ? data.baselineValue : goal.baselineValue,
       unit: data.unit ?? goal.unit,
-      weight: data.weight ?? goal.weight,
+      weight: data.weight !== undefined ? data.weight : goal.weight,
       polarity: data.polarity ?? goal.polarity,
       ownerUserId: goal.ownerUserId,
       ownerBranchId: goal.ownerBranchId,

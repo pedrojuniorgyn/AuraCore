@@ -155,9 +155,10 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
     // ✅ BUG-FIX: Atualizar usando reconstitute para manter domain entity válida
     // (Mapper.toPersistence espera entity completa, não plain object)
     
-    // ⚠️ IMPORTANTE: Recalcular priorityScore quando impact/probability mudam
-    const finalImpactScore = validated.impactScore ?? existing.impactScore;
-    const finalProbabilityScore = validated.probabilityScore ?? existing.probabilityScore;
+    // ⚠️ IMPORTANTE: Usar !== undefined para aceitar 0 como valor válido
+    // (0 ?? fallback retorna 0, mas !== undefined é mais explícito)
+    const finalImpactScore = validated.impactScore !== undefined ? validated.impactScore : existing.impactScore;
+    const finalProbabilityScore = validated.probabilityScore !== undefined ? validated.probabilityScore : existing.probabilityScore;
     const recalculatedPriorityScore = finalImpactScore * finalProbabilityScore;
     
     const updatedEntityResult = SwotItem.reconstitute({

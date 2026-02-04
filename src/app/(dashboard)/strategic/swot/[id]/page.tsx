@@ -81,6 +81,7 @@ export default function SwotDetailPage() {
     handleDelete,
     isDeleting,
     showDeleteDialog,
+    setShowDeleteDialog, // ✅ BUG-FIX: Necessário para controlar estado do modal
     confirmDelete,
     cancelDelete, // ✅ BUG-FIX: Necessário para limpar refs internos ao cancelar
     pendingOptions,
@@ -543,8 +544,10 @@ export default function SwotDetailPage() {
         <DeleteConfirmationDialog
           open={showDeleteDialog}
           onOpenChange={(open) => {
+            // ✅ BUG-FIX: Atualizar estado do modal PRIMEIRO (síncrono)
+            setShowDeleteDialog(open);
             if (!open) {
-              // ✅ BUG-FIX: Chamar cancelDelete ao fechar modal para limpar refs
+              // Depois limpar refs internos
               cancelDelete();
             }
           }}
