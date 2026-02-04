@@ -891,14 +891,21 @@ export default function ActionPlanDetailPage({
                           width: 150,
                           cellRenderer: (params: ICellRendererParams) => {
                             const statusConfig = {
-                              EXECUTED_OK: { label: 'Executado OK', color: 'text-green-400 bg-green-500/20' },
-                              EXECUTED_PARTIAL: { label: 'Parcial', color: 'text-blue-400 bg-blue-500/20' },
-                              NOT_EXECUTED: { label: 'Não Executado', color: 'text-gray-400 bg-gray-500/20' },
-                              BLOCKED: { label: 'Bloqueado', color: 'text-red-400 bg-red-500/20' },
-                            };
+                              EXECUTED_OK: { label: 'Executado OK', color: 'green' },
+                              EXECUTED_PARTIAL: { label: 'Parcial', color: 'blue' },
+                              NOT_EXECUTED: { label: 'Não Executado', color: 'gray' },
+                              BLOCKED: { label: 'Bloqueado', color: 'red' },
+                            } as const;
+                            
                             const config = statusConfig[params.value as keyof typeof statusConfig];
                             if (!config) return params.value;
-                            return `<span class="px-2 py-1 rounded text-xs ${config.color}">${config.label}</span>`;
+                            
+                            // Return JSX element (Badge from Tremor)
+                            return (
+                              <Badge color={config.color} size="xs">
+                                {config.label}
+                              </Badge>
+                            );
                           },
                         },
                         {
