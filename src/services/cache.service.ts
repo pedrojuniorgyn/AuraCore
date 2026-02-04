@@ -5,6 +5,7 @@
  * @module services/cache
  */
 import { redisCache } from '@/lib/cache';
+import { log } from '@/lib/observability/logger';
 
 /**
  * TTL Strategies (em segundos)
@@ -32,24 +33,20 @@ export class CacheService {
       const duration = Date.now() - start;
       
       // Log estruturado
-      console.log(JSON.stringify({
-        event: 'cache.get',
+      log('debug', 'cache.get', {
         key: `${prefix || 'aura:'}${key}`,
         hit: result !== null,
         durationMs: duration,
-        timestamp: new Date().toISOString(),
-      }));
+      });
       
       return result;
     } catch (error) {
       const duration = Date.now() - start;
-      console.error(JSON.stringify({
-        event: 'cache.get.error',
+      log('error', 'cache.get.error', {
         key: `${prefix || 'aura:'}${key}`,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error,
         durationMs: duration,
-        timestamp: new Date().toISOString(),
-      }));
+      });
       return null;
     }
   }
@@ -70,22 +67,18 @@ export class CacheService {
       const duration = Date.now() - start;
       
       // Log estruturado
-      console.log(JSON.stringify({
-        event: 'cache.set',
+      log('debug', 'cache.set', {
         key: `${prefix || 'aura:'}${key}`,
         ttl,
         durationMs: duration,
-        timestamp: new Date().toISOString(),
-      }));
+      });
     } catch (error) {
       const duration = Date.now() - start;
-      console.error(JSON.stringify({
-        event: 'cache.set.error',
+      log('error', 'cache.set.error', {
         key: `${prefix || 'aura:'}${key}`,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error,
         durationMs: duration,
-        timestamp: new Date().toISOString(),
-      }));
+      });
     }
   }
 

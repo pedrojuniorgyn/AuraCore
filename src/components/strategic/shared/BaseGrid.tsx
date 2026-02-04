@@ -67,7 +67,7 @@ export function BaseGrid<T = Record<string, unknown>>({
     () => ({
       pagination: true,
       paginationPageSize: isMobile ? 10 : paginationPageSize, // Menos linhas em mobile
-      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [20, 50, 100],
+      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [10, 25, 50, 100],
       rowSelection: {
         mode: 'singleRow',
         checkboxes: false,

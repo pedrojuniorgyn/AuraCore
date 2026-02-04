@@ -9,7 +9,7 @@ import { CacheService, CacheTTL } from "@/services/cache.service";
  * 
  * Cache:
  * - TTL: 24 horas (CacheTTL.LONG)
- * - Key: user:{userId}
+ * - Key: org:{organizationId}:user:{userId}
  * - Prefix: permissions:
  * - Invalidação: POST/PUT/DELETE em /api/admin/users/[id]/access
  */
@@ -29,7 +29,14 @@ export async function GET() {
       return NextResponse.json({ permissions: [], message: "Não autenticado" });
     }
 
-    const cacheKey = `user:${session.user.id}`;
+    // Obter organizationId do session (multi-tenancy)
+    const organizationId = (session.user as unknown as { organizationId?: number })?.organizationId;
+    if (!organizationId) {
+      console.error("⚠️ [API /auth/permissions] organizationId missing in session");
+      return NextResponse.json({ permissions: [], message: "Organization context missing" }, { status: 400 });
+    }
+
+    const cacheKey = `org:${organizationId}:user:${session.user.id}`;
     
     // Tentar buscar do cache
     const cached = await CacheService.get<string[]>(cacheKey, 'permissions:');
