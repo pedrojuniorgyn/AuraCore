@@ -898,7 +898,15 @@ export default function ActionPlanDetailPage({
                             } as const;
                             
                             const config = statusConfig[params.value as keyof typeof statusConfig];
-                            if (!config) return params.value;
+                            
+                            // Always return JSX for type consistency
+                            if (!config) {
+                              return (
+                                <Badge color="neutral" size="xs">
+                                  {params.value || 'Desconhecido'}
+                                </Badge>
+                              );
+                            }
                             
                             // Return JSX element (Badge from Tremor)
                             return (
