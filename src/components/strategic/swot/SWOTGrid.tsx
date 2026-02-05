@@ -226,6 +226,7 @@ export function SWOTGrid({ data, loading }: SWOTGridProps) {
         filter: 'agDateColumnFilter',
       },
       {
+        field: 'actions', // Necessário para mobileColumns filter no BaseGrid
         headerName: 'Ações',
         cellRenderer: ActionsCell,
         cellRendererParams: {

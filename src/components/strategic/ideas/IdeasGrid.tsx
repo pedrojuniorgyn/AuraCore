@@ -209,6 +209,7 @@ export function IdeasGrid({ data, loading }: IdeasGridProps) {
         filter: 'agDateColumnFilter',
       },
       {
+        field: 'actions', // Necessário para mobileColumns filter no BaseGrid
         headerName: 'Ações',
         cellRenderer: ActionsCell,
         cellRendererParams: {

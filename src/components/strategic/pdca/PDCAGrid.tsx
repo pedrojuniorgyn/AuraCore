@@ -217,6 +217,7 @@ export function PDCAGrid({ data, loading }: PDCAGridProps) {
         filter: 'agDateColumnFilter',
       },
       {
+        field: 'actions', // Necessário para mobileColumns filter no BaseGrid
         headerName: 'Ações',
         cellRenderer: ActionsCell,
         cellRendererParams: {

@@ -275,6 +275,7 @@ export function ActionPlanGrid({ data, loading = false }: ActionPlanGridProps) {
         filter: 'agTextColumnFilter',
       },
       {
+        field: 'actions', // Necessário para mobileColumns filter no BaseGrid
         headerName: 'Ações',
         width: 120,
         pinned: 'right',
