@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, ColDef } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -20,21 +23,442 @@ import {
   BooleanCellRenderer,
   ActionCellRenderer
 } from "@/components/ag-grid/renderers/aurora-renderers";
-import { Plus, FileText, BookOpen, Settings } from "lucide-react";
+import { Plus, FileText, BookOpen, Settings, Edit, Trash2 } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 // Registrar módulos do AG Grid
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
+// Componente de edição separado para evitar reset de form
+interface EditChartAccountModalProps {
+  isOpen: boolean;
+  onClose: (open: boolean) => void;
+  selectedAccount: ChartAccount | null;
+  isSubmitting: boolean;
+  setIsSubmitting: (value: boolean) => void;
+  onSuccess: () => void;
+}
+
+const EditChartAccountModal: React.FC<EditChartAccountModalProps> = ({
+  isOpen,
+  onClose,
+  selectedAccount,
+  isSubmitting,
+  setIsSubmitting,
+  onSuccess,
+}) => {
+  // Valores padrão vazios - form será populado pelo useEffect
+  const form = useForm<ChartAccountFormValues>({
+    resolver: zodResolver(chartAccountSchema),
+    defaultValues: {
+      name: '',
+      description: null,
+      type: 'DESPESA',
+      category: null,
+      legal_account_id: null,
+      allocation_rule: null,
+      allocation_base: null,
+      status: 'ACTIVE',
+    },
+  });
+
+  // Reset form quando selectedAccount mudar - única fonte de verdade para popular o form
+  React.useEffect(() => {
+    if (selectedAccount) {
+      form.reset({
+        name: selectedAccount.name,
+        description: selectedAccount.description ?? null,
+        type: selectedAccount.type,
+        category: selectedAccount.category ?? null,
+        legal_account_id: selectedAccount.legal_account_id ?? null,
+        allocation_rule: selectedAccount.allocation_rule ?? null,
+        allocation_base: selectedAccount.allocation_base ?? null,
+        status: selectedAccount.status,
+      });
+    }
+  }, [selectedAccount, form]);
+
+  const onSubmit = async (values: ChartAccountFormValues) => {
+    if (!selectedAccount?.id) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(`/api/management/chart-accounts/${selectedAccount.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: values.name,
+          description: values.description || null,
+          type: values.type,
+          category: values.category || null,
+          legalAccountId: values.legal_account_id || null,
+          allocationRule: values.allocation_rule || null,
+          allocationBase: values.allocation_base || null,
+          status: values.status,
+        }),
+      });
+
+      if (!response.ok) {
+        // Tentar parsear JSON de erro, mas tratar falhas graciosamente
+        let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // Se não conseguir parsear JSON (ex: página de erro HTML do nginx/proxy),
+          // usar mensagem baseada no status code
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success('Conta atualizada com sucesso!');
+      onClose(false);
+      form.reset();
+      onSuccess();
+    } catch (error) {
+      console.error('Erro ao atualizar conta:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar conta');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit className="h-5 w-5" />
+            Editar Conta Gerencial
+          </DialogTitle>
+          <DialogDescription>
+            Código: {selectedAccount?.code} - {selectedAccount?.name}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Nome */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Despesas com Pessoal" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Descrição */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Descrição detalhada da conta..." 
+                      {...field} 
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Tipo e Status */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="RECEITA">Receita</SelectItem>
+                        <SelectItem value="DESPESA">Despesa</SelectItem>
+                        <SelectItem value="CUSTO">Custo</SelectItem>
+                        <SelectItem value="INVESTIMENTO">Investimento</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Ativa</SelectItem>
+                        <SelectItem value="INACTIVE">Inativa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Categoria */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoria</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ex: Operacional, Administrativa..." 
+                      {...field} 
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Agrupamento interno para relatórios
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Regra de Alocação */}
+            <FormField
+              control={form.control}
+              name="allocation_rule"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Regra de Alocação</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Ex: Rateio proporcional por receita..." 
+                      {...field} 
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Definição de como alocar custos/receitas
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Base de Alocação */}
+            <FormField
+              control={form.control}
+              name="allocation_base"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Base de Alocação</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ex: Receita Bruta, Quantidade..." 
+                      {...field} 
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Footer */}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onClose(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Componente de exclusão separado para evitar stale closures
+interface DeleteConfirmationDialogProps {
+  isOpen: boolean;
+  onClose: (open: boolean) => void;
+  accountToDelete: ChartAccount | null;
+  isDeleting: boolean;
+  setIsDeleting: (value: boolean) => void;
+  onSuccess: () => void;
+}
+
+const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
+  isOpen,
+  onClose,
+  accountToDelete,
+  isDeleting,
+  setIsDeleting,
+  onSuccess,
+}) => {
+  const handleConfirmDelete = async () => {
+    if (!accountToDelete?.id) return;
+
+    try {
+      setIsDeleting(true);
+
+      const response = await fetch(`/api/management/chart-accounts/${accountToDelete.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        // Tentar parsear JSON de erro, mas tratar falhas graciosamente
+        let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // Se não conseguir parsear JSON (ex: página de erro HTML do nginx/proxy),
+          // usar mensagem baseada no status code
+        }
+        throw new Error(errorMessage);
+      }
+
+      toast.success('Conta excluída com sucesso!');
+      onClose(false);
+      onSuccess();
+    } catch (error) {
+      console.error('Erro ao excluir conta:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao excluir conta');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="h-5 w-5" />
+            Confirmar Exclusão
+          </DialogTitle>
+          <DialogDescription>
+            Esta ação não pode ser desfeita. A conta será marcada como excluída.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-4">
+          <p className="text-sm">
+            Deseja realmente excluir a conta:
+          </p>
+          <p className="font-semibold mt-2">
+            {accountToDelete?.code} - {accountToDelete?.name}
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onClose(false)}
+            disabled={isDeleting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleConfirmDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Excluindo...' : 'Excluir Conta'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const chartAccountSchema = z.object({
+  name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres").max(200),
+  description: z.string().max(1000).nullish(),
+  type: z.enum(['RECEITA', 'DESPESA', 'CUSTO', 'INVESTIMENTO']),
+  category: z.string().max(100).nullish(),
+  legal_account_id: z.number().int().positive().nullish(),
+  allocation_rule: z.string().max(500).nullish(),
+  allocation_base: z.string().max(100).nullish(),
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
+
+type ChartAccountFormValues = z.infer<typeof chartAccountSchema>;
+
 interface ChartAccount {
+  id?: number;
   code: string;
   name: string;
-  type: string;
-  legal_account_code?: string;
-  legal_account_id?: number;
-  allocation_rule?: string;
-  allocation_base?: string;
+  description?: string | null;
+  type: 'RECEITA' | 'DESPESA' | 'CUSTO' | 'INVESTIMENTO';
+  category?: string | null;
+  parent_id?: number | null;
+  level: number;
   is_analytical: boolean;
+  legal_account_id?: number | null;
+  legal_account_code?: string;
+  legal_account_name?: string | null;
+  allocation_rule?: string | null;
+  allocation_base?: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 export default function GestaoPCGPage() {
@@ -48,23 +472,36 @@ export default function GestaoPCGPage() {
     rules: 0
   });
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        const result = await fetchAPI<{ success: boolean; data: ChartAccount[] }>('/api/management/chart-accounts');
-        
-        if (result.success) {
-          setAccounts(result.data);
-          calculateStats(result.data);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar contas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Estados para edição
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<ChartAccount | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Estados para exclusão
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<ChartAccount | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const result = await fetchAPI<{ success: boolean; data: ChartAccount[] }>('/api/management/chart-accounts');
+      
+      if (result.success) {
+        setAccounts(result.data);
+        calculateStats(result.data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar contas:", error);
+      toast.error("Erro ao carregar contas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAccounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const calculateStats = (data: ChartAccount[]) => {
@@ -75,6 +512,18 @@ export default function GestaoPCGPage() {
       rules: data.filter(a => a.allocation_rule && a.allocation_rule !== 'MANUAL').length
     });
   };
+
+  const handleEdit = useCallback((data: unknown) => {
+    const account = data as ChartAccount;
+    setSelectedAccount(account);
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleDelete = useCallback((data: unknown) => {
+    const account = data as ChartAccount;
+    setAccountToDelete(account);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
   const columnDefs: ColDef[] = [
     { 
@@ -129,12 +578,8 @@ export default function GestaoPCGPage() {
       headerName: 'Ações',
       cellRenderer: ActionCellRenderer,
       cellRendererParams: {
-        onEdit: (data: ChartAccount) => {
-          toast.info('Funcionalidade de edição em desenvolvimento');
-        },
-        onDelete: (data: ChartAccount) => {
-          toast.info('Funcionalidade de exclusão em desenvolvimento');
-        }
+        onEdit: handleEdit,
+        onDelete: handleDelete,
       },
       width: 120,
       pinned: 'right'
@@ -142,7 +587,8 @@ export default function GestaoPCGPage() {
   ];
 
   return (
-    <PageTransition>
+    <>
+      <PageTransition>
       <div className="space-y-6">
         <FadeIn>
           <div className="flex justify-between items-center">
@@ -235,7 +681,37 @@ export default function GestaoPCGPage() {
           </GlassmorphismCard>
         </FadeIn>
       </div>
+
     </PageTransition>
+
+      {/* Modais - FORA do PageTransition (FIXED-001) */}
+      <EditChartAccountModal 
+        isOpen={isEditModalOpen}
+        onClose={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) {
+            setSelectedAccount(null);
+          }
+        }}
+        selectedAccount={selectedAccount}
+        isSubmitting={isSubmitting}
+        setIsSubmitting={setIsSubmitting}
+        onSuccess={fetchAccounts}
+      />
+      <DeleteConfirmationDialog 
+        isOpen={isDeleteDialogOpen}
+        onClose={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) {
+            setAccountToDelete(null);
+          }
+        }}
+        accountToDelete={accountToDelete}
+        isDeleting={isDeleting}
+        setIsDeleting={setIsDeleting}
+        onSuccess={fetchAccounts}
+      />
+    </>
   );
 }
 

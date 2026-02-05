@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
@@ -13,9 +13,18 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Modal } from "@/components/ui/modal";
 import { FileUpload } from "@/components/ui/file-upload";
 import { auraTheme } from "@/lib/ag-grid/theme";
-import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, FileText } from "lucide-react";
+import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, FileText, Edit, Truck } from "lucide-react";
 import { OperationalAIWidget } from "@/components/operational";
 import { fetchAPI } from "@/lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -34,6 +43,38 @@ interface Claim {
   resolvedAt?: string;
 }
 
+// Interface para detalhes completos do sinistro (retorno da API em snake_case)
+interface ClaimDetails {
+  id: number;
+  claim_number?: string;
+  claim_type?: string;
+  claim_status?: string;
+  claim_date?: string;
+  asset_type?: string;
+  vehicle_id?: number;
+  asset_description?: string;
+  notes?: string;
+  estimated_damage?: number;
+  franchise_amount?: number;
+  insurance_coverage?: number;
+  deductible_amount?: number;
+  insurance_company?: string;
+  policy_number?: string;
+  third_party_fault?: boolean;
+  third_party_name?: string;
+  third_party_insurance?: string;
+  recoverable_from_third?: number;
+  police_report_number?: string;
+  vehicle_plate?: string;
+  vehicle_model?: string;
+  vehicle_brand?: string;
+  vehicle_type?: string;
+  organization_id?: number;
+  branch_id?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export default function SinistrosPage() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +88,11 @@ export default function SinistrosPage() {
     estimatedDamage: 0,
     description: ''
   });
+
+  // Estados para modal de detalhes
+  const [selectedClaimDetails, setSelectedClaimDetails] = useState<ClaimDetails | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   // Calcular KPIs a partir dos claims carregados
   const kpis = useMemo(() => {
@@ -79,6 +125,38 @@ export default function SinistrosPage() {
       setLoading(false);
     }
   };
+
+  const fetchClaimDetails = useCallback(async (claimId: number) => {
+    try {
+      setIsLoadingDetails(true);
+      
+      const response = await fetch(`/api/claims/${claimId}`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        // Tentar parsear JSON de erro, mas tratar falhas graciosamente
+        let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // Se não conseguir parsear JSON (ex: página de erro HTML do nginx/proxy),
+          // usar mensagem baseada no status code
+        }
+        throw new Error(errorMessage);
+      }
+
+      const { data } = await response.json();
+      setSelectedClaimDetails(data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Erro ao buscar detalhes do sinistro:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao carregar detalhes");
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  }, []);
 
   const handleNewClaim = async () => {
     try {
@@ -148,6 +226,256 @@ export default function SinistrosPage() {
     } catch {
       alert('❌ Erro ao exportar');
     }
+  };
+
+  const ClaimDetailsModal = () => {
+    if (!selectedClaimDetails) return null;
+
+    return (
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6 text-orange-500" />
+              Detalhes do Sinistro #{selectedClaimDetails.claim_number || selectedClaimDetails.id}
+            </DialogTitle>
+            <DialogDescription>
+              Informações completas do sinistro registrado
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingDetails ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Seção 1: Status e Tipo */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="text-lg font-semibold">
+                    {selectedClaimDetails.claim_status === 'OPENED' && '🟡 Aberto'}
+                    {selectedClaimDetails.claim_status === 'IN_ANALYSIS' && '🔵 Em Análise'}
+                    {selectedClaimDetails.claim_status === 'APPROVED' && '🟢 Aprovado'}
+                    {selectedClaimDetails.claim_status === 'REJECTED' && '🔴 Rejeitado'}
+                    {selectedClaimDetails.claim_status === 'CLOSED' && '⚫ Fechado'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Tipo</p>
+                  <p className="text-lg font-semibold">
+                    {selectedClaimDetails.claim_type === 'THEFT' && '🚨 Roubo'}
+                    {selectedClaimDetails.claim_type === 'ACCIDENT' && '💥 Acidente'}
+                    {selectedClaimDetails.claim_type === 'DAMAGE' && '🔧 Avaria'}
+                    {selectedClaimDetails.claim_type === 'LOSS' && '📦 Perda'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Seção 2: Dados Gerais */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Dados Gerais
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Data da Ocorrência</p>
+                    <p className="font-medium">
+                      {selectedClaimDetails.claim_date ? 
+                        new Date(selectedClaimDetails.claim_date).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                        }) : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tipo de Ativo</p>
+                    <p className="font-medium">{selectedClaimDetails.asset_type || 'Não informado'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-muted-foreground">Descrição do Ativo</p>
+                    <p className="font-medium">{selectedClaimDetails.asset_description || 'Sem descrição'}</p>
+                  </div>
+                  {selectedClaimDetails.police_report_number && (
+                    <div className="col-span-2">
+                      <p className="text-sm text-muted-foreground">Número do Boletim de Ocorrência</p>
+                      <p className="font-medium font-mono">{selectedClaimDetails.police_report_number}</p>
+                    </div>
+                  )}
+                  <div className="col-span-2">
+                    <p className="text-sm text-muted-foreground">Observações</p>
+                    <p className="font-medium text-muted-foreground italic">
+                      {selectedClaimDetails.notes || 'Nenhuma observação registrada'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 3: Veículo */}
+              {selectedClaimDetails.vehicle_id && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Truck className="h-5 w-5" />
+                    Veículo Envolvido
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Placa</p>
+                      <p className="font-medium font-mono">
+                        {selectedClaimDetails.vehicle_plate || '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tipo</p>
+                      <p className="font-medium">{selectedClaimDetails.vehicle_type || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Marca</p>
+                      <p className="font-medium">{selectedClaimDetails.vehicle_brand || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Modelo</p>
+                      <p className="font-medium">{selectedClaimDetails.vehicle_model || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Seção 4: Seguro */}
+              {selectedClaimDetails.insurance_company && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Seguradora
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Seguradora</p>
+                      <p className="font-medium">{selectedClaimDetails.insurance_company}</p>
+                    </div>
+                    {selectedClaimDetails.policy_number && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Apólice</p>
+                        <p className="font-medium font-mono">{selectedClaimDetails.policy_number}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Seção 5: Terceiros */}
+              {selectedClaimDetails.third_party_fault && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5" />
+                    Informações de Terceiros
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedClaimDetails.third_party_name && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Terceiro Envolvido</p>
+                        <p className="font-medium">{selectedClaimDetails.third_party_name}</p>
+                      </div>
+                    )}
+                    {selectedClaimDetails.third_party_insurance && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Seguradora do Terceiro</p>
+                        <p className="font-medium">{selectedClaimDetails.third_party_insurance}</p>
+                      </div>
+                    )}
+                    {selectedClaimDetails.recoverable_from_third && (
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground">Valor Recuperável</p>
+                        <p className="text-lg font-bold text-green-500">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(selectedClaimDetails.recoverable_from_third)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Seção 6: Valores */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Valores
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedClaimDetails.estimated_damage && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Dano Estimado</p>
+                      <p className="text-xl font-bold text-orange-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(selectedClaimDetails.estimated_damage)}
+                      </p>
+                    </div>
+                  )}
+                  {selectedClaimDetails.insurance_coverage && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cobertura Seguro</p>
+                      <p className="text-xl font-bold text-blue-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(selectedClaimDetails.insurance_coverage)}
+                      </p>
+                    </div>
+                  )}
+                  {selectedClaimDetails.franchise_amount && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Franquia</p>
+                      <p className="text-xl font-bold text-yellow-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(selectedClaimDetails.franchise_amount)}
+                      </p>
+                    </div>
+                  )}
+                  {selectedClaimDetails.deductible_amount && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Dedutível</p>
+                      <p className="text-xl font-bold text-red-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(selectedClaimDetails.deductible_amount)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer com ações */}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+              Fechar
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                setIsModalOpen(false);
+                toast.info('Edição de sinistro será implementada em breve');
+              }}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   const columnDefs = [
@@ -329,8 +657,8 @@ export default function SinistrosPage() {
                 
                 loading={loading}
                 onRowClicked={(event) => {
-                  if (event.data) {
-                    toast.info('Detalhes do sinistro em desenvolvimento');
+                  if (event.data?.id) {
+                    fetchClaimDetails(event.data.id);
                   }
                 }}
               />
@@ -381,6 +709,9 @@ export default function SinistrosPage() {
         </FadeIn>
       </div>
       </PageTransition>
+      
+      {/* Modal de Detalhes */}
+      <ClaimDetailsModal />
       
       {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
       <OperationalAIWidget screen="sinistros" />
