@@ -8,6 +8,7 @@ import { container } from 'tsyringe';
 import type { IOkrRepository } from '../../domain/ports/output/IOkrRepository';
 import { DrizzleOkrRepository } from '../persistence/repositories/DrizzleOkrRepository';
 import { OKR_TOKENS } from './tokens';
+import { logDebug } from '../../../../../lib/observability/logger';
 
 export class OkrModule {
   private static isRegistered = false;
@@ -17,7 +18,7 @@ export class OkrModule {
    */
   static register(): void {
     if (this.isRegistered) {
-      console.log('[OkrModule] Already registered, skipping...');
+      logDebug('OkrModule already registered, skipping...', { module: 'okr' });
       return;
     }
 
@@ -28,6 +29,6 @@ export class OkrModule {
     );
 
     this.isRegistered = true;
-    console.log('[OkrModule] Dependencies registered successfully');
+    logDebug('OkrModule dependencies registered successfully', { module: 'okr' });
   }
 }

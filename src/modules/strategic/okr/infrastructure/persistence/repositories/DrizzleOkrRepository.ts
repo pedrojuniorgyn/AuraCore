@@ -13,6 +13,7 @@ import { okrTable, okrKeyResultTable } from '../schemas/okr.schema';
 import { db } from '../../../../../../lib/db';
 import { queryPaginated } from '../../../../../../lib/db/query-helpers';
 import { Result } from '../../../../../../shared/domain/types/Result';
+import { logError, logWarn } from '../../../../../../lib/observability/logger';
 
 @injectable()
 export class DrizzleOkrRepository implements IOkrRepository {
@@ -172,10 +173,14 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
     // Se houve erros de mapeamento, logar para observabilidade
     if (mappingErrors.length > 0) {
-      console.error(
-        `[DrizzleOkrRepository.findMany] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
-        mappingErrors
-      );
+      logWarn('Failed to map OKRs in findMany', {
+        method: 'findMany',
+        failedCount: mappingErrors.length,
+        totalCount: okrRows.length,
+        errors: mappingErrors,
+        organizationId,
+        branchId,
+      });
     }
 
     return { items, total };
@@ -231,10 +236,15 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
     // Se houve erros de mapeamento, logar para observabilidade
     if (mappingErrors.length > 0) {
-      console.error(
-        `[DrizzleOkrRepository.findByParentId] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
-        mappingErrors
-      );
+      logWarn('Failed to map OKRs in findByParentId', {
+        method: 'findByParentId',
+        parentId,
+        failedCount: mappingErrors.length,
+        totalCount: okrRows.length,
+        errors: mappingErrors,
+        organizationId,
+        branchId,
+      });
     }
 
     return items;
@@ -291,10 +301,15 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
     // Se houve erros de mapeamento, logar para observabilidade
     if (mappingErrors.length > 0) {
-      console.error(
-        `[DrizzleOkrRepository.findRootsByLevel] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
-        mappingErrors
-      );
+      logWarn('Failed to map OKRs in findRootsByLevel', {
+        method: 'findRootsByLevel',
+        level,
+        failedCount: mappingErrors.length,
+        totalCount: okrRows.length,
+        errors: mappingErrors,
+        organizationId,
+        branchId,
+      });
     }
 
     return items;
@@ -350,10 +365,15 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
     // Se houve erros de mapeamento, logar para observabilidade
     if (mappingErrors.length > 0) {
-      console.error(
-        `[DrizzleOkrRepository.findByOwnerId] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
-        mappingErrors
-      );
+      logWarn('Failed to map OKRs in findByOwnerId', {
+        method: 'findByOwnerId',
+        ownerId,
+        failedCount: mappingErrors.length,
+        totalCount: okrRows.length,
+        errors: mappingErrors,
+        organizationId,
+        branchId,
+      });
     }
 
     return items;
@@ -414,10 +434,15 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
     // Se houve erros de mapeamento, logar para observabilidade
     if (mappingErrors.length > 0) {
-      console.error(
-        `[DrizzleOkrRepository.findActiveInPeriod] Failed to map ${mappingErrors.length}/${okrRows.length} OKRs:`,
-        mappingErrors
-      );
+      logWarn('Failed to map OKRs in findActiveInPeriod', {
+        method: 'findActiveInPeriod',
+        periodType,
+        failedCount: mappingErrors.length,
+        totalCount: okrRows.length,
+        errors: mappingErrors,
+        organizationId,
+        branchId,
+      });
     }
 
     return items;
@@ -515,7 +540,12 @@ export class DrizzleOkrRepository implements IOkrRepository {
 
       return Result.ok(undefined);
     } catch (error) {
-      console.error('[DrizzleOkrRepository] save error:', error);
+      logError('Failed to save OKR', error, {
+        method: 'save',
+        okrId: okr.id,
+        organizationId: okr.organizationId,
+        branchId: okr.branchId,
+      });
       return Result.fail('Failed to save OKR');
     }
   }
