@@ -28,6 +28,7 @@ import {
   Layers,
   Download,
   TrendingUp,
+  LayoutGrid,
 } from 'lucide-react';
 
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
@@ -173,6 +174,14 @@ export default function ActionPlansPage() {
           isLoading={loading}
           actions={
             <>
+              <Link href="/strategic/action-plans/grid">
+                <RippleButton
+                  className="bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400"
+                >
+                  <LayoutGrid className="w-4 h-4 mr-2" />
+                  Grid
+                </RippleButton>
+              </Link>
               <Link href="/strategic/pdca">
                 <RippleButton
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500"
