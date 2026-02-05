@@ -44,6 +44,7 @@ interface Permission {
   id: number;
   slug: string;
   description: string | null;
+  module: string | null;
 }
 
 /** Roles padrão que não podem ser renomeadas/excluídas */
@@ -73,6 +74,7 @@ export default function RolesManagementPage() {
   );
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [savingPermissions, setSavingPermissions] = useState(false);
+  const [permissionSearch, setPermissionSearch] = useState("");
 
   /**
    * Busca lista de roles do backend
@@ -239,6 +241,55 @@ export default function RolesManagementPage() {
   };
 
   /**
+   * Extrai o módulo do slug da permissão
+   */
+  const getModuleFromSlug = (slug: string): string => {
+    const parts = slug.split(".");
+    return parts[0] || "outros";
+  };
+
+  /**
+   * Agrupa permissões por módulo
+   */
+  const groupPermissionsByModule = (perms: Permission[]) => {
+    const groups: Record<string, Permission[]> = {};
+    
+    for (const perm of perms) {
+      const moduleName = perm.module || getModuleFromSlug(perm.slug);
+      if (!groups[moduleName]) {
+        groups[moduleName] = [];
+      }
+      groups[moduleName].push(perm);
+    }
+    
+    // Ordenar módulos alfabeticamente
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([module, permissions]) => ({
+        module,
+        permissions: permissions.sort((a, b) => a.slug.localeCompare(b.slug)),
+      }));
+  };
+
+  /**
+   * Filtra permissões pela busca
+   */
+  const filteredPermissions = allPermissions.filter((perm) => {
+    if (!permissionSearch.trim()) return true;
+    const search = permissionSearch.toLowerCase();
+    return (
+      perm.slug.toLowerCase().includes(search) ||
+      perm.description?.toLowerCase().includes(search) ||
+      perm.module?.toLowerCase().includes(search)
+    );
+  });
+
+  /**
+   * Permissões agrupadas e filtradas
+   */
+  const groupedPermissions = groupPermissionsByModule(filteredPermissions);
+
+  /**
    * Abre modal de gerenciar permissões
    */
   const openPermissions = async (role: Role) => {
@@ -246,6 +297,7 @@ export default function RolesManagementPage() {
     setPermissionsOpen(true);
     setLoadingPermissions(true);
     setSavingPermissions(false);
+    setPermissionSearch("");
 
     try {
       // Buscar todas permissões e permissões do role em paralelo
@@ -463,7 +515,7 @@ export default function RolesManagementPage() {
 
       {/* Dialog Gerenciar Permissões */}
       <Dialog open={permissionsOpen} onOpenChange={setPermissionsOpen}>
-        <DialogContent className="sm:max-w-[720px]">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Gerenciar Permissões</DialogTitle>
             <DialogDescription>
@@ -476,6 +528,17 @@ export default function RolesManagementPage() {
             </DialogDescription>
           </DialogHeader>
 
+          {/* Campo de Busca */}
+          <div className="py-2">
+            <Input
+              placeholder="Buscar permissões..."
+              value={permissionSearch}
+              onChange={(e) => setPermissionSearch(e.target.value)}
+              className="w-full"
+              disabled={loadingPermissions}
+            />
+          </div>
+
           {loadingPermissions ? (
             <div className="py-8 text-center text-muted-foreground">
               Carregando permissões...
@@ -484,37 +547,55 @@ export default function RolesManagementPage() {
             <div className="py-8 text-center text-muted-foreground">
               Nenhuma permissão encontrada no sistema.
             </div>
+          ) : filteredPermissions.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Nenhuma permissão encontrada para &quot;{permissionSearch}&quot;
+            </div>
           ) : (
-            <div className="grid gap-2 max-h-[400px] overflow-y-auto py-4">
-              {allPermissions.map((perm) => (
-                <label
-                  key={perm.id}
-                  className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                >
-                  <Checkbox
-                    checked={selectedPermissionIds.includes(perm.id)}
-                    onCheckedChange={() => togglePermission(perm.id)}
-                    disabled={savingPermissions}
-                  />
-                  <div className="leading-tight">
-                    <div className="font-medium font-mono text-sm">
-                      {perm.slug}
-                    </div>
-                    {perm.description && (
-                      <div className="text-xs text-muted-foreground">
-                        {perm.description}
-                      </div>
-                    )}
+            <div className="flex-1 overflow-y-auto space-y-6 py-4 pr-2">
+              {groupedPermissions.map(({ module, permissions }) => (
+                <div key={module} className="space-y-2">
+                  <div className="flex items-center gap-2 sticky top-0 bg-background py-1">
+                    <h3 className="font-semibold text-sm uppercase tracking-wide text-primary">
+                      {module}
+                    </h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {permissions.length}
+                    </Badge>
                   </div>
-                </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {permissions.map((perm) => (
+                      <label
+                        key={perm.id}
+                        className="flex items-start gap-3 rounded-md border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <Checkbox
+                          checked={selectedPermissionIds.includes(perm.id)}
+                          onCheckedChange={() => togglePermission(perm.id)}
+                          disabled={savingPermissions}
+                        />
+                        <div className="leading-tight min-w-0">
+                          <div className="font-medium font-mono text-sm truncate">
+                            {perm.slug}
+                          </div>
+                          {perm.description && (
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {perm.description}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="border-t pt-4">
             <div className="flex items-center justify-between w-full">
               <div className="text-xs text-muted-foreground">
-                {selectedPermissionIds.length} permissão(ões) selecionada(s)
+                {selectedPermissionIds.length} de {allPermissions.length} permissão(ões) selecionada(s)
               </div>
               <div className="flex gap-2">
                 <Button

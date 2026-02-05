@@ -13,7 +13,7 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Modal } from "@/components/ui/modal";
 import { FileUpload } from "@/components/ui/file-upload";
 import { auraTheme } from "@/lib/ag-grid/theme";
-import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, FileText, Edit, Truck } from "lucide-react";
+import { AlertTriangle, DollarSign, CheckCircle, Clock, Shield, Plus, Upload, FileText, Edit, Truck, Loader2 } from "lucide-react";
 import { OperationalAIWidget } from "@/components/operational";
 import { fetchAPI } from "@/lib/api";
 import {
@@ -25,6 +25,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 
@@ -93,6 +96,14 @@ export default function SinistrosPage() {
   const [selectedClaimDetails, setSelectedClaimDetails] = useState<ClaimDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  // Estados para modal de edição
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    estimatedDamage: 0,
+    notes: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Calcular KPIs a partir dos claims carregados
   const kpis = useMemo(() => {
@@ -204,6 +215,49 @@ export default function SinistrosPage() {
 
   const handleUploadDoc = (file: File) => {
     alert(`📄 Arquivo "${file.name}" selecionado!\n(Upload real seria integrado com S3/Azure)`);
+  };
+
+  // Abrir modal de edição
+  const openEditModal = useCallback(() => {
+    if (selectedClaimDetails) {
+      setEditFormData({
+        estimatedDamage: selectedClaimDetails.estimated_damage || 0,
+        notes: selectedClaimDetails.notes || "",
+      });
+      setIsModalOpen(false);
+      setIsEditModalOpen(true);
+    }
+  }, [selectedClaimDetails]);
+
+  // Salvar edição
+  const handleSaveEdit = async () => {
+    if (!selectedClaimDetails) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/claims/${selectedClaimDetails.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(editFormData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Sinistro atualizado com sucesso!");
+        setIsEditModalOpen(false);
+        setSelectedClaimDetails(null);
+        loadData();
+      } else {
+        toast.error(result.error || "Erro ao atualizar sinistro");
+      }
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao atualizar sinistro");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleExport = async () => {
@@ -464,10 +518,7 @@ export default function SinistrosPage() {
             </Button>
             <Button
               variant="default"
-              onClick={() => {
-                setIsModalOpen(false);
-                toast.info('Edição de sinistro será implementada em breve');
-              }}
+              onClick={openEditModal}
             >
               <Edit className="h-4 w-4 mr-2" />
               Editar
@@ -712,6 +763,68 @@ export default function SinistrosPage() {
       
       {/* Modal de Detalhes */}
       <ClaimDetailsModal />
+
+      {/* Modal de Edição */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Editar Sinistro #{selectedClaimDetails?.claim_number || selectedClaimDetails?.id}
+            </DialogTitle>
+            <DialogDescription>
+              Atualize as informações do sinistro
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="estimatedDamage">Dano Estimado (R$)</Label>
+              <Input
+                id="estimatedDamage"
+                type="number"
+                step="0.01"
+                min="0"
+                value={editFormData.estimatedDamage}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    estimatedDamage: parseFloat(e.target.value) || 0,
+                  })
+                }
+                placeholder="0,00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                value={editFormData.notes}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, notes: e.target.value })
+                }
+                placeholder="Anotações sobre o sinistro..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={isSaving}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* AI Assistant Widget - FORA do PageTransition (FIXED-001) */}
       <OperationalAIWidget screen="sinistros" />

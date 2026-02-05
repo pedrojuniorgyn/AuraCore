@@ -1,19 +1,32 @@
 /**
  * API: GET /api/strategic/audit-log/export
- * Exporta audit log em formato CSV
+ * Exporta audit log em formato CSV - dados reais do banco
  * 
  * @module app/api/strategic/audit-log/export
  */
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getTenantContext } from '@/lib/auth/context';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema';
+import { inArray, sql } from 'drizzle-orm';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const dynamic = 'force-dynamic';
 
+// Tipo para resultado do banco
+interface AuditLogRow {
+  id: number;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  userId: string | null;
+  changes: string | null;
+  createdAt: Date | null;
+}
+
 /**
- * Formata valor para CSV de forma consistente com a UI (ChangesDiff)
- * FIX Bug 2: Evita [object Object] no CSV
+ * Formata valor para CSV de forma segura
  */
 function formatValueForCsv(value: unknown): string {
   if (value === null || value === undefined) {
@@ -24,7 +37,7 @@ function formatValueForCsv(value: unknown): string {
   }
   if (typeof value === 'object') {
     try {
-      return JSON.stringify(value, null, 0); // Sem indentação para CSV
+      return JSON.stringify(value, null, 0);
     } catch {
       return '[Complex Object]';
     }
@@ -33,7 +46,7 @@ function formatValueForCsv(value: unknown): string {
 }
 
 /**
- * Escapa valor para formato CSV (aspas duplas)
+ * Escapa valor para formato CSV
  */
 function escapeCsvValue(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -44,121 +57,96 @@ function escapeCsvValue(value: string): string {
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const actions = searchParams.get('actions')?.split(',').filter(Boolean) || [];
     const entityTypes = searchParams.get('entityTypes')?.split(',').filter(Boolean) || [];
     const userId = searchParams.get('userId') || '';
-    
-    // FIX Bug 1: Ler filtros de data
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';
 
-    // TODO: Buscar dados reais do banco com filtros
-    // Mock data para desenvolvimento
-    const mockEntries = [
-      {
-        id: 'a1',
-        action: 'UPDATE',
-        entityType: 'action-plan',
-        entityId: 'pdc-002',
-        entityTitle: 'PDC-002 - Reverter queda OTD',
-        user: { id: 'user-1', name: 'João Silva' },
-        changes: [
-          { field: 'status', oldValue: 'IN_PROGRESS', newValue: 'COMPLETED' },
-          { field: 'metadata', oldValue: { priority: 'high' }, newValue: { priority: 'critical', urgent: true } },
-        ],
-        createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'a2',
-        action: 'COMMENT',
-        entityType: 'action-plan',
-        entityId: 'pdc-002',
-        entityTitle: 'PDC-002 - Reverter queda OTD',
-        user: { id: 'user-2', name: 'Maria Santos' },
-        changes: [],
-        createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'a3',
-        action: 'CREATE',
-        entityType: 'action-plan',
-        entityId: 'pdc-015',
-        entityTitle: 'PDC-015 - Otimizar rotas zona sul',
-        user: { id: 'user-1', name: 'João Silva' },
-        changes: [],
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
+    // Query usando SQL raw para compatibilidade MSSQL (limite de 10000 para export)
+    const entriesResult = await db.execute(sql`
+      SELECT TOP 10000
+        id,
+        action,
+        entity,
+        entity_id as entityId,
+        user_id as userId,
+        changes,
+        created_at as createdAt
+      FROM audit_logs
+      WHERE organization_id = ${ctx.organizationId}
+        ${search ? sql`AND (entity LIKE ${'%' + search + '%'} OR action LIKE ${'%' + search + '%'})` : sql``}
+        ${actions.length > 0 ? sql`AND action IN (${sql.join(actions.map(a => sql`${a}`), sql`, `)})` : sql``}
+        ${entityTypes.length > 0 ? sql`AND entity IN (${sql.join(entityTypes.map(e => sql`${e}`), sql`, `)})` : sql``}
+        ${userId ? sql`AND user_id = ${userId}` : sql``}
+        ${dateFrom ? sql`AND created_at >= ${new Date(dateFrom)}` : sql``}
+        ${dateTo ? sql`AND created_at <= ${new Date(dateTo)}` : sql``}
+      ORDER BY created_at DESC
+    `);
 
-    // Apply filters
-    let filteredEntries = [...mockEntries];
+    const entries = ((entriesResult as { recordset?: unknown[] }).recordset || entriesResult) as AuditLogRow[];
 
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredEntries = filteredEntries.filter(e => 
-        e.entityTitle.toLowerCase().includes(searchLower) ||
-        e.user.name.toLowerCase().includes(searchLower)
-      );
-    }
+    // Buscar nomes de usuários
+    const userIds = [...new Set(entries.map((e: AuditLogRow) => e.userId).filter(Boolean))] as string[];
+    const usersData = userIds.length > 0
+      ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, userIds))
+      : [];
 
-    if (actions.length > 0) {
-      filteredEntries = filteredEntries.filter(e => actions.includes(e.action));
-    }
-
-    if (entityTypes.length > 0) {
-      filteredEntries = filteredEntries.filter(e => entityTypes.includes(e.entityType));
-    }
-
-    if (userId) {
-      filteredEntries = filteredEntries.filter(e => e.user.id === userId);
-    }
-
-    // FIX Bug 1: Aplicar filtros de data
-    if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      filteredEntries = filteredEntries.filter(e => new Date(e.createdAt) >= fromDate);
-    }
-
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      toDate.setHours(23, 59, 59, 999); // Incluir o dia final completo
-      filteredEntries = filteredEntries.filter(e => new Date(e.createdAt) <= toDate);
-    }
+    const usersMap = new Map(usersData.map(u => [u.id, u.name || 'Sem nome']));
 
     // Build CSV
-    const headers = ['Data/Hora', 'Usuário', 'Ação', 'Tipo Entidade', 'ID Entidade', 'Título', 'Alterações'];
+    const headers = ['Data/Hora', 'Usuário', 'Ação', 'Tipo Entidade', 'ID Entidade', 'Alterações'];
     
-    const rows = filteredEntries.map(entry => {
-      const formattedDate = format(new Date(entry.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR });
+    const rows = entries.map((entry: AuditLogRow) => {
+      const formattedDate = entry.createdAt 
+        ? format(new Date(entry.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })
+        : '-';
       
-      // FIX Bug 2: Usar formatValueForCsv para valores de changes
-      const changesStr = entry.changes
-        .map(c => `${c.field}: ${formatValueForCsv(c.oldValue)} → ${formatValueForCsv(c.newValue)}`)
-        .join('; ');
+      const userName = usersMap.get(entry.userId || '') || 'Sistema';
+      
+      // Parse changes JSON e formatar de forma legível
+      let changesStr = '-';
+      if (entry.changes) {
+        try {
+          const changesArray = JSON.parse(entry.changes) as Array<{ 
+            field?: string; 
+            oldValue?: unknown; 
+            newValue?: unknown;
+            previousValue?: unknown;
+          }>;
+          if (Array.isArray(changesArray) && changesArray.length > 0) {
+            // Formatar cada mudança como "campo: valor_antigo → valor_novo"
+            changesStr = changesArray.map(change => {
+              const field = change.field || 'valor';
+              const oldVal = formatValueForCsv(change.previousValue ?? change.oldValue ?? '');
+              const newVal = formatValueForCsv(change.newValue ?? '');
+              return `${field}: ${oldVal} → ${newVal}`;
+            }).join('; ');
+          }
+        } catch {
+          // Se não for JSON válido, usar o valor raw
+          changesStr = formatValueForCsv(entry.changes);
+        }
+      }
       
       return [
         formattedDate,
-        entry.user.name,
-        entry.action,
-        entry.entityType,
-        entry.entityId,
-        entry.entityTitle,
-        changesStr || '-',
+        userName,
+        entry.action || '-',
+        entry.entity || '-',
+        entry.entityId || '-',
+        changesStr,
       ];
     });
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => 
-        row.map(cell => escapeCsvValue(String(cell))).join(',')
+      ...rows.map((row: string[]) => 
+        row.map((cell: string) => escapeCsvValue(String(cell))).join(',')
       ),
     ].join('\n');
 
@@ -170,7 +158,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }

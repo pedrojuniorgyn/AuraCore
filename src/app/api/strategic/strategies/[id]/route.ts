@@ -2,6 +2,8 @@
  * API Routes: /api/strategic/strategies/[id]
  * Operações em estratégia específica
  * 
+ * 🔐 ABAC: Operações de escrita validam branchId
+ * 
  * Nota: POST /activate é tratado em ./activate/route.ts
  * 
  * @module app/api/strategic
@@ -11,7 +13,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
-import { getTenantContext } from '@/lib/auth/context';
+import { 
+  getTenantContext,
+  validateABACResourceAccess,
+  abacDeniedResponse 
+} from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 
@@ -86,6 +92,23 @@ export async function DELETE(
     const repository = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
     );
+
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Buscar strategy para validar acesso antes de deletar
+    const strategy = await repository.findById(
+      idResult.data,
+      context.organizationId,
+      context.branchId
+    );
+    if (!strategy) {
+      return NextResponse.json({ error: 'Estratégia não encontrada' }, { status: 404 });
+    }
+    const abacResult = validateABACResourceAccess(context, strategy.branchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
 
     await repository.delete(idResult.data, context.organizationId, context.branchId);
 

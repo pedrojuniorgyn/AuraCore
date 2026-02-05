@@ -5,16 +5,16 @@
  * @module app/api/strategic/comments
  */
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getTenantContext } from '@/lib/auth/context';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
     const entityType = searchParams.get('entityType');
@@ -27,62 +27,18 @@ export async function GET(request: Request) {
       );
     }
 
-    // TODO: Buscar comentários reais do banco de dados
-    // const commentRepo = container.resolve<ICommentRepository>(STRATEGIC_TOKENS.CommentRepository);
-    // const comments = await commentRepo.findByEntity(entityType, entityId);
+    // Buscar usuários da organização para o autocomplete de mentions
+    const orgUsers = await db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(eq(users.organizationId, ctx.organizationId));
 
-    // Mock data para desenvolvimento
-    const mockComments = [
-      {
-        id: 'c1',
-        content: 'Excelente progresso! @Maria podemos agendar uma revisão amanhã para validar os números?',
-        author: { id: 'user-2', name: 'Maria Santos' },
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        likes: 3,
-        likedByMe: true,
-        replies: [
-          {
-            id: 'c1-r1',
-            content: 'Claro! Pode ser às 14h? Vou preparar o dashboard com os dados atualizados.',
-            author: { id: 'user-1', name: 'João Silva' },
-            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-            likes: 1,
-            likedByMe: false,
-            parentId: 'c1',
-          },
-          {
-            id: 'c1-r2',
-            content: 'Perfeito! ✅',
-            author: { id: 'user-2', name: 'Maria Santos' },
-            createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-            likes: 0,
-            likedByMe: false,
-            parentId: 'c1',
-          },
-        ],
-      },
-      {
-        id: 'c2',
-        content: 'Identifiquei um gargalo na última milha. Vou criar uma tarefa específica para endereçar isso.',
-        author: { id: 'user-3', name: 'Pedro Lima' },
-        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        likes: 5,
-        likedByMe: false,
-        attachments: [
-          { id: 'a1', name: 'analise_gargalo.pdf', url: '#', type: 'application/pdf' },
-        ],
-      },
-    ];
-
+    // Retornar lista vazia de comentários - será implementado quando houver tabela de comments
+    // A UI deve exibir empty state "Nenhum comentário ainda. Seja o primeiro a comentar!"
     return NextResponse.json({
-      currentUserId: 'user-1',
-      users: [
-        { id: 'user-1', name: 'João Silva' },
-        { id: 'user-2', name: 'Maria Santos' },
-        { id: 'user-3', name: 'Pedro Lima' },
-        { id: 'user-4', name: 'Ana Costa' },
-      ],
-      comments: mockComments,
+      currentUserId: ctx.userId,
+      users: orgUsers.map(u => ({ id: u.id, name: u.name || 'Sem nome' })),
+      comments: [],
     });
   } catch (error) {
     // Propagar erros de auth (getTenantContext throws Response)
@@ -99,10 +55,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const formData = await request.formData();
     const content = formData.get('content') as string;
@@ -125,40 +78,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // TODO: Salvar comentário no banco de dados
-    // const commentRepo = container.resolve<ICommentRepository>(STRATEGIC_TOKENS.CommentRepository);
-    // const comment = await commentRepo.create({
-    //   content,
-    //   entityType,
-    //   entityId,
-    //   parentId,
-    //   authorId: session.user.id,
-    //   organizationId,
-    //   branchId,
-    // });
+    // TODO: Salvar comentário no banco de dados quando tabela for criada
+    // A tabela de comments ainda não existe no schema
 
-    // TODO: Processar mentions e enviar notificações
-    // const mentions = extractMentions(content);
-    // await notificationService.notifyMentions(mentions, entityType, entityId);
-
-    // TODO: Upload attachments
-    // const uploadedAttachments = await uploadService.uploadFiles(attachments);
-
-    console.log('New comment:', { 
+    console.log('New comment (in-memory, tabela não implementada):', { 
       content, 
       entityType, 
       entityId, 
       parentId,
       attachmentCount: attachments.length,
-      userId: session.user?.id 
+      userId: ctx.userId 
     });
 
     return NextResponse.json({ 
       success: true, 
-      id: `comment-${Date.now()}` 
+      id: `comment-${Date.now()}`,
+      message: 'Comentário registrado (funcionalidade em desenvolvimento)'
     });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }

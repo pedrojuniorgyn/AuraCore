@@ -1,11 +1,19 @@
 /**
  * API: POST /api/strategic/search
- * Busca global no módulo Strategic
+ * Busca global no módulo Strategic - busca em dados reais do banco
  *
  * @module app/api/strategic/search
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getTenantContext } from '@/lib/auth/context';
+import { db } from '@/lib/db';
+import { 
+  strategicKpis, 
+  actionPlans, 
+  pdcaCycles, 
+  strategicGoals 
+} from '@/modules/strategic/infrastructure/persistence/schemas';
+import { eq, and, ilike, or, isNull, desc, sql } from 'drizzle-orm';
 import type {
   SearchQuery,
   SearchResponse,
@@ -16,103 +24,9 @@ import type {
 
 export const dynamic = 'force-dynamic';
 
-// Mock data for development
-const MOCK_KPIS = [
-  {
-    id: 'kpi-1',
-    type: 'kpi' as const,
-    title: 'Taxa de Entrega (OTD)',
-    subtitle: 'Perspectiva: Cliente | Código: KPI-CLI-001',
-    value: '92%',
-    status: 'on_track',
-    url: '/strategic/kpis/kpi-1',
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-  },
-  {
-    id: 'kpi-2',
-    type: 'kpi' as const,
-    title: 'OTD Região Sul',
-    subtitle: 'Perspectiva: Cliente | Código: KPI-CLI-012',
-    value: '85%',
-    status: 'warning',
-    url: '/strategic/kpis/kpi-2',
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-  },
-  {
-    id: 'kpi-3',
-    type: 'kpi' as const,
-    title: 'Margem Bruta',
-    subtitle: 'Perspectiva: Financeira | Código: KPI-FIN-001',
-    value: '35%',
-    status: 'on_track',
-    url: '/strategic/kpis/kpi-3',
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-  },
-  {
-    id: 'kpi-4',
-    type: 'kpi' as const,
-    title: 'NPS - Satisfação do Cliente',
-    subtitle: 'Perspectiva: Cliente | Código: KPI-CLI-002',
-    value: '72',
-    status: 'warning',
-    url: '/strategic/kpis/kpi-4',
-    updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-  },
-];
-
-const MOCK_ACTION_PLANS = [
-  {
-    id: 'plan-1',
-    type: 'action_plan' as const,
-    title: 'Melhorar OTD na Região Sul',
-    subtitle: 'Responsável: João Silva | Prazo: 15/02/2026',
-    status: 'critical',
-    url: '/strategic/action-plans/plan-1',
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-  },
-  {
-    id: 'plan-2',
-    type: 'action_plan' as const,
-    title: 'Implementar NPS automatizado',
-    subtitle: 'Responsável: Maria Santos | Prazo: 01/03/2026',
-    status: 'in_progress',
-    url: '/strategic/action-plans/plan-2',
-    updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-  },
-];
-
-const MOCK_PDCA = [
-  {
-    id: 'pdca-1',
-    type: 'pdca_cycle' as const,
-    title: 'Ciclo PDCA - Qualidade',
-    subtitle: 'Fase: DO | Progresso: 45%',
-    status: 'in_progress',
-    url: '/strategic/pdca/pdca-1',
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-  },
-];
-
-const MOCK_GOALS = [
-  {
-    id: 'goal-1',
-    type: 'goal' as const,
-    title: 'Aumentar receita em 20%',
-    subtitle: 'Perspectiva: Financeira | Progresso: 65%',
-    status: 'on_track',
-    url: '/strategic/goals/goal-1',
-    updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-  },
-];
-
-const ALL_ITEMS = [...MOCK_KPIS, ...MOCK_ACTION_PLANS, ...MOCK_PDCA, ...MOCK_GOALS];
-
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const startTime = Date.now();
     const body: SearchQuery = await request.json();
@@ -122,30 +36,169 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    const searchTerm = query.toLowerCase().trim();
+    const searchTerm = `%${query.toLowerCase().trim()}%`;
+    const results: SearchResult[] = [];
 
-    // Filter by search term
-    let results: SearchResult[] = ALL_ITEMS.filter((item) => {
-      const titleMatch = item.title.toLowerCase().includes(searchTerm);
-      const subtitleMatch = item.subtitle?.toLowerCase().includes(searchTerm);
-      return titleMatch || subtitleMatch;
-    }).map((item) => ({
-      ...item,
-      metadata: {},
-      score: item.title.toLowerCase().includes(searchTerm) ? 1.0 : 0.5,
-    }));
+    // Buscar KPIs
+    if (!filters?.entityTypes || filters.entityTypes.includes('kpi')) {
+      const kpis = await db
+        .select({
+          id: strategicKpis.id,
+          name: strategicKpis.name,
+          code: strategicKpis.code,
+          currentValue: strategicKpis.currentValue,
+          targetValue: strategicKpis.targetValue,
+          status: strategicKpis.status,
+          updatedAt: strategicKpis.updatedAt,
+        })
+        .from(strategicKpis)
+        .where(and(
+          eq(strategicKpis.organizationId, ctx.organizationId),
+          eq(strategicKpis.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(strategicKpis.deletedAt),
+          or(
+            ilike(strategicKpis.name, searchTerm),
+            ilike(strategicKpis.code, searchTerm)
+          )
+        ))
+        .orderBy(desc(strategicKpis.updatedAt))
+        .limit(pageSize);
 
-    // Filter by entity types
-    if (filters?.entityTypes && filters.entityTypes.length > 0) {
-      results = results.filter((r) => filters.entityTypes!.includes(r.type));
+      kpis.forEach(kpi => {
+        results.push({
+          id: String(kpi.id),
+          type: 'kpi',
+          title: kpi.name,
+          subtitle: `Código: ${kpi.code || 'N/A'} | Atual: ${kpi.currentValue ?? '-'} / Meta: ${kpi.targetValue ?? '-'}`,
+          value: String(kpi.currentValue ?? '-'),
+          status: kpi.status || 'on_track',
+          url: `/strategic/kpis/${kpi.id}`,
+          updatedAt: kpi.updatedAt || new Date(),
+          metadata: {},
+          score: 1.0,
+        });
+      });
     }
 
-    // Filter by status
-    if (filters?.status && filters.status.length > 0) {
-      results = results.filter((r) => r.status && filters.status!.includes(r.status));
+    // Buscar Action Plans
+    if (!filters?.entityTypes || filters.entityTypes.includes('action_plan')) {
+      const plans = await db
+        .select({
+          id: actionPlans.id,
+          title: actionPlans.title,
+          status: actionPlans.status,
+          dueDate: actionPlans.dueDate,
+          updatedAt: actionPlans.updatedAt,
+        })
+        .from(actionPlans)
+        .where(and(
+          eq(actionPlans.organizationId, ctx.organizationId),
+          eq(actionPlans.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(actionPlans.deletedAt),
+          ilike(actionPlans.title, searchTerm)
+        ))
+        .orderBy(desc(actionPlans.updatedAt))
+        .limit(pageSize);
+
+      plans.forEach(plan => {
+        results.push({
+          id: String(plan.id),
+          type: 'action_plan',
+          title: plan.title || 'Sem título',
+          subtitle: `Prazo: ${plan.dueDate ? new Date(plan.dueDate).toLocaleDateString('pt-BR') : 'N/A'}`,
+          status: plan.status || 'in_progress',
+          url: `/strategic/action-plans/${plan.id}`,
+          updatedAt: plan.updatedAt || new Date(),
+          metadata: {},
+          score: 0.9,
+        });
+      });
     }
 
-    // Sort
+    // Buscar PDCA Cycles (histórico de transições)
+    // O pdcaCycleTable é um histórico de transições, fazemos JOIN com actionPlanTable para obter o título
+    if (!filters?.entityTypes || filters.entityTypes.includes('pdca_cycle')) {
+      const pdcas = await db
+        .select({
+          id: pdcaCycles.id,
+          actionPlanId: pdcaCycles.actionPlanId,
+          fromPhase: pdcaCycles.fromPhase,
+          toPhase: pdcaCycles.toPhase,
+          transitionReason: pdcaCycles.transitionReason,
+          completionPercent: pdcaCycles.completionPercent,
+          transitionedAt: pdcaCycles.transitionedAt,
+          // Campos do Action Plan para contexto
+          actionPlanWhat: actionPlans.what,
+          actionPlanStatus: actionPlans.status,
+        })
+        .from(pdcaCycles)
+        .innerJoin(actionPlans, eq(pdcaCycles.actionPlanId, actionPlans.id))
+        .where(and(
+          eq(pdcaCycles.organizationId, ctx.organizationId),
+          eq(pdcaCycles.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          or(
+            ilike(actionPlans.what, searchTerm),
+            ilike(pdcaCycles.transitionReason, searchTerm)
+          )
+        ))
+        .orderBy(desc(pdcaCycles.transitionedAt))
+        .limit(pageSize);
+
+      pdcas.forEach(pdca => {
+        results.push({
+          id: String(pdca.id),
+          type: 'pdca_cycle',
+          title: pdca.actionPlanWhat || 'Ciclo PDCA',
+          subtitle: `Transição: ${pdca.fromPhase} → ${pdca.toPhase} (${pdca.completionPercent}%)`,
+          status: pdca.actionPlanStatus || 'in_progress',
+          url: `/strategic/pdca/${pdca.actionPlanId}`,
+          updatedAt: pdca.transitionedAt || new Date(),
+          metadata: {
+            fromPhase: pdca.fromPhase,
+            toPhase: pdca.toPhase,
+            reason: pdca.transitionReason,
+          },
+          score: 0.8,
+        });
+      });
+    }
+
+    // Buscar Goals
+    if (!filters?.entityTypes || filters.entityTypes.includes('goal')) {
+      const goals = await db
+        .select({
+          id: strategicGoals.id,
+          name: strategicGoals.name,
+          progress: strategicGoals.progress,
+          status: strategicGoals.status,
+          updatedAt: strategicGoals.updatedAt,
+        })
+        .from(strategicGoals)
+        .where(and(
+          eq(strategicGoals.organizationId, ctx.organizationId),
+          eq(strategicGoals.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(strategicGoals.deletedAt),
+          ilike(strategicGoals.name, searchTerm)
+        ))
+        .orderBy(desc(strategicGoals.updatedAt))
+        .limit(pageSize);
+
+      goals.forEach(goal => {
+        results.push({
+          id: String(goal.id),
+          type: 'goal',
+          title: goal.name || 'Meta',
+          subtitle: `Progresso: ${goal.progress ?? 0}%`,
+          status: goal.status || 'on_track',
+          url: `/strategic/goals/${goal.id}`,
+          updatedAt: goal.updatedAt || new Date(),
+          metadata: {},
+          score: 0.85,
+        });
+      });
+    }
+
+    // Ordenar resultados
     switch (sortBy) {
       case 'recent':
         results.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
@@ -159,10 +212,10 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Calculate facets
+    // Calcular facets
     const facets: SearchFacets = {
-      entityTypes: ['kpi', 'action_plan', 'pdca_cycle', 'goal', 'comment'].map((type) => ({
-        type: type as SearchEntityType,
+      entityTypes: (['kpi', 'action_plan', 'pdca_cycle', 'goal', 'comment'] as SearchEntityType[]).map((type) => ({
+        type,
         count: results.filter((r) => r.type === type).length,
       })),
       status: ['critical', 'warning', 'on_track', 'completed', 'in_progress'].map((status) => ({
@@ -173,7 +226,7 @@ export async function POST(request: NextRequest) {
       responsible: [],
     };
 
-    // Pagination
+    // Paginação
     const total = results.length;
     const startIndex = (page - 1) * pageSize;
     const endIndex = startIndex + pageSize;
@@ -191,7 +244,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }

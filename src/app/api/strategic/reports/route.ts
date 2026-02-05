@@ -1,73 +1,36 @@
+/**
+ * API: GET/POST /api/strategic/reports
+ * Gerencia configurações de relatórios agendados
+ * 
+ * @module app/api/strategic/reports
+ */
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getTenantContext } from '@/lib/auth/context';
 
 export const dynamic = 'force-dynamic';
 
-// In-memory storage for development
-const reportsStore = new Map<string, Record<string, unknown>>();
+// In-memory storage temporário até implementar persistência
+// Cada organização terá seu próprio store
+const reportsStoreByOrg = new Map<number, Map<string, Record<string, unknown>>>();
 
-// Initialize with some mock data
-const mockReports = [
-  {
-    id: 'r1',
-    name: 'Relatório Executivo Semanal',
-    type: 'executive',
-    frequency: 'weekly',
-    dayOfWeek: 1,
-    time: '08:00',
-    sections: ['summary', 'healthScore', 'perspectives', 'topActions'],
-    recipients: ['diretoria@empresa.com', 'ceo@empresa.com'],
-    isActive: true,
-    nextRun: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    lastRun: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    includePdf: true,
-    sendCopy: true,
-  },
-  {
-    id: 'r2',
-    name: 'BSC Mensal',
-    type: 'bsc',
-    frequency: 'monthly',
-    dayOfMonth: 1,
-    time: '00:00',
-    sections: ['summary', 'perspectives', 'criticalKpis', 'swotAnalysis'],
-    recipients: ['gerentes@empresa.com'],
-    isActive: true,
-    nextRun: new Date(2026, 1, 1).toISOString(),
-    includePdf: true,
-    sendCopy: false,
-  },
-  {
-    id: 'r3',
-    name: 'Status de Ações',
-    type: 'actions',
-    frequency: 'weekly',
-    dayOfWeek: 1,
-    time: '08:00',
-    sections: ['topActions', 'pdcaCycles'],
-    recipients: ['gestores@empresa.com', 'operacao@empresa.com'],
-    isActive: true,
-    nextRun: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    includePdf: true,
-    sendCopy: true,
-  },
-];
-
-// Initialize store with mock data
-mockReports.forEach(report => reportsStore.set(report.id, report));
+function getOrgStore(orgId: number): Map<string, Record<string, unknown>> {
+  if (!reportsStoreByOrg.has(orgId)) {
+    reportsStoreByOrg.set(orgId, new Map());
+  }
+  return reportsStoreByOrg.get(orgId)!;
+}
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
-    const reports = Array.from(reportsStore.values());
+    const store = getOrgStore(ctx.organizationId);
+    const reports = Array.from(store.values());
 
+    // Retornar lista vazia se não houver relatórios configurados
+    // A UI deve exibir empty state
     return NextResponse.json({ reports });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }
@@ -78,10 +41,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const config = await request.json();
     
@@ -89,18 +49,18 @@ export async function POST(request: Request) {
     const newReport = {
       id,
       ...config,
+      organizationId: ctx.organizationId,
+      createdBy: ctx.userId,
       isActive: true,
       nextRun: calculateNextRun(config),
       createdAt: new Date().toISOString(),
     };
     
-    reportsStore.set(id, newReport);
-    
-    console.log('Created report:', newReport);
+    const store = getOrgStore(ctx.organizationId);
+    store.set(id, newReport);
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }

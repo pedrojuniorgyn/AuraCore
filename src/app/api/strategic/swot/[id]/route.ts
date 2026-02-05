@@ -2,12 +2,18 @@
  * API Routes: /api/strategic/swot/[id]
  * Get, Update, Delete SWOT item
  *
+ * 🔐 ABAC: Operações de escrita validam branchId
+ *
  * @module app/api/strategic/swot/[id]
  */
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
-import { getTenantContext } from '@/lib/auth/context';
+import { 
+  getTenantContext,
+  validateABACResourceAccess,
+  abacDeniedResponse 
+} from '@/lib/auth/context';
 import { Result } from '@/shared/domain';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
@@ -121,6 +127,15 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
         { success: false, error: 'SWOT item not found' },
         { status: 404 }
       );
+    }
+
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Validar se usuário tem acesso à filial do SWOT item antes de editar
+    const abacResult = validateABACResourceAccess(tenantCtx, existing.branchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, tenantCtx);
     }
 
     // ✅ VALIDAÇÃO: Se strategyId foi fornecido E mudou, verificar se a nova strategy existe
@@ -249,6 +264,15 @@ export const DELETE = withDI(async (_request: Request, context: { params: Promis
         { success: false, error: 'SWOT item not found' },
         { status: 404 }
       );
+    }
+
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Validar se usuário tem acesso à filial do SWOT item antes de deletar
+    const abacResult = validateABACResourceAccess(tenantCtx, existing.branchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, tenantCtx);
     }
 
     // Deletar (soft delete)

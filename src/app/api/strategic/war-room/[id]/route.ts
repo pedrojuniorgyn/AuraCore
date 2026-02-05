@@ -1,74 +1,54 @@
+/**
+ * API: War Room Details
+ * Gerencia uma sala de guerra específica
+ * 
+ * @module app/api/strategic/war-room/[id]
+ */
 import { NextRequest, NextResponse } from 'next/server';
+import { getTenantContext } from '@/lib/auth/context';
 import type { WarRoom } from '@/lib/war-room/war-room-types';
+import { getWarRoom, setWarRoom, deleteWarRoom, hasWarRoom } from '../_store';
 
-// Shared mock store
-const warRoomsStore = new Map<string, WarRoom>();
-
-function initializeMockData() {
-  if (warRoomsStore.size > 0) return;
-
-  const now = new Date();
-  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-
-  const mockWarRoom: WarRoom = {
-    id: 'wr-1',
-    title: 'Crise OTD Região Sul',
-    description: 'OTD caiu para 78% - abaixo do limite crítico (85%)',
-    status: 'active',
-    severity: 'critical',
-    startedAt: threeDaysAgo,
-    commanderId: 'user-1',
-    commanderName: 'João Silva',
-    currentEscalation: 'N3',
-    escalationHistory: [],
-    linkedKpis: [
-      { kpiId: 'kpi-1', kpiName: 'OTD Região Sul', kpiCode: 'OTD-SUL', currentValue: 78, targetValue: 95, threshold: 85, status: 'critical' },
-    ],
-    linkedActionPlans: [],
-    teamMembers: [
-      { userId: 'user-1', userName: 'João Silva', role: 'commander', joinedAt: threeDaysAgo, isOnline: true },
-    ],
-    actions: [],
-    updates: [],
-    organizationId: 1,
-    branchId: 1,
-    createdAt: threeDaysAgo,
-    updatedAt: now,
-  };
-
-  warRoomsStore.set(mockWarRoom.id, mockWarRoom);
-}
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  initializeMockData();
-  const { id } = await params;
+  try {
+    const ctx = await getTenantContext();
+    const { id } = await params;
 
-  const warRoom = warRoomsStore.get(id);
+    const warRoom = getWarRoom(ctx.organizationId, id);
 
-  if (!warRoom) {
-    return NextResponse.json({ error: 'War Room not found' }, { status: 404 });
+    if (!warRoom) {
+      return NextResponse.json({ error: 'War Room não encontrada' }, { status: 404 });
+    }
+
+    return NextResponse.json(warRoom);
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+    console.error('GET /api/strategic/war-room/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  return NextResponse.json(warRoom);
 }
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  initializeMockData();
-  const { id } = await params;
-
-  const warRoom = warRoomsStore.get(id);
-
-  if (!warRoom) {
-    return NextResponse.json({ error: 'War Room not found' }, { status: 404 });
-  }
-
   try {
+    const ctx = await getTenantContext();
+    const { id } = await params;
+
+    const warRoom = getWarRoom(ctx.organizationId, id);
+
+    if (!warRoom) {
+      return NextResponse.json({ error: 'War Room não encontrada' }, { status: 404 });
+    }
+
     const updates = await request.json();
 
     const updated: WarRoom = {
@@ -77,11 +57,10 @@ export async function PATCH(
       updatedAt: new Date(),
     };
 
-    warRoomsStore.set(id, updated);
+    setWarRoom(ctx.organizationId, updated);
 
     return NextResponse.json(updated);
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }
@@ -94,14 +73,22 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  initializeMockData();
-  const { id } = await params;
+  try {
+    const ctx = await getTenantContext();
+    const { id } = await params;
 
-  if (!warRoomsStore.has(id)) {
-    return NextResponse.json({ error: 'War Room not found' }, { status: 404 });
+    if (!hasWarRoom(ctx.organizationId, id)) {
+      return NextResponse.json({ error: 'War Room não encontrada' }, { status: 404 });
+    }
+
+    deleteWarRoom(ctx.organizationId, id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+    console.error('Error deleting war room:', error);
+    return NextResponse.json({ error: 'Failed to delete war room' }, { status: 500 });
   }
-
-  warRoomsStore.delete(id);
-
-  return NextResponse.json({ success: true });
 }

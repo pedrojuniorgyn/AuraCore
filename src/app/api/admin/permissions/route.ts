@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         id: permissions.id,
         slug: permissions.slug,
         description: permissions.description,
+        module: permissions.module,
       })
       .from(permissions)
       .orderBy(asc(permissions.slug));
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     await ensureConnection();
 
     const body = await request.json();
-    const { slug, description } = body;
+    const { slug, description, module } = body;
 
     // Validação slug (lowercase, números, dots, underscores)
     if (!slug || typeof slug !== "string" || !slug.match(/^[a-z0-9._]+$/)) {
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest) {
     await db.insert(permissions).values({
       slug: trimmedSlug,
       description: description?.trim() || null,
+      module: module?.trim() || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -84,6 +86,7 @@ export async function POST(request: NextRequest) {
         id: permissions.id,
         slug: permissions.slug,
         description: permissions.description,
+        module: permissions.module,
       })
       .from(permissions)
       .where(eq(permissions.slug, trimmedSlug));

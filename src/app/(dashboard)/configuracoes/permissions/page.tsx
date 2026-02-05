@@ -37,6 +37,18 @@ interface Permission {
   id: number;
   slug: string;
   description: string | null;
+  module: string | null;
+}
+
+interface Role {
+  id: number;
+  name: string;
+}
+
+interface RolePermission {
+  roleId: number;
+  roleName: string;
+  permissionIds: number[];
 }
 
 /** Regex para validar slug: lowercase, números, dots, underscores */
@@ -57,7 +69,13 @@ export default function PermissionsManagementPage() {
   // Estado do formulário
   const [formSlug, setFormSlug] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [formModule, setFormModule] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Estado para roles e suas permissões
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<Map<number, number[]>>(new Map());
+  const [searchQuery, setSearchQuery] = useState("");
 
   /**
    * Busca lista de permissões do backend
@@ -80,8 +98,57 @@ export default function PermissionsManagementPage() {
     }
   };
 
+  /**
+   * Busca roles e suas permissões
+   */
+  const fetchRolesWithPermissions = async () => {
+    try {
+      const rolesRes = await fetch("/api/admin/roles", { credentials: "include" });
+      if (!rolesRes.ok) return;
+      
+      const rolesData = await rolesRes.json();
+      const rolesArray = rolesData.data || [];
+      setRoles(rolesArray);
+
+      // Buscar permissões de cada role em paralelo
+      const permMap = new Map<number, number[]>();
+      
+      await Promise.all(
+        rolesArray.map(async (role: Role) => {
+          try {
+            const res = await fetch(`/api/admin/roles/${role.id}/permissions`, {
+              credentials: "include",
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const permIds = (data.data?.permissions || []).map((p: Permission) => p.id);
+              permMap.set(role.id, permIds);
+            }
+          } catch {
+            // Ignorar erro individual
+          }
+        })
+      );
+      
+      setRolePermissions(permMap);
+    } catch (error) {
+      console.error("Erro ao carregar roles:", error);
+    }
+  };
+
+  /**
+   * Retorna as roles que têm uma determinada permissão
+   */
+  const getRolesForPermission = (permId: number): Role[] => {
+    return roles.filter((role) => {
+      const perms = rolePermissions.get(role.id) || [];
+      return perms.includes(permId);
+    });
+  };
+
   useEffect(() => {
     fetchPermissions();
+    fetchRolesWithPermissions();
   }, []);
 
   /**
@@ -97,6 +164,7 @@ export default function PermissionsManagementPage() {
   const openCreate = () => {
     setFormSlug("");
     setFormDescription("");
+    setFormModule("");
     setSaving(false);
     setCreateOpen(true);
   };
@@ -108,6 +176,7 @@ export default function PermissionsManagementPage() {
     setEditingPermission(permission);
     setFormSlug(permission.slug);
     setFormDescription(permission.description || "");
+    setFormModule(permission.module || "");
     setSaving(false);
     setEditOpen(true);
   };
@@ -141,6 +210,7 @@ export default function PermissionsManagementPage() {
         body: JSON.stringify({
           slug: trimmedSlug,
           description: formDescription.trim() || null,
+          module: formModule.trim() || null,
         }),
       });
       const data = await res.json();
@@ -161,12 +231,13 @@ export default function PermissionsManagementPage() {
   };
 
   /**
-   * Submete edição de permissão existente (apenas description)
+   * Submete edição de permissão existente (description e module)
    */
   const submitEdit = async () => {
     if (!editingPermission) return;
 
     const trimmedDescription = formDescription.trim();
+    const trimmedModule = formModule.trim();
 
     setSaving(true);
     try {
@@ -176,6 +247,7 @@ export default function PermissionsManagementPage() {
         credentials: "include",
         body: JSON.stringify({
           description: trimmedDescription || null,
+          module: trimmedModule || null,
         }),
       });
       const data = await res.json();
@@ -196,7 +268,7 @@ export default function PermissionsManagementPage() {
   };
 
   /**
-   * Agrupa permissões por prefixo (módulo)
+   * Extrai módulo do slug (fallback se module não definido)
    */
   const getModuleFromSlug = (slug: string): string => {
     const parts = slug.split(".");
@@ -204,11 +276,31 @@ export default function PermissionsManagementPage() {
   };
 
   /**
+   * Retorna o módulo de uma permissão
+   */
+  const getPermissionModule = (perm: Permission): string => {
+    return perm.module || getModuleFromSlug(perm.slug);
+  };
+
+  /**
+   * Filtra permissões pela busca
+   */
+  const filteredPermissions = permissions.filter((perm) => {
+    if (!searchQuery.trim()) return true;
+    const search = searchQuery.toLowerCase();
+    return (
+      perm.slug.toLowerCase().includes(search) ||
+      perm.description?.toLowerCase().includes(search) ||
+      getPermissionModule(perm).toLowerCase().includes(search)
+    );
+  });
+
+  /**
    * Conta permissões por módulo
    */
   const permissionsByModule = permissions.reduce(
     (acc, perm) => {
-      const moduleName = getModuleFromSlug(perm.slug);
+      const moduleName = getPermissionModule(perm);
       acc[moduleName] = (acc[moduleName] || 0) + 1;
       return acc;
     },
@@ -279,7 +371,7 @@ export default function PermissionsManagementPage() {
           <DialogHeader>
             <DialogTitle>Criar Nova Permissão</DialogTitle>
             <DialogDescription>
-              Defina o slug e descrição da nova permissão.
+              Defina o slug, módulo e descrição da nova permissão.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -297,6 +389,19 @@ export default function PermissionsManagementPage() {
                 Use letras minúsculas, números, pontos e underscores.
                 <br />
                 Formato sugerido: <code>modulo.recurso.acao</code>
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create-module">Módulo</Label>
+              <Input
+                id="create-module"
+                value={formModule}
+                onChange={(e) => setFormModule(e.target.value.toLowerCase())}
+                placeholder="Ex: fiscal, tms, financial, admin"
+                className="font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                Se não informado, será extraído do slug (primeira parte antes do ponto).
               </p>
             </div>
             <div className="grid gap-2">
@@ -331,7 +436,7 @@ export default function PermissionsManagementPage() {
           <DialogHeader>
             <DialogTitle>Editar Permissão</DialogTitle>
             <DialogDescription>
-              O slug é imutável. Apenas a descrição pode ser alterada.
+              O slug é imutável. Módulo e descrição podem ser alterados.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -346,6 +451,16 @@ export default function PermissionsManagementPage() {
               <p className="text-xs text-muted-foreground">
                 O slug não pode ser alterado após a criação.
               </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-module">Módulo</Label>
+              <Input
+                id="edit-module"
+                value={formModule}
+                onChange={(e) => setFormModule(e.target.value.toLowerCase())}
+                placeholder="Ex: fiscal, tms, financial, admin"
+                className="font-mono"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-description">Descrição</Label>
@@ -376,10 +491,20 @@ export default function PermissionsManagementPage() {
       {/* Tabela de Permissões */}
       <Card>
         <CardHeader>
-          <CardTitle>Permissões Disponíveis</CardTitle>
-          <CardDescription>
-            {permissions.length} permissão(ões) configurada(s) no sistema
-          </CardDescription>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle>Permissões Disponíveis</CardTitle>
+              <CardDescription>
+                {filteredPermissions.length} de {permissions.length} permissão(ões)
+              </CardDescription>
+            </div>
+            <Input
+              placeholder="Buscar permissões..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -388,45 +513,69 @@ export default function PermissionsManagementPage() {
                 <TableHead>Slug</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Módulo</TableHead>
+                <TableHead>Roles</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {permissions.length === 0 ? (
+              {filteredPermissions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center text-muted-foreground py-8"
                   >
-                    Nenhuma permissão encontrada
+                    {searchQuery
+                      ? `Nenhuma permissão encontrada para "${searchQuery}"`
+                      : "Nenhuma permissão encontrada"}
                   </TableCell>
                 </TableRow>
               ) : (
-                permissions.map((perm) => (
-                  <TableRow key={perm.id}>
-                    <TableCell className="font-mono text-sm">
-                      {perm.slug}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {perm.description || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs">
-                        {getModuleFromSlug(perm.slug)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEdit(perm)}
-                        title="Editar permissão"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredPermissions.map((perm) => {
+                  const permRoles = getRolesForPermission(perm.id);
+                  return (
+                    <TableRow key={perm.id}>
+                      <TableCell className="font-mono text-sm">
+                        {perm.slug}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-xs truncate">
+                        {perm.description || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {getPermissionModule(perm)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {permRoles.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            permRoles.slice(0, 3).map((role) => (
+                              <Badge key={role.id} variant="outline" className="text-xs">
+                                {role.name}
+                              </Badge>
+                            ))
+                          )}
+                          {permRoles.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{permRoles.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEdit(perm)}
+                          title="Editar permissão"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -1,111 +1,39 @@
 /**
  * API: Strategic Audit Logs
  *
- * GET /api/strategic/audit - List audit logs
+ * GET /api/strategic/audit - List audit logs from database
  * POST /api/strategic/audit - Create audit log
  *
  * @module app/api/strategic/audit
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import type { AuditLog, AuditEntityType, AuditAction, AuditChange } from '@/lib/audit/audit-types';
+import { getTenantContext } from '@/lib/auth/context';
+import { db } from '@/lib/db';
+import { auditLogs, users } from '@/lib/db/schema';
+import { inArray, sql } from 'drizzle-orm';
+import type { AuditLog, AuditEntityType, AuditAction } from '@/lib/audit/audit-types';
 
 export const dynamic = 'force-dynamic';
 
-// In-memory store for development
-const auditLogsStore: AuditLog[] = [];
-
-// Initialize with mock data
-if (auditLogsStore.length === 0) {
-  const mockLogs: Partial<AuditLog>[] = [
-    {
-      entityType: 'kpi',
-      entityId: 'kpi-1',
-      entityName: 'Taxa OTD',
-      action: 'update',
-      userName: 'João Silva',
-      userEmail: 'joao@empresa.com',
-      changes: [
-        { field: 'currentValue', previousValue: 89, newValue: 92, changeType: 'modified' },
-      ],
-      reason: 'Atualização mensal com dados de dezembro',
-    },
-    {
-      entityType: 'action_plan',
-      entityId: 'plan-1',
-      entityName: 'Otimizar rotas região Norte',
-      action: 'create',
-      userName: 'Maria Santos',
-      userEmail: 'maria@empresa.com',
-    },
-    {
-      entityType: 'pdca_cycle',
-      entityId: 'pdca-1',
-      entityName: 'Melhoria Contínua Q1',
-      action: 'update',
-      userName: 'Pedro Alves',
-      userEmail: 'pedro@empresa.com',
-      changes: [{ field: 'phase', previousValue: 'Plan', newValue: 'Do', changeType: 'modified' }],
-    },
-    {
-      entityType: 'kpi',
-      entityId: 'kpi-2',
-      entityName: 'Métrica Legada',
-      action: 'delete',
-      userName: 'Ana Costa',
-      userEmail: 'ana@empresa.com',
-    },
-    {
-      entityType: 'report',
-      entityId: 'report-1',
-      entityName: 'Relatório Semanal KPIs',
-      action: 'export',
-      userName: 'Sistema',
-      userEmail: 'sistema@auracore.com',
-    },
-    {
-      entityType: 'role',
-      entityId: 'role-2',
-      entityName: 'Executor de Planos',
-      action: 'permission_change',
-      userName: 'João Silva',
-      userEmail: 'joao@empresa.com',
-      changes: [
-        { field: 'permissions', previousValue: 12, newValue: 14, changeType: 'modified' },
-      ],
-    },
-  ];
-
-  mockLogs.forEach((log, i) => {
-    const hoursAgo = i * 2;
-    auditLogsStore.push({
-      id: `log-${i + 1}`,
-      organizationId: 1,
-      branchId: 1,
-      userId: `user-${(i % 4) + 1}`,
-      userName: log.userName || 'Usuário',
-      userEmail: log.userEmail || 'user@empresa.com',
-      entityType: log.entityType || 'kpi',
-      entityId: log.entityId || `entity-${i}`,
-      entityName: log.entityName || 'Entidade',
-      action: log.action || 'view',
-      changes: log.changes,
-      reason: log.reason,
-      createdAt: new Date(Date.now() - hoursAgo * 60 * 60 * 1000),
-    });
-  });
+// Tipo para resultado de audit logs
+interface AuditLogRow {
+  id: number;
+  organizationId: number;
+  userId: string | null;
+  entity: string;
+  entityId: string | null;
+  action: string;
+  changes: string | null;
+  createdAt: Date | null;
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '20');
+    const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '20'), 100); // 🔐 Limite máximo para prevenir DoS
     const entityType = searchParams.get('entityType') as AuditEntityType | null;
     const action = searchParams.get('action') as AuditAction | null;
     const userId = searchParams.get('userId');
@@ -113,53 +41,117 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    let filtered = [...auditLogsStore];
+    // Query usando SQL raw para compatibilidade MSSQL
+    // IMPORTANTE: MSSQL requer OFFSET...FETCH para paginação correta (não usar TOP com OFFSET)
+    // BUG-FIX: Usar mesmos filtros para paginação e contagem (evitar inconsistência)
+    const offset = (page - 1) * pageSize;
+    
+    // Construir fragmentos SQL para reutilizar nos dois queries
+    const entityFilter = entityType ? sql`AND entity = ${entityType}` : sql``;
+    const actionFilter = action ? sql`AND action = ${action}` : sql``;
+    const userFilter = userId ? sql`AND user_id = ${userId}` : sql``;
+    const searchFilter = searchQuery 
+      ? sql`AND (entity LIKE ${'%' + searchQuery + '%'} OR action LIKE ${'%' + searchQuery + '%'})` 
+      : sql``;
+    const startDateFilter = startDate ? sql`AND created_at >= ${new Date(startDate)}` : sql``;
+    const endDateFilter = endDate ? sql`AND created_at <= ${new Date(endDate)}` : sql``;
 
-    // Apply filters
-    if (entityType) {
-      filtered = filtered.filter((l) => l.entityType === entityType);
-    }
-    if (action) {
-      filtered = filtered.filter((l) => l.action === action);
-    }
-    if (userId) {
-      filtered = filtered.filter((l) => l.userId === userId);
-    }
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (l) =>
-          l.entityName.toLowerCase().includes(query) ||
-          l.userName.toLowerCase().includes(query)
-      );
-    }
-    if (startDate) {
-      const start = new Date(startDate);
-      filtered = filtered.filter((l) => new Date(l.createdAt) >= start);
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      filtered = filtered.filter((l) => new Date(l.createdAt) <= end);
-    }
+    const logsResult = await db.execute(sql`
+      SELECT
+        id,
+        organization_id as organizationId,
+        user_id as userId,
+        entity,
+        entity_id as entityId,
+        action,
+        changes,
+        created_at as createdAt
+      FROM audit_logs
+      WHERE organization_id = ${ctx.organizationId}
+        ${entityFilter}
+        ${actionFilter}
+        ${userFilter}
+        ${searchFilter}
+        ${startDateFilter}
+        ${endDateFilter}
+      ORDER BY created_at DESC
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${pageSize} ROWS ONLY
+    `);
 
-    // Sort by date desc
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const logs = ((logsResult as { recordset?: unknown[] }).recordset || logsResult) as AuditLogRow[];
 
-    // Paginate
-    const total = filtered.length;
-    const start = (page - 1) * pageSize;
-    const logs = filtered.slice(start, start + pageSize);
-    const hasMore = start + logs.length < total;
+    // Contar total usando mesmos filtros (SQL raw para consistência)
+    const countResult = await db.execute(sql`
+      SELECT COUNT(*) as count
+      FROM audit_logs
+      WHERE organization_id = ${ctx.organizationId}
+        ${entityFilter}
+        ${actionFilter}
+        ${userFilter}
+        ${searchFilter}
+        ${startDateFilter}
+        ${endDateFilter}
+    `);
+    
+    const countData = ((countResult as { recordset?: unknown[] }).recordset || countResult) as Array<{ count: number }>;
+    const total = countData[0]?.count || 0;
+    const hasMore = page * pageSize < total;
+
+    // Buscar nomes de usuários
+    const userIds = [...new Set(logs.map((l: AuditLogRow) => l.userId).filter(Boolean))] as string[];
+    const usersData = userIds.length > 0
+      ? await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(inArray(users.id, userIds))
+      : [];
+
+    const usersMap = new Map(usersData.map(u => [u.id, { name: u.name, email: u.email }]));
+
+    // Formatar resposta
+    const formattedLogs: AuditLog[] = logs.map((log: AuditLogRow) => {
+      const user = usersMap.get(log.userId || '');
+      
+      // Parse changes (JSON string) para array com tipo correto
+      let changes: Array<{ field: string; previousValue: unknown; newValue: unknown; changeType: 'added' | 'removed' | 'modified' }> | undefined;
+      if (log.changes) {
+        try {
+          const parsed = JSON.parse(log.changes);
+          if (Array.isArray(parsed)) {
+            changes = parsed.map((c: { field?: string; oldValue?: unknown; newValue?: unknown; previousValue?: unknown }) => ({
+              field: c.field || 'value',
+              previousValue: c.previousValue ?? c.oldValue ?? null,
+              newValue: c.newValue ?? null,
+              changeType: 'modified' as const,
+            }));
+          }
+        } catch {
+          // Ignorar se não for JSON válido
+        }
+      }
+
+      return {
+        id: String(log.id),
+        organizationId: log.organizationId,
+        branchId: ctx.branchId, // schema não tem branchId, usar contexto do usuário
+        userId: log.userId || 'system',
+        userName: user?.name || 'Sistema',
+        userEmail: user?.email || '',
+        entityType: (log.entity || 'unknown') as AuditEntityType,
+        entityId: log.entityId || String(log.id),
+        entityName: `${log.entity || 'Item'} #${log.entityId || log.id}`,
+        action: (log.action || 'view') as AuditAction,
+        changes,
+        createdAt: log.createdAt || new Date(),
+      };
+    });
 
     return NextResponse.json({
-      logs,
+      logs: formattedLogs,
       total,
       page,
       pageSize,
       hasMore,
     });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }
@@ -170,37 +162,35 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ctx = await getTenantContext();
 
     const body = await request.json();
 
-    const log: AuditLog = {
-      id: `log-${Date.now()}`,
-      organizationId: 1,
-      branchId: 1,
-      userId: session.user.id || 'unknown',
-      userName: session.user.name || 'Usuário',
-      userEmail: session.user.email || '',
-      entityType: body.entityType,
+    // Preparar changes como JSON
+    let changesJson: string | null = null;
+    if (body.previousSnapshot || body.currentSnapshot) {
+      changesJson = JSON.stringify([{
+        field: 'snapshot',
+        oldValue: body.previousSnapshot,
+        newValue: body.currentSnapshot,
+      }]);
+    }
+
+    // Inserir no banco usando campos corretos do schema
+    await db.insert(auditLogs).values({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      entity: body.entityType || 'unknown',
       entityId: body.entityId,
-      entityName: body.entityName,
-      action: body.action,
-      changes: body.changes,
-      previousSnapshot: body.previousSnapshot,
-      currentSnapshot: body.currentSnapshot,
-      reason: body.reason,
-      metadata: body.metadata,
-      createdAt: new Date(),
-    };
+      action: body.action || 'update',
+      changes: changesJson,
+    });
 
-    auditLogsStore.unshift(log);
-
-    return NextResponse.json(log);
+    return NextResponse.json({
+      id: String(Date.now()),
+      success: true,
+    });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }

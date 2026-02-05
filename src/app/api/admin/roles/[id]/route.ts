@@ -65,11 +65,23 @@ export async function PUT(
 
     // Validar nome se fornecido
     const newName = name?.trim();
-    if (newName !== undefined && newName.length < 2) {
-      return NextResponse.json(
-        { success: false, error: "Nome inválido (mínimo 2 caracteres)" },
-        { status: 400 }
-      );
+    if (newName !== undefined) {
+      if (newName.length < 2) {
+        return NextResponse.json(
+          { success: false, error: "Nome inválido (mínimo 2 caracteres)" },
+          { status: 400 }
+        );
+      }
+
+      // Validar formato: deve começar com letra maiúscula
+      // Permite letras (maiúsculas e minúsculas), números, espaços e underscores
+      // Exemplos válidos: "ADMIN", "Gerente Financeiro", "GERENTE_VENDAS"
+      if (!/^[A-Z][A-Za-z0-9_ ]*$/.test(newName)) {
+        return NextResponse.json(
+          { success: false, error: "Nome deve começar com letra maiúscula e conter apenas letras, números, espaços ou underscores" },
+          { status: 400 }
+        );
+      }
     }
 
     // Verificar duplicado se mudando nome

@@ -2,13 +2,20 @@
  * API Routes: /api/strategic/goals/[id]
  * Operações em objetivo estratégico específico
  * 
+ * 🔐 ABAC: Todas as operações de escrita validam branchId
+ * 
  * @module app/api/strategic
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import { getTenantContext } from '@/lib/auth/context';
+import { 
+  getTenantContext, 
+  validateABACResourceAccess,
+  validateABACBranchAccess,
+  abacDeniedResponse 
+} from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import { StrategicGoal } from '@/modules/strategic/domain/entities/StrategicGoal';
@@ -147,6 +154,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
     }
 
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Validar se usuário tem acesso à filial do goal antes de editar
+    const abacResult = validateABACResourceAccess(context, goal.ownerBranchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
+
     // ✅ BUG-FIX: Atualizar usando reconstitute para manter domain entity válida
     // (Mapper.toPersistence espera entity com value objects como cascadeLevel.value)
     const data = validation.data;
@@ -280,6 +296,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
     }
 
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Validar se usuário tem acesso à filial do goal antes de editar progresso
+    const abacResult = validateABACResourceAccess(context, goal.ownerBranchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
+
     // Atualizar progresso
     const updateResult = goal.updateProgress(validation.data.currentValue);
     if (Result.isFail(updateResult)) {
@@ -320,6 +345,26 @@ export async function DELETE(
     const repository = container.resolve<IStrategicGoalRepository>(
       STRATEGIC_TOKENS.StrategicGoalRepository
     );
+
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Buscar goal primeiro para validar acesso à filial antes de deletar
+    const goal = await repository.findById(
+      idResult.data,
+      context.organizationId,
+      context.branchId
+    );
+
+    if (!goal) {
+      return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+    }
+
+    // Validar se usuário tem acesso à filial do goal
+    const abacResult = validateABACResourceAccess(context, goal.ownerBranchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
 
     await repository.delete(idResult.data, context.organizationId, context.branchId);
 

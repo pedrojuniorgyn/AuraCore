@@ -150,6 +150,7 @@ export const permissions = mssqlTable("permissions", {
   id: int("id").primaryKey().identity(),
   slug: nvarchar("slug", { length: 100 }).notNull(), // 'tms.create'
   description: nvarchar("description", { length: 255 }),
+  module: nvarchar("module", { length: 50 }), // 'admin', 'tms', 'financial', etc
   
   // Enterprise Base (simplificado - permissions são globais)
   createdAt: datetime2("created_at").default(new Date()),

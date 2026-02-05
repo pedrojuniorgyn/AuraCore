@@ -2,13 +2,19 @@
  * API Routes: /api/strategic/action-plans/[id]
  * Operações em plano de ação específico
  * 
+ * 🔐 ABAC: Todas as operações de escrita validam branchId
+ * 
  * @module app/api/strategic
  */
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import { getTenantContext } from '@/lib/auth/context';
+import { 
+  getTenantContext, 
+  validateABACResourceAccess,
+  abacDeniedResponse 
+} from '@/lib/auth/context';
 import { AdvancePDCACycleUseCase } from '@/modules/strategic/application/commands/AdvancePDCACycleUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
@@ -156,6 +162,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Action plan not found' }, { status: 404 });
     }
 
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Validar se usuário tem acesso à filial do action plan antes de editar
+    const abacResult = validateABACResourceAccess(context, existingPlan.branchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
+
     // Atualizar campos da entity usando reconstitute
     // IMPORTANTE: ActionPlan não tem método update genérico, apenas updateProgress/updateStatus
     // Para atualizar 5W2H, precisamos reconstitute com os campos mesclados
@@ -256,6 +271,26 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid action plan id' }, { status: 400 });
     }
 
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Buscar action plan para validar acesso antes de avançar PDCA
+    const repository = container.resolve<IActionPlanRepository>(
+      STRATEGIC_TOKENS.ActionPlanRepository
+    );
+    const existingPlan = await repository.findById(
+      idValidation.data,
+      context.organizationId,
+      context.branchId
+    );
+    if (!existingPlan) {
+      return NextResponse.json({ error: 'Action plan not found' }, { status: 404 });
+    }
+    const abacResult = validateABACResourceAccess(context, existingPlan.branchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
+
     const body = await safeJson<unknown>(request);
 
     const validation = advancePDCASchema.safeParse(body);
@@ -305,6 +340,23 @@ export async function DELETE(
     const repository = container.resolve<IActionPlanRepository>(
       STRATEGIC_TOKENS.ActionPlanRepository
     );
+
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Buscar action plan para validar acesso antes de deletar
+    const existingPlan = await repository.findById(
+      idValidation.data,
+      context.organizationId,
+      context.branchId
+    );
+    if (!existingPlan) {
+      return NextResponse.json({ error: 'Action plan not found' }, { status: 404 });
+    }
+    const abacResult = validateABACResourceAccess(context, existingPlan.branchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
 
     await repository.delete(idValidation.data, context.organizationId, context.branchId);
 

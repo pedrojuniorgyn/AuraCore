@@ -1,82 +1,64 @@
+/**
+ * API: War Room Team
+ * Gerencia membros da equipe de uma sala de guerra
+ * 
+ * @module app/api/strategic/war-room/[id]/team
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import type { WarRoom, TeamMember } from '@/lib/war-room/war-room-types';
+import { getTenantContext } from '@/lib/auth/context';
+import type { TeamMember } from '@/lib/war-room/war-room-types';
+import { getWarRoom, setWarRoom } from '../../_store';
 
-// Shared mock store
-const warRoomsStore = new Map<string, WarRoom>();
-
-function initializeMockData() {
-  if (warRoomsStore.size > 0) return;
-
-  const now = new Date();
-  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-
-  const mockWarRoom: WarRoom = {
-    id: 'wr-1',
-    title: 'Crise OTD Região Sul',
-    description: 'OTD caiu para 78%',
-    status: 'active',
-    severity: 'critical',
-    startedAt: threeDaysAgo,
-    commanderId: 'user-1',
-    commanderName: 'João Silva',
-    currentEscalation: 'N3',
-    escalationHistory: [],
-    linkedKpis: [],
-    linkedActionPlans: [],
-    teamMembers: [
-      { userId: 'user-1', userName: 'João Silva', role: 'commander', joinedAt: threeDaysAgo, isOnline: true },
-    ],
-    actions: [],
-    updates: [],
-    organizationId: 1,
-    branchId: 1,
-    createdAt: threeDaysAgo,
-    updatedAt: now,
-  };
-
-  warRoomsStore.set(mockWarRoom.id, mockWarRoom);
-}
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  initializeMockData();
-  const { id } = await params;
+  try {
+    const ctx = await getTenantContext();
+    const { id } = await params;
 
-  const warRoom = warRoomsStore.get(id);
+    const warRoom = getWarRoom(ctx.organizationId, id);
 
-  if (!warRoom) {
-    return NextResponse.json({ error: 'War Room not found' }, { status: 404 });
+    if (!warRoom) {
+      return NextResponse.json({ error: 'War Room não encontrada' }, { status: 404 });
+    }
+
+    return NextResponse.json({ members: warRoom.teamMembers || [] });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+    console.error('GET /api/strategic/war-room/[id]/team error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  return NextResponse.json({ members: warRoom.teamMembers });
 }
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  initializeMockData();
-  const { id } = await params;
-
-  const warRoom = warRoomsStore.get(id);
-
-  if (!warRoom) {
-    return NextResponse.json({ error: 'War Room not found' }, { status: 404 });
-  }
-
   try {
+    const ctx = await getTenantContext();
+    const { id } = await params;
+
+    const warRoom = getWarRoom(ctx.organizationId, id);
+
+    if (!warRoom) {
+      return NextResponse.json({ error: 'War Room não encontrada' }, { status: 404 });
+    }
+
     const body = await request.json();
 
     // Check if user already in team
     if (warRoom.teamMembers.some((m) => m.userId === body.userId)) {
-      return NextResponse.json({ error: 'User already in team' }, { status: 400 });
+      return NextResponse.json({ error: 'Usuário já está na equipe' }, { status: 400 });
     }
 
     const newMember: TeamMember = {
       userId: body.userId,
-      userName: body.userName || `User ${body.userId}`,
+      userName: body.userName || `Usuário ${body.userId}`,
       role: body.role || 'member',
       joinedAt: new Date(),
       isOnline: true,
@@ -95,11 +77,10 @@ export async function POST(
     });
 
     warRoom.updatedAt = new Date();
-    warRoomsStore.set(id, warRoom);
+    setWarRoom(ctx.organizationId, warRoom);
 
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {
-    // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }

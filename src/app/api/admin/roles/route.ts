@@ -118,6 +118,16 @@ export async function POST(request: NextRequest) {
 
     const trimmedName = name.trim();
 
+    // Validar formato: deve começar com letra maiúscula
+    // Permite letras (maiúsculas e minúsculas), números, espaços e underscores
+    // Exemplos válidos: "ADMIN", "Gerente Financeiro", "GERENTE_VENDAS"
+    if (!/^[A-Z][A-Za-z0-9_ ]*$/.test(trimmedName)) {
+      return NextResponse.json(
+        { success: false, error: "Nome deve começar com letra maiúscula e conter apenas letras, números, espaços ou underscores" },
+        { status: 400 }
+      );
+    }
+
     // Verificar duplicado
     const [exists] = await db
       .select({ id: roles.id })

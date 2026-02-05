@@ -51,41 +51,32 @@ interface DashboardData {
 }
 
 // ============================================
-// DADOS MOCK (fallback)
+// DADOS INICIAIS (empty state)
 // ============================================
-const mockData: DashboardData = {
-  healthScore: 78,
-  healthScoreTrend: 5,
+const emptyData: DashboardData = {
+  healthScore: 0,
+  healthScoreTrend: 0,
   kpis: {
-    total: 16,
-    onTrack: 12,
-    atRisk: 3,
-    critical: 1,
+    total: 0,
+    onTrack: 0,
+    atRisk: 0,
+    critical: 0,
   },
   plans: {
-    active: 8,
-    completed: 24,
-    overdue: 2,
+    active: 0,
+    completed: 0,
+    overdue: 0,
   },
-  perspectives: [
-    { name: 'Financeira', icon: '💰', progress: 78, color: 'green' },
-    { name: 'Clientes', icon: '👥', progress: 65, color: 'blue' },
-    { name: 'Processos', icon: '⚙️', progress: 52, color: 'yellow' },
-    { name: 'Aprendizado', icon: '📚', progress: 38, color: 'purple' },
-  ],
-  alerts: [
-    { id: '1', type: 'danger', message: 'KPI "OTD" abaixo da meta crítica (78%)', time: 'há 2h' },
-    { id: '2', type: 'warning', message: 'Plano de ação #123 vence amanhã', time: 'há 4h' },
-    { id: '3', type: 'info', message: 'Meta Q1 2026 foi revisada', time: 'há 1d' },
-  ],
-  aiInsight: 'Baseado nos dados atuais, recomendo priorizar o KPI de OTD que está 15% abaixo da meta. Ações sugeridas: revisar rota Sul e contratar transportadora backup para garantir entregas no prazo.',
+  perspectives: [],
+  alerts: [],
+  aiInsight: 'Nenhum dado disponível. Configure seus KPIs e metas para começar.',
 };
 
 // ============================================
 // PÁGINA PRINCIPAL
 // ============================================
 export default function StrategicDashboardShowcasePage() {
-  const [data, setData] = useState<DashboardData>(mockData);
+  const [data, setData] = useState<DashboardData>(emptyData);
   const [isLoading, setIsLoading] = useState(false);
   const isMountedRef = useRef(true);
   const abortControllerRef = useRef<AbortController | null>(null);

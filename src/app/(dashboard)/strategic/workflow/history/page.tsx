@@ -31,7 +31,7 @@ interface HistoryEntry {
   strategyId: string;
   strategyName: string;
   action: 'SUBMIT' | 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'RESUBMIT';
-  actorUserId: number;
+  actorUserId: string; // UUID string do usuário
   actorName?: string;
   comments?: string;
   reason?: string;
@@ -111,36 +111,75 @@ export default function ApprovalHistoryPage() {
     const fetchHistory = async () => {
       setIsLoading(true);
       try {
-        // NOTA: Usando dados mock até implementação do endpoint de histórico geral
-        const mockData: HistoryEntry[] = [
-          {
-            id: '1',
-            strategyId: 'str-1',
-            strategyName: 'Plano Estratégico 2026',
-            action: 'APPROVE',
-            actorUserId: 101,
-            actorName: 'João Silva',
-            comments: 'Estratégia bem estruturada, aprovado.',
-            fromStatus: 'PENDING_APPROVAL',
-            toStatus: 'APPROVED',
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-          },
-          {
-            id: '2',
-            strategyId: 'str-2',
-            strategyName: 'Orçamento 2026',
-            action: 'REQUEST_CHANGES',
-            actorUserId: 102,
-            actorName: 'Maria Santos',
-            reason: 'Necessário ajustes nos valores projetados.',
-            fromStatus: 'PENDING_APPROVAL',
-            toStatus: 'CHANGES_REQUESTED',
-            createdAt: new Date(Date.now() - 172800000).toISOString(),
-          },
-        ];
-        setHistory(mockData);
+        // Buscar histórico de aprovações da API de audit-log
+        const response = await fetch('/api/strategic/audit-log?entityTypes=STRATEGY&actions=APPROVE,REJECT,SUBMIT,REQUEST_CHANGES,RESUBMIT&pageSize=100');
+        
+        if (!response.ok) {
+          throw new Error('Erro ao carregar histórico');
+        }
+
+        const data = await response.json();
+        
+        // Transformar audit logs em formato de histórico de aprovações
+        // NOTA: A API retorna user como objeto aninhado { id, name, email }
+        interface AuditEntry {
+          id: string;
+          entityId?: string;
+          entityType?: string;
+          action?: string;
+          user?: {
+            id: string;
+            name: string;
+            email?: string;
+          };
+          changes?: Array<{ field: string; oldValue?: string; newValue?: string }>;
+          createdAt: string;
+        }
+        
+        const entries: HistoryEntry[] = (data.entries || []).map((entry: AuditEntry) => {
+          // Mapear ações do audit log para ações do workflow
+          const actionMap: Record<string, 'SUBMIT' | 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'RESUBMIT'> = {
+            'APPROVE': 'APPROVE',
+            'REJECT': 'REJECT',
+            'SUBMIT': 'SUBMIT',
+            'REQUEST_CHANGES': 'REQUEST_CHANGES',
+            'RESUBMIT': 'RESUBMIT',
+            'UPDATE': 'SUBMIT',
+            'CREATE': 'SUBMIT',
+          };
+
+          // Extrair transição de status dos changes
+          // Suporta tanto oldValue/newValue quanto previousValue/newValue
+          const statusChange = entry.changes?.find((c: { field: string }) => c.field === 'status') as { 
+            field: string; 
+            oldValue?: string; 
+            previousValue?: string; 
+            newValue?: string 
+          } | undefined;
+
+          // Usar previousValue com fallback para oldValue (compatibilidade)
+          const fromStatus = statusChange?.previousValue || statusChange?.oldValue || 'PENDING';
+          const toStatus = statusChange?.newValue || 'UNKNOWN';
+
+          return {
+            id: entry.id,
+            strategyId: entry.entityId || '',
+            strategyName: `Estratégia #${entry.entityId || entry.id}`,
+            action: actionMap[entry.action || ''] || 'SUBMIT',
+            actorUserId: String(entry.user?.id ?? 'system'),
+            actorName: entry.user?.name || 'Sistema',
+            fromStatus,
+            toStatus,
+            createdAt: entry.createdAt,
+          };
+        });
+
+        setHistory(entries);
       } catch (error) {
         console.error('Error fetching history:', error);
+        toast.error('Erro ao carregar histórico de aprovações');
+        // Retornar lista vazia em caso de erro - exibir empty state
+        setHistory([]);
       } finally {
         setIsLoading(false);
       }

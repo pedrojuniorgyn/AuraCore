@@ -48,6 +48,7 @@ export async function GET(
         id: permissions.id,
         slug: permissions.slug,
         description: permissions.description,
+        module: permissions.module,
       })
       .from(rolePermissions)
       .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
@@ -132,6 +133,7 @@ export async function PUT(
         id: permissions.id,
         slug: permissions.slug,
         description: permissions.description,
+        module: permissions.module,
       })
       .from(rolePermissions)
       .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))

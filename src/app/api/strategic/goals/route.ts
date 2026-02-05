@@ -9,7 +9,11 @@ import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
-import { getTenantContext } from '@/lib/auth/context';
+import { 
+  getTenantContext, 
+  validateABACBranchAccess, 
+  abacDeniedResponse 
+} from '@/lib/auth/context';
 import { getErrorMessage } from '@/shared/types/type-guards';
 import { CreateStrategicGoalUseCase } from '@/modules/strategic/application/commands/CreateStrategicGoalUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
@@ -468,6 +472,17 @@ export const POST = withDI(async (request: Request) => {
     // Resolver ownerUserId/ownerBranchId se não enviados
     ownerUserId = ownerUserId ?? context.userId;
     ownerBranchId = ownerBranchId ?? context.branchId;
+
+    // ============================
+    // 🔐 ABAC VALIDATION (E9.4)
+    // ============================
+    // Validar se usuário tem acesso à filial onde está criando o goal
+    const abacResult = validateABACBranchAccess(context, ownerBranchId);
+    if (!abacResult.allowed) {
+      return abacDeniedResponse(abacResult, context);
+    }
+    // Usar o branchId validado pelo ABAC
+    ownerBranchId = abacResult.effectiveBranchId;
 
     // Resolver dueDate a partir de endDate (UI)
     const resolvedDueDate = dueDate ?? endDate;

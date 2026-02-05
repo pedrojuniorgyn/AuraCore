@@ -1,121 +1,106 @@
+/**
+ * API: GET /api/strategic/leaderboard
+ * Retorna ranking de usuários baseado em atividades
+ * 
+ * @module app/api/strategic/leaderboard
+ */
 import { NextRequest, NextResponse } from 'next/server';
+import { getTenantContext } from '@/lib/auth/context';
+import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 import type { LeaderboardEntry } from '@/lib/gamification/gamification-types';
 
-// Mock leaderboard data
-const mockLeaderboard: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    previousRank: 1,
-    userId: 'user-1',
-    userName: 'João Silva',
-    level: 15,
-    totalXp: 5230,
-    achievementCount: 28,
-    isCurrentUser: false,
-  },
-  {
-    rank: 2,
-    previousRank: 3,
-    userId: 'user-2',
-    userName: 'Maria Santos',
-    level: 14,
-    totalXp: 4850,
-    achievementCount: 25,
-    isCurrentUser: false,
-  },
-  {
-    rank: 3,
-    previousRank: 2,
-    userId: 'user-3',
-    userName: 'Pedro Alves',
-    level: 13,
-    totalXp: 4420,
-    achievementCount: 23,
-    isCurrentUser: false,
-  },
-  {
-    rank: 4,
-    previousRank: 4,
-    userId: 'user-4',
-    userName: 'Ana Costa',
-    level: 12,
-    totalXp: 3980,
-    achievementCount: 21,
-    isCurrentUser: false,
-  },
-  {
-    rank: 5,
-    previousRank: 7,
-    userId: 'current-user',
-    userName: 'Você',
-    level: 12,
-    totalXp: 2450,
-    achievementCount: 23,
-    isCurrentUser: true,
-  },
-  {
-    rank: 6,
-    previousRank: 5,
-    userId: 'user-5',
-    userName: 'Carlos Lima',
-    level: 11,
-    totalXp: 2100,
-    achievementCount: 18,
-    isCurrentUser: false,
-  },
-  {
-    rank: 7,
-    previousRank: 7,
-    userId: 'user-6',
-    userName: 'Julia Reis',
-    level: 10,
-    totalXp: 1890,
-    achievementCount: 15,
-    isCurrentUser: false,
-  },
-  {
-    rank: 8,
-    previousRank: 8,
-    userId: 'user-7',
-    userName: 'Roberto Souza',
-    level: 9,
-    totalXp: 1650,
-    achievementCount: 14,
-    isCurrentUser: false,
-  },
-  {
-    rank: 9,
-    previousRank: 10,
-    userId: 'user-8',
-    userName: 'Fernanda Oliveira',
-    level: 8,
-    totalXp: 1420,
-    achievementCount: 12,
-    isCurrentUser: false,
-  },
-  {
-    rank: 10,
-    previousRank: 9,
-    userId: 'user-9',
-    userName: 'Lucas Martins',
-    level: 7,
-    totalXp: 1200,
-    achievementCount: 10,
-    isCurrentUser: false,
-  },
-];
+export const dynamic = 'force-dynamic';
+
+// Tipo para resultado do banco
+interface UserActivityRow {
+  id: string;
+  name: string | null;
+  activityCount: number;
+}
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const period = searchParams.get('period') || 'month';
-  const department = searchParams.get('department');
-  const limit = parseInt(searchParams.get('limit') || '20');
+  try {
+    const ctx = await getTenantContext();
 
-  // In real implementation, filter by period and department
-  let entries = [...mockLeaderboard];
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || 'month';
+    const department = searchParams.get('department');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
 
-  // Apply limit
-  entries = entries.slice(0, limit);
+    // Suprimir warning
+    void department;
 
-  return NextResponse.json({ entries, period, department });
+    // Calcular data de início baseado no período
+    const now = new Date();
+    let startDate: Date;
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+        startDate = new Date(now.getFullYear(), quarterMonth, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    // Query usando SQL raw para compatibilidade MSSQL
+    const result = await db.execute(sql`
+      SELECT TOP ${limit}
+        u.id,
+        u.name,
+        (
+          SELECT COUNT(*) 
+          FROM audit_logs al 
+          WHERE al.user_id = u.id 
+            AND al.organization_id = ${ctx.organizationId}
+            AND al.created_at >= ${startDate}
+        ) as activityCount
+      FROM users u
+      WHERE u.organization_id = ${ctx.organizationId}
+      ORDER BY activityCount DESC
+    `);
+
+    const usersWithActivity = ((result as { recordset?: unknown[] }).recordset || result) as UserActivityRow[];
+
+    // Converter para formato LeaderboardEntry
+    const entries: LeaderboardEntry[] = usersWithActivity.map((user: UserActivityRow, index: number) => {
+      // Calcular XP baseado em atividades (10 XP por atividade)
+      const xp = (user.activityCount || 0) * 10;
+      // Calcular nível (cada 100 XP = 1 nível)
+      const level = Math.floor(xp / 100) + 1;
+
+      return {
+        rank: index + 1,
+        previousRank: index + 1, // Sem histórico, igual ao atual
+        userId: user.id,
+        userName: user.name || 'Sem nome',
+        level,
+        totalXp: xp,
+        achievementCount: Math.min(Math.floor(xp / 50), 30), // Aproximação
+        isCurrentUser: user.id === ctx.userId,
+      };
+    });
+
+    // Se lista vazia, retornar empty array
+    return NextResponse.json({ 
+      entries,
+      period, 
+      department: null,
+    });
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+    console.error('GET /api/strategic/leaderboard error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

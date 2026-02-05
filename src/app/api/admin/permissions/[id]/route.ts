@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
  * PUT /api/admin/permissions/[id]
  * 🔐 Requer permissão: admin.roles.manage
  *
- * Edita apenas description de uma permissão.
+ * Edita description e module de uma permissão.
  * O slug é imutável e não pode ser alterado.
  */
 export async function PUT(
@@ -30,7 +30,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { description } = body;
+    const { description, module } = body;
 
     // Buscar permission existente
     const [perm] = await db
@@ -38,6 +38,7 @@ export async function PUT(
         id: permissions.id,
         slug: permissions.slug,
         description: permissions.description,
+        module: permissions.module,
       })
       .from(permissions)
       .where(eq(permissions.id, permissionId));
@@ -49,12 +50,14 @@ export async function PUT(
       );
     }
 
-    // Atualizar apenas description (slug é imutável)
+    // Atualizar description e module (slug é imutável)
     await db
       .update(permissions)
       .set({
         description:
           description !== undefined ? description?.trim() || null : perm.description,
+        module:
+          module !== undefined ? module?.trim() || null : perm.module,
         updatedAt: new Date(),
       })
       .where(eq(permissions.id, permissionId));
@@ -65,6 +68,7 @@ export async function PUT(
         id: permissions.id,
         slug: permissions.slug,
         description: permissions.description,
+        module: permissions.module,
       })
       .from(permissions)
       .where(eq(permissions.id, permissionId));
