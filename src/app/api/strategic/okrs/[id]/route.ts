@@ -237,39 +237,28 @@ export async function PATCH(
       }
     }
 
-    // Apply other updates using reconstitute (safe for non-status fields)
-    // Note: Status was already updated via domain methods above
-    const updatedOkrResult = OKR.reconstitute({
-      id: okr.id,
-      title: validated.title ?? okr.title,
-      description: validated.description !== undefined ? validated.description : okr.description,
-      level: validated.level ?? okr.level,
-      parentId: okr.parentId,
-      periodType: okr.periodType,
-      periodLabel: okr.periodLabel,
-      startDate: validated.startDate ? new Date(validated.startDate) : okr.startDate,
-      endDate: validated.endDate ? new Date(validated.endDate) : okr.endDate,
-      ownerId: validated.ownerId ?? okr.ownerId,
-      ownerName: validated.ownerName ?? okr.ownerName,
-      ownerType: okr.ownerType,
-      keyResults: okr.keyResults,
-      progress: okr.progress,
-      status: okr.status, // Use current status (already updated by domain methods)
-      organizationId: okr.organizationId,
-      branchId: okr.branchId,
-      createdBy: okr.createdBy,
-      createdAt: okr.createdAt,
-      updatedAt: new Date(), // Update timestamp
-    });
+    // Bug Fix (Task 04 - Bug 4): Apply non-status updates using updateDetails()
+    // Do NOT use reconstitute() - it creates new instance and loses domain events!
+    // updateDetails() mutates in place and preserves domain events from status transitions
+    if (validated.title !== undefined || 
+        validated.description !== undefined || 
+        validated.endDate !== undefined) {
+      const updateResult = okr.updateDetails({
+        title: validated.title,
+        description: validated.description,
+        endDate: validated.endDate ? new Date(validated.endDate) : undefined,
+      });
 
-    if (Result.isFail(updatedOkrResult)) {
-      return NextResponse.json({ error: updatedOkrResult.error }, { status: 400 });
+      if (Result.isFail(updateResult)) {
+        return NextResponse.json(
+          { error: updateResult.error },
+          { status: 400 }
+        );
+      }
     }
 
-    const updatedOkr = updatedOkrResult.value;
-
-    // Save updated OKR
-    const saveResult = await repository.save(updatedOkr);
+    // Save OKR (same instance with all domain events preserved)
+    const saveResult = await repository.save(okr);
 
     if (Result.isFail(saveResult)) {
       return NextResponse.json({ error: saveResult.error }, { status: 500 });
@@ -277,26 +266,26 @@ export async function PATCH(
 
     // Return updated OKR
     return NextResponse.json({
-      id: updatedOkr.id,
-      title: updatedOkr.title,
-      description: updatedOkr.description,
-      level: updatedOkr.level,
-      parentId: updatedOkr.parentId,
-      periodType: updatedOkr.periodType,
-      periodLabel: updatedOkr.periodLabel,
-      startDate: updatedOkr.startDate,
-      endDate: updatedOkr.endDate,
-      ownerId: updatedOkr.ownerId,
-      ownerName: updatedOkr.ownerName,
-      ownerType: updatedOkr.ownerType,
-      keyResults: updatedOkr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, updatedOkr.id, updatedOkr.createdAt, updatedOkr.updatedAt)),
-      progress: updatedOkr.progress,
-      status: updatedOkr.status,
-      organizationId: updatedOkr.organizationId,
-      branchId: updatedOkr.branchId,
-      createdBy: updatedOkr.createdBy,
-      createdAt: updatedOkr.createdAt,
-      updatedAt: updatedOkr.updatedAt,
+      id: okr.id,
+      title: okr.title,
+      description: okr.description,
+      level: okr.level,
+      parentId: okr.parentId,
+      periodType: okr.periodType,
+      periodLabel: okr.periodLabel,
+      startDate: okr.startDate,
+      endDate: okr.endDate,
+      ownerId: okr.ownerId,
+      ownerName: okr.ownerName,
+      ownerType: okr.ownerType,
+      keyResults: okr.keyResults.map((kr) => toLegacyKeyResultDTO(kr, okr.id, okr.createdAt, okr.updatedAt)),
+      progress: okr.progress,
+      status: okr.status,
+      organizationId: okr.organizationId,
+      branchId: okr.branchId,
+      createdBy: okr.createdBy,
+      createdAt: okr.createdAt,
+      updatedAt: okr.updatedAt,
     });
   } catch (error) {
     // Propagate auth errors (getTenantContext throws Response)
