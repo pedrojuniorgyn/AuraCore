@@ -5,7 +5,7 @@
  * @module strategic/okr/infrastructure/persistence/schemas
  */
 import { sql } from 'drizzle-orm';
-import { int, varchar, text, datetime2, nvarchar } from 'drizzle-orm/mssql-core';
+import { int, varchar, text, datetime2 } from 'drizzle-orm/mssql-core';
 import { mssqlTable, index } from 'drizzle-orm/mssql-core';
 
 /**
@@ -90,6 +90,10 @@ export const okrKeyResultTable = mssqlTable('strategic_okr_key_result', {
   index('idx_strategic_okr_key_result_okr').on(table.okrId),
   index('idx_strategic_okr_key_result_status').on(table.status),
 ]));
+
+// ===========================================
+// Types
+// ===========================================
 
 export type OkrRow = typeof okrTable.$inferSelect;
 export type OkrInsert = typeof okrTable.$inferInsert;

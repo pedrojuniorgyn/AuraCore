@@ -71,10 +71,11 @@ export class OkrMapper {
 
   /**
    * Domain → DB (MAPPER-003)
+   * Bug Fix: id pode ser undefined para novos KRs (gerado no Repository)
    */
   static toPersistence(entity: OKR): {
     okr: OkrInsert;
-    keyResults: Omit<KeyResultInsert, 'okrId'>[]; // Bug Fix: Manter 'id' (opcional), omitir apenas 'okrId'
+    keyResults: Array<Omit<KeyResultInsert, 'okrId' | 'id'> & { id: string | undefined }>;
   } {
     return {
       okr: {

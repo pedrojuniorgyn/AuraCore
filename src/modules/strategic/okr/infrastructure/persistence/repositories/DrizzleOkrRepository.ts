@@ -434,6 +434,9 @@ export class DrizzleOkrRepository implements IOkrRepository {
       const exists = await this.exists(okr.id, okr.organizationId, okr.branchId);
 
       // REPO-008: Transações para operações múltiplas
+      // Mapa para preservar timestamps originais (usado apenas em UPDATE)
+      let timestampMap = new Map<string, { createdAt: Date; createdBy: string | null }>();
+
       await db.transaction(async (tx) => {
         if (exists) {
           // UPDATE - Bug Fix: Adicionar multi-tenancy (REPO-005)
@@ -463,7 +466,7 @@ export class DrizzleOkrRepository implements IOkrRepository {
             .where(eq(okrKeyResultTable.okrId, okr.id));
           
           const existingIds = new Set(existingKRs.map(kr => kr.id));
-          const timestampMap = new Map(
+          timestampMap = new Map(
             existingKRs.map(kr => [kr.id, { createdAt: kr.createdAt, createdBy: kr.createdBy }])
           );
 
