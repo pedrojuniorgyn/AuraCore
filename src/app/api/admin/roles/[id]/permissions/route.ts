@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { roles, permissions, rolePermissions } from "@/lib/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 
 /**
  * GET /api/admin/roles/[id]/permissions
@@ -113,6 +113,28 @@ export async function PUT(
         { success: false, error: "Role not found" },
         { status: 404 }
       );
+    }
+
+    // Validar se todos os permissionIds existem ANTES de modificar dados
+    if (permissionIds.length > 0) {
+      const validPerms = await db
+        .select({ id: permissions.id })
+        .from(permissions)
+        .where(inArray(permissions.id, permissionIds));
+
+      if (validPerms.length !== permissionIds.length) {
+        const validIds = new Set(validPerms.map((p) => p.id));
+        const invalidIds = permissionIds.filter((id) => !validIds.has(id));
+        
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Alguns IDs de permissões não existem",
+            invalidIds,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Remover todas permissões atuais do role
