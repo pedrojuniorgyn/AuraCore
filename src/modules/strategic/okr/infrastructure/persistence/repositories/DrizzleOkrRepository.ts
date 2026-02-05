@@ -155,7 +155,7 @@ export class DrizzleOkrRepository implements IOkrRepository {
         .orderBy(okrKeyResultTable.orderIndex);
     }
 
-    // Map para Domain Entities - Bug Fix: Não ignorar erros de mapeamento
+    // Map para Domain Entities
     const items: OKR[] = [];
     const mappingErrors: string[] = [];
     
@@ -166,24 +166,34 @@ export class DrizzleOkrRepository implements IOkrRepository {
       if (Result.isOk(result)) {
         items.push(result.value);
       } else {
-        // Bug Fix: Coletar erros ao invés de ignorar silenciosamente
         mappingErrors.push(`OKR ${okrRow.id}: ${result.error}`);
       }
     }
 
-    // Se houve erros de mapeamento, logar para observabilidade
+    // CRITICAL: Erros de mapeamento indicam dados corrompidos no banco.
+    // Isso quebra o contrato de paginação (items.length < pageSize mas total inalterado).
+    // Logamos como ERROR para investigação imediata.
     if (mappingErrors.length > 0) {
-      logWarn('Failed to map OKRs in findMany', {
+      logError('CRITICAL: OKR mapping failures - data corruption detected', 
+        new Error(`${mappingErrors.length} OKRs failed to map`), {
         method: 'findMany',
         failedCount: mappingErrors.length,
-        totalCount: okrRows.length,
+        fetchedCount: okrRows.length,
         errors: mappingErrors,
         organizationId,
         branchId,
+        impact: 'Pagination contract broken - total does not match mappable items',
       });
     }
 
-    return { items, total };
+    // Ajustar total para refletir apenas itens mapeáveis nesta página.
+    // NOTA: Isso não é perfeito para paginação (outras páginas podem ter erros diferentes),
+    // mas é melhor que retornar um total que não corresponde aos itens retornáveis.
+    const adjustedTotal = mappingErrors.length > 0 
+      ? Math.max(0, total - mappingErrors.length) 
+      : total;
+
+    return { items, total: adjustedTotal };
   }
 
   /**
