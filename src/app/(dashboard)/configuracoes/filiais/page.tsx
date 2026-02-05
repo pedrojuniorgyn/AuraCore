@@ -75,6 +75,36 @@ export default function BranchesPage() {
     router.push(`/configuracoes/filiais/${branch.id}`);
   }, [router]);
 
+  const handleDelete = useCallback(async (data: unknown) => {
+    const branch = data as Branch;
+    
+    // Validação: Não permitir exclusão da matriz
+    if (branch.id === 1) {
+      toast.error("A filial matriz não pode ser excluída.");
+      return;
+    }
+
+    // Confirmação via AlertDialog
+    if (!confirm(`Deseja realmente excluir a filial "${branch.tradeName || branch.name}"?\n\nEsta ação marcará a filial como inativa.`)) {
+      return;
+    }
+
+    try {
+      // Chamada API (fetchAPI inclui credentials: 'include' automaticamente)
+      await fetchAPI(`/api/branches/${branch.id}`, {
+        method: "DELETE",
+      });
+
+      toast.success("Filial excluída com sucesso!");
+      
+      // Recarregar grid
+      await fetchBranches();
+    } catch (error) {
+      console.error("Erro ao excluir filial:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir filial");
+    }
+  }, [fetchBranches]);
+
   const columnDefs: ColDef[] = useMemo(
     () => [
       {
@@ -157,6 +187,7 @@ export default function BranchesPage() {
             {ActionsCellRenderer({
               ...params,
               onEdit: handleEdit,
+              onDelete: handleDelete,
             })}
           </div>
         ),
@@ -164,7 +195,7 @@ export default function BranchesPage() {
         filter: false,
       },
     ],
-    [handleEdit, handleConfig]
+    [handleEdit, handleConfig, handleDelete]
   );
 
   const handleExportExcel = useCallback(() => {
