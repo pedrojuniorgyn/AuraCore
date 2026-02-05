@@ -145,9 +145,9 @@ const locationSchema = z.object({
 // ============================================================
 
 /**
- * Schema para criar viagem
+ * Schema base para viagem (sem validação cross-field)
  */
-export const createTripSchema = z.object({
+const createTripSchemaBase = z.object({
   organizationId: z.number().int().positive(),
   branchId: z.number().int().positive(),
   vehicleId: z.string().uuid('ID do veículo inválido'),
@@ -160,7 +160,12 @@ export const createTripSchema = z.object({
   cargoWeight: z.number().positive().optional(), // kg
   cargoVolume: z.number().positive().optional(), // m³
   notes: z.string().max(1000).optional(),
-}).refine(
+});
+
+/**
+ * Schema para criar viagem (com validação cross-field)
+ */
+export const createTripSchema = createTripSchemaBase.refine(
   (data) => new Date(data.plannedDepartureAt) < new Date(data.plannedArrivalAt),
   { message: 'Data de partida deve ser anterior à chegada', path: ['plannedDepartureAt'] }
 );
@@ -244,9 +249,21 @@ export const createPickupOrderSchema = z.object({
 // ============================================================
 
 /**
- * Schema para atualizar viagem
+ * Schema para atualizar viagem (campos opcionais + validação condicional)
  */
-export const updateTripSchema = createTripSchema.partial().omit({ organizationId: true, branchId: true });
+export const updateTripSchema = createTripSchemaBase
+  .partial()
+  .omit({ organizationId: true, branchId: true })
+  .refine(
+    (data) => {
+      // Validar apenas se ambos os campos existem (após .partial())
+      if (data.plannedDepartureAt !== undefined && data.plannedArrivalAt !== undefined) {
+        return new Date(data.plannedDepartureAt) < new Date(data.plannedArrivalAt);
+      }
+      return true; // Se não existe, validação passa
+    },
+    { message: 'Data de partida deve ser anterior à chegada', path: ['plannedDepartureAt'] }
+  );
 
 /**
  * Schema para atualizar veículo

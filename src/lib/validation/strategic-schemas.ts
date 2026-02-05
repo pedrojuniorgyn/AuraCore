@@ -91,9 +91,9 @@ export const measurementFrequencySchema = z.enum([
 // ============================================================
 
 /**
- * Schema para criar estratégia
+ * Schema base para estratégia (sem validação cross-field)
  */
-export const createStrategySchema = z.object({
+const createStrategySchemaBase = z.object({
   organizationId: z.number().int().positive(),
   branchId: z.number().int().positive(),
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(200).trim(),
@@ -102,7 +102,12 @@ export const createStrategySchema = z.object({
   mission: z.string().max(1000).optional(),
   startDate: z.string().datetime({ message: 'Data inicial inválida (ISO 8601)' }),
   endDate: z.string().datetime({ message: 'Data final inválida (ISO 8601)' }),
-}).refine(
+});
+
+/**
+ * Schema para criar estratégia (com validação cross-field)
+ */
+export const createStrategySchema = createStrategySchemaBase.refine(
   (data) => new Date(data.startDate) < new Date(data.endDate),
   { message: 'Data inicial deve ser anterior à data final', path: ['startDate'] }
 );
@@ -145,9 +150,9 @@ export const createKpiSchema = z.object({
 });
 
 /**
- * Schema para criar plano de ação
+ * Schema base para plano de ação (sem validação cross-field)
  */
-export const createActionPlanSchema = z.object({
+const createActionPlanSchemaBase = z.object({
   organizationId: z.number().int().positive(),
   branchId: z.number().int().positive(),
   goalId: z.string().uuid('ID da meta inválido').optional(),
@@ -160,10 +165,20 @@ export const createActionPlanSchema = z.object({
   dueDate: z.string().datetime({ message: 'Data limite inválida' }),
   estimatedCost: z.number().nonnegative().optional(),
   estimatedHours: z.number().nonnegative().optional(),
-}).refine(
-  (data) => data.goalId || data.kpiId,
-  { message: 'Informe goalId ou kpiId', path: ['goalId'] }
-);
+});
+
+/**
+ * Schema para criar plano de ação (com validação cross-field)
+ */
+export const createActionPlanSchema = createActionPlanSchemaBase
+  .refine(
+    (data) => data.goalId || data.kpiId,
+    { message: 'Informe goalId ou kpiId', path: ['goalId'] }
+  )
+  .refine(
+    (data) => new Date(data.startDate) < new Date(data.dueDate),
+    { message: 'Data inicial deve ser anterior à data limite', path: ['startDate'] }
+  );
 
 /**
  * Schema para ciclo PDCA
@@ -214,9 +229,21 @@ export const createKeyResultSchema = z.object({
 // ============================================================
 
 /**
- * Schema para atualizar estratégia
+ * Schema para atualizar estratégia (campos opcionais + validação condicional)
  */
-export const updateStrategySchema = createStrategySchema.partial().omit({ organizationId: true, branchId: true });
+export const updateStrategySchema = createStrategySchemaBase
+  .partial()
+  .omit({ organizationId: true, branchId: true })
+  .refine(
+    (data) => {
+      // Validar apenas se ambos os campos existem (após .partial())
+      if (data.startDate !== undefined && data.endDate !== undefined) {
+        return new Date(data.startDate) < new Date(data.endDate);
+      }
+      return true; // Se não existe, validação passa
+    },
+    { message: 'Data inicial deve ser anterior à data final', path: ['startDate'] }
+  );
 
 /**
  * Schema para atualizar meta
@@ -229,9 +256,22 @@ export const updateGoalSchema = createGoalSchema.partial().omit({ organizationId
 export const updateKpiSchema = createKpiSchema.partial().omit({ organizationId: true, branchId: true });
 
 /**
- * Schema para atualizar plano de ação
+ * Schema para atualizar plano de ação (campos opcionais + validação condicional)
+ * Nota: Validação goalId/kpiId é obrigatória apenas no CREATE
  */
-export const updateActionPlanSchema = createActionPlanSchema.partial().omit({ organizationId: true, branchId: true });
+export const updateActionPlanSchema = createActionPlanSchemaBase
+  .partial()
+  .omit({ organizationId: true, branchId: true })
+  .refine(
+    (data) => {
+      // Validar apenas se ambos os campos existem (após .partial())
+      if (data.startDate !== undefined && data.dueDate !== undefined) {
+        return new Date(data.startDate) < new Date(data.dueDate);
+      }
+      return true; // Se não existe, validação passa
+    },
+    { message: 'Data inicial deve ser anterior à data limite', path: ['startDate'] }
+  );
 
 // ============================================================
 // SCHEMAS DE QUERY (GET com filtros)
