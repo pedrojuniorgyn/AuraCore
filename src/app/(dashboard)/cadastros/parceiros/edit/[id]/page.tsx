@@ -46,7 +46,6 @@ export default function EditBusinessPartnerPage() {
         },
       });
 
-      console.log("✅ Partner loaded:", data);
       setPartner(data);
     } catch (error) {
       console.error("❌ Erro ao buscar parceiro:", error);

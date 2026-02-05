@@ -43,7 +43,6 @@ export default function EditProductPage() {
         },
       });
 
-      console.log("✅ Product loaded:", data);
       setProduct(data);
     } catch (error) {
       console.error("❌ Erro ao buscar produto:", error);

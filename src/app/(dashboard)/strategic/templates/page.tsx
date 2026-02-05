@@ -4,6 +4,7 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { TemplateGallery } from '@/components/strategic/templates/TemplateGallery';
 
 function TemplatesPageInner() {
@@ -38,12 +39,10 @@ function TemplatesPageInner() {
       {/* Gallery */}
       <TemplateGallery
         onCreateNew={() => {
-          // TODO: Navigate to create page
-          console.log('Create new template');
+          toast.info('Funcionalidade de criação de template em desenvolvimento');
         }}
         onEdit={(template) => {
-          // TODO: Navigate to edit page
-          console.log('Edit template:', template.id);
+          toast.info('Funcionalidade de edição de template em desenvolvimento');
         }}
       />
     </div>

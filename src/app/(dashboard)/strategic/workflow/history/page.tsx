@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Card, Title, Text, Select, SelectItem } from '@tremor/react';
 import {
   History,
@@ -110,8 +111,7 @@ export default function ApprovalHistoryPage() {
     const fetchHistory = async () => {
       setIsLoading(true);
       try {
-        // TODO: Implementar API endpoint para histórico geral
-        // Por ora, usando dados mock
+        // NOTA: Usando dados mock até implementação do endpoint de histórico geral
         const mockData: HistoryEntry[] = [
           {
             id: '1',
@@ -153,13 +153,12 @@ export default function ApprovalHistoryPage() {
     if (actionFilter !== 'all' && entry.action !== actionFilter) {
       return false;
     }
-    // TODO: Implementar filtro por data
+    // NOTA: Filtro por data será implementado em versão futura
     return true;
   });
 
   const handleExportCSV = () => {
-    // TODO: Implementar export CSV
-    console.log('Exportando histórico para CSV...');
+    toast.info('Funcionalidade de exportação CSV em desenvolvimento');
   };
 
   return (

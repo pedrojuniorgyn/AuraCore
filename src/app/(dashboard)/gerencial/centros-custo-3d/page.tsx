@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, ColDef, ICellRendererParams } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
+import { toast } from "sonner";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -99,7 +100,21 @@ export default function GestaoCC3DPage() {
     { field: 'linked_object_id', headerName: 'ID Objeto', width: 120 },
     { field: 'is_analytical', headerName: 'Analítico', cellRenderer: BooleanCellRenderer, filter: 'agSetColumnFilter', width: 120 },
     { field: 'branch_name', headerName: 'Filial (D1)', filter: 'agTextColumnFilter', width: 150 },
-    { field: 'actions', headerName: 'Ações', cellRenderer: ActionCellRenderer, cellRendererParams: { onEdit: (data: CostCenter3D) => console.log('Edit', data), onDelete: (data: CostCenter3D) => console.log('Delete', data) }, width: 120, pinned: 'right' }
+    { 
+      field: 'actions', 
+      headerName: 'Ações', 
+      cellRenderer: ActionCellRenderer, 
+      cellRendererParams: { 
+        onEdit: (data: CostCenter3D) => {
+          toast.info('Funcionalidade de edição em desenvolvimento');
+        }, 
+        onDelete: (data: CostCenter3D) => {
+          toast.info('Funcionalidade de exclusão em desenvolvimento');
+        } 
+      }, 
+      width: 120, 
+      pinned: 'right' 
+    }
   ];
 
   return (

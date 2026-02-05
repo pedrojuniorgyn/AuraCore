@@ -59,8 +59,6 @@ export function PWAInstallPrompt() {
 
     // Aguardar escolha do usuário
     const { outcome } = await deferredPrompt.userChoice;
-    
-    console.log(`[PWA] User choice: ${outcome}`);
 
     // Limpar prompt
     setDeferredPrompt(null);

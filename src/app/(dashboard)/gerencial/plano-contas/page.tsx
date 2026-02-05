@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, ColDef } from "ag-grid-community";
 import { AllEnterpriseModule } from "ag-grid-enterprise";
+import { toast } from "sonner";
 
 // AG Grid CSS (v34+ Theming API)
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -128,8 +129,12 @@ export default function GestaoPCGPage() {
       headerName: 'Ações',
       cellRenderer: ActionCellRenderer,
       cellRendererParams: {
-        onEdit: (data: ChartAccount) => console.log('Edit', data),
-        onDelete: (data: ChartAccount) => console.log('Delete', data)
+        onEdit: (data: ChartAccount) => {
+          toast.info('Funcionalidade de edição em desenvolvimento');
+        },
+        onDelete: (data: ChartAccount) => {
+          toast.info('Funcionalidade de exclusão em desenvolvimento');
+        }
       },
       width: 120,
       pinned: 'right'

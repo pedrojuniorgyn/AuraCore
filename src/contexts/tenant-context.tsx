@@ -122,7 +122,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
         if (storedBranch && hasPermission) {
           setCurrentBranch(storedBranch);
-          console.log(`✅ Filial restaurada do localStorage: ${storedBranch.tradeName}`);
           void persistBranchCookie(storedBranch.id);
           return;
         } else {
@@ -137,7 +136,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         if (defaultBranch) {
           setCurrentBranch(defaultBranch);
           localStorage.setItem(STORAGE_KEY, defaultBranch.id.toString());
-          console.log(`✅ Filial padrão selecionada: ${defaultBranch.tradeName}`);
           void persistBranchCookie(defaultBranch.id);
           return;
         }
@@ -148,7 +146,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         const firstBranch = branches[0];
         setCurrentBranch(firstBranch);
         localStorage.setItem(STORAGE_KEY, firstBranch.id.toString());
-        console.log(`✅ Primeira filial selecionada: ${firstBranch.tradeName}`);
         void persistBranchCookie(firstBranch.id);
       }
     },

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ICellRendererParams, ValueFormatterParams } from 'ag-grid-community';
 import { AllEnterpriseModule, ModuleRegistry } from "ag-grid-enterprise";
+import { toast } from "sonner";
 import { PageTransition, StaggerContainer, FadeIn } from "@/components/ui/animated-wrappers";
 import { GradientText, NumberCounter } from "@/components/ui/magic-components";
 import { GlassmorphismCard } from "@/components/ui/glassmorphism-card";
@@ -328,7 +329,9 @@ export default function SinistrosPage() {
                 
                 loading={loading}
                 onRowClicked={(event) => {
-                  console.log('Sinistro selecionado:', event.data);
+                  if (event.data) {
+                    toast.info('Detalhes do sinistro em desenvolvimento');
+                  }
                 }}
               />
             </div>

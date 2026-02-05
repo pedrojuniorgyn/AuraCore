@@ -60,9 +60,6 @@ interface PartnerFormProps {
 export function PartnerForm({ initialData, onSubmit, isLoading, isEdit }: PartnerFormProps) {
   const [loadingCEP, setLoadingCEP] = useState(false);
 
-  console.log("🔍 PartnerForm initialData:", initialData);
-  console.log("🔍 Document value:", initialData?.document);
-
   const form = useForm<BusinessPartnerFormData>({
     resolver: zodResolver(createBusinessPartnerSchema) as Resolver<BusinessPartnerFormData>,
     defaultValues: initialData || {
@@ -119,8 +116,6 @@ export function PartnerForm({ initialData, onSubmit, isLoading, isEdit }: Partne
       form.setValue("cityName", data.localidade || "");
       form.setValue("state", data.uf || "");
       form.setValue("cityCode", data.ibge || ""); // ViaCEP retorna código IBGE!
-
-      console.log("✅ Endereço preenchido via ViaCEP:", data);
     } catch (error) {
       console.error("❌ Erro ao buscar CEP:", error);
       form.setError("zipCode", {

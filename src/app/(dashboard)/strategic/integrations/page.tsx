@@ -289,12 +289,7 @@ export default function IntegrationsPage() {
         logs={logsIntegration?.logs || []}
         onRefresh={fetchIntegrations}
         onRetry={async (retryLogId) => {
-          toast.loading('Reenviando...', { id: 'retry' });
-          // TODO: Implement retry logic for log entry
-          console.log('Retrying log entry:', retryLogId);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          toast.dismiss('retry');
-          toast.success('Reenviado com sucesso!');
+          toast.info('Funcionalidade de reenvio em desenvolvimento');
         }}
       />
       </div>

@@ -145,8 +145,6 @@ export default function BranchConfigPage() {
         description: result.message,
         duration: 5000,
       });
-
-      console.log("📊 Resultado da consulta:", result.data);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error("Falha ao conectar com Sefaz", {
