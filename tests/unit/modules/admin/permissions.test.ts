@@ -151,10 +151,10 @@ describe('Admin Permissions API - Validation Logic', () => {
         expect(result.valid).toBe(false);
       });
 
-      it('deve rejeitar slug que começa com número', () => {
-        // Números no início são tecnicamente válidos pelo regex, mas vamos testar
+      it('slug que começa com número é aceito pelo regex', () => {
+        // O regex /^[a-z0-9._]+$/ permite números em qualquer posição
         const result = validateSlug('123admin');
-        expect(result.valid).toBe(true); // Números são permitidos pelo regex atual
+        expect(result.valid).toBe(true);
       });
 
       it('deve rejeitar acentos', () => {
@@ -408,9 +408,11 @@ describe('Admin Permissions API - Validation Logic', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('deve rejeitar slug apenas com dots', () => {
+    it('slug apenas com dots é aceito pelo regex (edge case - semanticamente ruim)', () => {
+      // NOTA: O regex /^[a-z0-9._]+$/ aceita "..." mas isso é semanticamente inválido.
+      // Uma validação adicional de convenção (min 2 partes com conteúdo) deve ser aplicada.
       const result = validateSlug('...');
-      expect(result.valid).toBe(true); // Tecnicamente válido pelo regex, mas semanticamente ruim
+      expect(result.valid).toBe(true);
     });
   });
 });
