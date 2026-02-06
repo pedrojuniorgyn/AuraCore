@@ -99,8 +99,9 @@ export function DeleteResourceButton({
         if (onDeleteSuccess) {
           onDeleteSuccess();
         }
+        // Navegação para lista - hook useDeleteResource já chamou router.refresh()
+        // Nova página vai buscar dados frescos automaticamente
         router.push(redirectTo);
-        router.refresh();
       },
     });
   };
@@ -192,8 +193,9 @@ export function DeleteResourceButtonCompact({
         if (onDeleteSuccess) {
           onDeleteSuccess();
         }
+        // Navegação para lista - hook useDeleteResource já chamou router.refresh()
+        // Nova página vai buscar dados frescos automaticamente
         router.push(redirectTo);
-        router.refresh();
       },
     });
   };
