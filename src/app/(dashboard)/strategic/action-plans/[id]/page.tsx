@@ -6,7 +6,7 @@
  * 
  * @module app/(dashboard)/strategic/action-plans/[id]
  */
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Badge,
@@ -154,7 +154,9 @@ const PRIORITY_STYLES = {
   CRITICAL: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Crítica' },
 } as const;
 
-export default function ActionPlanDetailPage({ 
+// FIX: Extrair lógica de searchParams para componente separado com Suspense
+// No Next.js 15, useSearchParams() requer Suspense boundary para evitar hydration mismatch
+function ActionPlanDetailPageContent({ 
   params 
 }: { 
   params: Promise<{ id: string }> 
@@ -1202,5 +1204,30 @@ export default function ActionPlanDetailPage({
         </DialogContent>
       </Dialog>
     </PageTransition>
+  );
+}
+
+// Wrapper com Suspense boundary para evitar hydration mismatch
+// useSearchParams() requer Suspense no Next.js 15
+export default function ActionPlanDetailPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> 
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900 -m-6 p-6">
+          <div className="flex items-center justify-center h-[500px]">
+            <div className="text-center">
+              <RefreshCw className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
+              <p className="text-white/60">Carregando plano de ação...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ActionPlanDetailPageContent params={params} />
+    </Suspense>
   );
 }
