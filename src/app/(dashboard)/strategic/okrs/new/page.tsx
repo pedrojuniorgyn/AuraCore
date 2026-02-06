@@ -1,15 +1,17 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Target } from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
+import { ArrowLeft, Target, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { okrService } from '@/lib/okrs/okr-service';
 import { OKRForm } from '@/components/strategic/okrs';
 import type { OKR } from '@/lib/okrs/okr-types';
 import { toast } from 'sonner';
 
-export default function NewOKRPage() {
+// FIX: Extrair lógica de searchParams para componente separado com Suspense
+// No Next.js 15, useSearchParams() requer Suspense boundary para evitar hydration mismatch
+function NewOKRPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const parentId = searchParams.get('parentId');
@@ -84,5 +86,24 @@ export default function NewOKRPage() {
         />
       </div>
     </div>
+  );
+}
+
+// Wrapper com Suspense boundary para evitar hydration mismatch
+// useSearchParams() requer Suspense no Next.js 15
+export default function NewOKRPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
+            <p className="text-white/60">Carregando...</p>
+          </div>
+        </div>
+      }
+    >
+      <NewOKRPageContent />
+    </Suspense>
   );
 }

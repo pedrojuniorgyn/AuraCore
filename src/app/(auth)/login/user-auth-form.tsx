@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -21,7 +22,9 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Senha requerida" }),
 });
 
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+// FIX: Extrair lógica de searchParams para componente separado com Suspense
+// No Next.js 15, useSearchParams() requer Suspense boundary para evitar hydration mismatch
+function UserAuthFormContent({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -139,5 +142,23 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         Google Workspace
       </Button>
     </div>
+  );
+}
+
+// Wrapper com Suspense boundary para evitar hydration mismatch
+// useSearchParams() requer Suspense no Next.js 15
+export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="grid gap-6">
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-white/60" />
+          </div>
+        </div>
+      }
+    >
+      <UserAuthFormContent className={className} {...props} />
+    </Suspense>
   );
 }
