@@ -233,7 +233,8 @@ export default function ActionPlanDetailPage({
       }
     };
     loadPlan();
-  }, [id, router, editMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router é estável, incluí-lo causa re-renders infinitos
+  }, [id, editMode]);
 
   const refreshPlan = async () => {
     setLoading(true);
@@ -261,6 +262,8 @@ export default function ActionPlanDetailPage({
       });
       
       setIsEditing5W2H(false);
+      // Limpar query param ?edit=true da URL para manter sincronização
+      router.replace(`/strategic/action-plans/${id}`, { scroll: false });
       await refreshPlan();
     } catch (error) {
       console.error('Failed to save 5W2H:', error);
@@ -293,6 +296,8 @@ export default function ActionPlanDetailPage({
       howMuchCurrency: plan.howMuchCurrency || 'BRL',
     });
     setIsEditing5W2H(false);
+    // Limpar query param ?edit=true da URL para manter sincronização
+    router.replace(`/strategic/action-plans/${id}`, { scroll: false });
   };
 
   const loadFollowUps = useCallback(async () => {
