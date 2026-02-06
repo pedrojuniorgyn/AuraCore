@@ -203,6 +203,8 @@ function ActionPlanDetailPageContent({
   // Extrair valor primitivo para evitar infinite loop (searchParams retorna nova referência a cada render)
   const editMode = searchParams.get('edit') === 'true';
 
+  // Efeito para carregar dados - NÃO depende de editMode para evitar re-fetch
+  // quando router.replace() limpa a URL após save/cancel
   useEffect(() => {
     const loadPlan = async () => {
       setLoading(true);
@@ -221,8 +223,6 @@ function ActionPlanDetailPageContent({
           howMuchAmount: data.howMuchAmount || 0,
           howMuchCurrency: data.howMuchCurrency || 'BRL',
         });
-        // Sincronizar modo de edição com query param ?edit=true
-        setIsEditing5W2H(editMode);
       } catch (error) {
         // Se for 404, redirecionar
         if (error instanceof APIResponseError && error.status === 404) {
@@ -236,7 +236,13 @@ function ActionPlanDetailPageContent({
     };
     loadPlan();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router é estável, incluí-lo causa re-renders infinitos
-  }, [id, editMode]);
+  }, [id]);
+
+  // Efeito separado para sincronizar modo de edição com URL
+  // Isso permite que ?edit=true funcione ao navegar do grid
+  useEffect(() => {
+    setIsEditing5W2H(editMode);
+  }, [editMode]);
 
   const refreshPlan = async () => {
     setLoading(true);
@@ -515,7 +521,7 @@ function ActionPlanDetailPageContent({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsEditing5W2H(true)}
+                    onClick={() => router.push(`/strategic/action-plans/${id}?edit=true`, { scroll: false })}
                     className="text-white/70 hover:text-white"
                   >
                     <Edit className="w-4 h-4 mr-2" />
