@@ -170,30 +170,26 @@ export class DrizzleOkrRepository implements IOkrRepository {
       }
     }
 
-    // CRITICAL: Erros de mapeamento indicam dados corrompidos no banco.
-    // Isso quebra o contrato de paginação (items.length < pageSize mas total inalterado).
-    // Logamos como ERROR para investigação imediata.
+    // Erros de mapeamento indicam dados corrompidos no banco.
+    // Logamos como ERROR para investigação e correção dos dados.
+    // IMPORTANTE: NÃO ajustamos o total - o contrato de paginação deve refletir
+    // a contagem real do banco. Ajustar criaria totais inconsistentes entre páginas.
     if (mappingErrors.length > 0) {
-      logError('CRITICAL: OKR mapping failures - data corruption detected', 
+      logError('OKR mapping failures - data corruption detected', 
         new Error(`${mappingErrors.length} OKRs failed to map`), {
         method: 'findMany',
         failedCount: mappingErrors.length,
         fetchedCount: okrRows.length,
+        returnedCount: items.length,
         errors: mappingErrors,
         organizationId,
         branchId,
-        impact: 'Pagination contract broken - total does not match mappable items',
+        action: 'Investigate and fix corrupted OKR records in database',
       });
     }
 
-    // Ajustar total para refletir apenas itens mapeáveis nesta página.
-    // NOTA: Isso não é perfeito para paginação (outras páginas podem ter erros diferentes),
-    // mas é melhor que retornar um total que não corresponde aos itens retornáveis.
-    const adjustedTotal = mappingErrors.length > 0 
-      ? Math.max(0, total - mappingErrors.length) 
-      : total;
-
-    return { items, total: adjustedTotal };
+    // Retornar total original (não ajustado) para manter contrato de paginação consistente
+    return { items, total };
   }
 
   /**
