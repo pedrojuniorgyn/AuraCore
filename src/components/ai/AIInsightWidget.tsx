@@ -37,6 +37,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAgentInsights } from '@/hooks/useAgentInsights';
+import { useClientFormattedTime } from '@/hooks/useClientFormattedTime';
 import type { 
   AIInsightWidgetProps, 
   AIInsight, 
@@ -311,6 +312,10 @@ export function AIInsightWidget({
  */
 function InsightCard({ insight }: { insight: AIInsight }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // FIX: Formatar timestamp apenas no cliente para evitar hydration mismatch (React Error #418)
+  // toLocaleTimeString() gera valores diferentes servidor/cliente devido a timezones
+  const formattedTime = useClientFormattedTime(insight.timestamp);
 
   const categoryConfig: Record<InsightCategory, { icon: React.ReactNode; color: string }> = {
     alert: { icon: <AlertCircle className="h-4 w-4" />, color: 'text-red-500' },
@@ -366,11 +371,12 @@ function InsightCard({ insight }: { insight: AIInsight }) {
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">
               {insight.content}
             </p>
-            {/* FIX: suppressHydrationWarning evita React Error #418 */}
-            {/* toLocaleTimeString() gera valores diferentes servidor/cliente (timezones) */}
-            <p className="text-xs text-muted-foreground mt-2" suppressHydrationWarning>
-              {new Date(insight.timestamp).toLocaleTimeString('pt-BR')}
-            </p>
+            {/* Timestamp formatado apenas no cliente via hook */}
+            {formattedTime && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {formattedTime}
+              </p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
