@@ -366,7 +366,9 @@ function InsightCard({ insight }: { insight: AIInsight }) {
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">
               {insight.content}
             </p>
-            <p className="text-xs text-muted-foreground mt-2">
+            {/* FIX: suppressHydrationWarning evita React Error #418 */}
+            {/* toLocaleTimeString() gera valores diferentes servidor/cliente (timezones) */}
+            <p className="text-xs text-muted-foreground mt-2" suppressHydrationWarning>
               {new Date(insight.timestamp).toLocaleTimeString('pt-BR')}
             </p>
           </motion.div>
