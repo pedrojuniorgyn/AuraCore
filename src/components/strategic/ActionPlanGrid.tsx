@@ -282,7 +282,7 @@ export function ActionPlanGrid({ data, loading = false }: ActionPlanGridProps) {
         cellRenderer: ActionsCell,
         cellRendererParams: {
           onView: (data: ActionPlanGridItem) => router.push(`/strategic/action-plans/${data.id}`),
-          onEdit: (data: ActionPlanGridItem) => router.push(`/strategic/action-plans/${data.id}/edit`),
+          onEdit: (data: ActionPlanGridItem) => router.push(`/strategic/action-plans/${data.id}?edit=true`),
         },
         sortable: false,
         filter: false,

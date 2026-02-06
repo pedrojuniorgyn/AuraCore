@@ -7,7 +7,7 @@
  * @module app/(dashboard)/strategic/action-plans/[id]
  */
 import { use, useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Badge,
   Card,
@@ -161,6 +161,7 @@ export default function ActionPlanDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<ActionPlanDetail | null>(null);
@@ -215,6 +216,10 @@ export default function ActionPlanDetailPage({
           howMuchAmount: data.howMuchAmount || 0,
           howMuchCurrency: data.howMuchCurrency || 'BRL',
         });
+        // Ativar modo de edição se ?edit=true na URL (navegação do Grid)
+        if (searchParams.get('edit') === 'true') {
+          setIsEditing5W2H(true);
+        }
       } catch (error) {
         // Se for 404, redirecionar
         if (error instanceof APIResponseError && error.status === 404) {
@@ -227,7 +232,7 @@ export default function ActionPlanDetailPage({
       }
     };
     loadPlan();
-  }, [id, router]);
+  }, [id, router, searchParams]);
 
   const refreshPlan = async () => {
     setLoading(true);
