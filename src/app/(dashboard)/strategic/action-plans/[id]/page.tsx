@@ -198,6 +198,9 @@ export default function ActionPlanDetailPage({
     evidenceUrls: '',
   });
 
+  // Extrair valor primitivo para evitar infinite loop (searchParams retorna nova referência a cada render)
+  const editMode = searchParams.get('edit') === 'true';
+
   useEffect(() => {
     const loadPlan = async () => {
       setLoading(true);
@@ -216,10 +219,8 @@ export default function ActionPlanDetailPage({
           howMuchAmount: data.howMuchAmount || 0,
           howMuchCurrency: data.howMuchCurrency || 'BRL',
         });
-        // Ativar modo de edição se ?edit=true na URL (navegação do Grid)
-        if (searchParams.get('edit') === 'true') {
-          setIsEditing5W2H(true);
-        }
+        // Sincronizar modo de edição com query param ?edit=true
+        setIsEditing5W2H(editMode);
       } catch (error) {
         // Se for 404, redirecionar
         if (error instanceof APIResponseError && error.status === 404) {
@@ -232,7 +233,7 @@ export default function ActionPlanDetailPage({
       }
     };
     loadPlan();
-  }, [id, router, searchParams]);
+  }, [id, router, editMode]);
 
   const refreshPlan = async () => {
     setLoading(true);

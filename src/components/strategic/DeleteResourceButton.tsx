@@ -100,8 +100,7 @@ export function DeleteResourceButton({
           onDeleteSuccess();
         }
         router.push(redirectTo);
-        // FIX: Forçar refresh após navegação para garantir lista atualizada
-        setTimeout(() => router.refresh(), 100);
+        router.refresh();
       },
     });
   };
@@ -194,8 +193,7 @@ export function DeleteResourceButtonCompact({
           onDeleteSuccess();
         }
         router.push(redirectTo);
-        // FIX: Forçar refresh após navegação para garantir lista atualizada
-        setTimeout(() => router.refresh(), 100);
+        router.refresh();
       },
     });
   };
