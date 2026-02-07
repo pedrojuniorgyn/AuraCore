@@ -340,6 +340,19 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-759122",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "Mais uma regressão de LC-506620: linha 281 de meetings/[id]/page.tsx checava {formattedStartTime ? ...} ao invés de {meeting?.scheduledAt ? ...}. Mesmo erro que corrigi em outros lugares, mas esta linha foi esquecida durante a correção do Bug 1 em LC-506620.",
+      "correction": "Substituído {formattedStartTime ? \\`${formattedStartTime} (${meeting.expectedDuration} min)\\` : '\\u00A0'} por {meeting?.scheduledAt ? \\`${formattedStartTime} (${meeting.expectedDuration} min)\\` : '\\u00A0'}. Agora verifica dado original (meeting.scheduledAt) mantendo padrão consistente com resto do arquivo.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

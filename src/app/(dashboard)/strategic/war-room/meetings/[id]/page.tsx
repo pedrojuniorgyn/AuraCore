@@ -278,7 +278,7 @@ export default function MeetingDetailPage({
                       <div>
                         <Text className="text-gray-400 text-xs">Horário</Text>
                         <Text className="text-white">
-                          {formattedStartTime ? `${formattedStartTime} (${meeting.expectedDuration} min)` : '\u00A0'}
+                          {meeting?.scheduledAt ? `${formattedStartTime} (${meeting.expectedDuration} min)` : '\u00A0'}
                         </Text>
                       </div>
                     </Flex>
