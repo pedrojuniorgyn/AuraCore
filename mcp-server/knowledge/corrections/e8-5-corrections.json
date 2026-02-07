@@ -278,6 +278,24 @@
       "pattern_created": "HYDRATION-CHECK-ORIGINAL-DATA-001",
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-327861",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "CRÍTICO (extensão de LC-161293): Pattern {formatted || '\\u00A0'} também causa hydration mismatch porque verifica strings formatadas ao invés de dados originais. Durante hydration, hooks useSyncExternalStore retornam valores formatados no cliente mas string vazia no servidor, causando conteúdo textual diferente. Encontrado em 5 páginas adicionais (goals, ideas, pdca, swot, approvals) e war-room/page.tsx com useState(new Date()) que gera timestamps diferentes entre renders.",
+      "correction": "Aplicado pattern correto {data?.property ? formatted : '\\u00A0'} em goals, ideas, pdca, swot. Para war-room/page.tsx: substituído useState(new Date()) por useState(new Date(0)) para evitar timestamps diferentes. Para approvals helper components: simplificado para {formatted || '\\u00A0'} pois não há dados originais para verificar (componentes assumem date sempre válido). Pattern HYDRATION-CHECK-ORIGINAL-DATA aplica-se quando há dados originais disponíveis para verificação condicional.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/goals/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/pdca/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/approvals/page.tsx",
+        "src/app/(dashboard)/strategic/war-room/page.tsx"
+      ],
+      "pattern_created": "HYDRATION-CHECK-ORIGINAL-DATA-002",
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

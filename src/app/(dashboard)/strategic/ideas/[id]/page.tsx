@@ -498,7 +498,7 @@ export default function IdeaDetailPage() {
                     <span className="text-white/50 text-sm">Criado em</span>
                     <p className="text-white flex items-center gap-2">
                       <Clock size={14} className="text-white/50" />
-                      {formattedCreatedAt || '\u00A0'}
+                      {idea?.createdAt ? formattedCreatedAt : '\u00A0'}
                     </p>
                   </div>
                   {idea.updatedAt && (

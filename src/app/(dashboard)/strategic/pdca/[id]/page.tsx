@@ -213,11 +213,11 @@ export default function PDCADetailPage() {
             )}
             <div>
               <dt className="text-sm text-white/60">Data Início</dt>
-              <dd className="text-white">{formattedStartDate || '\u00A0'}</dd>
+              <dd className="text-white">{data?.startDate ? formattedStartDate : '\u00A0'}</dd>
             </div>
             <div>
               <dt className="text-sm text-white/60">Data Fim</dt>
-              <dd className="text-white">{formattedEndDate || '\u00A0'}</dd>
+              <dd className="text-white">{data?.endDate ? formattedEndDate : '\u00A0'}</dd>
             </div>
             {data.isOverdue && (
               <div>

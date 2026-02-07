@@ -61,7 +61,7 @@ export default function WarRoomPage() {
   const [data, setData] = useState<WarRoomData | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [lastUpdate, setLastUpdate] = useState(new Date(0)); // Static epoch to prevent SSR flickering
   const refreshInterval = 30; // seconds
 
   // Formatação de tempo no cliente (evita hydration mismatch)

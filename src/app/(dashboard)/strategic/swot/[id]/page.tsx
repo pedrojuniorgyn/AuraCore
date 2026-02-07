@@ -521,7 +521,7 @@ export default function SwotDetailPage() {
                   )}
                   <div>
                     <span className="text-white/50 text-sm">Criado em</span>
-                    <p className="text-white text-sm">{formattedCreatedAt || '\u00A0'}</p>
+                    <p className="text-white text-sm">{swot?.createdAt ? formattedCreatedAt : '\u00A0'}</p>
                   </div>
                   {swot.updatedAt && (
                     <div>

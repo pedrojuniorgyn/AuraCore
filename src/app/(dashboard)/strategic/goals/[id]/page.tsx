@@ -428,12 +428,12 @@ export default function GoalDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-white/50">Data de Início</p>
-                <p className="text-white font-medium">{formattedStartDate || '\u00A0'}</p>
+                <p className="text-white font-medium">{goal?.startDate ? formattedStartDate : '\u00A0'}</p>
               </div>
               <div>
                 <p className="text-sm text-white/50">Data de Término</p>
                 {!isEditing ? (
-                  <p className="text-white font-medium">{formattedDueDate || '\u00A0'}</p>
+                  <p className="text-white font-medium">{goal?.dueDate ? formattedDueDate : '\u00A0'}</p>
                 ) : (
                   <Input
                     type="date"
