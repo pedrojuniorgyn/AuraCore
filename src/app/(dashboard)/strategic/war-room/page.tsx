@@ -20,6 +20,7 @@ import { AuroraInsightCard } from '@/components/strategic/AuroraInsightCard';
 import { AIInsightWidget } from '@/components/ai';
 import { VoiceChatPanel } from '@/components/voice';
 import { fetchAPI } from '@/lib/api';
+import { useClientFormattedTime } from '@/hooks/useClientFormattedTime';
 
 interface WarRoomData {
   healthScore: number;
@@ -62,6 +63,9 @@ export default function WarRoomPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const refreshInterval = 30; // seconds
+
+  // Formatação de tempo no cliente (evita hydration mismatch)
+  const formattedLastUpdate = useClientFormattedTime(lastUpdate);
 
   const fetchData = useCallback(async () => {
     try {
@@ -196,9 +200,11 @@ export default function WarRoomPage() {
                     </span>
                   </div>
                 )}
-                <p className="text-white/40 text-xs mt-2">
-                  Última atualização: {lastUpdate.toLocaleTimeString()}
-                </p>
+                {formattedLastUpdate && (
+                  <p className="text-white/40 text-xs mt-2">
+                    Última atualização: {formattedLastUpdate}
+                  </p>
+                )}
               </div>
             </motion.div>
 
