@@ -353,6 +353,19 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-808956",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "Mais uma regressão de LC-506620: linha 272 de meetings/[id]/page.tsx usava {formattedDate || '\\u00A0'} checando string formatada ao invés de meeting?.scheduledAt (dado original). Segunda linha esquecida no mesmo arquivo durante correção do Bug 1 em LC-506620.",
+      "correction": "Substituído {formattedDate || '\\u00A0'} por {meeting?.scheduledAt ? formattedDate : '\\u00A0'}. Agora verifica dado original mantendo consistência com linhas 273 e 281 do mesmo arquivo que foram corrigidas em LC-506620 e LC-759122.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

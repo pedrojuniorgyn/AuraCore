@@ -269,7 +269,7 @@ export default function MeetingDetailPage({
                       <Calendar className="w-5 h-5 text-blue-400" />
                       <div>
                         <Text className="text-gray-400 text-xs">Data</Text>
-                        <Text className="text-white">{formattedDate || '\u00A0'}</Text>
+                        <Text className="text-white">{meeting?.scheduledAt ? formattedDate : '\u00A0'}</Text>
                       </div>
                     </Flex>
 
