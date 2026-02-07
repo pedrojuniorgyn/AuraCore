@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { fetchAPI } from '@/lib/api';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface Idea {
@@ -103,6 +104,14 @@ export default function IdeaDetailPage() {
     confirmDelete,
     pendingOptions,
   } = useDeleteResource('ideas');
+
+  // Formatação de datas no cliente (evita hydration mismatch)
+  const formattedCreatedAt = useClientFormattedDate(idea?.createdAt || new Date(), 'pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
   const [isSaving, setIsSaving] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
@@ -486,14 +495,12 @@ export default function IdeaDetailPage() {
                   )}
                   <div>
                     <span className="text-white/50 text-sm">Criado em</span>
-                    <p className="text-white flex items-center gap-2">
-                      <Clock size={14} className="text-white/50" />
-                      {new Date(idea.createdAt).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    {formattedCreatedAt && (
+                      <p className="text-white flex items-center gap-2">
+                        <Clock size={14} className="text-white/50" />
+                        {formattedCreatedAt}
+                      </p>
+                    )}
                   </div>
                   {idea.updatedAt && (
                     <div>

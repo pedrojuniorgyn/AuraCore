@@ -24,6 +24,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { fetchAPI } from '@/lib/api';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 
 interface SwotItem {
   id: string;
@@ -86,6 +87,13 @@ export default function SwotDetailPage() {
     cancelDelete, // ✅ BUG-FIX: Necessário para limpar refs internos ao cancelar
     pendingOptions,
   } = useDeleteResource('swot');
+
+  // Formatação de datas no cliente (evita hydration mismatch)
+  const formattedCreatedAt = useClientFormattedDate(swot?.createdAt || new Date(), 'pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 
   const [editForm, setEditForm] = useState({
     title: '',
@@ -512,13 +520,9 @@ export default function SwotDetailPage() {
                   )}
                   <div>
                     <span className="text-white/50 text-sm">Criado em</span>
-                    <p className="text-white text-sm">
-                      {new Date(swot.createdAt).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    {formattedCreatedAt && (
+                      <p className="text-white text-sm">{formattedCreatedAt}</p>
+                    )}
                   </div>
                   {swot.updatedAt && (
                     <div>

@@ -28,6 +28,20 @@ import { SubmissionStatusBadge } from './components/SubmissionStatusBadge';
 import { useApprovals } from './hooks/useApprovals';
 import { PageTransition, FadeIn, StaggerContainer } from '@/components/ui/animated-wrappers';
 import { RippleButton } from '@/components/ui/ripple-button';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
+
+// Componentes auxiliares para formatar datas (evitam hydration mismatch)
+function SubmittedDate({ date }: { date: string }) {
+  const formatted = useClientFormattedDate(date);
+  if (!formatted) return null;
+  return <span>Submetida em: {formatted}</span>;
+}
+
+function DecidedDate({ date }: { date: string }) {
+  const formatted = useClientFormattedDate(date);
+  if (!formatted) return null;
+  return <span>Decidida em: {formatted}</span>;
+}
 
 export default function ApprovalsPage() {
   const [activeTab, setActiveTab] = useState('pending');
@@ -230,12 +244,12 @@ export default function ApprovalsPage() {
                             <div className="flex items-center gap-6 text-sm text-gray-400 flex-wrap">
                               <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4" />
-                                Submetida em: {new Date(item.submittedAt).toLocaleDateString('pt-BR')}
+                                <SubmittedDate date={item.submittedAt} />
                               </div>
                               {item.decidedAt && (
                                 <div className="flex items-center gap-2">
                                   <CheckCircle2 className="w-4 h-4" />
-                                  Decidida em: {new Date(item.decidedAt).toLocaleDateString('pt-BR')}
+                                  <DecidedDate date={item.decidedAt} />
                                 </div>
                               )}
                               {item.decidedBy && (

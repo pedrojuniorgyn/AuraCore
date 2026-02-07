@@ -38,6 +38,7 @@ import { RippleButton } from '@/components/ui/ripple-button';
 import { fetchAPI } from '@/lib/api';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { useClientFormattedDate, useClientFormattedTime } from '@/hooks/useClientFormattedTime';
 
 // Tipos compartilhados (Single Source of Truth)
 import type { 
@@ -79,6 +80,22 @@ const TYPE_LABELS: Record<MeetingType, string> = {
   EMERGENCY: 'Emergência',
 };
 
+// Componente auxiliar para formatar deadline (evita hydration mismatch)
+function DecisionDeadline({ deadline }: { deadline: string }) {
+  const formattedDeadline = useClientFormattedDate(deadline);
+  
+  if (!formattedDeadline) return null;
+  
+  return (
+    <Flex className="gap-2 mt-1" alignItems="center">
+      <Calendar className="w-3 h-3 text-gray-500" />
+      <Text className="text-gray-400 text-xs">
+        Prazo: {formattedDeadline}
+      </Text>
+    </Flex>
+  );
+}
+
 export default function MeetingDetailPage({ 
   params 
 }: { 
@@ -99,6 +116,26 @@ export default function MeetingDetailPage({
     cancelDelete,
     pendingOptions,
   } = useDeleteResource('war-room/meetings');
+
+  // Formatação de datas no cliente (evita hydration mismatch)
+  const formattedDate = useClientFormattedDate(meeting?.scheduledDate || new Date(), 'pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const formattedStartTime = useClientFormattedTime(meeting?.scheduledDate || new Date(), 'pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const formattedEndTime = useClientFormattedTime(
+    meeting?.endTime ? new Date(meeting.endTime) : new Date(),
+    'pt-BR',
+    {
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+  );
 
   const loadMeetingData = useCallback(async () => {
     setLoading(true);
@@ -160,20 +197,6 @@ export default function MeetingDetailPage({
   const agendaProgress = meeting.agendaItems.length > 0 
     ? (completedAgendaItems / meeting.agendaItems.length) * 100 
     : 0;
-
-  const formatDate = (date: string) => 
-    new Date(date).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-
-  const formatTime = (date: string) => 
-    new Date(date).toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
 
   return (
     <PageTransition>
@@ -250,7 +273,9 @@ export default function MeetingDetailPage({
                       <Calendar className="w-5 h-5 text-blue-400" />
                       <div>
                         <Text className="text-gray-400 text-xs">Data</Text>
-                        <Text className="text-white">{formatDate(meeting.scheduledAt)}</Text>
+                        {formattedDate && (
+                          <Text className="text-white">{formattedDate}</Text>
+                        )}
                       </div>
                     </Flex>
 
@@ -258,9 +283,11 @@ export default function MeetingDetailPage({
                       <Clock className="w-5 h-5 text-blue-400" />
                       <div>
                         <Text className="text-gray-400 text-xs">Horário</Text>
-                        <Text className="text-white">
-                          {formatTime(meeting.scheduledAt)} ({meeting.expectedDuration} min)
-                        </Text>
+                        {formattedStartTime && (
+                          <Text className="text-white">
+                            {formattedStartTime} ({meeting.expectedDuration} min)
+                          </Text>
+                        )}
                       </div>
                     </Flex>
                   </div>
@@ -378,12 +405,7 @@ export default function MeetingDetailPage({
                           </Flex>
                         )}
                         {decision.deadline && (
-                          <Flex className="gap-2 mt-1" alignItems="center">
-                            <Calendar className="w-3 h-3 text-gray-500" />
-                            <Text className="text-gray-400 text-xs">
-                              Prazo: {new Date(decision.deadline).toLocaleDateString('pt-BR')}
-                            </Text>
-                          </Flex>
+                          <DecisionDeadline deadline={decision.deadline} />
                         )}
                       </div>
                     ))}
