@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 
 interface PDCACycle {
   id: string;
@@ -63,6 +64,10 @@ export default function PDCADetailPage() {
     cancelDelete,
     pendingOptions,
   } = useDeleteResource('pdca');
+
+  // Formatação de datas no cliente (evita hydration mismatch)
+  const formattedStartDate = useClientFormattedDate(data?.startDate || new Date());
+  const formattedEndDate = useClientFormattedDate(data?.endDate || new Date());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -207,15 +212,15 @@ export default function PDCADetailPage() {
             )}
             <div>
               <dt className="text-sm text-white/60">Data Início</dt>
-              <dd className="text-white">
-                {new Date(data.startDate).toLocaleDateString('pt-BR')}
-              </dd>
+              {formattedStartDate && (
+                <dd className="text-white">{formattedStartDate}</dd>
+              )}
             </div>
             <div>
               <dt className="text-sm text-white/60">Data Fim</dt>
-              <dd className="text-white">
-                {new Date(data.endDate).toLocaleDateString('pt-BR')}
-              </dd>
+              {formattedEndDate && (
+                <dd className="text-white">{formattedEndDate}</dd>
+              )}
             </div>
             {data.isOverdue && (
               <div>
