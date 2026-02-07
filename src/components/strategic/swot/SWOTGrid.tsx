@@ -231,7 +231,7 @@ export function SWOTGrid({ data, loading }: SWOTGridProps) {
         cellRenderer: ActionsCell,
         cellRendererParams: {
           onView: (data: SwotAnalysis) => router.push(`/strategic/swot/${data.id}`),
-          onEdit: (data: SwotAnalysis) => router.push(`/strategic/swot/${data.id}/edit`),
+          onEdit: (data: SwotAnalysis) => router.push(`/strategic/swot/${data.id}?edit=true`),
         },
         width: 120,
         pinned: 'right',

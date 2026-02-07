@@ -6,8 +6,8 @@
  *
  * @module app/(dashboard)/strategic/swot/[id]
  */
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import {
   Target, ArrowLeft, Loader2, Edit2, Trash2, Save,
   TrendingUp, AlertTriangle, Lightbulb, Shield,
@@ -62,14 +62,18 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }>
   RESOLVED: { label: 'Resolvido', bg: 'bg-green-500/20', text: 'text-green-400' },
 };
 
-export default function SwotDetailPage() {
+function SwotDetailPageContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+
+  // Ler query param ?edit=true para ativar modo de edição automaticamente
+  const editMode = searchParams.get('edit') === 'true';
 
   const [swot, setSwot] = useState<SwotItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(editMode);
   const [isSaving, setIsSaving] = useState(false);
   
   // Estados para strategies
@@ -160,6 +164,12 @@ export default function SwotDetailPage() {
     }
   }, [id, fetchSwot, fetchStrategies]);
 
+  // Efeito separado para sincronizar modo de edição com URL
+  // Isso permite que ?edit=true funcione ao navegar do grid
+  useEffect(() => {
+    setIsEditing(editMode);
+  }, [editMode]);
+
   // Carregar strategies quando entrar no modo de edição (fallback)
   useEffect(() => {
     if (isEditing && strategies.length === 0) {
@@ -202,6 +212,8 @@ export default function SwotDetailPage() {
 
       toast.success('Análise SWOT atualizada com sucesso!');
       setIsEditing(false);
+      // Limpar query param ?edit=true da URL para manter sincronização
+      router.replace(`/strategic/swot/${id}`, { scroll: false });
       fetchSwot();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar');
@@ -418,7 +430,11 @@ export default function SwotDetailPage() {
 
                     <div className="flex gap-2 pt-4">
                       <Button
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                          setIsEditing(false);
+                          // Limpar query param ?edit=true da URL para manter sincronização
+                          router.replace(`/strategic/swot/${id}`, { scroll: false });
+                        }}
                         variant="outline"
                         className="border-white/10"
                         disabled={isSaving}
@@ -565,5 +581,15 @@ export default function SwotDetailPage() {
         />
       </div>
     </PageTransition>
+  );
+}
+
+// Wrapper com Suspense boundary para evitar hydration mismatch
+// useSearchParams() requer Suspense no Next.js 15
+export default function SwotDetailPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <SwotDetailPageContent />
+    </Suspense>
   );
 }

@@ -214,7 +214,7 @@ export function IdeasGrid({ data, loading }: IdeasGridProps) {
         cellRenderer: ActionsCell,
         cellRendererParams: {
           onView: (data: Idea) => router.push(`/strategic/ideas/${data.id}`),
-          onEdit: (data: Idea) => router.push(`/strategic/ideas/${data.id}/edit`),
+          onEdit: (data: Idea) => router.push(`/strategic/ideas/${data.id}?edit=true`),
         },
         width: 120,
         pinned: 'right',

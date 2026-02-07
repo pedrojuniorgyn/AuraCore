@@ -6,8 +6,8 @@
  * 
  * @module app/(dashboard)/strategic/ideas/[id]
  */
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { 
   Lightbulb, ArrowLeft, Clock, CheckCircle2, XCircle,
   Target, BarChart3, RefreshCw, Loader2, Edit2, Trash2, Save
@@ -86,14 +86,18 @@ const CONVERT_OPTIONS = [
   { value: 'PDCA', label: 'Ciclo PDCA', icon: RefreshCw, href: '/strategic/pdca' },
 ];
 
-export default function IdeaDetailPage() {
+function IdeaDetailPageContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
+  
+  // Ler query param ?edit=true para ativar modo de edição automaticamente
+  const editMode = searchParams.get('edit') === 'true';
   
   const [idea, setIdea] = useState<Idea | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(editMode);
 
   // Hook de delete
   const {
@@ -158,6 +162,12 @@ export default function IdeaDetailPage() {
     }
   }, [id, fetchIdea]);
 
+  // Efeito separado para sincronizar modo de edição com URL
+  // Isso permite que ?edit=true funcione ao navegar do grid
+  useEffect(() => {
+    setIsEditing(editMode);
+  }, [editMode]);
+
   const handleConvert = async (targetType: 'ACTION_PLAN' | 'GOAL' | 'KPI' | 'PDCA') => {
     if (!idea) return;
 
@@ -217,6 +227,8 @@ export default function IdeaDetailPage() {
 
       toast.success('Ideia atualizada com sucesso!');
       setIsEditing(false);
+      // Limpar query param ?edit=true da URL para manter sincronização
+      router.replace(`/strategic/ideas/${id}`, { scroll: false });
       fetchIdea();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar');
@@ -395,7 +407,11 @@ export default function IdeaDetailPage() {
 
                     <div className="flex gap-2 pt-4">
                       <Button
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                          setIsEditing(false);
+                          // Limpar query param ?edit=true da URL para manter sincronização
+                          router.replace(`/strategic/ideas/${id}`, { scroll: false });
+                        }}
                         variant="outline"
                         className="border-white/10"
                       >
@@ -567,5 +583,15 @@ export default function IdeaDetailPage() {
         />
       </div>
     </PageTransition>
+  );
+}
+
+// Wrapper com Suspense boundary para evitar hydration mismatch
+// useSearchParams() requer Suspense no Next.js 15
+export default function IdeaDetailPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <IdeaDetailPageContent />
+    </Suspense>
   );
 }
