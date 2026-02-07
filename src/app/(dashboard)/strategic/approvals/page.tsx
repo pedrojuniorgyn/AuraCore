@@ -33,14 +33,12 @@ import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 // Componentes auxiliares para formatar datas (evitam hydration mismatch)
 function SubmittedDate({ date }: { date: string }) {
   const formatted = useClientFormattedDate(date);
-  if (!formatted) return null;
-  return <span>Submetida em: {formatted}</span>;
+  return <span>{formatted ? `Submetida em: ${formatted}` : '\u00A0'}</span>;
 }
 
 function DecidedDate({ date }: { date: string }) {
   const formatted = useClientFormattedDate(date);
-  if (!formatted) return null;
-  return <span>Decidida em: {formatted}</span>;
+  return <span>{formatted ? `Decidida em: ${formatted}` : '\u00A0'}</span>;
 }
 
 export default function ApprovalsPage() {

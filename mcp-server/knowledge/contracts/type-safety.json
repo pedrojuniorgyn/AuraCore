@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.112",
+  "version": "2.0.115",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1898,6 +1898,53 @@
       "correction": "1) Separado efeito de fetch (depende apenas de id) do efeito de editMode sync (depende de editMode) 2) Botão Edit agora usa router.push() com ?edit=true para manter URL sincronizada com estado",
       "files_affected": [
         "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-015434",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "React Error #418 - Hydration mismatch em 9 páginas do módulo Strategic. toLocaleDateString() e toLocaleTimeString() geravam valores diferentes entre servidor (SSR) e cliente (CSR) devido a timezones diferentes, causando HTML diferente e falha de hydration em páginas Next.js 15.",
+      "correction": "Implementado padrão consistente usando hooks useClientFormattedDate/useClientFormattedTime (LC-447015) em todas as 9 páginas. Hooks chamados ANTES de early returns (Rules of Hooks). Para casos em loops/maps, criados componentes auxiliares (DecisionDeadline, SubmittedDate, DecidedDate) que encapsulam os hooks corretamente.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/okrs/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/goals/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/war-room/page.tsx",
+        "src/app/(dashboard)/strategic/pdca/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/approvals/page.tsx"
+      ],
+      "pattern_created": "HYDRATION-BATCH-FIX-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-593679",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "Hook calls em war-room/meetings/[id]/page.tsx referenciavam propriedades incorretas: meeting?.scheduledDate (deveria ser scheduledAt) e meeting?.endTime (deveria ser endedAt). Isso causava fallback para new Date(), exibindo data/hora atual ao invés da data real da reunião.",
+      "correction": "Corrigidas 3 ocorrências: scheduledDate → scheduledAt (2x) e endTime → endedAt (1x). Agora os hooks recebem as propriedades corretas da interface MeetingDetail e exibem as datas reais das reuniões.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-192580",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "formattedEndTime em war-room/meetings/[id]/page.tsx era definido mas nunca usado na UI (código morto). Quando meeting.endedAt é null (reuniões em andamento/agendadas), o hook formatava hora atual ao invés de não exibir nada, causando computação desnecessária e potencial confusão se fosse renderizado no futuro.",
+      "correction": "Removido hook formattedEndTime não utilizado. Adicionado comentário com padrão correto para implementação futura: verificar meeting?.endedAt antes de renderizar tempo formatado. Pattern: {meeting?.endedAt && formattedEndTime && <Text>{formattedEndTime}</Text>}",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
       ],
       "pattern_created": null,
       "status": "APPROVED",

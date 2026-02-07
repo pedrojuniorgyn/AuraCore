@@ -737,11 +737,11 @@ function ActionPlanDetailPageContent({
                     <Calendar className="w-5 h-5 text-blue-400 mt-0.5" />
                     <div className="flex-1">
                       <Text className="text-blue-400 font-medium text-sm">WHEN - Quando será feito</Text>
-                      {formattedWhenStart && formattedWhenEnd && (
-                        <Text className="text-gray-300 mt-1">
-                          {formattedWhenStart} → {formattedWhenEnd}
-                        </Text>
-                      )}
+                      <Text className="text-gray-300 mt-1">
+                        {formattedWhenStart && formattedWhenEnd 
+                          ? `${formattedWhenStart} → ${formattedWhenEnd}`
+                          : '\u00A0'}
+                      </Text>
                       {!plan.isOverdue && daysUntilDue > 0 && (
                         <Text className="text-gray-500 text-sm mt-1">
                           {daysUntilDue} dias restantes

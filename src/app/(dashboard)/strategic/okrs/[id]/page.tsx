@@ -367,11 +367,11 @@ export default function OKRDetailPage() {
               </div>
               <div className="flex items-center gap-2 mt-3 text-sm text-white/40">
                 <Calendar size={14} />
-                {formattedStartDate && formattedEndDate && (
-                  <span>
-                    {formattedStartDate} - {formattedEndDate}
-                  </span>
-                )}
+                <span>
+                  {formattedStartDate && formattedEndDate 
+                    ? `${formattedStartDate} - ${formattedEndDate}` 
+                    : '\u00A0'}
+                </span>
               </div>
             </div>
 

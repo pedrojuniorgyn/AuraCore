@@ -84,13 +84,11 @@ const TYPE_LABELS: Record<MeetingType, string> = {
 function DecisionDeadline({ deadline }: { deadline: string }) {
   const formattedDeadline = useClientFormattedDate(deadline);
   
-  if (!formattedDeadline) return null;
-  
   return (
     <Flex className="gap-2 mt-1" alignItems="center">
       <Calendar className="w-3 h-3 text-gray-500" />
       <Text className="text-gray-400 text-xs">
-        Prazo: {formattedDeadline}
+        {formattedDeadline ? `Prazo: ${formattedDeadline}` : '\u00A0'}
       </Text>
     </Flex>
   );
@@ -268,9 +266,7 @@ export default function MeetingDetailPage({
                       <Calendar className="w-5 h-5 text-blue-400" />
                       <div>
                         <Text className="text-gray-400 text-xs">Data</Text>
-                        {formattedDate && (
-                          <Text className="text-white">{formattedDate}</Text>
-                        )}
+                        <Text className="text-white">{formattedDate || '\u00A0'}</Text>
                       </div>
                     </Flex>
 
@@ -278,11 +274,9 @@ export default function MeetingDetailPage({
                       <Clock className="w-5 h-5 text-blue-400" />
                       <div>
                         <Text className="text-gray-400 text-xs">Horário</Text>
-                        {formattedStartTime && (
-                          <Text className="text-white">
-                            {formattedStartTime} ({meeting.expectedDuration} min)
-                          </Text>
-                        )}
+                        <Text className="text-white">
+                          {formattedStartTime ? `${formattedStartTime} (${meeting.expectedDuration} min)` : '\u00A0'}
+                        </Text>
                       </div>
                     </Flex>
                   </div>
