@@ -128,14 +128,9 @@ export default function MeetingDetailPage({
     hour: '2-digit',
     minute: '2-digit',
   });
-  const formattedEndTime = useClientFormattedTime(
-    meeting?.endedAt ? new Date(meeting.endedAt) : new Date(),
-    'pt-BR',
-    {
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-  );
+  // Note: Para adicionar endTime no futuro, usar:
+  // const formattedEndTime = useClientFormattedTime(meeting?.endedAt || new Date(), ...);
+  // E renderizar condicionalmente: {meeting?.endedAt && formattedEndTime && <Text>{formattedEndTime}</Text>}
 
   const loadMeetingData = useCallback(async () => {
     setLoading(true);
