@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.121",
+  "version": "2.0.122",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -2050,6 +2050,20 @@
         "src/app/(dashboard)/strategic/war-room/page.tsx"
       ],
       "pattern_created": "HYDRATION-LOOP-FIX-DEFINITIVE-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-686013",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "Bug introduzido em LC-506620: Ao adicionar useClientFormattedDateTime para updatedAt em ideas e swot, usei pattern incorreto {formattedUpdatedAt || '\\u00A0'} que checa string formatada. Mesmo erro que corrigi nos helper components na mesma correção! Durante hydration, hook retorna \"\" no servidor mas valor formatado no cliente, causando conteúdo textual diferente e React Error #418. REGRESSÃO: corrigi o pattern nos helpers mas repeti o erro ao escrever código novo.",
+      "correction": "Substituído {formattedUpdatedAt || '\\u00A0'} por {idea?.updatedAt ? formattedUpdatedAt : '\\u00A0'} em ideas/[id] e {swot?.updatedAt ? formattedUpdatedAt : '\\u00A0'} em swot/[id]. Agora verifica dados originais (idea.updatedAt, swot.updatedAt) ao invés de strings formatadas, garantindo conteúdo idêntico durante hydration. LIÇÃO: Pattern IMUTÁVEL deve ser aplicado SEMPRE, inclusive ao escrever código novo durante correções.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

@@ -513,7 +513,7 @@ export default function IdeaDetailPage() {
                     <div>
                       <span className="text-white/50 text-sm">Atualizado em</span>
                       <p className="text-white/70 text-sm">
-                        {formattedUpdatedAt || '\u00A0'}
+                        {idea.updatedAt ? formattedUpdatedAt : '\u00A0'}
                       </p>
                     </div>
                   )}

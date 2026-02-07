@@ -535,7 +535,7 @@ export default function SwotDetailPage() {
                     <div>
                       <span className="text-white/50 text-sm">Atualizado em</span>
                       <p className="text-white/70 text-sm">
-                        {formattedUpdatedAt || '\u00A0'}
+                        {swot.updatedAt ? formattedUpdatedAt : '\u00A0'}
                       </p>
                     </div>
                   )}
