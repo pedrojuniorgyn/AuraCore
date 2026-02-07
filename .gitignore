@@ -116,3 +116,4 @@ report_*.pdf
 /TOOLS.md
 /USER.md
 src/instrumentation.ts.backup
+.cursor/environment.json

@@ -739,7 +739,7 @@ function ActionPlanDetailPageContent({
                     <div className="flex-1">
                       <Text className="text-blue-400 font-medium text-sm">WHEN - Quando será feito</Text>
                       <Text className="text-gray-300 mt-1">
-                        {formattedWhenStart && formattedWhenEnd 
+                        {plan?.whenStart && plan?.whenEnd 
                           ? `${formattedWhenStart} → ${formattedWhenEnd}`
                           : '\u00A0'}
                       </Text>

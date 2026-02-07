@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.116",
+  "version": "2.0.118",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1968,6 +1968,40 @@
         "src/app/(dashboard)/strategic/approvals/page.tsx"
       ],
       "pattern_created": "HYDRATION-ALWAYS-RENDER-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-762146",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "CRÍTICO: Hook calls usavam pattern 'data?.property || new Date()' que criava novo objeto Date a CADA render quando data é null. Durante loading, hook recebia timestamps diferentes (hora atual avançando), causando toLocaleTimeString() retornar strings diferentes e gerando flickering visual, derrotando o propósito da correção de hydration.",
+      "correction": "Substituído new Date() por new Date(0) (epoch estático) em todos os fallbacks. new Date(0) retorna valor constante (1970-01-01 00:00:00 UTC) que não muda entre renders, eliminando flickering durante loading. Aplicado em 7 arquivos com 11 hooks calls afetados: pdca, okrs, goals, action-plans, swot, war-room meetings, ideas.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/pdca/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/okrs/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/goals/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx"
+      ],
+      "pattern_created": "HYDRATION-STATIC-FALLBACK-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-161293",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "CRÍTICO: Pattern condicional verificava strings formatadas (formattedDate && ...) ao invés dos dados originais (data?.property). Durante hydration, hooks já retornam valores formatados no cliente via useSyncExternalStore, causando conteúdo textual diferente entre servidor ('\\u00A0') e cliente (datas formatadas), gerando React Error #418 mesmo com estrutura DOM idêntica.",
+      "correction": "Substituído pattern {formatted && ... ? ... : '\\u00A0'} por {data?.property && ... ? formattedString : '\\u00A0'}. Agora verifica se DADOS ORIGINAIS existem (não strings formatadas), garantindo conteúdo idêntico durante hydration inicial: servidor e cliente ambos renderizam '\\u00A0' até dados carregarem. Aplicado em okrs/[id] e action-plans/[id].",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/okrs/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
+      ],
+      "pattern_created": "HYDRATION-CHECK-ORIGINAL-DATA-001",
       "status": "APPROVED",
       "must_not_repeat": true
     }
