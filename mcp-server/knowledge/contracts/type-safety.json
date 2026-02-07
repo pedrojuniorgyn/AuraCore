@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.119",
+  "version": "2.0.120",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -2020,6 +2020,19 @@
         "src/app/(dashboard)/strategic/war-room/page.tsx"
       ],
       "pattern_created": "HYDRATION-CHECK-ORIGINAL-DATA-002",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-029586",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "Bug introduzido em LC-327861: Helper components SubmittedDate e DecidedDate tiveram labels \"Submetida em:\" e \"Decidida em:\" removidos durante simplificação do pattern de hydration. Components renderizavam apenas timestamps sem contexto, tornando UI ambígua (não ficava claro qual timestamp era submissão vs. decisão).",
+      "correction": "Restaurados labels dentro dos helper components mantendo pattern correto de hydration. SubmittedDate agora renderiza {formatted ? `Submetida em: ${formatted}` : '\\u00A0'} e DecidedDate renderiza {formatted ? `Decidida em: ${formatted}` : '\\u00A0'}. Pattern permanece correto: elemento sempre renderizado com placeholder durante SSR/hydration, conteúdo completo (label + data formatada) após dados carregarem.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/approvals/page.tsx"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }
