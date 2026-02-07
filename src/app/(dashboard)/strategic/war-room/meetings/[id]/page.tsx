@@ -118,18 +118,18 @@ export default function MeetingDetailPage({
   } = useDeleteResource('war-room/meetings');
 
   // Formatação de datas no cliente (evita hydration mismatch)
-  const formattedDate = useClientFormattedDate(meeting?.scheduledDate || new Date(), 'pt-BR', {
+  const formattedDate = useClientFormattedDate(meeting?.scheduledAt || new Date(), 'pt-BR', {
     weekday: 'long',
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
-  const formattedStartTime = useClientFormattedTime(meeting?.scheduledDate || new Date(), 'pt-BR', {
+  const formattedStartTime = useClientFormattedTime(meeting?.scheduledAt || new Date(), 'pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
   });
   const formattedEndTime = useClientFormattedTime(
-    meeting?.endTime ? new Date(meeting.endTime) : new Date(),
+    meeting?.endedAt ? new Date(meeting.endedAt) : new Date(),
     'pt-BR',
     {
       hour: '2-digit',
