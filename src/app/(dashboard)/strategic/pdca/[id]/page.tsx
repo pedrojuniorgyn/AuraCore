@@ -66,8 +66,9 @@ export default function PDCADetailPage() {
   } = useDeleteResource('pdca');
 
   // Formatação de datas no cliente (evita hydration mismatch)
-  const formattedStartDate = useClientFormattedDate(data?.startDate || new Date());
-  const formattedEndDate = useClientFormattedDate(data?.endDate || new Date());
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedStartDate = useClientFormattedDate(data?.startDate || new Date(0));
+  const formattedEndDate = useClientFormattedDate(data?.endDate || new Date(0));
 
   useEffect(() => {
     const fetchData = async () => {

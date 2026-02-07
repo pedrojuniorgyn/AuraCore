@@ -48,8 +48,9 @@ export default function GoalDetailPage() {
 
   // Formatação de datas no cliente (evita hydration mismatch)
   // Chamado sempre antes de early returns (Rules of Hooks)
-  const formattedStartDate = useClientFormattedDate(goal?.startDate || new Date());
-  const formattedDueDate = useClientFormattedDate(goal?.dueDate || new Date());
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedStartDate = useClientFormattedDate(goal?.startDate || new Date(0));
+  const formattedDueDate = useClientFormattedDate(goal?.dueDate || new Date(0));
 
   useEffect(() => {
     const load = async () => {

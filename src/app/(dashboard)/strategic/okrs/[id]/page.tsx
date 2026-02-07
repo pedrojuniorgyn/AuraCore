@@ -59,8 +59,9 @@ export default function OKRDetailPage() {
 
   // Formatação de datas no cliente (evita hydration mismatch)
   // Chamado sempre antes de early returns (Rules of Hooks)
-  const formattedStartDate = useClientFormattedDate(okr?.startDate || new Date());
-  const formattedEndDate = useClientFormattedDate(okr?.endDate || new Date());
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedStartDate = useClientFormattedDate(okr?.startDate || new Date(0));
+  const formattedEndDate = useClientFormattedDate(okr?.endDate || new Date(0));
 
   useEffect(() => {
     async function loadOKR() {

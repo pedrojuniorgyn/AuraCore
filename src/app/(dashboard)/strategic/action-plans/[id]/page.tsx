@@ -206,12 +206,13 @@ function ActionPlanDetailPageContent({
 
   // Formatação de datas no cliente (evita hydration mismatch)
   // Chamado sempre antes de early returns (Rules of Hooks)
-  const formattedWhenStart = useClientFormattedDate(plan?.whenStart || new Date(), 'pt-BR', {
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedWhenStart = useClientFormattedDate(plan?.whenStart || new Date(0), 'pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
-  const formattedWhenEnd = useClientFormattedDate(plan?.whenEnd || new Date(), 'pt-BR', {
+  const formattedWhenEnd = useClientFormattedDate(plan?.whenEnd || new Date(0), 'pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

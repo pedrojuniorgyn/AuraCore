@@ -116,18 +116,19 @@ export default function MeetingDetailPage({
   } = useDeleteResource('war-room/meetings');
 
   // Formatação de datas no cliente (evita hydration mismatch)
-  const formattedDate = useClientFormattedDate(meeting?.scheduledAt || new Date(), 'pt-BR', {
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedDate = useClientFormattedDate(meeting?.scheduledAt || new Date(0), 'pt-BR', {
     weekday: 'long',
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
-  const formattedStartTime = useClientFormattedTime(meeting?.scheduledAt || new Date(), 'pt-BR', {
+  const formattedStartTime = useClientFormattedTime(meeting?.scheduledAt || new Date(0), 'pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
   });
   // Note: Para adicionar endTime no futuro, usar:
-  // const formattedEndTime = useClientFormattedTime(meeting?.endedAt || new Date(), ...);
+  // const formattedEndTime = useClientFormattedTime(meeting?.endedAt || new Date(0), ...);
   // E renderizar condicionalmente: {meeting?.endedAt && formattedEndTime && <Text>{formattedEndTime}</Text>}
 
   const loadMeetingData = useCallback(async () => {

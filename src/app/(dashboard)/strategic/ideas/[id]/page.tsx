@@ -106,7 +106,8 @@ export default function IdeaDetailPage() {
   } = useDeleteResource('ideas');
 
   // Formatação de datas no cliente (evita hydration mismatch)
-  const formattedCreatedAt = useClientFormattedDate(idea?.createdAt || new Date(), 'pt-BR', {
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedCreatedAt = useClientFormattedDate(idea?.createdAt || new Date(0), 'pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

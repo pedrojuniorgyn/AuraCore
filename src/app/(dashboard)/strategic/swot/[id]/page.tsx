@@ -89,7 +89,8 @@ export default function SwotDetailPage() {
   } = useDeleteResource('swot');
 
   // Formatação de datas no cliente (evita hydration mismatch)
-  const formattedCreatedAt = useClientFormattedDate(swot?.createdAt || new Date(), 'pt-BR', {
+  // Usar epoch (new Date(0)) como fallback para evitar flickering durante loading
+  const formattedCreatedAt = useClientFormattedDate(swot?.createdAt || new Date(0), 'pt-BR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.115",
+  "version": "2.0.116",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -1947,6 +1947,27 @@
         "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
       ],
       "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-926575",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "CRÍTICO: Implementação anterior das correções de hydration (LC-015434) usava renderização condicional {formatted && <Element>} que CAUSAVA hydration mismatch ao invés de prevenir. Servidor renderizava nada (string vazia = falsy), cliente renderizava elemento (string formatada = truthy), resultando em estruturas DOM diferentes e React Error #418 em TODAS as 9 páginas corrigidas.",
+      "correction": "Corrigido padrão de renderização para SEMPRE renderizar elemento container, apenas variando o conteúdo: <Element>{formatted || '\\u00A0'}</Element>. Aplicado em 10 arquivos: 8 páginas + 3 componentes auxiliares (DecisionDeadline, SubmittedDate, DecidedDate). Pattern correto: elemento sempre renderizado com '\\u00A0' (non-breaking space) como placeholder no servidor.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/pdca/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/okrs/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/goals/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/war-room/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/approvals/page.tsx"
+      ],
+      "pattern_created": "HYDRATION-ALWAYS-RENDER-001",
       "status": "APPROVED",
       "must_not_repeat": true
     }
