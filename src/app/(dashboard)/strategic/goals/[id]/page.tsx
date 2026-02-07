@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 
 interface GoalDetail {
   id: string;
@@ -45,6 +46,11 @@ export default function GoalDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editedGoal, setEditedGoal] = useState<GoalDetail | null>(null);
 
+  // Formatação de datas no cliente (evita hydration mismatch)
+  // Chamado sempre antes de early returns (Rules of Hooks)
+  const formattedStartDate = useClientFormattedDate(goal?.startDate || new Date());
+  const formattedDueDate = useClientFormattedDate(goal?.dueDate || new Date());
+
   useEffect(() => {
     const load = async () => {
       if (!params?.id) {
@@ -73,10 +79,6 @@ export default function GoalDetailPage() {
   }, [params?.id]);
 
   const goBack = () => router.push('/strategic/goals');
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('pt-BR');
-  };
 
   // ✅ BUG-001: Função de salvar
   const handleSave = async () => {
@@ -425,12 +427,16 @@ export default function GoalDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-white/50">Data de Início</p>
-                <p className="text-white font-medium">{formatDate(goal.startDate)}</p>
+                {formattedStartDate && (
+                  <p className="text-white font-medium">{formattedStartDate}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-white/50">Data de Término</p>
                 {!isEditing ? (
-                  <p className="text-white font-medium">{formatDate(goal.dueDate)}</p>
+                  formattedDueDate && (
+                    <p className="text-white font-medium">{formattedDueDate}</p>
+                  )
                 ) : (
                   <Input
                     type="date"

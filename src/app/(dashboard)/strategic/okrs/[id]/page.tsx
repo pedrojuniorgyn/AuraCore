@@ -30,6 +30,7 @@ import type { OKR, KeyResult } from '@/lib/okrs/okr-types';
 import { toast } from 'sonner';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 
 export default function OKRDetailPage() {
   const params = useParams();
@@ -55,6 +56,11 @@ export default function OKRDetailPage() {
     cancelDelete,
     pendingOptions,
   } = useDeleteResource('okrs');
+
+  // Formatação de datas no cliente (evita hydration mismatch)
+  // Chamado sempre antes de early returns (Rules of Hooks)
+  const formattedStartDate = useClientFormattedDate(okr?.startDate || new Date());
+  const formattedEndDate = useClientFormattedDate(okr?.endDate || new Date());
 
   useEffect(() => {
     async function loadOKR() {
@@ -361,10 +367,11 @@ export default function OKRDetailPage() {
               </div>
               <div className="flex items-center gap-2 mt-3 text-sm text-white/40">
                 <Calendar size={14} />
-                <span>
-                  {new Date(okr.startDate).toLocaleDateString('pt-BR')} -{' '}
-                  {new Date(okr.endDate).toLocaleDateString('pt-BR')}
-                </span>
+                {formattedStartDate && formattedEndDate && (
+                  <span>
+                    {formattedStartDate} - {formattedEndDate}
+                  </span>
+                )}
               </div>
             </div>
 

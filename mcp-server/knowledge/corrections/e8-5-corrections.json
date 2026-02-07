@@ -1,0 +1,181 @@
+{
+  "epic": "E8.5",
+  "corrections": [
+    {
+      "id": "LC-649449",
+      "date": "2026-02-05",
+      "epic": "E8.5",
+      "error": "BaseGrid's mobileColumns filter usa field.includes(mobileCol) para filtrar colunas em mobile. Colunas de Ações sem propriedade 'field' eram convertidas para string vazia, causando exclusão da coluna e tornando botões de ação inacessíveis em dispositivos móveis.",
+      "correction": "Adicionado field: 'actions' na definição de coluna de Ações em todos os grids estratégicos (ActionPlanGrid, PDCAGrid, SWOTGrid, IdeasGrid)",
+      "files_affected": [
+        "src/components/strategic/ActionPlanGrid.tsx",
+        "src/components/strategic/pdca/PDCAGrid.tsx",
+        "src/components/strategic/swot/SWOTGrid.tsx",
+        "src/components/strategic/ideas/IdeasGrid.tsx"
+      ],
+      "pattern_created": "GRID-MOBILE-ACTIONS-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-741543",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "React Error #418 - Hydration mismatch no AIInsightWidget. toLocaleTimeString() gera valores diferentes entre servidor (SSR) e cliente (CSR) devido a timezones diferentes, causando HTML diferente e falha de hydration.",
+      "correction": "Adicionado useState para formattedTime + useEffect para formatar timestamp apenas no cliente. Renderização condicional com {formattedTime && ...} garante que timestamp só aparece após hydration completa.",
+      "files_affected": [
+        "src/components/ai/AIInsightWidget.tsx"
+      ],
+      "pattern_created": "HYDRATION-CLIENT-ONLY-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-945806",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "adjustedTotal no findMany criava contrato de paginação inconsistente: subtraía erros de mapeamento do total, mas cada página poderia ter taxas de erro diferentes, causando totais inconsistentes entre páginas (ex: pág1=98, pág2=100, pág3=95)",
+      "correction": "Removido adjustedTotal e retornado total original. Erros de mapeamento devem ser logados para correção de dados, não escondidos manipulando o total. Contrato de paginação agora é consistente.",
+      "files_affected": [
+        "src/modules/strategic/okr/infrastructure/persistence/repositories/DrizzleOkrRepository.ts"
+      ],
+      "pattern_created": "PAGINATION-TOTAL-INTEGRITY-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-447015",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "Fix anterior usava suppressHydrationWarning que apenas mascara o problema. O timestamp ainda mostrava valor incorreto dependendo da timezone do servidor vs cliente. O toLocaleTimeString() continuava gerando HTML diferente.",
+      "correction": "Criado hook useClientFormattedTime usando useSyncExternalStore do React 18 para formatar timestamps apenas no cliente. Hook retorna string vazia no servidor e formata após hydration, garantindo timezone correta do usuário.",
+      "files_affected": [
+        "src/hooks/useClientFormattedTime.ts",
+        "src/components/ai/AIInsightWidget.tsx"
+      ],
+      "pattern_created": "HYDRATION-USESYNCEXTERNALSTORE-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-280464",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "Botão Edit no ActionPlanGrid navegava para /strategic/action-plans/[id]/edit que não existe, causando 404. A página de detalhes já possui edição inline.",
+      "correction": "Removido /edit do caminho de navegação. onEdit agora navega para /strategic/action-plans/[id] (página de detalhes com edição inline).",
+      "files_affected": [
+        "src/components/strategic/ActionPlanGrid.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-525293",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "Fix anterior fazia onView e onEdit navegarem para a mesma URL, perdendo distinção de UX entre visualizar e editar. ActionPlanGrid não tem rota /[id]/edit como outros grids (PDCA, SWOT, Ideas).",
+      "correction": "onEdit navega com query param ?edit=true. Página de detalhes lê searchParams e ativa isEditing5W2H automaticamente quando edit=true, mantendo distinção de UX.",
+      "files_affected": [
+        "src/components/strategic/ActionPlanGrid.tsx",
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-651607",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "Após exclusão de OKR (ou qualquer recurso), lista não atualizava automaticamente. router.push() ocorria antes do cache Next.js ser atualizado, causando race condition com router.refresh() no hook useDeleteResource.",
+      "correction": "Adicionado setTimeout(() => router.refresh(), 100) após router.push() em DeleteResourceButton e DeleteResourceButtonCompact, garantindo refresh após navegação completar.",
+      "files_affected": [
+        "src/components/strategic/DeleteResourceButton.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-422001",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "3 bugs em fixes anteriores: 1) isEditing5W2H só setava true, nunca false - dessincronizava UI com URL 2) searchParams no dependency array causava infinite loop (nova referência a cada render) 3) setTimeout(100ms) antes de router.refresh() criava race condition",
+      "correction": "1) setIsEditing5W2H(editMode) sincroniza bidirecional com query param 2) Extraída primitiva editMode = searchParams.get('edit') === 'true' como dependency 3) Removido setTimeout, router.refresh() chamado diretamente após router.push() (padrão do codebase)",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx",
+        "src/components/strategic/DeleteResourceButton.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-134372",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "2 bugs em fix anterior: 1) router no dependency array do useEffect causa re-renders infinitos porque useRouter() retorna nova referência a cada render 2) handle5W2HSave e handle5W2HCancel setavam isEditing5W2H=false mas não limpavam ?edit=true da URL, causando dessincronização após refresh",
+      "correction": "1) Removido router do dependency array com eslint-disable comment explicando que router é estável 2) Adicionado router.replace() com scroll:false em handle5W2HSave e handle5W2HCancel para limpar query param da URL",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-306452",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "router.refresh() duplicado em DeleteResourceButton: hook useDeleteResource já chama refresh() após DELETE bem-sucedido (linha 160), mas componente chamava novamente no onSuccess. Isso criava race condition onde refresh podia executar na rota antiga antes da navegação completar.",
+      "correction": "Removido router.refresh() de DeleteResourceButton e DeleteResourceButtonCompact. O hook useDeleteResource já faz refresh, e router.push() para nova página busca dados frescos automaticamente.",
+      "files_affected": [
+        "src/components/strategic/DeleteResourceButton.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-833119",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "useSearchParams() chamado diretamente sem Suspense boundary. No Next.js 15, useSearchParams() não está disponível durante SSR e requer Suspense boundary para evitar hydration mismatch. Padrão do codebase (visto em /new/page.tsx) envolve useSearchParams em componente separado dentro de Suspense.",
+      "correction": "Extraída lógica para ActionPlanDetailPageContent e criado wrapper ActionPlanDetailPage com Suspense boundary e fallback de loading. Segue padrão de /new/page.tsx.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-878325",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "useSearchParams() chamado sem Suspense boundary em 2 arquivos adicionais: user-auth-form.tsx (login) e okrs/new/page.tsx. No Next.js 15, useSearchParams() requer Suspense boundary para evitar hydration mismatch.",
+      "correction": "Aplicado mesmo padrão de action-plans: extraída lógica para componente Content interno e criado wrapper com Suspense boundary e fallback de loading.",
+      "files_affected": [
+        "src/app/(auth)/login/user-auth-form.tsx",
+        "src/app/(dashboard)/strategic/okrs/new/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-101662",
+      "date": "2026-02-06",
+      "epic": "E8.5",
+      "error": "2 bugs no useEffect: 1) editMode no dependency array causava re-fetch quando router.replace() limpava a URL após save/cancel, resultando em chamadas API desnecessárias e re-inicialização do formulário 2) Botão Edit apenas setava estado sem atualizar URL, perdendo modo de edição após page refresh",
+      "correction": "1) Separado efeito de fetch (depende apenas de id) do efeito de editMode sync (depende de editMode) 2) Botão Edit agora usa router.push() com ?edit=true para manter URL sincronizada com estado",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/action-plans/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

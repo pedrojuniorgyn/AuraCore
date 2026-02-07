@@ -26,6 +26,36 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-406747",
+      "date": "2026-02-05",
+      "epic": "E8",
+      "error": "Schema OKR estava correto mas faltava: 1) Migration SQL para criar tabelas no banco 2) Variável timestampMap definida dentro de if mas usada fora 3) Tipo de retorno do Mapper incompatível com id opcional de KeyResult",
+      "correction": "1) Criada migration 0062_create_strategic_okr.sql com tabelas e índices 2) Movida variável timestampMap para escopo externo do if 3) Corrigido tipo de retorno do toPersistence para permitir id: string | undefined",
+      "files_affected": [
+        "drizzle/migrations/0062_create_strategic_okr.sql",
+        "src/modules/strategic/okr/infrastructure/persistence/repositories/DrizzleOkrRepository.ts",
+        "src/modules/strategic/okr/infrastructure/persistence/mappers/OkrMapper.ts",
+        "src/modules/strategic/okr/infrastructure/persistence/schemas/okr.schema.ts",
+        "src/modules/strategic/okr/infrastructure/persistence/schemas/index.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-755363",
+      "date": "2026-02-05",
+      "epic": "E8",
+      "error": "PUT /api/admin/roles/[id]/permissions aceitava array permissionIds sem validar se IDs existem na tabela permissions, causando potenciais violações de foreign key ou dados órfãos",
+      "correction": "Adicionada validação com inArray() que verifica se todos IDs existem antes de modificar role_permissions. Retorna 400 com lista de invalidIds se algum ID não existe",
+      "files_affected": [
+        "src/app/api/admin/roles/[id]/permissions/route.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

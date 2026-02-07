@@ -62,9 +62,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchAPI, APIResponseError } from '@/lib/api';
 import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry, ColDef, ICellRendererParams } from 'ag-grid-community';
+import { ModuleRegistry, ICellRendererParams } from 'ag-grid-community';
 import { AllEnterpriseModule } from 'ag-grid-enterprise';
 import { Button } from '@/components/ui/button';
+import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -202,6 +203,19 @@ function ActionPlanDetailPageContent({
 
   // Extrair valor primitivo para evitar infinite loop (searchParams retorna nova referência a cada render)
   const editMode = searchParams.get('edit') === 'true';
+
+  // Formatação de datas no cliente (evita hydration mismatch)
+  // Chamado sempre antes de early returns (Rules of Hooks)
+  const formattedWhenStart = useClientFormattedDate(plan?.whenStart || new Date(), 'pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const formattedWhenEnd = useClientFormattedDate(plan?.whenEnd || new Date(), 'pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Efeito para carregar dados - NÃO depende de editMode para evitar re-fetch
   // quando router.replace() limpa a URL após save/cancel
@@ -416,13 +430,6 @@ function ActionPlanDetailPageContent({
       setSubmittingFollowUp(false);
     }
   };
-
-  const formatDate = (date: string) => 
-    new Date(date).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
 
   const formatMoney = (amount: number, currency: string) => 
     new Intl.NumberFormat('pt-BR', {
@@ -730,9 +737,11 @@ function ActionPlanDetailPageContent({
                     <Calendar className="w-5 h-5 text-blue-400 mt-0.5" />
                     <div className="flex-1">
                       <Text className="text-blue-400 font-medium text-sm">WHEN - Quando será feito</Text>
-                      <Text className="text-gray-300 mt-1">
-                        {formatDate(plan.whenStart)} → {formatDate(plan.whenEnd)}
-                      </Text>
+                      {formattedWhenStart && formattedWhenEnd && (
+                        <Text className="text-gray-300 mt-1">
+                          {formattedWhenStart} → {formattedWhenEnd}
+                        </Text>
+                      )}
                       {!plan.isOverdue && daysUntilDue > 0 && (
                         <Text className="text-gray-500 text-sm mt-1">
                           {daysUntilDue} dias restantes
