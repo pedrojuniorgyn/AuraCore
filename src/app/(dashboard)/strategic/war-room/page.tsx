@@ -201,7 +201,7 @@ export default function WarRoomPage() {
                   </div>
                 )}
                 <p className="text-white/40 text-xs mt-2">
-                  {formattedLastUpdate ? `Última atualização: ${formattedLastUpdate}` : '\u00A0'}
+                  {lastUpdate.getTime() > 0 ? `Última atualização: ${formattedLastUpdate}` : '\u00A0'}
                 </p>
               </div>
             </motion.div>

@@ -24,7 +24,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { fetchAPI } from '@/lib/api';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
-import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
+import { useClientFormattedDate, useClientFormattedDateTime } from '@/hooks/useClientFormattedTime';
 
 interface SwotItem {
   id: string;
@@ -94,6 +94,14 @@ export default function SwotDetailPage() {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+  });
+  
+  const formattedUpdatedAt = useClientFormattedDateTime(swot?.updatedAt || new Date(0), 'pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   const [editForm, setEditForm] = useState({
@@ -527,13 +535,7 @@ export default function SwotDetailPage() {
                     <div>
                       <span className="text-white/50 text-sm">Atualizado em</span>
                       <p className="text-white/70 text-sm">
-                        {new Date(swot.updatedAt).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formattedUpdatedAt || '\u00A0'}
                       </p>
                     </div>
                   )}

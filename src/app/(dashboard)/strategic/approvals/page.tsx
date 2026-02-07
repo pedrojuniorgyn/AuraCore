@@ -31,16 +31,17 @@ import { RippleButton } from '@/components/ui/ripple-button';
 import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 
 // Componentes auxiliares para formatar datas (evitam hydration mismatch)
-// Helper components sempre renderizam o elemento container, variando apenas o conteúdo
-// Pattern: elemento sempre presente, placeholder '\u00A0' durante SSR/hydration
+// CRÍTICO: SEMPRE verificar DADOS ORIGINAIS (date), NUNCA strings formatadas (formatted)
+// Pattern correto: {date ? `Label: ${formatted}` : '\u00A0'}
+// Durante hydration: formatted="" no servidor, mas date é checado (estável)
 function SubmittedDate({ date }: { date: string }) {
   const formatted = useClientFormattedDate(date);
-  return <span>{formatted ? `Submetida em: ${formatted}` : '\u00A0'}</span>;
+  return <span>{date ? `Submetida em: ${formatted}` : '\u00A0'}</span>;
 }
 
 function DecidedDate({ date }: { date: string }) {
   const formatted = useClientFormattedDate(date);
-  return <span>{formatted ? `Decidida em: ${formatted}` : '\u00A0'}</span>;
+  return <span>{date ? `Decidida em: ${formatted}` : '\u00A0'}</span>;
 }
 
 export default function ApprovalsPage() {

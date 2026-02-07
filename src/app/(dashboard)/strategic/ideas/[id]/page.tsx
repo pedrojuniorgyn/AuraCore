@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { fetchAPI } from '@/lib/api';
 import { useDeleteResource } from '@/hooks/useDeleteResource';
-import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
+import { useClientFormattedDate, useClientFormattedDateTime } from '@/hooks/useClientFormattedTime';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 interface Idea {
@@ -111,6 +111,14 @@ export default function IdeaDetailPage() {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+  });
+  
+  const formattedUpdatedAt = useClientFormattedDateTime(idea?.updatedAt || new Date(0), 'pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   const [isSaving, setIsSaving] = useState(false);
@@ -505,13 +513,7 @@ export default function IdeaDetailPage() {
                     <div>
                       <span className="text-white/50 text-sm">Atualizado em</span>
                       <p className="text-white/70 text-sm">
-                        {new Date(idea.updatedAt).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formattedUpdatedAt || '\u00A0'}
                       </p>
                     </div>
                   )}
