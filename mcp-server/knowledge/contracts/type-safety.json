@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.124",
+  "version": "2.0.125",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -2088,6 +2088,20 @@
       "correction": "Substituído {formattedDate || '\\u00A0'} por {meeting?.scheduledAt ? formattedDate : '\\u00A0'}. Agora verifica dado original mantendo consistência com linhas 273 e 281 do mesmo arquivo que foram corrigidas em LC-506620 e LC-759122.",
       "files_affected": [
         "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-381824",
+      "date": "2026-02-07",
+      "epic": "E8.5",
+      "error": "BUG FUNDAMENTAL em LC-506620 e subsequentes: Helper components (DecisionDeadline, SubmittedDate, DecidedDate) usavam {date ? \\`Label: ${formatted}\\` : '\\u00A0'} que PARECIA correto (checa dados originais) mas CAUSAVA hydration mismatch por concatenar string formatada. Servidor renderizava \\\"Label: \\\" (formatted=\\\"\\\") enquanto cliente renderizava \\\"Label: 07/02/2026\\\" (formatted com valor), gerando conteúdo textual diferente e React Error #418. CAUSA RAIZ: Verificação de 'date' é DESNECESSÁRIA em helper components pois só são chamados quando date existe. A verificação DEVE ser de 'formatted' para garantir conteúdo idêntico durante hydration.",
+      "correction": "Substituído {date ? \\`Label: ${formatted}\\` : '\\u00A0'} por {formatted ? \\`Label: ${formatted}\\` : '\\u00A0'} nos 3 helper components. PATTERN CORRETO FINAL para helpers: verificar 'formatted' (não dados originais). Servidor/Hydration: formatted=\\\"\\\" (falsy) → renderiza '\\u00A0'. Pós-hydration: formatted tem valor (truthy) → renderiza \\\"Label: [data]\\\". Conteúdo IDÊNTICO durante hydration, mudança apenas após hydration completar. Comentários críticos expandidos explicando POR QUE verificar formatted ao invés de date em helper components.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/war-room/meetings/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/approvals/page.tsx"
       ],
       "pattern_created": null,
       "status": "APPROVED",

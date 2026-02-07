@@ -33,15 +33,19 @@ import { useClientFormattedDate } from '@/hooks/useClientFormattedTime';
 // Componentes auxiliares para formatar datas (evitam hydration mismatch)
 // CRÍTICO: SEMPRE verificar DADOS ORIGINAIS (date), NUNCA strings formatadas (formatted)
 // Pattern correto: {date ? `Label: ${formatted}` : '\u00A0'}
-// Durante hydration: formatted="" no servidor, mas date é checado (estável)
+// CRÍTICO: Em helper components, verificar 'formatted' (não 'date') para hydration safety.
+// Components só são chamados quando date existe (verificado pelo pai).
+// Verificar 'formatted' garante conteúdo idêntico durante hydration:
+// - Servidor/Hydration: formatted="" (falsy) → renderiza '\u00A0'
+// - Pós-hydration: formatted="07/02/2026" (truthy) → renderiza "Label: 07/02/2026"
 function SubmittedDate({ date }: { date: string }) {
   const formatted = useClientFormattedDate(date);
-  return <span>{date ? `Submetida em: ${formatted}` : '\u00A0'}</span>;
+  return <span>{formatted ? `Submetida em: ${formatted}` : '\u00A0'}</span>;
 }
 
 function DecidedDate({ date }: { date: string }) {
   const formatted = useClientFormattedDate(date);
-  return <span>{date ? `Decidida em: ${formatted}` : '\u00A0'}</span>;
+  return <span>{formatted ? `Decidida em: ${formatted}` : '\u00A0'}</span>;
 }
 
 export default function ApprovalsPage() {

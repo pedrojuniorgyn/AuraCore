@@ -81,7 +81,11 @@ const TYPE_LABELS: Record<MeetingType, string> = {
 };
 
 // Componente auxiliar para formatar deadline (evita hydration mismatch)
-// CRÍTICO: SEMPRE verificar DADOS ORIGINAIS (deadline), NUNCA strings formatadas (formattedDeadline)
+// CRÍTICO: Em helper components, verificar 'formatted' (não 'deadline') para hydration safety.
+// Component só é chamado quando deadline existe (verificado pelo pai).
+// Verificar 'formatted' garante conteúdo idêntico durante hydration:
+// - Servidor/Hydration: formatted="" (falsy) → renderiza '\u00A0'
+// - Pós-hydration: formatted="07/02/2026" (truthy) → renderiza "Prazo: 07/02/2026"
 function DecisionDeadline({ deadline }: { deadline: string }) {
   const formattedDeadline = useClientFormattedDate(deadline);
   
@@ -89,7 +93,7 @@ function DecisionDeadline({ deadline }: { deadline: string }) {
     <Flex className="gap-2 mt-1" alignItems="center">
       <Calendar className="w-3 h-3 text-gray-500" />
       <Text className="text-gray-400 text-xs">
-        {deadline ? `Prazo: ${formattedDeadline}` : '\u00A0'}
+        {formattedDeadline ? `Prazo: ${formattedDeadline}` : '\u00A0'}
       </Text>
     </Flex>
   );
