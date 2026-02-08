@@ -1,0 +1,63 @@
+{
+  "epic": "E8-Strategic",
+  "corrections": [
+    {
+      "id": "LC-428262",
+      "date": "2026-02-07",
+      "epic": "E8-Strategic",
+      "error": "Botões Edit em SWOT e Ideas grids navegavam para rotas /edit inexistentes, causando erro 404. ActionPlanGrid já estava correto (usa query param ?edit=true).",
+      "correction": "Removido /edit da navegação em SWOTGrid e IdeasGrid. Agora ambos navegam para página de detalhes (/{id}) que possui edição inline via isEditing state.",
+      "files_affected": [
+        "src/components/strategic/swot/SWOTGrid.tsx",
+        "src/components/strategic/ideas/IdeasGrid.tsx"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-948542",
+      "date": "2026-02-07",
+      "epic": "E8-Strategic",
+      "error": "BUG INICIAL (incompleto): Botões Edit e View em SWOT/Ideas grids navegavam para mesma rota, fazendo ações idênticas. BUG REAL: Faltava suporte ao query param ?edit=true nas páginas de detalhes, então modo de edição não era ativado automaticamente ao clicar em Edit.",
+      "correction": "1) Adicionado ?edit=true nos grids (SWOTGrid e IdeasGrid). 2) Adicionado suporte a useSearchParams() nas páginas de detalhes. 3) Extraído componentes internos com Suspense boundary (Next.js 15 requirement). 4) Estado isEditing agora inicializa com editMode do query param. Agora botão Edit ativa modo de edição automaticamente.",
+      "files_affected": [
+        "src/components/strategic/swot/SWOTGrid.tsx",
+        "src/components/strategic/ideas/IdeasGrid.tsx",
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx"
+      ],
+      "pattern_created": "query-param-edit-mode",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-371201",
+      "date": "2026-02-07",
+      "epic": "E8-Strategic",
+      "error": "BUGS CRÍTICOS em SWOT/Ideas: 1) Estado isEditing não sincronizava com query param ?edit=true durante/pós-hydration (useSearchParams retorna vazio inicialmente). 2) Query param não era removida da URL após save/cancel, criando mismatch URL vs UI e causando re-entrada em edit mode.",
+      "correction": "Aplicado padrão correto do ActionPlanGrid: 1) Adicionado useEffect para sincronizar isEditing com editMode do query param. 2) Adicionado router.replace() após save e cancel para limpar ?edit=true da URL. Agora edit mode funciona corretamente via grid e não há mismatch de estado.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/swot/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx"
+      ],
+      "pattern_created": "query-param-state-sync",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-130305",
+      "date": "2026-02-08",
+      "epic": "E8-Strategic",
+      "error": "Double-encoding do JSON ao converter ideias: body: JSON.stringify({ targetType }) era passado ao fetchAPI que já faz JSON.stringify internamente, resultando em string duplamente serializada que falhava na validação Zod da API com erro 400.",
+      "correction": "Removido JSON.stringify das chamadas ao fetchAPI em handleConvert, passando objeto diretamente: body: { targetType }. O fetchAPI já faz JSON.stringify automaticamente no body.",
+      "files_affected": [
+        "src/app/(dashboard)/strategic/ideas/[id]/page.tsx",
+        "src/app/(dashboard)/strategic/ideas/page.tsx"
+      ],
+      "pattern_created": "fetchapi-no-double-stringify",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

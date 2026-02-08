@@ -180,7 +180,7 @@ function IdeaDetailPageContent() {
         targetType: string;
       }>(`/api/strategic/ideas/${idea.id}/convert`, {
         method: 'POST',
-        body: JSON.stringify({ targetType }),
+        body: { targetType },
       });
 
       if (response.success) {

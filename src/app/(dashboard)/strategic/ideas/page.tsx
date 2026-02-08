@@ -119,7 +119,7 @@ export default function IdeasPage() {
         targetType: string;
       }>(`/api/strategic/ideas/${selectedIdea.id}/convert`, {
         method: 'POST',
-        body: JSON.stringify({ targetType }),
+        body: { targetType },
       });
 
       if (response.success) {
