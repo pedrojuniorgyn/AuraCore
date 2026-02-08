@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -14,6 +14,19 @@ const inter = Inter({ subsets: ["latin"] });
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * Next.js 15: viewport e themeColor DEVEM estar em export separado.
+ * Manter dentro de metadata causa hydration mismatch (React Error #418).
+ * @see https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ */
+export const viewport: Viewport = {
+  themeColor: "#667eea",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export const metadata: Metadata = {
   title: "AuraCore | ERP Logístico Enterprise",
   description: "Sistema de Gestão Logística Avançada com Strategic Management, TMS, WMS e Fiscal",
@@ -26,13 +39,6 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
-  },
-  themeColor: "#667eea",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
   },
   icons: {
     icon: [
@@ -58,7 +64,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="AuraCore" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#667eea" />
+        {/* theme-color gerenciado pelo export viewport acima - nao duplicar */}
       </head>
       <body className={inter.className}>
         <Providers>
