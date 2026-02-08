@@ -13,10 +13,14 @@ import type { IConvertIdeaUseCase } from '@/modules/strategic/domain/ports/input
 import type { IIdeaBoxRepository } from '@/modules/strategic/domain/ports/output/IIdeaBoxRepository';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
+import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import { StrategicGoal } from '@/modules/strategic/domain/entities/StrategicGoal';
 import { KPI } from '@/modules/strategic/domain/entities/KPI';
 import { Result } from '@/shared/domain';
 import { CascadeLevel } from '@/modules/strategic/domain/value-objects/CascadeLevel';
+import { db } from '@/lib/db';
+import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
+import { eq, and } from 'drizzle-orm';
 
 const convertIdeaSchema = z.object({
   targetType: z.enum(['ACTION_PLAN', 'GOAL', 'KPI', 'PDCA']),
@@ -237,6 +241,39 @@ async function convertToGoal(
       STRATEGIC_TOKENS.StrategicGoalRepository
     );
 
+    // Resolver perspectiveId: se não fornecido, buscar da estratégia ativa
+    let perspectiveId = options.perspectiveId;
+
+    if (!perspectiveId) {
+      const strategyRepo = container.resolve<IStrategyRepository>(
+        STRATEGIC_TOKENS.StrategyRepository
+      );
+
+      const activeStrategy = await strategyRepo.findActive(
+        tenantCtx.organizationId,
+        tenantCtx.branchId
+      );
+
+      if (!activeStrategy) {
+        return Result.fail('Nenhuma estratégia ativa encontrada. Crie uma estratégia antes de converter ideias em objetivos.');
+      }
+
+      // Buscar perspectiva "Processos Internos" (INT) como padrão para ideias
+      // Fallback: primeira perspectiva disponível
+      const perspectives = await db
+        .select({ id: bscPerspectiveTable.id, code: bscPerspectiveTable.code })
+        .from(bscPerspectiveTable)
+        .where(eq(bscPerspectiveTable.strategyId, activeStrategy.id));
+
+      if (perspectives.length === 0) {
+        return Result.fail('Nenhuma perspectiva BSC encontrada na estratégia ativa. Configure as perspectivas antes de converter.');
+      }
+
+      // Preferir INT (Processos Internos), fallback para primeira disponível
+      const internalPerspective = perspectives.find(p => p.code === 'INT');
+      perspectiveId = internalPerspective?.id ?? perspectives[0].id;
+    }
+
     // Gerar código temporário (formato: GOAL-YYYYMMDD-NNNN)
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -252,12 +289,12 @@ async function convertToGoal(
       branchId: tenantCtx.branchId,
       code,
       description: idea.title,
-      perspectiveId: options.perspectiveId || '', // Será vazio se não fornecido
+      perspectiveId,
       cascadeLevel,
       targetValue: options.targetValue || 100,
       baselineValue: 0,
       unit: 'unidade',
-      polarity: 'UP' as const, // Goal polarity é 'UP' ou 'DOWN'
+      polarity: 'UP' as const,
       weight: 1,
       ownerUserId: tenantCtx.userId,
       ownerBranchId: tenantCtx.branchId,

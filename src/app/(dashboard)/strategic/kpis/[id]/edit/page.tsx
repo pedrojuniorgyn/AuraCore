@@ -86,7 +86,7 @@ export default function EditKPIPage() {
         body: {
           code: formData.code.trim().toUpperCase(),
           name: formData.name.trim(),
-          description: formData.description?.trim(),
+          description: formData.description?.trim() || null,
           unit: formData.unit,
           frequency: formData.frequency,
           polarity: formData.polarity,

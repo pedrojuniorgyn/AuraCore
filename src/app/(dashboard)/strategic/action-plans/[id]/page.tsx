@@ -305,16 +305,19 @@ function ActionPlanDetailPageContent({
       await fetchAPI(`/api/strategic/action-plans/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          what: w5h2EditForm.what,
-          why: w5h2EditForm.why,
-          whereLocation: w5h2EditForm.whereLocation,
-          whenStart: w5h2EditForm.whenStart,
-          whenEnd: w5h2EditForm.whenEnd,
-          who: w5h2EditForm.who,
+          // Campos string: enviar undefined se vazio para que Zod trate como "não enviado"
+          // e o backend use o valor existente via fallback (??)
+          what: w5h2EditForm.what || undefined,
+          why: w5h2EditForm.why || undefined,
+          whereLocation: w5h2EditForm.whereLocation || undefined,
+          whenStart: w5h2EditForm.whenStart || undefined,
+          whenEnd: w5h2EditForm.whenEnd || undefined,
+          who: w5h2EditForm.who || undefined,
           whoUserId: w5h2EditForm.whoUserId || null,
-          how: w5h2EditForm.how,
+          how: w5h2EditForm.how || undefined,
+          // howMuchAmount: manter 0 como valor válido (não converter para undefined)
           howMuchAmount: w5h2EditForm.howMuchAmount,
-          howMuchCurrency: w5h2EditForm.howMuchCurrency,
+          howMuchCurrency: w5h2EditForm.howMuchCurrency || undefined,
           status: w5h2EditForm.status || undefined,
         }),
       });
