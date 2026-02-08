@@ -287,6 +287,20 @@ function ActionPlanDetailPageContent({
     loadOptions();
   }, []);
 
+  // Sincronizar campo WHO com nome do usuário quando a lista de usuários carrega
+  // Corrige o caso em que whoUserId está setado mas who ainda é "A definir"
+  useEffect(() => {
+    if (!usersLoading && users.length > 0 && w5h2EditForm.whoUserId) {
+      const matchedUser = users.find(u => u.id === w5h2EditForm.whoUserId);
+      if (matchedUser && matchedUser.name !== w5h2EditForm.who) {
+        setW5h2EditForm(prev => ({
+          ...prev,
+          who: matchedUser.name,
+        }));
+      }
+    }
+  }, [usersLoading, users, w5h2EditForm.whoUserId, w5h2EditForm.who]);
+
   const refreshPlan = async () => {
     setLoading(true);
     try {
@@ -313,7 +327,14 @@ function ActionPlanDetailPageContent({
           whereLocation: w5h2EditForm.whereLocation || undefined,
           whenStart: w5h2EditForm.whenStart || undefined,
           whenEnd: w5h2EditForm.whenEnd || undefined,
-          who: w5h2EditForm.who || undefined,
+          // Resolver nome do usuário pela lista carregada (evita enviar "A definir" quando whoUserId está setado)
+          who: (() => {
+            if (w5h2EditForm.whoUserId) {
+              const matched = users.find(u => u.id === w5h2EditForm.whoUserId);
+              if (matched) return matched.name;
+            }
+            return w5h2EditForm.who || undefined;
+          })(),
           whoUserId: w5h2EditForm.whoUserId || null,
           how: w5h2EditForm.how || undefined,
           // howMuchAmount: manter 0 como valor válido (não converter para undefined)
@@ -511,34 +532,44 @@ function ActionPlanDetailPageContent({
       <div className="space-y-6 max-w-5xl mx-auto">
         {/* Header */}
         <FadeIn>
-          <Flex justifyContent="between" alignItems="start">
-            <div>
-              <Flex alignItems="center" className="gap-3 mb-2">
-                <RippleButton 
-                  variant="ghost" 
-                  onClick={() => router.push('/strategic/action-plans')}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </RippleButton>
-                <GradientText className="text-3xl font-bold">
-                  {plan.code}
-                </GradientText>
-                <span className={`text-sm px-2 py-1 rounded ${pdcaStyle.bg} ${pdcaStyle.text}`}>
-                  {plan.pdcaCycle}
-                </span>
-                <span className={`text-sm px-2 py-1 rounded ${statusStyle.bg} ${statusStyle.text}`}>
-                  {statusStyle.label}
-                </span>
-              </Flex>
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Back + Code + Title */}
+            <div className="flex items-center gap-3 min-w-0">
+              <RippleButton 
+                variant="ghost" 
+                size="sm"
+                onClick={() => router.push('/strategic/action-plans')}
+                className="shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </RippleButton>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <GradientText className="text-2xl font-bold whitespace-nowrap">
+                    {plan.code}
+                  </GradientText>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${pdcaStyle.bg} ${pdcaStyle.text}`}>
+                    {plan.pdcaCycle}
+                  </span>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
+                    {statusStyle.label}
+                  </span>
+                </div>
+                <p className="text-sm text-white/60 mt-1 truncate" title={plan.what}>
+                  {plan.what}
+                </p>
+              </div>
             </div>
-            <Flex className="gap-3">
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2 shrink-0">
               <RippleButton 
                 variant="outline" 
+                size="sm"
                 onClick={refreshPlan}
                 disabled={loading}
+                title="Atualizar"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </RippleButton>
               <DeleteResourceButton
                 id={plan.id}
@@ -546,8 +577,8 @@ function ActionPlanDetailPageContent({
                 redirectTo="/strategic/action-plans"
                 resourceName={plan.what}
               />
-            </Flex>
-          </Flex>
+            </div>
+          </div>
         </FadeIn>
 
         {/* Alert for overdue */}
@@ -1001,7 +1032,9 @@ function ActionPlanDetailPageContent({
                     <Text className="text-sm">Carregando acompanhamentos...</Text>
                   </div>
                 ) : followUpViewMode === 'timeline' ? (
-                  <FollowUpTimeline followUps={followUps} />
+                  <div className="max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                    <FollowUpTimeline followUps={followUps} />
+                  </div>
                 ) : (
                   /* Grid View */
                   <div className="ag-theme-quartz-dark" style={{ height: '400px', width: '100%' }}>
@@ -1101,17 +1134,20 @@ function ActionPlanDetailPageContent({
         </div>
       </div>
       <Dialog open={isFollowUpDialogOpen} onOpenChange={setIsFollowUpDialogOpen}>
-        <DialogContent className="bg-gray-950 text-white border-gray-800">
+        <DialogContent className="bg-gray-950 text-white border-gray-800 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Registrar Acompanhamento 3G</DialogTitle>
+            <DialogTitle className="text-xl">Registrar Acompanhamento 3G</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Capture as observações GEMBA, GEMBUTSU e GENJITSU para este plano de ação.
+              Capture as observacoes GEMBA, GEMBUTSU e GENJITSU para este plano de acao.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleFollowUpSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="followUpDate">Data do Acompanhamento</Label>
+          <form onSubmit={handleFollowUpSubmit} className="space-y-5">
+            {/* Informacoes Gerais */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="followUpDate" className="text-blue-400 font-medium text-sm">
+                  Data do Acompanhamento
+                </Label>
                 <Input
                   id="followUpDate"
                   type="date"
@@ -1122,11 +1158,14 @@ function ActionPlanDetailPageContent({
                       followUpDate: event.target.value,
                     }))
                   }
+                  className="bg-gray-800/50 border-gray-700 text-white"
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="executionStatus">Status de Execução</Label>
+              <div className="space-y-2">
+                <Label htmlFor="executionStatus" className="text-blue-400 font-medium text-sm">
+                  Status de Execucao
+                </Label>
                 <Select
                   value={followUpForm.executionStatus}
                   onValueChange={(value) =>
@@ -1136,22 +1175,24 @@ function ActionPlanDetailPageContent({
                     }))
                   }
                 >
-                  <SelectTrigger id="executionStatus">
+                  <SelectTrigger id="executionStatus" className="bg-gray-800/50 border-gray-700 text-white">
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="EXECUTED_OK">Executado OK</SelectItem>
                     <SelectItem value="EXECUTED_PARTIAL">Executado Parcialmente</SelectItem>
-                    <SelectItem value="NOT_EXECUTED">Não Executado</SelectItem>
+                    <SelectItem value="NOT_EXECUTED">Nao Executado</SelectItem>
                     <SelectItem value="BLOCKED">Bloqueado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="executionPercent">Percentual de Execução (%)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="executionPercent" className="text-blue-400 font-medium text-sm">
+                  Percentual de Execucao (%)
+                </Label>
                 <Input
                   id="executionPercent"
                   type="number"
@@ -1164,11 +1205,14 @@ function ActionPlanDetailPageContent({
                       executionPercent: Number(event.target.value),
                     }))
                   }
+                  className="bg-gray-800/50 border-gray-700 text-white"
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="problemSeverity">Severidade do Problema</Label>
+              <div className="space-y-2">
+                <Label htmlFor="problemSeverity" className="text-amber-400 font-medium text-sm">
+                  Severidade do Problema
+                </Label>
                 <Select
                   value={followUpForm.problemSeverity}
                   onValueChange={(value) =>
@@ -1178,23 +1222,30 @@ function ActionPlanDetailPageContent({
                     }))
                   }
                 >
-                  <SelectTrigger id="problemSeverity">
+                  <SelectTrigger id="problemSeverity" className="bg-gray-800/50 border-gray-700 text-white">
                     <SelectValue placeholder="Selecione a severidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NONE">Não especificado</SelectItem>
+                    <SelectItem value="NONE">Nenhum</SelectItem>
                     <SelectItem value="LOW">Baixa</SelectItem>
-                    <SelectItem value="MEDIUM">Média</SelectItem>
+                    <SelectItem value="MEDIUM">Media</SelectItem>
                     <SelectItem value="HIGH">Alta</SelectItem>
-                    <SelectItem value="CRITICAL">Crítica</SelectItem>
+                    <SelectItem value="CRITICAL">Critica</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="gembaLocal">GEMBA (location)</Label>
+            {/* 3G - Gemba, Gembutsu, Genjitsu */}
+            <div className="border border-gray-800 rounded-lg p-4 space-y-4">
+              <Text className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+                Observacoes 3G
+              </Text>
+
+              <div className="space-y-2">
+                <Label htmlFor="gembaLocal" className="text-blue-400 font-medium text-sm">
+                  GEMBA - Local (Onde voce foi verificar?)
+                </Label>
                 <Input
                   id="gembaLocal"
                   value={followUpForm.gembaLocal}
@@ -1204,12 +1255,17 @@ function ActionPlanDetailPageContent({
                       gembaLocal: event.target.value,
                     }))
                   }
+                  className="bg-gray-800/50 border-gray-700 text-white"
+                  placeholder="Ex: Patio de operacoes, Doca 3, Escritorio filial SP"
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="gembutsuObservation">GEMBUTSU (observation)</Label>
-                <Input
+
+              <div className="space-y-2">
+                <Label htmlFor="gembutsuObservation" className="text-purple-400 font-medium text-sm">
+                  GEMBUTSU - Observacao (O que voce observou no local?)
+                </Label>
+                <Textarea
                   id="gembutsuObservation"
                   value={followUpForm.gembutsuObservation}
                   onChange={(event) =>
@@ -1218,28 +1274,37 @@ function ActionPlanDetailPageContent({
                       gembutsuObservation: event.target.value,
                     }))
                   }
+                  className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]"
+                  placeholder="Descreva o que foi observado fisicamente no local..."
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="genjitsuData" className="text-emerald-400 font-medium text-sm">
+                  GENJITSU - Dados/Fatos (Quais dados comprovam?)
+                </Label>
+                <Textarea
+                  id="genjitsuData"
+                  value={followUpForm.genjitsuData}
+                  onChange={(event) =>
+                    setFollowUpForm((prev) => ({
+                      ...prev,
+                      genjitsuData: event.target.value,
+                    }))
+                  }
+                  className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]"
+                  placeholder="Registre os dados concretos, numeros e fatos verificados..."
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="genjitsuData">GENJITSU (data/facts)</Label>
-              <Textarea
-                id="genjitsuData"
-                value={followUpForm.genjitsuData}
-                onChange={(event) =>
-                  setFollowUpForm((prev) => ({
-                    ...prev,
-                    genjitsuData: event.target.value,
-                  }))
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="problemsObserved">Problemas Observados (opcional)</Label>
+            {/* Problemas */}
+            <div className="space-y-2">
+              <Label htmlFor="problemsObserved" className="text-amber-400 font-medium text-sm">
+                Problemas Observados (opcional)
+              </Label>
               <Textarea
                 id="problemsObserved"
                 value={followUpForm.problemsObserved}
@@ -1249,15 +1314,19 @@ function ActionPlanDetailPageContent({
                     problemsObserved: event.target.value,
                   }))
                 }
-                placeholder="Descreva os problemas encontrados durante a execução..."
+                className="bg-gray-800/50 border-gray-700 text-white min-h-[60px]"
+                placeholder="Descreva os problemas encontrados durante a execucao..."
               />
             </div>
 
-            <div className="flex items-center justify-between rounded border border-gray-800 p-3">
+            {/* Requer Novo Plano */}
+            <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-800/30 p-4">
               <div className="space-y-0.5">
-                <Label htmlFor="requiresNewPlan">Requer Novo Plano?</Label>
+                <Label htmlFor="requiresNewPlan" className="text-red-400 font-medium text-sm">
+                  Requer Novo Plano de Acao?
+                </Label>
                 <Text className="text-xs text-gray-400">
-                  Se ativado, forneça descrição e responsável.
+                  Se ativado, forneca descricao e responsavel abaixo.
                 </Text>
               </div>
               <Switch
@@ -1273,9 +1342,11 @@ function ActionPlanDetailPageContent({
             </div>
 
             {followUpForm.requiresNewPlan && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="newPlanDescription">New plan description</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border border-red-500/20 rounded-lg p-4 bg-red-500/5">
+                <div className="space-y-2">
+                  <Label htmlFor="newPlanDescription" className="text-red-400 font-medium text-sm">
+                    Descricao do Novo Plano
+                  </Label>
                   <Textarea
                     id="newPlanDescription"
                     value={followUpForm.newPlanDescription}
@@ -1285,11 +1356,15 @@ function ActionPlanDetailPageContent({
                         newPlanDescription: event.target.value,
                       }))
                     }
+                    className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]"
+                    placeholder="Descreva o novo plano de acao necessario..."
                     required={followUpForm.requiresNewPlan}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="newPlanAssignedTo">Assign to (user id)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="newPlanAssignedTo" className="text-red-400 font-medium text-sm">
+                    Responsavel (ID do usuario)
+                  </Label>
                   <Input
                     id="newPlanAssignedTo"
                     value={followUpForm.newPlanAssignedTo}
@@ -1299,13 +1374,18 @@ function ActionPlanDetailPageContent({
                         newPlanAssignedTo: event.target.value,
                       }))
                     }
+                    className="bg-gray-800/50 border-gray-700 text-white"
+                    placeholder="ID do usuario responsavel"
                   />
                 </div>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="evidenceUrls">Evidence URLs (comma or newline separated)</Label>
+            {/* Evidencias */}
+            <div className="space-y-2">
+              <Label htmlFor="evidenceUrls" className="text-gray-400 font-medium text-sm">
+                URLs de Evidencias (separar por virgula ou nova linha)
+              </Label>
               <Textarea
                 id="evidenceUrls"
                 value={followUpForm.evidenceUrls}
@@ -1315,21 +1395,26 @@ function ActionPlanDetailPageContent({
                     evidenceUrls: event.target.value,
                   }))
                 }
+                className="bg-gray-800/50 border-gray-700 text-white min-h-[60px]"
+                placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/relatorio.pdf"
               />
             </div>
 
-            <DialogFooter>
-              <RippleButton
+            <DialogFooter className="gap-2 pt-2">
+              <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setIsFollowUpDialogOpen(false)}
                 disabled={submittingFollowUp}
+                className="text-white/70 hover:text-white"
               >
-                Cancel
-              </RippleButton>
-              <RippleButton type="submit" disabled={submittingFollowUp}>
-                {submittingFollowUp ? 'Saving...' : 'Save follow-up'}
-              </RippleButton>
+                <X className="w-4 h-4 mr-2" />
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={submittingFollowUp}>
+                <Save className="w-4 h-4 mr-2" />
+                {submittingFollowUp ? 'Salvando...' : 'Salvar Acompanhamento'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
