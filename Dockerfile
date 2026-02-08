@@ -30,10 +30,10 @@ ENV NEXT_PHASE=phase-production-build
 # - --mount=type=cache: .next/cache persiste entre builds para compilacao incremental
 # - bash -o pipefail: garante que falha do next build propague mesmo com tee
 # - tee: mostra progresso no log do Coolify + salva para diagnostico
-# - reflect-metadata: carregado via instrumentation.ts + serverExternalPackages (nao precisa de --webpack)
-# - NEXT_PRIVATE_PREBUNDLED_REACT: removido (padrao no Next.js 15)
+# - --webpack: OBRIGATORIO no Next.js 16 (Turbopack e padrao, mas precisamos de webpack
+#   para mangleExports=false + reflect-metadata entry point injection para tsyringe DI)
 RUN --mount=type=cache,target=/app/.next/cache \
-    bash -o pipefail -c 'npx next build 2>&1 | tee /tmp/next-build.log' \
+    bash -o pipefail -c 'npx next build --webpack 2>&1 | tee /tmp/next-build.log' \
     || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
 
 # --- Stage 3: Runner (Production) ---

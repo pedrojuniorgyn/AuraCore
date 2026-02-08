@@ -9,11 +9,6 @@ const nextConfig: NextConfig = {
   // Requer COPY .next/standalone, .next/static e public separados no Dockerfile
   output: "standalone",
 
-  // Habilitar instrumentation.ts para inicialização de módulos e cache
-  experimental: {
-    instrumentationHook: true,
-  },
-
   // Pacotes externos que não devem ser bundleados (carregados via require)
   serverExternalPackages: [
     "mssql",
@@ -23,9 +18,13 @@ const nextConfig: NextConfig = {
     "reflect-metadata",
   ],
 
-  // Webpack config: reflect-metadata carrega via instrumentation.ts (import direto)
-  // e serverExternalPackages (loaded as node require, não bundled).
-  // A config abaixo garante mangleExports=false para DI decorators (tsyringe).
+  // Next.js 16: Turbopack é o bundler padrão. Manter turbopack: {} para silenciar
+  // erro "webpack config with no turbopack config" quando usamos --webpack no build.
+  turbopack: {},
+
+  // Webpack config: OBRIGATÓRIO para tsyringe DI (mangleExports=false + reflect-metadata).
+  // Usado via --webpack flag no Dockerfile. Next.js 16 usa Turbopack por padrão,
+  // mas precisamos de webpack para controle de entry points e optimization.
   webpack: (config: WebpackConfig, { isServer }) => {
     if (isServer) {
       // 1. Preservar nomes de exports para decorators tsyringe (mangleExports)
