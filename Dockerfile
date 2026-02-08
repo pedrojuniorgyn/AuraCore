@@ -28,12 +28,15 @@ ENV NEXT_PHASE=phase-production-build
 
 # Next.js build com cache persistente do webpack (BuildKit cache mount)
 # - --mount=type=cache: .next/cache persiste entre builds para compilacao incremental
-# - bash -o pipefail: garante que falha do next build propague mesmo com tee
-# - tee: mostra progresso no log do Coolify + salva para diagnostico
 # - --webpack: OBRIGATORIO no Next.js 16 (Turbopack e padrao, mas precisamos de webpack
 #   para mangleExports=false + reflect-metadata entry point injection para tsyringe DI)
+# - DEBUG=: desabilita debug loggers (Coolify injeta DEBUG via build-arg, causando
+#   milhares de mensagens 'jsconfig-paths-plugin' que estouram o log limit de 2MiB)
+# - tee: salva log completo para diagnostico; grep -v filtra ruido do stdout do Coolify
 RUN --mount=type=cache,target=/app/.next/cache \
-    bash -o pipefail -c 'npx next build --webpack 2>&1 | tee /tmp/next-build.log' \
+    bash -o pipefail -c 'DEBUG= npx next build --webpack 2>&1 \
+    | tee /tmp/next-build.log \
+    | grep -v "jsconfig-paths-plugin\|next:resolve\|next:router"' \
     || (echo "---- NEXT BUILD LOG (tail) ----" && tail -n 200 /tmp/next-build.log && exit 1)
 
 # --- Stage 3: Runner (Production) ---
