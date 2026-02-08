@@ -5,6 +5,10 @@ import withPWA from "next-pwa";
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
+  // Standalone output: gera servidor mínimo (~50MB vs 1.8GB node_modules completo)
+  // Requer COPY .next/standalone, .next/static e public separados no Dockerfile
+  output: "standalone",
+
   // Habilitar instrumentation.ts para inicialização de módulos e cache
   experimental: {
     instrumentationHook: true,
@@ -19,10 +23,9 @@ const nextConfig: NextConfig = {
     "reflect-metadata",
   ],
 
-  // Turbopack config (desabilitado - usando webpack)
-  turbopack: {},
-
-  // CRÍTICO: Webpack config para garantir reflect-metadata carrega PRIMEIRO
+  // Webpack config: reflect-metadata carrega via instrumentation.ts (import direto)
+  // e serverExternalPackages (loaded as node require, não bundled).
+  // A config abaixo garante mangleExports=false para DI decorators (tsyringe).
   webpack: (config: WebpackConfig, { isServer }) => {
     if (isServer) {
       // 1. Preservar nomes de exports para decorators tsyringe (mangleExports)

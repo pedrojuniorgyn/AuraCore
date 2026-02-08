@@ -1,0 +1,70 @@
+# ==============================================================================
+# .dockerignore - AuraCore
+# Exclui arquivos desnecessarios do contexto Docker
+# Reduz contexto de ~2GB para ~25MB e acelera webpack scan
+# ==============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (reinstaladas via npm ci no Dockerfile)
+node_modules
+
+# Build output (regenerado via next build no Dockerfile)
+.next
+out
+
+# IDE e editor
+.cursor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentacao e memoria (nao necessario em producao)
+docs/
+memory/
+SOUL.md
+USER.md
+MEMORY.md
+AGENTS.md
+CLAUDE.md
+BOOTSTRAP.md
+
+# MCP Server (projeto separado, nao faz parte do app Next.js)
+mcp-server/
+
+# Agents (projeto Python separado)
+agents/
+
+# Docker configs (nao copiar para dentro do container)
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+docker/
+
+# Testes (nao necessario em producao)
+tests/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+vitest.config.*
+coverage/
+
+# Ambiente local
+.env
+.env.*
+!.env.example
+
+# Logs e temporarios
+*.log
+tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
