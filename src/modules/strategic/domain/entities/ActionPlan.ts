@@ -350,7 +350,7 @@ export class ActionPlan extends AggregateRoot<string> {
     
     // Validar transições permitidas
     const allowedTransitions: Record<ActionPlanStatus, ActionPlanStatus[]> = {
-      'DRAFT': ['PENDING', 'CANCELLED'],
+      'DRAFT': ['PENDING', 'IN_PROGRESS', 'CANCELLED'],
       'PENDING': ['IN_PROGRESS', 'BLOCKED', 'CANCELLED'],
       'IN_PROGRESS': ['COMPLETED', 'BLOCKED', 'CANCELLED', 'PENDING'],
       'BLOCKED': ['IN_PROGRESS', 'CANCELLED', 'PENDING'],

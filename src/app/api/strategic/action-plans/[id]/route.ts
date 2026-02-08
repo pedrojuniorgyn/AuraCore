@@ -35,9 +35,11 @@ const update5W2HSchema = z.object({
   whenStart: z.coerce.date().optional(),
   whenEnd: z.coerce.date().optional(),
   who: z.string().min(1).max(100).optional(),
+  whoUserId: z.string().uuid().nullable().optional(),
   how: z.string().min(1).max(5000).optional(),
   howMuchAmount: z.number().nonnegative().optional().nullable(),
   howMuchCurrency: z.string().length(3).optional(),
+  status: z.enum(['DRAFT', 'PENDING', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
 }).refine(
   (data) => {
     // Validar datas se ambas forem informadas
@@ -177,6 +179,8 @@ export async function PATCH(
     const { ActionPlan } = await import('@/modules/strategic/domain/entities/ActionPlan');
     
     // Mesclar dados: novos valores do form com valores existentes da entity
+    // NOTA: status é mantido como o existente aqui; mudança de status é feita via
+    // updateStatus() APÓS reconstitute para que o domain event fique na entity que será salva
     const updatedPlanResult = ActionPlan.reconstitute({
       id: existingPlan.id,
       code: existingPlan.code,
@@ -190,8 +194,17 @@ export async function PATCH(
       whenStart: validation.data.whenStart ?? existingPlan.whenStart,
       whenEnd: validation.data.whenEnd ?? existingPlan.whenEnd,
       who: validation.data.who ?? existingPlan.who,
-      whoUserId: existingPlan.whoUserId,
-      whoType: existingPlan.whoType,
+      // whoUserId: undefined = não enviado (manter existente), null = limpeza explícita, UUID = novo valor
+      whoUserId: validation.data.whoUserId !== undefined
+        ? validation.data.whoUserId   // explicitamente enviado (UUID ou null)
+        : existingPlan.whoUserId,     // não enviado, manter existente
+      // whoType: alinhar para 'USER' somente se um novo UUID diferente foi enviado
+      whoType: (() => {
+        if (validation.data.whoUserId === undefined) return existingPlan.whoType; // não enviado
+        if (validation.data.whoUserId === null) return existingPlan.whoType;       // limpeza, manter tipo
+        if (validation.data.whoUserId !== existingPlan.whoUserId) return 'USER' as const; // novo UUID
+        return existingPlan.whoType; // mesmo UUID, manter tipo
+      })(),
       whoEmail: existingPlan.whoEmail,
       whoPartnerId: existingPlan.whoPartnerId,
       how: validation.data.how ?? existingPlan.how,
@@ -203,7 +216,7 @@ export async function PATCH(
       pdcaCycle: existingPlan.pdcaCycle, // PDCACycle Value Object
       completionPercent: existingPlan.completionPercent,
       priority: existingPlan.priority,
-      status: existingPlan.status,
+      status: existingPlan.status, // Status original; transição feita abaixo
       parentActionPlanId: existingPlan.parentActionPlanId,
       repropositionNumber: existingPlan.repropositionNumber,
       repropositionReason: existingPlan.repropositionReason,
@@ -218,37 +231,53 @@ export async function PATCH(
       return NextResponse.json({ error: updatedPlanResult.error }, { status: 400 });
     }
 
-    // Salvar no banco
-    await repository.save(updatedPlanResult.value);
+    const updatedPlan = updatedPlanResult.value;
+
+    // Se status foi alterado, usar updateStatus() na entity reconstituída
+    // Isso garante que o domain event ACTION_PLAN_STATUS_CHANGED fique na mesma
+    // instância que será salva, evitando perda de events
+    if (validation.data.status && validation.data.status !== existingPlan.status) {
+      const statusUpdateResult = updatedPlan.updateStatus(
+        validation.data.status as import('@/modules/strategic/domain/entities/ActionPlan').ActionPlanStatus
+      );
+      if (Result.isFail(statusUpdateResult)) {
+        return NextResponse.json(
+          { error: statusUpdateResult.error },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Salvar no banco (domain events estão na mesma instância)
+    await repository.save(updatedPlan);
 
     // Retornar dados atualizados
-    const updated = updatedPlanResult.value;
     return NextResponse.json({
-      id: updated.id,
-      code: updated.code,
-      what: updated.what,
-      why: updated.why,
-      whereLocation: updated.whereLocation,
-      whenStart: updated.whenStart.toISOString(),
-      whenEnd: updated.whenEnd.toISOString(),
-      who: updated.who,
-      whoUserId: updated.whoUserId,
-      how: updated.how,
-      howMuchAmount: updated.howMuchAmount,
-      howMuchCurrency: updated.howMuchCurrency,
-      pdcaCycle: updated.pdcaCycle.value,
-      completionPercent: updated.completionPercent,
-      priority: updated.priority,
-      status: updated.status,
-      isOverdue: updated.isOverdue,
-      goalId: updated.goalId,
-      parentActionPlanId: updated.parentActionPlanId,
-      repropositionNumber: updated.repropositionNumber,
-      repropositionReason: updated.repropositionReason,
-      evidenceUrls: updated.evidenceUrls,
-      nextFollowUpDate: updated.nextFollowUpDate?.toISOString() ?? null,
-      canRepropose: updated.canRepropose,
-      createdBy: updated.createdBy,
+      id: updatedPlan.id,
+      code: updatedPlan.code,
+      what: updatedPlan.what,
+      why: updatedPlan.why,
+      whereLocation: updatedPlan.whereLocation,
+      whenStart: updatedPlan.whenStart.toISOString(),
+      whenEnd: updatedPlan.whenEnd.toISOString(),
+      who: updatedPlan.who,
+      whoUserId: updatedPlan.whoUserId,
+      how: updatedPlan.how,
+      howMuchAmount: updatedPlan.howMuchAmount,
+      howMuchCurrency: updatedPlan.howMuchCurrency,
+      pdcaCycle: updatedPlan.pdcaCycle.value,
+      completionPercent: updatedPlan.completionPercent,
+      priority: updatedPlan.priority,
+      status: updatedPlan.status,
+      isOverdue: updatedPlan.isOverdue,
+      goalId: updatedPlan.goalId,
+      parentActionPlanId: updatedPlan.parentActionPlanId,
+      repropositionNumber: updatedPlan.repropositionNumber,
+      repropositionReason: updatedPlan.repropositionReason,
+      evidenceUrls: updatedPlan.evidenceUrls,
+      nextFollowUpDate: updatedPlan.nextFollowUpDate?.toISOString() ?? null,
+      canRepropose: updatedPlan.canRepropose,
+      createdBy: updatedPlan.createdBy,
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;

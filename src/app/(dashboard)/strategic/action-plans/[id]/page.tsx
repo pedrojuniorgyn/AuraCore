@@ -134,6 +134,7 @@ interface FollowUpFormState {
 
 // Safelist pattern
 const STATUS_STYLES = {
+  DRAFT: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Rascunho' },
   PENDING: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Pendente' },
   IN_PROGRESS: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Em Andamento' },
   COMPLETED: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Concluído' },
@@ -175,6 +176,8 @@ function ActionPlanDetailPageContent({
   const [followUpViewMode, setFollowUpViewMode] = useState<'timeline' | 'grid'>('timeline');
   const [isEditing5W2H, setIsEditing5W2H] = useState(false);
   const [saving5W2H, setSaving5W2H] = useState(false);
+  const [users, setUsers] = useState<Array<{ id: string; name: string }>>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [w5h2EditForm, setW5h2EditForm] = useState({
     what: '',
     why: '',
@@ -182,9 +185,11 @@ function ActionPlanDetailPageContent({
     whenStart: '',
     whenEnd: '',
     who: '',
+    whoUserId: '',
     how: '',
     howMuchAmount: 0,
     howMuchCurrency: 'BRL',
+    status: 'DRAFT',
   });
   const [followUpForm, setFollowUpForm] = useState<FollowUpFormState>({
     followUpDate: new Date().toISOString().slice(0, 10),
@@ -231,12 +236,14 @@ function ActionPlanDetailPageContent({
           what: data.what,
           why: data.why,
           whereLocation: data.whereLocation,
-          whenStart: data.whenStart,
-          whenEnd: data.whenEnd,
+          whenStart: data.whenStart ? data.whenStart.slice(0, 10) : '',
+          whenEnd: data.whenEnd ? data.whenEnd.slice(0, 10) : '',
           who: data.who,
+          whoUserId: data.whoUserId || '',
           how: data.how,
           howMuchAmount: data.howMuchAmount || 0,
           howMuchCurrency: data.howMuchCurrency || 'BRL',
+          status: data.status,
         });
       } catch (error) {
         // Se for 404, redirecionar
@@ -259,6 +266,27 @@ function ActionPlanDetailPageContent({
     setIsEditing5W2H(editMode);
   }, [editMode]);
 
+  // Carregar opções de usuários para o campo WHO
+  useEffect(() => {
+    const loadOptions = async () => {
+      setUsersLoading(true);
+      try {
+        const data = await fetchAPI<{
+          users: Array<{ id: string; name: string }>;
+          objectives: Array<{ id: string; description: string }>;
+          departments: Array<{ id: string; name: string }>;
+          branches: Array<{ id: string; name: string }>;
+        }>('/api/strategic/action-plans/options');
+        setUsers(data.users);
+      } catch (error) {
+        console.error('Failed to load user options:', error);
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+    loadOptions();
+  }, []);
+
   const refreshPlan = async () => {
     setLoading(true);
     try {
@@ -276,7 +304,19 @@ function ActionPlanDetailPageContent({
     try {
       await fetchAPI(`/api/strategic/action-plans/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify(w5h2EditForm),
+        body: JSON.stringify({
+          what: w5h2EditForm.what,
+          why: w5h2EditForm.why,
+          whereLocation: w5h2EditForm.whereLocation,
+          whenStart: w5h2EditForm.whenStart,
+          whenEnd: w5h2EditForm.whenEnd,
+          who: w5h2EditForm.who,
+          whoUserId: w5h2EditForm.whoUserId || null,
+          how: w5h2EditForm.how,
+          howMuchAmount: w5h2EditForm.howMuchAmount,
+          howMuchCurrency: w5h2EditForm.howMuchCurrency,
+          status: w5h2EditForm.status || undefined,
+        }),
       });
       
       toast({
@@ -311,12 +351,14 @@ function ActionPlanDetailPageContent({
       what: plan.what,
       why: plan.why,
       whereLocation: plan.whereLocation,
-      whenStart: plan.whenStart,
-      whenEnd: plan.whenEnd,
+      whenStart: plan.whenStart ? plan.whenStart.slice(0, 10) : '',
+      whenEnd: plan.whenEnd ? plan.whenEnd.slice(0, 10) : '',
       who: plan.who,
+      whoUserId: plan.whoUserId || '',
       how: plan.how,
       howMuchAmount: plan.howMuchAmount || 0,
       howMuchCurrency: plan.howMuchCurrency || 'BRL',
+      status: plan.status,
     });
     setIsEditing5W2H(false);
     // Limpar query param ?edit=true da URL para manter sincronização
@@ -637,13 +679,82 @@ function ActionPlanDetailPageContent({
                     <Label htmlFor="edit-who" className="text-emerald-400 font-medium text-sm">
                       WHO - Quem fará
                     </Label>
-                    <Input
-                      id="edit-who"
-                      value={w5h2EditForm.who}
-                      onChange={(e) => setW5h2EditForm({...w5h2EditForm, who: e.target.value})}
-                      className="bg-gray-800/50 border-gray-700 text-white"
-                      placeholder="Responsável"
-                    />
+                    {usersLoading ? (
+                      <div className="flex items-center justify-center py-3 bg-gray-800/50 rounded-lg">
+                        <RefreshCw className="w-4 h-4 animate-spin text-gray-400 mr-2" />
+                        <Text className="text-sm text-gray-400">Carregando usuários...</Text>
+                      </div>
+                    ) : users.length > 0 ? (
+                      <Select
+                        value={w5h2EditForm.whoUserId || '__none__'}
+                        onValueChange={(value) => {
+                          if (value === '__none__') {
+                            setW5h2EditForm({
+                              ...w5h2EditForm,
+                              whoUserId: '',
+                            });
+                            return;
+                          }
+                          const selectedUser = users.find(u => u.id === value);
+                          setW5h2EditForm({
+                            ...w5h2EditForm,
+                            whoUserId: value,
+                            who: selectedUser ? selectedUser.name : w5h2EditForm.who,
+                          });
+                        }}
+                      >
+                        <SelectTrigger id="edit-who" className="bg-gray-800/50 border-gray-700 text-white">
+                          <SelectValue placeholder="Selecione o responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Nenhum selecionado</SelectItem>
+                          {users.map(user => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="edit-who"
+                        value={w5h2EditForm.who}
+                        onChange={(e) => setW5h2EditForm({...w5h2EditForm, who: e.target.value})}
+                        className="bg-gray-800/50 border-gray-700 text-white"
+                        placeholder="Responsável"
+                      />
+                    )}
+                    {w5h2EditForm.who && (
+                      <Text className="text-xs text-gray-400 mt-1">
+                        Responsável atual: {w5h2EditForm.who}
+                      </Text>
+                    )}
+                  </div>
+
+                  {/* STATUS */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status" className="text-purple-400 font-medium text-sm">
+                      STATUS - Status do Plano
+                    </Label>
+                    <Select
+                      value={w5h2EditForm.status}
+                      onValueChange={(value) => setW5h2EditForm({
+                        ...w5h2EditForm,
+                        status: value,
+                      })}
+                    >
+                      <SelectTrigger id="edit-status" className="bg-gray-800/50 border-gray-700 text-white">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DRAFT">Rascunho</SelectItem>
+                        <SelectItem value="PENDING">Pendente</SelectItem>
+                        <SelectItem value="IN_PROGRESS">Em Andamento</SelectItem>
+                        <SelectItem value="BLOCKED">Bloqueado</SelectItem>
+                        <SelectItem value="COMPLETED">Concluído</SelectItem>
+                        <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* HOW */}

@@ -63,8 +63,8 @@ export default function ActionPlansPage() {
     setLoading(true);
     try {
       const data = await fetchAPI<ActionPlansApiResponse>('/api/strategic/action-plans?pageSize=100');
-      // Filtrar DRAFT (não exibido no Kanban) e mapear para ActionPlanItem
-      const kanbanStatuses: ActionPlanStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'CANCELLED'];
+      // Mapear todos os status para o Kanban (incluindo DRAFT)
+      const kanbanStatuses: ActionPlanStatus[] = ['DRAFT', 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'CANCELLED'];
       const mapped: ActionPlanItem[] = data.items
         .filter((item) => kanbanStatuses.includes(item.status as ActionPlanStatus))
         .map((item: ActionPlanApiItem) => {
@@ -113,6 +113,11 @@ export default function ActionPlansPage() {
   // Agrupar por status para o Kanban
   const columns: StatusColumn[] = [
     {
+      id: 'DRAFT',
+      title: 'Rascunho',
+      items: filteredPlans.filter(p => p.status === 'DRAFT'),
+    },
+    {
       id: 'PENDING',
       title: 'Pendente',
       items: filteredPlans.filter(p => p.status === 'PENDING'),
@@ -154,6 +159,7 @@ export default function ActionPlansPage() {
   // Stats
   const stats = {
     total: plans.length,
+    draft: plans.filter(p => p.status === 'DRAFT').length,
     pending: plans.filter(p => p.status === 'PENDING').length,
     inProgress: plans.filter(p => p.status === 'IN_PROGRESS').length,
     completed: plans.filter(p => p.status === 'COMPLETED').length,

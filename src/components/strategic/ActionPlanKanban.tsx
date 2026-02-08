@@ -54,6 +54,13 @@ interface ActionPlanKanbanProps {
 
 // Safelist pattern - estilos por status
 const STATUS_COLUMN_STYLES = {
+  DRAFT: {
+    headerBg: 'bg-gray-500',
+    dropzoneBg: 'bg-gray-800/30',
+    dropzoneActive: 'bg-gray-700/50 border-gray-400',
+    icon: '📝',
+    label: 'Rascunho',
+  },
   PENDING: {
     headerBg: 'bg-gray-600',
     dropzoneBg: 'bg-gray-900/30',
@@ -93,8 +100,9 @@ const STATUS_COLUMN_STYLES = {
 
 // Transições válidas de status
 const VALID_STATUS_TRANSITIONS: Record<ActionPlanStatus, ActionPlanStatus[]> = {
+  DRAFT: ['PENDING', 'IN_PROGRESS', 'CANCELLED'],
   PENDING: ['IN_PROGRESS', 'BLOCKED', 'CANCELLED'],
-  IN_PROGRESS: ['COMPLETED', 'BLOCKED', 'PENDING'],
+  IN_PROGRESS: ['COMPLETED', 'BLOCKED', 'CANCELLED', 'PENDING'],
   COMPLETED: [], // Final - não pode mudar
   BLOCKED: ['PENDING', 'IN_PROGRESS', 'CANCELLED'],
   CANCELLED: [], // Final - não pode mudar

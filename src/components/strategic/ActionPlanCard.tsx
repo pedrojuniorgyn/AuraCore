@@ -16,7 +16,7 @@ import {
 import { ProgressBar } from '@tremor/react';
 import { ResourceActionMenu } from './ResourceActionMenu';
 
-type ActionPlanStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED' | 'CANCELLED';
+type ActionPlanStatus = 'DRAFT' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED' | 'CANCELLED';
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 type PdcaPhase = 'PLAN' | 'DO' | 'CHECK' | 'ACT';
 
@@ -45,6 +45,11 @@ interface ActionPlanCardProps {
 
 // Safelist pattern - classes explícitas
 const STATUS_STYLES = {
+  DRAFT: {
+    bg: 'bg-gray-500/20',
+    text: 'text-gray-400',
+    label: 'Rascunho',
+  },
   PENDING: {
     bg: 'bg-gray-500/20',
     text: 'text-gray-400',
