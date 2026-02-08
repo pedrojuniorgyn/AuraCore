@@ -304,7 +304,8 @@ function ActionPlanDetailPageContent({
     try {
       await fetchAPI(`/api/strategic/action-plans/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({
+        // NOTA: fetchAPI já faz JSON.stringify internamente — NÃO usar JSON.stringify aqui
+        body: {
           // Campos string: enviar undefined se vazio para que Zod trate como "não enviado"
           // e o backend use o valor existente via fallback (??)
           what: w5h2EditForm.what || undefined,
@@ -319,7 +320,7 @@ function ActionPlanDetailPageContent({
           howMuchAmount: w5h2EditForm.howMuchAmount,
           howMuchCurrency: w5h2EditForm.howMuchCurrency || undefined,
           status: w5h2EditForm.status || undefined,
-        }),
+        },
       });
       
       toast({

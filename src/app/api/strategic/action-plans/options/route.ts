@@ -62,20 +62,22 @@ export async function GET() {
     let usersFromDb = false;
     try {
       // Query direta na tabela de usuários
+      // NOTA: tabela users NÃO tem coluna branch_id — relação é via user_branches
       const usersResult = await db.execute<{
         id: string;
         name: string;
         email: string;
       }>(sql`
-        SELECT
+        SELECT DISTINCT
           u.id,
           COALESCE(u.name, u.email) as name,
           u.email
         FROM users u
+        LEFT JOIN user_branches ub ON ub.user_id = u.id AND ub.branch_id = ${branchId}
         WHERE u.organization_id = ${organizationId}
-          AND u.branch_id = ${branchId}
           AND u.deleted_at IS NULL
-        ORDER BY u.name
+          AND (ub.branch_id IS NOT NULL OR u.default_branch_id = ${branchId})
+        ORDER BY name
       `);
 
       // Normalizar resultado (Drizzle pode retornar em diferentes formatos)
