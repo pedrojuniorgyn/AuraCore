@@ -143,8 +143,14 @@ export async function PATCH(
     const validation = update5W2HSchema.safeParse(body);
 
     if (!validation.success) {
+      const flatErrors = validation.error.flatten();
+      console.error('[PATCH action-plans] Zod validation failed:', {
+        fieldErrors: flatErrors.fieldErrors,
+        formErrors: flatErrors.formErrors,
+        receivedKeys: body && typeof body === 'object' ? Object.keys(body) : 'not-object',
+      });
       return NextResponse.json(
-        { error: 'Validation failed', details: validation.error.flatten() },
+        { error: 'Validation failed', details: flatErrors },
         { status: 400 }
       );
     }
