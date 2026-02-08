@@ -135,29 +135,35 @@ export function FollowUpTimeline({ followUps, className }: FollowUpTimelineProps
                   </Badge>
                 </div>
 
-                {/* 3G Information */}
-                <div className="space-y-2 bg-gray-900/50 rounded-lg p-3 border border-gray-800">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="text-xs text-blue-300 font-medium">GEMBA (Local):</span>
-                      <p className="text-sm text-white/80 mt-0.5">{item.gembaLocal}</p>
+                {/* 3G Information - Grid layout for full-width */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs text-blue-300 font-medium">GEMBA (Local)</span>
+                        <p className="text-sm text-white/80 mt-1">{item.gembaLocal}</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-2">
-                    <Eye className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="text-xs text-purple-300 font-medium">GEMBUTSU (Observação):</span>
-                      <p className="text-sm text-white/80 mt-0.5">{item.gembutsuObservation}</p>
+                  <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
+                    <div className="flex items-start gap-2">
+                      <Eye className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs text-purple-300 font-medium">GEMBUTSU (Observacao)</span>
+                        <p className="text-sm text-white/80 mt-1">{item.gembutsuObservation}</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-2">
-                    <FileText className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="text-xs text-green-300 font-medium">GENJITSU (Dados/Fatos):</span>
-                      <p className="text-sm text-white/80 mt-0.5">{item.genjitsuData}</p>
+                  <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
+                    <div className="flex items-start gap-2">
+                      <FileText className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs text-green-300 font-medium">GENJITSU (Dados/Fatos)</span>
+                        <p className="text-sm text-white/80 mt-1">{item.genjitsuData}</p>
+                      </div>
                     </div>
                   </div>
                 </div>

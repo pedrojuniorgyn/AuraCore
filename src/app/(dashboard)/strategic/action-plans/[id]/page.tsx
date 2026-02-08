@@ -529,7 +529,7 @@ function ActionPlanDetailPageContent({
 
   return (
     <PageTransition>
-      <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <FadeIn>
           <div className="flex items-center justify-between gap-4">
@@ -939,7 +939,7 @@ function ActionPlanDetailPageContent({
             </Card>
           </FadeIn>
 
-          {/* Sidebar */}
+          {/* Sidebar - Compact: Progress + Info */}
           <FadeIn delay={0.15}>
             <div className="space-y-4">
               {/* Progress Card */}
@@ -947,7 +947,7 @@ function ActionPlanDetailPageContent({
                 <Title className="text-white mb-4">Progresso</Title>
                 <div className="space-y-3">
                   <Flex justifyContent="between">
-                    <Text className="text-gray-400">Conclusão</Text>
+                    <Text className="text-gray-400">Conclusao</Text>
                     <Text className="text-white font-semibold">{plan.completionPercent}%</Text>
                   </Flex>
                   <ProgressBar
@@ -957,7 +957,7 @@ function ActionPlanDetailPageContent({
                   {plan.completionPercent >= 100 && (
                     <Flex alignItems="center" className="gap-2 text-emerald-400">
                       <CheckCircle className="w-4 h-4" />
-                      <Text className="text-sm">Concluído!</Text>
+                      <Text className="text-sm">Concluido!</Text>
                     </Flex>
                   )}
                 </div>
@@ -965,7 +965,7 @@ function ActionPlanDetailPageContent({
 
               {/* Status Card */}
               <Card className="bg-gray-900/50 border-gray-800">
-                <Title className="text-white mb-4">Informações</Title>
+                <Title className="text-white mb-4">Informacoes</Title>
                 <div className="space-y-3">
                   <Flex justifyContent="between">
                     <Text className="text-gray-400">Status</Text>
@@ -987,151 +987,166 @@ function ActionPlanDetailPageContent({
                   </Flex>
                   {plan.repropositionNumber > 0 && (
                     <Flex justifyContent="between">
-                      <Text className="text-gray-400">Reproposições</Text>
+                      <Text className="text-gray-400">Reproposicoes</Text>
                       <Badge color="amber">{plan.repropositionNumber}x</Badge>
                     </Flex>
                   )}
                 </div>
               </Card>
-
-              {/* Follow-ups 3G */}
-              <Card className="bg-gray-900/50 border-gray-800">
-                <Flex justifyContent="between" alignItems="center" className="mb-4">
-                  <Flex alignItems="center" className="gap-3">
-                    <Title className="text-white">Acompanhamentos 3G</Title>
-                    <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFollowUpViewMode('timeline')}
-                        className={`h-7 px-2 ${followUpViewMode === 'timeline' ? 'bg-purple-500/20 text-purple-400' : 'text-white/50'}`}
-                      >
-                        <List className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFollowUpViewMode('grid')}
-                        className={`h-7 px-2 ${followUpViewMode === 'grid' ? 'bg-purple-500/20 text-purple-400' : 'text-white/50'}`}
-                      >
-                        <Grid3x3 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </Flex>
-                  <RippleButton
-                    variant="ghost"
-                    onClick={() => setIsFollowUpDialogOpen(true)}
-                    disabled={submittingFollowUp}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </RippleButton>
-                </Flex>
-                {followUpsLoading ? (
-                  <div className="text-center py-6 text-gray-500">
-                    <RefreshCw className="w-5 h-5 mx-auto mb-2 animate-spin text-gray-400" />
-                    <Text className="text-sm">Carregando acompanhamentos...</Text>
-                  </div>
-                ) : followUpViewMode === 'timeline' ? (
-                  <div className="max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-                    <FollowUpTimeline followUps={followUps} />
-                  </div>
-                ) : (
-                  /* Grid View */
-                  <div className="ag-theme-quartz-dark" style={{ height: '400px', width: '100%' }}>
-                    <AgGridReact
-                      rowData={followUps}
-                      columnDefs={[
-                        {
-                          field: 'followUpNumber',
-                          headerName: '#',
-                          width: 60,
-                          cellStyle: { textAlign: 'center' },
-                        },
-                        {
-                          field: 'followUpDate',
-                          headerName: 'Data',
-                          width: 120,
-                          valueFormatter: (params) => {
-                            if (!params.value) return '-';
-                            return new Date(params.value).toLocaleDateString('pt-BR');
-                          },
-                        },
-                        {
-                          field: 'gembaLocal',
-                          headerName: 'GEMBA (Local)',
-                          flex: 1,
-                          minWidth: 150,
-                        },
-                        {
-                          field: 'executionStatus',
-                          headerName: 'Status',
-                          width: 150,
-                          cellRenderer: (params: ICellRendererParams) => {
-                            const statusConfig = {
-                              EXECUTED_OK: { label: 'Executado OK', color: 'green' },
-                              EXECUTED_PARTIAL: { label: 'Parcial', color: 'blue' },
-                              NOT_EXECUTED: { label: 'Não Executado', color: 'slate' },
-                              BLOCKED: { label: 'Bloqueado', color: 'red' },
-                            } as const;
-                            
-                            const config = statusConfig[params.value as keyof typeof statusConfig];
-                            
-                            // Always return JSX for type consistency
-                            if (!config) {
-                              return (
-                                <Badge color="neutral" size="xs">
-                                  {params.value || 'Desconhecido'}
-                                </Badge>
-                              );
-                            }
-                            
-                            // Return JSX element (Badge from Tremor)
-                            return (
-                              <Badge color={config.color} size="xs">
-                                {config.label}
-                              </Badge>
-                            );
-                          },
-                        },
-                        {
-                          field: 'executionPercent',
-                          headerName: 'Progresso',
-                          width: 120,
-                          valueFormatter: (params) => `${params.value}%`,
-                          cellStyle: (params) => {
-                            const percent = params.value || 0;
-                            return {
-                              color: percent >= 80 ? '#10b981' : percent >= 50 ? '#3b82f6' : '#eab308',
-                              fontWeight: 'bold',
-                            };
-                          },
-                        },
-                        {
-                          field: 'verifiedBy',
-                          headerName: 'Verificado Por',
-                          width: 140,
-                        },
-                      ]}
-                      defaultColDef={{
-                        sortable: true,
-                        filter: true,
-                        resizable: true,
-                      }}
-                      pagination={true}
-                      paginationPageSize={5}
-                      domLayout="autoHeight"
-                      rowHeight={48}
-                      headerHeight={40}
-                      suppressCellFocus={true}
-                      enableCellTextSelection={true}
-                      className="text-sm"
-                    />
-                  </div>
-                )}
-              </Card>
             </div>
           </FadeIn>
         </div>
+
+        {/* Follow-ups 3G - FULL WIDTH para conteudo rico */}
+        <FadeIn delay={0.2}>
+          <Card className="bg-gray-900/50 border-gray-800">
+            <Flex justifyContent="between" alignItems="center" className="mb-6">
+              <div className="flex items-center gap-4">
+                <Title className="text-white">Acompanhamentos 3G</Title>
+                <div className="flex items-center gap-1 bg-gray-800/50 rounded-lg p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFollowUpViewMode('timeline')}
+                    className={`h-7 px-2 ${followUpViewMode === 'timeline' ? 'bg-purple-500/20 text-purple-400' : 'text-white/50'}`}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFollowUpViewMode('grid')}
+                    className={`h-7 px-2 ${followUpViewMode === 'grid' ? 'bg-purple-500/20 text-purple-400' : 'text-white/50'}`}
+                  >
+                    <Grid3x3 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Text className="text-gray-500 text-sm">
+                  {followUps.length} registro{followUps.length !== 1 ? 's' : ''}
+                </Text>
+              </div>
+              <RippleButton
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFollowUpDialogOpen(true)}
+                disabled={submittingFollowUp}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Acompanhamento
+              </RippleButton>
+            </Flex>
+            {followUpsLoading ? (
+              <div className="text-center py-8 text-gray-500">
+                <RefreshCw className="w-5 h-5 mx-auto mb-2 animate-spin text-gray-400" />
+                <Text className="text-sm">Carregando acompanhamentos...</Text>
+              </div>
+            ) : followUpViewMode === 'timeline' ? (
+              <FollowUpTimeline followUps={followUps} />
+            ) : (
+              /* Grid View */
+              <div className="ag-theme-quartz-dark" style={{ height: '400px', width: '100%' }}>
+                <AgGridReact
+                  rowData={followUps}
+                  columnDefs={[
+                    {
+                      field: 'followUpNumber',
+                      headerName: '#',
+                      width: 70,
+                      cellStyle: { textAlign: 'center' },
+                    },
+                    {
+                      field: 'followUpDate',
+                      headerName: 'Data',
+                      width: 130,
+                      valueFormatter: (params) => {
+                        if (!params.value) return '-';
+                        return new Date(params.value).toLocaleDateString('pt-BR');
+                      },
+                    },
+                    {
+                      field: 'gembaLocal',
+                      headerName: 'GEMBA (Local)',
+                      flex: 1,
+                      minWidth: 180,
+                    },
+                    {
+                      field: 'gembutsuObservation',
+                      headerName: 'GEMBUTSU (Observacao)',
+                      flex: 1,
+                      minWidth: 200,
+                    },
+                    {
+                      field: 'genjitsuData',
+                      headerName: 'GENJITSU (Dados)',
+                      flex: 1,
+                      minWidth: 200,
+                    },
+                    {
+                      field: 'executionStatus',
+                      headerName: 'Status',
+                      width: 160,
+                      cellRenderer: (params: ICellRendererParams) => {
+                        const statusConfig = {
+                          EXECUTED_OK: { label: 'Executado OK', color: 'green' },
+                          EXECUTED_PARTIAL: { label: 'Parcial', color: 'blue' },
+                          NOT_EXECUTED: { label: 'Nao Executado', color: 'slate' },
+                          BLOCKED: { label: 'Bloqueado', color: 'red' },
+                        } as const;
+                        
+                        const config = statusConfig[params.value as keyof typeof statusConfig];
+                        
+                        if (!config) {
+                          return (
+                            <Badge color="neutral" size="xs">
+                              {params.value || 'Desconhecido'}
+                            </Badge>
+                          );
+                        }
+                        
+                        return (
+                          <Badge color={config.color} size="xs">
+                            {config.label}
+                          </Badge>
+                        );
+                      },
+                    },
+                    {
+                      field: 'executionPercent',
+                      headerName: 'Progresso',
+                      width: 120,
+                      valueFormatter: (params) => `${params.value}%`,
+                      cellStyle: (params) => {
+                        const percent = params.value || 0;
+                        return {
+                          color: percent >= 80 ? '#10b981' : percent >= 50 ? '#3b82f6' : '#eab308',
+                          fontWeight: 'bold',
+                        };
+                      },
+                    },
+                    {
+                      field: 'verifiedBy',
+                      headerName: 'Verificado Por',
+                      width: 160,
+                    },
+                  ]}
+                  defaultColDef={{
+                    sortable: true,
+                    filter: true,
+                    resizable: true,
+                  }}
+                  pagination={true}
+                  paginationPageSize={10}
+                  domLayout="autoHeight"
+                  rowHeight={48}
+                  headerHeight={40}
+                  suppressCellFocus={true}
+                  enableCellTextSelection={true}
+                  className="text-sm"
+                />
+              </div>
+            )}
+          </Card>
+        </FadeIn>
       </div>
       <Dialog open={isFollowUpDialogOpen} onOpenChange={setIsFollowUpDialogOpen}>
         <DialogContent className="bg-gray-950 text-white border-gray-800 max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1363,20 +1378,36 @@ function ActionPlanDetailPageContent({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="newPlanAssignedTo" className="text-red-400 font-medium text-sm">
-                    Responsavel (ID do usuario)
+                    Responsavel
                   </Label>
-                  <Input
-                    id="newPlanAssignedTo"
-                    value={followUpForm.newPlanAssignedTo}
-                    onChange={(event) =>
-                      setFollowUpForm((prev) => ({
-                        ...prev,
-                        newPlanAssignedTo: event.target.value,
-                      }))
-                    }
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                    placeholder="ID do usuario responsavel"
-                  />
+                  {usersLoading ? (
+                    <div className="flex items-center justify-center py-2 bg-gray-800/50 rounded-lg">
+                      <RefreshCw className="w-4 h-4 animate-spin text-gray-400 mr-2" />
+                      <Text className="text-xs text-gray-400">Carregando...</Text>
+                    </div>
+                  ) : (
+                    <Select
+                      value={followUpForm.newPlanAssignedTo || '__none__'}
+                      onValueChange={(value) =>
+                        setFollowUpForm((prev) => ({
+                          ...prev,
+                          newPlanAssignedTo: value === '__none__' ? '' : value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="newPlanAssignedTo" className="bg-gray-800/50 border-gray-700 text-white">
+                        <SelectValue placeholder="Selecione o responsavel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Selecione...</SelectItem>
+                        {users.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
             )}
