@@ -3,9 +3,13 @@
 import { useCallback, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, GridReadyEvent, GridOptions } from 'ag-grid-community';
+import { ModuleRegistry } from 'ag-grid-community';
+import { AllEnterpriseModule } from 'ag-grid-enterprise';
 // Theming API v34 (sem ag-grid.css - conflito #239)
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import 'ag-grid-enterprise';
+
+// Registrar módulos AG Grid Enterprise (obrigatório v34+)
+ModuleRegistry.registerModules([AllEnterpriseModule]);
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface BaseGridProps<T = Record<string, unknown>> {
@@ -67,7 +71,7 @@ export function BaseGrid<T = Record<string, unknown>>({
     () => ({
       pagination: true,
       paginationPageSize: isMobile ? 10 : paginationPageSize, // Menos linhas em mobile
-      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [10, 25, 50, 100],
+      paginationPageSizeSelector: isMobile ? [5, 10, 20] : [10, 20, 25, 50, 100],
       rowSelection: {
         mode: 'singleRow',
         checkboxes: false,
@@ -77,7 +81,7 @@ export function BaseGrid<T = Record<string, unknown>>({
       masterDetail: !isMobile && masterDetail, // Master-detail apenas em desktop
       detailCellRenderer: !isMobile ? detailCellRenderer : undefined,
       detailCellRendererParams: !isMobile ? detailCellRendererParams : undefined,
-      enableRangeSelection: !isMobile && enableExport,
+      cellSelection: !isMobile && enableExport, // Substitui enableRangeSelection (deprecated v31.2)
       enableCharts: false, // Sempre desativado até registrar módulo (#200)
       rowGroupPanelShow: isMobile ? undefined : 'always',
       suppressMovableColumns: isMobile, // Travar colunas em mobile
@@ -92,8 +96,7 @@ export function BaseGrid<T = Record<string, unknown>>({
             fileName: `export_${new Date().toISOString().split('T')[0]}.csv`,
           }
         : undefined,
-      // Acessibilidade
-      enableAccessibility: true,
+      // Acessibilidade: sempre ativa no AG Grid v34+ (enableAccessibility removido)
     }),
     [masterDetail, detailCellRenderer, detailCellRendererParams, paginationPageSize, enableExport, enableCharts, isMobile]
   );

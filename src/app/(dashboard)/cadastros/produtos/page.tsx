@@ -336,7 +336,7 @@ export default function ProductsPage() {
                     ],
                     defaultToolPanel: "",
                   }}
-                  enableRangeSelection={true}
+                  cellSelection={true}
                   rowGroupPanelShow="always"
                   groupDisplayType="groupRows"
                   autoSizeStrategy={{

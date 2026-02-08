@@ -228,7 +228,7 @@ export function PDCAGrid({ data, loading }: PDCAGridProps) {
         pinned: 'right',
         sortable: false,
         filter: false,
-        suppressMenu: true,
+        suppressHeaderMenuButton: true,
       },
     ],
     [router]

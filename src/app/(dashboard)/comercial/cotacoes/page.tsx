@@ -331,7 +331,7 @@ export default function QuotesPage() {
                   ],
                   defaultToolPanel: "",
                 }}
-                enableRangeSelection={true}
+                cellSelection={true}
                 rowGroupPanelShow="always"
                 groupDisplayType="groupRows"
                 pagination={true}

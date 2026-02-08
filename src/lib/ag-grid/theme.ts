@@ -101,10 +101,8 @@ export const defaultGridOptions = {
   rowSelection: "multiple" as const,
   suppressRowClickSelection: true,
   
-  // 📋 Clipboard
-  enableRangeSelection: true,
-  enableRangeHandle: true,
-  enableFillHandle: true,
+  // 📋 Clipboard / Cell Selection (v34: cellSelection substitui enableRangeSelection)
+  cellSelection: true,
   
   // 🔍 Filtros
   enableAdvancedFilter: true,

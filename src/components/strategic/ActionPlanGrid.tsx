@@ -286,7 +286,7 @@ export function ActionPlanGrid({ data, loading = false }: ActionPlanGridProps) {
         },
         sortable: false,
         filter: false,
-        suppressMenu: true,
+        suppressHeaderMenuButton: true,
       },
     ],
     [router]

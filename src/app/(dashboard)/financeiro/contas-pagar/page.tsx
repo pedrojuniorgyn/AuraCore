@@ -551,7 +551,7 @@ export default function ContasPagarPage() {
               
               // Enterprise Features
               animateRows={true}
-              enableRangeSelection={true}
+              cellSelection={true}
               sideBar={{
                 toolPanels: [
                   {

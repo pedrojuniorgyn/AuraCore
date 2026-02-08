@@ -445,7 +445,7 @@ export default function RadarDdaPage() {
                     ],
                     defaultToolPanel: "",
                   }}
-                  enableRangeSelection={true}
+                  cellSelection={true}
                   rowGroupPanelShow="always"
                   groupDisplayType="groupRows"
                   pagination={true}

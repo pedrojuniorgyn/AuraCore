@@ -126,7 +126,7 @@ export default function FleetDocsPage() {
               ],
               defaultToolPanel: "",
             }}
-            enableRangeSelection={true}
+            cellSelection={true}
             rowGroupPanelShow="always"
             groupDisplayType="groupRows"
             paginationPageSizeSelector={[10, 20, 50, 100]}
@@ -154,7 +154,7 @@ export default function FleetDocsPage() {
               ],
               defaultToolPanel: "",
             }}
-            enableRangeSelection={true}
+            cellSelection={true}
             rowGroupPanelShow="always"
             groupDisplayType="groupRows"
             paginationPageSizeSelector={[10, 20, 50, 100]}

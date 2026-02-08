@@ -671,7 +671,7 @@ export default function GestaoPCGPage() {
                 sideBar={{
                   toolPanels: ['columns', 'filters']
                 }}
-                enableRangeSelection={true}
+                cellSelection={true}
                 pagination={true}
                 paginationPageSize={50}
                 

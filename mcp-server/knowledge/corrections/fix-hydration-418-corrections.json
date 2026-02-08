@@ -1,0 +1,18 @@
+{
+  "epic": "FIX-HYDRATION-418",
+  "corrections": [
+    {
+      "id": "LC-102762",
+      "date": "2026-02-08",
+      "epic": "FIX-HYDRATION-418",
+      "error": "React Error #418 (hydration mismatch) persistindo em TODAS as paginas apos fix do AIInsightWidget. Causa raiz: viewport e themeColor dentro do export metadata no root layout.tsx (Next.js 15 deprecated). Tambem havia meta tag theme-color duplicada manualmente no head. O servidor e o cliente geravam meta tags viewport/theme-color diferentes, causando hydration mismatch global.",
+      "correction": "1. Importado tipo Viewport de 'next'. 2. Criado export separado 'export const viewport: Viewport' com themeColor, width, initialScale, maximumScale e userScalable. 3. Removido themeColor e viewport do export metadata. 4. Removida tag manual duplicada meta name=theme-color do head (substituida por comentario explicativo).",
+      "files_affected": [
+        "src/app/layout.tsx"
+      ],
+      "pattern_created": "VIEWPORT-EXPORT-001",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

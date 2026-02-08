@@ -197,7 +197,7 @@ export const FinancialCharts: React.FC = () => {
             theme={auraTheme}
             // 📊 Charts Configuration
             enableCharts={true}
-            enableRangeSelection={true}
+            cellSelection={true}
             // 🎨 Auto-Size
             autoSizeStrategy={{
               type: "fitGridWidth",

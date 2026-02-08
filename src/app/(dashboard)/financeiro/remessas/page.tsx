@@ -461,7 +461,7 @@ export default function RemittancesPage() {
                           ],
                           defaultToolPanel: "",
                         }}
-                        enableRangeSelection={true}
+                        cellSelection={true}
                         rowGroupPanelShow="always"
                         groupDisplayType="groupRows"
                         rowSelection="multiple"
@@ -535,7 +535,7 @@ export default function RemittancesPage() {
                           ],
                           defaultToolPanel: "",
                         }}
-                        enableRangeSelection={true}
+                        cellSelection={true}
                         rowGroupPanelShow="always"
                         groupDisplayType="groupRows"
                         pagination={true}

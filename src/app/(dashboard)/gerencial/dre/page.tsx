@@ -271,7 +271,7 @@ export default function DREGerencialPage() {
                   resizable: true,
                   filter: true
                 }}
-                enableRangeSelection={true}
+                cellSelection={true}
                 enableCharts={true}
                 pagination={true}
                 paginationPageSize={50}

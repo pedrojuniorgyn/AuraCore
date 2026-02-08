@@ -486,7 +486,7 @@ export default function ContasReceberPage() {
                 
                 // Enterprise Features
                 animateRows={true}
-                enableRangeSelection={true}
+                cellSelection={true}
                 sideBar={{
                   toolPanels: [
                     {

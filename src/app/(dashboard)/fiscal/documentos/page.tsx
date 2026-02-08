@@ -474,7 +474,7 @@ export default function FiscalDocumentsPage() {
                 paginationPageSizeSelector={[25, 50, 100, 200]}
                 
                 // Enterprise Features
-                enableRangeSelection={true}
+                cellSelection={true}
                 rowGroupPanelShow="always"
                 sideBar={{
                   toolPanels: [

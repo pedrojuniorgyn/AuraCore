@@ -213,7 +213,7 @@ export default function CreditosFiscaisPage() {
                 columnDefs={columnDefs}
                 defaultColDef={{ sortable: true, resizable: true, filter: true }}
                 sideBar={{ toolPanels: ['columns', 'filters'] }}
-                enableRangeSelection={true}
+                cellSelection={true}
                 pagination={true}
                 paginationPageSize={50}
                 loading={loading}

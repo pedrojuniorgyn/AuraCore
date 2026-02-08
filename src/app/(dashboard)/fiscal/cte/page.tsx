@@ -372,7 +372,7 @@ export default function CtePage() {
                 ],
                 defaultToolPanel: "",
               }}
-              enableRangeSelection={true}
+              cellSelection={true}
               rowGroupPanelShow="always"
               
               // Pagination

@@ -458,7 +458,7 @@ export default function CategoriasPage() {
                 pagination={true}
                 paginationPageSize={50}
                 paginationPageSizeSelector={[25, 50, 100, 200]}
-                enableRangeSelection={true}
+                cellSelection={true}
                 rowGroupPanelShow="always"
                 sideBar={{
                   toolPanels: [

@@ -1,0 +1,19 @@
+{
+  "epic": "DEPLOY-OPTIMIZATION",
+  "corrections": [
+    {
+      "id": "LC-017648",
+      "date": "2026-02-08",
+      "epic": "DEPLOY-OPTIMIZATION",
+      "error": "Deploy falhou em producao (Next.js 16.0.7) porque: 1) --webpack flag foi removido do Dockerfile mas Next.js 16 usa Turbopack como bundler padrao, nao webpack. 2) turbopack: {} foi removido do next.config.ts, causando erro 'webpack config with no turbopack config'. 3) experimental.instrumentationHook estava deprecated no Next.js 16. Erro no log: 'ERROR: This build is using Turbopack, with a webpack config and no turbopack config.'",
+      "correction": "1) Restaurado --webpack flag no comando next build do Dockerfile (OBRIGATORIO para tsyringe DI: mangleExports=false + reflect-metadata entry points). 2) Restaurado turbopack: {} no next.config.ts para silenciar erro do Next.js 16. 3) Removido experimental.instrumentationHook deprecated (built-in no Next.js 16). LICAO: Verificar a versao REAL do Next.js no package.json/lock antes de assumir versao. O servidor tinha Next.js 16.0.7, nao 15.",
+      "files_affected": [
+        "Dockerfile",
+        "next.config.ts"
+      ],
+      "pattern_created": "NEXTJS16-WEBPACK-FLAG",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}
