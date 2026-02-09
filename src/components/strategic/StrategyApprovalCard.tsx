@@ -68,7 +68,8 @@ const formatDate = (dateString: string): string => {
 export const StrategyApprovalCard: React.FC<StrategyApprovalCardProps> = ({ strategy }) => {
   const router = useRouter();
 
-  const daysAgo = getDaysAgo(strategy.submittedAt);
+  const effectiveSubmittedAt = strategy.submittedAt ?? strategy.createdAt;
+  const daysAgo = getDaysAgo(effectiveSubmittedAt);
   const isUrgent = daysAgo >= 3;
 
   return (
@@ -104,7 +105,7 @@ export const StrategyApprovalCard: React.FC<StrategyApprovalCardProps> = ({ stra
             </div>
             <div className="flex items-center gap-2 text-gray-600">
               <Calendar className="h-4 w-4" />
-              <Text>Data: {formatDate(strategy.submittedAt)}</Text>
+              <Text>Data: {formatDate(effectiveSubmittedAt)}</Text>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />

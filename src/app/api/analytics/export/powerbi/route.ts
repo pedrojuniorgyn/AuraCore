@@ -42,10 +42,10 @@ export interface PowerBIGoal {
   code: string;
   description: string;
   startDate: string;
-  targetMonths: number;
+  dueDate: string;
   progress: number;
   status: string;
-  strategyId: string | null;
+  perspectiveId: string;
   cascadeLevel: string;
   createdAt: string;
   updatedAt: string;
@@ -53,11 +53,10 @@ export interface PowerBIGoal {
 
 export interface PowerBIStrategy {
   id: string;
-  title: string;
-  description: string | null;
-  visionStatement: string | null;
-  missionStatement: string | null;
-  valuesStatement: string | null;
+  name: string;
+  vision: string | null;
+  mission: string | null;
+  values: string;
   startDate: string;
   endDate: string;
   status: string;
@@ -171,10 +170,10 @@ export const GET = withDI(async (request: NextRequest) => {
       code: goal.code,
       description: goal.description,
       startDate: goal.startDate.toISOString(),
-      targetMonths: goal.targetMonths,
+      dueDate: goal.dueDate.toISOString(),
       progress: goal.progress,
       status: goal.status.value,
-      strategyId: goal.strategyId,
+      perspectiveId: goal.perspectiveId,
       cascadeLevel: goal.cascadeLevel.value,
       createdAt: goal.createdAt.toISOString(),
       updatedAt: goal.updatedAt.toISOString(),
@@ -182,15 +181,14 @@ export const GET = withDI(async (request: NextRequest) => {
 
     const strategies: PowerBIStrategy[] = strategiesResult.items.map((strategy) => ({
       id: strategy.id,
-      title: strategy.title,
-      description: strategy.description,
-      visionStatement: strategy.visionStatement,
-      missionStatement: strategy.missionStatement,
-      valuesStatement: strategy.valuesStatement,
+      name: strategy.name,
+      vision: strategy.vision,
+      mission: strategy.mission,
+      values: strategy.values.join(', '),
       startDate: strategy.startDate.toISOString(),
       endDate: strategy.endDate.toISOString(),
-      status: strategy.status.value,
-      isActive: strategy.isActive,
+      status: strategy.status,
+      isActive: strategy.status === 'ACTIVE',
       createdAt: strategy.createdAt.toISOString(),
       updatedAt: strategy.updatedAt.toISOString(),
     }));
@@ -201,11 +199,11 @@ export const GET = withDI(async (request: NextRequest) => {
       what: plan.what,
       why: plan.why,
       who: plan.who,
-      where: plan.where,
+      where: plan.whereLocation,
       whenStart: plan.whenStart.toISOString(),
       whenEnd: plan.whenEnd.toISOString(),
       how: plan.how,
-      howMuch: plan.howMuch,
+      howMuch: plan.howMuchAmount !== null ? `${plan.howMuchAmount} ${plan.howMuchCurrency}` : '',
       status: plan.status,
       pdcaCycle: plan.pdcaCycle.value,
       goalId: plan.goalId,

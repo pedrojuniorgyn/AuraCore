@@ -5,15 +5,11 @@
  * @module app/api/strategic/ideas
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { withDI } from '@/shared/infrastructure/di/with-di';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IIdeaBoxRepository } from '@/modules/strategic/domain/ports/output/IIdeaBoxRepository';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
 
 // TODO: Substituir por dados reais quando implementar tabelas de comentários/votos/anexos
 function generateMockDiscussions(ideaId: string, ideaTitle: string, status: string, createdAt: Date) {
@@ -133,7 +129,7 @@ export const GET = withDI(async (
     const { comments, voters, attachments } = generateMockDiscussions(
       idea.id,
       idea.title,
-      idea.status,
+      idea.status.value,
       idea.createdAt
     );
 

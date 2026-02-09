@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BudgetImportService } from '@/modules/strategic/application/services/BudgetImportService';
 import { Result } from '@/shared/domain';
-import type { IStrategicKPIRepository } from '@/modules/strategic/domain/repositories/IStrategicKPIRepository';
-import type { IStrategicGoalRepository } from '@/modules/strategic/domain/repositories/IStrategicGoalRepository';
+import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
+import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
 describe('BudgetImportService', () => {
   let service: BudgetImportService;
-  let mockKPIRepo: Partial<IStrategicKPIRepository>;
-  let mockGoalRepo: Partial<IStrategicGoalRepository>;
+  let mockKPIRepo: Record<string, ReturnType<typeof vi.fn>>;
+  let mockGoalRepo: Record<string, ReturnType<typeof vi.fn>>;
 
   beforeEach(() => {
     mockKPIRepo = {
@@ -20,7 +20,7 @@ describe('BudgetImportService', () => {
       addValueVersion: vi.fn().mockResolvedValue(undefined),
     };
 
-    service = new BudgetImportService(mockKPIRepo, mockGoalRepo);
+    service = new BudgetImportService(mockKPIRepo as unknown as IKPIRepository, mockGoalRepo as unknown as IStrategicGoalRepository);
   });
 
   describe('importKPIValues - CSV Parsing', () => {

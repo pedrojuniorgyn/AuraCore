@@ -7,8 +7,9 @@
  * @module app/api/strategic/swot/[id]
  */
 import { z } from 'zod';
+import { NextRequest } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { withDI } from '@/shared/infrastructure/di/with-di';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { 
   getTenantContext,
   validateABACResourceAccess,
@@ -17,6 +18,7 @@ import {
 import { Result } from '@/shared/domain';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
+import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import { SwotItem, type SwotCategory } from '@/modules/strategic/domain/entities/SwotItem';
 
 const updateSwotItemSchema = z.object({
@@ -34,7 +36,7 @@ const updateSwotItemSchema = z.object({
 });
 
 // GET /api/strategic/swot/[id]
-export const GET = withDI(async (_request: Request, context: { params: Promise<{ id: string }> }) => {
+export const GET = withDI(async (_request: NextRequest, context: RouteContext) => {
   try {
     let tenantCtx;
     try {
@@ -71,7 +73,7 @@ export const GET = withDI(async (_request: Request, context: { params: Promise<{
 });
 
 // PUT /api/strategic/swot/[id]
-export const PUT = withDI(async (request: Request, context: { params: Promise<{ id: string }> }) => {
+export const PUT = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     let tenantCtx;
     try {
@@ -141,10 +143,11 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
     // ✅ VALIDAÇÃO: Se strategyId foi fornecido E mudou, verificar se a nova strategy existe
     if (validated.strategyId !== undefined && validated.strategyId !== existing.strategyId) {
       try {
-        const strategyRepository = container.resolve(STRATEGIC_TOKENS.StrategyRepository);
+        const strategyRepository = container.resolve<IStrategyRepository>(STRATEGIC_TOKENS.StrategyRepository);
         const strategyExists = await strategyRepository.findById(
           validated.strategyId,
-          tenantCtx.organizationId
+          tenantCtx.organizationId,
+          tenantCtx.branchId
         );
         
         if (!strategyExists) {
@@ -238,7 +241,7 @@ export const PUT = withDI(async (request: Request, context: { params: Promise<{ 
 });
 
 // DELETE /api/strategic/swot/[id]
-export const DELETE = withDI(async (_request: Request, context: { params: Promise<{ id: string }> }) => {
+export const DELETE = withDI(async (_request: NextRequest, context: RouteContext) => {
   try {
     let tenantCtx;
     try {

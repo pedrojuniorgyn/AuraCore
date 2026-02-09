@@ -7,15 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
-import { withDI } from '@/shared/infrastructure/di/with-di';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IVerificationItemRepository } from '@/modules/strategic/domain/ports/output/IVerificationItemRepository';
-
-interface RouteContext {
-  params: Promise<Record<string, string>>;
-}
 
 const verifySchema = z.object({
   value: z.string().min(1).max(100),

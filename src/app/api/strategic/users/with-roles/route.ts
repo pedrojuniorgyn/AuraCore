@@ -99,6 +99,9 @@ export async function GET(request: NextRequest) {
           description: role.description || '',
           permissions: [],
           isSystem: false,
+          isDefault: false,
+          priority: 0,
+          userCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
         }));

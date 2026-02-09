@@ -5,14 +5,10 @@
  * @module app/api/strategic/pdca
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { withDI } from '@/shared/infrastructure/di/with-di';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
 
 // GET /api/strategic/pdca/[id]/phase-history
 export const GET = withDI(async (
@@ -65,7 +61,7 @@ export const GET = withDI(async (
       createdAt: Date;
     };
 
-    const planData = (planResult.recordset || planResult) as PlanRow[];
+    const planData = (planResult.recordset || planResult) as unknown as PlanRow[];
     const plan = planData[0];
 
     if (!plan) {

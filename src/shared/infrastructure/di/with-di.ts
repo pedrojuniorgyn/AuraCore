@@ -25,7 +25,7 @@ import { ensureDIInitializedAsync } from './ensure-initialized';
 /**
  * Tipo para route context (dynamic segments)
  */
-interface RouteContext {
+export interface RouteContext {
   params: Promise<Record<string, string>> | Record<string, string>;
 }
 

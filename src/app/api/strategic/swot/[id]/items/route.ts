@@ -5,15 +5,11 @@
  * @module app/api/strategic/swot
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { withDI } from '@/shared/infrastructure/di/with-di';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
 
 // GET /api/strategic/swot/[id]/items
 export const GET = withDI(async (

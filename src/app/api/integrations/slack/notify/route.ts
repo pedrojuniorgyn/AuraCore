@@ -34,7 +34,7 @@ const NotifySchema = z.object({
     'mention.received',
     'achievement.unlocked',
   ]),
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
   messageFormat: z.enum(['compact', 'detailed', 'rich']).optional(),
 });
 

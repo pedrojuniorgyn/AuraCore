@@ -51,8 +51,8 @@ export function BaseGrid<T = Record<string, unknown>>({
 
     // Em mobile, filtrar apenas colunas prioritárias
     return columnDefs.filter((col) => {
-      const field = typeof col.field === 'string' ? col.field : '';
-      return mobileColumns.some((mobileCol) => field.includes(mobileCol));
+      const identifier = typeof col.field === 'string' ? col.field : (typeof col.colId === 'string' ? col.colId : '');
+      return mobileColumns.some((mobileCol) => identifier.includes(mobileCol));
     });
   }, [isMobile, columnDefs, mobileColumns]);
 

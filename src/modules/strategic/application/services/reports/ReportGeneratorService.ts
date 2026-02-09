@@ -336,13 +336,13 @@ export class ReportGeneratorService {
 
     // Calcular métricas
     const totalApprovals = approvals.length;
-    const approved = approvals.filter((a) => a.action === 'APPROVE').length;
-    const rejected = approvals.filter((a) => a.action === 'REJECT').length;
+    const approved = approvals.filter((a) => a.action === 'APPROVED').length;
+    const rejected = approvals.filter((a) => a.action === 'REJECTED').length;
     const pending = totalApprovals - approved - rejected;
 
     // Calcular tempo médio
     const approvalTimes = approvals
-      .filter((a) => a.action === 'APPROVE')
+      .filter((a) => a.action === 'APPROVED')
       .map((a) => {
         // Mock: calcular tempo desde criação (TODO: usar campo real createdAt vs approvedAt)
         return 2; // dias
@@ -374,11 +374,11 @@ export class ReportGeneratorService {
         type: 'table',
         headers: ['Data', 'Tipo', 'Entidade', 'Aprovador', 'Ação', 'Comentário'],
         rows: approvals.slice(0, 20).map((a) => [
-          a.approvedAt.toLocaleDateString('pt-BR'),
-          a.entityType,
-          a.entityId.substring(0, 8),
-          a.approverUserId,
-          a.action === 'APPROVE' ? '✅' : a.action === 'REJECT' ? '❌' : '⏳',
+          a.createdAt.toLocaleDateString('pt-BR'),
+          'Strategy',
+          a.strategyId.substring(0, 8),
+          a.actorUserId.toString(),
+          a.action === 'APPROVED' ? '✅' : a.action === 'REJECTED' ? '❌' : '⏳',
           (a.comments || '-').substring(0, 30),
         ]),
       },
@@ -386,13 +386,13 @@ export class ReportGeneratorService {
 
     // Análise de gargalos (por aprovador)
     const approvalsByUser = approvals.reduce((acc, a) => {
-      const key = a.approverUserId;
+      const key = a.actorUserId.toString();
       if (!acc[key]) {
         acc[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
       }
       acc[key].total++;
-      if (a.action === 'APPROVE') acc[key].approved++;
-      if (a.action === 'REJECT') acc[key].rejected++;
+      if (a.action === 'APPROVED') acc[key].approved++;
+      if (a.action === 'REJECTED') acc[key].rejected++;
       return acc;
     }, {} as Record<string, { total: number; approved: number; rejected: number; pending: number }>);
 

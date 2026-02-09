@@ -10,7 +10,7 @@ import { container } from '@/shared/infrastructure/di/container';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
-import { GetDrilldownQuery } from '@/modules/strategic/application/queries/GetDrilldownQuery';
+import { GetDrilldownQuery, type PerspectiveDrilldown, type GoalDrilldown, type KPIDrilldown } from '@/modules/strategic/application/queries/GetDrilldownQuery';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
 const drilldownSchema = z.object({
@@ -49,7 +49,7 @@ export const GET = withDI(async (request: Request) => {
       STRATEGIC_TOKENS.GetDrilldownQuery
     );
 
-    let result: unknown;
+    let result: Result<PerspectiveDrilldown[] | GoalDrilldown[] | KPIDrilldown[], string>;
     switch (parsed.data.level) {
       case 'perspective':
         result = await query.getPerspectives({

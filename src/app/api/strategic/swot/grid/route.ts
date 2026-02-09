@@ -91,7 +91,7 @@ export const GET = withDI(async (request: NextRequest) => {
         strategiesMap.set(strategyId, {
           id: item.id, // Usar id do primeiro item como proxy
           title: item.title,
-          description: item.description,
+          description: item.description ?? undefined,
           status: item.status,
           itemsCount: {
             strengths: 0,

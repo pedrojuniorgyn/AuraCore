@@ -46,7 +46,7 @@ describe('ApprovalWorkflowService', () => {
         submittedByUserId: 100,
       });
 
-      const result = ApprovalWorkflowService.approve(strategy, 200);
+      const result = ApprovalWorkflowService.approve(strategy, 200, true);
 
       expect(Result.isOk(result)).toBe(true);
       expect(result.value.strategy.workflowStatus.value).toBe('APPROVED');
@@ -59,7 +59,7 @@ describe('ApprovalWorkflowService', () => {
         submittedByUserId: 123,
       });
 
-      const result = ApprovalWorkflowService.approve(strategy, 123); // Mesmo user
+      const result = ApprovalWorkflowService.approve(strategy, 123, true); // Mesmo user
 
       expect(Result.isOk(result)).toBe(false);
       expect(result.error).toContain('não pode aprovar estratégia que ele mesmo submeteu');
@@ -68,7 +68,7 @@ describe('ApprovalWorkflowService', () => {
     it('should fail if not in PENDING_APPROVAL', () => {
       const strategy = createMockStrategy({ workflowStatus: WorkflowStatus.DRAFT });
 
-      const result = ApprovalWorkflowService.approve(strategy, 200);
+      const result = ApprovalWorkflowService.approve(strategy, 200, true);
 
       expect(Result.isOk(result)).toBe(false);
     });
@@ -84,6 +84,7 @@ describe('ApprovalWorkflowService', () => {
       const result = ApprovalWorkflowService.reject(
         strategy,
         200,
+        true,
         'Targets unrealistic',
         'Please revise Q2 numbers'
       );
@@ -98,7 +99,7 @@ describe('ApprovalWorkflowService', () => {
         workflowStatus: WorkflowStatus.PENDING_APPROVAL,
       });
 
-      const result = ApprovalWorkflowService.reject(strategy, 200, ''); // Vazio
+      const result = ApprovalWorkflowService.reject(strategy, 200, true, ''); // Vazio
 
       expect(Result.isOk(result)).toBe(false);
       expect(result.error).toContain('Motivo da rejeição é obrigatório');
@@ -112,6 +113,7 @@ describe('ApprovalWorkflowService', () => {
       const result = ApprovalWorkflowService.reject(
         strategy,
         200,
+        true,
         'Reason here'
       );
 
@@ -128,6 +130,7 @@ describe('ApprovalWorkflowService', () => {
       const result = ApprovalWorkflowService.requestChanges(
         strategy,
         200,
+        true,
         'Needs more detail on OKRs'
       );
 
@@ -140,7 +143,7 @@ describe('ApprovalWorkflowService', () => {
         workflowStatus: WorkflowStatus.PENDING_APPROVAL,
       });
 
-      const result = ApprovalWorkflowService.requestChanges(strategy, 200, '');
+      const result = ApprovalWorkflowService.requestChanges(strategy, 200, true, '');
 
       expect(Result.isOk(result)).toBe(false);
       expect(result.error).toContain('obrigatório');

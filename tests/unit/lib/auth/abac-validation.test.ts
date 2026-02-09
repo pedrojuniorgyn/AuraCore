@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 // Mock do Next.js antes de importar context.ts
 vi.mock('next/server', () => ({
   NextResponse: {
-    json: (body: unknown, init?: { status?: number }) => ({
+    json: (body: Record<string, unknown>, init?: { status?: number }) => ({
       ...body,
       status: init?.status || 200,
     }),

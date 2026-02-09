@@ -1,15 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AlertService, type PartialAlertConfig } from '@/modules/strategic/application/services/AlertService';
 import { Result } from '@/shared/domain';
-import type { IStrategicAlertRepository } from '@/modules/strategic/domain/repositories/IStrategicAlertRepository';
-import type { IStrategicKPIRepository } from '@/modules/strategic/domain/repositories/IStrategicKPIRepository';
-import type { IActionPlanRepository } from '@/modules/strategic/domain/repositories/IActionPlanRepository';
+import type { IAlertRepository } from '@/modules/strategic/domain/ports/output/IAlertRepository';
+import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
+import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
+import type { IApprovalPermissionRepository } from '@/modules/strategic/domain/ports/output/IApprovalPermissionRepository';
+import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 
 describe('AlertService', () => {
   let alertService: AlertService;
-  let mockAlertRepo: Partial<IStrategicAlertRepository>;
-  let mockKPIRepo: Partial<IStrategicKPIRepository>;
-  let mockActionPlanRepo: Partial<IActionPlanRepository>;
+  let mockAlertRepo: Record<string, ReturnType<typeof vi.fn>>;
+  let mockKPIRepo: Record<string, ReturnType<typeof vi.fn>>;
+  let mockActionPlanRepo: Record<string, ReturnType<typeof vi.fn>>;
+  let mockApprovalPermRepo: Record<string, ReturnType<typeof vi.fn>>;
+  let mockNotificationService: Record<string, ReturnType<typeof vi.fn>>;
 
   beforeEach(() => {
     // Setup mocks
@@ -27,10 +31,20 @@ describe('AlertService', () => {
       findMany: vi.fn(),
     };
 
+    mockApprovalPermRepo = {
+      findApproversByOrg: vi.fn().mockResolvedValue([]),
+    };
+
+    mockNotificationService = {
+      sendNotification: vi.fn().mockResolvedValue(undefined),
+    };
+
     alertService = new AlertService(
-      mockAlertRepo,
-      mockKPIRepo,
-      mockActionPlanRepo
+      mockAlertRepo as unknown as IAlertRepository,
+      mockKPIRepo as unknown as IKPIRepository,
+      mockActionPlanRepo as unknown as IActionPlanRepository,
+      mockApprovalPermRepo as unknown as IApprovalPermissionRepository,
+      mockNotificationService as unknown as NotificationService
     );
   });
 

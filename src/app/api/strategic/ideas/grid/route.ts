@@ -99,7 +99,7 @@ export const GET = withDI(async (request: NextRequest) => {
         // Gerar engajamento mock
         const { votesCount, commentsCount } = generateMockEngagement(
           idea.id,
-          idea.status,
+          idea.status.value,
           idea.createdAt
         );
         
@@ -112,8 +112,8 @@ export const GET = withDI(async (request: NextRequest) => {
           title: idea.title,
           description: idea.description || '',
           category: CATEGORY_LABELS[idea.sourceType] || idea.sourceType,
-          status: idea.status,
-          statusLabel: STATUS_LABELS[idea.status] || idea.status,
+          status: idea.status.value,
+          statusLabel: STATUS_LABELS[idea.status.value] || idea.status.label,
           author: {
             id: idea.submittedBy,
             name: idea.submittedByName || 'Anônimo',

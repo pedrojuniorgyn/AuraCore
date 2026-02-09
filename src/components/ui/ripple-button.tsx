@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type RippleButtonVariant = "default" | "secondary" | "outline" | "ghost";
+type RippleButtonSize = "default" | "sm" | "lg" | "icon";
 
 interface RippleButtonProps extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   className?: string;
@@ -14,6 +15,11 @@ interface RippleButtonProps extends Omit<React.ComponentPropsWithoutRef<"button"
    * Importante: não é repassada para o DOM como atributo.
    */
   variant?: RippleButtonVariant;
+
+  /**
+   * Tamanho do botão.
+   */
+  size?: RippleButtonSize;
 
   /**
    * Compat com padrão "asChild" do shadcn/radix.
@@ -32,6 +38,7 @@ export function RippleButton({
   className,
   children,
   variant = "default",
+  size = "default",
   // compat: não repassar ao DOM
   asChild,
   ...props
@@ -67,8 +74,12 @@ export function RippleButton({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative px-6 py-3 rounded-lg font-semibold overflow-hidden",
+        "relative rounded-lg font-semibold overflow-hidden",
         "shadow-lg hover:shadow-xl transition-shadow duration-300",
+        size === "default" && "px-6 py-3",
+        size === "sm" && "px-3 py-1.5 text-sm",
+        size === "lg" && "px-8 py-4 text-lg",
+        size === "icon" && "p-2",
         variant === "default" && [
           "text-white",
           "bg-gradient-to-r from-purple-600 to-pink-600",

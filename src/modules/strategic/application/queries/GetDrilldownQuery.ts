@@ -51,6 +51,8 @@ interface KPIRow {
   currentValue: number | null;
   unit: string;
   polarity: string;
+  baselineValue: number | null;
+  lastUpdated: Date | null;
   progress: number;
   trend: string | null;
 }
@@ -202,7 +204,7 @@ export class GetDrilldownQuery {
     const rows = getDbRows(result);
 
     return Result.ok(
-      rows.map((row: PerspectiveRow) => ({
+      (rows as unknown as PerspectiveRow[]).map((row) => ({
         id: row.id,
         name: row.name,
         description: row.description,
@@ -269,7 +271,7 @@ export class GetDrilldownQuery {
     const rows = getDbRows(result);
 
     return Result.ok(
-      rows.map((row: GoalRow) => ({
+      (rows as unknown as GoalRow[]).map((row) => ({
         id: row.id,
         code: row.code,
         name: row.name,
@@ -329,7 +331,7 @@ export class GetDrilldownQuery {
     const rows = getDbRows(result);
 
     return Result.ok(
-      rows.map((row: KPIRow) => ({
+      (rows as unknown as KPIRow[]).map((row) => ({
         id: row.id,
         code: row.code,
         name: row.name,
@@ -337,7 +339,7 @@ export class GetDrilldownQuery {
         goalId: row.goalId,
         goalName: row.goalName,
         unit: row.unit,
-        polarity: row.polarity,
+        polarity: row.polarity as 'UP' | 'DOWN',
         currentValue: row.currentValue ? Number(row.currentValue) : null,
         targetValue: row.targetValue ? Number(row.targetValue) : null,
         baselineValue: row.baselineValue ? Number(row.baselineValue) : null,
@@ -429,7 +431,7 @@ export class GetDrilldownQuery {
         goalId: kpiRow.goalId,
         goalName: kpiRow.goalName,
         unit: kpiRow.unit,
-        polarity: kpiRow.polarity,
+        polarity: kpiRow.polarity as 'UP' | 'DOWN',
         currentValue: kpiRow.currentValue ? Number(kpiRow.currentValue) : null,
         targetValue: kpiRow.targetValue ? Number(kpiRow.targetValue) : null,
         baselineValue: kpiRow.baselineValue ? Number(kpiRow.baselineValue) : null,

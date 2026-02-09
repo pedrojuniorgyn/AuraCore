@@ -192,9 +192,9 @@ export async function POST(
 
 // Helper: Converter para Action Plan (usa Use Case existente)
 async function convertToActionPlan(
-  idea: { id: string; title: string; description: string; importance: string; estimatedCost?: number; estimatedCostCurrency?: string },
+  idea: { id: string; title: string; description: string; importance: string; estimatedCost: number | null; estimatedCostCurrency: string },
   tenantCtx: { organizationId: number; branchId: number; userId: string },
-  options: { goalId?: string; whereLocation?: string; whenStart?: string; whenEnd?: string; who?: string; whoUserId?: string; how?: string; howMuchAmount?: number; priority?: string }
+  options: { goalId?: string; whereLocation?: string; whenStart?: string; whenEnd?: string; who?: string; whoUserId?: string; how?: string; howMuchAmount?: number; priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' }
 ): Promise<Result<string, string>> {
   try {
     const useCase = container.resolve<IConvertIdeaUseCase>(
@@ -232,7 +232,7 @@ async function convertToActionPlan(
 
 // Helper: Converter para Goal
 async function convertToGoal(
-  idea: { id: string; title: string; description: string; category?: string },
+  idea: { id: string; title: string; description: string; category: string | null },
   tenantCtx: { organizationId: number; branchId: number; userId: string },
   options: { perspectiveId?: string; targetValue?: number }
 ): Promise<Result<string, string>> {
@@ -319,7 +319,7 @@ async function convertToGoal(
 
 // Helper: Converter para KPI
 async function convertToKpi(
-  idea: { id: string; title: string; description: string; category?: string },
+  idea: { id: string; title: string; description: string; category: string | null },
   tenantCtx: { organizationId: number; branchId: number; userId: string; userName?: string },
   options: { metricUnit?: string; targetValue?: number }
 ): Promise<Result<string, string>> {
