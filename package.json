@@ -105,7 +105,7 @@
     "ioredis": "^5.9.2",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
-    "lucide-react": "^0.555.0",
+    "lucide-react": "^0.563.0",
     "mini-svg-data-uri": "^1.4.4",
     "mssql": "^10.0.4",
     "next": "16.0.7",
