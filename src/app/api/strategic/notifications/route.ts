@@ -5,17 +5,14 @@
  * @module app/api/strategic/notifications
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getTenantContext } from '@/lib/auth/context';
 import type { NotificationsListResponse } from '@/lib/notifications/notification-types';
 import { getNotifications, clearNotifications } from '@/lib/notifications/notification-store';
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const ctx = await getTenantContext();
+  const userId = ctx.userId;
 
-  const userId = session.user.id;
   const searchParams = request.nextUrl.searchParams;
   const page = parseInt(searchParams.get('page') || '1', 10);
   const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
@@ -45,12 +42,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE() {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const ctx = await getTenantContext();
+  const userId = ctx.userId;
 
-  const userId = session.user.id;
   clearNotifications(userId);
 
   return NextResponse.json({ success: true });

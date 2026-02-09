@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { getTenantContext } from '@/lib/auth/context';
 import type { UserPoints } from '@/lib/gamification/gamification-types';
 import { LEVELS } from '@/lib/gamification/gamification-types';
 
@@ -25,9 +26,9 @@ function getLevelInfo(totalXp: number): { level: number; name: string; currentXp
   };
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId') || 'current-user';
+export async function GET() {
+  const ctx = await getTenantContext();
+  const userId = ctx.userId;
 
   // Mock user points data
   const totalXp = 2450;

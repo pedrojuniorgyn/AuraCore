@@ -2807,6 +2807,7 @@ export const productUnitConversions = mssqlTable("product_unit_conversions", {
 export const warehouseInventoryCounts = mssqlTable("warehouse_inventory_counts", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.2: Multi-tenancy
   warehouseId: int("warehouse_id").notNull(),
   
   countNumber: nvarchar("count_number", { length: 20 }).notNull(),
@@ -2825,7 +2826,10 @@ export const warehouseInventoryCounts = mssqlTable("warehouse_inventory_counts",
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   createdAt: datetime2("created_at").default(new Date()),
   updatedAt: datetime2("updated_at").default(new Date()),
-});
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
+}, (table) => ([
+  index("idx_warehouse_inventory_counts_tenant").on(table.organizationId, table.branchId), // SCHEMA-003
+]));
 
 export const inventoryCountItems = mssqlTable("inventory_count_items", {
   id: int("id").primaryKey().identity(),
@@ -2852,6 +2856,7 @@ export const inventoryCountItems = mssqlTable("inventory_count_items", {
 export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
   id: int("id").primaryKey().identity(),
   organizationId: int("organization_id").notNull(),
+  branchId: int("branch_id").notNull().default(1), // E9.2: Multi-tenancy
   
   countId: int("count_id"),
   
@@ -2874,7 +2879,11 @@ export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   createdAt: datetime2("created_at").default(new Date()),
-});
+  updatedAt: datetime2("updated_at").default(new Date()), // E9.2: Auditoria
+  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
+}, (table) => ([
+  index("idx_inventory_adjustments_tenant").on(table.organizationId, table.branchId), // SCHEMA-003
+]));
 
 // ==========================================
 // ⚙️ CONFIGURAÇÕES FISCAIS

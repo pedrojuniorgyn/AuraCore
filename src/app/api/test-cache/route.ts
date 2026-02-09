@@ -3,11 +3,15 @@
  * GET - Testa conexão Redis e operações de cache
  * 
  * Rota temporária para diagnóstico do Redis em produção
+ * Requer autenticacao (admin only)
  */
 import { NextResponse } from 'next/server';
+import { getTenantContext } from '@/lib/auth/context';
 import { CacheService, CacheTTL } from '@/services/cache.service';
 
 export async function GET() {
+  // Requer autenticacao para acesso a diagnostico
+  await getTenantContext();
   try {
     const testKey = 'test-cache-diagnostic';
     const testValue = {

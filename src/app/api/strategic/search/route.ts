@@ -8,12 +8,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import { db } from '@/lib/db';
 import { 
-  strategicKpis, 
-  actionPlans, 
-  pdcaCycles, 
-  strategicGoals 
+  kpiTable, 
+  actionPlanTable, 
+  pdcaCycleTable, 
+  strategicGoalTable 
 } from '@/modules/strategic/infrastructure/persistence/schemas';
-import { eq, and, ilike, or, isNull, desc, sql } from 'drizzle-orm';
+import { eq, and, ilike, or, isNull, desc } from 'drizzle-orm';
 import type {
   SearchQuery,
   SearchResponse,
@@ -41,30 +41,31 @@ export async function POST(request: NextRequest) {
 
     // Buscar KPIs
     if (!filters?.entityTypes || filters.entityTypes.includes('kpi')) {
-      const kpis = await db
+      const kpiQuery = db
         .select({
-          id: strategicKpis.id,
-          name: strategicKpis.name,
-          code: strategicKpis.code,
-          currentValue: strategicKpis.currentValue,
-          targetValue: strategicKpis.targetValue,
-          status: strategicKpis.status,
-          updatedAt: strategicKpis.updatedAt,
+          id: kpiTable.id,
+          name: kpiTable.name,
+          code: kpiTable.code,
+          currentValue: kpiTable.currentValue,
+          targetValue: kpiTable.targetValue,
+          status: kpiTable.status,
+          updatedAt: kpiTable.updatedAt,
         })
-        .from(strategicKpis)
+        .from(kpiTable)
         .where(and(
-          eq(strategicKpis.organizationId, ctx.organizationId),
-          eq(strategicKpis.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
-          isNull(strategicKpis.deletedAt),
+          eq(kpiTable.organizationId, ctx.organizationId),
+          eq(kpiTable.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(kpiTable.deletedAt),
           or(
-            ilike(strategicKpis.name, searchTerm),
-            ilike(strategicKpis.code, searchTerm)
+            ilike(kpiTable.name, searchTerm),
+            ilike(kpiTable.code, searchTerm)
           )
         ))
-        .orderBy(desc(strategicKpis.updatedAt))
-        .limit(pageSize);
+        .orderBy(desc(kpiTable.updatedAt));
+      type KpiQueryWithLimit = { limit(n: number): typeof kpiQuery };
+      const kpis = await (kpiQuery as unknown as KpiQueryWithLimit).limit(pageSize);
 
-      kpis.forEach(kpi => {
+      kpis.forEach((kpi: typeof kpis[number]) => {
         results.push({
           id: String(kpi.id),
           type: 'kpi',
@@ -82,25 +83,26 @@ export async function POST(request: NextRequest) {
 
     // Buscar Action Plans
     if (!filters?.entityTypes || filters.entityTypes.includes('action_plan')) {
-      const plans = await db
+      const planQuery = db
         .select({
-          id: actionPlans.id,
-          title: actionPlans.title,
-          status: actionPlans.status,
-          dueDate: actionPlans.dueDate,
-          updatedAt: actionPlans.updatedAt,
+          id: actionPlanTable.id,
+          title: actionPlanTable.what,
+          status: actionPlanTable.status,
+          dueDate: actionPlanTable.whenEnd,
+          updatedAt: actionPlanTable.updatedAt,
         })
-        .from(actionPlans)
+        .from(actionPlanTable)
         .where(and(
-          eq(actionPlans.organizationId, ctx.organizationId),
-          eq(actionPlans.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
-          isNull(actionPlans.deletedAt),
-          ilike(actionPlans.title, searchTerm)
+          eq(actionPlanTable.organizationId, ctx.organizationId),
+          eq(actionPlanTable.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(actionPlanTable.deletedAt),
+          ilike(actionPlanTable.what, searchTerm)
         ))
-        .orderBy(desc(actionPlans.updatedAt))
-        .limit(pageSize);
+        .orderBy(desc(actionPlanTable.updatedAt));
+      type PlanQueryWithLimit = { limit(n: number): typeof planQuery };
+      const plans = await (planQuery as unknown as PlanQueryWithLimit).limit(pageSize);
 
-      plans.forEach(plan => {
+      plans.forEach((plan: typeof plans[number]) => {
         results.push({
           id: String(plan.id),
           type: 'action_plan',
@@ -118,33 +120,34 @@ export async function POST(request: NextRequest) {
     // Buscar PDCA Cycles (histórico de transições)
     // O pdcaCycleTable é um histórico de transições, fazemos JOIN com actionPlanTable para obter o título
     if (!filters?.entityTypes || filters.entityTypes.includes('pdca_cycle')) {
-      const pdcas = await db
+      const pdcaQuery = db
         .select({
-          id: pdcaCycles.id,
-          actionPlanId: pdcaCycles.actionPlanId,
-          fromPhase: pdcaCycles.fromPhase,
-          toPhase: pdcaCycles.toPhase,
-          transitionReason: pdcaCycles.transitionReason,
-          completionPercent: pdcaCycles.completionPercent,
-          transitionedAt: pdcaCycles.transitionedAt,
+          id: pdcaCycleTable.id,
+          actionPlanId: pdcaCycleTable.actionPlanId,
+          fromPhase: pdcaCycleTable.fromPhase,
+          toPhase: pdcaCycleTable.toPhase,
+          transitionReason: pdcaCycleTable.transitionReason,
+          completionPercent: pdcaCycleTable.completionPercent,
+          transitionedAt: pdcaCycleTable.transitionedAt,
           // Campos do Action Plan para contexto
-          actionPlanWhat: actionPlans.what,
-          actionPlanStatus: actionPlans.status,
+          actionPlanWhat: actionPlanTable.what,
+          actionPlanStatus: actionPlanTable.status,
         })
-        .from(pdcaCycles)
-        .innerJoin(actionPlans, eq(pdcaCycles.actionPlanId, actionPlans.id))
+        .from(pdcaCycleTable)
+        .innerJoin(actionPlanTable, eq(pdcaCycleTable.actionPlanId, actionPlanTable.id))
         .where(and(
-          eq(pdcaCycles.organizationId, ctx.organizationId),
-          eq(pdcaCycles.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          eq(pdcaCycleTable.organizationId, ctx.organizationId),
+          eq(pdcaCycleTable.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
           or(
-            ilike(actionPlans.what, searchTerm),
-            ilike(pdcaCycles.transitionReason, searchTerm)
+            ilike(actionPlanTable.what, searchTerm),
+            ilike(pdcaCycleTable.transitionReason, searchTerm)
           )
         ))
-        .orderBy(desc(pdcaCycles.transitionedAt))
-        .limit(pageSize);
+        .orderBy(desc(pdcaCycleTable.transitionedAt));
+      type PdcaQueryWithLimit = { limit(n: number): typeof pdcaQuery };
+      const pdcas = await (pdcaQuery as unknown as PdcaQueryWithLimit).limit(pageSize);
 
-      pdcas.forEach(pdca => {
+      pdcas.forEach((pdca: typeof pdcas[number]) => {
         results.push({
           id: String(pdca.id),
           type: 'pdca_cycle',
@@ -165,30 +168,32 @@ export async function POST(request: NextRequest) {
 
     // Buscar Goals
     if (!filters?.entityTypes || filters.entityTypes.includes('goal')) {
-      const goals = await db
+      const goalQuery = db
         .select({
-          id: strategicGoals.id,
-          name: strategicGoals.name,
-          progress: strategicGoals.progress,
-          status: strategicGoals.status,
-          updatedAt: strategicGoals.updatedAt,
+          id: strategicGoalTable.id,
+          description: strategicGoalTable.description,
+          code: strategicGoalTable.code,
+          currentValue: strategicGoalTable.currentValue,
+          status: strategicGoalTable.status,
+          updatedAt: strategicGoalTable.updatedAt,
         })
-        .from(strategicGoals)
+        .from(strategicGoalTable)
         .where(and(
-          eq(strategicGoals.organizationId, ctx.organizationId),
-          eq(strategicGoals.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
-          isNull(strategicGoals.deletedAt),
-          ilike(strategicGoals.name, searchTerm)
+          eq(strategicGoalTable.organizationId, ctx.organizationId),
+          eq(strategicGoalTable.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(strategicGoalTable.deletedAt),
+          ilike(strategicGoalTable.description, searchTerm)
         ))
-        .orderBy(desc(strategicGoals.updatedAt))
-        .limit(pageSize);
+        .orderBy(desc(strategicGoalTable.updatedAt));
+      type GoalQueryWithLimit = { limit(n: number): typeof goalQuery };
+      const goals = await (goalQuery as unknown as GoalQueryWithLimit).limit(pageSize);
 
-      goals.forEach(goal => {
+      goals.forEach((goal: typeof goals[number]) => {
         results.push({
           id: String(goal.id),
           type: 'goal',
-          title: goal.name || 'Meta',
-          subtitle: `Progresso: ${goal.progress ?? 0}%`,
+          title: goal.description || 'Meta',
+          subtitle: `Código: ${goal.code} | Valor atual: ${goal.currentValue ?? 0}`,
           status: goal.status || 'on_track',
           url: `/strategic/goals/${goal.id}`,
           updatedAt: goal.updatedAt || new Date(),

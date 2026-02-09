@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { getTenantContext } from '@/lib/auth/context';
 import { ACHIEVEMENTS } from '@/lib/gamification/achievement-definitions';
 import type { UserAchievement } from '@/lib/gamification/gamification-types';
 
@@ -39,9 +40,9 @@ function initializeMockData(userId: string) {
   userAchievementsStore.set(userId, userAchievements);
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId') || 'current-user';
+export async function GET() {
+  const ctx = await getTenantContext();
+  const userId = ctx.userId;
 
   initializeMockData(userId);
 

@@ -5,11 +5,15 @@
  * @module app/api/strategic/war-room
  */
 import { NextRequest } from 'next/server';
+import { getTenantContext } from '@/lib/auth/context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  // Validar autenticacao e tenant context antes de abrir stream
+  await getTenantContext();
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

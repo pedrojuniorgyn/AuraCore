@@ -5,19 +5,18 @@
  * @module app/api/strategic/notifications/read-all
  */
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getTenantContext } from '@/lib/auth/context';
 
 export async function POST() {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Validar autenticacao e tenant context
+  await getTenantContext();
 
   // TODO: Implementar persistência no banco de dados
+  // const ctx = await getTenantContext();
   // await db.update(notifications)
   //   .set({ readAt: new Date() })
   //   .where(and(
-  //     eq(notifications.userId, session.user.id),
+  //     eq(notifications.userId, ctx.userId),
   //     isNull(notifications.readAt)
   //   ));
 
