@@ -50,7 +50,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@langchain/core": "^0.3.40",
     "@langchain/google-genai": "^0.1.9",
-    "@langchain/langgraph": "^1.1.0",
+    "@langchain/langgraph": "^1.1.4",
     "@nivo/core": "^0.99.0",
     "@nivo/heatmap": "^0.99.0",
     "@nivo/radar": "^0.99.0",
