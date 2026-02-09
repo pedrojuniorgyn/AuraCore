@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { TOKENS } from './tokens';
 import { CryptoUuidGenerator } from '../adapters/CryptoUuidGenerator';
-import { ConsoleLogger } from '../logging/ConsoleLogger';
+import { PinoLogger } from '../logging/PinoLogger';
 import { DoclingClient } from '../docling';
 import { DrizzleUnitOfWork } from '../persistence/DrizzleUnitOfWork';
 import { InMemoryEventPublisher } from '../events/InMemoryEventPublisher';
@@ -51,7 +51,7 @@ export function registerGlobalDependencies() {
   // ============================================================================
 
   container.registerSingleton(TOKENS.UuidGenerator, CryptoUuidGenerator);
-  container.registerSingleton(TOKENS.Logger, ConsoleLogger);
+  container.registerSingleton(TOKENS.Logger, PinoLogger);
   container.registerSingleton(TOKENS.UnitOfWork, DrizzleUnitOfWork);
   container.registerSingleton(TOKENS.EventPublisher, InMemoryEventPublisher);
   container.registerSingleton(TOKENS.AuditLogger, DrizzleAuditLogger);

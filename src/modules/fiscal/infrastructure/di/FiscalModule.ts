@@ -35,10 +35,26 @@ import { AuthorizeFiscalDocumentUseCase } from '../../application/use-cases/Auth
 import { CancelFiscalDocumentUseCase } from '../../application/use-cases/CancelFiscalDocumentUseCase';
 import { CalculateTaxesUseCase } from '../../application/use-cases/CalculateTaxesUseCase';
 
+// CRUD Use Cases
+import { ListFiscalDocumentsUseCase } from '../../application/use-cases/ListFiscalDocumentsUseCase';
+import { GetFiscalDocumentByIdUseCase } from '../../application/use-cases/GetFiscalDocumentByIdUseCase';
+import { ValidateFiscalDocumentUseCase } from '../../application/use-cases/ValidateFiscalDocumentUseCase';
+import { GenerateDanfeUseCase } from '../../application/use-cases/GenerateDanfeUseCase';
+import { TransmitToSefazUseCase } from '../../application/use-cases/TransmitToSefazUseCase';
+import { QuerySefazStatusUseCase } from '../../application/use-cases/QuerySefazStatusUseCase';
+
 // CTe/NFe Use Cases (E8 Fase 3)
 import { AuthorizeCteUseCase } from '../../application/use-cases/AuthorizeCteUseCase';
 import { CreateCteUseCase } from '../../application/use-cases/CreateCteUseCase';
 import { DownloadNfesUseCase } from '../../application/use-cases/DownloadNfesUseCase';
+
+// CTe Legacy Adapters (Diagnostic Plan - Fase 3)
+import { CteBuilderAdapter } from '../adapters/CteBuilderAdapter';
+import { XmlSignerAdapter } from '../adapters/XmlSignerAdapter';
+import { InsuranceValidatorAdapter } from '../adapters/InsuranceValidatorAdapter';
+import type { ICteBuilderService } from '../../domain/ports/output/ICteBuilderService';
+import type { IXmlSignerService } from '../../domain/ports/output/IXmlSignerService';
+import type { IInsuranceValidatorService } from '../../domain/ports/output/IInsuranceValidatorService';
 import type { IAuthorizeCteUseCase } from '../../domain/ports/input/IAuthorizeCteUseCase';
 import type { ICreateCteUseCase } from '../../domain/ports/input/ICreateCteUseCase';
 import type { IDownloadNfesUseCase } from '../../domain/ports/input/IDownloadNfesUseCase';
@@ -88,6 +104,19 @@ export function registerFiscalModule(): void {
   container.registerSingleton(TOKENS.AuthorizeFiscalDocumentUseCase, AuthorizeFiscalDocumentUseCase);
   container.registerSingleton(TOKENS.CancelFiscalDocumentUseCase, CancelFiscalDocumentUseCase);
   container.registerSingleton(TOKENS.CalculateTaxesUseCase, CalculateTaxesUseCase);
+
+  // CRUD Use Cases (Diagnostic Plan - Fase 2)
+  container.registerSingleton(TOKENS.ListFiscalDocumentsUseCase, ListFiscalDocumentsUseCase);
+  container.registerSingleton(TOKENS.GetFiscalDocumentByIdUseCase, GetFiscalDocumentByIdUseCase);
+  container.registerSingleton(TOKENS.ValidateFiscalDocumentUseCase, ValidateFiscalDocumentUseCase);
+  container.registerSingleton(TOKENS.GenerateDanfeUseCase, GenerateDanfeUseCase);
+  container.registerSingleton(TOKENS.TransmitToSefazUseCase, TransmitToSefazUseCase);
+  container.registerSingleton(TOKENS.QuerySefazStatusUseCase, QuerySefazStatusUseCase);
+
+  // CTe Legacy Adapters (Diagnostic Plan - Fase 3)
+  container.registerSingleton<ICteBuilderService>(TOKENS.CteBuilderService, CteBuilderAdapter);
+  container.registerSingleton<IXmlSignerService>(TOKENS.XmlSignerService, XmlSignerAdapter);
+  container.registerSingleton<IInsuranceValidatorService>(TOKENS.InsuranceValidatorService, InsuranceValidatorAdapter);
 
   // CTe/NFe Use Cases (E8 Fase 3)
   container.registerSingleton<IAuthorizeCteUseCase>(TOKENS.AuthorizeCteUseCase, AuthorizeCteUseCase);

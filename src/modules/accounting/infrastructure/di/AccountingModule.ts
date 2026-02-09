@@ -8,6 +8,7 @@ import { PostJournalEntryUseCase } from '../../application/use-cases/PostJournal
 import { ReverseJournalEntryUseCase } from '../../application/use-cases/ReverseJournalEntryUseCase';
 import { ListJournalEntriesUseCase } from '../../application/use-cases/ListJournalEntriesUseCase';
 import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJournalEntryByIdUseCase';
+import { GenerateJournalEntryUseCase } from '../../application/use-cases/GenerateJournalEntryUseCase';
 
 // Gateways (E9 Fase 1 + Fase 2)
 import { ManagementAccountingAdapter } from '../adapters/ManagementAccountingAdapter';
@@ -75,6 +76,11 @@ export function registerAccountingModule(): void {
   container.registerSingleton(
     TOKENS.GetJournalEntryByIdUseCase,
     GetJournalEntryByIdUseCase
+  );
+
+  container.registerSingleton(
+    TOKENS.GenerateJournalEntryUseCase,
+    GenerateJournalEntryUseCase
   );
 
   // Gateway de Contabilidade Gerencial (E9 Fase 1)

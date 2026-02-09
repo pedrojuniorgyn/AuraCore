@@ -18,16 +18,14 @@ import type {
   AuthorizeCteInput,
   AuthorizeCteOutput,
 } from '../../domain/ports/input/IAuthorizeCteUseCase';
+import type { ICteBuilderService } from '../../domain/ports/output/ICteBuilderService';
+import type { IXmlSignerService } from '../../domain/ports/output/IXmlSignerService';
+import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 
 // Database access (needed until full DDD migration with repositories)
 import { db } from '@/lib/db';
 import { cteHeader, fiscalSettings } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-
-// Legacy services (TODO E8 Fase 4: Migrate to Domain Services)
-// These still perform DB lookups internally
-import { buildCteXml } from '@/services/fiscal/cte-builder';
-import { createXmlSignerFromDb } from '@/services/fiscal/xml-signer';
 
 // ============================================================================
 // USE CASE
@@ -61,7 +59,10 @@ import { createXmlSignerFromDb } from '@/services/fiscal/xml-signer';
 @injectable()
 export class AuthorizeCteUseCase implements IAuthorizeCteUseCase {
   constructor(
-    @inject(TOKENS.SefazGateway) private readonly sefazGateway: ISefazGateway
+    @inject(TOKENS.SefazGateway) private readonly sefazGateway: ISefazGateway,
+    @inject(TOKENS.CteBuilderService) private readonly cteBuilder: ICteBuilderService,
+    @inject(TOKENS.XmlSignerService) private readonly xmlSigner: IXmlSignerService,
+    @inject(TOKENS.Logger) private readonly logger: ILogger
   ) {}
 
   async execute(input: AuthorizeCteInput): Promise<Result<AuthorizeCteOutput, string>> {
@@ -106,31 +107,40 @@ export class AuthorizeCteUseCase implements IAuthorizeCteUseCase {
 
       const environment = settings?.cteEnvironment === 'production' ? 'production' : 'homologation';
 
-      // 5. Gerar XML (legacy - busca dados do DB)
-      console.log(`🔨 [AuthorizeCteUseCase] Gerando XML do CTe #${input.cteId}...`);
-      const xmlSemAssinatura = await buildCteXml({
+      // 5. Gerar XML
+      this.logger.info(`Gerando XML do CTe #${input.cteId}`, { module: 'fiscal', useCase: 'AuthorizeCte', cteId: input.cteId });
+      const xmlResult = await this.cteBuilder.buildCteXml({
         pickupOrderId: cte.pickupOrderId,
         organizationId: input.organizationId,
       });
+      if (Result.isFail(xmlResult)) {
+        return Result.fail(xmlResult.error);
+      }
+      const xmlSemAssinatura = xmlResult.value;
 
-      // 6. Assinar XML (legacy)
-      console.log('🔐 [AuthorizeCteUseCase] Assinando XML...');
-      const signer = await createXmlSignerFromDb(input.organizationId);
-
-      const certInfo = signer.verifyCertificate();
-      if (!certInfo.valid) {
+      // 6. Verificar certificado e assinar XML
+      this.logger.info('Assinando XML', { module: 'fiscal', useCase: 'AuthorizeCte' });
+      const certResult = await this.xmlSigner.verifyCertificate(input.organizationId);
+      if (Result.isFail(certResult)) {
+        return Result.fail(certResult.error);
+      }
+      if (!certResult.value.valid) {
         return Result.fail('Certificado digital inválido ou vencido');
       }
 
-      const xmlAssinado = signer.signCteXml(xmlSemAssinatura);
-      console.log('✅ [AuthorizeCteUseCase] XML assinado com sucesso');
+      const signResult = await this.xmlSigner.signCteXml(xmlSemAssinatura, input.organizationId);
+      if (Result.isFail(signResult)) {
+        return Result.fail(signResult.error);
+      }
+      const xmlAssinado = signResult.value;
+      this.logger.info('XML assinado com sucesso', { module: 'fiscal', useCase: 'AuthorizeCte' });
 
       // 7. Extrair UF do emitente do XML
       const ufMatch = xmlSemAssinatura.match(/<enderEmit>[\s\S]*?<UF>(.*?)<\/UF>/);
       const uf = ufMatch?.[1] || 'SP';
 
       // 8. Transmitir via ISefazGateway
-      console.log(`🚀 [AuthorizeCteUseCase] Autorizando CTe #${input.cteId} na Sefaz ${uf}...`);
+      this.logger.info(`Autorizando CTe #${input.cteId} na Sefaz ${uf}`, { module: 'fiscal', useCase: 'AuthorizeCte', uf });
       const authResult = await this.sefazGateway.authorizeCte({
         cteXml: xmlAssinado,
         environment,
@@ -161,7 +171,7 @@ export class AuthorizeCteUseCase implements IAuthorizeCteUseCase {
         })
         .where(eq(cteHeader.id, input.cteId));
 
-      console.log(`✅ [AuthorizeCteUseCase] CTe #${input.cteId} autorizado com sucesso`);
+      this.logger.info(`CTe #${input.cteId} autorizado com sucesso`, { module: 'fiscal', useCase: 'AuthorizeCte', cteId: input.cteId });
 
       // 10. Retornar resultado
       return Result.ok({
@@ -172,7 +182,7 @@ export class AuthorizeCteUseCase implements IAuthorizeCteUseCase {
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`❌ [AuthorizeCteUseCase] Erro: ${errorMessage}`);
+      this.logger.error(`Erro ao autorizar CTe: ${errorMessage}`, error instanceof Error ? error : undefined);
       return Result.fail(`Erro ao autorizar CTe: ${errorMessage}`);
     }
   }

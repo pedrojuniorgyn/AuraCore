@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PostJournalEntryUseCase } from '@/modules/accounting/application/use-cases/PostJournalEntryUseCase';
 import type { IJournalEntryRepository } from '@/modules/accounting/domain/ports/output/IJournalEntryRepository';
+import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
+import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 import { JournalEntry } from '@/modules/accounting/domain/entities/JournalEntry';
 import { JournalEntryLine } from '@/modules/accounting/domain/entities/JournalEntryLine';
 import { Money, Result } from '@/shared/domain';
@@ -68,7 +70,26 @@ describe('PostJournalEntryUseCase', () => {
       nextEntryNumber: vi.fn(),
     };
 
-    useCase = new PostJournalEntryUseCase(mockRepository);
+    const mockEventPublisher: IEventPublisher = {
+      publish: vi.fn().mockResolvedValue(undefined),
+      publishBatch: vi.fn().mockResolvedValue(undefined),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      getHandlers: vi.fn().mockReturnValue([]),
+    };
+
+    const mockLogger: ILogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    };
+
+    useCase = new PostJournalEntryUseCase(
+      mockRepository,
+      mockEventPublisher,
+      mockLogger
+    );
 
     ctx = {
       userId: 'user-001',

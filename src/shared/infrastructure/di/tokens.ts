@@ -39,6 +39,7 @@ export const TOKENS = {
   ReverseJournalEntryUseCase: Symbol('ReverseJournalEntryUseCase'),
   ListJournalEntriesUseCase: Symbol('ListJournalEntriesUseCase'),
   GetJournalEntryByIdUseCase: Symbol('GetJournalEntryByIdUseCase'),
+  GenerateJournalEntryUseCase: Symbol('GenerateJournalEntryUseCase'),
 
   // Fiscal Module - Repositories & Services
   FiscalDocumentRepository: Symbol('FiscalDocumentRepository'),
@@ -68,6 +69,11 @@ export const TOKENS = {
   // Fiscal Module - Tax Repositories (E7.26)
   TaxRateRepository: Symbol('TaxRateRepository'),
   TaxCreditRepository: Symbol('TaxCreditRepository'),
+
+  // Fiscal Module - CTe Legacy Adapters (Diagnostic Plan Fase 3)
+  CteBuilderService: Symbol('CteBuilderService'),
+  XmlSignerService: Symbol('XmlSignerService'),
+  InsuranceValidatorService: Symbol('InsuranceValidatorService'),
 
   // Fiscal Module - CTe/NFe Use Cases (E8 Fase 3)
   AuthorizeCteUseCase: Symbol('AuthorizeCteUseCase'),

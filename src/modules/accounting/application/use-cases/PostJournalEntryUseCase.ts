@@ -4,6 +4,9 @@ import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IJournalEntryRepository } from '../../domain/ports/output/IJournalEntryRepository';
 import type { IPostJournalEntry, PostJournalEntryInput, PostJournalEntryOutput } from '../../domain/ports/input';
+import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
+import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
+import { publishAggregateEvents } from '@/shared/application/helpers/publishAggregateEvents';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
 import { ExecutionContext } from './BaseUseCase';
 
@@ -24,7 +27,11 @@ export class PostJournalEntryUseCase implements IPostJournalEntry {
   
   constructor(
     @inject(TOKENS.JournalEntryRepository)
-    private readonly repository: IJournalEntryRepository
+    private readonly repository: IJournalEntryRepository,
+    @inject(TOKENS.EventPublisher)
+    private readonly eventPublisher: IEventPublisher,
+    @inject(TOKENS.Logger)
+    private readonly logger: ILogger
   ) {
     this.repository = repository;
   }
@@ -72,6 +79,9 @@ export class PostJournalEntryUseCase implements IPostJournalEntry {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return Result.fail(`Failed to save journal entry: ${message}`);
     }
+
+    // 5b. Publicar domain events
+    await publishAggregateEvents(entry, this.eventPublisher, this.logger);
 
     // 6. Retornar resultado
     // Após post() bem-sucedido, postedAt e postedBy são garantidos

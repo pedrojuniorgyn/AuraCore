@@ -9,19 +9,17 @@
  * @see E8 Fase 3: Use Cases Orquestradores
  */
 
-import { injectable } from '@/shared/infrastructure/di/container';
+import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type {
   ICreateCteUseCase,
   CreateCteInput,
   CreateCteOutput,
 } from '../../domain/ports/input/ICreateCteUseCase';
-
-// Legacy services (TODO E8 Fase 4: Migrate to Domain Services)
-// buildCteXml fetches data from DB and generates XML
-// validatePickupOrderInsurance validates insurance data
-import { buildCteXml } from '@/services/fiscal/cte-builder';
-import { validatePickupOrderInsurance } from '@/services/validators/insurance-validator';
+import type { ICteBuilderService } from '../../domain/ports/output/ICteBuilderService';
+import type { IInsuranceValidatorService } from '../../domain/ports/output/IInsuranceValidatorService';
+import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 
 // ============================================================================
 // USE CASE
@@ -50,6 +48,12 @@ import { validatePickupOrderInsurance } from '@/services/validators/insurance-va
  */
 @injectable()
 export class CreateCteUseCase implements ICreateCteUseCase {
+  constructor(
+    @inject(TOKENS.CteBuilderService) private readonly cteBuilder: ICteBuilderService,
+    @inject(TOKENS.InsuranceValidatorService) private readonly insuranceValidator: IInsuranceValidatorService,
+    @inject(TOKENS.Logger) private readonly logger: ILogger
+  ) {}
+
   async execute(input: CreateCteInput): Promise<Result<CreateCteOutput, string>> {
     try {
       // 1. Validar input
@@ -58,19 +62,25 @@ export class CreateCteUseCase implements ICreateCteUseCase {
         return validationResult;
       }
 
-      console.log(`📝 [CreateCteUseCase] Criando CTe para ordem #${input.pickupOrderId}...`);
+      this.logger.info(`Criando CTe para ordem #${input.pickupOrderId}`, { module: 'fiscal', useCase: 'CreateCte', pickupOrderId: input.pickupOrderId });
 
-      // 2. Validar averbação de seguro (obrigatório por lei)
-      // O validador busca a ordem do banco e valida os campos de seguro
-      await validatePickupOrderInsurance(input.pickupOrderId);
+      // 2. Validar averbação de seguro (obrigatório por Lei 11.442/07)
+      const insuranceResult = await this.insuranceValidator.validatePickupOrderInsurance(input.pickupOrderId);
+      if (Result.isFail(insuranceResult)) {
+        return Result.fail(insuranceResult.error);
+      }
 
-      // 3. Gerar XML do CTe (legacy - busca dados do DB e persiste)
-      const xml = await buildCteXml({
+      // 3. Gerar XML do CTe
+      const xmlResult = await this.cteBuilder.buildCteXml({
         pickupOrderId: input.pickupOrderId,
         organizationId: input.organizationId,
       });
+      if (Result.isFail(xmlResult)) {
+        return Result.fail(xmlResult.error);
+      }
+      const xml = xmlResult.value;
 
-      console.log(`✅ [CreateCteUseCase] XML gerado com sucesso (${xml.length} bytes)`);
+      this.logger.info(`XML gerado com sucesso (${xml.length} bytes)`, { module: 'fiscal', useCase: 'CreateCte' });
 
       // 4. Retornar resultado
       // Nota: O buildCteXml persiste o CTe internamente, então não temos acesso
@@ -84,7 +94,7 @@ export class CreateCteUseCase implements ICreateCteUseCase {
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`❌ [CreateCteUseCase] Erro: ${errorMessage}`);
+      this.logger.error(`Erro ao criar CTe: ${errorMessage}`, error instanceof Error ? error : undefined);
       return Result.fail(`Erro ao criar CTe: ${errorMessage}`);
     }
   }

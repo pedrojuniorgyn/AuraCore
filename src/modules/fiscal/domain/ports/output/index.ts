@@ -83,3 +83,8 @@ export type {
   PcgNcmParams,
   FiscalFlagsResult,
 } from './IPcgNcmGateway';
+
+// ===== CTe LEGACY ADAPTERS (Diagnostic Plan - Fase 3) =====
+export type { ICteBuilderService, CteBuilderInput } from './ICteBuilderService';
+export type { IXmlSignerService, CertificateInfo } from './IXmlSignerService';
+export type { IInsuranceValidatorService } from './IInsuranceValidatorService';

@@ -6,15 +6,21 @@
  *
  * @module shared/infrastructure/events
  */
-import { injectable } from 'tsyringe';
+import { inject, injectable } from '@/shared/infrastructure/di/container';
+import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { DomainEvent } from '../../domain/events/DomainEvent';
 import type { IEventPublisher, EventHandler } from '../../domain/ports/IEventPublisher';
+import type { ILogger } from '../logging/ILogger';
 
 @injectable()
 export class InMemoryEventPublisher implements IEventPublisher {
   private handlers: Map<string, Set<EventHandler>> = new Map();
   private eventLog: DomainEvent<unknown>[] = [];
   private readonly maxLogSize = 1000;
+
+  constructor(
+    @inject(TOKENS.Logger) private readonly logger: ILogger
+  ) {}
 
   async publish<T>(event: DomainEvent<T>): Promise<void> {
     // Log do evento
@@ -24,7 +30,7 @@ export class InMemoryEventPublisher implements IEventPublisher {
     const eventHandlers = this.handlers.get(event.eventType);
 
     if (!eventHandlers || eventHandlers.size === 0) {
-      console.debug(`[EventPublisher] No handlers for event: ${event.eventType}`);
+      this.logger.debug(`No handlers for event: ${event.eventType}`, { component: 'EventPublisher' });
       return;
     }
 
@@ -33,9 +39,9 @@ export class InMemoryEventPublisher implements IEventPublisher {
       try {
         await handler(event as DomainEvent);
       } catch (error) {
-        console.error(
-          `[EventPublisher] Handler error for ${event.eventType}:`,
-          error
+        this.logger.error(
+          `Handler error for ${event.eventType}`,
+          error instanceof Error ? error : undefined
         );
         // Não propagar erro para não afetar outros handlers
       }
@@ -56,7 +62,7 @@ export class InMemoryEventPublisher implements IEventPublisher {
       this.handlers.set(eventType, new Set());
     }
     this.handlers.get(eventType)!.add(handler as EventHandler);
-    console.debug(`[EventPublisher] Subscribed to: ${eventType}`);
+    this.logger.debug(`Subscribed to: ${eventType}`, { component: 'EventPublisher' });
   }
 
   unsubscribe(eventType: string, handler: EventHandler): void {

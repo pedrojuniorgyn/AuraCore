@@ -121,6 +121,7 @@
     "ofx-parser": "^1.0.1",
     "openai": "^6.16.0",
     "pdfkit": "^0.17.2",
+    "pino": "^10.3.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-dropzone": "^14.3.8",
