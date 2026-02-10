@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
         .where(and(
           eq(pdcaCycleTable.organizationId, ctx.organizationId),
           eq(pdcaCycleTable.branchId, ctx.branchId), // 🔐 ABAC: Data scoping por branch
+          isNull(actionPlanTable.deletedAt), // SCHEMA-006: Excluir action plans soft-deleted
           or(
             ilike(actionPlanTable.what, searchTerm),
             ilike(pdcaCycleTable.transitionReason, searchTerm)

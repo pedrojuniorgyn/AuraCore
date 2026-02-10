@@ -39,8 +39,8 @@ export const organizations = mssqlTable("organizations", {
   
   // Enterprise Base
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'SUSPENDED', 'CANCELED'
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 }, (table) => ([
@@ -68,8 +68,8 @@ export const users = mssqlTable("users", {
   defaultBranchId: int("default_branch_id"), // Filial padrão ao logar (FK removida para evitar dependência circular)
   
   // Enterprise Base
-  createdAt: datetime2("created_at", { precision: 3 }).default(new Date()),
-  updatedAt: datetime2("updated_at", { precision: 3 }).default(new Date()),
+  createdAt: datetime2("created_at", { precision: 3 }).default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at", { precision: 3 }).default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at", { precision: 3 }), // Soft Delete
 }, (table) => ([
   uniqueIndex("users_email_org_idx").on(table.email, table.organizationId), // Email único por organização
@@ -81,7 +81,7 @@ export const userBranches = mssqlTable(
   {
     userId: nvarchar("user_id", { length: 255 }).notNull(),
     branchId: int("branch_id").notNull(),
-    createdAt: datetime2("created_at").default(new Date()),
+    createdAt: datetime2("created_at").default(sql`GETDATE()`),
   },
   (t) => ([
     primaryKey({ columns: [t.userId, t.branchId] }),
@@ -142,8 +142,8 @@ export const roles = mssqlTable("roles", {
   description: nvarchar("description", { length: 255 }),
   
   // Enterprise Base (simplificado - roles são globais)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
 });
 
 export const permissions = mssqlTable("permissions", {
@@ -153,8 +153,8 @@ export const permissions = mssqlTable("permissions", {
   module: nvarchar("module", { length: 50 }), // 'admin', 'tms', 'financial', etc
   
   // Enterprise Base (simplificado - permissions são globais)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
 }, (table) => ([
   uniqueIndex("permissions_slug_idx").on(table.slug),
 ]));
@@ -179,7 +179,7 @@ export const userRoles = mssqlTable(
     roleId: int("role_id").notNull(),
     organizationId: int("organization_id").notNull(),
     branchId: int("branch_id"),
-    createdAt: datetime2("created_at").default(new Date()),
+    createdAt: datetime2("created_at").default(sql`GETDATE()`),
   },
   (t) => ([
     primaryKey({ columns: [t.userId, t.roleId] }),
@@ -234,8 +234,8 @@ export const branches = mssqlTable("branches", {
   // === ENTERPRISE BASE (Auditoria + Segurança) ===
   createdBy: nvarchar("created_by", { length: 255 }), // Quem criou (FK removida para evitar dependência circular)
   updatedBy: nvarchar("updated_by", { length: 255 }), // Quem atualizou (FK removida para evitar dependência circular)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
@@ -281,8 +281,8 @@ export const businessPartners = mssqlTable("business_partners", {
   // === ENTERPRISE BASE (Auditoria + Segurança) ===
   createdBy: nvarchar("created_by", { length: 255 }), // Quem criou (FK removida para evitar dependência circular)
   updatedBy: nvarchar("updated_by", { length: 255 }), // Quem atualizou (FK removida para evitar dependência circular)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
@@ -322,8 +322,8 @@ export const products = mssqlTable("products", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }), // FK removida para evitar dependência circular
   updatedBy: nvarchar("updated_by", { length: 255 }), // FK removida para evitar dependência circular
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
   status: nvarchar("status", { length: 20 }).default("ACTIVE"),
@@ -397,8 +397,8 @@ export const inboundInvoices = mssqlTable("inbound_invoices", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -440,7 +440,7 @@ export const inboundInvoiceItems = mssqlTable("inbound_invoice_items", {
   // Controle
   itemNumber: int("item_number"), // Número sequencial do item na NFe
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // === AUDIT LOGS (Sistema de Auditoria Global) ===
@@ -456,7 +456,7 @@ export const auditLogs = mssqlTable("audit_logs", {
   changes: nvarchar("changes", { length: "max" }), // JSON com diff das alterações
   ipAddress: nvarchar("ip_address", { length: 50 }),
   userAgent: nvarchar("user_agent", { length: 500 }),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // --- RELATIONS (COMENTADAS - Beta ainda instável para MSSQL) ---
@@ -552,8 +552,8 @@ export const financialCategories = mssqlTable("financial_categories", {
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
   createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 });
@@ -588,8 +588,8 @@ export const bankAccounts = mssqlTable("bank_accounts", {
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
   createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 });
@@ -619,7 +619,7 @@ export const bankRemittances = mssqlTable("bank_remittances", {
   
   // Enterprise Base (Simplificado - Arquivos não são editáveis)
   createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
 });
 
@@ -653,8 +653,8 @@ export const financialDdaInbox = mssqlTable("financial_dda_inbox", {
   dismissedReason: nvarchar("dismissed_reason", { length: 255 }), // Motivo da rejeição
   
   // Enterprise Base
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
 });
 
@@ -703,8 +703,8 @@ export const accountsPayable = mssqlTable("accounts_payable", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 });
@@ -753,8 +753,8 @@ export const accountsReceivable = mssqlTable("accounts_receivable", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 });
@@ -783,7 +783,7 @@ export const payableItems = mssqlTable("payable_items", {
   
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // --- MATRIZ DE CLASSIFICAÇÃO AUTOMÁTICA (NCM → Categoria Contábil) ---
@@ -824,8 +824,8 @@ export const autoClassificationRules = mssqlTable("auto_classification_rules", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -864,8 +864,8 @@ export const drivers = mssqlTable("drivers", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 }, (table) => ([
@@ -920,8 +920,8 @@ export const vehicles = mssqlTable("vehicles", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // Soft Delete
   version: int("version").default(1).notNull(), // Optimistic Locking
 }, (table) => ([
@@ -961,8 +961,8 @@ export const paymentTerms = mssqlTable("payment_terms", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -994,8 +994,8 @@ export const unitsOfMeasure = mssqlTable("units_of_measure", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1034,8 +1034,8 @@ export const vehicleTypes = mssqlTable("vehicle_types", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1065,8 +1065,8 @@ export const geoRegions = mssqlTable("geo_regions", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1099,8 +1099,8 @@ export const taxRules = mssqlTable("tax_rules", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1146,8 +1146,8 @@ export const freightTables = mssqlTable("freight_tables", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -1170,8 +1170,8 @@ export const freightWeightRanges = mssqlTable("freight_weight_ranges", {
   displayOrder: int("display_order").default(0),
   
   // Enterprise Base (Simplificado - sem multi-tenancy pois herda da tabela)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1200,8 +1200,8 @@ export const freightExtraComponents = mssqlTable("freight_extra_components", {
   applyOrder: int("apply_order").default(0), // Ordem de cálculo (importante para cascata)
   
   // Enterprise Base (Simplificado)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1226,8 +1226,8 @@ export const freightTableRoutes = mssqlTable("freight_table_routes", {
   displayOrder: int("display_order").default(0),
   
   // Enterprise Base (Simplificado)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1269,8 +1269,8 @@ export const costCenters = mssqlTable("cost_centers", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1305,8 +1305,8 @@ export const pcgNcmRules = mssqlTable("pcg_ncm_rules", {
   isActive: int("is_active").default(1).notNull(),
   
   // Enterprise Base
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   createdBy: nvarchar("created_by", { length: 255 }),
   updatedBy: nvarchar("updated_by", { length: 255 }),
   deletedAt: datetime2("deleted_at"),
@@ -1350,8 +1350,8 @@ export const managementChartOfAccounts = mssqlTable("management_chart_of_account
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1392,8 +1392,8 @@ export const chartOfAccounts = mssqlTable("chart_of_accounts", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1443,8 +1443,8 @@ export const taxMatrix = mssqlTable("tax_matrix", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 }, (table) => ([
@@ -1473,8 +1473,8 @@ export const freightTablePrices = mssqlTable("freight_table_prices", {
   excessPrice: decimal("excess_price", { precision: 18, scale: 2 }).default("0.00"), // Preço por kg excedente
   
   // Enterprise Base (Simplificado)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1506,8 +1506,8 @@ export const freightGeneralities = mssqlTable("freight_generalities", {
   applyOrder: int("apply_order").default(0),
   
   // Enterprise Base (Simplificado)
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1584,8 +1584,8 @@ export const freightQuotes = mssqlTable("freight_quotes", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -1655,8 +1655,8 @@ export const pickupOrders = mssqlTable("pickup_orders", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -1746,8 +1746,8 @@ export const cteHeader = mssqlTable("cte_header", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -1772,8 +1772,8 @@ export const cteCargoDocuments = mssqlTable("cte_cargo_documents", {
   sourceCargoId: int("source_cargo_id").references(() => cargoDocuments.id),
   // Rastreabilidade: De qual cargo do repositório veio este documento
   
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1786,8 +1786,8 @@ export const cteValueComponents = mssqlTable("cte_value_components", {
   componentName: nvarchar("component_name", { length: 50 }), // FRETE_PESO, AD_VALOREM, GRIS, etc.
   componentValue: decimal("component_value", { precision: 18, scale: 2 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1832,8 +1832,8 @@ export const mdfeHeader = mssqlTable("mdfe_header", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -1845,7 +1845,7 @@ export const mdfeDocuments = mssqlTable("mdfe_documents", {
   mdfeHeaderId: int("mdfe_header_id").notNull(), // FK mdfe_header
   cteHeaderId: int("cte_header_id").notNull(), // FK cte_header
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1902,8 +1902,8 @@ export const trips = mssqlTable("trips", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -1926,7 +1926,7 @@ export const tripCheckpoints = mssqlTable("trip_checkpoints", {
   recordedAt: datetime2("recorded_at").notNull(),
   recordedBy: nvarchar("recorded_by", { length: 255 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
@@ -1960,8 +1960,8 @@ export const tripStops = mssqlTable("trip_stops", {
   signatureUrl: nvarchar("signature_url", { length: 500 }),
   notes: nvarchar("notes", { length: 500 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -1975,7 +1975,7 @@ export const tripDocuments = mssqlTable("trip_documents", {
   documentType: nvarchar("document_type", { length: 10 }).default("CTE"),
   cteId: int("cte_id"), // FK cte_header
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -2047,8 +2047,8 @@ export const cargoDocuments = mssqlTable("cargo_documents", {
   // ✅ Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -2121,8 +2121,8 @@ export const billingInvoices = mssqlTable("billing_invoices", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -2143,7 +2143,7 @@ export const billingItems = mssqlTable("billing_items", {
   originUf: nvarchar("origin_uf", { length: 2 }),
   destinationUf: nvarchar("destination_uf", { length: 2 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2168,8 +2168,8 @@ export const vehicleDocuments = mssqlTable("vehicle_documents", {
   alertSentAt: datetime2("alert_sent_at"),
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -2189,8 +2189,8 @@ export const driverDocuments = mssqlTable("driver_documents", {
   alertSentAt: datetime2("alert_sent_at"),
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -2221,8 +2221,8 @@ export const tripOccurrences = mssqlTable("trip_occurrences", {
   clientNotifiedAt: datetime2("client_notified_at"),
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -2242,8 +2242,8 @@ export const taxCredits = mssqlTable("tax_credits", {
   recoveredInPeriod: nvarchar("recovered_in_period", { length: 7 }),
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1).notNull(),
 });
@@ -2271,7 +2271,7 @@ export const cteInutilization = mssqlTable("cte_inutilization", {
   inutilizedAt: datetime2("inutilized_at"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2294,7 +2294,7 @@ export const cteCorrectionLetters = mssqlTable("cte_correction_letters", {
   xmlEvent: nvarchar("xml_event", { length: "max" }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2329,7 +2329,7 @@ export const crmLeads = mssqlTable("crm_leads", {
   wonDate: datetime2("won_date"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -2350,7 +2350,7 @@ export const crmActivities = mssqlTable("crm_activities", {
   assignedTo: nvarchar("assigned_to", { length: 255 }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 export const commercialProposals = mssqlTable("commercial_proposals", {
@@ -2378,7 +2378,7 @@ export const commercialProposals = mssqlTable("commercial_proposals", {
   rejectionReason: nvarchar("rejection_reason", { length: 500 }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2408,7 +2408,7 @@ export const tires = mssqlTable("tires", {
   
   recappingCount: int("recapping_count").default(0),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -2428,7 +2428,7 @@ export const tireMovements = mssqlTable("tire_movements", {
   notes: nvarchar("notes", { length: 500 }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 export const fuelTransactions = mssqlTable("fuel_transactions", {
@@ -2454,7 +2454,7 @@ export const fuelTransactions = mssqlTable("fuel_transactions", {
   source: nvarchar("source", { length: 20 }),
   nfeKey: nvarchar("nfe_key", { length: 44 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_fuel_transactions_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
@@ -2482,7 +2482,7 @@ export const driverWorkShifts = mssqlTable("driver_work_shifts", {
   
   violations: nvarchar("violations", { length: "max" }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 export const driverShiftEvents = mssqlTable("driver_shift_events", {
@@ -2495,7 +2495,7 @@ export const driverShiftEvents = mssqlTable("driver_shift_events", {
   
   source: nvarchar("source", { length: 20 }).default("MANUAL"),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2507,7 +2507,7 @@ export const warehouseZones = mssqlTable("warehouse_zones", {
   warehouseId: int("warehouse_id").notNull(),
   zoneName: nvarchar("zone_name", { length: 100 }).notNull(),
   zoneType: nvarchar("zone_type", { length: 20 }),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 export const warehouseLocations = mssqlTable("warehouse_locations", {
@@ -2523,7 +2523,7 @@ export const warehouseLocations = mssqlTable("warehouse_locations", {
   
   status: nvarchar("status", { length: 20 }).default("AVAILABLE"),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_warehouse_locations_tenant").on(table.organizationId, table.branchId), // E9.1.3: SCHEMA-003
@@ -2558,7 +2558,7 @@ export const warehouseMovements = mssqlTable("warehouse_movements", {
   referenceId: int("reference_id"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_warehouse_movements_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
@@ -2590,8 +2590,8 @@ export const bankTransactions = mssqlTable("bank_transactions", {
   accountsReceivableId: int("accounts_receivable_id"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_bank_transactions_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
@@ -2621,8 +2621,8 @@ export const vehicleMaintenancePlans = mssqlTable("vehicle_maintenance_plans", {
   isActive: nvarchar("is_active", { length: 1 }).default("S"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
 });
 
 export const maintenanceAlerts = mssqlTable("maintenance_alerts", {
@@ -2646,7 +2646,7 @@ export const maintenanceAlerts = mssqlTable("maintenance_alerts", {
   dismissedAt: datetime2("dismissed_at"),
   dismissedBy: nvarchar("dismissed_by", { length: 255 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2665,8 +2665,8 @@ export const mechanics = mssqlTable("mechanics", {
   status: nvarchar("status", { length: 20 }).default("ACTIVE"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -2682,8 +2682,8 @@ export const maintenanceProviders = mssqlTable("maintenance_providers", {
   specialty: nvarchar("specialty", { length: 100 }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 });
 
@@ -2710,7 +2710,7 @@ export const maintenanceWorkOrders = mssqlTable("maintenance_work_orders", {
   providerType: nvarchar("provider_type", { length: 20 }),
   providerId: int("provider_id"),
   
-  openedAt: datetime2("opened_at").default(new Date()),
+  openedAt: datetime2("opened_at").default(sql`GETDATE()`),
   startedAt: datetime2("started_at"),
   completedAt: datetime2("completed_at"),
   
@@ -2719,8 +2719,8 @@ export const maintenanceWorkOrders = mssqlTable("maintenance_work_orders", {
   totalCost: decimal("total_cost", { precision: 18, scale: 2 }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
 }, (table) => ([
   index("idx_maintenance_work_orders_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
@@ -2739,7 +2739,7 @@ export const workOrderItems = mssqlTable("work_order_items", {
   unitCost: decimal("unit_cost", { precision: 18, scale: 2 }),
   totalCost: decimal("total_cost", { precision: 18, scale: 2 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 export const workOrderMechanics = mssqlTable("work_order_mechanics", {
@@ -2747,7 +2747,7 @@ export const workOrderMechanics = mssqlTable("work_order_mechanics", {
   workOrderId: int("work_order_id").notNull(),
   mechanicId: int("mechanic_id").notNull(),
   
-  assignedAt: datetime2("assigned_at").default(new Date()),
+  assignedAt: datetime2("assigned_at").default(sql`GETDATE()`),
   startedAt: datetime2("started_at"),
   completedAt: datetime2("completed_at"),
   
@@ -2781,8 +2781,8 @@ export const nfeManifestationEvents = mssqlTable("nfe_manifestation_events", {
   xmlEvent: nvarchar("xml_event", { length: "max" }),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2797,7 +2797,7 @@ export const productUnitConversions = mssqlTable("product_unit_conversions", {
   toUnit: nvarchar("to_unit", { length: 10 }).notNull(),
   factor: decimal("factor", { precision: 10, scale: 4 }).notNull(),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // ==========================================
@@ -2820,12 +2820,12 @@ export const warehouseInventoryCounts = mssqlTable("warehouse_inventory_counts",
   notes: nvarchar("notes", { length: 500 }),
   
   startedBy: nvarchar("started_by", { length: 255 }).notNull(),
-  startedAt: datetime2("started_at").default(new Date()),
+  startedAt: datetime2("started_at").default(sql`GETDATE()`),
   completedAt: datetime2("completed_at"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_warehouse_inventory_counts_tenant").on(table.organizationId, table.branchId), // SCHEMA-003
@@ -2850,7 +2850,7 @@ export const inventoryCountItems = mssqlTable("inventory_count_items", {
   
   notes: nvarchar("notes", { length: 500 }),
   
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
@@ -2878,8 +2878,8 @@ export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
   approvedAt: datetime2("approved_at"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()), // E9.2: Auditoria
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`), // E9.2: Auditoria - server-side timestamp
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_inventory_adjustments_tenant").on(table.organizationId, table.branchId), // SCHEMA-003
@@ -2916,8 +2916,8 @@ export const fiscalSettings = mssqlTable("fiscal_settings", {
   // Empresa de auditoria
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   version: int("version").default(1).notNull(),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
@@ -2969,8 +2969,8 @@ export const btgBoletos = mssqlTable("btg_boletos", {
   webhookReceivedAt: datetime2("webhook_received_at"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
 });
 
 // Pix Cobranças BTG
@@ -2997,7 +2997,7 @@ export const btgPixCharges = mssqlTable("btg_pix_charges", {
   status: nvarchar("status", { length: 20 }).default("ACTIVE"),
   
   // Datas
-  dataCriacao: datetime2("data_criacao").default(new Date()),
+  dataCriacao: datetime2("data_criacao").default(sql`GETDATE()`),
   dataExpiracao: datetime2("data_expiracao"),
   dataPagamento: datetime2("data_pagamento"),
   
@@ -3005,7 +3005,7 @@ export const btgPixCharges = mssqlTable("btg_pix_charges", {
   accountsReceivableId: int("accounts_receivable_id"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 // Pagamentos BTG (Pix/TED/DOC)
@@ -3039,7 +3039,7 @@ export const btgPayments = mssqlTable("btg_payments", {
   accountsPayableId: int("accounts_payable_id"),
   
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
 /**
@@ -3122,8 +3122,8 @@ export const externalCtes = mssqlTable("external_ctes", {
   // Enterprise Base
   createdBy: nvarchar("created_by", { length: 255 }).notNull(),
   updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   deletedAt: datetime2("deleted_at"),
   version: int("version").default(1),
 });
@@ -3140,7 +3140,7 @@ export const lancamentosContabeis = mssqlTable("lancamentos_contabeis", {
   branchId: int("branch_id").notNull(),
   
   // Datas
-  dataLancamento: datetime2("data_lancamento").notNull().default(new Date()),
+  dataLancamento: datetime2("data_lancamento").notNull().default(sql`GETDATE()`),
   dataCompetencia: datetime2("data_competencia").notNull(),
   
   // Vínculos Obrigatórios com Master Data
@@ -3162,8 +3162,8 @@ export const lancamentosContabeis = mssqlTable("lancamentos_contabeis", {
   status: nvarchar("status", { length: 20 }).default("PENDENTE"),
   
   // Enterprise Base
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   createdBy: nvarchar("created_by", { length: 255 }),
   updatedBy: nvarchar("updated_by", { length: 255 }),
   deletedAt: datetime2("deleted_at"),
@@ -3203,8 +3203,8 @@ export const comprasEntradaItem = mssqlTable("compras_entrada_item", {
   valorCofins: decimal("valor_cofins", { precision: 15, scale: 2 }),
   
   // Enterprise Base
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   createdBy: nvarchar("created_by", { length: 255 }),
   updatedBy: nvarchar("updated_by", { length: 255 }),
   deletedAt: datetime2("deleted_at"),
@@ -3217,7 +3217,7 @@ export const frotaAbastecimentos = mssqlTable("frota_abastecimentos", {
   branchId: int("branch_id").notNull(),
   
   // Data e Localização
-  dataAbastecimento: datetime2("data_abastecimento").notNull().default(new Date()),
+  dataAbastecimento: datetime2("data_abastecimento").notNull().default(sql`GETDATE()`),
   localAbastecimento: nvarchar("local_abastecimento", { length: 255 }),
   
   // Vínculos
@@ -3249,8 +3249,8 @@ export const frotaAbastecimentos = mssqlTable("frota_abastecimentos", {
   observacoes: nvarchar("observacoes", { length: 500 }),
   
   // Enterprise Base
-  createdAt: datetime2("created_at").default(new Date()),
-  updatedAt: datetime2("updated_at").default(new Date()),
+  createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   createdBy: nvarchar("created_by", { length: 255 }),
   updatedBy: nvarchar("updated_by", { length: 255 }),
   deletedAt: datetime2("deleted_at"),

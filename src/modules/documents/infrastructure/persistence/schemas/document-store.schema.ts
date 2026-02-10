@@ -4,6 +4,7 @@
  * Tabela para armazenar metadados de documentos.
  * Os arquivos ficam em storage externo (S3/MinIO).
  */
+import { sql } from 'drizzle-orm';
 import { int, nvarchar, bigint, datetime2, index, uniqueIndex, mssqlTable } from 'drizzle-orm/mssql-core';
 
 export const documentStoreTable = mssqlTable(
@@ -39,8 +40,8 @@ export const documentStoreTable = mssqlTable(
     
     // Auditoria
     createdBy: nvarchar('created_by', { length: 255 }),
-    createdAt: datetime2('created_at').notNull().default(new Date()),
-    updatedAt: datetime2('updated_at').notNull().default(new Date()),
+    createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
+    updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
     deletedAt: datetime2('deleted_at'),
   },
   (table) => ([

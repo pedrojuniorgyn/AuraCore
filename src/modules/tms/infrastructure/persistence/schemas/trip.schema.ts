@@ -3,6 +3,7 @@
  * 
  * Tabela de viagens do TMS.
  */
+import { sql } from 'drizzle-orm';
 import { int, nvarchar, decimal, datetime2, index, uniqueIndex, mssqlTable } from 'drizzle-orm/mssql-core';
 
 export const tripsTable = mssqlTable('trips', {
@@ -54,8 +55,8 @@ export const tripsTable = mssqlTable('trips', {
   // Enterprise Base
   createdBy: nvarchar('created_by', { length: 255 }).notNull(),
   updatedBy: nvarchar('updated_by', { length: 255 }),
-  createdAt: datetime2('created_at').default(new Date()),
-  updatedAt: datetime2('updated_at').default(new Date()),
+  createdAt: datetime2('created_at').default(sql`GETDATE()`),
+  updatedAt: datetime2('updated_at').default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at'),
   version: int('version').default(1).notNull(),
 }, (table) => ([

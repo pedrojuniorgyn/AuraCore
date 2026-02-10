@@ -4,6 +4,7 @@
  * Tabela para fila de processamento de documentos.
  * Usa lock/claim pattern para evitar race conditions.
  */
+import { sql } from 'drizzle-orm';
 import { int, nvarchar, datetime2, index, mssqlTable } from 'drizzle-orm/mssql-core';
 
 export const documentJobsTable = mssqlTable(
@@ -25,7 +26,7 @@ export const documentJobsTable = mssqlTable(
     maxAttempts: int('max_attempts').notNull().default(5),
     
     // Scheduling
-    scheduledAt: datetime2('scheduled_at').notNull().default(new Date()),
+    scheduledAt: datetime2('scheduled_at').notNull().default(sql`GETDATE()`),
     startedAt: datetime2('started_at'),
     completedAt: datetime2('completed_at'),
     lockedAt: datetime2('locked_at'),
@@ -36,8 +37,8 @@ export const documentJobsTable = mssqlTable(
     lastError: nvarchar('last_error', { length: 4000 }),
     
     // Auditoria
-    createdAt: datetime2('created_at').notNull().default(new Date()),
-    updatedAt: datetime2('updated_at').notNull().default(new Date()),
+    createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
+    updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
   },
   (table) => ([
     // Índice composto multi-tenancy
