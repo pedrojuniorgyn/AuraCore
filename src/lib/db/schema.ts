@@ -2498,71 +2498,9 @@ export const driverShiftEvents = mssqlTable("driver_shift_events", {
   createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
-// ==========================================
-// 📦 WMS (ONDA 6)
-// ==========================================
-
-export const warehouseZones = mssqlTable("warehouse_zones", {
-  id: int("id").primaryKey().identity(),
-  warehouseId: int("warehouse_id").notNull(),
-  zoneName: nvarchar("zone_name", { length: 100 }).notNull(),
-  zoneType: nvarchar("zone_type", { length: 20 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-});
-
-export const warehouseLocations = mssqlTable("warehouse_locations", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // E9.1.3: Multi-tenancy
-  branchId: int("branch_id").notNull().default(1), // E9.1.3: Multi-tenancy
-  zoneId: int("zone_id").notNull(),
-  
-  code: nvarchar("code", { length: 20 }).notNull(),
-  
-  locationType: nvarchar("location_type", { length: 20 }),
-  maxWeightKg: decimal("max_weight_kg", { precision: 10, scale: 2 }),
-  
-  status: nvarchar("status", { length: 20 }).default("AVAILABLE"),
-  
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-}, (table) => ([
-  index("idx_warehouse_locations_tenant").on(table.organizationId, table.branchId), // E9.1.3: SCHEMA-003
-]));
-
-export const stockLocations = mssqlTable("stock_locations", {
-  id: int("id").primaryKey().identity(),
-  locationId: int("location_id").notNull(),
-  productId: int("product_id").notNull(),
-  
-  quantity: decimal("quantity", { precision: 18, scale: 4 }).notNull(),
-  lotNumber: nvarchar("lot_number", { length: 50 }),
-  expiryDate: datetime2("expiry_date"),
-  
-  receivedAt: datetime2("received_at"),
-});
-
-export const warehouseMovements = mssqlTable("warehouse_movements", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull().default(1), // E9.1: Multi-tenancy
-  
-  movementType: nvarchar("movement_type", { length: 20 }).notNull(),
-  
-  productId: int("product_id").notNull(),
-  quantity: decimal("quantity", { precision: 18, scale: 4 }).notNull(),
-  
-  fromLocationId: int("from_location_id"),
-  toLocationId: int("to_location_id"),
-  
-  referenceType: nvarchar("reference_type", { length: 50 }),
-  referenceId: int("reference_id"),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-}, (table) => ([
-  index("idx_warehouse_movements_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
-]));
+// 📦 WMS schemas: use DDD module exports (wms_* tables)
+// See: src/modules/wms/infrastructure/persistence/schemas/
+// Legacy warehouse_* definitions removed - tables never existed in database
 
 // ==========================================
 // 💰 CONCILIAÇÃO BANCÁRIA (ONDA 2.3)
@@ -2800,58 +2738,10 @@ export const productUnitConversions = mssqlTable("product_unit_conversions", {
   createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
-// ==========================================
 // 📦 INVENTÁRIO WMS (ONDA 6.3)
-// ==========================================
-
-export const warehouseInventoryCounts = mssqlTable("warehouse_inventory_counts", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull().default(1), // E9.2: Multi-tenancy
-  warehouseId: int("warehouse_id").notNull(),
-  
-  countNumber: nvarchar("count_number", { length: 20 }).notNull(),
-  countDate: datetime2("count_date").notNull(),
-  
-  countType: nvarchar("count_type", { length: 20 }).notNull(),
-  
-  status: nvarchar("status", { length: 20 }).default("IN_PROGRESS"),
-  
-  notes: nvarchar("notes", { length: 500 }),
-  
-  startedBy: nvarchar("started_by", { length: 255 }).notNull(),
-  startedAt: datetime2("started_at").default(sql`GETDATE()`),
-  completedAt: datetime2("completed_at"),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-}, (table) => ([
-  index("idx_warehouse_inventory_counts_tenant").on(table.organizationId, table.branchId), // SCHEMA-003
-]));
-
-export const inventoryCountItems = mssqlTable("inventory_count_items", {
-  id: int("id").primaryKey().identity(),
-  countId: int("count_id").notNull(),
-  
-  locationId: int("location_id"),
-  productId: int("product_id").notNull(),
-  
-  systemQuantity: decimal("system_quantity", { precision: 18, scale: 4 }),
-  countedQuantity: decimal("counted_quantity", { precision: 18, scale: 4 }),
-  difference: decimal("difference", { precision: 18, scale: 4 }),
-  
-  lotNumber: nvarchar("lot_number", { length: 50 }),
-  expiryDate: datetime2("expiry_date"),
-  
-  countedBy: nvarchar("counted_by", { length: 255 }),
-  countedAt: datetime2("counted_at"),
-  
-  notes: nvarchar("notes", { length: 500 }),
-  
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-});
+// Legacy warehouse_inventory_counts + inventory_count_items removidos
+// Tabelas reais no banco usam prefixo wms_* (via módulo DDD)
+// See: src/modules/wms/infrastructure/persistence/schemas/
 
 export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
   id: int("id").primaryKey().identity(),
