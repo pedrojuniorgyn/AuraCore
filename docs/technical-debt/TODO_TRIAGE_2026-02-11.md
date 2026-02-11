@@ -51,6 +51,17 @@ Rotas em `src/app/api/strategic/` que retornam dados mock:
 **Issue: TMS Cockpit KPIs** (5 TODOs - P2)
 - Calcular OTD real, graficos, mapa de calor
 
+### DEBITO TECNICO - Robustez (P3, baixa severidade)
+
+**ProcessJobsCommand.ts - handleJobError sem try-catch externo**
+- Arquivo: `src/modules/documents/application/commands/ProcessJobsCommand.ts`
+- Linhas: 80-86 (fora do try) e 128-132 (dentro do catch)
+- Problema: Se `handleJobError()` lancar excecao (ex: DB indisponivel), o erro propaga sem tratamento tanto no bloco `!processor` (L82-86) quanto dentro do `catch` (L131).
+- Impacto: Muito baixo. So ocorre se DB estiver completamente fora. Neste cenario toda a execucao de jobs ja esta comprometida.
+- Correcao futura: Envolver todo o corpo do `for` em um unico try-catch, ou adicionar try-catch interno em `handleJobError`.
+- Detectado: Agent Review Cursor, 11/02/2026
+- Prioridade: P3
+
 ### MANTER (avisos uteis in-code) - ~212 TODOs
 
 - TODOs com referencia a epicos (E8, E9, E10) - servem de rastreamento

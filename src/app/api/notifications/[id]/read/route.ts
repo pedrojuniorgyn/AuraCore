@@ -16,7 +16,7 @@ import { Result } from '@/shared/domain';
  */
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const authContext = await getTenantContext();
