@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
-import { SimulateTaxScenarioUseCase } from '@/modules/fiscal/application/use-cases/SimulateTaxScenarioUseCase';
+import { SimulateTaxScenarioUseCase } from '@/modules/fiscal/application/queries/tax-reform/SimulateTaxScenarioUseCase';
 import type { SimulateTaxReformInput } from '@/modules/fiscal/domain/ports/input/ISimulateTaxReform';
-import { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import { ExecutionContext } from '@/modules/fiscal/application/commands/fiscal/BaseUseCase';
 
 describe('SimulateTaxScenarioUseCase', () => {
   let useCase: SimulateTaxScenarioUseCase;

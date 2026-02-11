@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ManifestNfeUseCase } from '@/modules/fiscal/application/use-cases/ManifestNfeUseCase';
+import { ManifestNfeUseCase } from '@/modules/fiscal/application/commands/cte/ManifestNfeUseCase';
 import type { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';

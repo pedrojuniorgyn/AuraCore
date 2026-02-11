@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { 
   freightTables, 
   freightTableRoutes,
@@ -18,7 +19,8 @@ import { and, eq, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { insertReturning } from "@/lib/db/query-helpers";
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -102,15 +104,15 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar tabelas de frete:", error);
+    logger.error("❌ Erro ao listar tabelas de frete:", error);
     return NextResponse.json(
       { error: "Falha ao listar tabelas de frete", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -240,11 +242,11 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar tabela de frete:", error);
+    logger.error("❌ Erro ao criar tabela de frete:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao criar tabela de frete" },
       { status: 500 }
     );
   }
-}
+});
 

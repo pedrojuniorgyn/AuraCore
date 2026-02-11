@@ -5,12 +5,14 @@ import { crmLeads } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, asc } from "drizzle-orm";
 
-export async function PUT(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const PUT = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -82,15 +84,15 @@ export async function PUT(
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 // DELETE - Soft delete do lead
-export async function DELETE(
+export const DELETE = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -143,10 +145,10 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao excluir lead:", error);
+    logger.error("Erro ao excluir lead:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Interface para INSERT OUTPUT INSERTED.id
 interface InsertedIdResult {
   id: number;
@@ -16,7 +18,7 @@ interface InsertedIdResult {
  * D2: Tipo de Serviço (service_type: FTL, LTL, ARMAZ)
  * D3: Objeto de Custo (linked_object: CTe, Viagem, Veículo)
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -94,19 +96,19 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar CC 3D:", error);
+    logger.error("❌ Erro ao criar CC 3D:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/cost-centers/3d?serviceType=FTL&linkedObjectType=CTE
  * Busca CCs 3D com filtros
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -154,13 +156,13 @@ export async function GET(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar CCs 3D:", error);
+    logger.error("❌ Erro ao buscar CCs 3D:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -18,6 +18,7 @@ import type { IManagementAccountingGateway } from '../../domain/ports/output/IMa
 import { CostCenterAllocationAdapter } from '../adapters/CostCenterAllocationAdapter';
 import type { ICostCenterAllocationGateway } from '../../domain/ports/output/ICostCenterAllocationGateway';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Tokens locais (E9 Fase 1 + Fase 2)
 export const ACCOUNTING_TOKENS = {
   ManagementAccountingGateway: Symbol.for('IManagementAccountingGateway'),
@@ -97,5 +98,5 @@ export function registerAccountingModule(): void {
     CostCenterAllocationAdapter
   );
 
-  console.log('[Accounting Module] DI registrado: 2 repos + 6 use cases + 2 gateways');
+  logger.info('[Accounting Module] DI registrado: 2 repos + 6 use cases + 2 gateways');
 }

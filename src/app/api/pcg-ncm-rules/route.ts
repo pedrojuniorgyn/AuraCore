@@ -4,13 +4,15 @@ import { getTenantContext } from "@/lib/auth/context";
 import { ensureConnection } from "@/lib/db";
 import sql from "mssql";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/pcg-ncm-rules
  * Lista todas as regras PCG-NCM
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const session = await auth();
@@ -69,19 +71,19 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao buscar regras PCG-NCM:", error);
+    logger.error("Erro ao buscar regras PCG-NCM:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao buscar regras" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/pcg-ncm-rules
  * Cria uma nova regra PCG-NCM
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const session = await auth();
@@ -160,10 +162,10 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao criar regra:", error);
+    logger.error("Erro ao criar regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao criar regra" },
       { status: 500 }
     );
   }
-}
+});

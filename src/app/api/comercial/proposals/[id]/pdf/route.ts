@@ -14,18 +14,19 @@ import { container } from "@/shared/infrastructure/di/container";
 import { COMMERCIAL_TOKENS } from "@/modules/commercial/infrastructure/di/CommercialModule";
 import type { IProposalPdfGateway } from "@/modules/commercial/domain/ports/output/IProposalPdfGateway";
 import { Result } from "@/shared/domain";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const proposalId = parseInt(resolvedParams.id);
 
     const [proposal] = await db
@@ -68,4 +69,4 @@ export async function GET(
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});

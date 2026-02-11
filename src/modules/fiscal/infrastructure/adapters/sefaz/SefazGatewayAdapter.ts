@@ -18,6 +18,7 @@ import type {
 } from '../../../domain/ports/output/ISefazService';
 import type { FiscalDocument } from '../../../domain/entities/FiscalDocument';
 
+import { logger } from '@/shared/infrastructure/logging';
 // TODO: E7.11 - Implementar ICertificateManager interface e adapter
 // quando assinatura XML for necessária (atualmente usando mock mode)
 
@@ -92,7 +93,7 @@ export class SefazGatewayAdapter implements ISefazService {
 
       // Em desenvolvimento/teste, retornar mock
       if (this.shouldUseMock()) {
-        console.log(`⚠️ MOCK MODE: Simulating SEFAZ transmission for key ${fiscalKey}`);
+        logger.info(`⚠️ MOCK MODE: Simulating SEFAZ transmission for key ${fiscalKey}`);
         
         const result: TransmissionResult = {
           success: true,
@@ -115,7 +116,7 @@ export class SefazGatewayAdapter implements ISefazService {
       return Result.fail('Real SEFAZ integration not yet implemented - use mock mode');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('❌ Error transmitting to SEFAZ:', errorMessage);
+      logger.error('❌ Error transmitting to SEFAZ:', errorMessage);
       return Result.fail(`Transmission failed: ${errorMessage}`);
     }
   }
@@ -132,7 +133,7 @@ export class SefazGatewayAdapter implements ISefazService {
 
       // Em desenvolvimento/teste, retornar mock
       if (this.shouldUseMock()) {
-        console.log(`⚠️ MOCK MODE: Simulating SEFAZ authorization for key ${fiscalKey}`);
+        logger.info(`⚠️ MOCK MODE: Simulating SEFAZ authorization for key ${fiscalKey}`);
         
         const result: AuthorizationResult = {
           authorized: true,
@@ -155,7 +156,7 @@ export class SefazGatewayAdapter implements ISefazService {
       return Result.fail('Real SEFAZ authorization not yet implemented - use mock mode');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('❌ Error authorizing with SEFAZ:', errorMessage);
+      logger.error('❌ Error authorizing with SEFAZ:', errorMessage);
       return Result.fail(`Authorization failed: ${errorMessage}`);
     }
   }
@@ -176,7 +177,7 @@ export class SefazGatewayAdapter implements ISefazService {
 
       // Em desenvolvimento/teste, retornar mock
       if (this.shouldUseMock()) {
-        console.log(`⚠️ MOCK MODE: Simulating SEFAZ cancellation for key ${fiscalKey}`);
+        logger.info(`⚠️ MOCK MODE: Simulating SEFAZ cancellation for key ${fiscalKey}`);
         
         const result: CancellationResult = {
           cancelled: true,
@@ -199,7 +200,7 @@ export class SefazGatewayAdapter implements ISefazService {
       return Result.fail('Real SEFAZ cancellation not yet implemented - use mock mode');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('❌ Error cancelling with SEFAZ:', errorMessage);
+      logger.error('❌ Error cancelling with SEFAZ:', errorMessage);
       return Result.fail(`Cancellation failed: ${errorMessage}`);
     }
   }
@@ -216,7 +217,7 @@ export class SefazGatewayAdapter implements ISefazService {
 
       // Em desenvolvimento/teste, retornar mock
       if (this.shouldUseMock()) {
-        console.log(`⚠️ MOCK MODE: Simulating SEFAZ status query for key ${fiscalKey}`);
+        logger.info(`⚠️ MOCK MODE: Simulating SEFAZ status query for key ${fiscalKey}`);
         
         const result: StatusResult = {
           fiscalKey,
@@ -238,7 +239,7 @@ export class SefazGatewayAdapter implements ISefazService {
       return Result.fail('Real SEFAZ status query not yet implemented - use mock mode');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('❌ Error querying SEFAZ status:', errorMessage);
+      logger.error('❌ Error querying SEFAZ status:', errorMessage);
       return Result.fail(`Status query failed: ${errorMessage}`);
     }
   }

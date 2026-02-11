@@ -37,6 +37,7 @@ import { ListInventoryCounts } from '../../application/queries/ListInventoryCoun
 import { GetMovementById } from '../../application/queries/GetMovementById';
 import { ListMovements } from '../../application/queries/ListMovements';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * WmsModule - Dependency Injection Configuration
  * E7.8 WMS Semana 2 + Semana 3
@@ -112,7 +113,7 @@ export function registerWmsModule(): void {
   );
 
   isRegistered = true;
-  console.log('[WMS Module] DI configured - 4 repos + 8 commands + 9 queries + 1 gateway');
+  logger.info('[WMS Module] DI configured - 4 repos + 8 commands + 9 queries + 1 gateway');
 }
 
 export function initializeWmsModule(): void {

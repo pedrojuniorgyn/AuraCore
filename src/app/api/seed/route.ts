@@ -6,6 +6,8 @@ import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 
 function seedIsEnabled() {
@@ -17,7 +19,7 @@ function seedIsEnabled() {
   return true;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   const debugRequested = req.headers.get("x-seed-debug") === "1";
   const isProd = process.env.NODE_ENV === "production";
   let tokenOk = false;
@@ -418,7 +420,7 @@ export async function GET(req: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro no Seed:", error);
+    logger.error("Erro no Seed:", error);
     const message = error instanceof Error ? error.message : String(error);
     const errorObj = error as Record<string, unknown>;
     return NextResponse.json(
@@ -429,4 +431,4 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

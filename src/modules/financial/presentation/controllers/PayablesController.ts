@@ -10,6 +10,7 @@ import { GetPayableByIdUseCase } from '../../application/queries/GetPayableByIdU
 import type { ExecutionContext } from '../../application/use-cases/BaseUseCase';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Controller para Payables
  * 
@@ -211,7 +212,7 @@ export class PayablesController {
       return error;
     }
 
-    console.error('[PayablesController] Error:', error);
+    logger.error('[PayablesController] Error:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('Unauthorized')) {

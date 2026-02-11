@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
 import { runDocumentJobsTick } from "@/lib/documents/jobs-worker";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
-export async function POST() {
+export const POST = withDI(async () => {
   try {
     const ctx = await getTenantContext();
     if (!ctx.isAdmin) {
@@ -17,5 +18,5 @@ export async function POST() {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

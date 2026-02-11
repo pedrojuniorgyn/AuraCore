@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * API de Estatísticas do Dashboard Principal
  * 
@@ -25,7 +27,7 @@ interface DashboardStats {
   novosParceiros: number;
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     const organizationId = (session?.user as { organizationId?: number })?.organizationId ?? 1;
@@ -88,7 +90,7 @@ export async function GET() {
       }
     } catch (dbError) {
       // Se tabelas não existirem, retornar zeros
-      console.error("Erro ao buscar estatísticas:", dbError);
+      logger.error("Erro ao buscar estatísticas:", dbError);
     }
 
     return NextResponse.json({
@@ -110,4 +112,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});

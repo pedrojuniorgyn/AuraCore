@@ -8,12 +8,14 @@ import { db } from "@/lib/db";
 import { freightTables, freightWeightRanges, freightExtraComponents } from "@/lib/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
-export async function GET(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const tableId = Number(resolvedParams.id);
 
     // Buscar tabela
@@ -70,20 +72,20 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar tabela:", error);
+    logger.error("❌ Erro ao buscar tabela:", error);
     return NextResponse.json(
       { error: "Falha ao buscar tabela" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const tableId = Number(resolvedParams.id);
     const body = await request.json();
 
@@ -182,20 +184,20 @@ export async function PUT(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao atualizar tabela:", error);
+    logger.error("❌ Erro ao atualizar tabela:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao atualizar tabela" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const tableId = Number(resolvedParams.id);
 
     // Soft delete
@@ -213,13 +215,13 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao excluir tabela:", error);
+    logger.error("❌ Erro ao excluir tabela:", error);
     return NextResponse.json(
       { error: "Falha ao excluir tabela" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

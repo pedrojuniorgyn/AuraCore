@@ -15,12 +15,14 @@ import { TMS_TOKENS } from "@/modules/tms/infrastructure/di/TmsModule";
 import type { IWorkflowAutomatorGateway } from "@/modules/tms/domain/ports/output/IWorkflowAutomatorGateway";
 import { Result } from "@/shared/domain";
 
-export async function POST(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -119,7 +121,7 @@ export async function POST(
         },
       });
     } catch (workflowError: unknown) {
-      console.error("❌ Erro ao criar ordem de coleta:", workflowError);
+      logger.error("❌ Erro ao criar ordem de coleta:", workflowError);
       
       // Reverter aprovação
       await db
@@ -145,10 +147,10 @@ export async function POST(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao aprovar cotação:", error);
+    logger.error("❌ Erro ao aprovar cotação:", error);
     return NextResponse.json(
       { error: "Erro ao aprovar cotação", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

@@ -11,6 +11,7 @@ import { AddLineToEntryUseCase } from '../../application/commands/AddLineToEntry
 import { PostJournalEntryUseCase } from '../../application/commands/PostJournalEntryUseCase';
 import { ReverseJournalEntryUseCase } from '../../application/commands/ReverseJournalEntryUseCase';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Controller para Journal Entries
  */
@@ -253,14 +254,14 @@ export class JournalEntriesController {
       }
 
       // Erro genérico
-      console.error('[JournalEntriesController] Error:', error.message);
+      logger.error('[JournalEntriesController] Error:', error.message);
       return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }
       );
     }
 
-    console.error('[JournalEntriesController] Unknown error:', error);
+    logger.error('[JournalEntriesController] Unknown error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

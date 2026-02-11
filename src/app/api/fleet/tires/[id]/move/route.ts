@@ -3,13 +3,14 @@ import { db } from "@/lib/db";
 import { tires, tireMovements } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and } from "drizzle-orm";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(
+export const POST = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
     const tireId = parseInt(resolvedParams.id);
     const body = await request.json();
@@ -61,7 +62,7 @@ export async function POST(
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

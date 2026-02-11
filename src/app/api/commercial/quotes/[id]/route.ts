@@ -5,15 +5,17 @@ import { freightQuotes } from "@/lib/db/schema";
 import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/commercial/quotes/:id
  */
-export async function GET(
+export const GET = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -44,23 +46,23 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar cotação:", error);
+    logger.error("❌ Erro ao buscar cotação:", error);
     return NextResponse.json(
       { error: "Erro ao buscar cotação", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/commercial/quotes/:id
  */
-export async function PUT(
+export const PUT = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -148,23 +150,23 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao atualizar cotação:", error);
+    logger.error("❌ Erro ao atualizar cotação:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar cotação", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/commercial/quotes/:id
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -196,13 +198,13 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao excluir cotação:", error);
+    logger.error("❌ Erro ao excluir cotação:", error);
     return NextResponse.json(
       { error: "Erro ao excluir cotação", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

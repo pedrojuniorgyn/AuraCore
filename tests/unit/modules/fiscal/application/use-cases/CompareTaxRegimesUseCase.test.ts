@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
-import { CompareTaxRegimesUseCase } from '@/modules/fiscal/application/use-cases/CompareTaxRegimesUseCase';
+import { CompareTaxRegimesUseCase } from '@/modules/fiscal/application/queries/tax-reform/CompareTaxRegimesUseCase';
 import type { CompareTaxRegimesInput } from '@/modules/fiscal/domain/ports/input/ICompareTaxRegimes';
-import { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import { ExecutionContext } from '@/modules/fiscal/application/commands/fiscal/BaseUseCase';
 
 describe('CompareTaxRegimesUseCase', () => {
   let useCase: CompareTaxRegimesUseCase;

@@ -7,12 +7,12 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { container } from 'tsyringe';
-import { CreateLocation } from '@/modules/wms/application/use-cases/CreateLocation';
-import { RegisterStockEntry } from '@/modules/wms/application/use-cases/RegisterStockEntry';
-import { GetLocationById } from '@/modules/wms/application/use-cases/queries/GetLocationById';
-import { GetStockItemById } from '@/modules/wms/application/use-cases/queries/GetStockItemById';
-import { ListLocations } from '@/modules/wms/application/use-cases/queries/ListLocations';
-import { ListStockItems } from '@/modules/wms/application/use-cases/queries/ListStockItems';
+import { CreateLocation } from '@/modules/wms/application/commands/CreateLocation';
+import { RegisterStockEntry } from '@/modules/wms/application/commands/RegisterStockEntry';
+import { GetLocationById } from '@/modules/wms/application/queries/GetLocationById';
+import { GetStockItemById } from '@/modules/wms/application/queries/GetStockItemById';
+import { ListLocations } from '@/modules/wms/application/queries/ListLocations';
+import { ListStockItems } from '@/modules/wms/application/queries/ListStockItems';
 import type { IntegrationTestContext } from '../../helpers/integration-db';
 import {
   createIntegrationContext,

@@ -9,15 +9,17 @@ import { container } from 'tsyringe';
 import { getTenantContext } from '@/lib/auth/context';
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 import { Result } from '@/shared/domain';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/notifications/[id]/read
  * Marca uma notificação como lida
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const authContext = await getTenantContext();
 
@@ -52,10 +54,10 @@ export async function POST(
     if (error instanceof NextResponse) {
       return error; // Return original 401/403 response
     }
-    console.error('Error marking notification as read:', error);
+    logger.error('Error marking notification as read:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

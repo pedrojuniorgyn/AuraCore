@@ -16,6 +16,7 @@ vi.mock('tsyringe', () => ({
     resolve: vi.fn(),
     register: vi.fn(),
     registerSingleton: vi.fn(),
+    registerInstance: vi.fn(),
   },
   injectable: () => (target: unknown) => target,
   inject: () => () => undefined,

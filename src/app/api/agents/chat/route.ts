@@ -17,7 +17,9 @@ import type {
 } from "@/modules/integrations/domain/ports/output/IAgentsGateway";
 import { Result } from "@/shared/domain";
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const session = await auth();
@@ -69,10 +71,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro no chat:", error);
+    logger.error("Erro no chat:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }
-}
+});

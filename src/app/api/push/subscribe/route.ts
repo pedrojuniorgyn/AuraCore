@@ -7,7 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Validar autenticação
     const context = await getTenantContext();
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
     // Criar tabela: push_subscriptions (id, user_id, endpoint, keys_p256dh, keys_auth, org_id, branch_id, created_at)
     
     // Por enquanto, apenas log
-    console.log('[Push] Subscription received:', {
+    logger.info('[Push] Subscription received:', {
       userId,
       endpoint: subscription.endpoint,
     });
@@ -43,10 +45,10 @@ export async function POST(request: NextRequest) {
       message: 'Subscription saved',
     });
   } catch (error) {
-    console.error('[Push] Error saving subscription:', error);
+    logger.error('[Push] Error saving subscription:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

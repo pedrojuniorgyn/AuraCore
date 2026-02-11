@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { NextRequest } from 'next/server';
 import { POST } from '@/app/api/voice/process/route';
 import { getTenantContext } from '@/lib/auth/context';
 
@@ -40,7 +41,7 @@ describe('POST /api/voice/process', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const response = await POST(request);
+    const response = await POST(request as NextRequest);
 
     expect(response.status).toBe(400);
     const body = (await response.json()) as { error: string };

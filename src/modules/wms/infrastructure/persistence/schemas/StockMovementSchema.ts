@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { mssqlTable, char, int, varchar, decimal, datetime } from 'drizzle-orm/mssql-core';
+import { mssqlTable, char, int, varchar, decimal, datetime, index } from 'drizzle-orm/mssql-core';
 
 /**
  * StockMovementSchema - E7.8 WMS Semana 2
@@ -42,8 +42,11 @@ export const wmsStockMovements = mssqlTable('wms_stock_movements', {
   executedAt: datetime('executed_at', { mode: 'date' }).notNull(),
   
   createdAt: datetime('created_at', { mode: 'date' }).notNull().default(sql`GETDATE()`),
+  updatedAt: datetime('updated_at', { mode: 'date' }).default(sql`GETDATE()`), // E13.2: SCHEMA-005
   deletedAt: datetime('deleted_at', { mode: 'date' })
-});
+}, (table) => ([
+  index('idx_wms_stock_movements_tenant').on(table.organizationId, table.branchId), // E13.2: SCHEMA-003
+]));
 
 export type WmsStockMovementPersistence = typeof wmsStockMovements.$inferSelect;
 export type WmsStockMovementInsert = typeof wmsStockMovements.$inferInsert;

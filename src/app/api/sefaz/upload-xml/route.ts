@@ -6,6 +6,7 @@ import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructu
 import { Result } from "@/shared/domain";
 import { gzipSync } from "zlib";
 
+import { logger } from '@/shared/infrastructure/logging';
 interface FileProcessResult {
   fileName: string;
   type: "NFE" | "CTE" | "UNKNOWN";
@@ -55,7 +56,7 @@ export const POST = withDI(async (request: NextRequest) => {
       );
     }
 
-    console.log(`📤 Upload de ${files.length} arquivo(s) XML iniciado...`);
+    logger.info(`📤 Upload de ${files.length} arquivo(s) XML iniciado...`);
 
     const results = {
       totalFiles: files.length,
@@ -73,7 +74,7 @@ export const POST = withDI(async (request: NextRequest) => {
       const fileName = (file as File).name;
       
       try {
-        console.log(`\n📄 Processando arquivo: ${fileName}`);
+        logger.info(`\n📄 Processando arquivo: ${fileName}`);
 
         // Lê conteúdo do arquivo
         const content = await (file as File).text();
@@ -148,11 +149,11 @@ export const POST = withDI(async (request: NextRequest) => {
           errors: processResult.errors,
         });
 
-        console.log(`✅ ${fileName}: ${processResult.imported} importado(s)`);
+        logger.info(`✅ ${fileName}: ${processResult.imported} importado(s)`);
 
       } catch (fileError: unknown) {
         const errorMessage = fileError instanceof Error ? fileError.message : 'Erro desconhecido';
-        console.error(`❌ Erro ao processar ${fileName}:`, errorMessage);
+        logger.error(`❌ Erro ao processar ${fileName}:`, errorMessage);
         results.errors++;
         results.errorMessages.push(`${fileName}: ${errorMessage}`);
         
@@ -165,8 +166,8 @@ export const POST = withDI(async (request: NextRequest) => {
       }
     }
 
-    console.log("\n✅ Upload concluído!");
-    console.log(`📊 Resultados: ${results.imported} importados, ${results.duplicates} duplicatas, ${results.errors} erros`);
+    logger.info("\n✅ Upload concluído!");
+    logger.info(`📊 Resultados: ${results.imported} importados, ${results.duplicates} duplicatas, ${results.errors} erros`);
 
     return NextResponse.json({
       success: true,
@@ -180,7 +181,7 @@ export const POST = withDI(async (request: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao processar upload:", error);
+    logger.error("❌ Erro ao processar upload:", error);
     return NextResponse.json(
       { 
         error: "Falha ao processar upload", 

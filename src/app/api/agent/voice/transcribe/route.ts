@@ -12,8 +12,9 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { VoiceHandler } from '@/agent/voice/VoiceHandler';
 import { agentLogger } from '@/agent/observability';
 import { Result } from '@/shared/domain';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   const timer = agentLogger.startTimer();
 
   try {
@@ -95,12 +96,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET - Documentação do endpoint
  */
-export async function GET() {
+export const GET = withDI(async () => {
   return NextResponse.json({
     endpoint: '/api/agent/voice/transcribe',
     method: 'POST',
@@ -127,4 +128,4 @@ export async function GET() {
       detectedLanguage: 'string - Idioma detectado',
     },
   });
-}
+});

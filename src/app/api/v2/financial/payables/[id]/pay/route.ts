@@ -1,20 +1,16 @@
 import { NextRequest } from 'next/server';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { initializeFinancialModule } from '@/modules/financial/presentation/bootstrap';
 import { PayablesController } from '@/modules/financial/presentation/controllers/PayablesController';
 
 // Inicializar módulo
 initializeFinancialModule();
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
 /**
  * POST /api/v2/financial/payables/[id]/pay
  * Registrar pagamento
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  const { id } = await params;
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
+  const { id } = await context.params;
   return PayablesController.pay(request, { id });
-}
-
+});

@@ -5,10 +5,10 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { container } from 'tsyringe';
-import { RegisterStockEntry } from '@/modules/wms/application/use-cases/RegisterStockEntry';
-import { RegisterStockExit } from '@/modules/wms/application/use-cases/RegisterStockExit';
-import { ListMovements } from '@/modules/wms/application/use-cases/queries/ListMovements';
-import { GetMovementById } from '@/modules/wms/application/use-cases/queries/GetMovementById';
+import { RegisterStockEntry } from '@/modules/wms/application/commands/RegisterStockEntry';
+import { RegisterStockExit } from '@/modules/wms/application/commands/RegisterStockExit';
+import { ListMovements } from '@/modules/wms/application/queries/ListMovements';
+import { GetMovementById } from '@/modules/wms/application/queries/GetMovementById';
 import type { IntegrationTestContext } from '../../helpers/integration-db';
 import {
   createIntegrationContext,

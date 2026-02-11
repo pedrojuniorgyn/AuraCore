@@ -14,4 +14,4 @@ export * from './IEsgCalculatorGateway';
 export * from './ICiapEngineGateway';
 export * from './IClaimsEngineGateway';
 export * from './IIntercompanyGateway';
-
+export * from './IBtgDdaGateway';

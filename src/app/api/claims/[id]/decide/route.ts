@@ -11,18 +11,19 @@ import { container } from "@/shared/infrastructure/di/container";
 import { INTEGRATIONS_TOKENS } from "@/modules/integrations/infrastructure/di/IntegrationsModule";
 import type { IClaimsEngineGateway } from "@/modules/integrations/domain/ports/output/IClaimsEngineGateway";
 import { Result } from "@/shared/domain";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const body = await request.json();
     const { decision, amount, notes } = body;
 
@@ -62,4 +63,4 @@ export async function POST(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});

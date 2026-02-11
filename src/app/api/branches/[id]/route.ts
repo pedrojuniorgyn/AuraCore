@@ -6,6 +6,8 @@ import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ne } from "drizzle-orm";
 import sql from "mssql";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 interface BranchRow extends Record<string, unknown> {
   id: number;
   version: number;
@@ -91,17 +93,17 @@ async function fetchBranchRaw(
  * - ✅ Soft Delete: Apenas não deletados
  * - ✅ Data Scoping: Se não for ADMIN, valida acesso à filial
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -137,13 +139,13 @@ export async function GET(
       return error;
     }
 
-    console.error("❌ Error fetching branch:", error);
+    logger.error("❌ Error fetching branch:", error);
     return NextResponse.json(
       { error: "Falha ao buscar filial.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/branches/[id]
@@ -155,17 +157,17 @@ export async function GET(
  * - ✅ Auditoria: Registra updated_by
  * - ✅ Data Scoping: Se não for ADMIN, valida acesso
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -290,13 +292,13 @@ export async function PUT(
       return error;
     }
 
-    console.error("❌ Error updating branch:", error);
+    logger.error("❌ Error updating branch:", error);
     return NextResponse.json(
       { error: "Falha ao atualizar filial.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/branches/[id]
@@ -309,17 +311,17 @@ export async function PUT(
  * - ✅ Data Scoping: Se não for ADMIN, valida acesso
  * - ✅ Regra de Negócio: Matriz (ID 1) não pode ser deletada
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -382,10 +384,10 @@ export async function DELETE(
       return error;
     }
 
-    console.error("❌ Error deleting branch:", error);
+    logger.error("❌ Error deleting branch:", error);
     return NextResponse.json(
       { error: "Falha ao excluir filial.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

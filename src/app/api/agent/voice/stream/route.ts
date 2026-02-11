@@ -15,11 +15,12 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { streamingVoiceHandler } from '@/agent/voice/StreamingVoiceHandler';
 import { agentLogger } from '@/agent/observability';
 import type { AgentExecutionContext } from '@/agent/core/AgentContext';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET - Server-Sent Events para transcrições em tempo real
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const ctx = await getTenantContext();
@@ -135,12 +136,12 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+});
 
 /**
  * POST - Enviar chunks de áudio para o stream
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const ctx = await getTenantContext();
@@ -185,12 +186,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE - Encerrar streaming e obter transcrição final
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const ctx = await getTenantContext();
@@ -231,4 +232,4 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});

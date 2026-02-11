@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -13,7 +15,7 @@ export const runtime = "nodejs";
  * Nota: Esta rota lista DDAs do banco local, não chama API BTG diretamente.
  * Para sincronizar DDAs do BTG, use POST /api/btg/dda/sync
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -38,14 +40,14 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar DDAs:", error);
+    logger.error("❌ Erro ao listar DDAs:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

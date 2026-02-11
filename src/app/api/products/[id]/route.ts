@@ -5,6 +5,8 @@ import { updateProductSchema } from "@/lib/validators/product";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ne } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/products/[id]
  * Busca um produto específico.
@@ -13,17 +15,17 @@ import { eq, and, isNull, ne } from "drizzle-orm";
  * - ✅ Multi-Tenant: Valida organization_id
  * - ✅ Soft Delete: Apenas não deletados
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -59,13 +61,13 @@ export async function GET(
       return error;
     }
 
-    console.error("❌ Error fetching product:", error);
+    logger.error("❌ Error fetching product:", error);
     return NextResponse.json(
       { error: "Falha ao buscar produto.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/products/[id]
@@ -76,17 +78,17 @@ export async function GET(
  * - ✅ Optimistic Lock: Valida versão
  * - ✅ Auditoria: Registra updated_by
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -232,13 +234,13 @@ export async function PUT(
       return error;
     }
 
-    console.error("❌ Error updating product:", error);
+    logger.error("❌ Error updating product:", error);
     return NextResponse.json(
       { error: "Falha ao atualizar produto.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/products/[id]
@@ -249,17 +251,17 @@ export async function PUT(
  * - ✅ Soft Delete: Marca deleted_at
  * - ✅ Auditoria: Registra updated_by
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -333,13 +335,13 @@ export async function DELETE(
       return error;
     }
 
-    console.error("❌ Error deleting product:", error);
+    logger.error("❌ Error deleting product:", error);
     return NextResponse.json(
       { error: "Falha ao excluir produto.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

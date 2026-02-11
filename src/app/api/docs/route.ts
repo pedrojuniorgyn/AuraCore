@@ -9,8 +9,9 @@
 
 import { NextResponse } from 'next/server';
 import { getApiDocs } from '@/lib/swagger/config';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET() {
+export const GET = withDI(async () => {
   const spec = getApiDocs();
   return NextResponse.json(spec);
-}
+});

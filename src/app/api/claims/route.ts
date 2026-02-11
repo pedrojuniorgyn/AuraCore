@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const ctx = await getTenantContext();
@@ -46,9 +47,9 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const body = await request.json();
@@ -75,5 +76,5 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});
 

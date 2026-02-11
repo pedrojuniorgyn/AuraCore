@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/reports/cte-margin?cteId=123
  * KPI: Margem de Contribuição por CTe
@@ -13,7 +15,7 @@ import { sql } from "drizzle-orm";
  * Margem de Contribuição = Receita Líquida - Custos Variáveis
  * % Margem = (Margem / Receita Líquida) * 100
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -125,13 +127,13 @@ export async function GET(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao calcular margem do CTe:", error);
+    logger.error("❌ Erro ao calcular margem do CTe:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

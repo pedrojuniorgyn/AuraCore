@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 function convertToCSV(data: Record<string, unknown>[]): string {
   if (!data || data.length === 0) return '';

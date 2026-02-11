@@ -8,8 +8,9 @@
 import { NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import { CacheService, CacheTTL } from '@/services/cache.service';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET() {
+export const GET = withDI(async () => {
   // Requer autenticacao para acesso a diagnostico
   await getTenantContext();
   try {
@@ -54,4 +55,4 @@ export async function GET() {
       status: 500,
     });
   }
-}
+});

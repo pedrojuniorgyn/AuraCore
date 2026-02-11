@@ -15,7 +15,9 @@ import { FLEET_TOKENS } from "@/modules/fleet/infrastructure/di/FleetModule";
 import type { IVehicleServiceGateway } from "@/modules/fleet/domain/ports/output/IVehicleServiceGateway";
 import { Result } from "@/shared/domain";
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const searchParams = request.nextUrl.searchParams;
@@ -45,15 +47,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: vehiclesList });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error("❌ Erro ao listar veículos:", error);
+    logger.error("❌ Erro ao listar veículos:", error);
     return NextResponse.json(
       { error: "Falha ao listar veículos" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const body = await request.json();
@@ -107,10 +109,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar veículo:", error);
+    logger.error("❌ Erro ao criar veículo:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao criar veículo" },
       { status: 500 }
     );
   }
-}
+});

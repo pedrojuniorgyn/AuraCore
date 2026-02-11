@@ -4,9 +4,10 @@ import { vehicleDocuments, driverDocuments } from "@/lib/db/schema";
 import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, lte, asc } from "drizzle-orm";
 import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 // GET - Lista documentos vencendo
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -44,10 +45,10 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 // POST - Criar documento
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

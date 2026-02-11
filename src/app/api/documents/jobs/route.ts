@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
 import { listJobs } from "@/lib/documents/document-db";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx.isAdmin) {
@@ -19,5 +20,5 @@ export async function GET(req: NextRequest) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

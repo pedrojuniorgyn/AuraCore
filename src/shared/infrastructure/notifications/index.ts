@@ -6,4 +6,5 @@
  */
 
 export { NotificationService } from './NotificationService';
+export { InAppNotificationAdapter } from './InAppNotificationAdapter';
 export * from './types';

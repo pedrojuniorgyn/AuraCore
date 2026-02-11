@@ -13,7 +13,9 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IAgentsGateway } from "@/modules/integrations/domain/ports/output/IAgentsGateway";
 import { Result } from "@/shared/domain";
 
-export async function GET() {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async () => {
   try {
     // 1. Autenticação
     const session = await auth();
@@ -40,10 +42,10 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao listar agentes:", error);
+    logger.error("Erro ao listar agentes:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }
-}
+});

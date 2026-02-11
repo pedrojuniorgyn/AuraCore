@@ -9,11 +9,13 @@
  * - Falha do upstream devolve 502 sem derrubar a UI.
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/auth/context';
 import { getErrorMessage } from '@/shared/types/type-guards';
 
+import { logger } from '@/shared/infrastructure/logging';
 const bodySchema = z.object({
   audio_base64: z.string().min(1, 'audio_base64 is required'),
   encoding: z.string().min(1, 'encoding is required'),
@@ -29,7 +31,7 @@ const safeJson = async <T>(request: Request): Promise<T> => {
   }
 };
 
-export async function POST(request: Request): Promise<NextResponse> {
+export const POST = withDI(async (request: NextRequest): Promise<NextResponse> => {
   try {
     const tenant = await getTenantContext();
     if (!tenant) {
@@ -79,7 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     if (!response.ok) {
       const upstreamError = await response.text();
-      console.error('Voice upstream error:', upstreamError);
+      logger.error('Voice upstream error:', upstreamError);
       return NextResponse.json(
         { error: 'Voice processing unavailable' },
         { status: 502 }
@@ -95,4 +97,4 @@ export async function POST(request: Request): Promise<NextResponse> {
     const message = getErrorMessage(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

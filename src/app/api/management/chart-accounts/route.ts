@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Interface para INSERT OUTPUT INSERTED.id
 interface InsertedIdResult {
   id: number;
@@ -12,7 +14,7 @@ interface InsertedIdResult {
  * GET /api/management/chart-accounts
  * Lista contas gerenciais (PCG)
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -56,16 +58,16 @@ export async function GET(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao listar contas gerenciais:", error);
+    logger.error("❌ Erro ao listar contas gerenciais:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/management/chart-accounts
  * Cria nova conta gerencial
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -147,10 +149,10 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar conta gerencial:", error);
+    logger.error("❌ Erro ao criar conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

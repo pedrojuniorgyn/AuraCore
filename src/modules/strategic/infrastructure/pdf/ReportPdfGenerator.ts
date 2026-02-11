@@ -7,6 +7,7 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Extend jsPDF with autoTable
 declare module 'jspdf' {
   interface jsPDF {
@@ -84,7 +85,7 @@ export class ReportPdfGenerator {
         this.doc.addImage(header.logo, 'PNG', this.marginLeft, this.currentY, 30, 12);
         this.currentY += 15;
       } catch (error) {
-        console.warn('Failed to add logo:', error);
+        logger.warn('Failed to add logo:', error);
       }
     }
 
@@ -224,7 +225,7 @@ export class ReportPdfGenerator {
       );
       this.currentY += height + 5;
     } catch (error) {
-      console.warn('Failed to add chart:', error);
+      logger.warn('Failed to add chart:', error);
       this.addText({
         type: 'text',
         text: '[Gráfico não disponível]',

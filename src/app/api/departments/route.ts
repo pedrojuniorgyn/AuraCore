@@ -16,6 +16,8 @@ import { Department } from '@/shared/domain';
 import { Result } from '@/shared/domain';
 import { CacheService } from '@/services/cache.service';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const createDepartmentSchema = z.object({
   code: z.string().trim().min(1).max(20),
   name: z.string().trim().min(1).max(100),
@@ -28,7 +30,7 @@ const createDepartmentSchema = z.object({
  * GET /api/departments
  * List all departments
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -66,19 +68,19 @@ export async function GET(request: NextRequest) {
       count: departments.length,
     });
   } catch (error) {
-    console.error('Error listing departments:', error);
+    logger.error('Error listing departments:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/departments
  * Create a new department
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -152,10 +154,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating department:', error);
+    logger.error('Error creating department:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

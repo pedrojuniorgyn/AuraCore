@@ -23,6 +23,7 @@ import { CancelTripCommand } from '../../application/commands/CancelTripCommand'
 import { GetTripByIdQuery } from '../../application/queries/GetTripByIdQuery';
 import { ListTripsQuery } from '../../application/queries/ListTripsQuery';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Tokens
 export const TMS_TOKENS = {
   TripRepository: Symbol.for('ITripRepository'),
@@ -62,7 +63,7 @@ export function registerTmsModule(): void {
   container.registerSingleton(ListTripsQuery);
 
   isRegistered = true;
-  console.log('[TMS Module] DI configured - 3 repos + 2 gateways + 3 commands + 2 queries');
+  logger.info('[TMS Module] DI configured - 3 repos + 2 gateways + 3 commands + 2 queries');
 }
 
 export function initializeTmsModule(): void {

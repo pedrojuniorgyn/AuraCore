@@ -10,7 +10,9 @@ import { and, eq, isNull, desc, like } from "drizzle-orm";
 import { validateCPF, formatCPF } from "@/lib/validators/fleet-validators";
 import { getTenantContext } from "@/lib/auth/context";
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // E9.3: Usar getTenantContext para multi-tenancy
     const ctx = await getTenantContext();
@@ -42,15 +44,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: driversList });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error("❌ Erro ao listar motoristas:", error);
+    logger.error("❌ Erro ao listar motoristas:", error);
     return NextResponse.json(
       { error: "Falha ao listar motoristas" },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // E9.3: Usar getTenantContext para multi-tenancy
     const ctx = await getTenantContext();
@@ -147,12 +149,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar motorista:", error);
+    logger.error("❌ Erro ao criar motorista:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao criar motorista" },
       { status: 500 }
     );
   }
-}
+});
 
 

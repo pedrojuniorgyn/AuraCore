@@ -16,6 +16,8 @@ import { container } from '@/shared/infrastructure/di';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IAnalyzeFreightContractUseCase } from '@/modules/contracts/domain/ports/input';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // ============================================================================
 // CONFIG
 // ============================================================================
@@ -36,7 +38,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
  *   - skipRiskAnalysis?: boolean
  *   - includeRawText?: boolean
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const POST = withDI(async (request: NextRequest): Promise<NextResponse> => {
   // 1. Autenticação
   const context = await getTenantContext();
   if (!context) {
@@ -129,19 +131,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('POST /api/contracts/freight/analyze error:', message);
+    logger.error('POST /api/contracts/freight/analyze error:', message);
 
     return NextResponse.json(
       { error: message },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * OPTIONS handler for CORS
  */
-export async function OPTIONS(): Promise<NextResponse> {
+export const OPTIONS = withDI(async (): Promise<NextResponse> => {
   return new NextResponse(null, {
     status: 204,
     headers: {
@@ -149,4 +151,4 @@ export async function OPTIONS(): Promise<NextResponse> {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
-}
+});

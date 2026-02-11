@@ -18,6 +18,7 @@ import { Result } from '../../../../../../shared/domain/types/Result';
 import type { OKR as MockOKR, KeyResult as MockKeyResult } from '../../../../../../lib/okrs/okr-types';
 import { getAllOkrs } from '../../../../../../lib/okrs/mock-store';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Converte KeyResult do Mock Store para Domain Entity
  */
@@ -92,25 +93,25 @@ function convertOkr(mockOkr: MockOKR): Result<OKR, string> {
  * Executa migração de dados
  */
 async function migrateOkrsToDb() {
-  console.log('🚀 Starting OKRs migration from Mock Store to SQL Server...\n');
+  logger.info('🚀 Starting OKRs migration from Mock Store to SQL Server...\n');
 
   // 1. Conectar ao banco de dados
-  console.log('🔌 Connecting to SQL Server...');
+  logger.info('🔌 Connecting to SQL Server...');
   const { ensureConnection } = await import('../../../../../../lib/db');
   await ensureConnection();
-  console.log('✅ Connected to SQL Server\n');
+  logger.info('✅ Connected to SQL Server\n');
 
   // 2. Registrar DI Container
-  console.log('📦 Registering DI Container...');
+  logger.info('📦 Registering DI Container...');
   registerStrategicModule();
-  console.log('✅ DI Container registered\n');
+  logger.info('✅ DI Container registered\n');
 
   // 3. Resolver Repository
   const repository = container.resolve<IOkrRepository>(OKR_TOKENS.OkrRepository);
 
   // 4. Carregar OKRs do Mock Store
   const mockOkrs = getAllOkrs();
-  console.log(`📄 Found ${mockOkrs.length} OKRs in Mock Store\n`);
+  logger.info(`📄 Found ${mockOkrs.length} OKRs in Mock Store\n`);
 
   // 5. Migrar cada OKR
   let successCount = 0;
@@ -119,12 +120,12 @@ async function migrateOkrsToDb() {
 
   for (const mockOkr of mockOkrs) {
     try {
-      console.log(`📦 Migrating: "${mockOkr.title}" (${mockOkr.level})...`);
+      logger.info(`📦 Migrating: "${mockOkr.title}" (${mockOkr.level})...`);
 
       // Converter para Domain Entity
       const okrResult = convertOkr(mockOkr);
       if (Result.isFail(okrResult)) {
-        console.error(`  ❌ Conversion failed: ${okrResult.error}`);
+        logger.error(`  ❌ Conversion failed: ${okrResult.error}`);
         errors.push({ title: mockOkr.title, error: okrResult.error });
         errorCount++;
         continue;
@@ -135,16 +136,16 @@ async function migrateOkrsToDb() {
       // Salvar via Repository
       const saveResult = await repository.save(okr);
       if (Result.isFail(saveResult)) {
-        console.error(`  ❌ Save failed: ${saveResult.error}`);
+        logger.error(`  ❌ Save failed: ${saveResult.error}`);
         errors.push({ title: mockOkr.title, error: saveResult.error });
         errorCount++;
         continue;
       }
 
-      console.log(`  ✅ Saved: ${okr.id} (${okr.keyResults.length} Key Results, ${okr.progress}% progress)`);
+      logger.info(`  ✅ Saved: ${okr.id} (${okr.keyResults.length} Key Results, ${okr.progress}% progress)`);
       successCount++;
     } catch (error) {
-      console.error(`  ❌ Unexpected error:`, error);
+      logger.error(`  ❌ Unexpected error:`, error);
       errors.push({ 
         title: mockOkr.title, 
         error: error instanceof Error ? error.message : String(error) 
@@ -154,31 +155,31 @@ async function migrateOkrsToDb() {
   }
 
   // 6. Resumo
-  console.log('\n' + '='.repeat(60));
-  console.log('📊 MIGRATION SUMMARY');
-  console.log('='.repeat(60));
-  console.log(`Total OKRs: ${mockOkrs.length}`);
-  console.log(`✅ Success: ${successCount}`);
-  console.log(`❌ Errors: ${errorCount}`);
+  logger.info('\n' + '='.repeat(60));
+  logger.info('📊 MIGRATION SUMMARY');
+  logger.info('='.repeat(60));
+  logger.info(`Total OKRs: ${mockOkrs.length}`);
+  logger.info(`✅ Success: ${successCount}`);
+  logger.info(`❌ Errors: ${errorCount}`);
 
   if (errors.length > 0) {
-    console.log('\n❌ ERRORS:');
+    logger.info('\n❌ ERRORS:');
     errors.forEach((e, i) => {
-      console.log(`${i + 1}. "${e.title}"`);
-      console.log(`   ${e.error}\n`);
+      logger.info(`${i + 1}. "${e.title}"`);
+      logger.info(`   ${e.error}\n`);
     });
   }
 
-  console.log('='.repeat(60));
+  logger.info('='.repeat(60));
 
   if (errorCount === 0) {
-    console.log('\n🎉 Migration completed successfully!');
-    console.log('\n📋 Next Steps:');
-    console.log('1. Validate data in SQL Server');
-    console.log('2. Update APIs to use Repository (Task 04)');
-    console.log('3. Delete Mock Store + JSON (Task 05)');
+    logger.info('\n🎉 Migration completed successfully!');
+    logger.info('\n📋 Next Steps:');
+    logger.info('1. Validate data in SQL Server');
+    logger.info('2. Update APIs to use Repository (Task 04)');
+    logger.info('3. Delete Mock Store + JSON (Task 05)');
   } else {
-    console.log('\n⚠️  Migration completed with errors. Check logs above.');
+    logger.info('\n⚠️  Migration completed with errors. Check logs above.');
     process.exit(1);
   }
 }
@@ -186,11 +187,11 @@ async function migrateOkrsToDb() {
 // Execute migration
 migrateOkrsToDb()
   .then(() => {
-    console.log('\n👋 Migration script finished');
+    logger.info('\n👋 Migration script finished');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n💥 Fatal error:', error);
-    console.error(error.stack);
+    logger.error('\n💥 Fatal error:', error);
+    logger.error('Error occurred', error.stack);
     process.exit(1);
   });

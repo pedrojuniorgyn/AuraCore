@@ -10,6 +10,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/notifications
  * Lista notificações não lidas do usuário
@@ -17,7 +19,7 @@ import { Result } from '@/shared/domain';
  * Query params:
  * - limit: Número de resultados (padrão: 50, máx: 200)
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -55,10 +57,10 @@ export async function GET(request: NextRequest) {
     if (error instanceof NextResponse) {
       return error; // Return original 401/403 response
     }
-    console.error('Error fetching notifications:', error);
+    logger.error('Error fetching notifications:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

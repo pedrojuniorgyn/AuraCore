@@ -8,6 +8,7 @@ import { injectable } from 'tsyringe';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { userDashboardLayoutTable } from '../schemas/user-dashboard-layout.schema';
+import { logger } from '@/shared/infrastructure/logging';
 import type { 
   IUserDashboardLayoutRepository,
   DashboardLayoutItem 
@@ -39,7 +40,7 @@ export class DrizzleUserDashboardLayoutRepository implements IUserDashboardLayou
       const layout = JSON.parse(row.layoutJson) as DashboardLayoutItem[];
       return layout;
     } catch {
-      console.error('Failed to parse dashboard layout JSON');
+      logger.error('Failed to parse dashboard layout JSON');
       return null;
     }
   }

@@ -15,6 +15,7 @@ import type { ITaxCreditRepository, ChartAccount } from '@/modules/fiscal/domain
 import type { TaxCredit } from "@/modules/fiscal/domain/value-objects/TaxCredit";
 import type { FiscalDocumentData } from "@/modules/fiscal/domain/services/TaxCreditCalculator";
 
+import { logger } from '@/shared/infrastructure/logging';
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SQL RESULT TYPES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -238,10 +239,10 @@ export class DrizzleTaxCreditRepository implements ITaxCreditRepository {
         );
       }
 
-      console.log(`✅ Crédito fiscal registrado (balanceado): R$ ${totalCreditAmount.toFixed(2)}`);
-      console.log(`   D - PIS a Recuperar: R$ ${credit.pisCredit.amount.toFixed(2)}`);
-      console.log(`   D - COFINS a Recuperar: R$ ${credit.cofinsCredit.amount.toFixed(2)}`);
-      console.log(`   C - ${costAccount.name}: R$ ${totalCredits.toFixed(2)}`);
+      logger.info(`✅ Crédito fiscal registrado (balanceado): R$ ${totalCreditAmount.toFixed(2)}`);
+      logger.info(`   D - PIS a Recuperar: R$ ${credit.pisCredit.amount.toFixed(2)}`);
+      logger.info(`   D - COFINS a Recuperar: R$ ${credit.cofinsCredit.amount.toFixed(2)}`);
+      logger.info(`   C - ${costAccount.name}: R$ ${totalCredits.toFixed(2)}`);
       
       return Result.ok(true);
     } catch (error) {

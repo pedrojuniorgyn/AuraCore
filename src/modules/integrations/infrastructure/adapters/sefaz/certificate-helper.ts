@@ -11,6 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { logger } from '@/shared/infrastructure/logging';
 export interface CertificateConfig {
   pfxPath: string;
   password: string;
@@ -40,7 +41,7 @@ export async function loadCertificate(config: CertificateConfig): Promise<Certif
       password: config.password,
     };
   } catch (error: unknown) {
-    console.error('❌ Erro ao carregar certificado:', error);
+    logger.error('❌ Erro ao carregar certificado:', error);
     throw new Error(`Falha ao carregar certificado: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
@@ -66,15 +67,15 @@ export async function signXml(xml: string, certificateConfig: CertificateConfig)
     // Em produção, usar xml-crypto ou biblioteca equivalente
     // para assinar o XML com o certificado A1
 
-    console.log('⚠️ MODO DESENVOLVIMENTO: Assinatura simulada');
-    console.log(`Certificado: ${certificateConfig.organization}`);
-    console.log(`XML tamanho: ${xml.length} bytes`);
+    logger.info('⚠️ MODO DESENVOLVIMENTO: Assinatura simulada');
+    logger.info(`Certificado: ${certificateConfig.organization}`);
+    logger.info(`XML tamanho: ${xml.length} bytes`);
 
     // Por enquanto, retornar XML sem assinatura
     // Em produção, adicionar tag <Signature>
     return xml;
   } catch (error: unknown) {
-    console.error('❌ Erro ao assinar XML:', error);
+    logger.error('❌ Erro ao assinar XML:', error);
     throw new Error(`Falha na assinatura: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

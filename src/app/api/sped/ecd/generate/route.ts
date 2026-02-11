@@ -19,6 +19,8 @@ import type { IGenerateSpedEcd } from '@/modules/fiscal/domain/ports/input';
 // Garantir que módulo está inicializado
 import '@/modules/fiscal/infrastructure/bootstrap';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/sped/ecd/generate
  * 
@@ -30,7 +32,7 @@ import '@/modules/fiscal/infrastructure/bootstrap';
  * 
  * Response: Arquivo .txt com encoding ISO-8859-1
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     // 1. Autenticação
     const session = await auth();
@@ -76,7 +78,7 @@ export async function POST(req: Request) {
     const useCase = container.resolve<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase);
 
     // 7. Executar geração
-    console.log(`📄 Gerando SPED ECD ${referenceYear} (${finalidade}) para org ${ctx.organizationId}...`);
+    logger.info(`📄 Gerando SPED ECD ${referenceYear} (${finalidade}) para org ${ctx.organizationId}...`);
 
     const result = await useCase.execute(
       {
@@ -93,7 +95,7 @@ export async function POST(req: Request) {
 
     // 8. Tratar resultado
     if (Result.isFail(result)) {
-      console.error('❌ Erro ao gerar SPED ECD:', result.error);
+      logger.error('❌ Erro ao gerar SPED ECD:', result.error);
       return NextResponse.json(
         { error: result.error },
         { status: 400 }
@@ -101,7 +103,7 @@ export async function POST(req: Request) {
     }
 
     // 9. Retornar arquivo
-    console.log(`✅ SPED ECD gerado: ${result.value.filename}`);
+    logger.info(`✅ SPED ECD gerado: ${result.value.filename}`);
 
     return new NextResponse(result.value.content, {
       status: 200,
@@ -118,11 +120,11 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('❌ Erro inesperado ao gerar SPED ECD:', error);
+    logger.error('❌ Erro inesperado ao gerar SPED ECD:', error);
     return NextResponse.json(
       { error: `Erro interno: ${errorMessage}` },
       { status: 500 }
     );
   }
-}
+});
 

@@ -6,6 +6,7 @@ import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
 import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/sefaz/process-saved-xml
  * 
@@ -30,8 +31,8 @@ export const POST = withDI(async (request: NextRequest) => {
 
     const finalBranchId = branchId || ctx.defaultBranchId || 1;
 
-    console.log(`📦 Processando XML salvo para branch ${finalBranchId}...`);
-    console.log(`📄 Tamanho do XML: ${xmlContent.length} bytes`);
+    logger.info(`📦 Processando XML salvo para branch ${finalBranchId}...`);
+    logger.info(`📄 Tamanho do XML: ${xmlContent.length} bytes`);
 
     // Garantir que os valores são números válidos
     const orgId = typeof ctx.organizationId === 'number' 
@@ -80,7 +81,7 @@ export const POST = withDI(async (request: NextRequest) => {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao processar XML salvo:", error);
+    logger.error("❌ Erro ao processar XML salvo:", error);
     return NextResponse.json(
       { error: "Falha ao processar XML.", details: errorMessage },
       { status: 500 }

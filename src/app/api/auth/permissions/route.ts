@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getUserPermissions } from "@/lib/auth/permissions";
 import { CacheService, CacheTTL } from "@/services/cache.service";
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /** Session user type com campos extended */
 interface SessionUser {
@@ -28,11 +30,11 @@ interface SessionUser {
  * - role: string (role do usuário)
  * - isAdmin: boolean (bypass ABAC se true)
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
 
-    console.log("🔍 [API /auth/permissions] Session:", {
+    logger.info('🔍 [API /auth/permissions] Session', {
       hasSession: !!session,
       userId: session?.user?.id,
       email: session?.user?.email,
@@ -40,7 +42,7 @@ export async function GET() {
     });
 
     if (!session?.user?.id) {
-      console.warn("⚠️ [API /auth/permissions] Usuário não autenticado");
+      logger.warn('⚠️ [API /auth/permissions] Usuário não autenticado');
       return NextResponse.json({ 
         permissions: [], 
         allowedBranches: [],
@@ -60,7 +62,7 @@ export async function GET() {
       : [];
 
     if (!organizationId) {
-      console.error("⚠️ [API /auth/permissions] organizationId missing in session");
+      logger.error('⚠️ [API /auth/permissions] organizationId missing in session');
       return NextResponse.json({ 
         permissions: [], 
         allowedBranches: [],
@@ -75,7 +77,7 @@ export async function GET() {
     // Tentar buscar permissões do cache
     const cached = await CacheService.get<string[]>(cacheKey, 'permissions:');
     if (cached) {
-      console.log("✅ [API /auth/permissions] Cache HIT");
+      logger.info('✅ [API /auth/permissions] Cache HIT');
       return NextResponse.json({
         success: true,
         permissions: cached,
@@ -92,13 +94,13 @@ export async function GET() {
     }
 
     // Cache MISS - buscar do banco
-    console.log("⚠️ [API /auth/permissions] Cache MISS - fetching from DB");
+    logger.info('⚠️ [API /auth/permissions] Cache MISS - fetching from DB');
     const permissions = await getUserPermissions(session.user.id);
 
     // Cachear apenas permissions (allowedBranches vem da session)
     await CacheService.set(cacheKey, permissions, CacheTTL.LONG, 'permissions:');
 
-    console.log("✅ [API /auth/permissions] Permissões retornadas:", permissions.length);
+    logger.info('✅ [API /auth/permissions] Permissões retornadas', { permissionsLength: permissions.length });
 
     return NextResponse.json({
       success: true,
@@ -119,13 +121,13 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar permissões:", error);
+    logger.error('❌ Erro ao buscar permissões', error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

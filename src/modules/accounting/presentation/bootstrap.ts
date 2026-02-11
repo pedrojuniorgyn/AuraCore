@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { registerAccountingModule } from '../infrastructure/di/AccountingModule';
 
+import { logger } from '@/shared/infrastructure/logging';
 let isInitialized = false;
 
 /**
@@ -15,7 +16,7 @@ export function initializeAccountingModule(): void {
   registerAccountingModule();
   isInitialized = true;
   
-  console.log('[Accounting] Module initialized');
+  logger.info('[Accounting] Module initialized');
 }
 
 /**

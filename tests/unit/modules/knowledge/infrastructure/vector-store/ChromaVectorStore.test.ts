@@ -150,7 +150,16 @@ describe('ChromaVectorStore', () => {
     });
 
     it('deve tratar erro de conexão', async () => {
-      mocks.heartbeat.mockRejectedValueOnce(new Error('Connection refused'));
+      // Criar store com retry rápido para teste
+      const failStore = new ChromaVectorStore({
+        host: 'localhost',
+        port: 8001,
+        maxRetries: 1,
+        retryDelayMs: 0,
+      });
+
+      // Rejeitar TODAS as chamadas de heartbeat (não apenas a primeira)
+      mocks.heartbeat.mockRejectedValue(new Error('Connection refused'));
 
       const chunks: DocumentChunk[] = [
         {
@@ -163,11 +172,11 @@ describe('ChromaVectorStore', () => {
         },
       ];
 
-      const result = await store.upsert(chunks);
+      const result = await failStore.upsert(chunks);
 
       expect(Result.isFail(result)).toBe(true);
       if (Result.isFail(result)) {
-        expect(result.error).toContain('Falha ao conectar');
+        expect(result.error).toContain('ChromaDB not available');
       }
     });
   });

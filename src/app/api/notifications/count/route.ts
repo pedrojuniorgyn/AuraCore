@@ -4,11 +4,13 @@ import { notifications } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/notifications/count
  * Contar notificações não lidas
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -32,11 +34,11 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error counting notifications:", error);
+    logger.error("Error counting notifications:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

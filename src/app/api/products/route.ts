@@ -5,6 +5,8 @@ import { createProductSchema } from "@/lib/validators/product";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, or, ilike, desc, sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/products
  * Lista produtos da organização (com filtros e paginação).
@@ -13,7 +15,7 @@ import { eq, and, isNull, or, ilike, desc, sql } from "drizzle-orm";
  * - ✅ Multi-Tenant: Valida organization_id
  * - ✅ Soft Delete: Apenas não deletados
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
@@ -78,13 +80,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error fetching products:", error);
+    logger.error("❌ Error fetching products:", error);
     return NextResponse.json(
       { error: "Falha ao buscar produtos.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/products
@@ -95,7 +97,7 @@ export async function GET(request: NextRequest) {
  * - ✅ Auditoria: Registra created_by
  * - ✅ Validação: Zod schema + SKU único
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
@@ -181,13 +183,13 @@ export async function POST(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error creating product:", error);
+    logger.error("❌ Error creating product:", error);
     return NextResponse.json(
       { error: "Falha ao criar produto.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

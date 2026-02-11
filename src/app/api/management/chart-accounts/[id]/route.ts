@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // Interface para query de conta gerencial com join
 interface ManagementAccountResult {
   id: number;
@@ -32,17 +34,17 @@ interface ManagementAccountResult {
 /**
  * GET /api/management/chart-accounts/[id]
  */
-export async function GET(
+export const GET = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const result = await db.execute(sql`
       SELECT 
@@ -76,25 +78,25 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar conta gerencial:", error);
+    logger.error("❌ Erro ao buscar conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT /api/management/chart-accounts/[id]
  */
-export async function PUT(
+export const PUT = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await req.json();
 
     await db.execute(sql`
@@ -125,25 +127,25 @@ export async function PUT(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao atualizar conta gerencial:", error);
+    logger.error("❌ Erro ao atualizar conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/management/chart-accounts/[id]
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // Soft delete
     await db.execute(sql`
@@ -163,10 +165,10 @@ export async function DELETE(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao excluir conta gerencial:", error);
+    logger.error("❌ Erro ao excluir conta gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

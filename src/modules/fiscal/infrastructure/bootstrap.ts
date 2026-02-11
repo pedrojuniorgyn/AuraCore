@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { registerFiscalModule } from './di/FiscalModule';
 
+import { logger } from '@/shared/infrastructure/logging';
 let isInitialized = false;
 
 /**
@@ -20,7 +21,7 @@ export function initializeFiscalModule(): void {
   registerFiscalModule();
   isInitialized = true;
   
-  console.log('[Fiscal] Module initialized');
+  logger.info('[Fiscal] Module initialized');
 }
 
 /**

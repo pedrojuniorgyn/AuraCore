@@ -15,7 +15,9 @@ import { FISCAL_TOKENS } from "@/modules/fiscal/infrastructure/di/FiscalModule";
 import type { IPcgNcmGateway } from "@/modules/fiscal/domain/ports/output/IPcgNcmGateway";
 import { Result } from "@/shared/domain";
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -100,7 +102,7 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro em /api/pcg-ncm-rules/fiscal-flags:", error);
+    logger.error("❌ Erro em /api/pcg-ncm-rules/fiscal-flags:", error);
     return NextResponse.json(
       { 
         error: errorMessage || "Erro interno ao buscar flags fiscais",
@@ -109,4 +111,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

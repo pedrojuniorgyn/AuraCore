@@ -4,6 +4,7 @@ import sql from "mssql";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 import { log } from "@/lib/observability/logger";
 import { getErrorMessage } from "@/shared/types/type-guards";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,7 +30,7 @@ async function runSqlTransaction<T>(work: (tx: sql.Transaction) => Promise<T>): 
  * POST /api/btg/webhook
  * Recebe notificações de pagamento do BTG
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const body = await request.json();
 
@@ -312,7 +313,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 
 

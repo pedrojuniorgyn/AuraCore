@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTenantContext } from "@/lib/auth/context";
 import { requeueFailedJob, updateDocumentStatus } from "@/lib/documents/document-db";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withDI(async (
+  req: NextRequest,
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx.isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const jobId = Number(id);
     if (!Number.isFinite(jobId) || jobId <= 0) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
@@ -38,5 +42,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (error instanceof Response) return error;
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

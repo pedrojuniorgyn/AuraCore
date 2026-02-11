@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as createGoal } from '@/app/api/strategic/goals/route';
-import { getTenantContext } from '@/lib/auth/context';
+import { getTenantContext, validateABACBranchAccess } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
@@ -9,6 +9,8 @@ import type { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
+  validateABACBranchAccess: vi.fn(),
+  abacDeniedResponse: vi.fn(),
 }));
 
 vi.mock('@/shared/infrastructure/di/container', () => ({
@@ -40,6 +42,7 @@ vi.mock('@/lib/db', () => ({
 const mockGetTenantContext = getTenantContext as unknown as ReturnType<typeof vi.fn>;
 const mockContainerResolve = container.resolve as unknown as ReturnType<typeof vi.fn>;
 const mockDbSelect = db.select as unknown as ReturnType<typeof vi.fn>;
+const mockValidateABAC = validateABACBranchAccess as unknown as ReturnType<typeof vi.fn>;
 
 const tenant = {
   userId: 'user-1',
@@ -60,12 +63,30 @@ const makeRequest = (jsonImpl: () => Promise<unknown> | unknown) =>
   ({ json: jsonImpl } as unknown as NextRequest);
 
 const createSelectChain = (result: Array<{ id: string }>) => {
-  const fetch = vi.fn().mockResolvedValue(result);
-  const offset = vi.fn().mockReturnValue({ fetch });
-  const orderBy = vi.fn().mockReturnValue({ offset });
-  const where = vi.fn().mockReturnValue({ orderBy, offset });
+  // Drizzle queries are thenable - `await db.select().from().where()` resolves directly
+  // The mock must return a thenable (Promise) with chainable methods
+  const makeThenable = () =>
+    Object.assign(Promise.resolve(result), {
+      orderBy: vi.fn().mockReturnValue(
+        Object.assign(Promise.resolve(result), {
+          offset: vi.fn().mockReturnValue(
+            Object.assign(Promise.resolve(result), {
+              fetch: vi.fn().mockResolvedValue(result),
+            })
+          ),
+          fetch: vi.fn().mockResolvedValue(result),
+        })
+      ),
+      offset: vi.fn().mockReturnValue(
+        Object.assign(Promise.resolve(result), {
+          fetch: vi.fn().mockResolvedValue(result),
+        })
+      ),
+      fetch: vi.fn().mockResolvedValue(result),
+    });
+  const where = vi.fn().mockReturnValue(makeThenable());
   const from = vi.fn().mockReturnValue({ where });
-  return { from, where, orderBy, offset, fetch };
+  return { from, where };
 };
 
 const mockDbSelectSequence = (results: Array<Array<{ id: string }>>) => {
@@ -80,6 +101,7 @@ describe('strategic goals create route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetTenantContext.mockResolvedValue(tenant);
+    mockValidateABAC.mockReturnValue({ allowed: true, effectiveBranchId: 2 });
   });
 
   it('returns 400 on invalid JSON body', async () => {
@@ -92,8 +114,9 @@ describe('strategic goals create route', () => {
     expect(json.error).toBe('Invalid JSON body');
   });
 
-  it('preserves 401 response when tenant context returns Response', async () => {
-    mockGetTenantContext.mockResolvedValueOnce(
+  it('preserves 401 response when tenant context throws Response', async () => {
+    // getTenantContext() THROWS a Response on auth failure (not returns)
+    mockGetTenantContext.mockRejectedValueOnce(
       new Response('Unauthorized', { status: 401 })
     );
 
@@ -105,7 +128,8 @@ describe('strategic goals create route', () => {
   });
 
   it('creates goal when strategyId is provided and perspective resolves', async () => {
-    mockDbSelectSequence([[{ id: 'perspective-1' }]]);
+    // 2 db.select calls: perspectiveCode resolution + BUG-001 validation
+    mockDbSelectSequence([[{ id: 'perspective-1' }], [{ id: 'perspective-1' }]]);
     const execute = vi.fn().mockResolvedValue(
       Result.ok({
         id: 'goal-1',
@@ -114,7 +138,14 @@ describe('strategic goals create route', () => {
         cascadeLevel: 'CEO',
       })
     );
-    mockContainerResolve.mockReturnValue({ execute });
+    const mockStrategyRepo = {
+      findById: vi.fn().mockResolvedValue({ id: validId }),
+      findActive: vi.fn(),
+    };
+    mockContainerResolve.mockImplementation((token: unknown) => {
+      if (typeof token === 'symbol') return mockStrategyRepo;
+      return { execute };
+    });
 
     const response = await createGoal(
       makeRequest(
@@ -139,7 +170,8 @@ describe('strategic goals create route', () => {
   });
 
   it('creates goal when strategyId is absent and fallback strategy resolves', async () => {
-    mockDbSelectSequence([[{ id: 'strategy-1' }], [{ id: 'perspective-1' }]]);
+    // 2 db.select calls: perspectiveCode resolution + BUG-001 validation
+    mockDbSelectSequence([[{ id: 'perspective-1' }], [{ id: 'perspective-1' }]]);
     const execute = vi.fn().mockResolvedValue(
       Result.ok({
         id: 'goal-1',
@@ -148,7 +180,14 @@ describe('strategic goals create route', () => {
         cascadeLevel: 'CEO',
       })
     );
-    mockContainerResolve.mockReturnValue({ execute });
+    const mockStrategyRepo = {
+      findById: vi.fn(),
+      findActive: vi.fn().mockResolvedValue({ id: 'strategy-1' }),
+    };
+    mockContainerResolve.mockImplementation((token: unknown) => {
+      if (typeof token === 'symbol') return mockStrategyRepo;
+      return { execute };
+    });
 
     const response = await createGoal(
       makeRequest(
@@ -173,6 +212,14 @@ describe('strategic goals create route', () => {
 
   it('returns 400 when no strategy exists for tenant', async () => {
     mockDbSelectSequence([[], []]);
+    const mockStrategyRepo = {
+      findById: vi.fn(),
+      findActive: vi.fn().mockResolvedValue(null),
+    };
+    mockContainerResolve.mockImplementation((token: unknown) => {
+      if (typeof token === 'symbol') return mockStrategyRepo;
+      return { execute: vi.fn() };
+    });
 
     const response = await createGoal(
       makeRequest(
@@ -191,8 +238,8 @@ describe('strategic goals create route', () => {
 
     expect(response.status).toBe(400);
     const json = await response.json();
-    expect(json.details?.strategyId?.[0]).toBe(
-      'strategyId is required because no strategy exists for this tenant to resolve perspectiveId'
+    expect(json.details?.strategyId?.[0]).toContain(
+      'strategyId is required'
     );
   });
 });

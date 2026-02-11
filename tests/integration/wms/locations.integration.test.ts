@@ -8,11 +8,11 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { container } from 'tsyringe';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import { CreateLocation } from '@/modules/wms/application/use-cases/CreateLocation';
-import { UpdateLocation } from '@/modules/wms/application/use-cases/UpdateLocation';
-import { DeleteLocation } from '@/modules/wms/application/use-cases/DeleteLocation';
-import { GetLocationById } from '@/modules/wms/application/use-cases/queries/GetLocationById';
-import { ListLocations } from '@/modules/wms/application/use-cases/queries/ListLocations';
+import { CreateLocation } from '@/modules/wms/application/commands/CreateLocation';
+import { UpdateLocation } from '@/modules/wms/application/commands/UpdateLocation';
+import { DeleteLocation } from '@/modules/wms/application/commands/DeleteLocation';
+import { GetLocationById } from '@/modules/wms/application/queries/GetLocationById';
+import { ListLocations } from '@/modules/wms/application/queries/ListLocations';
 import type { IntegrationTestContext } from '../../helpers/integration-db';
 import {
   createIntegrationContext,

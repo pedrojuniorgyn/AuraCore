@@ -1,6 +1,7 @@
 import { ValidationResult } from './IbsCbsXmlValidator';
 import { MockXsdValidator, SchemaType } from './MockXsdValidator';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * XmlSchemaValidator: Interface unificada para validação XSD
  * 
@@ -118,7 +119,7 @@ export class XmlValidatorFactory {
       // return new RealXsdValidator();
       
       // Por enquanto, usar Mock mesmo em produção
-      console.warn('[XmlValidatorFactory] Using MockXsdValidator in production');
+      logger.warn('[XmlValidatorFactory] Using MockXsdValidator in production');
       return XmlSchemaValidator.getInstance();
     }
     

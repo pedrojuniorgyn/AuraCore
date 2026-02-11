@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { UpdateCteUseCase } from '@/modules/fiscal/application/use-cases/UpdateCteUseCase';
+import { UpdateCteUseCase } from '@/modules/fiscal/application/commands/cte/UpdateCteUseCase';
 import type { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import type { ExecutionContext } from '@/modules/fiscal/domain/ports/input/IAuthorizeFiscalDocument';

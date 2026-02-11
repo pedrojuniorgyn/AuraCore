@@ -12,11 +12,13 @@ import { ACCOUNTING_TOKENS } from "@/modules/accounting/infrastructure/di/Accoun
 import type { IManagementAccountingGateway } from "@/modules/accounting/domain/ports/output/IManagementAccountingGateway";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/management/dre?period=2024-12&branchId=1&serviceType=FTL
  * Calcula DRE Gerencial
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -62,7 +64,7 @@ export async function GET(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao calcular DRE Gerencial:", error);
+    logger.error("❌ Erro ao calcular DRE Gerencial:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
