@@ -118,6 +118,80 @@ groups:
           summary: "Alta taxa de erro em imports"
           description: "Mais de 30% dos imports de documentos falhando"
 
+  - name: auracore_erp_alerts
+    rules:
+      # ERP HTTP alta latência
+      - alert: ERPHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Alta latência no ERP AuraCore"
+          description: "P95 latência HTTP > 2s por 5 minutos. Valor: {{ $value | printf \"%.2f\" }}s"
+
+      # ERP taxa de erro HTTP elevada
+      - alert: ERPHighErrorRate
+        expr: |
+          sum(rate(http_request_errors_total[5m]))
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Taxa de erro HTTP > 5% no ERP"
+          description: "Mais de 5% das requisições HTTP estão falhando. Valor: {{ $value | printf \"%.2f\" }}"
+
+      # Database query lenta
+      - alert: ERPSlowDatabaseQueries
+        expr: histogram_quantile(0.95, sum(rate(database_query_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Queries SQL lentas no ERP"
+          description: "P95 latência de queries > 1s por 5 minutos. Valor: {{ $value | printf \"%.2f\" }}s"
+
+      # Muitas conexões ativas
+      - alert: ERPHighActiveConnections
+        expr: active_connections > 100
+        for: 2m
+        labels:
+          severity: warning
+          team: infra
+        annotations:
+          summary: "Muitas conexões ativas no ERP"
+          description: "Mais de 100 conexões ativas. Valor: {{ $value }}"
+
+      # Módulo fiscal com erros (crítico - multas SEFAZ)
+      - alert: ERPFiscalModuleErrors
+        expr: |
+          sum(rate(http_request_errors_total{path=~"/api/fiscal/.*"}[5m]))
+          / sum(rate(http_requests_total{path=~"/api/fiscal/.*"}[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+          team: fiscal
+        annotations:
+          summary: "Módulo Fiscal com erros!"
+          description: "Mais de 1% dos requests fiscais falhando. Risco de multa SEFAZ. Valor: {{ $value | printf \"%.4f\" }}"
+
+      # Módulo financeiro com erros
+      - alert: ERPFinancialModuleErrors
+        expr: |
+          sum(rate(http_request_errors_total{path=~"/api/financial/.*"}[5m]))
+          / sum(rate(http_requests_total{path=~"/api/financial/.*"}[5m])) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+          team: financial
+        annotations:
+          summary: "Módulo Financeiro com erros"
+          description: "Mais de 2% dos requests financeiros falhando. Valor: {{ $value | printf \"%.4f\" }}"
+
   - name: auracore_infrastructure_alerts
     rules:
       # Serviço down

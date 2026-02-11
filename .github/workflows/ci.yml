@@ -20,8 +20,70 @@ jobs:
   # ═══════════════════════════════════════════════════════════
   # FRONTEND - Next.js
   # ═══════════════════════════════════════════════════════════
+  # ── GATE 1: TypeScript Strict Check (TSG-001) ──────────────
+  frontend-typecheck:
+    name: 🔷 Gate 1 - TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript strict check (TSG-001)
+        run: |
+          echo "🔷 TypeScript Gate (TSG-001): HARD mode"
+          npx tsc --noEmit 2>&1 | tee tsc-output.txt
+          TSC_EXIT=${PIPESTATUS[0]}
+          ERROR_COUNT=$(grep -c 'error TS' tsc-output.txt || echo "0")
+          echo "## TypeCheck Gate" >> $GITHUB_STEP_SUMMARY
+          echo "- Exit code: $TSC_EXIT" >> $GITHUB_STEP_SUMMARY
+          echo "- Errors: $ERROR_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$TSC_EXIT" -ne 0 ]; then
+            echo "❌ TypeCheck FAILED with $ERROR_COUNT errors" >> $GITHUB_STEP_SUMMARY
+            tail -50 tsc-output.txt >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "✅ TypeCheck PASSED (0 errors)" >> $GITHUB_STEP_SUMMARY
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+  # ── GATE 2: Code Quality (as any check) ──────────────────
+  frontend-quality:
+    name: 🛡️ Gate 2 - Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for 'as any' usage
+        run: |
+          echo "🛡️ Code Quality Gate: 'as any' check"
+          ANY_COUNT=$(grep -rn 'as any' src/ --include="*.ts" --include="*.tsx" | grep -v 'node_modules' | grep -v '.test.' | grep -v '.spec.' | wc -l || echo "0")
+          echo "## Code Quality Gate" >> $GITHUB_STEP_SUMMARY
+          echo "- 'as any' occurrences: $ANY_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$ANY_COUNT" -gt 0 ]; then
+            echo "⚠️ Found $ANY_COUNT 'as any' usages (warning, not blocking)" >> $GITHUB_STEP_SUMMARY
+            grep -rn 'as any' src/ --include="*.ts" --include="*.tsx" | grep -v 'node_modules' | grep -v '.test.' | grep -v '.spec.' | head -20 >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Zero 'as any' found!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for console.log in production code
+        run: |
+          CONSOLE_COUNT=$(grep -rn 'console\.\(log\|error\|warn\)' src/ --include="*.ts" --include="*.tsx" | grep -v 'node_modules' | grep -v '.test.' | grep -v '.spec.' | grep -v '__tests__' | wc -l || echo "0")
+          echo "- console.log occurrences: $CONSOLE_COUNT" >> $GITHUB_STEP_SUMMARY
+
+  # ── GATE 3: Lint ─────────────────────────────────────────
   frontend-lint:
-    name: 🔍 Frontend - Lint
+    name: 🔍 Gate 3 - ESLint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,15 +103,11 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: Run TypeScript Check
-        run: npx tsc --noEmit
-        env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
-
+  # ── GATE 4: Unit Tests ──────────────────────────────────
   frontend-test:
-    name: 🧪 Frontend - Test
+    name: 🧪 Gate 4 - Unit Tests
     runs-on: ubuntu-latest
-    needs: frontend-lint
+    needs: [frontend-typecheck, frontend-lint]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,7 +122,25 @@ jobs:
         run: npm ci
 
       - name: Run Unit Tests with Coverage
-        run: npm run test:unit -- --coverage --reporter=verbose
+        run: |
+          echo "🧪 Test Gate: All tests must pass"
+          npm run test:unit -- --coverage --reporter=verbose 2>&1 | tee test-output.txt
+          TEST_EXIT=${PIPESTATUS[0]}
+          echo "## Test Gate" >> $GITHUB_STEP_SUMMARY
+          echo "- Exit code: $TEST_EXIT" >> $GITHUB_STEP_SUMMARY
+          # Extract test count from output
+          PASS_COUNT=$(grep -oP '\d+ passed' test-output.txt | head -1 || echo "unknown")
+          FAIL_COUNT=$(grep -oP '\d+ failed' test-output.txt | head -1 || echo "0")
+          echo "- Passed: $PASS_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- Failed: $FAIL_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo "❌ Tests FAILED" >> $GITHUB_STEP_SUMMARY
+            tail -30 test-output.txt >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -78,7 +154,7 @@ jobs:
   frontend-build:
     name: 🏗️ Frontend - Build
     runs-on: ubuntu-latest
-    needs: [frontend-lint, frontend-test]
+    needs: [frontend-typecheck, frontend-lint, frontend-test]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -180,7 +256,7 @@ jobs:
   ci-summary:
     name: 📊 CI Summary
     runs-on: ubuntu-latest
-    needs: [frontend-lint, frontend-test, frontend-build, agents-lint, agents-test]
+    needs: [frontend-typecheck, frontend-quality, frontend-lint, frontend-test, frontend-build, agents-lint, agents-test]
     if: always()
     steps:
       - name: Check Results
@@ -188,11 +264,13 @@ jobs:
           echo "## CI Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Frontend (Next.js)" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint & TypeCheck | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Unit Tests | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 1 | TypeCheck (TSG-001) | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2 | Code Quality (as any) | ${{ needs.frontend-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 3 | ESLint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 4 | Unit Tests | ${{ needs.frontend-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 5 | Build | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Agents (Python)" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
@@ -202,9 +280,15 @@ jobs:
 
       - name: Fail if critical jobs failed
         if: |
+          needs.frontend-typecheck.result == 'failure' ||
           needs.frontend-lint.result == 'failure' ||
+          needs.frontend-test.result == 'failure' ||
           needs.frontend-build.result == 'failure'
         run: |
-          echo "❌ Critical CI jobs failed"
+          echo "❌ Critical CI gates failed"
+          echo "TypeCheck: ${{ needs.frontend-typecheck.result }}"
+          echo "Lint: ${{ needs.frontend-lint.result }}"
+          echo "Tests: ${{ needs.frontend-test.result }}"
+          echo "Build: ${{ needs.frontend-build.result }}"
           exit 1
 
