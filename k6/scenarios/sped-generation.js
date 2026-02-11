@@ -80,12 +80,14 @@ function generateSpedPayload() {
   const spedTypes = ['fiscal', 'contributions', 'ecd'];
   const spedType = spedTypes[(__ITER || 0) % spedTypes.length];
 
-  // Use a recent month for generation
+  // Use a recent month for generation (getMonth returns 0-11, convert to 1-12)
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth(); // previous month (0-indexed)
-  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-  const endDate = `${year}-${String(month).padStart(2, '0')}-28`;
+  const month = now.getMonth() + 1; // 1-12
+  const monthStr = String(month).padStart(2, '0');
+  const lastDay = new Date(year, month, 0).getDate(); // last day of month
+  const startDate = `${year}-${monthStr}-01`;
+  const endDate = `${year}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
 
   return {
     payload: JSON.stringify({
