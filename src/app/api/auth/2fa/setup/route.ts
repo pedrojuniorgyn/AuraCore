@@ -23,7 +23,8 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { TotpService } from '@/shared/infrastructure/auth/TotpService';
-
+import { encryptTotpSecret } from '@/lib/crypto';
+import { logger } from '@/shared/infrastructure/logging';
 export const POST = withDI(async (req: NextRequest) => {
   return withAuth(req, async (_user, ctx) => {
     try {
@@ -68,11 +69,12 @@ export const POST = withDI(async (req: NextRequest) => {
         TotpService.hashBackupCode(code)
       );
 
-      // 4. Save secret and hashed backup codes (totp_enabled stays false until verified)
+      // 4. Save secret (encrypted) and hashed backup codes (totp_enabled stays false until verified)
+      const encryptedSecret = encryptTotpSecret(setup.secret);
       await db
         .update(users)
         .set({
-          totpSecret: setup.secret,
+          totpSecret: encryptedSecret,
           totpBackupCodes: JSON.stringify(hashedBackupCodes),
           updatedAt: new Date(),
         })
@@ -96,7 +98,7 @@ export const POST = withDI(async (req: NextRequest) => {
       }
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error('❌ Erro ao configurar 2FA:', error);
+      logger.error('❌ Erro ao configurar 2FA:', error);
       return NextResponse.json(
         { error: 'Erro ao configurar 2FA', details: errorMessage },
         { status: 500 }

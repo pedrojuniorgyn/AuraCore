@@ -23,7 +23,8 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { TotpService } from '@/shared/infrastructure/auth/TotpService';
-
+import { decryptTotpSecret } from '@/lib/crypto';
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Zod schema for 2FA disable input.
  * Requires current TOTP token for re-verification before disabling.
@@ -95,8 +96,9 @@ export const POST = withDI(async (req: NextRequest) => {
         );
       }
 
-      // 4. Verify TOTP token (re-authentication before disabling)
-      const isValid = TotpService.verifyToken(currentUser.totpSecret, token);
+      // 4. Verify TOTP token (re-authentication before disabling; decrypt if encrypted)
+      const secret = decryptTotpSecret(currentUser.totpSecret);
+      const isValid = TotpService.verifyToken(secret, token);
 
       if (!isValid) {
         return NextResponse.json(
@@ -135,7 +137,7 @@ export const POST = withDI(async (req: NextRequest) => {
       }
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error('❌ Erro ao desabilitar 2FA:', error);
+      logger.error('❌ Erro ao desabilitar 2FA:', error);
       return NextResponse.json(
         { error: 'Erro ao desabilitar 2FA', details: errorMessage },
         { status: 500 }

@@ -14,7 +14,9 @@
  * @see PrometheusMetrics
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { PrometheusMetrics } from '@/shared/infrastructure/observability/PrometheusMetrics';
+import { constantTimeEqual } from '@/lib/crypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -25,8 +27,8 @@ export const runtime = 'nodejs';
  */
 const PROMETHEUS_CONTENT_TYPE = 'text/plain; version=0.0.4; charset=utf-8';
 
-export async function GET(req: NextRequest): Promise<Response> {
-  // Optional bearer-token auth to protect metrics in production
+export const GET = withDI(async (req: NextRequest): Promise<Response> => {
+  // Optional bearer-token auth to protect metrics in production (LC-PR88-005)
   const expectedToken = process.env.METRICS_AUTH_TOKEN;
   if (expectedToken) {
     const authHeader = req.headers.get('authorization');
@@ -34,7 +36,8 @@ export async function GET(req: NextRequest): Promise<Response> {
       ? authHeader.slice(7)
       : null;
 
-    if (providedToken !== expectedToken) {
+    // Constant-time comparison to prevent timing attacks
+    if (!providedToken || !constantTimeEqual(providedToken, expectedToken)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 },
@@ -52,4 +55,4 @@ export async function GET(req: NextRequest): Promise<Response> {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
   });
-}
+});
