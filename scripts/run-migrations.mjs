@@ -59,7 +59,14 @@ function splitByGo(content) {
   return content
     .split(/^\s*GO\s*$/gim)
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith('--'));
+    .filter((s) => {
+      if (s.length === 0) return false;
+      // Only discard batches that are ENTIRELY comments/empty lines
+      const hasSQL = s.split('\n').some(
+        (line) => line.trim().length > 0 && !line.trim().startsWith('--'),
+      );
+      return hasSQL;
+    });
 }
 
 // ---------------------------------------------------------------------------
