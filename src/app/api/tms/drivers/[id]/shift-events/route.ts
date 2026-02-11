@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -9,17 +11,17 @@ export const runtime = "nodejs";
  * POST /api/tms/drivers/:id/shift-events
  * Registra evento de jornada (início/fim direção, início/fim descanso)
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const driverId = parseInt(resolvedParams.id);
 
     const body = await request.json();
@@ -136,12 +138,12 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao registrar evento de jornada:", error);
+    logger.error("❌ Erro ao registrar evento de jornada:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

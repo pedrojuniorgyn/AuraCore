@@ -6,6 +6,8 @@ import { branches, roles, userBranches, userRoles, users } from "@/lib/db/schema
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { CacheService } from "@/services/cache.service";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const inviteSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).optional(),
@@ -22,7 +24,7 @@ const inviteSchema = z.object({
  * - Vincula role (user_roles) e filiais (user_branches)
  * - Usuário então pode fazer o 1º login via Google Workspace (OAuth)
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   return withPermission(request, "admin.users.manage", async (_user, ctx) => {
     try {
       const { ensureConnection } = await import("@/lib/db");
@@ -165,10 +167,10 @@ export async function POST(request: NextRequest) {
           allowedDomainsHint: domainsHint || undefined,
         });
         if (!result.sent) {
-          console.warn("⚠️ Invite email not sent:", result.reason);
+          logger.warn("⚠️ Invite email not sent:", result.reason);
         }
       } catch (e) {
-        console.warn("⚠️ Invite email failed (non-fatal):", e);
+        logger.warn("⚠️ Invite email failed (non-fatal):", e);
       }
 
       // Invalidar cache de users após criação
@@ -185,13 +187,13 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Error inviting user:", error);
+      logger.error("❌ Error inviting user:", error);
       return NextResponse.json(
         { error: "Falha ao convidar usuário", details: errorMessage },
         { status: 500 }
       );
     }
   });
-}
+});
 
 

@@ -3,6 +3,7 @@ import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { permissions, rolePermissions, roles } from "@/lib/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 async function ensureDefaultRoles() {
   // Roles globais (não são por organização) — idempotente.
@@ -73,7 +74,7 @@ async function ensureDefaultRolePermissions() {
  * GET /api/admin/roles
  * 🔐 Requer permissão: admin.users.manage
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   return withPermission(request, "admin.users.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data });
   });
-}
+});
 
 /**
  * POST /api/admin/roles
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
  *
  * Cria novo role customizado.
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -161,4 +162,4 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   });
-}
+});

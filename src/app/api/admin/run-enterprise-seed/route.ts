@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const seedPath = join(process.cwd(), "drizzle/seeds/enterprise_seed_data.sql");
     const seedSQL = readFileSync(seedPath, "utf-8");
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 
 

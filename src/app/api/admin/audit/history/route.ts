@@ -33,7 +33,9 @@ import { withPermission } from '@/lib/auth/api-guard';
 import { auditService, AUDITABLE_ENTITIES, type AuditableEntity } from '@/shared/infrastructure/audit';
 import { type AuditOperation } from '@/shared/infrastructure/audit/audit.types';
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   return withPermission(request, 'admin.audit', async (_user, ctx) => {
     try {
       const { searchParams } = new URL(request.url);
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-      console.error('[Audit History] Erro:', error);
+      logger.error('[Audit History] Erro:', error);
       return NextResponse.json(
         {
           success: false,
@@ -119,4 +121,4 @@ export async function GET(request: NextRequest) {
       );
     }
   });
-}
+});

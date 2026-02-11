@@ -3,6 +3,7 @@ import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { permissions } from "@/lib/db/schema";
 import { asc, eq } from "drizzle-orm";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/admin/permissions
@@ -11,7 +12,7 @@ import { asc, eq } from "drizzle-orm";
  * Retorna lista completa de permissões do sistema.
  * Usado na UI de configuração de roles.
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data });
   });
-}
+});
 
 /**
  * POST /api/admin/permissions
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
  * Cria nova permissão no sistema.
  * Slug deve seguir formato: lowercase, números, dots, underscores.
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -93,4 +94,4 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: created }, { status: 201 });
   });
-}
+});

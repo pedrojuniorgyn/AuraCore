@@ -8,12 +8,13 @@ import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
 import { parsePaginationParams } from '@/lib/api/pagination';
 import { parseDateParam, validateDateRange } from '@/lib/api/date-params';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/wms/movements - List Stock Movements
  * E7.8 WMS Semana 3
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -110,4 +111,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { chartOfAccounts, financialCategories, autoClassificationRules } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🌱 SEED: Plano de Contas e Matriz NCM para Transportadoras
  * 
@@ -11,7 +13,7 @@ import { eq, and } from "drizzle-orm";
  * 2. Categorias Financeiras
  * 3. Matriz de Classificação Automática (NCM → Categoria)
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
     const organizationId = body.organization_id || 1;
     const userId = body.user_id || "system";
 
-    console.log(`🌱 Iniciando seed para organização ${organizationId}...`);
+    logger.info(`🌱 Iniciando seed para organização ${organizationId}...`);
 
     let categoriesCreated = 0;
     let accountsCreated = 0;
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
     // 1. CATEGORIAS FINANCEIRAS
     // ===========================================
     
-    console.log("📋 Criando categorias financeiras...");
+    logger.info("📋 Criando categorias financeiras...");
 
     const categories = [
       // DESPESAS
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         categoryMap[cat.name] = existing.id;
-        console.log(`  ⏭️  Categoria "${cat.name}" já existe`);
+        logger.info(`  ⏭️  Categoria "${cat.name}" já existe`);
         continue;
       }
 
@@ -94,14 +96,14 @@ export async function POST(request: NextRequest) {
 
       categoryMap[cat.name] = newCategory.id;
       categoriesCreated++;
-      console.log(`  ✅ Categoria "${cat.name}" criada (ID: ${newCategory.id})`);
+      logger.info(`  ✅ Categoria "${cat.name}" criada (ID: ${newCategory.id})`);
     }
 
     // ===========================================
     // 2. PLANO DE CONTAS (Chart of Accounts)
     // ===========================================
     
-    console.log("📊 Criando plano de contas...");
+    logger.info("📊 Criando plano de contas...");
 
     const accounts = [
       // RECEITAS
@@ -145,7 +147,7 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         accountMap[acc.code] = existing.id;
-        console.log(`  ⏭️  Conta "${acc.code}" já existe`);
+        logger.info(`  ⏭️  Conta "${acc.code}" já existe`);
         continue;
       }
 
@@ -180,14 +182,14 @@ export async function POST(request: NextRequest) {
 
       accountMap[acc.code] = newAccount.id;
       accountsCreated++;
-      console.log(`  ✅ Conta "${acc.code} - ${acc.name}" criada (ID: ${newAccount.id})`);
+      logger.info(`  ✅ Conta "${acc.code} - ${acc.name}" criada (ID: ${newAccount.id})`);
     }
 
     // ===========================================
     // 3. MATRIZ DE CLASSIFICAÇÃO AUTOMÁTICA
     // ===========================================
     
-    console.log("🗺️  Criando matriz de classificação (NCM → Categoria)...");
+    logger.info("🗺️  Criando matriz de classificação (NCM → Categoria)...");
 
     const rules = [
       // COMBUSTÍVEIS
@@ -303,7 +305,7 @@ export async function POST(request: NextRequest) {
       const chartAccountId = accountMap[rule.chartCode];
 
       if (!categoryId || !chartAccountId) {
-        console.log(`  ⚠️  Pulando regra "${rule.name}" (categoria ou conta não encontrada)`);
+        logger.info(`  ⚠️  Pulando regra "${rule.name}" (categoria ou conta não encontrada)`);
         continue;
       }
 
@@ -320,7 +322,7 @@ export async function POST(request: NextRequest) {
         );
 
       if (existing) {
-        console.log(`  ⏭️  Regra "${rule.name}" já existe`);
+        logger.info(`  ⏭️  Regra "${rule.name}" já existe`);
         continue;
       }
 
@@ -342,13 +344,13 @@ export async function POST(request: NextRequest) {
       });
 
       rulesCreated++;
-      console.log(`  ✅ Regra "${rule.name}" (NCM: ${rule.ncmCode}) criada`);
+      logger.info(`  ✅ Regra "${rule.name}" (NCM: ${rule.ncmCode}) criada`);
     }
 
-    console.log("\n✅ Seed concluído!");
-    console.log(`   Categorias: ${categoriesCreated} criadas`);
-    console.log(`   Contas: ${accountsCreated} criadas`);
-    console.log(`   Regras: ${rulesCreated} criadas`);
+    logger.info("\n✅ Seed concluído!");
+    logger.info(`   Categorias: ${categoriesCreated} criadas`);
+    logger.info(`   Contas: ${accountsCreated} criadas`);
+    logger.info(`   Regras: ${rulesCreated} criadas`);
 
     return NextResponse.json({
       success: true,
@@ -366,7 +368,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro no seed:", error);
+    logger.error("❌ Erro no seed:", error);
     return NextResponse.json(
       {
         success: false,
@@ -376,5 +378,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

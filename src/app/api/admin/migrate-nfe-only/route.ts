@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
 import { db } from "@/lib/db";
 
-export async function GET() {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async () => {
   try {
-    console.log("\n🔄 Migrando NFes para fiscal_documents...\n");
+    logger.info("\n🔄 Migrando NFes para fiscal_documents...\n");
 
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -33,7 +35,7 @@ export async function GET() {
       );
     `);
 
-    console.log(`✅ NFes migradas com sucesso!\n`);
+    logger.info(`✅ NFes migradas com sucesso!\n`);
 
     return NextResponse.json({
       success: true,
@@ -45,8 +47,8 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro:", error);
+    logger.error("❌ Erro:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

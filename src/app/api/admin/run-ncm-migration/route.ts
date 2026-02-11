@@ -2,15 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔧 Criar tabela ncm_financial_categories
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
-    console.log("🔧 Iniciando migration de NCM Categories...");
+    logger.info("🔧 Iniciando migration de NCM Categories...");
 
     // 1. Criar tabela ncm_financial_categories
     await db.execute(sql`
@@ -36,7 +38,7 @@ export async function POST(request: NextRequest) {
         CREATE INDEX idx_ncm_active ON ncm_financial_categories(is_active, deleted_at);
       END
     `);
-    console.log("✅ Tabela ncm_financial_categories criada");
+    logger.info("✅ Tabela ncm_financial_categories criada");
 
     // 2. Adicionar colunas em fiscal_document_items (se não existirem)
     await db.execute(sql`
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
         ALTER TABLE fiscal_document_items ADD category_id INT NULL;
       END
     `);
-    console.log("✅ Coluna category_id adicionada em fiscal_document_items");
+    logger.info("✅ Coluna category_id adicionada em fiscal_document_items");
 
     await db.execute(sql`
       IF NOT EXISTS (
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
         ALTER TABLE fiscal_document_items ADD chart_account_id INT NULL;
       END
     `);
-    console.log("✅ Coluna chart_account_id adicionada em fiscal_document_items");
+    logger.info("✅ Coluna chart_account_id adicionada em fiscal_document_items");
 
     await db.execute(sql`
       IF NOT EXISTS (
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
         ALTER TABLE fiscal_document_items ADD cost_center_id INT NULL;
       END
     `);
-    console.log("✅ Coluna cost_center_id adicionada em fiscal_document_items");
+    logger.info("✅ Coluna cost_center_id adicionada em fiscal_document_items");
 
     return NextResponse.json({
       success: true,
@@ -82,13 +84,13 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migration:", error);
+    logger.error("❌ Erro na migration:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { listOpsHealthRuns } from "@/lib/ops/ops-health-db";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ function isInternalTokenOk(req: NextRequest) {
   return false;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   const handler = async () => {
     const { searchParams } = new URL(req.url);
     const limit = Number(searchParams.get("limit") ?? "50");
@@ -27,5 +28,5 @@ export async function GET(req: NextRequest) {
 
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, "admin.users.manage", handler);
-}
+});
 

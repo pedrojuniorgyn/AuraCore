@@ -7,6 +7,8 @@ import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 import { queryTripsSchema } from "@/lib/validation/tms-schemas";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * Verifica se motorista requer CIOT (terceiros/agregados)
  * 
@@ -68,7 +70,7 @@ const createUnauthorizedResponse = () =>
  * Multi-tenancy: ✅ organizationId + branchId
  * Validação: ✅ Zod query params
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -122,13 +124,13 @@ export async function GET(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Error fetching trips:", error);
+    logger.error("❌ Error fetching trips:", error);
     return NextResponse.json(
       { error: "Failed to fetch trips", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/tms/trips
@@ -136,7 +138,7 @@ export async function GET(req: Request) {
  * Multi-tenancy: ✅ organizationId + branchId
  * Validação: ✅ Zod schema
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -241,13 +243,13 @@ export async function POST(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Error creating trip:", error);
+    logger.error("❌ Error creating trip:", error);
     return NextResponse.json(
       { error: "Failed to create trip", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

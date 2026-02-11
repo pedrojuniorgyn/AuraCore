@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { roles, rolePermissions, userRoles } from "@/lib/db/schema";
@@ -14,10 +15,10 @@ const DEFAULT_ROLES = ["ADMIN", "MANAGER", "OPERATOR", "AUDITOR"] as const;
  * Edita nome e description de uma role.
  * Roles padrão (ADMIN, MANAGER, OPERATOR, AUDITOR) não podem ser renomeadas.
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -121,7 +122,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: updated });
   });
-}
+});
 
 /**
  * DELETE /api/admin/roles/[id]
@@ -131,10 +132,10 @@ export async function PUT(
  * Roles padrão (ADMIN, MANAGER, OPERATOR, AUDITOR) não podem ser excluídas.
  * Roles em uso (vinculadas a usuários) não podem ser excluídas.
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -200,4 +201,4 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: "Role deleted" });
   });
-}
+});

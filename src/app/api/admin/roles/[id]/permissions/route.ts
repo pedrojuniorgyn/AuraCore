@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { roles, permissions, rolePermissions } from "@/lib/db/schema";
@@ -11,10 +12,10 @@ import { asc, eq, inArray } from "drizzle-orm";
  * Lista todas as permissões atribuídas a uma role.
  * Usado no modal de gerenciamento de permissões.
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -63,7 +64,7 @@ export async function GET(
       },
     });
   });
-}
+});
 
 /**
  * PUT /api/admin/roles/[id]/permissions
@@ -73,10 +74,10 @@ export async function GET(
  * Substitui todas as permissões atuais pelas novas.
  * Enviar array vazio remove todas as permissões.
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -171,4 +172,4 @@ export async function PUT(
       },
     });
   });
-}
+});

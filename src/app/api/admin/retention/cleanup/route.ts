@@ -27,16 +27,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPermission } from '@/lib/auth/api-guard';
 import { retentionService } from '@/shared/infrastructure/retention';
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   return withPermission(request, 'admin.retention', async (_user, ctx) => {
     try {
-      console.log(`[Retention Cleanup] Iniciado por userId=${ctx.userId}`);
+      logger.info(`[Retention Cleanup] Iniciado por userId=${ctx.userId}`);
 
       const summary = await retentionService.runCleanup();
 
-      console.log(
-        `[Retention Cleanup] Concluído: ${summary.totalDeleted} registros deletados em ${summary.totalDurationMs}ms`
-      );
+      logger.info(`[Retention Cleanup] Concluído: ${summary.totalDeleted} registros deletados em ${summary.totalDurationMs}ms`);
 
       return NextResponse.json({
         success: true,
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-      console.error('[Retention Cleanup] Erro:', error);
+      logger.error('[Retention Cleanup] Erro:', error);
       return NextResponse.json(
         {
           success: false,
@@ -58,4 +58,4 @@ export async function POST(request: NextRequest) {
       );
     }
   });
-}
+});

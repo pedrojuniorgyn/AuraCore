@@ -6,17 +6,18 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/wms/inventory/[id] - Get Inventory Count by ID
  * E7.8 WMS Semana 3
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await routeCtx.params;
     
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -67,5 +68,5 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 

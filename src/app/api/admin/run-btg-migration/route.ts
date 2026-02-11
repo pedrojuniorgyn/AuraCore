@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { pool, ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function POST() {
+export const POST = withDI(async () => {
   try {
-    console.log("🏦 Iniciando Migração BTG Pactual...");
+    logger.info("🏦 Iniciando Migração BTG Pactual...");
 
     await ensureConnection();
 
@@ -126,7 +128,7 @@ export async function POST() {
       END
     `);
 
-    console.log("✅ Migração BTG concluída!");
+    logger.info("✅ Migração BTG concluída!");
 
     return NextResponse.json({
       success: true,
@@ -138,14 +140,14 @@ export async function POST() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro na Migração BTG:", error);
+    logger.error("❌ Erro na Migração BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

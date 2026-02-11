@@ -9,6 +9,8 @@ import { db } from "@/lib/db";
 import { branches, organizations } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/admin/debug-sefaz-response?branchId=1
  * Retorna resposta XML da Sefaz para debug
@@ -17,7 +19,7 @@ import { eq, and, isNull } from "drizzle-orm";
  * 
  * @since E8 Fase 3 - Migrado para ISefazGateway via DI
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     const branchIdParam = request.nextUrl.searchParams.get("branchId");
     const branchId = branchIdParam ? parseInt(branchIdParam) : 1;
 
-    console.log(`🔍 Debug Sefaz Response para branch ${branchId}`);
+    logger.info(`🔍 Debug Sefaz Response para branch ${branchId}`);
 
     // Buscar dados da filial
     const [branch] = await db
@@ -117,10 +119,10 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro no debug Sefaz Response:", error);
+    logger.error("❌ Erro no debug Sefaz Response:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});

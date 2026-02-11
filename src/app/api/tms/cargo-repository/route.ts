@@ -4,6 +4,8 @@ import { cargoDocuments, inboundInvoices, businessPartners } from "@/lib/db/sche
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * ✅ OPÇÃO A - BLOCO 2: API REPOSITÓRIO DE CARGAS
  * 
@@ -15,7 +17,7 @@ import { eq, and, isNull, desc, sql } from "drizzle-orm";
  * - destination_uf: UF de destino
  * - urgent: cargas com prazo < 48h
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -116,13 +118,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error fetching cargo repository:", error);
+    logger.error("❌ Error fetching cargo repository:", error);
     return NextResponse.json(
       { error: "Falha ao buscar repositório de cargas.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/tms/cargo-repository/[id]/assign

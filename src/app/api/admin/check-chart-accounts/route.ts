@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔍 GET /api/admin/check-chart-accounts
  * 
  * Verifica se o Plano de Contas existe
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -55,13 +57,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao verificar plano de contas:", error);
+    logger.error("❌ Erro ao verificar plano de contas:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -12,6 +12,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { performanceTracker } from '@/lib/observability/performance-tracker';
 import { metricsCollector } from '@/lib/observability/metrics';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const runtime = 'nodejs';
 
 /**
@@ -53,7 +55,7 @@ function isInternalTokenOk(req: NextRequest): boolean {
  *   "metricsCollectorSummary": {...}
  * }
  */
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   // Verificar autenticação (token interno ou sessão)
   // Por enquanto aceita token interno para facilitar integração
   if (!isInternalTokenOk(req)) {
@@ -111,7 +113,7 @@ export async function GET(req: NextRequest) {
       metricsCollectorSummary,
     });
   } catch (error) {
-    console.error('[E13] Performance metrics error:', error);
+    logger.error('[E13] Performance metrics error:', error);
 
     return NextResponse.json(
       {
@@ -121,7 +123,7 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/admin/performance
@@ -129,7 +131,7 @@ export async function GET(req: NextRequest) {
  * Registra uma métrica de performance manualmente.
  * Útil para testes e integração com sistemas externos.
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   if (!isInternalTokenOk(req)) {
     return NextResponse.json(
       { error: 'Unauthorized - requires internal token' },
@@ -174,14 +176,14 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/admin/performance
  *
  * Limpa todas as métricas (para testes).
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withDI(async (req: NextRequest) => {
   if (!isInternalTokenOk(req)) {
     return NextResponse.json(
       { error: 'Unauthorized - requires internal token' },
@@ -195,4 +197,4 @@ export async function DELETE(req: NextRequest) {
     success: true,
     message: 'All metrics cleared',
   });
-}
+});

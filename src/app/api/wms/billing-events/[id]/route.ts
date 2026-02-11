@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
 // ✅ S1.1 Batch 3 Phase 2: Schemas
 const idParamSchema = z.object({
@@ -19,12 +20,12 @@ const updateBillingEventSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     
     // ✅ S1.1 Batch 3 Phase 2: Validate ID
     const idValidation = idParamSchema.safeParse(resolvedParams);
@@ -73,14 +74,14 @@ export async function PUT(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     
     // ✅ S1.1 Batch 3 Phase 2: Validate ID
     const validation = idParamSchema.safeParse(resolvedParams);
@@ -112,7 +113,7 @@ export async function DELETE(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 
 

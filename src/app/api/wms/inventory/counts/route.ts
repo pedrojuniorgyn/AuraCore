@@ -10,6 +10,8 @@ import { getTenantContext } from "@/lib/auth/context";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // ✅ S1.1 Batch 3 Phase 2: Schema
 const createInventoryCountSchema = z.object({
   warehouseId: z.number().int().positive('ID do armazém obrigatório'),
@@ -26,7 +28,7 @@ export const runtime = "nodejs";
  * GET /api/wms/inventory/counts
  * Lista contagens de inventário
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const ctx = await getTenantContext();
 
@@ -51,20 +53,20 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar contagens:", error);
+    logger.error("❌ Erro ao listar contagens:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/wms/inventory/counts
  * Inicia nova contagem de inventário
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -139,12 +141,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao iniciar contagem:", error);
+    logger.error("❌ Erro ao iniciar contagem:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

@@ -1,3 +1,9 @@
+// ============================================================================
+// ⛔ READY FOR REMOVAL - E15.3
+// Zero consumers detected. All functionality migrated to DDD modules.
+// Safe to delete after E16 sprint verification.
+// ============================================================================
+
 /**
  * ⚠️ DEPRECATED - accounting-engine.ts
  *

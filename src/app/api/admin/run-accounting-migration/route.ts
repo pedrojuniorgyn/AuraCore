@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
 import { db } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🚀 MIGRATION: Estrutura Contábil Completa
  * 
@@ -14,15 +16,15 @@ import { db } from "@/lib/db";
  * 
  * Implementa padrão Fiscal → Contábil → Financeiro
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
-    console.log("\n🚀 Iniciando Migration de Estrutura Contábil...\n");
+    logger.info("\n🚀 Iniciando Migration de Estrutura Contábil...\n");
 
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
     // 1️⃣ FISCAL DOCUMENTS (Unificada)
-    console.log("1️⃣ Criando tabela fiscal_documents...");
+    logger.info("1️⃣ Criando tabela fiscal_documents...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'fiscal_documents')
       BEGIN
@@ -100,10 +102,10 @@ export async function GET() {
         CREATE UNIQUE INDEX idx_fiscal_documents_access_key_unique ON fiscal_documents(access_key) WHERE access_key IS NOT NULL AND deleted_at IS NULL;
       END
     `);
-    console.log("✅ fiscal_documents criada");
+    logger.info("✅ fiscal_documents criada");
 
     // 2️⃣ FISCAL DOCUMENT ITEMS
-    console.log("\n2️⃣ Criando tabela fiscal_document_items...");
+    logger.info("\n2️⃣ Criando tabela fiscal_document_items...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'fiscal_document_items')
       BEGIN
@@ -166,10 +168,10 @@ export async function GET() {
         CREATE INDEX idx_fiscal_document_items_product ON fiscal_document_items(product_id);
       END
     `);
-    console.log("✅ fiscal_document_items criada");
+    logger.info("✅ fiscal_document_items criada");
 
     // 3️⃣ JOURNAL ENTRIES
-    console.log("\n3️⃣ Criando tabela journal_entries...");
+    logger.info("\n3️⃣ Criando tabela journal_entries...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'journal_entries')
       BEGIN
@@ -224,10 +226,10 @@ export async function GET() {
         CREATE UNIQUE INDEX idx_journal_entries_entry_number_unique ON journal_entries(organization_id, entry_number) WHERE deleted_at IS NULL;
       END
     `);
-    console.log("✅ journal_entries criada");
+    logger.info("✅ journal_entries criada");
 
     // 4️⃣ JOURNAL ENTRY LINES
-    console.log("\n4️⃣ Criando tabela journal_entry_lines...");
+    logger.info("\n4️⃣ Criando tabela journal_entry_lines...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'journal_entry_lines')
       BEGIN
@@ -269,10 +271,10 @@ export async function GET() {
         CREATE INDEX idx_journal_entry_lines_cost_center ON journal_entry_lines(cost_center_id);
       END
     `);
-    console.log("✅ journal_entry_lines criada");
+    logger.info("✅ journal_entry_lines criada");
 
     // 5️⃣ FINANCIAL TRANSACTIONS
-    console.log("\n5️⃣ Criando tabela financial_transactions...");
+    logger.info("\n5️⃣ Criando tabela financial_transactions...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'financial_transactions')
       BEGIN
@@ -328,10 +330,10 @@ export async function GET() {
         CREATE INDEX idx_financial_transactions_date ON financial_transactions(transaction_date);
       END
     `);
-    console.log("✅ financial_transactions criada");
+    logger.info("✅ financial_transactions criada");
 
     // 6️⃣ ADICIONAR FKs NAS TABELAS EXISTENTES
-    console.log("\n6️⃣ Adicionando FK fiscal_document_id em accounts_payable...");
+    logger.info("\n6️⃣ Adicionando FK fiscal_document_id em accounts_payable...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('accounts_payable') AND name = 'fiscal_document_id')
       BEGIN
@@ -340,7 +342,7 @@ export async function GET() {
       END
     `);
 
-    console.log("7️⃣ Adicionando FK fiscal_document_id em accounts_receivable...");
+    logger.info("7️⃣ Adicionando FK fiscal_document_id em accounts_receivable...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('accounts_receivable') AND name = 'fiscal_document_id')
       BEGIN
@@ -349,7 +351,7 @@ export async function GET() {
       END
     `);
 
-    console.log("8️⃣ Adicionando FK journal_entry_id em accounts_payable...");
+    logger.info("8️⃣ Adicionando FK journal_entry_id em accounts_payable...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('accounts_payable') AND name = 'journal_entry_id')
       BEGIN
@@ -358,7 +360,7 @@ export async function GET() {
       END
     `);
 
-    console.log("9️⃣ Adicionando FK journal_entry_id em accounts_receivable...");
+    logger.info("9️⃣ Adicionando FK journal_entry_id em accounts_receivable...");
     await db.execute(rawSql`
       IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('accounts_receivable') AND name = 'journal_entry_id')
       BEGIN
@@ -367,15 +369,15 @@ export async function GET() {
       END
     `);
 
-    console.log("\n✅ Migration concluída com sucesso!");
-    console.log("\n📊 Resumo:");
-    console.log("  ✅ fiscal_documents");
-    console.log("  ✅ fiscal_document_items");
-    console.log("  ✅ journal_entries");
-    console.log("  ✅ journal_entry_lines");
-    console.log("  ✅ financial_transactions");
-    console.log("  ✅ FKs adicionadas em accounts_payable");
-    console.log("  ✅ FKs adicionadas em accounts_receivable\n");
+    logger.info("\n✅ Migration concluída com sucesso!");
+    logger.info("\n📊 Resumo:");
+    logger.info("  ✅ fiscal_documents");
+    logger.info("  ✅ fiscal_document_items");
+    logger.info("  ✅ journal_entries");
+    logger.info("  ✅ journal_entry_lines");
+    logger.info("  ✅ financial_transactions");
+    logger.info("  ✅ FKs adicionadas em accounts_payable");
+    logger.info("  ✅ FKs adicionadas em accounts_receivable\n");
 
     return NextResponse.json({
       success: true,
@@ -400,10 +402,10 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migration:", error);
+    logger.error("❌ Erro na migration:", error);
     return NextResponse.json(
       { error: errorMessage, stack: (error instanceof Error ? error.stack : undefined) },
       { status: 500 }
     );
   }
-}
+});

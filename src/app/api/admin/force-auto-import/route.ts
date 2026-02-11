@@ -5,6 +5,8 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IDownloadNfesUseCase } from "@/modules/fiscal/domain/ports/input/IDownloadNfesUseCase";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔧 FORÇA EXECUÇÃO MANUAL DA IMPORTAÇÃO DE NFes
  * 
@@ -20,16 +22,16 @@ import { Result } from "@/shared/domain";
  *   - DownloadNfesUseCase via DI
  *   - Elimina dependência de @/services/cron/
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     
     const branchIdParam = request.nextUrl.searchParams.get("branchId");
     const branchId = branchIdParam ? parseInt(branchIdParam) : ctx.defaultBranchId || 1;
 
-    console.log("🔧 [FORCE] Iniciando importação manual forçada...");
-    console.log(`   Branch: ${branchId}, Organization: ${ctx.organizationId}`);
-    console.log("━".repeat(80));
+    logger.info("🔧 [FORCE] Iniciando importação manual forçada...");
+    logger.info(`   Branch: ${branchId}, Organization: ${ctx.organizationId}`);
+    logger.info("━".repeat(80));
 
     // Resolver Use Case via DI
     const downloadNfesUseCase = container.resolve<IDownloadNfesUseCase>(
@@ -43,10 +45,10 @@ export async function POST(request: NextRequest) {
       userId: ctx.userId,
     });
 
-    console.log("━".repeat(80));
+    logger.info("━".repeat(80));
 
     if (Result.isFail(result)) {
-      console.log(`⚠️ [FORCE] Importação retornou erro: ${result.error}`);
+      logger.info(`⚠️ [FORCE] Importação retornou erro: ${result.error}`);
       return NextResponse.json({
         success: false,
         error: result.error,
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const output = result.value;
-    console.log(`✅ [FORCE] Importação concluída: ${output.message}`);
+    logger.info(`✅ [FORCE] Importação concluída: ${output.message}`);
 
     return NextResponse.json({
       success: true,
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ [FORCE] Erro ao executar importação manual:", error);
+    logger.error("❌ [FORCE] Erro ao executar importação manual:", error);
     return NextResponse.json(
       {
         success: false,
@@ -84,12 +86,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET - Mostra instruções de uso
  */
-export async function GET() {
+export const GET = withDI(async () => {
   return NextResponse.json({
     endpoint: "/api/admin/force-auto-import",
     method: "POST",
@@ -104,4 +106,4 @@ export async function GET() {
     note: "A importação será executada imediatamente usando DownloadNfesUseCase.",
     since: "E8 Fase 3 - Use Case DDD",
   });
-}
+});

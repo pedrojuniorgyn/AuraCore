@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ export const runtime = "nodejs";
  *
  * 🔐 Requer permissão: admin.users.manage
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   // Autorização: reutiliza o token do módulo Audit para automação (Coolify terminal),
   // ou exige permissão via sessão (admin.users.manage).
   const token = process.env.AUDIT_SNAPSHOT_HTTP_TOKEN;
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   return withPermission(req, "admin.users.manage", async () => applyMigrate(req));
-}
+});
 
 async function applyMigrate(req: Request) {
   const debugRequested = req.headers.get("x-debug") === "1";

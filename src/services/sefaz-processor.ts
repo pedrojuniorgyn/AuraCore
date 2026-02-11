@@ -1,3 +1,9 @@
+// ============================================================================
+// ⛔ READY FOR REMOVAL - E16.4
+// Zero external consumers detected. All functionality migrated to DDD modules.
+// Safe to delete after E17 sprint verification.
+// ============================================================================
+
 /**
  * @deprecated Este arquivo está deprecated desde 20/01/2026 e será removido em versão futura.
  * A funcionalidade foi migrada para o módulo DDD: `src/modules/fiscal/`

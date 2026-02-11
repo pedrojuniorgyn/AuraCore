@@ -8,9 +8,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql as drizzleSql } from "drizzle-orm";
 
-export async function POST() {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async () => {
   try {
-    console.log("📄 Executando migration banking_cnab...");
+    logger.info("📄 Executando migration banking_cnab...");
 
     // Adicionar campos CNAB à tabela bank_accounts
     await db.execute(drizzleSql.raw(`
@@ -69,7 +71,7 @@ export async function POST() {
       CREATE INDEX idx_bank_remittances_created_at ON bank_remittances(created_at DESC);
     `));
 
-    console.log("✅ Migration banking_cnab executada com sucesso!");
+    logger.info("✅ Migration banking_cnab executada com sucesso!");
 
     return NextResponse.json({
       success: true,
@@ -81,7 +83,7 @@ export async function POST() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migration:", error);
+    logger.error("❌ Erro na migration:", error);
     return NextResponse.json(
       {
         success: false,
@@ -90,7 +92,7 @@ export async function POST() {
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { z } from "zod";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
@@ -6,6 +7,7 @@ import { accounts, branches, roles, userBranches, userRoles, users } from "@/lib
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { CacheService } from "@/services/cache.service";
 
+import { logger } from '@/shared/infrastructure/logging';
 const putSchema = z.object({
   roleIds: z.array(z.number().int().positive()).min(1),
   branchIds: z.array(z.number().int().positive()).default([]),
@@ -15,7 +17,7 @@ const putSchema = z.object({
  * GET /api/admin/users/:id/access
  * 🔐 Requer permissão: admin.users.manage
  */
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export const GET = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "admin.users.manage", async (_user, ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -54,14 +56,14 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       },
     });
   });
-}
+});
 
 /**
  * PUT /api/admin/users/:id/access
  * Atualiza roles e filiais do usuário (idempotente).
  * 🔐 Requer permissão: admin.users.manage
  */
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export const PUT = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "admin.users.manage", async (_user, ctx) => {
     try {
       const { ensureConnection } = await import("@/lib/db");
@@ -166,13 +168,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Error updating user access:", error);
+      logger.error("❌ Error updating user access:", error);
       return NextResponse.json(
         { error: "Falha ao atualizar acessos", details: errorMessage },
         { status: 500 }
       );
     }
   });
-}
-
-
+});

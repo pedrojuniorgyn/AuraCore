@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * 🔧 HOTFIX: Compatibilizar colunas *_by do módulo contábil
@@ -12,7 +13,7 @@ import { db } from "@/lib/db";
  *
  * Segurança: /api/admin/* já é protegido por middleware (ADMIN).
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -169,5 +170,5 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
 

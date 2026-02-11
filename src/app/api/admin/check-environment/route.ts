@@ -3,7 +3,9 @@ import { db } from "@/lib/db";
 import { branches, fiscalSettings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET() {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async () => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -33,29 +35,29 @@ export async function GET() {
       },
     };
 
-    console.log("\n📊 CONFIGURAÇÕES DE AMBIENTE - FILIAIS:\n");
-    console.log("═══════════════════════════════════════════════════════════");
+    logger.info("\n📊 CONFIGURAÇÕES DE AMBIENTE - FILIAIS:\n");
+    logger.info("═══════════════════════════════════════════════════════════");
     
     report.branches.forEach((branch) => {
-      console.log(`\n🏢 Filial #${branch.id}: ${branch.name}`);
-      console.log(`   📄 CNPJ: ${branch.document}`);
-      console.log(`   🌐 Ambiente (branches): ${branch.environment_branch}`);
-      console.log(`   📋 Ambiente (fiscal_settings): ${branch.environment_settings}`);
-      console.log(`   🔢 Último NSU: ${branch.lastNsu}`);
-      console.log(`   📜 Certificado: ${branch.hasCertificate ? "✅" : "❌"}`);
-      console.log(`   🤖 Auto-Import: ${branch.autoImport}`);
+      logger.info(`\n🏢 Filial #${branch.id}: ${branch.name}`);
+      logger.info(`   📄 CNPJ: ${branch.document}`);
+      logger.info(`   🌐 Ambiente (branches): ${branch.environment_branch}`);
+      logger.info(`   📋 Ambiente (fiscal_settings): ${branch.environment_settings}`);
+      logger.info(`   🔢 Último NSU: ${branch.lastNsu}`);
+      logger.info(`   📜 Certificado: ${branch.hasCertificate ? "✅" : "❌"}`);
+      logger.info(`   🤖 Auto-Import: ${branch.autoImport}`);
     });
     
-    console.log("\n═══════════════════════════════════════════════════════════");
-    console.log("\n📈 RESUMO:");
-    console.log(`   • Total de Filiais: ${report.summary.total}`);
-    console.log(`   • Com Certificado: ${report.summary.withCertificate}`);
-    console.log(`   • Em PRODUÇÃO: ${report.summary.production}`);
-    console.log(`   • Em HOMOLOGAÇÃO: ${report.summary.homologation}`);
-    console.log("\n✅ Legenda:");
-    console.log("   • PRODUCTION → tpAmb=1 (Produção - REAL)");
-    console.log("   • HOMOLOGATION → tpAmb=2 (Homologação - TESTE)");
-    console.log("   • null/undefined → tpAmb=2 (Homologação - TESTE)\n");
+    logger.info("\n═══════════════════════════════════════════════════════════");
+    logger.info("\n📈 RESUMO:");
+    logger.info(`   • Total de Filiais: ${report.summary.total}`);
+    logger.info(`   • Com Certificado: ${report.summary.withCertificate}`);
+    logger.info(`   • Em PRODUÇÃO: ${report.summary.production}`);
+    logger.info(`   • Em HOMOLOGAÇÃO: ${report.summary.homologation}`);
+    logger.info("\n✅ Legenda:");
+    logger.info("   • PRODUCTION → tpAmb=1 (Produção - REAL)");
+    logger.info("   • HOMOLOGATION → tpAmb=2 (Homologação - TESTE)");
+    logger.info("   • null/undefined → tpAmb=2 (Homologação - TESTE)\n");
 
     return NextResponse.json(report);
   } catch (error: unknown) {
@@ -64,10 +66,10 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro:", error);
+    logger.error("❌ Erro:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

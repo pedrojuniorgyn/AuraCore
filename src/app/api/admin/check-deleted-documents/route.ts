@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 interface FiscalDocumentRow {
   id: number;
   documentType: string;
@@ -20,7 +22,7 @@ interface FiscalDocumentRow {
  * 
  * Verifica documentos deletados no banco de dados
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -97,13 +99,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao verificar documentos deletados:", error);
+    logger.error("❌ Erro ao verificar documentos deletados:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

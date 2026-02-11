@@ -2,18 +2,20 @@ import { NextResponse } from "next/server";
 import { sql as rawSql } from "drizzle-orm";
 import { db, getDbRows } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔄 MIGRAÇÃO DE DADOS FISCAIS V2 (SQL Simples)
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
-    console.log("\n🔄 Iniciando Migração de Dados Fiscais V2...\n");
+    logger.info("\n🔄 Iniciando Migração de Dados Fiscais V2...\n");
 
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
     // 1️⃣ MIGRAR NFe
-    console.log("1️⃣ Migrando NFes...");
+    logger.info("1️⃣ Migrando NFes...");
     
     const nfeResult = await db.execute(rawSql`
       INSERT INTO fiscal_documents (
@@ -35,10 +37,10 @@ export async function GET() {
       WHERE access_key NOT IN (SELECT access_key FROM fiscal_documents WHERE access_key IS NOT NULL);
     `);
     
-    console.log(`✅ NFes migradas`);
+    logger.info(`✅ NFes migradas`);
 
     // 2️⃣ MIGRAR CTe
-    console.log("2️⃣ Migrando CTes...");
+    logger.info("2️⃣ Migrando CTes...");
     
     await db.execute(rawSql`
       INSERT INTO fiscal_documents (
@@ -59,10 +61,10 @@ export async function GET() {
       WHERE access_key NOT IN (SELECT access_key FROM fiscal_documents WHERE access_key IS NOT NULL);
     `);
     
-    console.log("✅ CTes migrados");
+    logger.info("✅ CTes migrados");
 
     // 3️⃣ MIGRAR ITENS
-    console.log("3️⃣ Migrando itens de NFe...");
+    logger.info("3️⃣ Migrando itens de NFe...");
     
     await db.execute(rawSql`
       INSERT INTO fiscal_document_items (
@@ -86,10 +88,10 @@ export async function GET() {
       );
     `);
     
-    console.log("✅ Itens migrados");
+    logger.info("✅ Itens migrados");
 
     // 4️⃣ ATUALIZAR FKs
-    console.log("4️⃣ Atualizando FKs...");
+    logger.info("4️⃣ Atualizando FKs...");
     
     await db.execute(rawSql`
       UPDATE ap
@@ -107,7 +109,7 @@ export async function GET() {
       WHERE ar.fiscal_document_id IS NULL;
     `);
     
-    console.log("✅ FKs atualizadas");
+    logger.info("✅ FKs atualizadas");
 
     // Contar total
     interface CountRow {
@@ -118,7 +120,7 @@ export async function GET() {
     const rows = getDbRows<CountRow>(result as unknown as { recordset?: CountRow[] });
     const total = rows[0]?.total || 0;
     
-    console.log(`\n✅ Migração concluída! Total: ${total} documentos\n`);
+    logger.info(`\n✅ Migração concluída! Total: ${total} documentos\n`);
 
     return NextResponse.json({
       success: true,
@@ -131,8 +133,8 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migração:", error);
+    logger.error("❌ Erro na migração:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

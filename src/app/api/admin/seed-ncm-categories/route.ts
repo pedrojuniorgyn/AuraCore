@@ -3,10 +3,12 @@ import { sql } from "drizzle-orm";
 import { db, getFirstRow } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🌱 Seed com NCMs comuns para Transporte
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
     const organizationId = 1; // Organização padrão
     const userId = "SYSTEM"; // System user
 
-    console.log("🌱 Iniciando seed de NCM Categories...");
+    logger.info("🌱 Iniciando seed de NCM Categories...");
 
     // NCMs comuns para transportadoras
     const ncmCategories = [
@@ -160,11 +162,11 @@ export async function POST(request: NextRequest) {
       return error;
     }
   const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`❌ Erro ao criar NCM ${item.ncm}:`, errorMessage);
+        logger.error(`❌ Erro ao criar NCM ${item.ncm}:`, errorMessage);
       }
     }
 
-    console.log(`✅ Seed concluído: ${created} criados, ${skipped} já existiam`);
+    logger.info(`✅ Seed concluído: ${created} criados, ${skipped} já existiam`);
 
     return NextResponse.json({
       success: true,
@@ -178,11 +180,11 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro no seed:", error);
+    logger.error("❌ Erro no seed:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

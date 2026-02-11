@@ -7,6 +7,8 @@ import { queryFirst } from "@/lib/db/query-helpers";
 import { updateTripSchema } from "@/lib/validation/tms-schemas";
 import { getTenantContext } from "@/lib/auth/context";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // GET - Buscar viagem específica
 const idSchema = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : value),
@@ -29,14 +31,14 @@ const createUnauthorizedResponse = () =>
   NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 // GET - Buscar viagem específica
-export async function GET(
+export const GET = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const tenant = await getTenantContext();
     if (!tenant) {
       return createUnauthorizedResponse();
@@ -83,23 +85,23 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Error fetching trip:", error);
+    logger.error("Error fetching trip:", error);
     return NextResponse.json(
       { error: "Failed to fetch trip" },
       { status: 500 }
     );
   }
-}
+});
 
 // PUT - Atualizar viagem
-export async function PUT(
+export const PUT = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const tenant = await getTenantContext();
     if (!tenant) {
       return createUnauthorizedResponse();
@@ -227,23 +229,23 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Error updating trip:", error);
+    logger.error("Error updating trip:", error);
     return NextResponse.json(
       { error: "Failed to update trip" },
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Soft delete da viagem
-export async function DELETE(
+export const DELETE = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const tenant = await getTenantContext();
     if (!tenant) {
       return createUnauthorizedResponse();
@@ -326,13 +328,13 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Error deleting trip:", error);
+    logger.error("Error deleting trip:", error);
     return NextResponse.json(
       { error: "Failed to delete trip" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

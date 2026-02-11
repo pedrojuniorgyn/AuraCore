@@ -3,12 +3,14 @@ import { db } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔧 ATUALIZAR NSU DA FILIAL
  * 
  * Quando SEFAZ retorna erro 656, use o ultNSU retornado
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -23,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🔧 Atualizando NSU da filial ${branchId} para: ${newNsu}`);
+    logger.info(`🔧 Atualizando NSU da filial ${branchId} para: ${newNsu}`);
 
     await db
       .update(branches)
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(branches.id, branchId));
 
-    console.log("✅ NSU atualizado com sucesso!");
+    logger.info("✅ NSU atualizado com sucesso!");
 
     return NextResponse.json({
       success: true,
@@ -51,7 +53,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔧 MIGRATION: Tabela external_ctes
  * 
  * Cria tabela para armazenar CTes externos (Multicte/bsoft)
  * importados via SEFAZ
  */
-export async function POST() {
+export const POST = withDI(async () => {
   try {
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
 
-    console.log("🚀 Executando migration: external_ctes...");
+    logger.info("🚀 Executando migration: external_ctes...");
 
     // 1. Criar tabela external_ctes
     await pool.request().query(`
@@ -121,7 +123,7 @@ export async function POST() {
       END
     `);
 
-    console.log("✅ Migration external_ctes concluída!");
+    logger.info("✅ Migration external_ctes concluída!");
 
     return NextResponse.json({
       success: true,
@@ -134,13 +136,13 @@ export async function POST() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migration:", error);
+    logger.error("❌ Erro na migration:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

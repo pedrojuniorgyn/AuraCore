@@ -4,16 +4,18 @@ import { cargoDocuments } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/tms/cargo-repository/[id]
  * Retorna detalhes de uma carga específica
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
@@ -46,24 +48,24 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Error fetching cargo:", error);
+    logger.error("❌ Error fetching cargo:", error);
     return NextResponse.json(
       { error: "Falha ao buscar carga.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/tms/cargo-repository/[id]
  * Atualiza status ou dados de uma carga
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
@@ -112,24 +114,24 @@ export async function PUT(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Error updating cargo:", error);
+    logger.error("❌ Error updating cargo:", error);
     return NextResponse.json(
       { error: "Falha ao atualizar carga.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/tms/cargo-repository/[id]
  * Soft delete de uma carga
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
@@ -161,13 +163,13 @@ export async function DELETE(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Error deleting cargo:", error);
+    logger.error("❌ Error deleting cargo:", error);
     return NextResponse.json(
       { error: "Falha ao remover carga.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 
