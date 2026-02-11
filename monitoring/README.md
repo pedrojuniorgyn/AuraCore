@@ -30,6 +30,17 @@ Stack de monitoramento para o AuraCore com Prometheus, Grafana e Alertmanager.
 
 ## Dashboards
 
+### AuraCore - ERP Overview (auracore-erp.json) **[E17.3]**
+- HTTP requests/s por rota e método
+- Latência P50/P95/P99 por rota
+- Taxa de erro (5xx) global e por rota
+- Conexões ativas
+- Database query latency
+- Top rotas por volume e latência
+
+> **Nota:** As métricas ERP são coletadas automaticamente pelo wrapper `withDI`
+> que envolve todas as rotas API (~120 rotas). Nenhuma configuração por rota é necessária.
+
 ### AuraCore - Agents Overview
 - Requests totais e por agente
 - Latência P95 por agente
@@ -54,6 +65,19 @@ Stack de monitoramento para o AuraCore com Prometheus, Grafana e Alertmanager.
 - Chunks indexados
 
 ## Métricas Coletadas
+
+### ERP HTTP (coletadas automaticamente via `withDI`) **[E17.3]**
+| Métrica | Tipo | Labels | Descrição |
+|---------|------|--------|-----------|
+| `http_requests_total` | Counter | method, path, status_code | Total de HTTP requests |
+| `http_request_duration_seconds` | Histogram | method, path | Latência por rota (P50/P95/P99) |
+| `http_request_errors_total` | Counter | method, path, error_type | Erros HTTP (5xx + exceções) |
+| `database_query_duration_seconds` | Histogram | — | Latência de queries ao banco |
+| `active_connections` | Gauge | — | Conexões HTTP ativas |
+
+> Todas as rotas que usam `withDI` (padrão em ~120 rotas API) emitem estas
+> métricas automaticamente. O endpoint `/api/metrics` expõe os dados no formato
+> Prometheus text exposition para scrape.
 
 ### Agentes
 | Métrica | Tipo | Descrição |
@@ -103,11 +127,23 @@ Stack de monitoramento para o AuraCore com Prometheus, Grafana e Alertmanager.
 ### Variáveis de Ambiente
 
 ```bash
-# Criar arquivo .env (opcional)
+# Copiar o .env.example e preencher os valores
+cp .env.example .env
+
+# Variáveis obrigatórias:
 GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=sua_senha_segura
 GRAFANA_ROOT_URL=http://seu-dominio:3001
+
+# SMTP para alertas (Google Workspace):
+SMTP_USER=alerts@auracore.cloud     # Email do Google Workspace
+SMTP_PASS=xxxx-xxxx-xxxx-xxxx       # App Password (16 chars)
+SMTP_FROM=alerts@auracore.cloud     # Remetente dos alertas
+ALERT_EMAIL_TO=admin@auracore.cloud # Destinatário dos alertas
 ```
+
+> **Google Workspace App Password:** Acesse https://myaccount.google.com/apppasswords,
+> gere uma senha de app para "Mail" e use-a como `SMTP_PASS`.
 
 ### Adicionar Novo Target
 
@@ -147,6 +183,7 @@ curl -X POST http://localhost:9090/-/reload
 ```
 monitoring/
 ├── docker-compose.yml          # Stack principal
+├── .env.example                # Template de variáveis de ambiente
 ├── start.sh                    # Script de inicialização
 ├── stop.sh                     # Script de parada
 ├── README.md                   # Esta documentação
@@ -154,7 +191,7 @@ monitoring/
 │   ├── prometheus.yml          # Configuração Prometheus
 │   └── alerts.yml              # Regras de alerta
 ├── alertmanager/
-│   └── alertmanager.yml        # Configuração alertas
+│   └── alertmanager.yml        # Configuração alertas (SMTP Google Workspace)
 └── grafana/
     ├── provisioning/
     │   ├── datasources/
@@ -162,6 +199,7 @@ monitoring/
     │   └── dashboards/
     │       └── dashboards.yml  # Config auto-provisioning
     └── dashboards/
+        ├── auracore-erp.json   # Dashboard ERP (HTTP metrics via withDI)
         ├── agents-overview.json
         ├── voice-interface.json
         └── rag-knowledge.json
