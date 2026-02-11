@@ -81,7 +81,7 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
       const processor = ProcessJobsCommand.processors.get(job.jobType.value);
       if (!processor) {
         failed++;
-        await this.handleJobError(job, `Nenhum processador registrado para: ${job.jobType.value}`);
+        await this.safeHandleJobError(job, `Nenhum processador registrado para: ${job.jobType.value}`);
         continue;
       }
 
@@ -105,7 +105,7 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
 
         if (Result.isFail(processResult)) {
           failed++;
-          await this.handleJobError(job, processResult.error);
+          await this.safeHandleJobError(job, processResult.error);
           continue;
         }
 
@@ -125,10 +125,11 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
           jobType: job.jobType.value,
           organizationId: job.organizationId,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         failed++;
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        await this.handleJobError(job, errorMessage);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        await this.safeHandleJobError(job, errorMessage, errorStack);
       }
     }
 
@@ -136,14 +137,19 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
   }
 
   /**
-   * Handles job failure: logs error, marks job as failed, updates document status
+   * Handles job failure: logs error (with stack if available), marks job as failed, updates document status
    */
-  private async handleJobError(job: DocumentJob, errorMessage: string): Promise<void> {
+  private async handleJobError(
+    job: DocumentJob,
+    errorMessage: string,
+    errorStack?: string,
+  ): Promise<void> {
     log('error', 'documents.job.failed', {
       jobId: job.id,
       jobType: job.jobType.value,
       organizationId: job.organizationId,
       error: errorMessage,
+      ...(errorStack && { stack: errorStack }),
     });
 
     // Marcar como falha (pode voltar para QUEUED se ainda tiver tentativas)
@@ -161,6 +167,28 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
         docResult.value.updateStatus('FAILED', errorMessage);
         await this.documentRepository.save(docResult.value);
       }
+    }
+  }
+
+  /**
+   * Safe wrapper for handleJobError - prevents secondary errors (e.g. DB down) from propagating.
+   * Bugbot PR#88: handleJobError can throw if jobRepository.save or documentRepository ops fail.
+   */
+  private async safeHandleJobError(
+    job: DocumentJob,
+    errorMessage: string,
+    errorStack?: string,
+  ): Promise<void> {
+    try {
+      await this.handleJobError(job, errorMessage, errorStack);
+    } catch (secondaryError: unknown) {
+      const msg = secondaryError instanceof Error ? secondaryError.message : String(secondaryError);
+      log('error', 'documents.job.handle_error_failed', {
+        jobId: job.id,
+        jobType: job.jobType.value,
+        originalError: errorMessage,
+        secondaryError: msg,
+      });
     }
   }
 }

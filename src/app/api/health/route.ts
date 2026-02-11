@@ -15,6 +15,8 @@
  */
 import { NextResponse } from 'next/server';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -80,35 +82,24 @@ async function checkDatabase(): Promise<ComponentCheck> {
 
 /**
  * Checks Redis connectivity by sending a PING command.
+ * Reuses singleton client (LC-PR88-004) instead of creating new connection per probe.
  * Returns `not_configured` when REDIS_URL is absent.
  */
 async function checkRedis(): Promise<ComponentCheck> {
-  const redisUrl = process.env.REDIS_URL;
-  if (!redisUrl) {
-    return { status: 'not_configured', latency_ms: 0 };
-  }
-
   const start = performance.now();
   try {
-    // Use dynamic import to avoid loading ioredis when Redis is not configured
-    const { default: Redis } = await import('ioredis');
-    const client = new Redis(redisUrl, {
-      maxRetriesPerRequest: 1,
-      connectTimeout: CHECK_TIMEOUT_MS,
-      lazyConnect: true,
-    });
+    const { getRedisHealthClient } = await import('@/lib/redis-health-client');
+    const client = await getRedisHealthClient();
 
-    try {
-      await client.connect();
-      const pong = await client.ping();
-      return {
-        status: pong === 'PONG' ? 'up' : 'down',
-        latency_ms: Math.round(performance.now() - start),
-      };
-    } finally {
-      // Always disconnect to avoid leaked connections from health checks
-      await client.quit().catch(() => client.disconnect());
+    if (!client) {
+      return { status: 'not_configured', latency_ms: 0 };
     }
+
+    const pong = await client.ping();
+    return {
+      status: pong === 'PONG' ? 'up' : 'down',
+      latency_ms: Math.round(performance.now() - start),
+    };
   } catch (error: unknown) {
     return {
       status: 'down',
@@ -154,7 +145,7 @@ async function checkSefaz(): Promise<ComponentCheck> {
   }
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   // Fire-and-forget auto-smoke in background (preserve existing behavior)
   try {
     void import('@/lib/ops/auto-smoke')
@@ -162,14 +153,14 @@ export async function GET() {
         try {
           scheduleAutoSmokeRun('healthcheck');
         } catch (e: unknown) {
-          console.error('auto-smoke failed (schedule):', e);
+          logger.error('auto-smoke failed (schedule):', e);
         }
       })
       .catch((e: unknown) => {
-        console.error('auto-smoke failed (import):', e);
+        logger.error('auto-smoke failed (import):', e);
       });
   } catch (e: unknown) {
-    console.error('auto-smoke failed (sync):', e);
+    logger.error('auto-smoke failed (sync):', e);
   }
 
   // Run all checks in parallel with individual timeouts
@@ -197,4 +188,4 @@ export async function GET() {
     { status: isHealthy ? 'healthy' : 'degraded', checks },
     { status: isHealthy ? 200 : 503 },
   );
-}
+});

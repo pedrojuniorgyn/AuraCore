@@ -99,12 +99,15 @@ export default function () {
       errorRate.add(!loginOk);
       loginDuration.add(loginRes.timings.duration);
 
-      if (loginOk && loginRes.json()) {
+      if (loginOk) {
         try {
           const body = loginRes.json();
-          authToken = body.token || body.accessToken || null;
+          if (body) {
+            authToken = body.token || body.accessToken || null;
+          }
         } catch {
           // Response may not be JSON; continue with cookies
+          // authToken remains null, which is fine
         }
       }
     }
