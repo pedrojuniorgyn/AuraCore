@@ -6,6 +6,7 @@
  */
 import { injectable } from 'tsyringe';
 import { redisCache } from '@/lib/cache';
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * Estratégia de invalidação:
@@ -23,7 +24,7 @@ export class CacheInvalidationService {
     const pattern = `*:${organizationId}:${branchId}:*`;
     await redisCache.invalidate(pattern, 'strategic');
     
-    console.log(`[CacheInvalidation] Invalidated strategic cache for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated strategic cache', { organizationId, branchId });
   }
 
   /**
@@ -33,7 +34,7 @@ export class CacheInvalidationService {
     await redisCache.invalidate(`executive-dashboard:${organizationId}:${branchId}:*`, 'strategic:');
     await redisCache.invalidate(`dashboard-data:${organizationId}:${branchId}`, 'strategic:');
     
-    console.log(`[CacheInvalidation] Invalidated dashboards for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated dashboards', { organizationId, branchId });
   }
 
   /**
@@ -45,7 +46,7 @@ export class CacheInvalidationService {
     await redisCache.invalidate(`kpi-summary:${organizationId}:${branchId}`, 'strategic:');
     await this.invalidateDashboards(organizationId, branchId);
     
-    console.log(`[CacheInvalidation] Invalidated KPIs for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated KPIs', { organizationId, branchId });
   }
 
   /**
@@ -56,7 +57,7 @@ export class CacheInvalidationService {
     await redisCache.invalidate(`goal-list:${organizationId}:${branchId}:*`, 'strategic:');
     await this.invalidateDashboards(organizationId, branchId);
     
-    console.log(`[CacheInvalidation] Invalidated goals for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated goals', { organizationId, branchId });
   }
 
   /**
@@ -67,7 +68,7 @@ export class CacheInvalidationService {
     await redisCache.invalidate(`action-plan-list:${organizationId}:${branchId}:*`, 'strategic:');
     await this.invalidateDashboards(organizationId, branchId);
     
-    console.log(`[CacheInvalidation] Invalidated action plans for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated action plans', { organizationId, branchId });
   }
 
   /**
@@ -78,7 +79,7 @@ export class CacheInvalidationService {
     await redisCache.invalidate(`strategy-list:${organizationId}:${branchId}:*`, 'strategic:');
     await this.invalidateDashboards(organizationId, branchId);
     
-    console.log(`[CacheInvalidation] Invalidated strategies for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated strategies', { organizationId, branchId });
   }
 
   /**
@@ -88,7 +89,7 @@ export class CacheInvalidationService {
   async invalidateDepartments(organizationId: number, branchId: number): Promise<void> {
     await redisCache.invalidate(`department-tree:${organizationId}:${branchId}`, 'strategic:');
     
-    console.log(`[CacheInvalidation] Invalidated departments for org ${organizationId}, branch ${branchId}`);
+    logger.info('[CacheInvalidation] Invalidated departments', { organizationId, branchId });
   }
 
   /**

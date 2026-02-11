@@ -77,13 +77,15 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
         attempt: job.attempts,
       });
 
-      try {
-        // Buscar processador
-        const processor = ProcessJobsCommand.processors.get(job.jobType.value);
-        if (!processor) {
-          throw new Error(`Nenhum processador registrado para: ${job.jobType.value}`);
-        }
+      // Buscar processador
+      const processor = ProcessJobsCommand.processors.get(job.jobType.value);
+      if (!processor) {
+        failed++;
+        await this.handleJobError(job, `Nenhum processador registrado para: ${job.jobType.value}`);
+        continue;
+      }
 
+      try {
         // Atualizar status do documento para PROCESSING
         const docResult = await this.documentRepository.findById(
           job.documentId,
@@ -102,7 +104,9 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
         });
 
         if (Result.isFail(processResult)) {
-          throw new Error(processResult.error);
+          failed++;
+          await this.handleJobError(job, processResult.error);
+          continue;
         }
 
         // Marcar como sucesso
@@ -124,33 +128,39 @@ export class ProcessJobsCommand implements IProcessJobUseCase {
       } catch (error) {
         failed++;
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        
-        log('error', 'documents.job.failed', {
-          jobId: job.id,
-          jobType: job.jobType.value,
-          organizationId: job.organizationId,
-          error: errorMessage,
-        });
-
-        // Marcar como falha (pode voltar para QUEUED se ainda tiver tentativas)
-        job.markAsFailed(errorMessage);
-        await this.jobRepository.save(job);
-
-        // Atualizar documento se falha definitiva
-        if (job.status.isFailed) {
-          const docResult = await this.documentRepository.findById(
-            job.documentId,
-            job.organizationId,
-            job.branchId,
-          );
-          if (Result.isOk(docResult) && docResult.value) {
-            docResult.value.updateStatus('FAILED', errorMessage);
-            await this.documentRepository.save(docResult.value);
-          }
-        }
+        await this.handleJobError(job, errorMessage);
       }
     }
 
     return Result.ok({ processed, succeeded, failed });
+  }
+
+  /**
+   * Handles job failure: logs error, marks job as failed, updates document status
+   */
+  private async handleJobError(job: DocumentJob, errorMessage: string): Promise<void> {
+    log('error', 'documents.job.failed', {
+      jobId: job.id,
+      jobType: job.jobType.value,
+      organizationId: job.organizationId,
+      error: errorMessage,
+    });
+
+    // Marcar como falha (pode voltar para QUEUED se ainda tiver tentativas)
+    job.markAsFailed(errorMessage);
+    await this.jobRepository.save(job);
+
+    // Atualizar documento se falha definitiva
+    if (job.status.isFailed) {
+      const docResult = await this.documentRepository.findById(
+        job.documentId,
+        job.organizationId,
+        job.branchId,
+      );
+      if (Result.isOk(docResult) && docResult.value) {
+        docResult.value.updateStatus('FAILED', errorMessage);
+        await this.documentRepository.save(docResult.value);
+      }
+    }
   }
 }

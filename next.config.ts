@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
     "drizzle-orm",
     "tsyringe",
     "reflect-metadata",
+    "pino",
+    "thread-stream",
+    "pino-pretty",
   ],
 
   // Next.js 16: Turbopack é o bundler padrão. Manter turbopack: {} para silenciar

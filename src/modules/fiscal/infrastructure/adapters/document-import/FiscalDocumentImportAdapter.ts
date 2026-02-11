@@ -8,6 +8,7 @@
  * @service 2/9 - sefaz-processor.ts → FiscalDocumentImportAdapter
  */
 
+import { logger } from "@/shared/infrastructure/logging";
 import { db } from "@/lib/db";
 import {
   fiscalDocuments,
@@ -69,7 +70,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         );
 
       if (existingDoc) {
-        console.log(`⚠️  NFe já importada (Chave: ${parsedNFe.accessKey})`);
+        logger.info("NFe ja importada", { accessKey: parsedNFe.accessKey });
         return Result.ok("DUPLICATE");
       }
 
@@ -93,14 +94,15 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
       const nfeType = classifyNFe(parsedNFe, branch.document);
       const fiscalStatus = getFiscalStatusFromClassification(nfeType);
 
-      console.log(`🔍 Classificando NFe:`);
-      console.log(`  - Branch CNPJ: ${branch.document}`);
-      console.log(`  - Destinatário: ${parsedNFe.recipient.cnpj}`);
-      console.log(`  - Emitente: ${parsedNFe.issuer.cnpj}`);
-      console.log(`  - Transportador: ${parsedNFe.transporter?.cnpj || "N/A"}`);
-      console.log(`  - Natureza Operação: ${parsedNFe.operation.naturezaOperacao}`);
-      console.log(`  - CFOP: ${parsedNFe.operation.cfop}`);
-      console.log(`🏷️  NFe classificada como: ${nfeType}`);
+      logger.info("Classificando NFe", {
+        branchCnpj: branch.document,
+        destinatario: parsedNFe.recipient.cnpj,
+        emitente: parsedNFe.issuer.cnpj,
+        transportador: parsedNFe.transporter?.cnpj || "N/A",
+        naturezaOperacao: parsedNFe.operation.naturezaOperacao,
+        cfop: parsedNFe.operation.cfop,
+        nfeType,
+      });
 
       // Insere na tabela fiscal_documents
       const documentData: typeof fiscalDocuments.$inferInsert = {
@@ -171,13 +173,13 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
 
       const fiscalDocumentId = newDocument.id;
 
-      console.log(`📊 Documento fiscal #${fiscalDocumentId} criado - Status: ${newDocument.fiscalStatus}`);
+      logger.info("Documento fiscal criado", { fiscalDocumentId, fiscalStatus: newDocument.fiscalStatus });
 
       // Categorizar itens por NCM (em batch)
       const ncmCodes = parsedNFe.items.map((item) => item.ncm).filter(Boolean);
       const ncmCategorizationMap = await batchGetNCMCategorization(ncmCodes, this.organizationId);
 
-      console.log(`📦 Categorizando ${parsedNFe.items.length} itens por NCM...`);
+      logger.info("Categorizando itens por NCM", { itemCount: parsedNFe.items.length });
 
       // Insere os itens na tabela fiscal_document_items
       for (const item of parsedNFe.items) {
@@ -242,7 +244,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         await db.insert(fiscalDocumentItems).values(itemData);
       }
 
-      console.log(`✅ NFe ${parsedNFe.number} importada com ${parsedNFe.items.length} itens`);
+      logger.info("NFe importada com sucesso", { nfeNumber: parsedNFe.number, itemCount: parsedNFe.items.length });
 
       return Result.ok("SUCCESS");
     } catch (error) {
@@ -256,12 +258,12 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
    */
   async importCTe(xmlContent: string): Promise<Result<"SUCCESS" | "DUPLICATE", FiscalDocumentError>> {
     try {
-      console.log("🚚 Iniciando importação de CTe externo...");
+      logger.info("Iniciando importacao de CTe externo");
 
       // Parse do XML do CTe
       const parsedCTe = await parseCTeXML(xmlContent);
 
-      console.log(`📋 CTe ${parsedCTe.cteNumber} - Emitente: ${parsedCTe.issuer.name}`);
+      logger.info("CTe parseado", { cteNumber: parsedCTe.cteNumber, emitente: parsedCTe.issuer.name });
 
       // Verifica duplicata
       const [existingCTe] = await db
@@ -276,7 +278,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         );
 
       if (existingCTe) {
-        console.log(`⚠️  CTe já importado (Chave: ${parsedCTe.accessKey})`);
+        logger.info("CTe ja importado", { accessKey: parsedCTe.accessKey });
         return Result.ok("DUPLICATE");
       }
 
@@ -287,7 +289,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
       if (parsedCTe.linkedNfeKeys.length > 0) {
         linkedNfeKey = parsedCTe.linkedNfeKeys[0]; // Usa a primeira NFe
 
-        console.log(`🔗 CTe vinculado à NFe: ${linkedNfeKey}`);
+        logger.info("CTe vinculado a NFe", { linkedNfeKey });
 
         // Busca a NFe no sistema
         const [nfeInvoice] = await db
@@ -302,7 +304,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
           );
 
         if (nfeInvoice) {
-          console.log(`✅ NFe encontrada no sistema (ID: ${nfeInvoice.id})`);
+          logger.info("NFe encontrada no sistema", { nfeInvoiceId: nfeInvoice.id });
 
           // Busca o cargo_document vinculado à NFe
           const [cargo] = await db
@@ -318,7 +320,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
 
           if (cargo) {
             cargoDocumentId = cargo.id;
-            console.log(`✅ Cargo encontrado (ID: ${cargoDocumentId})`);
+            logger.info("Cargo encontrado", { cargoDocumentId });
 
             // Atualiza cargo para marcar que tem CTe externo
             await db
@@ -330,12 +332,12 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
               })
               .where(eq(cargoDocuments.id, cargoDocumentId));
 
-            console.log(`✅ Cargo atualizado: hasExternalCte = 'S'`);
+            logger.info("Cargo atualizado com hasExternalCte", { cargoDocumentId });
           } else {
-            console.log(`⚠️  Cargo não encontrado para esta NFe`);
+            logger.warn("Cargo nao encontrado para esta NFe", { nfeInvoiceId: nfeInvoice.id });
           }
         } else {
-          console.log(`⚠️  NFe ${linkedNfeKey} não encontrada no sistema`);
+          logger.warn("NFe nao encontrada no sistema", { linkedNfeKey });
         }
       }
 
@@ -402,11 +404,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         version: 1,
       });
 
-      console.log(`✅ CTe externo ${parsedCTe.cteNumber} importado com sucesso!`);
-
-      if (cargoDocumentId) {
-        console.log(`🔗 CTe vinculado ao cargo_document (ID: ${cargoDocumentId})`);
-      }
+      logger.info("CTe externo importado com sucesso", { cteNumber: parsedCTe.cteNumber, cargoDocumentId });
 
       return Result.ok("SUCCESS");
     } catch (error) {

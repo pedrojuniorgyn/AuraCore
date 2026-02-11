@@ -68,23 +68,31 @@ export class BudgetImportService {
         const row = records[i];
         const rowNum = i + 2; // +2 for header and 0-index
 
+        // Validate row (Result pattern: explicit checks + continue)
+        if (!row.kpi_code?.trim()) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.kpi_code || 'UNKNOWN', error: 'kpi_code is required' });
+          continue;
+        }
+        if (!row.period_start || !row.period_end) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.kpi_code || 'UNKNOWN', error: 'period_start and period_end are required' });
+          continue;
+        }
+        if (!['ACTUAL', 'BUDGET', 'FORECAST'].includes(row.value_type)) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.kpi_code || 'UNKNOWN', error: `Invalid value_type: ${row.value_type}` });
+          continue;
+        }
+
+        const value = parseFloat(row.value);
+        if (isNaN(value)) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.kpi_code || 'UNKNOWN', error: `Invalid value: ${row.value}` });
+          continue;
+        }
+
         try {
-          // Validate row
-          if (!row.kpi_code?.trim()) {
-            throw new Error('kpi_code is required');
-          }
-          if (!row.period_start || !row.period_end) {
-            throw new Error('period_start and period_end are required');
-          }
-          if (!['ACTUAL', 'BUDGET', 'FORECAST'].includes(row.value_type)) {
-            throw new Error(`Invalid value_type: ${row.value_type}`);
-          }
-
-          const value = parseFloat(row.value);
-          if (isNaN(value)) {
-            throw new Error(`Invalid value: ${row.value}`);
-          }
-
           // Find KPI by code
           const kpi = await this.kpiRepository.findByCode(
             row.kpi_code.trim(),
@@ -93,7 +101,9 @@ export class BudgetImportService {
           );
 
           if (!kpi) {
-            throw new Error(`KPI not found: ${row.kpi_code}`);
+            result.failed++;
+            result.errors.push({ row: rowNum, code: row.kpi_code || 'UNKNOWN', error: `KPI not found: ${row.kpi_code}` });
+            continue;
           }
 
           // Create value version
@@ -148,22 +158,31 @@ export class BudgetImportService {
         const row = records[i];
         const rowNum = i + 2;
 
+        // Validate row (Result pattern: explicit checks + continue)
+        if (!row.goal_code?.trim()) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.goal_code || 'UNKNOWN', error: 'goal_code is required' });
+          continue;
+        }
+        if (!row.period_start || !row.period_end) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.goal_code || 'UNKNOWN', error: 'period_start and period_end are required' });
+          continue;
+        }
+        if (!['ACTUAL', 'BUDGET', 'FORECAST'].includes(row.value_type)) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.goal_code || 'UNKNOWN', error: `Invalid value_type: ${row.value_type}` });
+          continue;
+        }
+
+        const targetValue = parseFloat(row.target_value);
+        if (isNaN(targetValue)) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.goal_code || 'UNKNOWN', error: `Invalid target_value: ${row.target_value}` });
+          continue;
+        }
+
         try {
-          if (!row.goal_code?.trim()) {
-            throw new Error('goal_code is required');
-          }
-          if (!row.period_start || !row.period_end) {
-            throw new Error('period_start and period_end are required');
-          }
-          if (!['ACTUAL', 'BUDGET', 'FORECAST'].includes(row.value_type)) {
-            throw new Error(`Invalid value_type: ${row.value_type}`);
-          }
-
-          const targetValue = parseFloat(row.target_value);
-          if (isNaN(targetValue)) {
-            throw new Error(`Invalid target_value: ${row.target_value}`);
-          }
-
           const goal = await this.goalRepository.findByCode(
             row.goal_code.trim(),
             organizationId,
@@ -171,7 +190,9 @@ export class BudgetImportService {
           );
 
           if (!goal) {
-            throw new Error(`Goal not found: ${row.goal_code}`);
+            result.failed++;
+            result.errors.push({ row: rowNum, code: row.goal_code || 'UNKNOWN', error: `Goal not found: ${row.goal_code}` });
+            continue;
           }
 
           await this.goalRepository.addValueVersion({

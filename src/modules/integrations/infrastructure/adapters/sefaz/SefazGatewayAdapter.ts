@@ -3,6 +3,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import https from 'https';
 import axios from 'axios';
 import { Result } from '@/shared/domain';
+import { logger } from '@/shared/infrastructure/logging';
 import type {
   ISefazGateway,
   AuthorizeCteRequest,
@@ -305,7 +306,7 @@ export class SefazGatewayAdapter implements ISefazGateway {
    */
   async getDistribuicaoDFe(request: DistribuicaoDFeRequest): Promise<Result<DistribuicaoDFeResponse, string>> {
     try {
-      console.log('🤖 [SefazGatewayAdapter] Iniciando consulta DistribuicaoDFe na Sefaz...');
+      logger.info('[SefazGatewayAdapter] Iniciando consulta DistribuicaoDFe na Sefaz');
 
       // Criar HTTPS Agent com certificado mTLS
       const httpsAgent = new https.Agent({
@@ -320,7 +321,7 @@ export class SefazGatewayAdapter implements ISefazGateway {
           ? SEFAZ_NFE_DISTRIBUICAO_URLS.PRODUCTION
           : SEFAZ_NFE_DISTRIBUICAO_URLS.HOMOLOGATION;
 
-      console.log(`📡 URL Sefaz: ${url}`);
+      logger.info('URL Sefaz', { url });
 
       // Monta envelope SOAP
       const soapEnvelope = this.buildDistribuicaoEnvelope(
@@ -330,7 +331,7 @@ export class SefazGatewayAdapter implements ISefazGateway {
         request.uf
       );
 
-      console.log('📤 Enviando requisição para Sefaz...');
+      logger.info('Enviando requisicao para Sefaz');
 
       // Envia requisição SOAP
       const response = await axios.post(url, soapEnvelope, {
@@ -342,8 +343,7 @@ export class SefazGatewayAdapter implements ISefazGateway {
         timeout: 30000, // 30 segundos
       });
 
-      console.log('✅ Resposta recebida da Sefaz');
-      console.log('📄 Tamanho da resposta:', response.data?.length || 0, 'bytes');
+      logger.info('Resposta recebida da Sefaz', { bytes: response.data?.length || 0 });
 
       // Extrai o XML da resposta
       const responseXml = response.data;
@@ -359,12 +359,12 @@ export class SefazGatewayAdapter implements ISefazGateway {
       const ultNSU = ultNSUMatch ? ultNSUMatch[1] : request.lastNsu;
       const maxNSU = maxNSUMatch ? maxNSUMatch[1] : '000000000000000';
 
-      console.log(`📊 Status SEFAZ: ${cStat} - ${xMotivo}`);
-      console.log(`🔢 ultNSU: ${ultNSU} | maxNSU: ${maxNSU}`);
+      logger.info('Status SEFAZ', { cStat, xMotivo });
+      logger.info('NSU info', { ultNSU, maxNSU });
 
       // Tratamento de erro 656 (Consumo Indevido)
       if (cStat === '656') {
-        console.log('⚠️ ERRO 656 - Consumo Indevido detectado!');
+        logger.warn('ERRO 656 - Consumo Indevido detectado');
         return Result.ok({
           success: false,
           xml: responseXml,
@@ -381,7 +381,7 @@ export class SefazGatewayAdapter implements ISefazGateway {
 
       // Status 137: Nenhum documento localizado (normal)
       if (cStat === '137') {
-        console.log('ℹ️ Nenhum documento novo disponível');
+        logger.info('Nenhum documento novo disponivel');
         return Result.ok({
           success: true,
           xml: responseXml,
@@ -392,7 +392,7 @@ export class SefazGatewayAdapter implements ISefazGateway {
 
       // Status 138: Documentos localizados
       if (cStat !== '138') {
-        console.log(`⚠️ Status inesperado: ${cStat} - ${xMotivo}`);
+        logger.warn('Status inesperado', { cStat, xMotivo });
         return Result.ok({
           success: false,
           xml: responseXml,
@@ -409,8 +409,8 @@ export class SefazGatewayAdapter implements ISefazGateway {
       const docZipMatches = responseXml.match(/<docZip/g);
       const totalDocuments = docZipMatches ? docZipMatches.length : 0;
 
-      console.log(`📊 Documentos retornados: ${totalDocuments}`);
-      console.log(`🔢 Novo maxNSU: ${maxNSU}`);
+      logger.info('Documentos retornados', { totalDocuments });
+      logger.info('Novo maxNSU', { maxNSU });
 
       return Result.ok({
         success: true,
@@ -425,13 +425,13 @@ export class SefazGatewayAdapter implements ISefazGateway {
         errorMessage = error.message;
       }
 
-      console.error('❌ Erro ao consultar Sefaz:', errorMessage);
+      logger.error('Erro ao consultar Sefaz', { error: errorMessage });
 
       // Type guard para Axios error
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: unknown } };
         if (axiosError.response?.data) {
-          console.error('📄 Resposta Sefaz:', axiosError.response.data);
+          logger.error('Resposta Sefaz com erro', { data: axiosError.response.data });
         }
       }
 
