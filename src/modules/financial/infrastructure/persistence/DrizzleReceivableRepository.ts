@@ -95,7 +95,7 @@ export class DrizzleReceivableRepository implements IReceivableRepository {
         conditions.push(eq(accountsReceivableTable.status, filter.status));
       }
       if (filter.customerId) {
-        conditions.push(eq(accountsReceivableTable.customerId, filter.customerId));
+        conditions.push(eq(accountsReceivableTable.partnerId, filter.customerId));
       }
       if (filter.dueDateFrom) {
         conditions.push(gte(accountsReceivableTable.dueDate, filter.dueDateFrom));
@@ -158,7 +158,7 @@ export class DrizzleReceivableRepository implements IReceivableRepository {
         .from(accountsReceivableTable)
         .where(
           and(
-            eq(accountsReceivableTable.customerId, customerId),
+            eq(accountsReceivableTable.partnerId, customerId),
             eq(accountsReceivableTable.organizationId, organizationId),
             eq(accountsReceivableTable.branchId, branchId),
             isNull(accountsReceivableTable.deletedAt)

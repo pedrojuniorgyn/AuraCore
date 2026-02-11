@@ -1,0 +1,42 @@
+{
+  "epic": "E0.F0",
+  "corrections": [
+    {
+      "id": "LC-366445",
+      "date": "2026-02-11",
+      "epic": "E0.F0",
+      "error": "CRITICO-004: Schema Duality (Legacy INT vs DDD UUID) para accounts_payable e accounts_receivable. Schemas legacy com id: int().identity() coexistiam com DDD schemas com id: char(36).primaryKey(). CRITICO-002: Tabelas-filhas (payments, receivable_receipts, journal_entry_lines) sem organizationId/branchId. CRITICO-003: Tabelas-filhas sem deletedAt (soft delete). CRITICO-005: Ausencia de indices compostos multi-tenancy em schemas DDD. DT-001: FiscalDocumentSchema sem indices e sem deletedAt.",
+      "correction": "1. Removidas definicoes legacy de accountsPayable e accountsReceivable de schema.ts (linhas 668-795). 2. Criados barrel files (index.ts) para financial e accounting modules com aliases backward-compat. 3. Adicionados organizationId+branchId+deletedAt a paymentsTable, receivableReceiptsTable, journalEntryLinesTable. 4. Adicionados indices compostos SCHEMA-003 a todas as tabelas DDD. 5. Renomeado supplierId→partnerId e customerId→partnerId nos schemas para backward-compat com V1 routes (Mappers fazem traducao). 6. Atualizadas 17 arquivos V1 (routes, services, tests) para usar UUID IDs (string) com crypto.randomUUID(). 7. Adicionadas colunas backward-compat (origin, barcode, payDate, amountPaid, etc) ao PayableSchema para V1 routes. 8. Adicionadas colunas discount/interest/fine ao ReceivableSchema.",
+      "files_affected": [
+        "src/modules/financial/infrastructure/persistence/schemas/PayableSchema.ts",
+        "src/modules/financial/infrastructure/persistence/schemas/ReceivableSchema.ts",
+        "src/modules/financial/infrastructure/persistence/schemas/index.ts",
+        "src/modules/accounting/infrastructure/persistence/schemas/JournalEntrySchema.ts",
+        "src/modules/accounting/infrastructure/persistence/schemas/index.ts",
+        "src/modules/fiscal/infrastructure/persistence/FiscalDocumentSchema.ts",
+        "src/modules/fiscal/infrastructure/persistence/schemas/index.ts",
+        "src/lib/db/schema.ts",
+        "src/modules/financial/infrastructure/persistence/mappers/PayableMapper.ts",
+        "src/modules/financial/infrastructure/persistence/mappers/ReceivableMapper.ts",
+        "src/modules/financial/infrastructure/persistence/DrizzlePayableRepository.ts",
+        "src/modules/financial/infrastructure/persistence/DrizzleReceivableRepository.ts",
+        "src/app/api/financial/payables/route.ts",
+        "src/app/api/financial/payables/[id]/route.ts",
+        "src/app/api/financial/payables/[id]/calculate-payment/route.ts",
+        "src/app/api/financial/payables/ssrm/route.ts",
+        "src/app/api/financial/receivables/route.ts",
+        "src/app/api/financial/receivables/[id]/route.ts",
+        "src/app/api/financial/receivables/[id]/receive/route.ts",
+        "src/app/api/financial/receivables/ssrm/route.ts",
+        "src/services/banking/btg-dda-service.ts",
+        "src/services/tms/workflow-automator.ts",
+        "src/modules/integrations/infrastructure/adapters/banking/BtgDdaAdapter.ts",
+        "src/modules/integrations/domain/ports/output/IBtgDdaGateway.ts",
+        "src/modules/financial/infrastructure/services/DdaSyncService.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    }
+  ]
+}

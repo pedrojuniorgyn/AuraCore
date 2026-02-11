@@ -16,8 +16,8 @@ import { BtgDdaService } from '@/services/banking/btg-dda-service';
  */
 export interface IDdaSyncService {
   syncDdaInbox(): Promise<number>;
-  createPayableFromDda(ddaId: number): Promise<number>;
-  linkDdaToPayable(ddaId: number, payableId: number): Promise<void>;
+  createPayableFromDda(ddaId: number): Promise<string>; // Retorna UUID do payable criado
+  linkDdaToPayable(ddaId: number, payableId: string): Promise<void>; // payableId agora é UUID
 }
 
 /**

@@ -666,105 +666,14 @@ export const financialDdaInbox = mssqlTable("financial_dda_inbox", {
 });
 
 // --- CONTAS A PAGAR ---
-
-export const accountsPayable = mssqlTable("accounts_payable", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // FK organizations
-  branchId: int("branch_id").notNull(), // FK branches (Filial responsável)
-  
-  // Relacionamentos
-  partnerId: int("partner_id"), // FK business_partners (Fornecedor)
-  categoryId: int("category_id"), // FK financial_categories (Categoria de Despesa)
-  bankAccountId: int("bank_account_id"), // FK bank_accounts (Conta de Baixa - Nullable até baixar)
-  inboundInvoiceId: int("inbound_invoice_id"), // FK inbound_invoices (NFe de compra) - DEPRECATED
-  fiscalDocumentId: bigint("fiscal_document_id", { mode: "number" }), // FK fiscal_documents (Novo)
-  
-  // Controladoria Gerencial
-  costCenterId: int("cost_center_id"), // FK cost_centers (Obrigatório ao pagar)
-  chartAccountId: int("chart_account_id"), // FK chart_of_accounts (Obrigatório ao pagar)
-  
-  // Dados do Título
-  description: nvarchar("description", { length: "max" }).notNull(), // Ex: "NFe 12345 - Fornecedor XYZ"
-  documentNumber: nvarchar("document_number", { length: 100 }), // Ex: "NFe 12345", "Boleto 98765"
-  barcode: nvarchar("barcode", { length: 100 }), // Código de barras do boleto (DDA)
-  
-  // Datas
-  issueDate: datetime2("issue_date").notNull(), // Data de Emissão
-  dueDate: datetime2("due_date").notNull(), // Data de Vencimento
-  payDate: datetime2("pay_date"), // Data de Pagamento (Nullable)
-  
-  // Valores
-  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(), // Valor Original
-  amountPaid: decimal("amount_paid", { precision: 18, scale: 2 }).default("0.00"), // Valor Pago
-  discount: decimal("discount", { precision: 18, scale: 2 }).default("0.00"), // Desconto
-  interest: decimal("interest", { precision: 18, scale: 2 }).default("0.00"), // Juros
-  fine: decimal("fine", { precision: 18, scale: 2 }).default("0.00"), // Multa
-  
-  // Status e Origem
-  status: nvarchar("status", { length: 20 }).default("OPEN").notNull(), // 'OPEN', 'PAID', 'PARTIAL', 'OVERDUE', 'CANCELED'
-  origin: nvarchar("origin", { length: 50 }).default("MANUAL"), // 'MANUAL', 'FISCAL_NFE', 'FISCAL_CTE', 'IMPORT'
-  
-  // Observações
-  notes: nvarchar("notes", { length: "max" }),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // Soft Delete
-  version: int("version").default(1).notNull(), // Optimistic Locking
-});
+// REMOVIDO (Fase 0 F0.2): Schema legacy com INT IDENTITY.
+// Agora exportado via DDD module: @/modules/financial/infrastructure/persistence/schemas
+// O barrel cria alias `accountsPayable` → `accountsPayableTable` (DDD, char(36) UUID).
 
 // --- CONTAS A RECEBER ---
-
-export const accountsReceivable = mssqlTable("accounts_receivable", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // FK organizations
-  branchId: int("branch_id").notNull(), // FK branches (Filial responsável)
-  
-  // Relacionamentos
-  partnerId: int("partner_id"), // FK business_partners (Cliente)
-  categoryId: int("category_id"), // FK financial_categories (Categoria de Receita)
-  bankAccountId: int("bank_account_id"), // FK bank_accounts (Conta de Recebimento - Nullable até receber)
-  cteDocumentId: int("cte_document_id"), // FK cte_documents (CTe emitido) - DEPRECATED
-  fiscalDocumentId: bigint("fiscal_document_id", { mode: "number" }), // FK fiscal_documents (Novo)
-  
-  // Controladoria Gerencial
-  costCenterId: int("cost_center_id"), // FK cost_centers (Obrigatório ao receber)
-  chartAccountId: int("chart_account_id"), // FK chart_of_accounts (Obrigatório ao receber)
-  
-  // Dados do Título
-  description: nvarchar("description", { length: "max" }).notNull(), // Ex: "Venda #12345 - Cliente ABC"
-  documentNumber: nvarchar("document_number", { length: 100 }), // Ex: "NF 54321"
-  
-  // Datas
-  issueDate: datetime2("issue_date").notNull(), // Data de Emissão
-  dueDate: datetime2("due_date").notNull(), // Data de Vencimento
-  receiveDate: datetime2("receive_date"), // Data de Recebimento (Nullable)
-  
-  // Valores
-  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(), // Valor Original
-  amountReceived: decimal("amount_received", { precision: 18, scale: 2 }).default("0.00"), // Valor Recebido
-  discount: decimal("discount", { precision: 18, scale: 2 }).default("0.00"), // Desconto
-  interest: decimal("interest", { precision: 18, scale: 2 }).default("0.00"), // Juros
-  fine: decimal("fine", { precision: 18, scale: 2 }).default("0.00"), // Multa
-  
-  // Status e Origem
-  status: nvarchar("status", { length: 20 }).default("OPEN").notNull(), // 'OPEN', 'RECEIVED', 'PARTIAL', 'OVERDUE', 'CANCELED'
-  origin: nvarchar("origin", { length: 50 }).default("MANUAL"), // 'MANUAL', 'FISCAL_NFE_SAIDA', 'SALE', 'IMPORT'
-  
-  // Observações
-  notes: nvarchar("notes", { length: "max" }),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // Soft Delete
-  version: int("version").default(1).notNull(), // Optimistic Locking
-});
+// REMOVIDO (Fase 0 F0.2): Schema legacy com INT IDENTITY.
+// Agora exportado via DDD module: @/modules/financial/infrastructure/persistence/schemas
+// O barrel cria alias `accountsReceivable` → `accountsReceivableTable` (DDD, char(36) UUID).
 
 // --- ITENS DAS CONTAS A PAGAR (Detalhamento por NCM) ---
 
@@ -3198,13 +3107,25 @@ export const notifications = mssqlTable("notifications", {
 });
 
 // ==========================================
-// ACCOUNTING MODULE (Fiscal → Contábil → Financeiro)
+// ACCOUNTING MODULE LEGACY
+// Mantido para: journalEntries, journalEntryLines, fiscalDocuments,
+// fiscalDocumentItems, financialTransactions (bigint IDs).
+// accounting-engine.ts e sefaz-processor.ts usam colunas legacy-específicas
+// (sourceType, debitAmount/creditAmount, chartAccountId) que NÃO existem
+// nos DDD schemas. Serão migrados nas Fases 1 (Accounting) e 3 (Fiscal).
 // ==========================================
 export * from "./schema/accounting";
 
 // ==========================================
 // DDD MODULES (Domain-Driven Design)
 // ==========================================
+// Financial: Exporta DDD schemas + aliases backward-compat
+// (accountsPayable → accountsPayableTable, accountsReceivable → accountsReceivableTable)
+// As definições legacy de accountsPayable/accountsReceivable foram removidas
+// deste arquivo (linhas 668-795 anteriores).
+export * from '@/modules/financial/infrastructure/persistence/schemas';
+
+// Outros módulos DDD
 export * from '@/modules/strategic/infrastructure/persistence/schemas';
 export * from '@/modules/documents/infrastructure/persistence/schemas';
 export * from '@/modules/fiscal/infrastructure/persistence/schemas';

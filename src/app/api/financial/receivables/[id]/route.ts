@@ -6,7 +6,7 @@ import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 import { z } from "zod";
-import { idParamSchema } from "@/lib/validation/common-schemas";
+import { uuidParamSchema } from "@/lib/validation/common-schemas";
 
 import { logger } from '@/shared/infrastructure/logging';
 const updateReceivableSchema = z.object({
@@ -31,7 +31,7 @@ export const GET = withDI(async (req: NextRequest, context: RouteContext) => {
     const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
-    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    const paramValidation = uuidParamSchema.safeParse(resolvedParams);
     if (!paramValidation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
@@ -78,7 +78,7 @@ export const PUT = withDI(async (req: NextRequest, context: RouteContext) => {
     const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
-    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    const paramValidation = uuidParamSchema.safeParse(resolvedParams);
     if (!paramValidation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
@@ -182,7 +182,7 @@ export const DELETE = withDI(async (req: NextRequest, context: RouteContext) => 
     const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
-    const paramValidation = idParamSchema.safeParse(resolvedParams);
+    const paramValidation = uuidParamSchema.safeParse(resolvedParams);
     if (!paramValidation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }

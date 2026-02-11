@@ -111,7 +111,7 @@ export interface IBtgDdaGateway {
    */
   linkDdaToPayable(
     ddaId: number,
-    payableId: number,
+    payableId: string, // UUID (char(36)) — payable ID agora é UUID
     organizationId: number,
   ): Promise<void>;
 
@@ -130,5 +130,5 @@ export interface IBtgDdaGateway {
     ddaId: number,
     organizationId: number,
     bankAccountId: number,
-  ): Promise<number>;
+  ): Promise<string>; // Retorna UUID do payable criado
 }

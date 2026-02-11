@@ -51,6 +51,8 @@ export interface FiscalDocumentPersistence {
 
 export interface FiscalDocumentItemPersistence {
   id: string;
+  organizationId: number;
+  branchId: number;
   documentId: string;
   itemNumber: number;
   description: string;
@@ -62,6 +64,7 @@ export interface FiscalDocumentItemPersistence {
   cfop: string;
   unitOfMeasure: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
@@ -256,10 +259,16 @@ export class FiscalDocumentMapper {
 
   /**
    * Item: Domain → Persistence
+   * 
+   * organizationId/branchId are passed from the parent FiscalDocument
+   * since FiscalDocumentItem entity doesn't carry tenant info directly.
    */
-  static itemToPersistence(item: FiscalDocumentItem, documentId: string): FiscalDocumentItemPersistence {
+  static itemToPersistence(item: FiscalDocumentItem, documentId: string, organizationId: number, branchId: number): FiscalDocumentItemPersistence {
+    const now = new Date();
     return {
       id: item.id,
+      organizationId,
+      branchId,
       documentId,
       itemNumber: item.itemNumber,
       description: item.description,
@@ -271,6 +280,7 @@ export class FiscalDocumentMapper {
       cfop: item.cfop.code,
       unitOfMeasure: item.unit,
       createdAt: item.createdAt,
+      updatedAt: item.createdAt ?? now,
     };
   }
 

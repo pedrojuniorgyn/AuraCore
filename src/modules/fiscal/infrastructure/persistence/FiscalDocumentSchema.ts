@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { char, varchar, decimal, int, datetime, text, mssqlTable } from 'drizzle-orm/mssql-core';
+import { char, varchar, decimal, int, datetime, text, mssqlTable, index } from 'drizzle-orm/mssql-core';
 
 /**
  * Drizzle Schema: fiscal_documents
@@ -63,7 +63,17 @@ export const fiscalDocuments = mssqlTable('fiscal_documents', {
   // Audit
   createdAt: datetime('created_at').notNull().default(sql`GETDATE()`),
   updatedAt: datetime('updated_at').notNull().default(sql`GETDATE()`),
-});
+  deletedAt: datetime('deleted_at'),
+}, (table) => ([
+  // SCHEMA-003: Índice composto multi-tenancy
+  index('idx_fiscal_docs_tenant').on(table.organizationId, table.branchId),
+  // SCHEMA-004: Índices para filtros frequentes
+  index('idx_fiscal_docs_status').on(table.organizationId, table.status),
+  index('idx_fiscal_docs_issue_date').on(table.issueDate),
+  index('idx_fiscal_docs_type').on(table.organizationId, table.documentType),
+  // SCHEMA-010: Chave natural única
+  index('idx_fiscal_docs_key').on(table.fiscalKey),
+]));
 
 /**
  * Drizzle Schema: fiscal_document_items
@@ -73,6 +83,8 @@ export const fiscalDocuments = mssqlTable('fiscal_documents', {
 export const fiscalDocumentItems = mssqlTable('fiscal_document_items', {
   // Identificação
   id: char('id', { length: 36 }).primaryKey(),
+  organizationId: int('organization_id').notNull(),
+  branchId: int('branch_id').notNull(),
   documentId: char('document_id', { length: 36 }).notNull(),
   
   // Item
@@ -81,7 +93,7 @@ export const fiscalDocumentItems = mssqlTable('fiscal_document_items', {
   quantity: decimal('quantity', { precision: 18, scale: 4 }).notNull(),
   unitPrice: decimal('unit_price', { precision: 18, scale: 2 }).notNull(),
   totalValue: decimal('total_value', { precision: 18, scale: 2 }).notNull(),
-  currency: varchar('currency', { length: 3 }).notNull().default('BRL'), // BUG 1 FIX: ISO 4217
+  currency: varchar('currency', { length: 3 }).notNull().default('BRL'), // ISO 4217
   
   // Classificação fiscal
   ncm: char('ncm', { length: 8 }),
@@ -90,7 +102,13 @@ export const fiscalDocumentItems = mssqlTable('fiscal_document_items', {
   
   // Audit
   createdAt: datetime('created_at').notNull().default(sql`GETDATE()`),
-});
+  updatedAt: datetime('updated_at').notNull().default(sql`GETDATE()`),
+}, (table) => ([
+  // SCHEMA-003: Índice composto multi-tenancy
+  index('idx_fiscal_items_tenant').on(table.organizationId, table.branchId),
+  // FK index
+  index('idx_fiscal_items_document').on(table.documentId),
+]));
 
 /**
  * Drizzle Schema: fiscal_document_taxes
@@ -101,6 +119,8 @@ export const fiscalDocumentItems = mssqlTable('fiscal_document_items', {
 export const fiscalDocumentTaxes = mssqlTable('fiscal_document_taxes', {
   // Identificação
   id: char('id', { length: 36 }).primaryKey(),
+  organizationId: int('organization_id').notNull(),
+  branchId: int('branch_id').notNull(),
   documentId: char('document_id', { length: 36 }).notNull(),
   itemId: char('item_id', { length: 36 }).notNull(),
   
@@ -114,5 +134,17 @@ export const fiscalDocumentTaxes = mssqlTable('fiscal_document_taxes', {
   
   // Audit
   createdAt: datetime('created_at').notNull().default(sql`GETDATE()`),
-});
+}, (table) => ([
+  // FK indexes
+  index('idx_fiscal_taxes_document').on(table.documentId),
+  index('idx_fiscal_taxes_item').on(table.itemId),
+]));
+
+// Types inferidos
+export type FiscalDocumentRow = typeof fiscalDocuments.$inferSelect;
+export type FiscalDocumentInsert = typeof fiscalDocuments.$inferInsert;
+export type FiscalDocumentItemRow = typeof fiscalDocumentItems.$inferSelect;
+export type FiscalDocumentItemInsert = typeof fiscalDocumentItems.$inferInsert;
+export type FiscalDocumentTaxRow = typeof fiscalDocumentTaxes.$inferSelect;
+export type FiscalDocumentTaxInsert = typeof fiscalDocumentTaxes.$inferInsert;
 

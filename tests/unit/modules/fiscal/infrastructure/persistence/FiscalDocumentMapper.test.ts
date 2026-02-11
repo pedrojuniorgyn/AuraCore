@@ -86,7 +86,7 @@ describe('FiscalDocumentMapper', () => {
     const item = itemResult.value;
 
     // Converter para persistence
-    const persistence = FiscalDocumentMapper.itemToPersistence(item, 'doc-123');
+    const persistence = FiscalDocumentMapper.itemToPersistence(item, 'doc-123', 1, 1);
 
     // Verificar campos
     expect(persistence.id).toBe('item-123');
@@ -157,7 +157,7 @@ describe('FiscalDocumentMapper', () => {
 
     // Converter para persistence
     const docPersistence = FiscalDocumentMapper.toPersistence(originalDoc);
-    const itemsPersistence = [FiscalDocumentMapper.itemToPersistence(itemResult.value, 'doc-123')];
+    const itemsPersistence = [FiscalDocumentMapper.itemToPersistence(itemResult.value, 'doc-123', 1, 1)];
 
     // Converter de volta para domain
     const reconstructedResult = FiscalDocumentMapper.toDomain(docPersistence, itemsPersistence);

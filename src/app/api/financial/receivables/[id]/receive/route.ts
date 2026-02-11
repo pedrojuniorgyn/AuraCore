@@ -16,10 +16,10 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
     await ensureConnection();
     const ctx = await getTenantContext();
     const resolvedParams = await context.params;
-    const id = parseInt(resolvedParams.id);
+    const id = resolvedParams.id;
     const body = await request.json();
 
-    if (isNaN(id)) {
+    if (!id || id.length !== 36) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
     }
 

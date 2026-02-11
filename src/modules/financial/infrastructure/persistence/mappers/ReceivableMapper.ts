@@ -45,8 +45,8 @@ export class ReceivableMapper {
         id: row.id,
         organizationId: row.organizationId,
         branchId: row.branchId,
-        customerId: row.customerId,
-        documentNumber: row.documentNumber,
+        customerId: row.partnerId ?? 0, // Schema partnerId → Domain customerId
+        documentNumber: row.documentNumber ?? '',
         description: row.description,
         amount: amountResult.value,
         amountReceived: amountReceivedResult.value,
@@ -86,7 +86,7 @@ export class ReceivableMapper {
       id: entity.id,
       organizationId: entity.organizationId,
       branchId: entity.branchId,
-      customerId: entity.customerId,
+      partnerId: entity.customerId, // Domain customerId → Schema partnerId
       documentNumber: entity.documentNumber,
       description: entity.description,
       amount: entity.amount.amount.toString(),

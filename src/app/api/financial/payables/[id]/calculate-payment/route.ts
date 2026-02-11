@@ -108,7 +108,7 @@ export const GET = withDI(async (request: NextRequest, context: RouteContext) =>
     }
 
     const resolvedParams = await context.params;
-    const payableId = parseInt(resolvedParams.id);
+    const payableId = resolvedParams.id;
     const paymentDate = request.nextUrl.searchParams.get("paymentDate");
 
     if (!paymentDate) {

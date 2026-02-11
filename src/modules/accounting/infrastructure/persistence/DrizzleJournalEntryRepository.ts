@@ -219,7 +219,7 @@ export class DrizzleJournalEntryRepository implements IJournalEntryRepository {
     // 2. Inserir novas lines
     if (entry.lines.length > 0) {
       const lineData = entry.lines.map(line => 
-        JournalEntryMapper.lineToPersistence(line)
+        JournalEntryMapper.lineToPersistence(line, entry.organizationId, entry.branchId)
       );
       await db.insert(journalEntryLinesTable).values(lineData);
     }

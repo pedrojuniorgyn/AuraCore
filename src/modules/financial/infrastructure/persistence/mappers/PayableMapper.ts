@@ -26,7 +26,7 @@ export class PayableMapper {
       id: payable.id,
       organizationId: payable.organizationId,
       branchId: payable.branchId,
-      supplierId: payable.supplierId,
+      partnerId: payable.supplierId, // Domain supplierId → Schema partnerId
       documentNumber: payable.documentNumber,
       description: payable.description,
       amount: payable.originalAmount.amount.toString(),
@@ -103,8 +103,8 @@ export class PayableMapper {
       {
         organizationId: row.organizationId,
         branchId: row.branchId,
-        supplierId: row.supplierId,
-        documentNumber: row.documentNumber,
+        supplierId: row.partnerId ?? 0, // Schema partnerId → Domain supplierId
+        documentNumber: row.documentNumber ?? '',
         description: row.description,
         terms: termsResult.value,
         status: row.status as 'OPEN' | 'PROCESSING' | 'PARTIAL' | 'PAID' | 'CANCELLED',
@@ -124,9 +124,11 @@ export class PayableMapper {
   /**
    * Payment Domain → Persistence
    */
-  static paymentToPersistence(payment: Payment, payableId: string): PaymentInsert {
+  static paymentToPersistence(payment: Payment, payableId: string, organizationId: number, branchId: number): PaymentInsert {
     return {
       id: payment.id,
+      organizationId,
+      branchId,
       payableId,
       amount: payment.amount.amount.toString(),
       currency: payment.amount.currency,

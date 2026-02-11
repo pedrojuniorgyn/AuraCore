@@ -260,11 +260,11 @@ export class DrizzleFiscalDocumentRepository implements IFiscalDocumentRepositor
     // INSERT items
     if (document.items.length > 0) {
       const itemsPersistence = document.items.map((item) =>
-        FiscalDocumentMapper.itemToPersistence(item, document.id)
+        FiscalDocumentMapper.itemToPersistence(item, document.id, document.organizationId, document.branchId)
       );
 
       for (const item of itemsPersistence) {
-        await db.insert(fiscalDocumentItems).values(item);
+        await db.insert(fiscalDocumentItems).values(item as typeof fiscalDocumentItems.$inferInsert);
       }
     }
   }

@@ -145,6 +145,7 @@ export const POST = withDI(async (request: NextRequest) => {
     const data = validation.data;
 
     const receivableData: typeof accountsReceivable.$inferInsert = {
+      id: globalThis.crypto.randomUUID(),
       organizationId: ctx.organizationId,
       // Política: header manda; body não decide filial.
       branchId,

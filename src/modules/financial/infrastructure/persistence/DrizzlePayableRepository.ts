@@ -82,7 +82,7 @@ export class DrizzlePayableRepository implements IPayableRepository {
     ];
 
     if (filter.supplierId) {
-      conditions.push(eq(accountsPayableTable.supplierId, filter.supplierId));
+      conditions.push(eq(accountsPayableTable.partnerId, filter.supplierId));
     }
 
     if (filter.status && filter.status.length > 0) {
@@ -197,7 +197,7 @@ export class DrizzlePayableRepository implements IPayableRepository {
 
     // Salvar payments
     for (const payment of payable.payments) {
-      const paymentRow = PayableMapper.paymentToPersistence(payment, payable.id);
+      const paymentRow = PayableMapper.paymentToPersistence(payment, payable.id, payable.organizationId, payable.branchId);
       
       const existingPayment = await db
         .select({ id: paymentsTable.id })
@@ -278,7 +278,7 @@ export class DrizzlePayableRepository implements IPayableRepository {
       .from(accountsPayableTable)
       .where(
         and(
-          eq(accountsPayableTable.supplierId, supplierId),
+          eq(accountsPayableTable.partnerId, supplierId),
           eq(accountsPayableTable.organizationId, organizationId),
           eq(accountsPayableTable.branchId, branchId), // OBRIGATÓRIO
           isNull(accountsPayableTable.deletedAt)

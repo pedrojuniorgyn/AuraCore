@@ -49,7 +49,7 @@ export class BtgDdaAdapter implements IBtgDdaGateway {
    */
   async linkDdaToPayable(
     ddaId: number,
-    payableId: number,
+    payableId: string,
     organizationId: number,
   ): Promise<void> {
     // Legacy service requires bankAccountId in constructor.
@@ -66,7 +66,7 @@ export class BtgDdaAdapter implements IBtgDdaGateway {
     ddaId: number,
     organizationId: number,
     bankAccountId: number,
-  ): Promise<number> {
+  ): Promise<string> {
     const service = new BtgDdaService(organizationId, bankAccountId);
     return service.createPayableFromDda(ddaId);
   }

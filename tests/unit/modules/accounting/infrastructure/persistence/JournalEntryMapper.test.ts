@@ -139,6 +139,8 @@ describe('JournalEntryMapper', () => {
 
       const lineRow: JournalEntryLineRow = {
         id: 'line-001',
+        organizationId: 1,
+        branchId: 1,
         journalEntryId: '550e8400-e29b-41d4-a716-446655440000',
         accountId: 'acc-001',
         accountCode: '1.1.1.01',
@@ -149,6 +151,8 @@ describe('JournalEntryMapper', () => {
         costCenterId: null,
         businessPartnerId: null,
         createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
       };
 
       const result = JournalEntryMapper.toDomain(entryRow, [lineRow]);
@@ -165,7 +169,7 @@ describe('JournalEntryMapper', () => {
   describe('lineToPersistence', () => {
     it('should convert line domain to persistence', () => {
       const line = validEntry.lines[0];
-      const row = JournalEntryMapper.lineToPersistence(line);
+      const row = JournalEntryMapper.lineToPersistence(line, validEntry.organizationId, validEntry.branchId);
 
       expect(row.id).toBe(line.id);
       expect(row.journalEntryId).toBe(validEntry.id);

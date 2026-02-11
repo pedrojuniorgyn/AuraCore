@@ -65,9 +65,13 @@ export const journalEntriesTable = mssqlTable('journal_entries', {
 
 /**
  * Schema para journal_entry_lines
+ * 
+ * CORRIGIDO: Adicionado organizationId, branchId, updatedAt, deletedAt (CRITICO-002/003)
  */
 export const journalEntryLinesTable = mssqlTable('journal_entry_lines', {
   id: char('id', { length: 36 }).primaryKey(),
+  organizationId: int('organization_id').notNull(),
+  branchId: int('branch_id').notNull(),
   journalEntryId: char('journal_entry_id', { length: 36 }).notNull(),
   
   accountId: char('account_id', { length: 36 }).notNull(),
@@ -82,7 +86,11 @@ export const journalEntryLinesTable = mssqlTable('journal_entry_lines', {
   businessPartnerId: int('business_partner_id'),
   
   createdAt: datetime2('created_at').notNull().default(sql`GETDATE()`),
+  updatedAt: datetime2('updated_at').notNull().default(sql`GETDATE()`),
+  deletedAt: datetime2('deleted_at'),
 }, (table) => ([
+  // SCHEMA-003: Índice composto multi-tenancy
+  index('idx_jel_tenant').on(table.organizationId, table.branchId),
   // Índice para FK - busca de linhas por lançamento
   index('idx_journal_entry_lines_entry').on(table.journalEntryId),
   // Índice para busca por conta contábil

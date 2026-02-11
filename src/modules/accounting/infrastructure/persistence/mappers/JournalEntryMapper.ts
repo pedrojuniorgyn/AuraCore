@@ -98,10 +98,15 @@ export class JournalEntryMapper {
 
   /**
    * Line Domain → Persistence
+   * 
+   * organizationId/branchId are passed from the parent JournalEntry
+   * since JournalEntryLine entity doesn't carry tenant info directly.
    */
-  static lineToPersistence(line: JournalEntryLine): JournalEntryLineInsert {
+  static lineToPersistence(line: JournalEntryLine, organizationId: number, branchId: number): JournalEntryLineInsert {
     return {
       id: line.id,
+      organizationId,
+      branchId,
       journalEntryId: line.journalEntryId,
       accountId: line.accountId,
       accountCode: line.accountCode,
@@ -112,6 +117,8 @@ export class JournalEntryMapper {
       costCenterId: line.costCenterId ?? null,
       businessPartnerId: line.businessPartnerId ?? null,
       createdAt: line.createdAt,
+      updatedAt: line.createdAt, // Lines don't track updatedAt separately; use createdAt as initial value
+      deletedAt: null,
     };
   }
 

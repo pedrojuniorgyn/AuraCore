@@ -41,7 +41,7 @@ describe('PayableMapper', () => {
       expect(row.id).toBe(validPayable.id);
       expect(row.organizationId).toBe(1);
       expect(row.branchId).toBe(1);
-      expect(row.supplierId).toBe(100);
+      expect(row.partnerId).toBe(100);
       expect(row.documentNumber).toBe('NF-12345');
       expect(row.amount).toBe('1000');
       expect(row.currency).toBe('BRL');
@@ -55,19 +55,30 @@ describe('PayableMapper', () => {
         id: '550e8400-e29b-41d4-a716-446655440000',
         organizationId: 1,
         branchId: 1,
-        supplierId: 100,
+        partnerId: 100, // Schema uses partnerId, Mapper translates → Domain supplierId
         documentNumber: 'NF-12345',
         description: 'Test',
         amount: '1000.00',
         currency: 'BRL',
         dueDate: new Date('2025-06-30'),
+        issueDate: null,
+        payDate: null,
         discountUntil: null,
         discountAmount: null,
+        discount: '0.00',
+        interest: '0.00',
+        fine: '0.00',
+        amountPaid: '0.00',
         fineRate: '2.00',
         interestRate: '1.00',
         status: 'OPEN',
+        origin: 'MANUAL',
         categoryId: null,
         costCenterId: null,
+        chartAccountId: null,
+        bankAccountId: null,
+        fiscalDocumentId: null,
+        barcode: null,
         notes: null,
         version: 1,
         createdAt: new Date(),
@@ -93,19 +104,30 @@ describe('PayableMapper', () => {
         id: '550e8400-e29b-41d4-a716-446655440000',
         organizationId: 1,
         branchId: 1,
-        supplierId: 100,
+        partnerId: 100, // Schema uses partnerId, Mapper translates → Domain supplierId
         documentNumber: 'NF-12345',
         description: 'Test',
         amount: '1000.00',
         currency: 'BRL',
         dueDate: new Date('2025-06-30'),
+        issueDate: null,
+        payDate: null,
         discountUntil: null,
         discountAmount: null,
+        discount: '0.00',
+        interest: '0.00',
+        fine: '0.00',
+        amountPaid: '0.00',
         fineRate: '2.00',
         interestRate: '1.00',
         status: 'PARTIAL',
+        origin: 'MANUAL',
         categoryId: null,
         costCenterId: null,
+        chartAccountId: null,
+        bankAccountId: null,
+        fiscalDocumentId: null,
+        barcode: null,
         notes: null,
         version: 2,
         createdAt: new Date(),
@@ -117,6 +139,8 @@ describe('PayableMapper', () => {
 
       const paymentRow: PaymentRow = {
         id: '660e8400-e29b-41d4-a716-446655440001',
+        organizationId: 1,
+        branchId: 1,
         payableId: '550e8400-e29b-41d4-a716-446655440000',
         amount: '500.00',
         currency: 'BRL',
@@ -128,6 +152,7 @@ describe('PayableMapper', () => {
         paidAt: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),
+        deletedAt: null,
       };
 
       const result = PayableMapper.toDomain(payableRow, [paymentRow]);

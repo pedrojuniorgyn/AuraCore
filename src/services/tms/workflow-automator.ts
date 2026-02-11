@@ -212,6 +212,7 @@ export async function createReceivableFromCte(
 
   // Criar Conta a Receber
   await db.insert(accountsReceivable).values({
+    id: crypto.randomUUID(), // char(36) UUID — no longer auto-generated
     organizationId: cte.organizationId,
     branchId: cte.branchId,
     partnerId: cte.takerId,
@@ -258,6 +259,7 @@ export async function createPayableFromTrip(
     const THIRD_PARTY_FREIGHT_ACCOUNT_ID = 2; // Temporário
 
     await db.insert(accountsPayable).values({
+      id: crypto.randomUUID(), // char(36) UUID — no longer auto-generated
       organizationId: trip.organizationId,
       branchId: trip.branchId,
       partnerId: trip.driverId, // Motorista agregado

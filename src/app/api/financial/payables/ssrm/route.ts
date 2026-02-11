@@ -53,7 +53,7 @@ const ALLOWED_SORT_FIELDS = [
 const MAX_PAGE_SIZE = 500;
 
 interface PayableSSRMRow {
-  id: number;
+  id: string;
   documentNumber: string | null;
   partnerName: string | null;
   partnerId: number | null;
