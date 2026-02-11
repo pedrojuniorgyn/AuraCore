@@ -16,6 +16,7 @@ import { db } from '@/lib/db';
 import { fiscalSettings, branches } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { Result } from '@/shared/domain';
+import { logger } from '@/shared/infrastructure/logging';
 import { notificationService } from '@/services/notification-service';
 import type { IDownloadNfesUseCase } from '@/modules/fiscal/domain/ports/input/IDownloadNfesUseCase';
 
@@ -50,23 +51,23 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
    */
   start(): void {
     if (this.cronJob) {
-      console.log('⚠️  [AutoImportNfeJob] Cron job já está rodando');
+      logger.warn('[AutoImportNfeJob] Cron job ja esta rodando');
       return;
     }
 
     // Roda a cada 1 hora (minuto 0 de cada hora)
     this.cronJob = cron.schedule('0 * * * *', async () => {
-      console.log('🤖 [AutoImportNfeJob] Iniciando importação automática...');
+      logger.info('[AutoImportNfeJob] Iniciando importacao automatica');
 
       try {
         await this.execute();
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('❌ [AutoImportNfeJob] Erro:', errorMessage);
+        logger.error('[AutoImportNfeJob] Erro na execucao do cron', { error: errorMessage });
       }
     });
 
-    console.log('✅ [AutoImportNfeJob] Cron job iniciado (a cada 1 hora)');
+    logger.info('[AutoImportNfeJob] Cron job iniciado (a cada 1 hora)');
   }
 
   /**
@@ -76,7 +77,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
     if (this.cronJob) {
       this.cronJob.stop();
       this.cronJob = null;
-      console.log('⏹️  [AutoImportNfeJob] Cron job parado');
+      logger.info('[AutoImportNfeJob] Cron job parado');
     }
   }
 
@@ -84,7 +85,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
    * Executa importação manual (para testes ou chamadas diretas)
    */
   async runManually(): Promise<AutoImportResult> {
-    console.log('🔧 [AutoImportNfeJob] Executando importação manual...');
+    logger.info('[AutoImportNfeJob] Executando importacao manual');
     return this.execute();
   }
 
@@ -111,11 +112,11 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
       const settings = await db.select().from(fiscalSettings).where(eq(fiscalSettings.autoImportEnabled, 'S'));
 
       if (settings.length === 0) {
-        console.log('ℹ️  [AutoImportNfeJob] Nenhuma filial com auto-import habilitado');
+        logger.info('[AutoImportNfeJob] Nenhuma filial com auto-import habilitado');
         return result;
       }
 
-      console.log(`📋 [AutoImportNfeJob] ${settings.length} filial(is) para importar`);
+      logger.info('[AutoImportNfeJob] Filiais para importar', { branchCount: settings.length });
 
       for (const setting of settings) {
         try {
@@ -123,11 +124,11 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
           const [branch] = await db.select().from(branches).where(eq(branches.id, setting.branchId));
 
           if (!branch) {
-            console.log(`⚠️  [AutoImportNfeJob] Filial ${setting.branchId} não encontrada`);
+            logger.warn('[AutoImportNfeJob] Filial nao encontrada', { branchId: setting.branchId });
             continue;
           }
 
-          console.log(`🏢 [AutoImportNfeJob] Importando para: ${branch.name}`);
+          logger.info('[AutoImportNfeJob] Importando para filial', { branchName: branch.name, branchId: setting.branchId });
 
           // Chamar UseCase via DI
           const importResult = await this.downloadNfesUseCase.execute({
@@ -143,9 +144,10 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
             result.totalImported += data.processing?.imported || 0;
             result.totalDuplicates += data.processing?.duplicates || 0;
 
-            console.log(
-              `✅ [AutoImportNfeJob] ${branch.name}: ${data.processing?.imported || 0} NFe(s) importada(s)`
-            );
+            logger.info('[AutoImportNfeJob] NFes importadas para filial', {
+              branchName: branch.name,
+              imported: data.processing?.imported || 0,
+            });
 
             // Notificar importação bem-sucedida
             if (data.processing && data.processing.imported > 0) {
@@ -164,7 +166,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
             }
           } else {
             const errorMsg = importResult.error;
-            console.error(`❌ [AutoImportNfeJob] Erro na filial ${setting.branchId}:`, errorMsg);
+            logger.error('[AutoImportNfeJob] Erro na filial', { branchId: setting.branchId, error: errorMsg });
 
             result.totalErrors++;
             result.errors.push(`Filial ${setting.branchId}: ${errorMsg}`);
@@ -186,7 +188,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
           await new Promise((resolve) => setTimeout(resolve, 2000));
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error(`❌ [AutoImportNfeJob] Erro na filial ${setting.branchId}:`, errorMessage);
+          logger.error('[AutoImportNfeJob] Erro na filial', { branchId: setting.branchId, error: errorMessage });
 
           result.totalErrors++;
           result.errors.push(`Filial ${setting.branchId}: ${errorMessage}`);
@@ -196,16 +198,17 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
         }
       }
 
-      console.log('✅ [AutoImportNfeJob] Importação automática concluída');
-      console.log(`   - Filiais processadas: ${result.branchesProcessed}`);
-      console.log(`   - Total importadas: ${result.totalImported}`);
-      console.log(`   - Total duplicadas: ${result.totalDuplicates}`);
-      console.log(`   - Total erros: ${result.totalErrors}`);
+      logger.info('[AutoImportNfeJob] Importacao automatica concluida', {
+        branchesProcessed: result.branchesProcessed,
+        totalImported: result.totalImported,
+        totalDuplicates: result.totalDuplicates,
+        totalErrors: result.totalErrors,
+      });
 
       return result;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('[AutoImportNfeJob] Erro geral:', errorMessage);
+      logger.error('[AutoImportNfeJob] Erro geral', { error: errorMessage });
 
       result.success = false;
       result.errors.push(errorMessage);

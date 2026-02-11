@@ -102,11 +102,17 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
     if (input.includeGoals !== false) {
       // ✅ CORREÇÃO BUG 2+3: Usar strategyId no filtro do repository (filtro SQL, não memória)
       // + Iterar páginas para garantir todos os goals (sem limite silencioso)
-      const goals = await this.fetchAllGoalsByStrategy(
+      const goalsResult = await this.fetchAllGoalsByStrategy(
         strategy.id,
         context.organizationId,
         context.branchId
       );
+
+      if (Result.isFail(goalsResult)) {
+        return Result.fail(goalsResult.error);
+      }
+
+      const goals = goalsResult.value;
 
       // ✅ OTIMIZAÇÃO N+1 QUERY: Buscar todos KPIs de uma vez (batch loading)
       let kpisByGoal: Map<string, KPI[]> = new Map();
@@ -170,7 +176,7 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
     strategyId: string,
     organizationId: number,
     branchId: number
-  ): Promise<StrategicGoal[]> {
+  ): Promise<Result<StrategicGoal[], string>> {
     const PAGE_SIZE = 100;
     const MAX_PAGES = 100; // Limite de segurança (10.000 goals máximo)
     const allGoals: StrategicGoal[] = [];
@@ -200,8 +206,8 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
         `orgId=${organizationId}, branchId=${branchId}. ` +
         `Considere aumentar MAX_PAGES ou otimizar a query.`;
       console.error(errorMsg);
-      // Em vez de retornar parcial silenciosamente, lançamos erro controlado
-      throw new Error(errorMsg);
+      // Em vez de retornar parcial silenciosamente, retornamos Result.fail controlado
+      return Result.fail(errorMsg);
     }
 
     // Warning se quantidade atípica (>1000 goals)
@@ -235,6 +241,6 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
       allGoals.push(...items);
     }
 
-    return allGoals;
+    return Result.ok(allGoals);
   }
 }

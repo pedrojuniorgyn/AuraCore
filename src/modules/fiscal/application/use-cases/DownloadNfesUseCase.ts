@@ -23,6 +23,7 @@ import type {
   DownloadNfesOutput,
 } from '../../domain/ports/input/IDownloadNfesUseCase';
 import type { ISefazGateway } from '@/modules/integrations/domain/ports/output/ISefazGateway';
+import { logger } from '@/shared/infrastructure/logging';
 
 // Domain Services
 import { SefazDocumentProcessor } from '../../domain/services';
@@ -65,7 +66,7 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
         return validationResult;
       }
 
-      console.log(`🤖 [DownloadNfesUseCase] Iniciando download de NFes (Branch: ${input.branchId})...`);
+      logger.info('[DownloadNfesUseCase] Iniciando download de NFes', { branchId: input.branchId });
 
       // 2. Buscar certificado digital do banco
       const certificateResult = await this.getCertificate(input.branchId, input.organizationId);
@@ -74,9 +75,7 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
       }
 
       const cert = certificateResult.value;
-      console.log(`📜 Certificado carregado (${cert.pfx.length} bytes)`);
-      console.log(`🔢 Último NSU processado: ${cert.lastNsu}`);
-      console.log(`🌐 Ambiente: ${cert.environment}`);
+      logger.info('Certificado carregado', { bytes: cert.pfx.length, lastNsu: cert.lastNsu, environment: cert.environment });
 
       // 3. Consultar DistribuicaoDFe via Gateway
       const downloadResult = await this.sefazGateway.getDistribuicaoDFe({
@@ -95,7 +94,7 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
       }
 
       const dfeResponse = downloadResult.value;
-      console.log(`📦 [DownloadNfesUseCase] Documentos recebidos: ${dfeResponse.totalDocuments}`);
+      logger.info('[DownloadNfesUseCase] Documentos recebidos', { totalDocuments: dfeResponse.totalDocuments });
 
       // 4. Atualizar NSU da filial se necessário
       if (dfeResponse.maxNsu !== cert.lastNsu) {
@@ -111,12 +110,12 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
               eq(branches.organizationId, input.organizationId)
             )
           );
-        console.log(`✅ NSU atualizado: ${cert.lastNsu} → ${dfeResponse.maxNsu}`);
+        logger.info('NSU atualizado', { from: cert.lastNsu, to: dfeResponse.maxNsu });
       }
 
       // 5. Verificar se houve erro (ex: 656 - Consumo Indevido)
       if (dfeResponse.error) {
-        console.log(`⚠️ [DownloadNfesUseCase] Erro SEFAZ: ${dfeResponse.error.code} - ${dfeResponse.error.message}`);
+        logger.warn('[DownloadNfesUseCase] Erro SEFAZ', { code: dfeResponse.error.code, message: dfeResponse.error.message });
 
         return Result.ok({
           totalDocuments: 0,
@@ -130,7 +129,7 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
       let processResult = null;
 
       if (dfeResponse.totalDocuments > 0) {
-        console.log('🤖 [DownloadNfesUseCase] Iniciando processamento automático...');
+        logger.info('[DownloadNfesUseCase] Iniciando processamento automatico');
 
         // Cria adapter de importação (DDD)
         const importAdapter = createFiscalDocumentImportAdapter(
@@ -147,9 +146,9 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
 
         if (Result.isOk(result)) {
           processResult = result.value;
-          console.log('✅ [DownloadNfesUseCase] Processamento concluído:', processResult);
+          logger.info('[DownloadNfesUseCase] Processamento concluido', { result: processResult });
         } else {
-          console.error('❌ [DownloadNfesUseCase] Erro ao processar documentos:', result.error.message);
+          logger.error('[DownloadNfesUseCase] Erro ao processar documentos', { message: result.error.message });
           // Continua e retorna os dados da consulta mesmo se o processamento falhar
         }
       }
@@ -175,7 +174,7 @@ export class DownloadNfesUseCase implements IDownloadNfesUseCase {
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`❌ [DownloadNfesUseCase] Erro: ${errorMessage}`);
+      logger.error('[DownloadNfesUseCase] Erro', { error: errorMessage });
 
       // Verificar se é erro de certificado
       if (errorMessage.includes('Certificado')) {

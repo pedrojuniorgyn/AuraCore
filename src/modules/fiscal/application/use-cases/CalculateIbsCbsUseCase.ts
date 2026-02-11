@@ -49,13 +49,14 @@ export class CalculateIbsCbsUseCase implements IUseCaseWithContext<CalculateIbsC
     }
 
     // 3. Preparar inputs para cálculo
-    const calculationInputs: CalculationInput[] = data.items.map(item => {
+    const calculationInputs: CalculationInput[] = [];
+    for (const item of data.items) {
       const baseValueResult = Money.create(item.baseValue, 'BRL');
       if (Result.isFail(baseValueResult)) {
-        throw new Error(`Invalid baseValue for item ${item.itemId}`);
+        return Result.fail(`Invalid baseValue for item ${item.itemId}`);
       }
 
-      return {
+      calculationInputs.push({
         itemId: item.itemId,
         baseValue: baseValueResult.value,
         operationDate: data.operationDate,
@@ -64,8 +65,8 @@ export class CalculateIbsCbsUseCase implements IUseCaseWithContext<CalculateIbsC
         ufOrigem: item.ufOrigem,
         ufDestino: item.ufDestino,
         municipioDestino: item.municipioDestino,
-      };
-    });
+      });
+    }
 
     // 4. Executar cálculo em batch
     const calculationResult = await this.orchestrator.calculateBatch(calculationInputs);

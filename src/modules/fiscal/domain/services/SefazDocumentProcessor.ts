@@ -14,6 +14,7 @@ import { XMLParser } from "fast-xml-parser";
 import zlib from "zlib";
 import { Result } from "@/shared/domain";
 import { FiscalDocumentError } from "../errors/FiscalDocumentError";
+import { logger } from "@/shared/infrastructure/logging";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // TYPES
@@ -83,7 +84,7 @@ export class SefazDocumentProcessor {
     };
 
     try {
-      console.log("🔍 Parseando resposta da Sefaz...");
+      logger.info("Parseando resposta da Sefaz");
 
       // Parse do XML de resposta
       const responseObj = this.parser.parse(xmlResponse);
@@ -106,13 +107,13 @@ export class SefazDocumentProcessor {
       const ultNSU = retDistDFeInt.ultNSU;
       const maxNSU = retDistDFeInt.maxNSU;
 
-      console.log(`📊 Status Sefaz: ${cStat} - ${xMotivo}`);
-      console.log(`🔢 ultNSU: ${ultNSU}, maxNSU: ${maxNSU}`);
+      logger.info("Status Sefaz recebido", { cStat, xMotivo });
+      logger.info("NSU info", { ultNSU, maxNSU });
 
       // Status 138: Documentos localizados
       if (cStat !== "138" && cStat !== 138) {
-        console.log(`⚠️  Nenhum documento novo (Status: ${cStat})`);
-        console.log(`📋 Retorno completo:`, JSON.stringify(retDistDFeInt, null, 2));
+        logger.info("Nenhum documento novo", { cStat });
+        logger.debug("Retorno completo Sefaz", { retDistDFeInt });
         return Result.ok(result);
       }
 
@@ -120,7 +121,7 @@ export class SefazDocumentProcessor {
       const loteDistDFeInt = retDistDFeInt.loteDistDFeInt;
 
       if (!loteDistDFeInt || !loteDistDFeInt.docZip) {
-        console.log("⚠️  Nenhum documento no lote");
+        logger.info("Nenhum documento no lote");
         return Result.ok(result);
       }
 
@@ -131,7 +132,7 @@ export class SefazDocumentProcessor {
 
       result.totalDocuments = docZipArray.length;
 
-      console.log(`📦 Total de documentos: ${result.totalDocuments}`);
+      logger.info("Total de documentos no lote", { totalDocuments: result.totalDocuments });
 
       // Processa cada documento
       for (const docZip of docZipArray) {
@@ -158,27 +159,27 @@ export class SefazDocumentProcessor {
         }
       }
 
-      console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("📊 RESUMO DA IMPORTAÇÃO:");
-      console.log(`  ├─ 📦 Total retornados: ${result.totalDocuments}`);
-      console.log(`  ├─ ✅ Importados: ${result.imported}`);
-      console.log(`  ├─ ⚠️  Duplicados: ${result.duplicates}`);
-      console.log(`  ├─ ❌ Erros: ${result.errors}`);
-      console.log(`  ├─ 📋 Resumos: ${result.resumos}`);
-      console.log(`  └─ 📄 Completos: ${result.completas}`);
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+      logger.info("Resumo da importacao Sefaz", {
+        totalDocuments: result.totalDocuments,
+        imported: result.imported,
+        duplicates: result.duplicates,
+        errors: result.errors,
+        resumos: result.resumos,
+        completas: result.completas,
+      });
 
       // Validação: Se todos são duplicatas, alertar
       if (result.duplicates === result.totalDocuments && result.totalDocuments > 0) {
-        console.warn("⚠️  ALERTA: TODOS os documentos retornados são duplicatas!");
-        console.warn("⚠️  Isso pode indicar que o NSU não está sendo atualizado corretamente.");
-        console.warn("⚠️  Ou os documentos já foram importados anteriormente.");
+        logger.warn("ALERTA: Todos os documentos retornados sao duplicatas. NSU pode nao estar sendo atualizado corretamente ou documentos ja foram importados anteriormente.", {
+          totalDocuments: result.totalDocuments,
+          duplicates: result.duplicates,
+        });
       }
 
       return Result.ok(result);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao processar resposta Sefaz:", errorMessage);
+      logger.error("Erro ao processar resposta Sefaz", { error: errorMessage });
       return Result.fail(new FiscalDocumentError(`Erro ao processar resposta Sefaz: ${errorMessage}`));
     }
   }
@@ -193,7 +194,7 @@ export class SefazDocumentProcessor {
       const nsu = docZip["@_NSU"];
       const schema = docZip["@_schema"];
 
-      console.log(`\n📄 Processando NSU ${nsu} (Tipo: ${schema})...`);
+      logger.info("Processando documento", { nsu, schema });
 
       // Decodifica Base64
       const compressedBuffer = Buffer.from(docZip["#text"], "base64");
@@ -201,25 +202,26 @@ export class SefazDocumentProcessor {
       // Descompacta GZIP
       const xmlContent = zlib.gunzipSync(compressedBuffer).toString("utf-8");
 
-      console.log(`✅ XML descompactado (${xmlContent.length} bytes)`);
+      logger.info("XML descompactado", { sizeBytes: xmlContent.length });
 
       // Roteamento por tipo de documento
       if (schema?.startsWith("resNFe")) {
         // RESUMO de NFe - Apenas salva referência (não importa completo)
-        console.log("📋 Resumo de NFe detectado (não será importado)");
+        logger.info("Resumo de NFe detectado (nao sera importado)");
         return Result.ok({ type: "resNFe", status: "IGNORED" });
       } else if (schema?.startsWith("procNFe")) {
         // NFE COMPLETA - Importa automaticamente!
-        console.log("📥 NFe completa detectada! Importando...");
+        logger.info("NFe completa detectada, importando");
 
         const importResult = await this.importer.importNFe(xmlContent);
 
         if (Result.isOk(importResult)) {
           const status = importResult.value;
-          console.log(
+          logger.info(
             status === "SUCCESS"
-              ? "✅ NFe importada com sucesso!"
-              : "⚠️  NFe duplicada (já existe no sistema)"
+              ? "NFe importada com sucesso"
+              : "NFe duplicada (ja existe no sistema)",
+            { status }
           );
           return Result.ok({ type: "procNFe", status });
         } else {
@@ -227,32 +229,33 @@ export class SefazDocumentProcessor {
         }
       } else if (schema?.startsWith("resEvento")) {
         // EVENTO de NFe (Cancelamento, Manifestação, etc) - Ignorar por enquanto
-        console.log("📋 Evento de NFe detectado (será ignorado)");
+        logger.info("Evento de NFe detectado (sera ignorado)");
         return Result.ok({ type: "resEvento", status: "IGNORED" });
       } else if (schema?.startsWith("procCTe")) {
         // CTe COMPLETO (emitido externamente - Multicte/bsoft)
-        console.log("🚚 CTe externo detectado! Importando...");
+        logger.info("CTe externo detectado, importando");
 
         const importResult = await this.importer.importCTe(xmlContent);
 
         if (Result.isOk(importResult)) {
           const status = importResult.value;
-          console.log(
+          logger.info(
             status === "SUCCESS"
-              ? "✅ CTe externo importado com sucesso!"
-              : "⚠️  CTe duplicado (já existe no sistema)"
+              ? "CTe externo importado com sucesso"
+              : "CTe duplicado (ja existe no sistema)",
+            { status }
           );
           return Result.ok({ type: "procCTe", status });
         } else {
           throw importResult.error;
         }
       } else {
-        console.log(`⚠️  Tipo de documento não suportado: ${schema}`);
+        logger.warn("Tipo de documento nao suportado", { schema });
         return Result.ok({ type: schema || "UNKNOWN", status: "IGNORED" });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`❌ Erro ao processar documento:`, errorMessage);
+      logger.error("Erro ao processar documento", { error: errorMessage });
       return Result.fail(new FiscalDocumentError(`Erro ao processar documento: ${errorMessage}`));
     }
   }

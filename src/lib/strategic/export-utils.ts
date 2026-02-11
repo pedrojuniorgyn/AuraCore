@@ -8,6 +8,11 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+/** Type extension for jspdf-autotable plugin property */
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: { finalY: number };
+}
+
 export interface KpiExportData {
   code: string;
   name: string;
@@ -110,8 +115,7 @@ export async function exportToPdf(
       styles: { fontSize: 9 },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    yPos = (doc as any).lastAutoTable.finalY + 15;
+    yPos = (doc as unknown as JsPDFWithAutoTable).lastAutoTable.finalY + 15;
   }
 
   // Action Plans Table

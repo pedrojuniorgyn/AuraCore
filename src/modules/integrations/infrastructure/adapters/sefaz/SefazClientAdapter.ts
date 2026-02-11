@@ -13,6 +13,7 @@
  */
 
 import { injectable } from '@/shared/infrastructure/di/container';
+import { logger } from '@/shared/infrastructure/logging';
 import * as soap from 'soap';
 import { DOMParser } from 'xmldom';
 import type {
@@ -95,12 +96,11 @@ export class SefazClientAdapter implements ISefazClient {
       const ufEndpoints = endpoints[config.uf as keyof typeof endpoints] || endpoints.SVRS;
       const url = ufEndpoints.cte;
 
-      console.log(`📡 Enviando CTe para SEFAZ ${config.uf} (${config.environment})`);
-      console.log(`Endpoint: ${url}`);
+      logger.info('Enviando CTe para SEFAZ', { uf: config.uf, environment: config.environment, url });
 
       // Em desenvolvimento, simular resposta
       if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ MODO DESENVOLVIMENTO: Simulando autorização automática');
+        logger.warn('MODO DESENVOLVIMENTO: Simulando autorizacao automatica');
 
         return {
           success: true,
@@ -120,7 +120,7 @@ export class SefazClientAdapter implements ISefazClient {
         rejectionMessage: 'Integração SEFAZ real deve ser implementada em produção',
       };
     } catch (error: unknown) {
-      console.error('❌ Erro ao enviar CTe para SEFAZ:', error);
+      logger.error('Erro ao enviar CTe para SEFAZ', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         rejectionCode: '999',
@@ -139,7 +139,7 @@ export class SefazClientAdapter implements ISefazClient {
    */
   async queryCteStatus(cteKey: string, config: SefazClientConfig): Promise<CteQueryResponse> {
     try {
-      console.log(`🔍 Consultando CTe ${cteKey}...`);
+      logger.info('Consultando CTe', { cteKey });
 
       const url = this.getCteWebserviceUrl(config.uf, config.environment, 'consulta');
       const client = await soap.createClientAsync(url, { disableCache: true });
@@ -174,7 +174,7 @@ export class SefazClientAdapter implements ISefazClient {
         error && typeof error === 'object' && 'message' in error
           ? String((error as { message: unknown }).message)
           : 'Erro desconhecido';
-      console.error('❌ Erro ao consultar CTe:', error);
+      logger.error('Erro ao consultar CTe', { error: errorMessage });
       return {
         success: false,
         message: `Erro de comunicação: ${errorMessage}`,
@@ -197,7 +197,7 @@ export class SefazClientAdapter implements ISefazClient {
     config: SefazClientConfig
   ): Promise<CteCancelResponse> {
     try {
-      console.log(`❌ Cancelando CTe ${cteKey}...`);
+      logger.info('Cancelando CTe', { cteKey });
 
       if (justification.length < 15) {
         return {
@@ -244,7 +244,7 @@ export class SefazClientAdapter implements ISefazClient {
         error && typeof error === 'object' && 'message' in error
           ? String((error as { message: unknown }).message)
           : 'Erro desconhecido';
-      console.error('❌ Erro ao cancelar CTe:', error);
+      logger.error('Erro ao cancelar CTe', { error: errorMessage });
       return {
         success: false,
         message: `Erro de comunicação: ${errorMessage}`,
@@ -262,7 +262,7 @@ export class SefazClientAdapter implements ISefazClient {
    */
   async inutilizeCte(inutilizationXml: string, config: SefazClientConfig): Promise<CteInutilizationResponse> {
     try {
-      console.log(`🚫 Inutilizando CTe...`);
+      logger.info('Inutilizando CTe');
 
       const url = this.getCteWebserviceUrl(config.uf, config.environment, 'inutilizacao');
       const client = await soap.createClientAsync(url, { disableCache: true });
@@ -287,7 +287,7 @@ export class SefazClientAdapter implements ISefazClient {
         error && typeof error === 'object' && 'message' in error
           ? String((error as { message: unknown }).message)
           : 'Erro desconhecido';
-      console.error('❌ Erro ao inutilizar:', error);
+      logger.error('Erro ao inutilizar CTe', { error: errorMessage });
       return {
         success: false,
         message: `Erro de comunicação: ${errorMessage}`,
@@ -322,11 +322,11 @@ export class SefazClientAdapter implements ISefazClient {
   </soap:Body>
 </soap:Envelope>`;
 
-      console.log(`📡 Enviando MDFe para SEFAZ ${config.uf} (${config.environment})`);
+      logger.info('Enviando MDFe para SEFAZ', { uf: config.uf, environment: config.environment });
 
       // Em desenvolvimento, simular resposta
       if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ MODO DESENVOLVIMENTO: Simulando autorização automática');
+        logger.warn('MODO DESENVOLVIMENTO: Simulando autorizacao automatica MDFe');
 
         return {
           success: true,
@@ -342,7 +342,7 @@ export class SefazClientAdapter implements ISefazClient {
         rejectionMessage: 'Integração SEFAZ MDFe real deve ser implementada em produção',
       };
     } catch (error: unknown) {
-      console.error('❌ Erro ao enviar MDFe para SEFAZ:', error);
+      logger.error('Erro ao enviar MDFe para SEFAZ', { error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         rejectionCode: '999',
@@ -361,7 +361,7 @@ export class SefazClientAdapter implements ISefazClient {
    */
   async checkServiceStatus(config: SefazClientConfig): Promise<SefazStatusResponse> {
     try {
-      console.log(`🔍 Consultando status SEFAZ ${config.uf} (${config.environment})`);
+      logger.info('Consultando status SEFAZ', { uf: config.uf, environment: config.environment });
 
       // Em desenvolvimento, sempre retornar online
       if (process.env.NODE_ENV === 'development') {

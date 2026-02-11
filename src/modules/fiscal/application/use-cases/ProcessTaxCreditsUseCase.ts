@@ -10,6 +10,7 @@
 import { Result } from "@/shared/domain";
 import { TaxCreditCalculator } from "@/modules/fiscal/domain/services/TaxCreditCalculator";
 import type { ITaxCreditRepository } from '@/modules/fiscal/domain/ports/output/ITaxCreditRepository';
+import { logger } from '@/shared/infrastructure/logging';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // TYPES
@@ -40,7 +41,7 @@ export class ProcessTaxCreditsUseCase {
     request: ProcessTaxCreditsRequest
   ): Promise<Result<ProcessTaxCreditsResponse, Error>> {
     try {
-      console.log("🔍 Processando créditos fiscais pendentes...");
+      logger.info('Processando creditos fiscais pendentes');
 
       // 1. Buscar documentos pendentes
       const pendingDocsResult = await this.repository.getPendingDocuments(request.organizationId);
@@ -51,7 +52,7 @@ export class ProcessTaxCreditsUseCase {
 
       const pendingDocIds = pendingDocsResult.value;
 
-      console.log(`📦 Encontrados ${pendingDocIds.length} documentos pendentes`);
+      logger.info('Documentos pendentes encontrados', { count: pendingDocIds.length });
 
       let processed = 0;
       let totalCredit = 0;
@@ -81,7 +82,7 @@ export class ProcessTaxCreditsUseCase {
 
           if (Result.isFail(creditResult)) {
             // Não é erro crítico - documento pode não ser elegível
-            console.log(`⚠️  Documento ${docId}: ${creditResult.error.message}`);
+            logger.warn('Documento nao elegivel para credito', { docId, reason: creditResult.error.message });
             continue;
           }
 
@@ -90,7 +91,7 @@ export class ProcessTaxCreditsUseCase {
           // ✅ S1.3-APP: hasCredit() retorna Result<boolean, string>
           const hasCreditResult = credit.hasCredit();
           if (Result.isFail(hasCreditResult) || !hasCreditResult.value) {
-            console.log(`⚠️  Documento ${docId}: crédito zerado`);
+            logger.warn('Documento com credito zerado', { docId });
             continue;
           }
 
@@ -117,20 +118,19 @@ export class ProcessTaxCreditsUseCase {
           
           totalCredit += totalCreditResult.value.amount;
 
-          console.log(`✅ Documento ${docId}: R$ ${totalCreditResult.value.amount.toFixed(2)}`);
+          logger.info('Credito registrado para documento', { docId, amount: totalCreditResult.value.amount.toFixed(2) });
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           errors.push(`Documento ${docId}: ${errorMessage}`);
         }
       }
 
-      console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("📊 RESUMO DO PROCESSAMENTO:");
-      console.log(`  ├─ 📦 Total pendentes: ${pendingDocIds.length}`);
-      console.log(`  ├─ ✅ Processados: ${processed}`);
-      console.log(`  ├─ 💰 Crédito total: R$ ${totalCredit.toFixed(2)}`);
-      console.log(`  └─ ❌ Erros: ${errors.length}`);
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+      logger.info('Resumo do processamento de creditos fiscais', {
+        totalPendentes: pendingDocIds.length,
+        processados: processed,
+        creditoTotal: totalCredit.toFixed(2),
+        erros: errors.length,
+      });
 
       return Result.ok({
         processed,
