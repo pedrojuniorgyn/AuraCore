@@ -1,8 +1,13 @@
 /**
- * withDI - Route Handler Wrapper for DI Initialization
+ * withDI - Route Handler Wrapper for DI Initialization + Prometheus Metrics
  *
  * Garante que o container DI está inicializado antes de executar
  * qualquer API route handler em Next.js production.
+ *
+ * A partir de E17.3, coleta automaticamente métricas Prometheus
+ * (http_requests_total, http_request_duration_seconds, http_request_errors_total,
+ * active_connections) para todas as rotas que usam withDI — sem necessidade
+ * de alterar cada rota individualmente.
  *
  * @example
  * // Em src/app/api/strategic/war-room/dashboard/route.ts
@@ -15,12 +20,14 @@
  * });
  *
  * @module shared/infrastructure/di
- * @since E14.8
+ * @since E14.8 (metrics: E17.3)
  */
 // CRÍTICO: Polyfill DEVE ser importado ANTES de qualquer módulo com decorators
 import './reflect-polyfill';
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureDIInitializedAsync } from './ensure-initialized';
+import { PrometheusMetrics } from '../observability/PrometheusMetrics';
+import { normalisePath } from '../observability/MetricsMiddleware';
 
 /**
  * Tipo para route context (dynamic segments)
@@ -49,7 +56,7 @@ type ContextHandler = (
 ) => Promise<ApiResponse>;
 
 /**
- * Wrapper para rotas API que garante DI inicializado.
+ * Wrapper para rotas API que garante DI inicializado e coleta métricas.
  *
  * Uso simples (sem parâmetros dinâmicos):
  * ```typescript
@@ -78,11 +85,54 @@ export function withDI(
     // Garantir DI inicializado ANTES de executar handler (ASYNC)
     await ensureDIInitializedAsync();
 
-    // Executar handler original
-    if (context !== undefined) {
-      return (handler as ContextHandler)(req, context);
+    // ── E17.3: Prometheus metrics collection (automatic) ──────────────
+    const metrics = PrometheusMetrics.getInstance();
+    const method = req.method;
+    let metricPath: string;
+    try {
+      metricPath = normalisePath(new URL(req.url).pathname);
+    } catch {
+      metricPath = '/unknown';
     }
-    return (handler as SimpleHandler)(req);
+    const start = performance.now();
+    metrics.activeConnections.inc();
+
+    try {
+      // Executar handler original
+      const response = context !== undefined
+        ? await (handler as ContextHandler)(req, context)
+        : await (handler as SimpleHandler)(req);
+
+      // Record success metrics
+      const durationSec = (performance.now() - start) / 1_000;
+      const statusCode = String(response.status);
+      metrics.httpRequestsTotal.inc({ method, path: metricPath, status_code: statusCode });
+      metrics.httpRequestDuration.observe({ method, path: metricPath }, durationSec);
+
+      if (response.status >= 500) {
+        metrics.httpRequestErrors.inc({
+          method,
+          path: metricPath,
+          error_type: 'server_error',
+        });
+      }
+
+      return response;
+    } catch (error: unknown) {
+      // Record error metrics
+      const durationSec = (performance.now() - start) / 1_000;
+      metrics.httpRequestsTotal.inc({ method, path: metricPath, status_code: '500' });
+      metrics.httpRequestDuration.observe({ method, path: metricPath }, durationSec);
+      metrics.httpRequestErrors.inc({
+        method,
+        path: metricPath,
+        error_type: error instanceof Error ? error.name : 'unknown_error',
+      });
+
+      throw error;
+    } finally {
+      metrics.activeConnections.dec();
+    }
   };
 }
 

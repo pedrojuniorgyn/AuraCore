@@ -1,7 +1,17 @@
 # monitoring/alertmanager/alertmanager.yml
 # Configuração do Alertmanager para AuraCore
+#
+# IMPORTANTE: Este arquivo é processado via envsubst no docker-compose.
+# Variáveis ${...} são substituídas em tempo de execução.
+# Veja monitoring/.env.example para a lista de variáveis necessárias.
+
 global:
   resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: '${SMTP_FROM}'
+  smtp_auth_username: '${SMTP_USER}'
+  smtp_auth_password: '${SMTP_PASS}'
+  smtp_require_tls: true
 
 route:
   group_by: ['alertname', 'severity']
@@ -13,30 +23,35 @@ route:
     - match:
         severity: critical
       receiver: 'critical'
+      repeat_interval: 1h
       continue: true
     - match:
         severity: warning
       receiver: 'warning'
+      repeat_interval: 4h
 
 receivers:
   - name: 'default'
-    # Configurar webhook, email, slack, etc.
-    # webhook_configs:
-    #   - url: 'http://your-webhook-url/alerts'
-    
+    email_configs:
+      - to: '${ALERT_EMAIL_TO}'
+        send_resolved: true
+        headers:
+          Subject: '[AuraCore] {{ .GroupLabels.alertname }} ({{ .Status }})'
+
   - name: 'critical'
-    # Webhook para alertas críticos
-    # webhook_configs:
-    #   - url: 'http://your-webhook-url/critical'
-    # slack_configs:
-    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-    #     channel: '#auracore-critical'
-    #     send_resolved: true
-    
+    email_configs:
+      - to: '${ALERT_EMAIL_TO}'
+        send_resolved: true
+        headers:
+          Subject: '[CRITICAL] AuraCore - {{ .GroupLabels.alertname }}'
+          Priority: 'urgent'
+
   - name: 'warning'
-    # Webhook para warnings
-    # webhook_configs:
-    #   - url: 'http://your-webhook-url/warning'
+    email_configs:
+      - to: '${ALERT_EMAIL_TO}'
+        send_resolved: true
+        headers:
+          Subject: '[WARNING] AuraCore - {{ .GroupLabels.alertname }}'
 
 inhibit_rules:
   # Se um alerta crítico estiver ativo, suprimir warnings do mesmo tipo
