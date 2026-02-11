@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
@@ -12,7 +13,7 @@ interface TaxMatrixResult {
   legal_basis: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { organizationId = 1, ufOrigin, ufDestination, cargoType = 'GERAL', isContributor = true, baseValue } = body;
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

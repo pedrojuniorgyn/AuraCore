@@ -43,10 +43,16 @@ import { GenerateDanfeUseCase } from '../../application/use-cases/GenerateDanfeU
 import { TransmitToSefazUseCase } from '../../application/use-cases/TransmitToSefazUseCase';
 import { QuerySefazStatusUseCase } from '../../application/use-cases/QuerySefazStatusUseCase';
 
-// CTe/NFe Use Cases (E8 Fase 3)
+// CTe/NFe Use Cases (E8 Fase 3 + E10.2)
 import { AuthorizeCteUseCase } from '../../application/use-cases/AuthorizeCteUseCase';
 import { CreateCteUseCase } from '../../application/use-cases/CreateCteUseCase';
 import { DownloadNfesUseCase } from '../../application/use-cases/DownloadNfesUseCase';
+import { ListCtesUseCase } from '../../application/use-cases/ListCtesUseCase';
+import { GetCteByIdUseCase } from '../../application/use-cases/GetCteByIdUseCase';
+import { UpdateCteUseCase } from '../../application/use-cases/UpdateCteUseCase';
+import { CancelCteUseCase as CancelCteUseCaseImpl } from '../../application/use-cases/CancelCteUseCase';
+import { ManifestNfeUseCase } from '../../application/use-cases/ManifestNfeUseCase';
+import { ImportNfeXmlUseCase } from '../../application/use-cases/ImportNfeXmlUseCase';
 
 // CTe Legacy Adapters (Diagnostic Plan - Fase 3)
 import { CteBuilderAdapter } from '../adapters/CteBuilderAdapter';
@@ -118,10 +124,16 @@ export function registerFiscalModule(): void {
   container.registerSingleton<IXmlSignerService>(TOKENS.XmlSignerService, XmlSignerAdapter);
   container.registerSingleton<IInsuranceValidatorService>(TOKENS.InsuranceValidatorService, InsuranceValidatorAdapter);
 
-  // CTe/NFe Use Cases (E8 Fase 3)
+  // CTe/NFe Use Cases (E8 Fase 3 + E10.2)
   container.registerSingleton<IAuthorizeCteUseCase>(TOKENS.AuthorizeCteUseCase, AuthorizeCteUseCase);
   container.registerSingleton<ICreateCteUseCase>(TOKENS.CreateCteUseCase, CreateCteUseCase);
   container.registerSingleton<IDownloadNfesUseCase>(TOKENS.DownloadNfesUseCase, DownloadNfesUseCase);
+  container.registerSingleton(TOKENS.ListCtesUseCase, ListCtesUseCase);
+  container.registerSingleton(TOKENS.GetCteByIdUseCase, GetCteByIdUseCase);
+  container.registerSingleton(TOKENS.UpdateCteUseCase, UpdateCteUseCase);
+  container.registerSingleton(TOKENS.CancelCteUseCase, CancelCteUseCaseImpl);
+  container.registerSingleton(TOKENS.ManifestNfeUseCase, ManifestNfeUseCase);
+  container.registerSingleton(TOKENS.ImportNfeXmlUseCase, ImportNfeXmlUseCase);
 
   // Gateways (E9 Fase 2)
   container.registerSingleton<ITaxCalculatorGateway>(

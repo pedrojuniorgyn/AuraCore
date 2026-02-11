@@ -28,3 +28,13 @@ export type { ProcessTaxCreditsRequest, ProcessTaxCreditsResponse } from './Proc
 export { GenerateSpedFiscalUseCase } from './GenerateSpedFiscalUseCase';
 export { GenerateSpedEcdUseCase } from './GenerateSpedEcdUseCase';
 export { GenerateSpedContributionsUseCase } from './GenerateSpedContributionsUseCase';
+
+// CTe Cancellation / NFe Manifest / XML Import
+export { CancelCteUseCase } from './CancelCteUseCase';
+export { ManifestNfeUseCase } from './ManifestNfeUseCase';
+export { ImportNfeXmlUseCase } from './ImportNfeXmlUseCase';
+
+// CTe Use Cases (E8 Fase 3)
+export { ListCtesUseCase } from './ListCtesUseCase';
+export { GetCteByIdUseCase } from './GetCteByIdUseCase';
+export { UpdateCteUseCase } from './UpdateCteUseCase';

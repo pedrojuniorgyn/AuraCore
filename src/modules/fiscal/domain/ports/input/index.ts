@@ -41,3 +41,11 @@ export * from './IQueryLegislationUseCase';
 export * from './IAuthorizeCteUseCase';
 export * from './ICreateCteUseCase';
 export * from './IDownloadNfesUseCase';
+
+// ===== CTe CANCELAMENTO / NFe MANIFESTAÇÃO / IMPORTAÇÃO XML =====
+export * from './ICancelCteUseCase';
+export * from './IManifestNfeUseCase';
+export * from './IImportNfeXmlUseCase';
+export * from './IListCtesUseCase';
+export * from './IGetCteByIdUseCase';
+export * from './IUpdateCteUseCase';

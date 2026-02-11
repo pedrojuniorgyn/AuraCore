@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { mdfeHeader, mdfeDocuments, trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
@@ -12,7 +13,7 @@ import { CreateMdfeSchema, ListMdfeQuerySchema } from "@/modules/fiscal/presenta
  * Multi-tenancy: ✅ organizationId
  * Validação: ✅ Zod query params
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/fiscal/mdfe
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
  * Multi-tenancy: ✅ organizationId
  * Validação: ✅ Zod schema
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -203,7 +204,7 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-}
+});
 
 
 

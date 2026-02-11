@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
@@ -15,7 +16,7 @@ import { eq, and, isNull } from "drizzle-orm";
  * - Testa conexão mTLS com Sefaz
  * - Retorna status da conexão
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 
 

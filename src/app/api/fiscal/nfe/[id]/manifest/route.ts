@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
+import type { RouteContext } from '@/shared/infrastructure/di/with-di';
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 
@@ -9,18 +11,15 @@ export const runtime = "nodejs";
  * POST /api/fiscal/nfe/:id/manifest
  * Enviar manifestação do destinatário (Ciência, Confirmação, Desconhecimento, Não Realizada)
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
-    const invoiceId = parseInt(resolvedParams.id);
+    const { id } = await context.params;
+    const invoiceId = parseInt(id);
 
     const body = await request.json();
     const { eventType, justification } = body;
@@ -106,5 +105,5 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
 

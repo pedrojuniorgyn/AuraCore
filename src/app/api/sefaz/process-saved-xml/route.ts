@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from "@/lib/auth/context";
 import { ensureConnection } from "@/lib/db";
 import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
@@ -12,7 +13,7 @@ import { Result } from "@/shared/domain";
  * 
  * Body: { xmlContent: string }
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 
 

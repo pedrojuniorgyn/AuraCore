@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
+import type { RouteContext } from '@/shared/infrastructure/di/with-di';
 import { container } from '@/shared/infrastructure/di/container';
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
@@ -7,16 +9,12 @@ import { Result } from '@/shared/domain';
 import type { IGeneratePayableTitle } from '@/modules/financial/domain/ports/input/IGeneratePayableTitle';
 import type { IGenerateReceivableTitle } from '@/modules/financial/domain/ports/input/IGenerateReceivableTitle';
 import type { ExecutionContext } from '@/modules/financial/domain/ports/input';
-import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
 
 /** Interface comum para outputs de geração de títulos */
 interface GenerateTitleOutput {
   titleIds: string[];
   titlesCount: number;
 }
-
-// Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)
-initializeFinancialModule();
 
 /**
  * 💰 POST /api/fiscal/documents/:id/generate-titles
@@ -26,18 +24,15 @@ initializeFinancialModule();
  * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
  * Atualizado: E7.22.2 P3 - Migração para DI container
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     // 1. Contexto multi-tenant (OBRIGATÓRIO)
     const ctx = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
     // 2. Resolver params
-    const resolvedParams = await params;
-    const fiscalDocumentId = resolvedParams.id;
+    const { id } = await context.params;
+    const fiscalDocumentId = id;
 
     // 3. Buscar documento para determinar o tipo de título
     const { db } = await import("@/lib/db");
@@ -154,4 +149,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

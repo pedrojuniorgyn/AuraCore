@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
 import { inboundInvoices, businessPartners } from '@/lib/db/schema';
 import { 
@@ -64,7 +65,7 @@ interface FiscalDocumentSSRMRow {
   createdAt: Date | null;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const body: IServerSideGetRowsRequest = await request.json();
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Constrói condição de filtro para um campo específico

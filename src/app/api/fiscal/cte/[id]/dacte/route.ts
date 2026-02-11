@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withAuth } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader, businessPartners, cteCargoDocuments, branches } from "@/lib/db/schema";
@@ -18,14 +20,14 @@ import PDFDocument from "pdfkit";
  * 
  * Por agora, mantemos a geração inline do PDF.
  */
-export async function GET(
+export const GET = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
+  const { id } = await context.params;
   return withAuth(req, async (user, ctx) => {
     try {
-      const resolvedParams = await params;
-      const cteId = parseInt(resolvedParams.id);
+      const cteId = parseInt(id);
 
       if (isNaN(cteId)) {
         return NextResponse.json(
@@ -82,7 +84,7 @@ export async function GET(
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
   });
-}
+});
 
 /**
  * Gera o PDF do DACTE

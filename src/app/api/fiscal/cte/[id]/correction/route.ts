@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader, cteCorrectionLetters } from "@/lib/db/schema";
@@ -10,17 +12,17 @@ import { and, desc, eq } from "drizzle-orm";
  * 
  * Envia Carta de Correção (CCe) para CTe
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
+  const { id } = await context.params;
   return withPermission(request, "fiscal.cte.create", async (user, ctx) => {
     try {
       const { ensureConnection } = await import("@/lib/db");
       await ensureConnection();
 
-      const resolvedParams = await params;
-      const cteId = parseInt(resolvedParams.id);
+      const cteId = parseInt(id);
 
       if (isNaN(cteId)) {
         return NextResponse.json(
@@ -123,7 +125,7 @@ export async function POST(
       );
     }
   });
-}
+});
 
 
 

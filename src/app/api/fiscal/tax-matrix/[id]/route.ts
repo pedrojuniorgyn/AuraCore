@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
+import type { RouteContext } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
-    const resolvedParams = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const { cstCode, icmsRate, fcpRate, legalBasis } = body;
 
@@ -17,7 +16,7 @@ export async function PUT(
           icms_rate = ${icmsRate},
           fcp_rate = ${fcpRate},
           legal_basis = ${legalBasis || ''}
-      WHERE id = ${resolvedParams.id}
+      WHERE id = ${id}
     `);
 
     return NextResponse.json({
@@ -35,18 +34,15 @@ export async function PUT(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
-    const resolvedParams = await params;
+    const { id } = await context.params;
     await db.execute(sql`
       UPDATE fiscal_tax_matrix 
       SET is_active = 0
-      WHERE id = ${resolvedParams.id}
+      WHERE id = ${id}
     `);
 
     return NextResponse.json({
@@ -64,4 +60,4 @@ export async function DELETE(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
@@ -7,16 +9,16 @@ import { sql } from "drizzle-orm";
  * 
  * Retorna itens de um documento fiscal (para Master-Detail)
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
+    const { id } = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
-    const resolvedParams = await params;
-    const fiscalDocumentId = parseInt(resolvedParams.id);
+    const fiscalDocumentId = parseInt(id);
 
     // Buscar itens com categorização
     const result = await db.execute(sql`
@@ -58,7 +60,7 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from "@/lib/auth/context";
 import { SefazDocumentProcessor } from "@/modules/fiscal/domain/services";
 import { createFiscalDocumentImportAdapter } from "@/modules/fiscal/infrastructure/adapters";
@@ -29,7 +30,7 @@ interface FileProcessResult {
  * - CTes importados
  * - Erros
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Helper: Envolve XML em envelope SOAP para simular resposta SEFAZ

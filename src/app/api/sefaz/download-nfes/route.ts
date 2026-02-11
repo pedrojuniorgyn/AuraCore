@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from "@/lib/auth/context";
 import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
@@ -21,7 +22,7 @@ import { Result } from "@/shared/domain";
  *   - DownloadNfesUseCase via DI
  *   - Encapsula: consulta SEFAZ, processamento documentos
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
@@ -110,4 +111,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

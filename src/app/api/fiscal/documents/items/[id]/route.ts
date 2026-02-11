@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -8,11 +10,12 @@ import { auth } from "@/lib/auth";
  * 
  * Atualiza categorização de um item
  */
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
+    const { id } = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
@@ -21,8 +24,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
-    const itemId = parseInt(resolvedParams.id);
+    const itemId = parseInt(id);
     const body = await request.json();
 
     const updates: string[] = [];
@@ -60,7 +62,7 @@ export async function PATCH(
     console.error("❌ Erro ao atualizar item:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 
