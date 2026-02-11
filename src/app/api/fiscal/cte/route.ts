@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
@@ -17,7 +18,7 @@ import { CreateCteSchema, ListCteQuerySchema } from "@/modules/fiscal/presentati
  * Multi-tenancy: ✅ organizationId
  * Validação: ✅ Zod query params
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -71,7 +72,7 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/fiscal/cte
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
  *   - CreateCteUseCase via DI
  *   - Encapsula: validação seguro, geração XML
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   return withPermission(req, "fiscal.cte.create", async (user, ctx) => {
     try {
       const body = await req.json();
@@ -160,4 +161,4 @@ export async function POST(req: NextRequest) {
       );
     }
   });
-}
+});

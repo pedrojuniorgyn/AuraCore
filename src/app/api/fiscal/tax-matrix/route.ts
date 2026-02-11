@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
@@ -15,7 +16,7 @@ import { CreateTaxMatrixRuleSchema, ListTaxMatrixQuerySchema } from "@/modules/f
  * - Antes: string interpolation vulnerável
  * - Agora: sql tagged template com parâmetros seguros
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/fiscal/tax-matrix
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
  * Multi-tenancy: ✅ organizationId
  * Validação: ✅ Zod schema
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
@@ -136,4 +137,4 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});

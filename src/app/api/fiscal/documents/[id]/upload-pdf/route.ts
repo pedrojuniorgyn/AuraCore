@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
@@ -10,19 +12,19 @@ import { insertDocument } from "@/lib/documents/document-db";
  * 
  * Upload de PDF do documento fiscal
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
+    const { id } = await context.params;
     const session = await auth();
     
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
-    const documentId = parseInt(resolvedParams.id);
+    const documentId = parseInt(id);
     const formData = await request.formData();
     const file = formData.get("pdf") as File;
 
@@ -110,7 +112,7 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
 
 
 

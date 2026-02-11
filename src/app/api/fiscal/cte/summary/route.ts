@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
 import { cteHeader } from '@/lib/db/schema';
 import { eq, and, sql, count, isNull } from 'drizzle-orm';
@@ -30,7 +31,7 @@ interface CteSummary {
  * - rejected: Rejeitados
  * - totalValue: Valor total
  */
-export async function GET(_request: NextRequest) {
+export const GET = withDI(async (_request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -109,4 +110,4 @@ export async function GET(_request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

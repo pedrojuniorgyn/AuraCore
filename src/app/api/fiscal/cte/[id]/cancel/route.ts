@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader, fiscalSettings } from "@/lib/db/schema";
@@ -21,13 +23,12 @@ import { CancelCteSchema } from "@/modules/fiscal/presentation/validators";
  * 
  * @since E8 Fase 2.4 - Migrado para DI
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
+  const resolvedParams = await context.params;
   return withPermission(request, "fiscal.cte.cancel", async (user, ctx) => {
-    const resolvedParams = await params;
-
     // Validar path param com Zod
     const paramValidation = idParamSchema.safeParse(resolvedParams);
     if (!paramValidation.success) {
@@ -168,4 +169,4 @@ export async function POST(
       );
     }
   });
-}
+});

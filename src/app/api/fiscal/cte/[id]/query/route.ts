@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withAuth } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { cteHeader, fiscalSettings } from "@/lib/db/schema";
@@ -14,13 +16,13 @@ import { Result } from "@/shared/domain";
  * 
  * @since E8 Fase 2.4 - Migrado para DI
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
+  const { id } = await context.params;
   return withAuth(request, async (user, ctx) => {
-    const resolvedParams = await params;
-    const cteId = parseInt(resolvedParams.id);
+    const cteId = parseInt(id);
 
     if (isNaN(cteId)) {
       return NextResponse.json(
@@ -108,4 +110,4 @@ export async function GET(
       );
     }
   });
-}
+});

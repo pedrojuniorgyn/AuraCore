@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { fiscalSettings } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq, and, isNull } from "drizzle-orm";
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -70,13 +71,13 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT - Atualizar configurações fiscais
  * (RBAC temporariamente desabilitado)
  */
-export async function PUT(request: NextRequest) {
+export const PUT = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -188,5 +189,5 @@ export async function PUT(request: NextRequest) {
     console.error("Erro ao atualizar fiscal settings:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

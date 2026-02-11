@@ -7,6 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
 import { inboundInvoices } from '@/lib/db/schema';
 import { eq, and, sql, count } from 'drizzle-orm';
@@ -30,7 +31,7 @@ interface FiscalDocumentSummary {
  * - posted: Processados/Importados com sucesso
  * - totalValue: Valor total (soma de totalNfe)
  */
-export async function GET(_request: NextRequest) {
+export const GET = withDI(async (_request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -108,4 +109,4 @@ export async function GET(_request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

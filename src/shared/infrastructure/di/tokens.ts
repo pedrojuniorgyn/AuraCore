@@ -14,6 +14,10 @@ export const TOKENS = {
   AuditLogger: Symbol('AuditLogger'),
   DepartmentRepository: Symbol('DepartmentRepository'),
 
+  // Transactional Outbox
+  OutboxRepository: Symbol('OutboxRepository'),
+  OutboxProcessor: Symbol('OutboxProcessor'),
+
   // Financial Module - Repositories & Services
   PayableRepository: Symbol('PayableRepository'),
   ExpenseReportRepository: Symbol('ExpenseReportRepository'),
@@ -75,10 +79,16 @@ export const TOKENS = {
   XmlSignerService: Symbol('XmlSignerService'),
   InsuranceValidatorService: Symbol('InsuranceValidatorService'),
 
-  // Fiscal Module - CTe/NFe Use Cases (E8 Fase 3)
+  // Fiscal Module - CTe/NFe Use Cases (E8 Fase 3 + E10.2)
   AuthorizeCteUseCase: Symbol('AuthorizeCteUseCase'),
   CreateCteUseCase: Symbol('CreateCteUseCase'),
   DownloadNfesUseCase: Symbol('DownloadNfesUseCase'),
+  ListCtesUseCase: Symbol('ListCtesUseCase'),
+  GetCteByIdUseCase: Symbol('GetCteByIdUseCase'),
+  UpdateCteUseCase: Symbol('UpdateCteUseCase'),
+  CancelCteUseCase: Symbol('CancelCteUseCase'),
+  ManifestNfeUseCase: Symbol('ManifestNfeUseCase'),
+  ImportNfeXmlUseCase: Symbol('ImportNfeXmlUseCase'),
 
   // TMS Module - Repositories (E7.26)
   RomaneioRepository: Symbol('RomaneioRepository'),

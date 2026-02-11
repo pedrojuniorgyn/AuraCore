@@ -7,6 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
+import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db, getFirstRow, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -15,11 +17,12 @@ import { FISCAL_TOKENS } from "@/modules/fiscal/infrastructure/di/FiscalModule";
 import type { IFiscalClassificationGateway } from "@/modules/fiscal/domain/ports/output/IFiscalClassificationGateway";
 import { Result } from "@/shared/domain";
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
+    const { id } = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
@@ -29,8 +32,7 @@ export async function POST(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
-    const documentId = parseInt(resolvedParams.id);
+    const documentId = parseInt(id);
 
     // Buscar documento
     const result = await db.execute(sql`
@@ -136,4 +138,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
