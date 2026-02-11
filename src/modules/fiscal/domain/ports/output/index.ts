@@ -88,3 +88,14 @@ export type {
 export type { ICteBuilderService, CteBuilderInput } from './ICteBuilderService';
 export type { IXmlSignerService, CertificateInfo } from './IXmlSignerService';
 export type { IInsuranceValidatorService } from './IInsuranceValidatorService';
+
+// ===== CERTIFICATE & SEFAZ CLIENT (E10.3) =====
+export type {
+  ICertificateManagerService,
+  CertificateManagerInfo,
+} from './ICertificateManagerService';
+export type {
+  ISefazClientService,
+  SefazTransmissionResult,
+  SefazStatusResult,
+} from './ISefazClientService';
