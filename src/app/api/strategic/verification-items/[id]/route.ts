@@ -13,6 +13,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IVerificationItemRepository } from '@/modules/strategic/domain/ports/output/IVerificationItemRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 const updateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional(),
@@ -25,15 +26,14 @@ const updateSchema = z.object({
 });
 
 // GET /api/strategic/verification-items/[id]
-export const GET = withDI(async (_request: NextRequest, context: RouteContext) => {
-  const params = context.params;
+export const GET = withDI(async (_request: NextRequest, routeCtx: RouteContext) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const repository = container.resolve<IVerificationItemRepository>(
       STRATEGIC_TOKENS.VerificationItemRepository
@@ -68,21 +68,20 @@ export const GET = withDI(async (_request: NextRequest, context: RouteContext) =
     });
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/verification-items/[id] error:', error);
+    logger.error('GET /api/strategic/verification-items/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
 
 // PATCH /api/strategic/verification-items/[id]
-export const PATCH = withDI(async (request: NextRequest, context: RouteContext) => {
-  const params = context.params;
+export const PATCH = withDI(async (request: NextRequest, routeCtx: RouteContext) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     let body: unknown;
     try {
@@ -137,21 +136,20 @@ export const PATCH = withDI(async (request: NextRequest, context: RouteContext) 
     });
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error('PATCH /api/strategic/verification-items/[id] error:', error);
+    logger.error('PATCH /api/strategic/verification-items/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
 
 // DELETE /api/strategic/verification-items/[id]
-export const DELETE = withDI(async (_request: NextRequest, context: RouteContext) => {
-  const params = context.params;
+export const DELETE = withDI(async (_request: NextRequest, routeCtx: RouteContext) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const repository = container.resolve<IVerificationItemRepository>(
       STRATEGIC_TOKENS.VerificationItemRepository
@@ -179,7 +177,7 @@ export const DELETE = withDI(async (_request: NextRequest, context: RouteContext
     });
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/verification-items/[id] error:', error);
+    logger.error('DELETE /api/strategic/verification-items/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

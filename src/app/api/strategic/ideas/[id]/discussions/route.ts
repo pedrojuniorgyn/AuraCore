@@ -11,6 +11,7 @@ import { container } from '@/shared/infrastructure/di/container';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IIdeaBoxRepository } from '@/modules/strategic/domain/ports/output/IIdeaBoxRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 // TODO: Substituir por dados reais quando implementar tabelas de comentários/votos/anexos
 function generateMockDiscussions(ideaId: string, ideaTitle: string, status: string, createdAt: Date) {
   const seed = ideaId.charCodeAt(0) + ideaId.charCodeAt(1);
@@ -144,7 +145,7 @@ export const GET = withDI(async (
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[Idea Discussions] Error:', error);
+    logger.error('[Idea Discussions] Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

@@ -5,6 +5,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const PHASE_ORDER = ['PLAN', 'DO', 'CHECK', 'ACT'] as const;
 type Phase = (typeof PHASE_ORDER)[number];
 
@@ -44,12 +46,12 @@ function initializeMockData() {
 }
 
 // POST - Avançar para próxima fase
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id: actionPlanId } = await params;
+  const { id: actionPlanId } = await context.params;
 
   try {
     const body = await request.json().catch(() => ({}));
@@ -117,7 +119,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error advancing PDCA phase:', error);
+    logger.error('Error advancing PDCA phase:', error);
     return NextResponse.json({ error: 'Failed to advance PDCA phase' }, { status: 500 });
   }
-}
+});

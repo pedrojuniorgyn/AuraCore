@@ -11,19 +11,21 @@ import { getTenantContext } from '@/lib/auth/context';
 import { ActivateStrategyUseCase } from '@/modules/strategic/application/commands/ActivateStrategyUseCase';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().trim().uuid('Invalid strategy id');
 
 // POST /api/strategic/strategies/[id]/activate
-export async function POST(
+export const POST = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid strategy id' }, { status: 400 });
@@ -42,7 +44,7 @@ export async function POST(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/strategies/[id]/activate error:', error);
+    logger.error('POST /api/strategic/strategies/[id]/activate error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

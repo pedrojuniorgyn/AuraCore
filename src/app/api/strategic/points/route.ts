@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import type { UserPoints } from '@/lib/gamification/gamification-types';
 import { LEVELS } from '@/lib/gamification/gamification-types';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 function getLevelInfo(totalXp: number): { level: number; name: string; currentXp: number; nextXp: number } {
   let currentLevel = LEVELS[0];
@@ -26,7 +27,7 @@ function getLevelInfo(totalXp: number): { level: number; name: string; currentXp
   };
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   const ctx = await getTenantContext();
   const userId = ctx.userId;
 
@@ -53,4 +54,4 @@ export async function GET() {
   };
 
   return NextResponse.json(userPoints);
-}
+});

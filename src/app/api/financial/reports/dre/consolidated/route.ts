@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { accountsReceivable, accountsPayable } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/financial/reports/dre/consolidated
  * 
  * DRE - Demonstração de Resultado do Exercício
  * Relatório consolidado de receitas e despesas
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const { searchParams } = new URL(request.url);
@@ -86,13 +88,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao gerar DRE:", error);
+    logger.error("❌ Erro ao gerar DRE:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao gerar relatório" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

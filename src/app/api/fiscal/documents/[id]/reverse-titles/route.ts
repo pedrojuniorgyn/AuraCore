@@ -6,10 +6,9 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { Result } from '@/shared/domain';
 import type { IReverseTitles } from '@/modules/financial/domain/ports/input/IReverseTitles';
 import type { ExecutionContext } from '@/modules/financial/domain/ports/input';
-import { initializeFinancialModule } from '@/modules/financial/infrastructure/di/FinancialModule';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-// Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)
-initializeFinancialModule();
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * 🔄 POST /api/fiscal/documents/:id/reverse-titles
@@ -19,17 +18,17 @@ initializeFinancialModule();
  * Épico: E7.13 - Migrated to DDD/Hexagonal Architecture
  * Atualizado: E7.22.2 P3 - Migração para DI container
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 1. Contexto multi-tenant (OBRIGATÓRIO)
     const ctx = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
 
     // 2. Resolver params
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const fiscalDocumentId = resolvedParams.id;
 
     // 3. Preparar ExecutionContext
@@ -73,10 +72,10 @@ export async function POST(
       return error;
     }
     
-    console.error("❌ Erro ao reverter títulos:", error);
+    logger.error("❌ Erro ao reverter títulos:", error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});

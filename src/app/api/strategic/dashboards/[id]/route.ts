@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Dashboard, Widget } from '@/lib/dashboard/dashboard-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // Shared store (in real app, this would be a database)
 const dashboardsStore = new Map<string, Dashboard>();
 
@@ -37,12 +39,12 @@ function initializeMockData() {
   dashboardsStore.set(sampleDashboard.id, sampleDashboard);
 }
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id } = await params;
+  const { id } = await context.params;
 
   const dashboard = dashboardsStore.get(id);
 
@@ -51,14 +53,14 @@ export async function GET(
   }
 
   return NextResponse.json(dashboard);
-}
+});
 
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id } = await params;
+  const { id } = await context.params;
 
   const dashboard = dashboardsStore.get(id);
 
@@ -92,17 +94,17 @@ export async function PATCH(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating dashboard:', error);
+    logger.error('Error updating dashboard:', error);
     return NextResponse.json({ error: 'Failed to update dashboard' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id } = await params;
+  const { id } = await context.params;
 
   if (!dashboardsStore.has(id)) {
     return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
@@ -111,4 +113,4 @@ export async function DELETE(
   dashboardsStore.delete(id);
 
   return NextResponse.json({ success: true });
-}
+});

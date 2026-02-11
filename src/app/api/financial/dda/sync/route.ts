@@ -6,10 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { createDdaSyncService } from "@/modules/financial/infrastructure/services/DdaSyncService";
 import { getTenantContext } from "@/lib/auth/context";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const runtime = "nodejs";
 
 function isInternalTokenOk(req: NextRequest) {
@@ -25,7 +27,7 @@ function isInternalTokenOk(req: NextRequest) {
   return false;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const tokenOk = isInternalTokenOk(request);
     const ctx = tokenOk
@@ -113,7 +115,7 @@ export async function POST(request: NextRequest) {
           resultRef: `imported:${imported}`,
         });
       } catch (e: unknown) {
-        console.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
+        logger.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
       }
 
       return NextResponse.json({
@@ -132,7 +134,7 @@ export async function POST(request: NextRequest) {
           errorMessage: e instanceof Error ? e.message : String(e),
         });
       } catch (e2: unknown) {
-        console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
+        logger.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
       }
       throw e;
     }
@@ -140,13 +142,13 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     // getTenantContext() pode lançar NextResponse (401/500). Preserve.
     if (error instanceof Response) return error;
-    console.error("❌ Erro ao sincronizar DDA:", error);
+    logger.error("❌ Erro ao sincronizar DDA:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao sincronizar DDA" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

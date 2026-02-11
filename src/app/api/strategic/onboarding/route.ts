@@ -8,11 +8,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/strategic/onboarding
  * Retorna estado do onboarding do usuário
  */
-export async function GET() {
+export const GET = withDI(async () => {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,13 +29,13 @@ export async function GET() {
     xpEarned: 0,
     badges: [],
   });
-}
+});
 
 /**
  * POST /api/strategic/onboarding
  * Registra ações do onboarding (tour completo, items do checklist)
  */
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error processing onboarding action:', error);
+    logger.error('Error processing onboarding action:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

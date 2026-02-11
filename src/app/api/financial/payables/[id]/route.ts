@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { accountsPayable } from "@/lib/db/schema";
 import { eq, and, isNull, asc } from "drizzle-orm";
@@ -7,6 +8,7 @@ import { queryFirst } from "@/lib/db/query-helpers";
 import { z } from "zod";
 import { idParamSchema } from "@/lib/validation/common-schemas";
 
+import { logger } from '@/shared/infrastructure/logging';
 const updatePayableSchema = z.object({
   partnerId: z.number().int().positive().optional(),
   supplierId: z.number().int().positive().optional(), // Alias for partnerId
@@ -22,14 +24,11 @@ const updatePayableSchema = z.object({
 });
 
 // GET - Buscar conta a pagar específica
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withDI(async (req: NextRequest, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
     const paramValidation = idParamSchema.safeParse(resolvedParams);
@@ -63,23 +62,20 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao buscar conta a pagar:", error);
+    logger.error("Erro ao buscar conta a pagar:", error);
     return NextResponse.json(
       { error: "Erro ao buscar conta a pagar" },
       { status: 500 }
     );
   }
-}
+});
 
 // PUT - Atualizar conta a pagar
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withDI(async (req: NextRequest, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
     const paramValidation = idParamSchema.safeParse(resolvedParams);
@@ -172,23 +168,20 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao atualizar conta a pagar:", error);
+    logger.error("Erro ao atualizar conta a pagar:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar conta a pagar" },
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Soft delete da conta a pagar
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withDI(async (req: NextRequest, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
     const paramValidation = idParamSchema.safeParse(resolvedParams);
@@ -242,10 +235,10 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao excluir conta a pagar:", error);
+    logger.error("Erro ao excluir conta a pagar:", error);
     return NextResponse.json(
       { error: "Erro ao excluir conta a pagar" },
       { status: 500 }
     );
   }
-}
+});

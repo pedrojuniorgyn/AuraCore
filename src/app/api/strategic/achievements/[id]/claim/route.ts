@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAchievementById } from '@/lib/gamification/achievement-definitions';
 
-export async function POST(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id: achievementId } = await params;
+  context: RouteContext
+) => {
+  const { id: achievementId } = await context.params;
 
   try {
     const achievement = getAchievementById(achievementId);
@@ -30,7 +32,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error claiming achievement:', error);
+    logger.error('Error claiming achievement:', error);
     return NextResponse.json({ error: 'Failed to claim achievement' }, { status: 500 });
   }
-}
+});

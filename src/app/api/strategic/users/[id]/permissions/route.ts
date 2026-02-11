@@ -10,6 +10,8 @@ import { auth } from '@/lib/auth';
 import type { Role, Permission } from '@/lib/permissions/permission-types';
 import { SYSTEM_ROLES } from '@/lib/permissions/permission-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Mock stores
@@ -34,17 +36,17 @@ if (userRolesStore.size === 0) {
   userRolesStore.set('user-1', ['role-1']);
 }
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const roleIds = userRolesStore.get(id) || [];
 
     // Collect all permissions from all roles
@@ -68,7 +70,7 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/users/[id]/permissions error:', error);
+    logger.error('GET /api/strategic/users/[id]/permissions error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

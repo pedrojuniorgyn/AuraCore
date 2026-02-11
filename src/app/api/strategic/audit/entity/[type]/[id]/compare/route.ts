@@ -9,19 +9,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import type { VersionComparison, AuditEntityType, AuditChange } from '@/lib/audit/audit-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ type: string; id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { type, id } = await params;
+    const { type, id } = await context.params;
     const { searchParams } = new URL(request.url);
     const fromVersion = parseInt(searchParams.get('from') || '1');
     const toVersion = parseInt(searchParams.get('to') || '2');
@@ -112,7 +114,7 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/audit/entity/[type]/[id]/compare error:', error);
+    logger.error('GET /api/strategic/audit/entity/[type]/[id]/compare error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

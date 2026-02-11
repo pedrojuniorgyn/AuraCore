@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { cteHeader, cteCorrectionLetters } from "@/lib/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/fiscal/cte/:id/correction
  * 🔐 Requer permissão: fiscal.cte.create
@@ -106,7 +107,7 @@ export const POST = withDI(async (
       }
 
       // TODO: Implementar envio real para Sefaz
-      console.log("⚠️  CCe registrada localmente. Envio para Sefaz pendente de implementação.");
+      logger.info("⚠️  CCe registrada localmente. Envio para Sefaz pendente de implementação.");
 
       return NextResponse.json({
         success: true,
@@ -118,7 +119,7 @@ export const POST = withDI(async (
       if (error instanceof Response) {
         return error;
       }
-      console.error("❌ Erro ao processar CCe:", error);
+      logger.error("❌ Erro ao processar CCe:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }

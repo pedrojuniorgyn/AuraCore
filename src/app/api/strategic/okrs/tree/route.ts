@@ -15,6 +15,8 @@ import type { OKR } from '@/modules/strategic/okr/domain/entities/OKR';
 import type { KeyResult as DomainKeyResult } from '@/modules/strategic/okr/domain/entities/KeyResult';
 import type { KeyResult as LegacyKeyResult } from '@/lib/okrs/okr-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Ensure DI container is registered
 registerStrategicModule();
 
@@ -53,7 +55,7 @@ function toLegacyKeyResultDTO(
   };
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period');
@@ -145,10 +147,10 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('[GET /api/strategic/okrs/tree] Error:', error);
+    logger.error('[GET /api/strategic/okrs/tree] Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch OKRs tree' },
       { status: 500 }
     );
   }
-}
+});

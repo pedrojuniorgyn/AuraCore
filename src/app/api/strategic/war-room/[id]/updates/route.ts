@@ -9,15 +9,17 @@ import { getTenantContext } from '@/lib/auth/context';
 import type { WarRoomUpdate } from '@/lib/war-room/war-room-types';
 import { getWarRoom, setWarRoom } from '../../_store';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
-    const { id } = await params;
+    const { id } = await context.params;
 
     const warRoom = getWarRoom(ctx.organizationId, id);
 
@@ -42,18 +44,18 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/war-room/[id]/updates error:', error);
+    logger.error('GET /api/strategic/war-room/[id]/updates error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
-    const { id } = await params;
+    const { id } = await context.params;
 
     const warRoom = getWarRoom(ctx.organizationId, id);
 
@@ -82,7 +84,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error adding update:', error);
+    logger.error('Error adding update:', error);
     return NextResponse.json({ error: 'Failed to add update' }, { status: 500 });
   }
-}
+});

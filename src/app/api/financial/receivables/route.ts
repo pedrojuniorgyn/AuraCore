@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db, ensureConnection } from "@/lib/db";
 import { accountsReceivable, businessPartners, financialCategories, costCenters, chartOfAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
@@ -6,6 +7,7 @@ import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull, gte, lte, type SQL } from "drizzle-orm";
 import { z } from "zod";
 
+import { logger } from '@/shared/infrastructure/logging';
 // Schemas de validação
 const createReceivableSchema = z.object({
   partnerId: z.number().int().positive().optional().nullable(),
@@ -38,7 +40,7 @@ const queryReceivablesSchema = z.object({
 /**
  * GET /api/financial/receivables
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -113,18 +115,18 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar contas a receber:", error);
+    logger.error("❌ Erro ao listar contas a receber:", error);
     return NextResponse.json(
       { error: "Falha ao listar contas", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/financial/receivables
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -188,10 +190,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar conta a receber:", error);
+    logger.error("❌ Erro ao criar conta a receber:", error);
     return NextResponse.json(
       { error: "Falha ao criar conta", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

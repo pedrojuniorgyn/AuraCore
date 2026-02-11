@@ -24,6 +24,7 @@ import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persiste
 import { eq, and } from 'drizzle-orm';
 import { queryGoalsSchema, bscPerspectiveSchema } from '@/lib/validation/strategic-schemas';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ✅ S1.1 Batch 3: Schema estendido para compatibilidade com estrutura existente
 const perspectiveLabels: Record<string, z.infer<typeof bscPerspectiveSchema>> = {
   FINANCIAL: 'FINANCIAL',
@@ -328,11 +329,7 @@ export const GET = withDI(async (request: Request) => {
     const serializedItems = result.items.map((g) => {
       // Validação de integridade: dueDate NUNCA deve ser null (schema NOT NULL)
       if (!g.dueDate) {
-        console.error(
-          `[GET /api/strategic/goals] Violação de integridade: goal.id=${g.id} tem dueDate=null. ` +
-            `orgId=${context.organizationId}, branchId=${context.branchId}. ` +
-            `Schema declara dueDate NOT NULL - verifique dados corrompidos.`
-        );
+        logger.error('Violação de integridade: goal tem dueDate=null (schema NOT NULL)', { goalId: g.id, orgId: context.organizationId, branchId: context.branchId });
         throw new Error(
           `Data integrity violation: goal ${g.id} has null dueDate (schema requires NOT NULL)`
         );
@@ -372,7 +369,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/goals error:', error);
+    logger.error('GET /api/strategic/goals error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
@@ -582,7 +579,7 @@ export const POST = withDI(async (request: Request) => {
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     const message = getErrorMessage(error);
-    console.error('POST /api/strategic/goals error:', error);
+    logger.error('POST /api/strategic/goals error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 });

@@ -9,6 +9,8 @@ import { auth } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 import type { ExportEntity } from '@/lib/export/export-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const KPI_TEMPLATE_DATA = [
   {
     Código: 'KPI-001',
@@ -39,7 +41,7 @@ const ACTION_PLAN_TEMPLATE_DATA = [
   },
 ];
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -108,7 +110,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/export/template error:', error);
+    logger.error('GET /api/strategic/export/template error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

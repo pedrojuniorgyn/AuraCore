@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db, ensureConnection } from "@/lib/db";
 import {
   accountsPayable,
@@ -10,6 +11,7 @@ import {
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, gte, lte, sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/financial/reports/dre
  * 
@@ -18,7 +20,7 @@ import { eq, and, isNull, gte, lte, sql } from "drizzle-orm";
  * - startDate: YYYY-MM-DD
  * - endDate: YYYY-MM-DD
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -243,13 +245,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao gerar DRE:", error);
+    logger.error("❌ Erro ao gerar DRE:", error);
     return NextResponse.json(
       { error: "Erro ao gerar DRE", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

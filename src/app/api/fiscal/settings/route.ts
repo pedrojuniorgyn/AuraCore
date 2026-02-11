@@ -5,6 +5,7 @@ import { fiscalSettings } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
@@ -186,7 +187,7 @@ export const PUT = withDI(async (request: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao atualizar fiscal settings:", error);
+    logger.error("Erro ao atualizar fiscal settings:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 });

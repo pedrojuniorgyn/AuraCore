@@ -11,6 +11,7 @@ import { container } from '@/shared/infrastructure/di/container';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 // GET /api/strategic/swot/[id]/items
 export const GET = withDI(async (
   request: NextRequest,
@@ -113,7 +114,7 @@ export const GET = withDI(async (
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[SWOT Items] Error:', error);
+    logger.error('[SWOT Items] Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

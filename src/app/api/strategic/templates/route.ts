@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { DEFAULT_TEMPLATES } from '@/lib/templates/default-templates';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Templates legados (serão mesclados com DEFAULT_TEMPLATES)
@@ -202,7 +204,7 @@ const legacyTemplates = [
   },
 ];
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session) {
@@ -223,15 +225,15 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/templates error:', error);
+    logger.error('GET /api/strategic/templates error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const session = await auth();
     if (!session) {
@@ -248,7 +250,7 @@ export async function POST(request: Request) {
     //   createdBy: session.user.id,
     // });
 
-    console.log('Creating template:', template);
+    logger.info('Creating template:', template);
 
     return NextResponse.json({ 
       success: true, 
@@ -259,10 +261,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/templates error:', error);
+    logger.error('POST /api/strategic/templates error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

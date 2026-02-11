@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * 🔧 PATCH /api/fiscal/documents/items/:id
  * 
@@ -59,7 +60,7 @@ export const PATCH = withDI(async (
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao atualizar item:", error);
+    logger.error("❌ Erro ao atualizar item:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 });

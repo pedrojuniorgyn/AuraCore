@@ -4,6 +4,7 @@
  * @module api/strategic/permissions
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 interface Permission {
   id: string;
@@ -99,7 +100,7 @@ const permissions: Permission[] = [
 ];
 
 // GET - Listar permissões disponíveis
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const moduleFilter = searchParams.get('module');
 
@@ -110,4 +111,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ data: filtered });
-}
+});

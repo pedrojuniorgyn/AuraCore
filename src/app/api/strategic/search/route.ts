@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import { db } from '@/lib/db';
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { 
   kpiTable, 
   actionPlanTable, 
@@ -24,7 +26,7 @@ import type {
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -253,7 +255,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/search error:', error);
+    logger.error('POST /api/strategic/search error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

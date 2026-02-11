@@ -16,6 +16,8 @@ import type { KeyResult as DomainKeyResult } from '@/modules/strategic/okr/domai
 import type { KeyResult as LegacyKeyResult } from '@/lib/okrs/okr-types';
 import { Result } from '@/shared/domain/types/Result';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Ensure DI container is registered
 registerStrategicModule();
 
@@ -69,7 +71,7 @@ const createOkrSchema = z.object({
   ownerType: z.enum(['user', 'team', 'department']),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const level = searchParams.getAll('level');
@@ -156,15 +158,15 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('[GET /api/strategic/okrs] Error:', error);
+    logger.error('[GET /api/strategic/okrs] Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch OKRs' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const body = await request.json();
 
@@ -254,10 +256,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('[POST /api/strategic/okrs] Error:', error);
+    logger.error('[POST /api/strategic/okrs] Error:', error);
     return NextResponse.json(
       { error: 'Failed to create OKR' },
       { status: 500 }
     );
   }
-}
+});

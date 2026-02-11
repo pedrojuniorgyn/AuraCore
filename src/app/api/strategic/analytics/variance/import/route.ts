@@ -13,8 +13,10 @@ import { BudgetImportService } from '@/modules/strategic/application/services/Bu
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // POST - Importar CSV
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -64,9 +66,9 @@ export async function POST(request: NextRequest) {
       }
     }, { status });
   } catch (error) {
-    console.error('[variance/import] Error:', error);
+    logger.error('[variance/import] Error:', error);
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Internal server error'
     }, { status: 500 });
   }
-}
+});

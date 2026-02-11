@@ -11,19 +11,21 @@ import { getTenantContext } from '@/lib/auth/context';
 import { GetKpiHistoryQuery } from '@/modules/strategic/application/queries/GetKpiHistoryQuery';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().trim().uuid('Invalid kpi id');
 
 // GET /api/strategic/kpis/[id]/history
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
@@ -39,7 +41,7 @@ export async function GET(
     return NextResponse.json(result.value);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/kpis/[id]/history error:', error);
+    logger.error('GET /api/strategic/kpis/[id]/history error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

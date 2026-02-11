@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { billingInvoices, businessPartners } from "@/lib/db/schema";
@@ -18,12 +19,10 @@ import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/Financia
 import type { IBillingPdfGateway } from "@/modules/financial/domain/ports/output/IBillingPdfGateway";
 import { Result } from "@/shared/domain";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+import { logger } from '@/shared/infrastructure/logging';
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "financial.billing.create", async (user, ctx) => {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
@@ -62,7 +61,7 @@ export async function POST(
       }
 
       // Gerar PDF via Gateway DI
-      console.log("📄 Gerando PDF da fatura...");
+      logger.info("📄 Gerando PDF da fatura...");
       const billingPdf = container.resolve<IBillingPdfGateway>(FINANCIAL_TOKENS.BillingPdfGateway);
       
       const pdfResult = await billingPdf.generatePdf({
@@ -89,7 +88,7 @@ export async function POST(
       });
 
       // Enviar email
-      console.log(`📧 Enviando fatura para ${email}...`);
+      logger.info(`📧 Enviando fatura para ${email}...`);
       
       await transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
@@ -144,7 +143,7 @@ export async function POST(
         })
         .where(eq(billingInvoices.id, billingId));
 
-      console.log("✅ Email enviado com sucesso!");
+      logger.info("✅ Email enviado com sucesso!");
 
       return NextResponse.json({
         success: true,
@@ -156,11 +155,11 @@ export async function POST(
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao enviar email:", error);
+      logger.error("❌ Erro ao enviar email:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
       );
     }
   });
-}
+});

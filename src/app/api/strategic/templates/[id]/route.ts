@@ -7,25 +7,27 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export const GET = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // TODO: Buscar template do banco
     // const template = await templateRepository.findById(id);
 
-    console.log('Getting template:', id);
+    logger.info('Getting template:', id);
 
     return NextResponse.json({
       template: null, // TODO: retornar template real
@@ -35,28 +37,28 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/templates/[id] error:', error);
+    logger.error('GET /api/strategic/templates/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export const PUT = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const updates = await request.json();
 
     // TODO: Atualizar template no banco
     // await templateRepository.update(id, updates);
 
-    console.log('Updating template:', id, updates);
+    logger.info('Updating template:', id, updates);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -64,27 +66,27 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('PUT /api/strategic/templates/[id] error:', error);
+    logger.error('PUT /api/strategic/templates/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export const DELETE = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // TODO: Deletar template do banco
     // await templateRepository.delete(id);
 
-    console.log('Deleting template:', id);
+    logger.info('Deleting template:', id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -92,10 +94,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('DELETE /api/strategic/templates/[id] error:', error);
+    logger.error('DELETE /api/strategic/templates/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

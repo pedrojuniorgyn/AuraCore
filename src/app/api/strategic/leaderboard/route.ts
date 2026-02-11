@@ -10,6 +10,8 @@ import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import type { LeaderboardEntry } from '@/lib/gamification/gamification-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Tipo para resultado do banco
@@ -19,7 +21,7 @@ interface UserActivityRow {
   activityCount: number;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -100,7 +102,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/leaderboard error:', error);
+    logger.error('GET /api/strategic/leaderboard error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

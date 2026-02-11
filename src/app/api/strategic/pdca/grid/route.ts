@@ -11,6 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 // GET /api/strategic/pdca/grid
 export const GET = withDI(async (request: NextRequest) => {
   try {
@@ -95,7 +96,7 @@ export const GET = withDI(async (request: NextRequest) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[PDCA Grid] Error:', error);
+    logger.error('[PDCA Grid] Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

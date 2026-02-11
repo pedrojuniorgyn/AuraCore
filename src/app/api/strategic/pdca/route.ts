@@ -10,6 +10,8 @@ import { db } from '@/lib/db';
 import { pdcaCycleTable } from '@/modules/strategic/infrastructure/persistence/schemas';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Tipo para resultado do banco
@@ -29,7 +31,7 @@ interface PDCACycleRow {
 }
 
 // GET - Listar ciclos PDCA
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -92,13 +94,13 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/pdca error:', error);
+    logger.error('GET /api/strategic/pdca error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 // POST - Registrar transição PDCA
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -162,7 +164,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error creating PDCA transition:', error);
+    logger.error('Error creating PDCA transition:', error);
     return NextResponse.json({ error: 'Failed to create PDCA transition' }, { status: 500 });
   }
-}
+});

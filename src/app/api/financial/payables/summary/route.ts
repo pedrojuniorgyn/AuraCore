@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db, ensureConnection } from "@/lib/db";
 import { accountsPayable } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/financial/payables/summary
  * 
  * Retorna resumo financeiro (KPIs) das contas a pagar
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -81,13 +83,13 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar resumo:", error);
+    logger.error("❌ Erro ao buscar resumo:", error);
     return NextResponse.json(
       { error: "Falha ao buscar resumo", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

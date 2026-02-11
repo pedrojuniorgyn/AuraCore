@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { 
   getTenantContext, 
   validateABACResourceAccess,
@@ -20,19 +21,20 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import { StrategicGoal } from '@/modules/strategic/domain/entities/StrategicGoal';
 
+import { logger } from '@/shared/infrastructure/logging';
 const idSchema = z.string().trim().uuid();
 
 // GET /api/strategic/goals/[id]
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
@@ -81,10 +83,10 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/goals/[id] error:', error);
+    logger.error('GET /api/strategic/goals/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // Schema para atualizar progresso
 const updateProgressSchema = z.object({
@@ -107,16 +109,16 @@ const updateGoalSchema = z.object({
 });
 
 // PUT /api/strategic/goals/[id]
-export async function PUT(
+export const PUT = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
@@ -246,22 +248,22 @@ export async function PUT(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PUT /api/strategic/goals/[id] error:', error);
+    logger.error('PUT /api/strategic/goals/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // PATCH /api/strategic/goals/[id]
-export async function PATCH(
+export const PATCH = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
@@ -321,22 +323,22 @@ export async function PATCH(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PATCH /api/strategic/goals/[id] error:', error);
+    logger.error('PATCH /api/strategic/goals/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/strategic/goals/[id]
-export async function DELETE(
+export const DELETE = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
@@ -371,7 +373,7 @@ export async function DELETE(
     return NextResponse.json({ message: 'Goal removed successfully' });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/goals/[id] error:', error);
+    logger.error('DELETE /api/strategic/goals/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

@@ -11,10 +11,12 @@ import { db } from '@/lib/db';
 import { getTenantContext } from '@/lib/auth/context';
 import { sql } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Table name for dashboard layouts
 const LAYOUTS_TABLE = 'strategic_dashboard_layouts';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -57,13 +59,13 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao carregar layout:', error);
+    logger.error('Erro ao carregar layout:', error);
     // Return empty layout on error (table might not exist)
     return NextResponse.json({ layout: [] });
   }
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -149,10 +151,10 @@ export async function PUT(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao salvar layout:', error);
+    logger.error('Erro ao salvar layout:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});

@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { billingInvoices, businessPartners } from "@/lib/db/schema";
@@ -17,12 +18,10 @@ import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/Financia
 import type { IBoletoGateway } from "@/modules/financial/domain/ports/output/IBoletoGateway";
 import { Result } from "@/shared/domain";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+import { logger } from '@/shared/infrastructure/logging';
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "financial.billing.create", async (user, ctx) => {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
@@ -63,7 +62,7 @@ export async function POST(
       );
 
       // Gerar boleto via Gateway
-      console.log("💰 Gerando boleto...");
+      logger.info("💰 Gerando boleto...");
       const resultado = await boletoGateway.generate({
         customerId: billing.invoice.customerId,
         customerName: billing.customer?.name || "Cliente",
@@ -93,7 +92,7 @@ export async function POST(
         })
         .where(eq(billingInvoices.id, billingId));
 
-      console.log("✅ Boleto gerado com sucesso!");
+      logger.info("✅ Boleto gerado com sucesso!");
 
       return NextResponse.json({
         success: true,
@@ -111,11 +110,11 @@ export async function POST(
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao gerar boleto:", error);
+      logger.error("❌ Erro ao gerar boleto:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
       );
     }
   });
-}
+});

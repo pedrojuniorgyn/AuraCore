@@ -13,6 +13,8 @@ import { ExecuteFollowUpUseCase } from '@/modules/strategic/application/commands
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanFollowUpRepository } from '@/modules/strategic/domain/ports/output/IActionPlanFollowUpRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().trim().uuid();
 
 const followUpSchema = z.object({
@@ -51,13 +53,13 @@ const safeJson = async <T>(request: Request): Promise<T> => {
 };
 
 // GET /api/strategic/action-plans/[id]/follow-up - Lista follow-ups
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext(); // Validates auth and gets tenant context
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -98,19 +100,19 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/action-plans/[id]/follow-up error:', error);
+    logger.error('GET /api/strategic/action-plans/[id]/follow-up error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // POST /api/strategic/action-plans/[id]/follow-up - Registra follow-up 3G
-export async function POST(
+export const POST = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -144,7 +146,7 @@ export async function POST(
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/action-plans/[id]/follow-up error:', error);
+    logger.error('POST /api/strategic/action-plans/[id]/follow-up error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

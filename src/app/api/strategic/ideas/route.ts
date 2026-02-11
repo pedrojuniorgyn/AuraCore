@@ -13,6 +13,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Schema de validação para criação
 const CreateIdeaSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório').max(200),
@@ -22,7 +24,7 @@ const CreateIdeaSchema = z.object({
   department: z.string().max(100).optional(),
 });
 
-export async function GET(request: Request) {
+export const GET = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -75,15 +77,15 @@ export async function GET(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao listar ideias:', error);
+    logger.error('Erro ao listar ideias:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -159,10 +161,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao criar ideia:', error);
+    logger.error('Erro ao criar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { accountsReceivable, accountsPayable } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, gte, lte, inArray, sql } from "drizzle-orm";
 
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const today = new Date();
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
@@ -9,11 +10,8 @@ import sql from "mssql";
  * 
  * Baixa de conta a pagar com juros, multa, IOF, tarifas
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const resolvedParams = await params;
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
+  const resolvedParams = await context.params;
   try {
     const ctx = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
@@ -507,4 +505,4 @@ export async function POST(
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});

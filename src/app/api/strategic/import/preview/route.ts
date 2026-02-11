@@ -8,13 +8,15 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 interface ParsedRow {
   [key: string]: string | number | null;
 }
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const session = await auth();
     if (!session) {
@@ -112,10 +114,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/import/preview error:', error);
+    logger.error('POST /api/strategic/import/preview error:', error);
     return NextResponse.json(
       { error: 'Failed to parse file' },
       { status: 500 }
     );
   }
-}
+});

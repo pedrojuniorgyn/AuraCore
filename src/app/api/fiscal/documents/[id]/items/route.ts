@@ -4,6 +4,7 @@ import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * 📦 GET /api/fiscal/documents/:id/items
  * 
@@ -54,7 +55,7 @@ export const GET = withDI(async (
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar itens:", error);
+    logger.error("❌ Erro ao buscar itens:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

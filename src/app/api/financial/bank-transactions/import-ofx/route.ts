@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { isS3Configured, uploadBufferToS3 } from "@/lib/storage/s3";
 import { insertDocument, insertJob } from "@/lib/documents/document-db";
 import { DOCUMENT_JOB_TYPES } from "@/lib/documents/jobs-worker";
 import { importOfxToBankTransactions } from "@/lib/financial/ofx-import";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -12,7 +14,7 @@ export const runtime = "nodejs";
  * POST /api/financial/bank-transactions/import-ofx
  * Importa arquivo OFX e cria transações bancárias
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -105,12 +107,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao importar OFX:", error);
+    logger.error("❌ Erro ao importar OFX:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db, ensureConnection } from "@/lib/db";
 import { financialCategories } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { ensureFinancialData } from "@/lib/services/financial-init";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/financial/categories
  * 
  * Lista categorias financeiras
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -59,20 +61,20 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar categorias:", error);
+    logger.error("❌ Erro ao listar categorias:", error);
     return NextResponse.json(
       { error: "Falha ao listar categorias", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/financial/categories
  * 
  * Cria nova categoria
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -122,13 +124,13 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar categoria:", error);
+    logger.error("❌ Erro ao criar categoria:", error);
     return NextResponse.json(
       { error: "Falha ao criar categoria", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -14,6 +14,8 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IControlItemRepository } from '@/modules/strategic/domain/ports/output/IControlItemRepository';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const uuidSchema = z.string().uuid();
 
 const updateValueSchema = z.object({
@@ -21,13 +23,13 @@ const updateValueSchema = z.object({
 });
 
 // GET /api/strategic/control-items/[id]
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -74,19 +76,19 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/control-items/[id] error:', error);
+    logger.error('GET /api/strategic/control-items/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // PATCH /api/strategic/control-items/[id]/value
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -145,19 +147,19 @@ export async function PATCH(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PATCH /api/strategic/control-items/[id] error:', error);
+    logger.error('PATCH /api/strategic/control-items/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/strategic/control-items/[id]
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -197,7 +199,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/control-items/[id] error:', error);
+    logger.error('DELETE /api/strategic/control-items/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

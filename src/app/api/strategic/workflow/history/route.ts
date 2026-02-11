@@ -14,6 +14,8 @@ import type { IStrategyRepository } from '@/modules/strategic/domain/ports/outpu
 import type { Strategy } from '@/modules/strategic/domain/entities/Strategy';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/strategic/workflow/history
  * Get all approval history with optional filters
@@ -22,7 +24,7 @@ import '@/modules/strategic/infrastructure/di/StrategicModule';
  * - action: Filter by action type (SUBMIT, APPROVE, REJECT, REQUEST_CHANGES)
  * - limit: Maximum number of entries (default: 100)
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -109,10 +111,10 @@ export async function GET(request: NextRequest) {
       data: sortedHistory,
     });
   } catch (error) {
-    console.error('Error getting approval history:', error);
+    logger.error('Error getting approval history:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

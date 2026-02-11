@@ -13,9 +13,11 @@ import { users, userRoles, roles } from '@/lib/db/schema';
 import { eq, and, ilike, or, isNull, inArray, sql } from 'drizzle-orm';
 import type { UserWithRoles } from '@/lib/permissions/permission-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -128,7 +130,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/users/with-roles error:', error);
+    logger.error('GET /api/strategic/users/with-roles error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

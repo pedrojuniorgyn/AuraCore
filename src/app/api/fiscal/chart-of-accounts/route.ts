@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * 📊 GET /api/fiscal/chart-of-accounts
  * 
@@ -39,7 +40,7 @@ export const GET = withDI(async (request: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar plano de contas:", error);
+    logger.error("❌ Erro ao buscar plano de contas:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

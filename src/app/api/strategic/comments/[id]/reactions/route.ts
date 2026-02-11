@@ -8,21 +8,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { REACTIONS, type Reaction } from '@/lib/comments/comment-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // In-memory store para desenvolvimento
 // Em produção, usar banco de dados
 const reactionsStore = new Map<string, Map<string, Set<string>>>();
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: commentId } = await params;
+    const { id: commentId } = await context.params;
     const body = await request.json();
     const { emoji } = body as { emoji: string };
 
@@ -74,20 +76,20 @@ export async function POST(
 
     return NextResponse.json({ reactions });
   } catch (error) {
-    console.error('POST /api/strategic/comments/[id]/reactions error:', error);
+    logger.error('POST /api/strategic/comments/[id]/reactions error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     const userId = session?.user?.id;
 
-    const { id: commentId } = await params;
+    const { id: commentId } = await context.params;
 
     const commentReactions = reactionsStore.get(commentId);
     if (!commentReactions) {
@@ -112,7 +114,7 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/comments/[id]/reactions error:', error);
+    logger.error('GET /api/strategic/comments/[id]/reactions error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

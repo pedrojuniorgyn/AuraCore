@@ -21,6 +21,7 @@ import type {
   IServerSideGetRowsResponse,
   FilterModel,
 } from '@/types/ag-grid-ssrm';
+import { logger } from '@/shared/infrastructure/logging';
 
 // Campos permitidos para filtro (whitelist de segurança)
 const ALLOWED_FILTER_FIELDS = [
@@ -85,7 +86,7 @@ export const POST = withDI(async (request: NextRequest) => {
     // Aplicar filtros do AG Grid
     for (const [field, filter] of Object.entries(filterModel)) {
       if (!ALLOWED_FILTER_FIELDS.includes(field)) {
-        console.warn(`[SSRM] Campo não permitido para filtro: ${field}`);
+        logger.warn(`[SSRM] Campo não permitido para filtro: ${field}`);
         continue;
       }
 
@@ -141,7 +142,7 @@ export const POST = withDI(async (request: NextRequest) => {
 
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[SSRM] Error:', error);
+    logger.error('[SSRM] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: 'Failed to fetch data', details: message },
@@ -295,7 +296,7 @@ function buildOrderBy(sortModel: Array<{ colId: string; sort: 'asc' | 'desc' }>)
 
   for (const { colId, sort } of sortModel) {
     if (!ALLOWED_SORT_FIELDS.includes(colId)) {
-      console.warn(`[SSRM] Campo não permitido para ordenação: ${colId}`);
+      logger.warn(`[SSRM] Campo não permitido para ordenação: ${colId}`);
       continue;
     }
 

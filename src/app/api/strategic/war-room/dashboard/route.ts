@@ -13,6 +13,7 @@ import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKP
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 export const GET = withDI(async () => {
   try {
     const context = await getTenantContext();
@@ -144,7 +145,7 @@ export const GET = withDI(async () => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/war-room/dashboard error:', error);
+    logger.error('GET /api/strategic/war-room/dashboard error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

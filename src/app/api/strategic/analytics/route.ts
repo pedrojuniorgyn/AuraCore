@@ -10,7 +10,9 @@ import { auth } from '@/lib/auth';
 import { generateMockAnalyticsData } from '@/lib/analytics/metrics-calculator';
 import type { TimeRangeKey } from '@/lib/analytics/analytics-types';
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -37,10 +39,10 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Analytics fetch error:', error);
+    logger.error('Analytics fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch analytics data' },
       { status: 500 }
     );
   }
-}
+});

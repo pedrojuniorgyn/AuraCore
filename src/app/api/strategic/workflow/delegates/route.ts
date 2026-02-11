@@ -14,6 +14,7 @@ import { withDI } from '@/shared/infrastructure/di/with-di';
 import type { ApprovalPermissionService } from '@/modules/strategic/application/services/ApprovalPermissionService';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ====================================
 // GET /api/strategic/workflow/delegates
 // Lista delegações do usuário
@@ -77,7 +78,7 @@ export const GET = withDI(async (request: NextRequest) => {
     if (error instanceof NextResponse) {
       return error; // Return original 401/403/400 response
     }
-    console.error('Error listing delegates:', error);
+    logger.error('Error listing delegates:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -162,7 +163,7 @@ export const POST = withDI(async (request: NextRequest) => {
     if (error instanceof NextResponse) {
       return error; // Return original 401/403/400 response
     }
-    console.error('Error creating delegate:', error);
+    logger.error('Error creating delegate:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

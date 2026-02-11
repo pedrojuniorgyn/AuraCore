@@ -8,8 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import type { NotificationsListResponse } from '@/lib/notifications/notification-types';
 import { getNotifications, clearNotifications } from '@/lib/notifications/notification-store';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   const ctx = await getTenantContext();
   const userId = ctx.userId;
 
@@ -39,13 +40,13 @@ export async function GET(request: NextRequest) {
   };
 
   return NextResponse.json(response);
-}
+});
 
-export async function DELETE() {
+export const DELETE = withDI(async () => {
   const ctx = await getTenantContext();
   const userId = ctx.userId;
 
   clearNotifications(userId);
 
   return NextResponse.json({ success: true });
-}
+});

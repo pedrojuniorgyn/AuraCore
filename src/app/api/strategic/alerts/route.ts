@@ -15,6 +15,7 @@ import { AlertService, type PartialAlertConfig } from '@/modules/strategic/appli
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IAlertRepository } from '@/modules/strategic/domain/ports/output/IAlertRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 const runAlertsSchema = z.object({
   config: z.object({
     kpiCriticalThreshold: z.number().min(0).max(100).optional(),
@@ -65,7 +66,7 @@ export const GET = withDI(async () => {
       count: alerts.length,
     });
   } catch (error) {
-    console.error('Error fetching alerts:', error);
+    logger.error('Error fetching alerts:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -132,7 +133,7 @@ export const POST = withDI(async (request: Request) => {
       },
     });
   } catch (error) {
-    console.error('Error running alert checks:', error);
+    logger.error('Error running alert checks:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/financial/billing/:id/finalize
  * 🔐 Requer permissão: financial.billing.approve
  * 
  * Finaliza fatura e cria título no Contas a Receber
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "financial.billing.approve", async (user, ctx) => {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const billingId = Number(resolvedParams.id);
 
     if (!Number.isFinite(billingId) || billingId <= 0) {
@@ -142,14 +141,14 @@ export async function POST(
     const errorMessage = error instanceof Error ? error.message : String(error);
       // resolveBranchIdOrThrow lança NextResponse (400/403). Preserve.
       if (error instanceof Response) return error;
-      console.error("❌ Erro ao finalizar fatura:", error);
+      logger.error("❌ Erro ao finalizar fatura:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
       );
     }
   });
-}
+});
 
 
 

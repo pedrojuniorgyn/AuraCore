@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { KeyResult, KeyResultValueEntry } from '@/lib/okrs/okr-types';
 
-export async function POST(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; krId: string }> }
-) {
-  const { id: okrId, krId } = await params;
+  context: RouteContext
+) => {
+  const { id: okrId, krId } = await context.params;
 
   try {
     const body = await request.json();
@@ -72,7 +74,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating Key Result value:', error);
+    logger.error('Error updating Key Result value:', error);
     return NextResponse.json({ error: 'Failed to update value' }, { status: 500 });
   }
-}
+});

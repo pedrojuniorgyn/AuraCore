@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -39,7 +41,7 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
     };
 
-    console.log('Testing integration:', config.type, testPayload);
+    logger.info('Testing integration:', config.type, testPayload);
 
     // Simulate different integration types
     switch (config.type) {
@@ -86,10 +88,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error testing integration:', error);
+    logger.error('Error testing integration:', error);
     return NextResponse.json({ 
       success: false, 
       message: 'Falha ao conectar. Verifique a URL e tente novamente.' 
     });
   }
-}
+});

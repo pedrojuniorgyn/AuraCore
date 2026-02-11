@@ -13,6 +13,7 @@ import { BudgetImportService } from '@/modules/strategic/application/services/Bu
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/strategic/import/budget/upload
  * Upload CSV file for budget import
@@ -75,7 +76,7 @@ export const POST = withDI(async (request: Request) => {
       },
     });
   } catch (error) {
-    console.error('Error uploading budget file:', error);
+    logger.error('Error uploading budget file:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

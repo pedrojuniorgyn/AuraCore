@@ -15,6 +15,8 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IControlItemRepository } from '@/modules/strategic/domain/ports/output/IControlItemRepository';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const createControlItemSchema = z.object({
   code: z.string().min(1).max(20),
   name: z.string().min(1).max(200),
@@ -30,7 +32,7 @@ const createControlItemSchema = z.object({
 });
 
 // GET /api/strategic/control-items
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -79,13 +81,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/control-items error:', error);
+    logger.error('GET /api/strategic/control-items error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // POST /api/strategic/control-items
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -156,7 +158,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/control-items error:', error);
+    logger.error('POST /api/strategic/control-items error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

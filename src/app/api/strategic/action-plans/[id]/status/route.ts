@@ -13,6 +13,8 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 import type { ActionPlanStatus } from '@/modules/strategic/domain/entities/ActionPlan';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().trim().uuid();
 
 const updateStatusSchema = z.object({
@@ -28,13 +30,13 @@ const safeJson = async <T>(request: Request): Promise<T> => {
 };
 
 // PATCH /api/strategic/action-plans/[id]/status
-export async function PATCH(
+export const PATCH = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -92,7 +94,7 @@ export async function PATCH(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PATCH /api/strategic/action-plans/[id]/status error:', error);
+    logger.error('PATCH /api/strategic/action-plans/[id]/status error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

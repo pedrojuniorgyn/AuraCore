@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; krId: string }> }
-) {
-  const { id: okrId, krId } = await params;
+  context: RouteContext
+) => {
+  const { id: okrId, krId } = await context.params;
 
   // Get OKR and find specific key result
   const response = await fetch(
@@ -25,13 +27,13 @@ export async function GET(
   }
 
   return NextResponse.json(keyResult);
-}
+});
 
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; krId: string }> }
-) {
-  const { id: okrId, krId } = await params;
+  context: RouteContext
+) => {
+  const { id: okrId, krId } = await context.params;
 
   try {
     const body = await request.json();
@@ -68,19 +70,19 @@ export async function PATCH(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating Key Result:', error);
+    logger.error('Error updating Key Result:', error);
     return NextResponse.json({ error: 'Failed to update Key Result' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; krId: string }> }
-) {
-  const { krId } = await params;
+  context: RouteContext
+) => {
+  const { krId } = await context.params;
 
   // In real implementation, delete from database
-  console.log('Deleting Key Result:', krId);
+  logger.info('Deleting Key Result:', krId);
 
   return NextResponse.json({ success: true });
-}
+});

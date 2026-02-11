@@ -10,6 +10,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
 // GET /api/strategic/pdca/[id]/phase-history
 export const GET = withDI(async (
   request: NextRequest,
@@ -80,7 +81,7 @@ export const GET = withDI(async (
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[PDCA Phase History] Error:', error);
+    logger.error('[PDCA Phase History] Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { bankAccounts, accountsPayable, bankRemittances, branches } from "@/lib/db/schema";
 import { and, eq, inArray, isNull, asc } from "drizzle-orm";
@@ -20,6 +21,7 @@ import { createHash } from "crypto";
 import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 import { acquireIdempotency, finalizeIdempotency } from "@/lib/idempotency/sql-idempotency";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const runtime = "nodejs";
 
 function isInternalTokenOk(req: NextRequest) {
@@ -35,7 +37,7 @@ function isInternalTokenOk(req: NextRequest) {
   return false;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const tokenOk = isInternalTokenOk(request);
     const headerBranchId = Number(request.headers.get("x-branch-id") || "1");
@@ -145,7 +147,7 @@ export async function POST(request: NextRequest) {
           errorMessage,
         });
       } catch (e: unknown) {
-        console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e);
+        logger.error("⚠️ Falha ao finalizar idempotência (FAILED):", e);
       }
     };
 
@@ -315,7 +317,7 @@ export async function POST(request: NextRequest) {
           resultRef: `bank_remittances:${remittance.id}`,
         });
       } catch (e: unknown) {
-        console.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
+        logger.error("⚠️ Falha ao finalizar idempotência (SUCCEEDED):", e);
       }
     } catch (e: unknown) {
       try {
@@ -327,7 +329,7 @@ export async function POST(request: NextRequest) {
           errorMessage: e instanceof Error ? e.message : String(e),
         });
       } catch (e2: unknown) {
-        console.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
+        logger.error("⚠️ Falha ao finalizar idempotência (FAILED):", e2);
       }
       throw e;
     }
@@ -347,10 +349,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error("❌ Erro ao gerar remessa:", error);
+    logger.error("❌ Erro ao gerar remessa:", error);
     return NextResponse.json(
       { error: "Falha ao gerar remessa CNAB" },
       { status: 500 }
     );
   }
-}
+});

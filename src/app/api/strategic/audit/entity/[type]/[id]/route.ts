@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import type { EntityHistory, EntityVersion, AuditEntityType } from '@/lib/audit/audit-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Mock version history
@@ -64,17 +66,17 @@ function generateMockHistory(
   };
 }
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ type: string; id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { type, id } = await params;
+    const { type, id } = await context.params;
     const history = generateMockHistory(type as AuditEntityType, id);
 
     return NextResponse.json(history);
@@ -83,7 +85,7 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/audit/entity/[type]/[id] error:', error);
+    logger.error('GET /api/strategic/audit/entity/[type]/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

@@ -13,6 +13,8 @@ import { auditLogTable, type AuditLogRow } from '@/shared/infrastructure/audit/a
 import { queryPaginated } from '@/lib/db/query-helpers';
 import type { AuditEntityType } from '@/lib/audit/audit-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Entidades do módulo Strategic que podem ser auditadas
@@ -43,7 +45,7 @@ const querySchema = z.object({
 });
 
 // GET /api/strategic/audit-history
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -165,7 +167,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/audit-history error:', error);
+    logger.error('GET /api/strategic/audit-history error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

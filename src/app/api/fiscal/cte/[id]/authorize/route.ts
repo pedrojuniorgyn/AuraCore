@@ -5,6 +5,9 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IAuthorizeCteUseCase } from "@/modules/fiscal/domain/ports/input/IAuthorizeCteUseCase";
 import { Result } from "@/shared/domain";
 import { idParamSchema } from "@/lib/validation/common-schemas";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * POST /api/fiscal/cte/:id/authorize
@@ -19,12 +22,12 @@ import { idParamSchema } from "@/lib/validation/common-schemas";
  *   - AuthorizeCteUseCase via DI
  *   - Encapsula: busca CTe, gera XML, assina, transmite SEFAZ
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "fiscal.cte.authorize", async (user, ctx) => {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
 
     // Validar path param com Zod
     const paramValidation = idParamSchema.safeParse(resolvedParams);
@@ -105,7 +108,7 @@ export async function POST(
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao autorizar CTe:", error);
+      logger.error("❌ Erro ao autorizar CTe:", error);
       return NextResponse.json(
         {
           error: "Erro ao autorizar CTe",
@@ -115,4 +118,4 @@ export async function POST(
       );
     }
   });
-}
+});

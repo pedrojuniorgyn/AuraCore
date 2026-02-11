@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Dashboard, Widget } from '@/lib/dashboard/dashboard-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // Shared store
 const dashboardsStore = new Map<string, Dashboard>();
 
@@ -26,12 +28,12 @@ function initializeMockData() {
   dashboardsStore.set(sampleDashboard.id, sampleDashboard);
 }
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id } = await params;
+  const { id } = await context.params;
 
   const dashboard = dashboardsStore.get(id);
 
@@ -40,14 +42,14 @@ export async function GET(
   }
 
   return NextResponse.json({ widgets: dashboard.widgets });
-}
+});
 
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id } = await params;
+  const { id } = await context.params;
 
   const dashboard = dashboardsStore.get(id);
 
@@ -72,17 +74,17 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating widgets:', error);
+    logger.error('Error updating widgets:', error);
     return NextResponse.json({ error: 'Failed to update widgets' }, { status: 500 });
   }
-}
+});
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   initializeMockData();
-  const { id } = await params;
+  const { id } = await context.params;
 
   const dashboard = dashboardsStore.get(id);
 
@@ -113,7 +115,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error adding widget:', error);
+    logger.error('Error adding widget:', error);
     return NextResponse.json({ error: 'Failed to add widget' }, { status: 500 });
   }
-}
+});

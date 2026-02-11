@@ -17,6 +17,7 @@ import { FISCAL_TOKENS } from "@/modules/fiscal/infrastructure/di/FiscalModule";
 import type { IFiscalClassificationGateway } from "@/modules/fiscal/domain/ports/output/IFiscalClassificationGateway";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const POST = withDI(async (
   request: NextRequest,
   context: RouteContext
@@ -132,7 +133,7 @@ export const POST = withDI(async (
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao reclassificar documento:", error);
+    logger.error("❌ Erro ao reclassificar documento:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

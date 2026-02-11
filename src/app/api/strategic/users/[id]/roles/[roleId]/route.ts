@@ -8,22 +8,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Reference the same store
 const userRolesStore = new Map<string, string[]>();
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; roleId: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, roleId } = await params;
+    const { id, roleId } = await context.params;
     const currentRoles = userRolesStore.get(id) || [];
     userRolesStore.set(id, currentRoles.filter((r) => r !== roleId));
 
@@ -33,7 +35,7 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error('DELETE /api/strategic/users/[id]/roles/[roleId] error:', error);
+    logger.error('DELETE /api/strategic/users/[id]/roles/[roleId] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

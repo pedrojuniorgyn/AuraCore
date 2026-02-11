@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * 📊 GET /api/fiscal/ncm-categories
  * 
@@ -44,7 +45,7 @@ export const GET = withDI(async (request: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar NCM categories:", error);
+    logger.error("❌ Erro ao buscar NCM categories:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
@@ -96,7 +97,7 @@ export const POST = withDI(async (request: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar NCM category:", error);
+    logger.error("❌ Erro ao criar NCM category:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

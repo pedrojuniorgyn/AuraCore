@@ -13,6 +13,7 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IGetDashboardDataUseCase } from '@/modules/strategic/application/queries/GetDashboardDataQuery';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = 'force-dynamic';
 
 export const GET = withDI(async () => {
@@ -54,7 +55,7 @@ export const GET = withDI(async () => {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error fetching dashboard data:', error);
+    logger.error('Error fetching dashboard data:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -20,6 +20,8 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import { CreateStrategyVersionUseCase } from '@/modules/strategic/application/commands/CreateStrategyVersionUseCase';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 registerStrategicModule();
 
 const postSchema = z.object({
@@ -28,17 +30,17 @@ const postSchema = z.object({
 });
 
 // GET - Listar versões de uma estratégia
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const strategyRepo = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
@@ -62,23 +64,23 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error('[strategy-versions] Error:', error);
+    logger.error('[strategy-versions] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 // POST - Criar nova versão
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     let body;
     try {
@@ -111,7 +113,7 @@ export async function POST(
 
     return NextResponse.json({ data: { id: result.value } }, { status: 201 });
   } catch (error) {
-    console.error('[strategy-versions] Error:', error);
+    logger.error('[strategy-versions] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

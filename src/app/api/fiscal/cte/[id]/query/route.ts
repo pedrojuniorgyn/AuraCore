@@ -10,6 +10,7 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { ISefazGateway } from "@/modules/integrations/domain/ports/output/ISefazGateway";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/fiscal/cte/:id/query
  * Consulta status de um CTe na Sefaz
@@ -103,7 +104,7 @@ export const GET = withDI(async (
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao consultar CTe:", error);
+      logger.error("❌ Erro ao consultar CTe:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }

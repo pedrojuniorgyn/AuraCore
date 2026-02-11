@@ -13,21 +13,21 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IVerificationItemRepository } from '@/modules/strategic/domain/ports/output/IVerificationItemRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 const verifySchema = z.object({
   value: z.string().min(1).max(100),
   notes: z.string().max(1000).optional(),
 });
 
 // POST /api/strategic/verification-items/[id]/verify
-export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
-  const params = context.params;
+export const POST = withDI(async (request: NextRequest, routeCtx: RouteContext) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     let body: unknown;
     try {
@@ -82,7 +82,7 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
     });
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/verification-items/[id]/verify error:', error);
+    logger.error('POST /api/strategic/verification-items/[id]/verify error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

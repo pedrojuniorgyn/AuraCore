@@ -8,19 +8,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ type: string; id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { type, id } = await params;
+    const { type, id } = await context.params;
 
     // In production, this would:
     // 1. Find the entity by type and id
@@ -39,7 +41,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/audit/entity/[type]/[id]/restore error:', error);
+    logger.error('POST /api/strategic/audit/entity/[type]/[id]/restore error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

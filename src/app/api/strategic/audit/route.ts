@@ -13,6 +13,8 @@ import { auditLogs, users } from '@/lib/db/schema';
 import { inArray, sql } from 'drizzle-orm';
 import type { AuditLog, AuditEntityType, AuditAction } from '@/lib/audit/audit-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Tipo para resultado de audit logs
@@ -27,7 +29,7 @@ interface AuditLogRow {
   createdAt: Date | null;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -155,12 +157,12 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/audit error:', error);
+    logger.error('GET /api/strategic/audit error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -194,7 +196,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/audit error:', error);
+    logger.error('POST /api/strategic/audit error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

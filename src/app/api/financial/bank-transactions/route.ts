@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { bankTransactions } from "@/lib/db/schema";
@@ -15,7 +16,7 @@ const QuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const url = new URL(req.url);
@@ -54,5 +55,5 @@ export async function GET(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Erro ao listar transações";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});
 

@@ -11,6 +11,8 @@ import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { CascadeGoalUseCase } from '@/modules/strategic/application/commands/CascadeGoalUseCase';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().trim().uuid();
 
 const cascadeSchema = z.object({
@@ -29,16 +31,16 @@ const cascadeSchema = z.object({
   })).min(1, 'É necessário informar pelo menos uma meta filha'),
 });
 
-export async function POST(
+export const POST = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid goal id' }, { status: 400 });
@@ -75,7 +77,7 @@ export async function POST(
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/goals/[id]/cascade error:', error);
+    logger.error('POST /api/strategic/goals/[id]/cascade error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

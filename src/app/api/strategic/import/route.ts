@@ -9,7 +9,9 @@ import { auth } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 import type { ImportMapping, ImportResult, ExportEntity } from '@/lib/export/export-types';
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -103,7 +105,7 @@ export async function POST(request: NextRequest) {
         //     break;
         // }
 
-        console.log('Importing row:', { entity, rowNumber, mappedData });
+        logger.info('Importing row:', { entity, rowNumber, mappedData });
 
         if (options.mode === 'update') {
           updated++;
@@ -139,7 +141,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/import error:', error);
+    logger.error('POST /api/strategic/import error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

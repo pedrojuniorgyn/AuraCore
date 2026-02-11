@@ -14,6 +14,8 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 import { GoalCascadeService, type CascadeTreeNode } from '@/modules/strategic/domain/services/GoalCascadeService';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // ✅ BUG-003 FIX: Constantes para PAGE PLANNING
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100; // Limite de segurança (10.000 goals máximo)
@@ -36,7 +38,7 @@ function formatForTreemap(node: CascadeTreeNode): {
   };
 }
 
-export async function GET(request: Request) {
+export const GET = withDI(async (request: Request) => {
   try {
     const context = await getTenantContext();
     if (!context) {
@@ -80,7 +82,7 @@ export async function GET(request: Request) {
       const warnMsg =
         `Truncamento: tenant ${context.organizationId}/${context.branchId} tem ${total} goals (${requiredPages} páginas), ` +
         `mas apenas ${MAX_PAGES} páginas serão buscadas (${MAX_PAGES * PAGE_SIZE} goals máximo).`;
-      console.warn(`[GET /api/strategic/goals/tree] ${warnMsg}`);
+      logger.warn(`[GET /api/strategic/goals/tree] ${warnMsg}`);
       warnings.push(warnMsg);
     }
 
@@ -153,7 +155,7 @@ export async function GET(request: Request) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/goals/tree error:', error);
+    logger.error('GET /api/strategic/goals/tree error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

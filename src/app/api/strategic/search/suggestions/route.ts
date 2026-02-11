@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import type { SearchSuggestion } from '@/lib/search/search-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Mock suggestions data
@@ -38,7 +40,7 @@ const USERS = [
   { name: 'Pedro Lima', id: 'user-3' },
 ];
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/search/suggestions error:', error);
+    logger.error('GET /api/strategic/search/suggestions error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

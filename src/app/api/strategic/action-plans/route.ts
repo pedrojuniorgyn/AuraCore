@@ -16,6 +16,7 @@ import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/out
 import type { ActionPlanStatus } from '@/modules/strategic/domain/entities/ActionPlan';
 import { queryActionPlansSchema, actionPlanStatusSchema, prioritySchema, pdcaPhaseSchema } from '@/lib/validation/strategic-schemas';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ✅ S1.1 Batch 3: Schema estendido para 5W2H
 const createSchema = z.object({
   goalId: z.string().trim().uuid().optional(),
@@ -171,7 +172,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/action-plans error:', error);
+    logger.error('GET /api/strategic/action-plans error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
@@ -202,7 +203,7 @@ export const POST = withDI(async (request: Request) => {
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/action-plans error:', error);
+    logger.error('POST /api/strategic/action-plans error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

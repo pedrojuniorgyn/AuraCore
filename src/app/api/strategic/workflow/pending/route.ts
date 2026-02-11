@@ -12,11 +12,13 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/strategic/workflow/pending
  * Get all strategies pending approval
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -51,10 +53,10 @@ export async function GET() {
       data,
     });
   } catch (error) {
-    console.error('Error getting pending strategies:', error);
+    logger.error('Error getting pending strategies:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

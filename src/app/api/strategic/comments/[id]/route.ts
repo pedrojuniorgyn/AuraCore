@@ -7,20 +7,22 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export const PATCH = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const { content } = body;
 
@@ -36,7 +38,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     // const commentRepo = container.resolve<ICommentRepository>(STRATEGIC_TOKENS.CommentRepository);
     // await commentRepo.update(id, { content });
 
-    console.log('Edit comment:', { id, content, userId: session.user?.id });
+    logger.info('Edit comment:', { id, content, userId: session.user?.id });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -44,29 +46,29 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('PATCH /api/strategic/comments/[id] error:', error);
+    logger.error('PATCH /api/strategic/comments/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export const DELETE = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // TODO: Verificar se usuário é dono do comentário ou admin
     // TODO: Soft delete ou hard delete
     // const commentRepo = container.resolve<ICommentRepository>(STRATEGIC_TOKENS.CommentRepository);
     // await commentRepo.delete(id);
 
-    console.log('Delete comment:', { id, userId: session.user?.id });
+    logger.info('Delete comment:', { id, userId: session.user?.id });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -74,10 +76,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('DELETE /api/strategic/comments/[id] error:', error);
+    logger.error('DELETE /api/strategic/comments/[id] error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

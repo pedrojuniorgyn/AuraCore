@@ -15,6 +15,8 @@ import type { IStandardProcedureRepository } from '@/modules/strategic/domain/po
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 registerStrategicModule();
 
 const uuidSchema = z.string().uuid();
@@ -30,13 +32,13 @@ const updateStandardProcedureSchema = z.object({
 });
 
 // GET /api/strategic/standard-procedures/[id]
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -85,19 +87,19 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/standard-procedures/[id] error:', error);
+    logger.error('GET /api/strategic/standard-procedures/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // PATCH /api/strategic/standard-procedures/[id]
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -143,19 +145,19 @@ export async function PATCH(
     );
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PATCH /api/strategic/standard-procedures/[id] error:', error);
+    logger.error('PATCH /api/strategic/standard-procedures/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/strategic/standard-procedures/[id]
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -190,7 +192,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/standard-procedures/[id] error:', error);
+    logger.error('DELETE /api/strategic/standard-procedures/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

@@ -10,9 +10,11 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export const GET = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
 
@@ -45,15 +47,15 @@ export async function GET(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/comments error:', error);
+    logger.error('GET /api/strategic/comments error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
 
@@ -81,13 +83,13 @@ export async function POST(request: Request) {
     // TODO: Salvar comentário no banco de dados quando tabela for criada
     // A tabela de comments ainda não existe no schema
 
-    console.log('New comment (in-memory, tabela não implementada):', { 
-      content, 
-      entityType, 
-      entityId, 
+    logger.info('New comment (in-memory, tabela não implementada):', {
+      content,
+      entityType,
+      entityId,
       parentId,
       attachmentCount: attachments.length,
-      userId: ctx.userId 
+      userId: ctx.userId,
     });
 
     return NextResponse.json({ 
@@ -99,10 +101,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/comments error:', error);
+    logger.error('POST /api/strategic/comments error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

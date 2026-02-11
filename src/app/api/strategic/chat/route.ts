@@ -15,6 +15,8 @@ import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKP
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Google Generative AI - cache com retry após falha
 // Fix: Cache de sucesso permanente, mas falha permite retry após intervalo
 
@@ -43,7 +45,7 @@ async function getAIModel(): Promise<AIModel | null> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     lastFailedAttempt = now;
-    console.warn('[AuraChat] GOOGLE_AI_API_KEY não configurada');
+    logger.warn('[AuraChat] GOOGLE_AI_API_KEY não configurada');
     return null;
   }
   
@@ -53,11 +55,11 @@ async function getAIModel(): Promise<AIModel | null> {
     const genAI = new GoogleGenerativeAI(apiKey);
     cachedModel = genAI.getGenerativeModel({ model: 'gemini-pro' });
     lastFailedAttempt = 0; // Reset on success
-    console.log('[AuraChat] Google AI inicializado com sucesso');
+    logger.info('[AuraChat] Google AI inicializado com sucesso');
     return cachedModel;
   } catch (error) {
     lastFailedAttempt = now;
-    console.error('[AuraChat] Erro ao inicializar Gemini:', error);
+    logger.error('[AuraChat] Erro ao inicializar Gemini:', error);
     return null;
   }
 }
@@ -185,7 +187,7 @@ function generateFallbackResponse(
          `O que gostaria de saber?`;
 }
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const tenantContext = await getTenantContext();
     
@@ -285,7 +287,7 @@ Responda de forma profissional e útil:`;
         responseText = result.response.text();
         aiEnabled = true;
       } catch (aiError) {
-        console.error('[AuraChat] AI generation error:', aiError);
+        logger.error('[AuraChat] AI generation error:', aiError);
         responseText = generateFallbackResponse(message, context);
       }
     } else {
@@ -305,10 +307,10 @@ Responda de forma profissional e útil:`;
 
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/chat error:', error);
+    logger.error('POST /api/strategic/chat error:', error);
     return NextResponse.json({ 
       response: 'Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente.',
       actions: [{ label: 'Dashboard', href: '/strategic/dashboard' }]
     });
   }
-}
+});

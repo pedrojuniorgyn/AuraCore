@@ -13,6 +13,7 @@ import { Result } from '@/shared/domain';
 import type { ApprovalPermissionService } from '@/modules/strategic/application/services/ApprovalPermissionService';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ====================================
 // DELETE /api/strategic/workflow/delegates/[id]
 // Revoga delegação
@@ -61,7 +62,7 @@ export const DELETE = withDI(
       if (error instanceof NextResponse) {
         return error; // Return original 401/403/400 response
       }
-      console.error('Error revoking delegate:', error);
+      logger.error('Error revoking delegate:', error);
       return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 }

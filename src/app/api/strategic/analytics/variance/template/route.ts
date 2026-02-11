@@ -14,8 +14,10 @@ import { BudgetImportService } from '@/modules/strategic/application/services/Bu
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // GET - Download template CSV
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -51,7 +53,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('[variance/template] Error:', error);
+    logger.error('[variance/template] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

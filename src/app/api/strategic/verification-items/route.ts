@@ -16,6 +16,7 @@ import type { IVerificationItemRepository } from '@/modules/strategic/domain/por
 import type { IControlItemRepository } from '@/modules/strategic/domain/ports/output/IControlItemRepository';
 import { VerificationItem } from '@/modules/strategic/domain/entities/VerificationItem';
 
+import { logger } from '@/shared/infrastructure/logging';
 const createVerificationItemSchema = z.object({
   controlItemId: z.string().uuid(),
   code: z.string().min(1).max(20),
@@ -97,7 +98,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/verification-items error:', error);
+    logger.error('GET /api/strategic/verification-items error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
@@ -173,7 +174,7 @@ export const POST = withDI(async (request: Request) => {
   } catch (error) {
     if (error instanceof Response) return error;
     const message = getErrorMessage(error);
-    console.error('POST /api/strategic/verification-items error:', error);
+    logger.error('POST /api/strategic/verification-items error:', error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 });

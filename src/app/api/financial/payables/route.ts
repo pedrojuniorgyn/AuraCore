@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db, ensureConnection } from "@/lib/db";
 import { accountsPayable, businessPartners, financialCategories, bankAccounts, costCenters, chartOfAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
@@ -7,6 +8,7 @@ import { eq, and, isNull, gte, lte, sql, type SQL } from "drizzle-orm";
 import { ensureFinancialData } from "@/lib/services/financial-init";
 import { z } from "zod";
 
+import { logger } from '@/shared/infrastructure/logging';
 // Schemas de validação
 const createPayableSchema = z.object({
   partnerId: z.number().int().positive().optional().nullable(),
@@ -41,7 +43,7 @@ const queryPayablesSchema = z.object({
  * 
  * Lista contas a pagar com filtros
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -120,20 +122,20 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar contas a pagar:", error);
+    logger.error("❌ Erro ao listar contas a pagar:", error);
     return NextResponse.json(
       { error: "Falha ao listar contas a pagar", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/financial/payables
  * 
  * Cria nova conta a pagar
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -198,10 +200,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar conta a pagar:", error);
+    logger.error("❌ Erro ao criar conta a pagar:", error);
     return NextResponse.json(
       { error: "Falha ao criar conta a pagar", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

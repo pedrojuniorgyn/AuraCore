@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { db, ensureConnection } from "@/lib/db";
 import { accountsReceivable, bankAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/financial/receivables/[id]/receive
  * 
  * Registra recebimento de uma conta a receber
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
     const body = await request.json();
 
@@ -111,11 +110,11 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao registrar recebimento:", error);
+    logger.error("❌ Erro ao registrar recebimento:", error);
     return NextResponse.json(
       { error: "Falha ao registrar recebimento", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

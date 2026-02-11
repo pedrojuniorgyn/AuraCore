@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { 
   getTenantContext, 
   validateABACResourceAccess,
@@ -18,6 +19,7 @@ import {
 import { AdvancePDCACycleUseCase } from '@/modules/strategic/application/commands/AdvancePDCACycleUseCase';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
+import { logger } from '@/shared/infrastructure/logging';
 import { UpdateActionPlanInputSchema } from '@/modules/strategic/application/dtos/UpdateActionPlanDTO';
 
 const idSchema = z.string().trim().uuid();
@@ -63,13 +65,13 @@ const safeJson = async <T>(request: Request): Promise<T> => {
 };
 
 // GET /api/strategic/action-plans/[id]
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -119,19 +121,19 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/action-plans/[id] error:', error);
+    logger.error('GET /api/strategic/action-plans/[id] error', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // PATCH /api/strategic/action-plans/[id] - Atualizar campos 5W2H
-export async function PATCH(
+export const PATCH = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -144,11 +146,7 @@ export async function PATCH(
 
     if (!validation.success) {
       const flatErrors = validation.error.flatten();
-      console.error('[PATCH action-plans] Zod validation failed:', {
-        fieldErrors: flatErrors.fieldErrors,
-        formErrors: flatErrors.formErrors,
-        receivedKeys: body && typeof body === 'object' ? Object.keys(body) : 'not-object',
-      });
+      logger.error('[PATCH action-plans] Zod validation failed', { fieldErrors: flatErrors.fieldErrors, formErrors: flatErrors.formErrors, receivedKeys: body && typeof body === 'object' ? Object.keys(body) : 'not-object' });
       return NextResponse.json(
         { error: 'Validation failed', details: flatErrors },
         { status: 400 }
@@ -287,19 +285,19 @@ export async function PATCH(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PATCH /api/strategic/action-plans/[id] error:', error);
+    logger.error('PATCH /api/strategic/action-plans/[id] error', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // PUT /api/strategic/action-plans/[id]/advance - Avançar PDCA
-export async function PUT(
+export const PUT = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -353,19 +351,19 @@ export async function PUT(
     return NextResponse.json(result.value);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PUT /api/strategic/action-plans/[id] error:', error);
+    logger.error('PUT /api/strategic/action-plans/[id] error', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/strategic/action-plans/[id]
-export async function DELETE(
+export const DELETE = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -398,7 +396,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/action-plans/[id] error:', error);
+    logger.error('DELETE /api/strategic/action-plans/[id] error', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

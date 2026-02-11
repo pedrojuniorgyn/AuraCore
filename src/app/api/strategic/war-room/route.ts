@@ -9,9 +9,11 @@ import { getTenantContext } from '@/lib/auth/context';
 import type { WarRoom } from '@/lib/war-room/war-room-types';
 import { getOrgStore, setWarRoom, listWarRooms } from './_store';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -40,12 +42,12 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/war-room error:', error);
+    logger.error('GET /api/strategic/war-room error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error creating war room:', error);
+    logger.error('Error creating war room:', error);
     return NextResponse.json({ error: 'Failed to create war room' }, { status: 500 });
   }
-}
+});

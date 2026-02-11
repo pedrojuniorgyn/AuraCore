@@ -12,6 +12,7 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IGetExecutiveDashboardUseCase } from '@/modules/strategic/application/queries/GetExecutiveDashboardQuery';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
 export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
@@ -47,7 +48,7 @@ export const GET = withDI(async (request: NextRequest) => {
     return NextResponse.json(result.value);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/analytics/executive/summary error:', error);
+    logger.error('GET /api/strategic/analytics/executive/summary error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

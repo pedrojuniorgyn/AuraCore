@@ -10,6 +10,8 @@ import { db } from '@/lib/db';
 import { auditLogs, users } from '@/lib/db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 interface Activity {
@@ -64,7 +66,7 @@ function generateDescription(action: string, entity: string, entityId: string | 
   return `${label} ${entity} #${entityId || 'N/A'}`;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -130,7 +132,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/activity error:', error);
+    logger.error('GET /api/strategic/activity error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

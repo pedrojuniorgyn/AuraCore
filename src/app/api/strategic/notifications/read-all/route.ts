@@ -6,8 +6,9 @@
  */
 import { NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function POST() {
+export const POST = withDI(async () => {
   // Validar autenticacao e tenant context
   await getTenantContext();
 
@@ -21,4 +22,4 @@ export async function POST() {
   //   ));
 
   return NextResponse.json({ success: true });
-}
+});

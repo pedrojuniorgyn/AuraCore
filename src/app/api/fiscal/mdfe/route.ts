@@ -6,6 +6,7 @@ import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { CreateMdfeSchema, ListMdfeQuerySchema } from "@/modules/fiscal/presentation/validators";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/fiscal/mdfe
  * Lista MDFes da organização
@@ -58,7 +59,7 @@ export const GET = withDI(async (req: NextRequest) => {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar MDFes:", error);
+    logger.error("❌ Erro ao buscar MDFes:", error);
     return NextResponse.json(
       { error: "Erro ao buscar MDFes", details: errorMessage },
       { status: 500 }
@@ -198,7 +199,7 @@ export const POST = withDI(async (req: NextRequest) => {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar MDFe:", error);
+    logger.error("❌ Erro ao criar MDFe:", error);
     return NextResponse.json(
       { error: "Erro ao criar MDFe", details: errorMessage },
       { status: 500 }

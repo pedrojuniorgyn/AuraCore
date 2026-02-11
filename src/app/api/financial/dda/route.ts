@@ -4,11 +4,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { financialDdaInbox, accountsPayable, bankAccounts } from "@/lib/db/schema";
 import { and, eq, isNull, desc } from "drizzle-orm";
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const organizationId = Number(searchParams.get("organizationId") || "1");
@@ -68,13 +70,13 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar DDA:", error);
+    logger.error("❌ Erro ao listar DDA:", error);
     return NextResponse.json(
       { error: "Falha ao listar DDA" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

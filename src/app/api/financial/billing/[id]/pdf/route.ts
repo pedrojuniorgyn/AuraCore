@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withAuth } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { billingInvoices } from "@/lib/db/schema";
@@ -17,12 +18,10 @@ import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/Financia
 import type { IBillingPdfGateway } from "@/modules/financial/domain/ports/output/IBillingPdfGateway";
 import { Result } from "@/shared/domain";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+import { logger } from '@/shared/infrastructure/logging';
+export const GET = withDI(async (request: NextRequest, context: RouteContext) => {
   return withAuth(request, async (user, ctx) => {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const billingId = parseInt(resolvedParams.id);
 
     if (isNaN(billingId)) {
@@ -33,7 +32,7 @@ export async function GET(
     }
 
     try {
-      console.log(`📄 Gerando PDF da fatura #${billingId}...`);
+      logger.info(`📄 Gerando PDF da fatura #${billingId}...`);
 
       // Resolver gateway via DI
       const billingPdf = container.resolve<IBillingPdfGateway>(FINANCIAL_TOKENS.BillingPdfGateway);
@@ -67,10 +66,10 @@ export async function GET(
           })
           .where(eq(billingInvoices.id, billingId));
       } catch (err) {
-        console.warn("⚠️ Não foi possível salvar PDF em disco, continuando...");
+        logger.warn("⚠️ Não foi possível salvar PDF em disco, continuando...");
       }
 
-      console.log("✅ PDF gerado com sucesso!");
+      logger.info("✅ PDF gerado com sucesso!");
 
       // Retornar PDF
       return new NextResponse(new Uint8Array(pdfBuffer), {
@@ -85,11 +84,11 @@ export async function GET(
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao gerar PDF:", error);
+      logger.error("❌ Erro ao gerar PDF:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
       );
     }
   });
-}
+});
