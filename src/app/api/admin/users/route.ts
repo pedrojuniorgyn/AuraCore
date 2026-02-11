@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users, userRoles, roles, accounts } from "@/lib/db/schema";
 import { eq, isNull, and, inArray } from "drizzle-orm";
 import { CacheService, CacheTTL } from "@/services/cache.service";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/admin/users
@@ -15,7 +16,7 @@ import { CacheService, CacheTTL } from "@/services/cache.service";
  * - Prefix: users:
  * - Invalidação: POST/PUT/DELETE em /api/admin/users
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   return withPermission(request, "admin.users.manage", async (user, ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       },
     });
   });
-}
+});
 
 
 

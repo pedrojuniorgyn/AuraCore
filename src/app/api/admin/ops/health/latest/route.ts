@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { getLatestOpsHealthRun } from "@/lib/ops/ops-health-db";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ function isInternalTokenOk(req: NextRequest) {
   return false;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   const handler = async () => {
     const row = await getLatestOpsHealthRun();
     return NextResponse.json({ success: true, run: row });
@@ -25,5 +26,5 @@ export async function GET(req: NextRequest) {
 
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, "admin.users.manage", handler);
-}
+});
 

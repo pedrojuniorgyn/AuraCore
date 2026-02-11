@@ -3,6 +3,7 @@ import { ensureConnection, pool } from "@/lib/db";
 import { withPermission } from "@/lib/auth/api-guard";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -48,7 +49,7 @@ function splitGoBatches(sqlText: string) {
  * - Por padrão exige ADMIN via RBAC (middleware /api/admin).
  * - Em produção (Coolify terminal), pode ser liberado por token no middleware (x-audit-token).
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   const handler = async () => {
     await ensureConnection();
 
@@ -81,5 +82,5 @@ export async function POST(req: NextRequest) {
   // Permitimos execução via token; caso contrário, exige permissão ADMIN.
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, "admin.users.manage", handler);
-}
+});
 

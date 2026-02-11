@@ -3,9 +3,11 @@ import { pool } from "@/lib/db";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
-    console.log("🚀 Executando MARATONA ENTERPRISE: 3 Migrations Completas");
+    logger.info("🚀 Executando MARATONA ENTERPRISE: 3 Migrations Completas");
     
     const migrations = [
       "0029_enterprise_simple_tables.sql"
@@ -14,7 +16,7 @@ export async function POST(request: NextRequest) {
     const results = [];
 
     for (const migrationFile of migrations) {
-      console.log(`\n📄 Executando: ${migrationFile}`);
+      logger.info(`\n📄 Executando: ${migrationFile}`);
       
       const migrationPath = join(process.cwd(), "drizzle/migrations", migrationFile);
       const migrationSQL = readFileSync(migrationPath, "utf-8");
@@ -26,7 +28,7 @@ export async function POST(request: NextRequest) {
         status: "✅ SUCCESS"
       });
       
-      console.log(`✅ ${migrationFile} concluído!`);
+      logger.info(`✅ ${migrationFile} concluído!`);
     }
 
     return NextResponse.json({
@@ -90,12 +92,12 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migration:", error);
+    logger.error("❌ Erro na migration:", error);
     return NextResponse.json({
       success: false,
       error: errorMessage,
       stack: (error instanceof Error ? error.stack : undefined)
     }, { status: 500 });
   }
-}
+});
 

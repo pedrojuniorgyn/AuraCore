@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 // ✅ S1.1 Batch 3 Phase 2: Schemas
 const queryPreInvoicesSchema = z.object({
@@ -21,7 +22,7 @@ const createPreInvoiceSchema = z.object({
   subtotal: z.number().nonnegative('Subtotal deve ser não-negativo'),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -58,9 +59,9 @@ export async function GET(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const body = await request.json();
     
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

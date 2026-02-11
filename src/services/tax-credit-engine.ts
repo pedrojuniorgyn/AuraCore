@@ -1,3 +1,9 @@
+// ============================================================================
+// ⛔ READY FOR REMOVAL - E16.4
+// Zero external consumers detected. All functionality migrated to DDD modules.
+// Safe to delete after E17 sprint verification.
+// ============================================================================
+
 /**
  * 🔍 TAX CREDIT ENGINE
  * Motor de Crédito Fiscal PIS/COFINS (Regime Não-Cumulativo)

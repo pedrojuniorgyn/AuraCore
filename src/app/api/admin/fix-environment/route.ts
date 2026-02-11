@@ -3,12 +3,14 @@ import { db } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🛠️ API para corrigir ambiente SEFAZ de PRODUCTION → HOMOLOGATION
  * 
  * GET /api/admin/fix-environment?branchId=1&environment=HOMOLOGATION
  */
-export async function GET(request: Request) {
+export const GET = withDI(async (request: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -40,10 +42,10 @@ export async function GET(request: Request) {
     
     const oldEnvironment = branch.environment || "null";
     
-    console.log("\n🔧 CORRIGINDO AMBIENTE SEFAZ:");
-    console.log(`   🏢 Filial #${branchId}: ${branch.name}`);
-    console.log(`   📄 CNPJ: ${branch.document}`);
-    console.log(`   🔄 Mudando: ${oldEnvironment} → ${environment}`);
+    logger.info("\n🔧 CORRIGINDO AMBIENTE SEFAZ:");
+    logger.info(`   🏢 Filial #${branchId}: ${branch.name}`);
+    logger.info(`   📄 CNPJ: ${branch.document}`);
+    logger.info(`   🔄 Mudando: ${oldEnvironment} → ${environment}`);
     
     // Atualizar ambiente
     await db
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
       .set({ environment })
       .where(eq(branches.id, branchId));
     
-    console.log("   ✅ Ambiente atualizado com sucesso!\n");
+    logger.info("   ✅ Ambiente atualizado com sucesso!\n");
     
     // Buscar filial atualizada
     const [updated] = await db
@@ -80,10 +82,10 @@ export async function GET(request: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao corrigir ambiente:", error);
+    logger.error("❌ Erro ao corrigir ambiente:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

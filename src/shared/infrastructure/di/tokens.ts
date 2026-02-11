@@ -13,6 +13,8 @@ export const TOKENS = {
   UnitOfWork: Symbol('UnitOfWork'),
   AuditLogger: Symbol('AuditLogger'),
   DepartmentRepository: Symbol('DepartmentRepository'),
+  CacheService: Symbol('CacheService'),
+  InAppNotificationService: Symbol('InAppNotificationService'),
 
   // Transactional Outbox
   OutboxRepository: Symbol('OutboxRepository'),

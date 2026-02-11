@@ -27,7 +27,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withPermission } from '@/lib/auth/api-guard';
 import { retentionService } from '@/shared/infrastructure/retention';
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   return withPermission(request, 'admin.retention', async () => {
     try {
       const policies = await retentionService.listPolicies();
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-      console.error('[Retention Policies] Erro ao listar:', error);
+      logger.error('[Retention Policies] Erro ao listar:', error);
       return NextResponse.json(
         {
           success: false,
@@ -53,4 +55,4 @@ export async function GET(request: NextRequest) {
       );
     }
   });
-}
+});

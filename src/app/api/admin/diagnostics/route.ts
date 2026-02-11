@@ -7,6 +7,7 @@ import {
   getTotalRequests,
 } from "@/lib/observability/request-buffer";
 import { metricsCollector } from "@/lib/observability/metrics";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -57,7 +58,7 @@ function isInternalTokenOk(req: NextRequest) {
  * 
  * @see E8.5 - Observabilidade
  */
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   const handler = async () => {
     const { searchParams } = new URL(req.url);
     const minMs = Number(searchParams.get("minMs") ?? "200");
@@ -109,4 +110,4 @@ export async function GET(req: NextRequest) {
   // Permitir acesso com token interno ou permissão admin
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, "admin.users.manage", handler);
-}
+});

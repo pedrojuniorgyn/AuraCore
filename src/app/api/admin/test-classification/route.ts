@@ -3,13 +3,15 @@ import { db, getDbRows } from "@/lib/db";
 import { inboundInvoices, accountsPayable, payableItems } from "@/lib/db/schema";
 import { eq, isNull, sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/admin/test-classification
  * Testar classificação automática de NFes existentes
  */
-export async function POST() {
+export const POST = withDI(async () => {
   try {
-    console.log("🧪 [TEST] Iniciando teste de classificação automática...");
+    logger.info("🧪 [TEST] Iniciando teste de classificação automática...");
 
     // 1. Verificar NFes existentes
     const result = await db.execute(sql`
@@ -41,7 +43,7 @@ export async function POST() {
       createdAt: inv.created_at || inv.createdAt,
     }));
 
-    console.log(`📊 [TEST] Total de NFes: ${mappedInvoices.length}`);
+    logger.info(`📊 [TEST] Total de NFes: ${mappedInvoices.length}`);
 
     // 2. Contar por classificação
     const classificationCount = {
@@ -52,12 +54,12 @@ export async function POST() {
       NULL: mappedInvoices.filter((i) => !i.classification).length,
     };
 
-    console.log("📊 [TEST] Distribuição por classificação:");
-    console.log(`  • PURCHASE (Compras): ${classificationCount.PURCHASE}`);
-    console.log(`  • CARGO (Transporte): ${classificationCount.CARGO}`);
-    console.log(`  • RETURN (Devoluções): ${classificationCount.RETURN}`);
-    console.log(`  • OTHER (Outros): ${classificationCount.OTHER}`);
-    console.log(`  • NULL (Sem classificação): ${classificationCount.NULL}`);
+    logger.info("📊 [TEST] Distribuição por classificação:");
+    logger.info(`  • PURCHASE (Compras): ${classificationCount.PURCHASE}`);
+    logger.info(`  • CARGO (Transporte): ${classificationCount.CARGO}`);
+    logger.info(`  • RETURN (Devoluções): ${classificationCount.RETURN}`);
+    logger.info(`  • OTHER (Outros): ${classificationCount.OTHER}`);
+    logger.info(`  • NULL (Sem classificação): ${classificationCount.NULL}`);
 
     // 3. Verificar contas a pagar geradas
     const payablesResult = await db.execute(sql`
@@ -84,7 +86,7 @@ export async function POST() {
     
     const payables = getDbRows<PayableRow>(payablesResult as unknown as { recordset?: PayableRow[] });
 
-    console.log(`💰 [TEST] Contas a pagar de NFe: ${payables.length}`);
+    logger.info(`💰 [TEST] Contas a pagar de NFe: ${payables.length}`);
 
     // 4. Verificar itens de contas a pagar
     const itemsResult = await db.execute(sql`
@@ -98,7 +100,7 @@ export async function POST() {
     
     const items = getDbRows<ItemCountRow>(itemsResult);
     const itemsCount = items[0]?.count || 0;
-    console.log(`📦 [TEST] Total de itens vinculados: ${itemsCount}`);
+    logger.info(`📦 [TEST] Total de itens vinculados: ${itemsCount}`);
 
     // 5. Amostra de NFes recentes para exibição
     // NOTA: .slice() mantido - dados já limitados via TOP 100 no SQL
@@ -122,11 +124,11 @@ export async function POST() {
       { total: 0, totalAmount: 0, pending: 0, paid: 0 }
     );
 
-    console.log("💰 [TEST] Estatísticas de Contas a Pagar:");
-    console.log(`  • Total: ${payableStats.total}`);
-    console.log(`  • Pendentes: ${payableStats.pending}`);
-    console.log(`  • Pagas: ${payableStats.paid}`);
-    console.log(`  • Valor Total: R$ ${payableStats.totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`);
+    logger.info("💰 [TEST] Estatísticas de Contas a Pagar:");
+    logger.info(`  • Total: ${payableStats.total}`);
+    logger.info(`  • Pendentes: ${payableStats.pending}`);
+    logger.info(`  • Pagas: ${payableStats.paid}`);
+    logger.info(`  • Valor Total: R$ ${payableStats.totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`);
 
     // 7. Validações
     const validations = {
@@ -157,7 +159,7 @@ export async function POST() {
           : `${classificationCount.NULL} NFe(s) sem classificação`,
     };
 
-    console.log("✅ [TEST] Teste concluído!");
+    logger.info("✅ [TEST] Teste concluído!");
 
     return NextResponse.json(report, { status: 200 });
   } catch (error: unknown) {
@@ -166,7 +168,7 @@ export async function POST() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ [TEST] Erro no teste:", error);
+    logger.error("❌ [TEST] Erro no teste:", error);
     return NextResponse.json(
       {
         success: false,
@@ -175,5 +177,5 @@ export async function POST() {
       { status: 500 }
     );
   }
-}
+});
 

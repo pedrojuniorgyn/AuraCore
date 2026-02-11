@@ -9,17 +9,18 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/wms/locations/[id] - Get Location by ID
  * E7.8 WMS Semana 3
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await routeCtx.params;
     
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -70,18 +71,18 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/wms/locations/[id] - Update Location
  * E7.8 WMS Semana 3
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await routeCtx.params;
     
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -147,18 +148,18 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/wms/locations/[id] - Delete Location
  * E7.8 WMS Semana 3
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await routeCtx.params;
     
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -209,5 +210,5 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});
 

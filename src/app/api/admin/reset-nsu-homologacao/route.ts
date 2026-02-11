@@ -3,12 +3,14 @@ import { db } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔄 API para resetar NSU ao trocar de PRODUÇÃO → HOMOLOGAÇÃO
  * 
  * GET /api/admin/reset-nsu-homologacao?branchId=1
  */
-export async function GET(request: Request) {
+export const GET = withDI(async (request: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -32,12 +34,12 @@ export async function GET(request: Request) {
     const oldNsu = branch.lastNsu || "0";
     const oldEnvironment = branch.environment || "null";
     
-    console.log("\n🔄 RESETANDO NSU PARA HOMOLOGAÇÃO:");
-    console.log(`   🏢 Filial #${branchId}: ${branch.name}`);
-    console.log(`   📄 CNPJ: ${branch.document}`);
-    console.log(`   🌐 Ambiente: ${oldEnvironment}`);
-    console.log(`   🔢 NSU Antigo (PRODUÇÃO): ${oldNsu}`);
-    console.log(`   🔢 NSU Novo (HOMOLOGAÇÃO): 0`);
+    logger.info("\n🔄 RESETANDO NSU PARA HOMOLOGAÇÃO:");
+    logger.info(`   🏢 Filial #${branchId}: ${branch.name}`);
+    logger.info(`   📄 CNPJ: ${branch.document}`);
+    logger.info(`   🌐 Ambiente: ${oldEnvironment}`);
+    logger.info(`   🔢 NSU Antigo (PRODUÇÃO): ${oldNsu}`);
+    logger.info(`   🔢 NSU Novo (HOMOLOGAÇÃO): 0`);
     
     // Resetar NSU para 0
     await db
@@ -45,7 +47,7 @@ export async function GET(request: Request) {
       .set({ lastNsu: "0" })
       .where(eq(branches.id, branchId));
     
-    console.log("   ✅ NSU resetado com sucesso!\n");
+    logger.info("   ✅ NSU resetado com sucesso!\n");
     
     // Buscar filial atualizada
     const [updated] = await db
@@ -72,10 +74,10 @@ export async function GET(request: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao resetar NSU:", error);
+    logger.error("❌ Erro ao resetar NSU:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

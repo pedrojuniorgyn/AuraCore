@@ -7,6 +7,8 @@ import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 import { createPickupOrderSchema } from "@/lib/validation/tms-schemas";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // ✅ S1.1 Batch 3: Schema de query para pickup orders
 const queryPickupOrdersSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -31,7 +33,7 @@ const queryPickupOrdersSchema = z.object({
  * Multi-tenancy: ✅ organizationId + branchId
  * Validação: ✅ Zod query params
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -78,13 +80,13 @@ export async function GET(req: Request) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error("❌ Erro ao buscar ordens:", error);
+    logger.error("❌ Erro ao buscar ordens:", error);
     return NextResponse.json(
       { error: "Erro ao buscar ordens", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/tms/pickup-orders
@@ -92,7 +94,7 @@ export async function GET(req: Request) {
  * Multi-tenancy: ✅ organizationId + branchId
  * Validação: ✅ Zod schema
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -176,13 +178,13 @@ export async function POST(req: Request) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error("❌ Erro ao criar ordem:", error);
+    logger.error("❌ Erro ao criar ordem:", error);
     return NextResponse.json(
       { error: "Erro ao criar ordem", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
-}
+});
 
 
 

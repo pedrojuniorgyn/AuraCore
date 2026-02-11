@@ -4,14 +4,16 @@ import { db, getDbRows } from "@/lib/db";
 import { NfeXmlParser } from "@/modules/fiscal/domain/services";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔄 Atualizar nomes de parceiros em fiscal_documents
  * 
  * Extrai o nome do emitente/remetente dos XMLs armazenados
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
-    console.log("\n🔄 Atualizando nomes de parceiros em fiscal_documents...\n");
+    logger.info("\n🔄 Atualizando nomes de parceiros em fiscal_documents...\n");
 
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -19,7 +21,7 @@ export async function GET() {
     let updated = 0;
 
     // 1️⃣ ATUALIZAR NFes
-    console.log("1️⃣ Processando NFes...");
+    logger.info("1️⃣ Processando NFes...");
     
     interface NfeRow {
       id: number;
@@ -45,7 +47,7 @@ export async function GET() {
         const parseResult = await NfeXmlParser.parse(doc.xml_content);
         
         if (Result.isFail(parseResult)) {
-          console.log(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${parseResult.error}`);
+          logger.info(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${parseResult.error}`);
           continue;
         }
         
@@ -60,17 +62,17 @@ export async function GET() {
         `);
         
         updated++;
-        console.log(`  ✅ NFe ${doc.id}: ${parsed.issuer.name} (${parsed.issuer.cnpj})`);
+        logger.info(`  ✅ NFe ${doc.id}: ${parsed.issuer.name} (${parsed.issuer.cnpj})`);
       } catch (error) {
     // Propagar erros de auth (getTenantContext throws Response)
     if (error instanceof Response) {
       return error;
     }
-        console.log(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${error}`);
+        logger.info(`  ⚠️  NFe ${doc.id}: Erro ao processar - ${error}`);
       }
     }
     
-    console.log(`\n✅ ${updated} NFes atualizadas!\n`);
+    logger.info(`\n✅ ${updated} NFes atualizadas!\n`);
 
     return NextResponse.json({
       success: true,
@@ -84,8 +86,8 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao atualizar parceiros:", error);
+    logger.error("❌ Erro ao atualizar parceiros:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

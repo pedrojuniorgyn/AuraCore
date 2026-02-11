@@ -28,6 +28,10 @@ import type { BankTransaction } from '@/modules/financial/domain/types';
 // Notification Service (FASE7-06)
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 
+// Cache & In-App Notification Adapters (E15.3 - Legacy → DDD)
+import { CacheServiceAdapter } from '@/shared/infrastructure/cache/CacheServiceAdapter';
+import { InAppNotificationAdapter } from '@/shared/infrastructure/notifications/InAppNotificationAdapter';
+
 // Stub Repository for Bank Transactions (to be replaced with real implementation)
 class StubBankTransactionRepository implements IBankTransactionRepository {
   async findByFitId(): Promise<BankTransaction | null> {
@@ -107,4 +111,11 @@ export function registerGlobalDependencies() {
   //
   // Solução: Manter como singleton global compartilhado entre módulos
   container.registerSingleton(NotificationService);
+
+  // ============================================================================
+  // CACHE & IN-APP NOTIFICATIONS (E15.3 - Legacy Service → DDD Ports+Adapters)
+  // ============================================================================
+
+  container.registerSingleton(TOKENS.CacheService, CacheServiceAdapter);
+  container.registerSingleton(TOKENS.InAppNotificationService, InAppNotificationAdapter);
 }

@@ -3,18 +3,20 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/admin/run-migration-022
  * Executa Migration 0022: Melhorias Avançadas
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    console.log("🚀 Executando Migration 0022: Melhorias Avançadas...");
+    logger.info("🚀 Executando Migration 0022: Melhorias Avançadas...");
 
     // Executar migration SQL completa
     const migrationSQL = `
@@ -131,7 +133,7 @@ export async function POST(req: Request) {
 
     await db.execute(sql.raw(migrationSQL));
 
-    console.log("✅ Migration 0022 executada com sucesso!");
+    logger.info("✅ Migration 0022 executada com sucesso!");
 
     return NextResponse.json({
       success: true,
@@ -151,13 +153,13 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao executar migration:", error);
+    logger.error("❌ Erro ao executar migration:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

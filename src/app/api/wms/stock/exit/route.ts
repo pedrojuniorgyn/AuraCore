@@ -7,12 +7,13 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * POST /api/wms/stock/exit - Register Stock Exit
  * E7.8 WMS Semana 2
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const tenantContext = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
@@ -75,5 +76,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

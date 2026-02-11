@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { z } from "zod";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
@@ -6,6 +7,7 @@ import { users } from "@/lib/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { hash } from "bcryptjs";
 
+import { logger } from '@/shared/infrastructure/logging';
 const putSchema = z.object({
   password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
 });
@@ -15,10 +17,10 @@ const putSchema = z.object({
  * Define/reset a senha (password_hash) para login via Credentials.
  * 🔐 Requer permissão: admin.users.manage
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "admin.users.manage", async (_user, ctx) => {
     try {
       const { ensureConnection } = await import("@/lib/db");
@@ -60,12 +62,12 @@ export async function PUT(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Error setting user password:", error);
+      logger.error("❌ Error setting user password:", error);
       return NextResponse.json(
         { error: "Falha ao definir senha", details: errorMessage },
         { status: 500 }
       );
     }
   });
-}
+});
 

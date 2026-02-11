@@ -9,12 +9,13 @@ import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionC
 import { Result } from '@/shared/domain';
 import { getHttpStatusFromError } from '@/lib/api/error-status';
 import { parsePaginationParams } from '@/lib/api/pagination';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/wms/inventory - List Inventory Counts
  * E7.8 WMS Semana 3
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -88,13 +89,13 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/wms/inventory - Start Inventory Count
  * E7.8 WMS Semana 2
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const tenantContext = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
@@ -157,5 +158,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

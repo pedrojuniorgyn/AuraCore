@@ -5,6 +5,7 @@ import { tripCheckpoints, trips } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { and, eq, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -38,14 +39,17 @@ const safeJson = async <T>(request: Request): Promise<T> => {
 const createUnauthorizedResponse = () =>
   NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withDI(async (
+  req: Request,
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return createUnauthorizedResponse();
     }
 
-    const resolved = await params;
+    const resolved = await context.params;
     const tripIdValidation = idSchema.safeParse(resolved.id);
     if (!tripIdValidation.success) {
       return NextResponse.json({ error: "Invalid trip id" }, { status: 400 });
@@ -97,4 +101,4 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const message = error instanceof Error ? error.message : "Error registering checkpoint";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 📊 GET /api/admin/list-ncm-categories
  * 
  * Lista TODAS as categorizações de NCM (admin)
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -54,13 +56,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao listar NCM categories:", error);
+    logger.error("❌ Erro ao listar NCM categories:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

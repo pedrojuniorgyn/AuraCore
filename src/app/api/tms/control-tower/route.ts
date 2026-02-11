@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { tripCheckpoints, trips } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, inArray } from "drizzle-orm";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const ctx = await getTenantContext();
 
@@ -73,7 +74,7 @@ export async function GET() {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

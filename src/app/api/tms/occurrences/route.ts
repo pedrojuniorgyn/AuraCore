@@ -5,6 +5,7 @@ import { tripOccurrences } from "@/lib/db/schema";
 import { getTenantContext, hasAccessToBranch } from "@/lib/auth/context";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 // ✅ S1.1 Batch 3 Phase 2: Schema inline para occurrences
 const createOccurrenceSchema = z.object({
@@ -26,7 +27,7 @@ const queryOccurrencesSchema = z.object({
   resolved: z.enum(['true', 'false']).transform((val) => val === 'true').optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -78,9 +79,9 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

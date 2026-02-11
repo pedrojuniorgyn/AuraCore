@@ -14,6 +14,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cacheManager, type CacheStats } from '@/lib/cache/CacheManager';
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = 'nodejs';
 
@@ -81,7 +83,7 @@ function validateApiKey(req: NextRequest): { valid: boolean; error?: string } {
 
   // Se não há API Key configurada, requer token interno
   if (!adminApiKey) {
-    console.warn('[SECURITY] ADMIN_API_KEY not configured, falling back to internal token only');
+    logger.warn('[SECURITY] ADMIN_API_KEY not configured, falling back to internal token only');
     return { valid: false, error: 'API Key not configured' };
   }
 
@@ -129,9 +131,9 @@ function logSecurityEvent(
   };
 
   if (eventType === 'success') {
-    console.log('[AUDIT] Cache stats accessed', logData);
+    logger.info('[AUDIT] Cache stats accessed', logData);
   } else {
-    console.warn(`[SECURITY] ${eventType.toUpperCase()} cache stats access attempt`, logData);
+    logger.warn(`[SECURITY] ${eventType.toUpperCase()} cache stats access attempt`, logData);
   }
 }
 
@@ -156,7 +158,7 @@ function logSecurityEvent(
  *   }
  * }
  */
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   // Verificar autenticação: token interno OU API Key
   if (!isInternalTokenOk(req)) {
     const apiKeyResult = validateApiKey(req);
@@ -187,7 +189,7 @@ export async function GET(req: NextRequest) {
       stats,
     });
   } catch (error) {
-    console.error('[E13] Cache stats error:', error);
+    logger.error('[E13] Cache stats error:', error);
 
     return NextResponse.json(
       {
@@ -197,7 +199,7 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/admin/cache/stats
@@ -209,7 +211,7 @@ export async function GET(req: NextRequest) {
  *   "pattern": "financial_titles:1:1"
  * }
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   // Verificar autenticação
   if (!isInternalTokenOk(req)) {
     const apiKeyResult = validateApiKey(req);
@@ -238,7 +240,7 @@ export async function POST(req: NextRequest) {
 
     const invalidatedCount = cacheManager.invalidate(pattern);
 
-    console.log('[AUDIT] Cache invalidated', {
+    logger.info('[AUDIT] Cache invalidated', {
       pattern,
       invalidatedCount,
       timestamp: new Date().toISOString(),
@@ -259,14 +261,14 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/admin/cache/stats
  *
  * Limpa todo o cache (para testes e manutenção).
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withDI(async (req: NextRequest) => {
   // Verificar autenticação
   if (!isInternalTokenOk(req)) {
     const apiKeyResult = validateApiKey(req);
@@ -285,7 +287,7 @@ export async function DELETE(req: NextRequest) {
   const previousStats = cacheManager.getStats();
   cacheManager.clear();
 
-  console.log('[AUDIT] Cache cleared', {
+  logger.info('[AUDIT] Cache cleared', {
     previousSize: previousStats.size,
     previousMemory: previousStats.memoryEstimate,
     timestamp: new Date().toISOString(),
@@ -297,4 +299,4 @@ export async function DELETE(req: NextRequest) {
     previousSize: previousStats.size,
     previousMemory: previousStats.memoryEstimate,
   });
-}
+});

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { runOpsHealthOnce } from "@/lib/ops/ops-health-runner";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ function isInternalTokenOk(req: NextRequest) {
   return false;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   const handler = async () => {
     const body = await req.json().catch(() => ({}));
     const bodyData = body as Record<string, unknown>;
@@ -28,5 +29,5 @@ export async function POST(req: NextRequest) {
 
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, "admin.users.manage", handler);
-}
+});
 

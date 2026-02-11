@@ -2,51 +2,53 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🧹 LIMPEZA COMPLETA DAS TABELAS FISCAIS
  * 
  * Limpa TODAS as tabelas fiscais (antigas + novas) para começar do zero
  */
-export async function POST() {
+export const POST = withDI(async () => {
   try {
-    console.log("🧹 Iniciando limpeza completa das tabelas fiscais...");
+    logger.info("🧹 Iniciando limpeza completa das tabelas fiscais...");
 
     // 1. Limpar nova estrutura (Fiscal → Contábil → Financeiro)
-    console.log("📋 Limpando nova estrutura...");
+    logger.info("📋 Limpando nova estrutura...");
     
     await db.execute(sql`DELETE FROM financial_transactions`);
-    console.log("  ✅ financial_transactions limpa");
+    logger.info("  ✅ financial_transactions limpa");
     
     await db.execute(sql`DELETE FROM journal_entry_lines`);
-    console.log("  ✅ journal_entry_lines limpa");
+    logger.info("  ✅ journal_entry_lines limpa");
     
     await db.execute(sql`DELETE FROM journal_entries`);
-    console.log("  ✅ journal_entries limpa");
+    logger.info("  ✅ journal_entries limpa");
     
     await db.execute(sql`DELETE FROM fiscal_document_items`);
-    console.log("  ✅ fiscal_document_items limpa");
+    logger.info("  ✅ fiscal_document_items limpa");
     
     await db.execute(sql`DELETE FROM fiscal_documents`);
-    console.log("  ✅ fiscal_documents limpa");
+    logger.info("  ✅ fiscal_documents limpa");
 
     // 2. Limpar estrutura antiga
-    console.log("📋 Limpando estrutura antiga...");
+    logger.info("📋 Limpando estrutura antiga...");
     
     // Limpar cargo_documents primeiro (tem FK para inbound_invoices)
     await db.execute(sql`DELETE FROM cargo_documents`);
-    console.log("  ✅ cargo_documents limpa");
+    logger.info("  ✅ cargo_documents limpa");
     
     await db.execute(sql`DELETE FROM inbound_invoice_items`);
-    console.log("  ✅ inbound_invoice_items limpa");
+    logger.info("  ✅ inbound_invoice_items limpa");
     
     await db.execute(sql`DELETE FROM inbound_invoices`);
-    console.log("  ✅ inbound_invoices limpa");
+    logger.info("  ✅ inbound_invoices limpa");
     
     await db.execute(sql`DELETE FROM external_ctes`);
-    console.log("  ✅ external_ctes limpa");
+    logger.info("  ✅ external_ctes limpa");
 
     // 3. Limpar FKs em contas a pagar/receber
-    console.log("📋 Limpando FKs...");
+    logger.info("📋 Limpando FKs...");
     
     await db.execute(sql`
       UPDATE accounts_payable 
@@ -54,7 +56,7 @@ export async function POST() {
           journal_entry_id = NULL 
       WHERE fiscal_document_id IS NOT NULL
     `);
-    console.log("  ✅ accounts_payable FKs limpas");
+    logger.info("  ✅ accounts_payable FKs limpas");
     
     await db.execute(sql`
       UPDATE accounts_receivable 
@@ -62,19 +64,19 @@ export async function POST() {
           journal_entry_id = NULL 
       WHERE fiscal_document_id IS NOT NULL
     `);
-    console.log("  ✅ accounts_receivable FKs limpas");
+    logger.info("  ✅ accounts_receivable FKs limpas");
 
     // 4. Resetar identities
-    console.log("🔢 Resetando identities...");
+    logger.info("🔢 Resetando identities...");
     
     await db.execute(sql`DBCC CHECKIDENT ('fiscal_documents', RESEED, 0)`);
     await db.execute(sql`DBCC CHECKIDENT ('fiscal_document_items', RESEED, 0)`);
     await db.execute(sql`DBCC CHECKIDENT ('journal_entries', RESEED, 0)`);
     await db.execute(sql`DBCC CHECKIDENT ('journal_entry_lines', RESEED, 0)`);
     await db.execute(sql`DBCC CHECKIDENT ('financial_transactions', RESEED, 0)`);
-    console.log("  ✅ Identities resetadas");
+    logger.info("  ✅ Identities resetadas");
 
-    console.log("✅ Limpeza completa concluída!");
+    logger.info("✅ Limpeza completa concluída!");
 
     return NextResponse.json({
       success: true,
@@ -107,7 +109,7 @@ export async function POST() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na limpeza:", error);
+    logger.error("❌ Erro na limpeza:", error);
     return NextResponse.json(
       { 
         success: false, 
@@ -117,5 +119,5 @@ export async function POST() {
       { status: 500 }
     );
   }
-}
+});
 

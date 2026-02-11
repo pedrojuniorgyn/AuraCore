@@ -11,6 +11,8 @@ import {
 } from "@/lib/db/schema/accounting";
 import { sql as rawSql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔄 MIGRAÇÃO DE DADOS FISCAIS
  * 
@@ -21,9 +23,9 @@ import { sql as rawSql } from "drizzle-orm";
  * 
  * Mantém rastreabilidade via fiscal_document_id
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
-    console.log("\n🔄 Iniciando Migração de Dados Fiscais...\n");
+    logger.info("\n🔄 Iniciando Migração de Dados Fiscais...\n");
 
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -33,7 +35,7 @@ export async function GET() {
     let cteMigrated = 0;
 
     // 1️⃣ MIGRAR NFe (inbound_invoices → fiscal_documents)
-    console.log("1️⃣ Migrando NFes (inbound_invoices → fiscal_documents)...");
+    logger.info("1️⃣ Migrando NFes (inbound_invoices → fiscal_documents)...");
     
     const result = await db.execute(rawSql`
       INSERT INTO fiscal_documents (
@@ -123,10 +125,10 @@ export async function GET() {
     `);
 
     nfeMigrated = ((result as unknown as Record<string, unknown>).rows as Array<Record<string, unknown>>)?.[0]?.affected_rows as number || 0;
-    console.log(`✅ ${nfeMigrated} NFes migradas`);
+    logger.info(`✅ ${nfeMigrated} NFes migradas`);
 
     // 2️⃣ MIGRAR NFe ITEMS
-    console.log("\n2️⃣ Migrando Itens de NFe...");
+    logger.info("\n2️⃣ Migrando Itens de NFe...");
     
     const itemsResult = await db.execute(rawSql`
       INSERT INTO fiscal_document_items (
@@ -189,10 +191,10 @@ export async function GET() {
     `);
 
     nfeItemsMigrated = ((itemsResult as unknown as Record<string, unknown>).rows as Array<Record<string, unknown>>)?.[0]?.affected_rows as number || 0;
-    console.log(`✅ ${nfeItemsMigrated} itens de NFe migrados`);
+    logger.info(`✅ ${nfeItemsMigrated} itens de NFe migrados`);
 
     // 3️⃣ MIGRAR CTe (external_ctes → fiscal_documents)
-    console.log("\n3️⃣ Migrando CTes (external_ctes → fiscal_documents)...");
+    logger.info("\n3️⃣ Migrando CTes (external_ctes → fiscal_documents)...");
     
     const cteResult = await db.execute(rawSql`
       INSERT INTO fiscal_documents (
@@ -268,10 +270,10 @@ export async function GET() {
     `);
 
     cteMigrated = ((cteResult as unknown as Record<string, unknown>).rows as Array<Record<string, unknown>>)?.[0]?.affected_rows as number || 0;
-    console.log(`✅ ${cteMigrated} CTes migrados`);
+    logger.info(`✅ ${cteMigrated} CTes migrados`);
 
     // 4️⃣ ATUALIZAR FKs em accounts_payable/receivable
-    console.log("\n4️⃣ Atualizando FKs em accounts_payable...");
+    logger.info("\n4️⃣ Atualizando FKs em accounts_payable...");
     
     await db.execute(rawSql`
       UPDATE ap
@@ -282,9 +284,9 @@ export async function GET() {
       WHERE ap.fiscal_document_id IS NULL;
     `);
 
-    console.log("✅ FKs atualizadas em accounts_payable");
+    logger.info("✅ FKs atualizadas em accounts_payable");
 
-    console.log("\n5️⃣ Atualizando FKs em accounts_receivable...");
+    logger.info("\n5️⃣ Atualizando FKs em accounts_receivable...");
     
     await db.execute(rawSql`
       UPDATE ar
@@ -295,14 +297,14 @@ export async function GET() {
       WHERE ar.fiscal_document_id IS NULL;
     `);
 
-    console.log("✅ FKs atualizadas em accounts_receivable");
+    logger.info("✅ FKs atualizadas em accounts_receivable");
 
-    console.log("\n✅ Migração concluída com sucesso!");
-    console.log("\n📊 Resumo:");
-    console.log(`  ✅ ${nfeMigrated} NFes migradas`);
-    console.log(`  ✅ ${nfeItemsMigrated} itens de NFe migrados`);
-    console.log(`  ✅ ${cteMigrated} CTes migrados`);
-    console.log(`  ✅ FKs atualizadas\n`);
+    logger.info("\n✅ Migração concluída com sucesso!");
+    logger.info("\n📊 Resumo:");
+    logger.info(`  ✅ ${nfeMigrated} NFes migradas`);
+    logger.info(`  ✅ ${nfeItemsMigrated} itens de NFe migrados`);
+    logger.info(`  ✅ ${cteMigrated} CTes migrados`);
+    logger.info(`  ✅ FKs atualizadas\n`);
 
     return NextResponse.json({
       success: true,
@@ -319,11 +321,11 @@ export async function GET() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro na migração:", error);
+    logger.error("❌ Erro na migração:", error);
     return NextResponse.json(
       { error: errorMessage, stack: (error instanceof Error ? error.stack : undefined) },
       { status: 500 }
     );
   }
-}
+});
 

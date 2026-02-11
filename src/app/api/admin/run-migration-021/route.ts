@@ -3,18 +3,20 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/admin/run-migration-021
  * Executa Migration 0021: Integração Centros de Custo
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    console.log("🚀 Executando Migration 0021: Integração Centros de Custo...");
+    logger.info("🚀 Executando Migration 0021: Integração Centros de Custo...");
 
     // 1. Adicionar cost_center_id em journal_entry_lines
     await db.execute(sql`
@@ -96,7 +98,7 @@ export async function POST(req: Request) {
       END
     `);
 
-    console.log("✅ Migration 0021 executada com sucesso!");
+    logger.info("✅ Migration 0021 executada com sucesso!");
 
     return NextResponse.json({
       success: true,
@@ -114,13 +116,13 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao executar migration:", error);
+    logger.error("❌ Erro ao executar migration:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

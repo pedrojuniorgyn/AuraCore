@@ -9,12 +9,13 @@ import { getHttpStatusFromError } from '@/lib/api/error-status';
 import { parsePaginationParams } from '@/lib/api/pagination';
 import { parseNumberParam } from '@/lib/api/number-params';
 import { parseBooleanParam } from '@/lib/api/boolean-params';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * GET /api/wms/stock - List Stock Items
  * E7.8 WMS Semana 3
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // Get tenant context (multi-tenancy)
     const tenantContext = await getTenantContext();
@@ -125,5 +126,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

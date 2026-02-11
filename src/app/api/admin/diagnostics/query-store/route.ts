@@ -12,6 +12,8 @@ import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { withPermission } from '@/lib/auth/api-guard';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const runtime = 'nodejs';
 
 // Interfaces para tipagem dos resultados
@@ -94,7 +96,7 @@ function isInternalTokenOk(req: NextRequest): boolean {
  *   "missingIndexes": [...]
  * }
  */
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   const handler = async () => {
     const { searchParams } = new URL(req.url);
     const limit = Math.min(Math.max(1, Number(searchParams.get('limit') ?? '20')), 100);
@@ -289,7 +291,7 @@ export async function GET(req: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-      console.error('[Query Store Diagnostics] Error:', error);
+      logger.error('[Query Store Diagnostics] Error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return NextResponse.json(
         { 
@@ -305,7 +307,7 @@ export async function GET(req: NextRequest) {
   // Permitir acesso com token interno ou permissão admin
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, 'admin.users.manage', handler);
-}
+});
 
 /**
  * POST /api/admin/diagnostics/query-store
@@ -317,7 +319,7 @@ export async function GET(req: NextRequest) {
  * - maxStorageSizeMb (optional): Tamanho máximo em MB (default 1000)
  * - staleQueryThresholdDays (optional): Dias para manter queries (default 30)
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   const handler = async () => {
     try {
       const body = await req.json();
@@ -377,7 +379,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-      console.error('[Query Store Enable/Disable] Error:', error);
+      logger.error('[Query Store Enable/Disable] Error:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       return NextResponse.json(
         { 
@@ -393,4 +395,4 @@ export async function POST(req: NextRequest) {
   // Apenas admin pode habilitar/desabilitar Query Store
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, 'admin.users.manage', handler);
-}
+});

@@ -11,18 +11,19 @@ import { container } from "@/shared/infrastructure/di/container";
 import { WMS_TOKENS } from "@/modules/wms/infrastructure/di/WmsModule";
 import type { IWmsBillingGateway } from "@/modules/wms/domain/ports/output/IWmsBillingGateway";
 import { Result } from "@/shared/domain";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const preInvoiceId = parseInt(resolvedParams.id);
     const invoiceNumber = `NFS-${Date.now().toString().slice(-8)}`;
 
@@ -59,4 +60,4 @@ export async function POST(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 // ✅ S1.1 Batch 3 Phase 2: Schemas inline para billing-events
 const createBillingEventSchema = z.object({
@@ -19,7 +20,7 @@ const queryBillingEventsSchema = z.object({
   status: z.enum(['PENDING', 'INVOICED', 'PAID', 'CANCELLED']).optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     
@@ -71,9 +72,9 @@ export async function GET(request: NextRequest) {
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const body = await request.json();
     
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withPermission } from "@/lib/auth/api-guard";
 import { listRequestLogs } from "@/lib/observability/request-buffer";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,7 @@ function isInternalTokenOk(req: NextRequest) {
  * - minMs (default 200)
  * - sinceMinutes (default 30)
  */
-export async function GET(req: NextRequest) {
+export const GET = withDI(async (req: NextRequest) => {
   const handler = async () => {
     const { searchParams } = new URL(req.url);
     const limit = Number(searchParams.get("limit") ?? "50");
@@ -57,5 +58,5 @@ export async function GET(req: NextRequest) {
   // Permitimos acesso com token interno; caso contrário, exige permissão ADMIN.
   if (isInternalTokenOk(req)) return handler();
   return withPermission(req, "admin.users.manage", handler);
-}
+});
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFirstRow, getDbRows } from "@/lib/db/helpers";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 interface ChecksResult {
   tables_found?: string[];
@@ -32,7 +33,7 @@ interface TestResults {
  * 
  * Verifica a estrutura do banco e testa a importação
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection, pool } = await import("@/lib/db");
     await ensureConnection();
@@ -211,5 +212,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

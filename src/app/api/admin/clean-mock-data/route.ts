@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * API de Limpeza de Dados Mock - AuraCore
@@ -18,7 +19,7 @@ interface CleanResult {
   error?: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   // Verificar se é ambiente de desenvolvimento
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
@@ -183,12 +184,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET para verificar status e contagem de registros mock
  */
-export async function GET() {
+export const GET = withDI(async () => {
   // Verificar se é ambiente de desenvolvimento
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
@@ -256,4 +257,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});

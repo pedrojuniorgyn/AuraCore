@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { permissions } from "@/lib/db/schema";
@@ -11,10 +12,10 @@ import { eq } from "drizzle-orm";
  * Edita description e module de uma permissão.
  * O slug é imutável e não pode ser alterado.
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   return withPermission(request, "admin.roles.manage", async (_user, _ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -75,4 +76,4 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: updated });
   });
-}
+});

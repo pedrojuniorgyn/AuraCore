@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
-export async function POST() {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async () => {
   try {
-    console.log("🔧 Criando tabela notifications...");
+    logger.info("🔧 Criando tabela notifications...");
 
     // Verificar se tabela já existe
     const tableCheck = await db.execute(sql`
@@ -17,7 +19,7 @@ export async function POST() {
     const tableExists = (tableData[0]?.count || 0) > 0;
 
     if (tableExists) {
-      console.log("⚠️  Tabela notifications já existe, pulando...");
+      logger.info("⚠️  Tabela notifications já existe, pulando...");
       return NextResponse.json({
         success: true,
         message: "Tabela notifications já existe",
@@ -46,37 +48,37 @@ export async function POST() {
       )
     `);
 
-    console.log("✅ Tabela notifications criada!");
+    logger.info("✅ Tabela notifications criada!");
 
     // Criar índices
     try {
       await db.execute(sql`
         CREATE INDEX idx_notifications_user ON notifications(user_id, is_read, created_at DESC)
       `);
-      console.log("✅ Índice user criado!");
+      logger.info("✅ Índice user criado!");
     } catch (e) {
-      console.log("⚠️  Índice user já existe");
+      logger.info("⚠️  Índice user já existe");
     }
 
     try {
       await db.execute(sql`
         CREATE INDEX idx_notifications_org ON notifications(organization_id, created_at DESC)
       `);
-      console.log("✅ Índice org criado!");
+      logger.info("✅ Índice org criado!");
     } catch (e) {
-      console.log("⚠️  Índice org já existe");
+      logger.info("⚠️  Índice org já existe");
     }
 
     try {
       await db.execute(sql`
         CREATE INDEX idx_notifications_type ON notifications(type, created_at DESC)
       `);
-      console.log("✅ Índice type criado!");
+      logger.info("✅ Índice type criado!");
     } catch (e) {
-      console.log("⚠️  Índice type já existe");
+      logger.info("⚠️  Índice type já existe");
     }
 
-    console.log("✅ Tabela notifications criada com sucesso!");
+    logger.info("✅ Tabela notifications criada com sucesso!");
 
     return NextResponse.json({
       success: true,
@@ -88,11 +90,11 @@ export async function POST() {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar tabela:", error);
+    logger.error("❌ Erro ao criar tabela:", error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

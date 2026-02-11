@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { getTenantContext } from "@/lib/auth/context";
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
-    console.log("🌱 Iniciando seed de contas contábeis Enterprise");
+    logger.info("🌱 Iniciando seed de contas contábeis Enterprise");
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
@@ -206,11 +208,11 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro no seed:", error);
+    logger.error("❌ Erro no seed:", error);
     return NextResponse.json({
       success: false,
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 

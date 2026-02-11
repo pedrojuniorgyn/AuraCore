@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
 import { accounts, sessions, userBranches, userRoles, users } from "@/lib/db/schema";
@@ -9,7 +10,7 @@ import { and, eq, isNull } from "drizzle-orm";
  * Soft delete de usuário (multi-tenant) + revogação de sessões.
  * 🔐 Requer permissão: admin.users.manage
  */
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export const DELETE = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "admin.users.manage", async (_user, ctx) => {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -52,5 +53,5 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
     return NextResponse.json({ success: true });
   });
-}
+});
 
