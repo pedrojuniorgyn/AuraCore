@@ -30,7 +30,7 @@ const postSchema = z.object({
 // GET - Listar versões de uma estratégia
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
@@ -38,12 +38,14 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const strategyRepo = container.resolve<IStrategyRepository>(
       STRATEGIC_TOKENS.StrategyRepository
     );
 
     const versions = await strategyRepo.findAllVersions(
-      params.id,
+      id,
       ctx.organizationId,
       ctx.branchId
     );
@@ -68,13 +70,15 @@ export async function GET(
 // POST - Criar nova versão
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { id } = await params;
 
     let body;
     try {
@@ -93,7 +97,7 @@ export async function POST(
 
     const useCase = container.resolve(CreateStrategyVersionUseCase);
     const result = await useCase.execute({
-      sourceStrategyId: params.id,
+      sourceStrategyId: id,
       versionType: parseResult.data.versionType,
       versionName: parseResult.data.versionName,
       organizationId: ctx.organizationId,

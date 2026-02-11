@@ -3,11 +3,11 @@ import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
 import { BRANCH_COOKIE_NAME } from "@/lib/tenant/branch-cookie";
 
-// Middleware roda em Edge Runtime: não pode importar libs Node (ex.: mssql).
-// Por isso usamos o authConfig "leve" (sem adapter/providers) apenas para ler o JWT/cookie.
+// Proxy roda em Node.js runtime (Next.js 16+).
+// Usamos o authConfig "leve" (sem adapter/providers) apenas para ler o JWT/cookie.
 const { auth } = NextAuth(authConfig);
 
-export default auth((req) => {
+export const proxy = auth((req) => {
   const isLoggedIn = !!req.auth;
   const pathname = req.nextUrl.pathname;
   const isOnLogin = pathname.startsWith("/login");
@@ -15,7 +15,7 @@ export default auth((req) => {
   const isApiAdmin = pathname.startsWith("/api/admin");
 
   // === Branch scoping (automático) ===
-  // Para evitar “esquecer” x-branch-id em fetches, injetamos o header em /api/** quando faltar:
+  // Para evitar "esquecer" x-branch-id em fetches, injetamos o header em /api/** quando faltar:
   // - primeiro pelo cookie HttpOnly (setado por /api/tenant/branch)
   // - fallback: defaultBranchId do usuário (se existir no token)
   //
