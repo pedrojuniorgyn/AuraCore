@@ -53,6 +53,7 @@ async function encryptExistingSecrets() {
   }
 
   console.log('✅ Migration complete!');
+  process.exit(0);
 }
 
 encryptExistingSecrets().catch((err) => {
