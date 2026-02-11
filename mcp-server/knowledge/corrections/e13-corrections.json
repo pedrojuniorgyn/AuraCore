@@ -75,6 +75,22 @@
       "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
+    },
+    {
+      "id": "LC-350147",
+      "date": "2026-02-11",
+      "epic": "E13",
+      "error": "Schema gap: trip_checkpoints faltando updated_at (SCHEMA-005). Console.error usando console.error diretamente em catch handler de chart-accounts API route ao invés de structured logger.",
+      "correction": "1) Adicionado updatedAt a tripCheckpoints em src/lib/db/schema.ts. 2) Criada migration 0068_add_trip_checkpoints_updated_at.sql com IF NOT EXISTS idempotente. 3) Substituído .catch(console.error) por .catch((err: unknown) => logger.error(...)) em chart-accounts/[id]/route.ts (2 ocorrências).",
+      "files_affected": [
+        "src/lib/db/schema.ts",
+        "drizzle/migrations/0068_add_trip_checkpoints_updated_at.sql",
+        "src/app/api/financial/chart-accounts/[id]/route.ts",
+        "docs/technical-debt/SCHEMA_GAPS_E8.4.md"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
     }
   ]
 }

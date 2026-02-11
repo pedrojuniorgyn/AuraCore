@@ -27,4 +27,3 @@ export type {
   GeneratedJournalLine,
   JournalEntryGenerationResult,
 } from './AccountingEngine';
-

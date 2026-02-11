@@ -1,8 +1,8 @@
 # Schema Gaps Identificados - E8.4
 
-**Data:** 2026-01-19  
+**Data:** 2026-01-19 (atualizado 2026-02-11)  
 **Épico:** E8.4 - Performance Migration  
-**Status:** Documentado para correção futura  
+**Status:** ✅ TODOS RESOLVIDOS (E13.2)  
 **Responsável:** Equipe Backend
 
 ---
@@ -158,3 +158,4 @@ const stops = await db.select().from(tripStops);
 | Data | Autor | Alteração |
 |------|-------|-----------|
 | 2026-01-19 | Claude | Criação inicial baseada em auditoria E8.4 |
+| 2026-02-11 | AuraCore Team | Todos gaps resolvidos (E13.2). Migrations: 0037, 0038, 0065, 0068. Schemas Drizzle atualizados. |
