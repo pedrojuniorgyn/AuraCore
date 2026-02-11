@@ -11,7 +11,7 @@ import {
   CreateJournalEntryInputSchema, 
   CreateJournalEntryOutput 
 } from '../dtos/CreateJournalEntryDTO';
-import { ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from '../use-cases/BaseUseCase';
 
 /**
  * Use Case: Criar Lançamento Contábil

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CreateJournalEntryUseCase } from '@/modules/accounting/application/use-cases/CreateJournalEntryUseCase';
+import { CreateJournalEntryUseCase } from '@/modules/accounting/application/commands/CreateJournalEntryUseCase';
 import type { IJournalEntryRepository } from '@/modules/accounting/domain/ports/output/IJournalEntryRepository';
 import { Result } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';

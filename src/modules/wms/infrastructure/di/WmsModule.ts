@@ -16,28 +16,26 @@ export const WMS_TOKENS = {
   BillingGateway: Symbol.for('IWmsBillingGateway'),
 };
 
-// Command Use Cases (existentes - Semana 2)
-import { RegisterStockEntry } from '../../application/use-cases/RegisterStockEntry';
-import { RegisterStockExit } from '../../application/use-cases/RegisterStockExit';
-import { TransferStock } from '../../application/use-cases/TransferStock';
-import { CreateLocation } from '../../application/use-cases/CreateLocation';
-import { StartInventoryCount } from '../../application/use-cases/StartInventoryCount';
-import { CompleteInventoryCount } from '../../application/use-cases/CompleteInventoryCount';
+// Commands (ARCH-012)
+import { RegisterStockEntry } from '../../application/commands/RegisterStockEntry';
+import { RegisterStockExit } from '../../application/commands/RegisterStockExit';
+import { TransferStock } from '../../application/commands/TransferStock';
+import { CreateLocation } from '../../application/commands/CreateLocation';
+import { UpdateLocation } from '../../application/commands/UpdateLocation';
+import { DeleteLocation } from '../../application/commands/DeleteLocation';
+import { StartInventoryCount } from '../../application/commands/StartInventoryCount';
+import { CompleteInventoryCount } from '../../application/commands/CompleteInventoryCount';
 
-// Command Use Cases (novos - Semana 3)
-import { UpdateLocation } from '../../application/use-cases/UpdateLocation';
-import { DeleteLocation } from '../../application/use-cases/DeleteLocation';
-
-// Query Use Cases (Semana 3)
-import { GetLocationById } from '../../application/use-cases/queries/GetLocationById';
-import { ListLocations } from '../../application/use-cases/queries/ListLocations';
-import { GetStockItemById } from '../../application/use-cases/queries/GetStockItemById';
-import { ListStockItems } from '../../application/use-cases/queries/ListStockItems';
-import { GetStockByProduct } from '../../application/use-cases/queries/GetStockByProduct';
-import { GetInventoryCountById } from '../../application/use-cases/queries/GetInventoryCountById';
-import { ListInventoryCounts } from '../../application/use-cases/queries/ListInventoryCounts';
-import { GetMovementById } from '../../application/use-cases/queries/GetMovementById';
-import { ListMovements } from '../../application/use-cases/queries/ListMovements';
+// Queries (ARCH-013)
+import { GetLocationById } from '../../application/queries/GetLocationById';
+import { ListLocations } from '../../application/queries/ListLocations';
+import { GetStockItemById } from '../../application/queries/GetStockItemById';
+import { ListStockItems } from '../../application/queries/ListStockItems';
+import { GetStockByProduct } from '../../application/queries/GetStockByProduct';
+import { GetInventoryCountById } from '../../application/queries/GetInventoryCountById';
+import { ListInventoryCounts } from '../../application/queries/ListInventoryCounts';
+import { GetMovementById } from '../../application/queries/GetMovementById';
+import { ListMovements } from '../../application/queries/ListMovements';
 
 /**
  * WmsModule - Dependency Injection Configuration

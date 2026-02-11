@@ -2,7 +2,7 @@ import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IMovementRepository } from '@/modules/wms/domain/ports/output/IMovementRepository';
 import type { IGetMovementById, GetMovementByIdInput, GetMovementByIdOutput } from '@/modules/wms/domain/ports/input';
-import type { ExecutionContext } from '../../dtos/ExecutionContext';
+import type { ExecutionContext } from '../dtos/ExecutionContext';
 
 /**
  * GetMovementById Query - E7.8 WMS Semana 2

@@ -2,13 +2,15 @@ import { container } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { DrizzleJournalEntryRepository } from '../persistence/DrizzleJournalEntryRepository';
 import { DrizzleFiscalAccountingRepository } from '../persistence/DrizzleFiscalAccountingRepository';
-import { CreateJournalEntryUseCase } from '../../application/use-cases/CreateJournalEntryUseCase';
-import { AddLineToEntryUseCase } from '../../application/use-cases/AddLineToEntryUseCase';
-import { PostJournalEntryUseCase } from '../../application/use-cases/PostJournalEntryUseCase';
-import { ReverseJournalEntryUseCase } from '../../application/use-cases/ReverseJournalEntryUseCase';
-import { ListJournalEntriesUseCase } from '../../application/use-cases/ListJournalEntriesUseCase';
-import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJournalEntryByIdUseCase';
-import { GenerateJournalEntryUseCase } from '../../application/use-cases/GenerateJournalEntryUseCase';
+// Commands (ARCH-012)
+import { CreateJournalEntryUseCase } from '../../application/commands/CreateJournalEntryUseCase';
+import { AddLineToEntryUseCase } from '../../application/commands/AddLineToEntryUseCase';
+import { PostJournalEntryUseCase } from '../../application/commands/PostJournalEntryUseCase';
+import { ReverseJournalEntryUseCase } from '../../application/commands/ReverseJournalEntryUseCase';
+import { GenerateJournalEntryUseCase } from '../../application/commands/GenerateJournalEntryUseCase';
+// Queries (ARCH-013)
+import { ListJournalEntriesUseCase } from '../../application/queries/ListJournalEntriesUseCase';
+import { GetJournalEntryByIdUseCase } from '../../application/queries/GetJournalEntryByIdUseCase';
 
 // Gateways (E9 Fase 1 + Fase 2)
 import { ManagementAccountingAdapter } from '../adapters/ManagementAccountingAdapter';

@@ -20,7 +20,7 @@ import type {
 } from '../../domain/ports/input';
 import { JournalEntry } from '../../domain/entities/JournalEntry';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
-import { ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from '../use-cases/BaseUseCase';
 
 const ReverseJournalEntryInputSchema = z.object({
   journalEntryId: z.string().uuid('Invalid journal entry ID'),

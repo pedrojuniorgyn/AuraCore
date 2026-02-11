@@ -42,36 +42,44 @@ import { CnabAdapter } from '../adapters/CnabAdapter';
 import { DomainEventDispatcher } from '../events/DomainEventDispatcher';
 
 // ============================================================
-// USE CASES - PAYABLES (Contas a Pagar)
+// COMMANDS - PAYABLES (Contas a Pagar) (ARCH-012)
 // ============================================================
-import { CreatePayableUseCase } from '../../application/use-cases/CreatePayableUseCase';
-import { GetPayableByIdUseCase } from '../../application/use-cases/GetPayableByIdUseCase';
-import { ListPayablesUseCase } from '../../application/use-cases/ListPayablesUseCase';
-import { PayAccountPayableUseCase } from '../../application/use-cases/PayAccountPayableUseCase';
-import { CancelPayableUseCase } from '../../application/use-cases/CancelPayableUseCase';
+import { CreatePayableUseCase } from '../../application/commands/CreatePayableUseCase';
+import { PayAccountPayableUseCase } from '../../application/commands/PayAccountPayableUseCase';
+import { CancelPayableUseCase } from '../../application/commands/CancelPayableUseCase';
 
 // ============================================================
-// USE CASES - RECEIVABLES (Contas a Receber)
+// QUERIES - PAYABLES (ARCH-013)
 // ============================================================
-import { CreateReceivableUseCase } from '../../application/use-cases/CreateReceivableUseCase';
-import { GetReceivableByIdUseCase } from '../../application/use-cases/GetReceivableByIdUseCase';
-import { ListReceivablesUseCase } from '../../application/use-cases/ListReceivablesUseCase';
-import { ReceivePaymentUseCase } from '../../application/use-cases/ReceivePaymentUseCase';
-import { CancelReceivableUseCase } from '../../application/use-cases/CancelReceivableUseCase';
+import { GetPayableByIdUseCase } from '../../application/queries/GetPayableByIdUseCase';
+import { ListPayablesUseCase } from '../../application/queries/ListPayablesUseCase';
 
 // ============================================================
-// USE CASES - FINANCIAL TITLES (Títulos Financeiros)
+// COMMANDS - RECEIVABLES (Contas a Receber) (ARCH-012)
 // ============================================================
-import { GeneratePayableTitleUseCase } from '../../application/use-cases/GeneratePayableTitleUseCase';
-import { GenerateReceivableTitleUseCase } from '../../application/use-cases/GenerateReceivableTitleUseCase';
-import { ReverseTitlesUseCase } from '../../application/use-cases/ReverseTitlesUseCase';
+import { CreateReceivableUseCase } from '../../application/commands/CreateReceivableUseCase';
+import { ReceivePaymentUseCase } from '../../application/commands/ReceivePaymentUseCase';
+import { CancelReceivableUseCase } from '../../application/commands/CancelReceivableUseCase';
 
 // ============================================================
-// USE CASES - EXPENSE REPORTS (Prestação de Contas)
+// QUERIES - RECEIVABLES (ARCH-013)
 // ============================================================
-import { SubmitExpenseReportUseCase } from '../../application/use-cases/expense/SubmitExpenseReportUseCase';
-import { ApproveExpenseReportUseCase } from '../../application/use-cases/expense/ApproveExpenseReportUseCase';
-import { RejectExpenseReportUseCase } from '../../application/use-cases/expense/RejectExpenseReportUseCase';
+import { GetReceivableByIdUseCase } from '../../application/queries/GetReceivableByIdUseCase';
+import { ListReceivablesUseCase } from '../../application/queries/ListReceivablesUseCase';
+
+// ============================================================
+// COMMANDS - FINANCIAL TITLES (Títulos Financeiros)
+// ============================================================
+import { GeneratePayableTitleUseCase } from '../../application/commands/GeneratePayableTitleUseCase';
+import { GenerateReceivableTitleUseCase } from '../../application/commands/GenerateReceivableTitleUseCase';
+import { ReverseTitlesUseCase } from '../../application/commands/ReverseTitlesUseCase';
+
+// ============================================================
+// COMMANDS - EXPENSE REPORTS (Prestação de Contas)
+// ============================================================
+import { SubmitExpenseReportUseCase } from '../../application/commands/expense/SubmitExpenseReportUseCase';
+import { ApproveExpenseReportUseCase } from '../../application/commands/expense/ApproveExpenseReportUseCase';
+import { RejectExpenseReportUseCase } from '../../application/commands/expense/RejectExpenseReportUseCase';
 
 // ============================================================
 // USE CASES - BANK STATEMENT (Extrato Bancário)

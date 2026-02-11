@@ -1,4 +1,4 @@
-import { Result, Money, BaseDomainEvent } from '@/shared/domain';
+import { AggregateRoot, Result, Money, BaseDomainEvent } from '@/shared/domain';
 import { FiscalDocumentItem } from './FiscalDocumentItem';
 import { 
   DocumentType, 
@@ -93,26 +93,25 @@ export interface FiscalDocumentProps {
 
 /**
  * Aggregate Root: Documento Fiscal
+ * 
+ * Extends AggregateRoot<string> per ARCH-007 / ENTITY-001
  */
-export class FiscalDocument {
+export class FiscalDocument extends AggregateRoot<string> {
   private _props: FiscalDocumentProps;
-  private readonly _createdAt: Date;
-  private _updatedAt: Date;
-  private readonly _domainEvents: BaseDomainEvent[] = [];
 
   private constructor(
     props: FiscalDocumentProps,
     createdAt: Date,
     updatedAt: Date
   ) {
-    this._props = props;
-    this._createdAt = createdAt;
+    super(props.id, createdAt);
     this._updatedAt = updatedAt;
+    this._props = props;
   }
 
   // ============ GETTERS ============
+  // Note: id, createdAt, updatedAt, domainEvents inherited from AggregateRoot
 
-  get id(): string { return this._props.id; }
   get organizationId(): number { return this._props.organizationId; }
   get branchId(): number { return this._props.branchId; }
   get documentType(): DocumentType { return this._props.documentType; }
@@ -168,9 +167,7 @@ export class FiscalDocument {
   get cancellationReason(): string | undefined { return this._props.cancellationReason; }
   
   get version(): number { return this._props.version; }
-  get createdAt(): Date { return this._createdAt; }
-  get updatedAt(): Date { return this._updatedAt; }
-  get domainEvents(): readonly BaseDomainEvent[] { return [...this._domainEvents]; }
+  // createdAt, updatedAt, domainEvents inherited from AggregateRoot
 
   // ============ COMPUTED ============
 
@@ -328,7 +325,7 @@ export class FiscalDocument {
     this._updatedAt = new Date();
     this._props.version++;
 
-    this._domainEvents.push(
+    this.addDomainEvent(
       new FiscalDocumentSubmittedEvent(this.id, {
         documentType: this.documentType,
         number: this.number,
@@ -382,7 +379,7 @@ export class FiscalDocument {
     this._updatedAt = new Date();
     this._props.version++;
 
-    this._domainEvents.push(
+    this.addDomainEvent(
       new FiscalDocumentAuthorizedEvent(this.id, {
         fiscalKey: params.fiscalKey.value,
         protocolNumber: params.protocolNumber,
@@ -433,7 +430,7 @@ export class FiscalDocument {
     this._updatedAt = new Date();
     this._props.version++;
 
-    this._domainEvents.push(
+    this.addDomainEvent(
       new FiscalDocumentCancelledEvent(this.id, {
         reason: params.reason,
         protocolNumber: params.protocolNumber,
@@ -522,12 +519,7 @@ export class FiscalDocument {
     return Result.ok(undefined);
   }
 
-  /**
-   * Limpa eventos
-   */
-  clearDomainEvents(): void {
-    this._domainEvents.length = 0;
-  }
+  // clearDomainEvents() inherited from AggregateRoot
 
   // ============ FACTORY ============
 

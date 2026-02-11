@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CreatePayableUseCase } from '@/modules/financial/application/use-cases/CreatePayableUseCase';
+import { CreatePayableUseCase } from '@/modules/financial/application/commands/CreatePayableUseCase';
 import { IPayableRepository } from '@/modules/financial/domain/ports/output/IPayableRepository';
 import { Result } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';

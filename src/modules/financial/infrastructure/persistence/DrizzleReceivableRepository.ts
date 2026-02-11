@@ -12,8 +12,8 @@ import type {
   ReceivableSummary 
 } from '../../domain/ports/output/IReceivableRepository';
 import type { AccountReceivable } from '../../domain/entities/AccountReceivable';
-import { accountsReceivableTable, type AccountReceivableRow } from './ReceivableSchema';
-import { ReceivableMapper } from './ReceivableMapper';
+import { accountsReceivableTable, type AccountReceivableRow } from './schemas/ReceivableSchema';
+import { ReceivableMapper } from './mappers/ReceivableMapper';
 
 // Type helper para contornar limitações de tipagem do Drizzle MSSQL
 // Tipos antigos removidos - usamos inline type assertion (HOTFIX S3)

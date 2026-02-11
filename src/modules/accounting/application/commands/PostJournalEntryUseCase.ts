@@ -8,7 +8,7 @@ import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 import { publishAggregateEvents } from '@/shared/application/helpers/publishAggregateEvents';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
-import { ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from '../use-cases/BaseUseCase';
 
 const PostJournalEntryInputSchema = z.object({
   journalEntryId: z.string().uuid('Invalid journal entry ID'),

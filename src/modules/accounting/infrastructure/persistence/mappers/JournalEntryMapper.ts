@@ -1,13 +1,13 @@
 import { Result, Money } from '@/shared/domain';
-import { JournalEntry, JournalEntrySource, JournalEntryStatus } from '../../domain/entities/JournalEntry';
-import { JournalEntryLine, EntryType } from '../../domain/entities/JournalEntryLine';
-import { AccountingPeriod } from '../../domain/value-objects/AccountingPeriod';
+import { JournalEntry, JournalEntrySource, JournalEntryStatus } from '../../../domain/entities/JournalEntry';
+import { JournalEntryLine, EntryType } from '../../../domain/entities/JournalEntryLine';
+import { AccountingPeriod } from '../../../domain/value-objects/AccountingPeriod';
 import { 
   JournalEntryRow, 
   JournalEntryInsert,
   JournalEntryLineRow,
   JournalEntryLineInsert 
-} from './JournalEntrySchema';
+} from '../schemas/JournalEntrySchema';
 
 /**
  * Mapper: Converte entre Domain Models e Persistence Models

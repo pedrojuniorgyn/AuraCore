@@ -8,7 +8,7 @@ import type {
   GetStockByProductOutput, 
   StockByLocationItem 
 } from '@/modules/wms/domain/ports/input';
-import type { ExecutionContext } from '../../dtos/ExecutionContext';
+import type { ExecutionContext } from '../dtos/ExecutionContext';
 import type { StockItem } from '@/modules/wms/domain/entities/StockItem';
 
 /**

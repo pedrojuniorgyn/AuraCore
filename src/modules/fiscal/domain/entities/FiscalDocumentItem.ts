@@ -1,4 +1,4 @@
-import { Result, Money } from '@/shared/domain';
+import { Entity, Result, Money } from '@/shared/domain';
 import { CFOP } from '../value-objects/CFOP';
 import { IBSCBSGroup } from '../tax/value-objects/IBSCBSGroup';
 import { InvalidItemValueError, InvalidNCMError } from '../errors/FiscalErrors';
@@ -35,18 +35,19 @@ export interface FiscalDocumentItemProps {
 
 /**
  * Entity: Item de Documento Fiscal
+ * 
+ * Extends Entity<string> per ARCH-007 / ENTITY-001
  */
-export class FiscalDocumentItem {
+export class FiscalDocumentItem extends Entity<string> {
   private readonly _props: FiscalDocumentItemProps;
-  private readonly _createdAt: Date;
 
   private constructor(props: FiscalDocumentItemProps, createdAt: Date) {
+    super(props.id, createdAt);
     this._props = props;
-    this._createdAt = createdAt;
   }
 
   // Getters
-  get id(): string { return this._props.id; }
+  // Note: id, createdAt inherited from Entity
   get documentId(): string { return this._props.documentId; }
   get itemNumber(): number { return this._props.itemNumber; }
   get productId(): string | undefined { return this._props.productId; }
@@ -68,7 +69,7 @@ export class FiscalDocumentItem {
   get pisValue(): Money | undefined { return this._props.pisValue; }
   get cofinsValue(): Money | undefined { return this._props.cofinsValue; }
   get ibsCbsGroup(): IBSCBSGroup | undefined { return this._props.ibsCbsGroup; }
-  get createdAt(): Date { return this._createdAt; }
+  // createdAt inherited from Entity
 
   /**
    * Valor líquido (total - desconto)

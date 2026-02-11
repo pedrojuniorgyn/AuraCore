@@ -9,8 +9,8 @@ import {
   PaginationOptions,
   PaginatedResult 
 } from '../../domain/ports/output/IPayableRepository';
-import { PayableMapper } from './PayableMapper';
-import { accountsPayableTable, paymentsTable, type AccountPayableRow } from './PayableSchema';
+import { PayableMapper } from './mappers/PayableMapper';
+import { accountsPayableTable, paymentsTable, type AccountPayableRow } from './schemas/PayableSchema';
 import { Result } from '@/shared/domain';
 
 /**

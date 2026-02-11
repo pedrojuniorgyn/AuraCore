@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PayAccountPayableUseCase } from '@/modules/financial/application/use-cases/PayAccountPayableUseCase';
+import { PayAccountPayableUseCase } from '@/modules/financial/application/commands/PayAccountPayableUseCase';
 import { IPayableRepository } from '@/modules/financial/domain/ports/output/IPayableRepository';
 import { AccountPayable } from '@/modules/financial/domain/entities/AccountPayable';
 import { PaymentTerms } from '@/modules/financial/domain/value-objects/PaymentTerms';

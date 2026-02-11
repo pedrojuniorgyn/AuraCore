@@ -2,8 +2,8 @@ import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IStockRepository } from '@/modules/wms/domain/ports/output/IStockRepository';
 import type { IListStockItems, ListStockItemsInput, StockItemListItem } from '@/modules/wms/domain/ports/input';
-import type { ExecutionContext } from '../../dtos/ExecutionContext';
-import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
+import type { ExecutionContext } from '../dtos/ExecutionContext';
+import type { PaginatedResponse } from '../dtos/ListQueryDTO';
 
 /**
  * ListStockItems Query - E7.8 WMS Semana 2
