@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { 
   int, 
   bigint, 
+  bit, // E11.1: TOTP boolean fields
   nvarchar, 
   datetime2, 
   decimal, 
@@ -67,6 +68,12 @@ export const users = mssqlTable("users", {
   // Data Scoping por Filial
   defaultBranchId: int("default_branch_id"), // Filial padrão ao logar (FK removida para evitar dependência circular)
   
+  // 2FA/TOTP (E11.1 - GAP-SEC-003)
+  totpSecret: nvarchar("totp_secret", { length: 255 }), // Encrypted TOTP secret (base32)
+  totpEnabled: bit("totp_enabled").default(false).notNull(), // Whether 2FA is active
+  totpBackupCodes: nvarchar("totp_backup_codes", { length: "max" }), // JSON array of hashed backup codes
+  totpVerifiedAt: datetime2("totp_verified_at", { precision: 3 }), // When 2FA was successfully set up
+
   // Enterprise Base
   createdAt: datetime2("created_at", { precision: 3 }).default(sql`GETDATE()`),
   updatedAt: datetime2("updated_at", { precision: 3 }).default(sql`GETDATE()`),
@@ -3212,5 +3219,6 @@ export * from '@/agent/persistence/schemas/agent-messages.schema';
 export * from '@/shared/infrastructure/audit/audit.schema';
 export * from '@/shared/infrastructure/audit/audit-log.schema';
 export * from '@/shared/infrastructure/retention/retention.schema';
+export * from '@/shared/infrastructure/events/outbox/outbox.schema';
 
 // 🛑 PARE AQUI! NÃO DEIXE MAIS NADA ABAIXO DESTA LINHA 🛑
