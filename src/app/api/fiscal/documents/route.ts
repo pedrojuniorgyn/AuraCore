@@ -12,10 +12,9 @@ import {
   getHttpStatusFromError 
 } from '@/modules/fiscal/presentation/validators';
 import { toFiscalDocumentResponseDTO } from '@/modules/fiscal/application/dtos';
-import { initializeFiscalModule } from '@/modules/fiscal/infrastructure/bootstrap';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-// Garantir DI registrado (idempotente - seguro chamar múltiplas vezes)
-initializeFiscalModule();
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * POST /api/fiscal/documents
@@ -26,7 +25,7 @@ initializeFiscalModule();
  * Validação: ✅ Zod schema
  * DDD: ✅ Use Case
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Contexto multi-tenant (OBRIGATÓRIO)
     const ctx = await getTenantContext();
@@ -74,14 +73,14 @@ export async function POST(request: NextRequest) {
       return error;
     }
     
-    console.error('[POST /api/fiscal/documents]', error);
+    logger.error('[POST /api/fiscal/documents]', error);
     return NextResponse.json({
       success: false,
       error: 'Erro interno ao criar documento fiscal',
       details: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 /**
  * GET /api/fiscal/documents
@@ -92,7 +91,7 @@ export async function POST(request: NextRequest) {
  * Paginação: ✅ page, limit
  * Filtros: status, documentType, issueDateFrom, issueDateTo
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // 1. Contexto multi-tenant (OBRIGATÓRIO)
     const ctx = await getTenantContext();
@@ -154,11 +153,11 @@ export async function GET(request: NextRequest) {
       return error;
     }
     
-    console.error('[GET /api/fiscal/documents]', error);
+    logger.error('[GET /api/fiscal/documents]', error);
     return NextResponse.json({
       success: false,
       error: 'Erro interno ao listar documentos fiscais',
       details: errorMessage
     }, { status: 500 });
   }
-}
+});

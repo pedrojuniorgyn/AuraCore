@@ -11,6 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Cálculo de prioridade estratégica (1-10)
 function calculateStrategicPriority(impact: number, probability: number): number {
   // Fórmula: (impacto * probabilidade) / 2.5
@@ -158,7 +159,7 @@ export const GET = withDI(async (request: NextRequest) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[SWOT Grid] Error:', error);
+    logger.error('[SWOT Grid] Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

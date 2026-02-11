@@ -7,6 +7,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 interface ExportRequestBody {
@@ -22,7 +24,7 @@ interface ExportRequestBody {
   includeHistory?: boolean;
 }
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const session = await auth();
     if (!session) {
@@ -84,10 +86,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/export error:', error);
+    logger.error('POST /api/strategic/export error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

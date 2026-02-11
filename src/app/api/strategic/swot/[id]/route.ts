@@ -20,6 +20,7 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import { SwotItem, type SwotCategory } from '@/modules/strategic/domain/entities/SwotItem';
+import { logger } from '@/shared/infrastructure/logging';
 
 const updateSwotItemSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(200).optional(),
@@ -64,7 +65,7 @@ export const GET = withDI(async (_request: NextRequest, context: RouteContext) =
 
     return Response.json(item, { status: 200 });
   } catch (error) {
-    console.error('[GET /api/strategic/swot/[id]] Error:', error);
+    logger.error('[GET /api/strategic/swot/[id]] Error', error);
     return Response.json(
       { success: false, error: 'Internal Server Error' },
       { status: 500 }
@@ -92,10 +93,7 @@ export const PUT = withDI(async (request: NextRequest, context: RouteContext) =>
     // ✅ BUG-FIX: Defense-in-depth - Validar null/empty SE fornecido explicitamente
     // (undefined = campo omitido = OK, null/'' = campo fornecido inválido = ERRO)
     if (payload.strategyId !== undefined && (payload.strategyId === null || payload.strategyId === '')) {
-      console.error('[PUT /api/strategic/swot/[id]] strategyId null/empty:', {
-        payload: JSON.stringify(payload, null, 2),
-        strategyId: payload.strategyId
-      });
+      logger.error('[PUT /api/strategic/swot/[id]] strategyId null/empty', { payload: JSON.stringify(payload, null, 2), strategyId: payload.strategyId });
       
       return Response.json(
         { 
@@ -161,7 +159,7 @@ export const PUT = withDI(async (request: NextRequest, context: RouteContext) =>
           );
         }
       } catch (error) {
-        console.error('[PUT /api/strategic/swot/[id]] Error validating strategy:', error);
+        logger.error('[PUT /api/strategic/swot/[id]] Error validating strategy', error);
         return Response.json(
           { 
             success: false, 
@@ -232,7 +230,7 @@ export const PUT = withDI(async (request: NextRequest, context: RouteContext) =>
       );
     }
 
-    console.error('[PUT /api/strategic/swot/[id]] Error:', error);
+    logger.error('[PUT /api/strategic/swot/[id]] Error', error);
     return Response.json(
       { success: false, error: 'Internal Server Error' },
       { status: 500 }
@@ -287,7 +285,7 @@ export const DELETE = withDI(async (_request: NextRequest, context: RouteContext
 
     return Response.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('[DELETE /api/strategic/swot/[id]] Error:', error);
+    logger.error('[DELETE /api/strategic/swot/[id]] Error', error);
     return Response.json(
       { success: false, error: 'Internal Server Error' },
       { status: 500 }

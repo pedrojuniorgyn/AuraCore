@@ -7,6 +7,7 @@ import { cteHeader, businessPartners, cteCargoDocuments, branches } from "@/lib/
 import { eq } from "drizzle-orm";
 import PDFDocument from "pdfkit";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/fiscal/cte/:id/dacte
  * Gera PDF do DACTE (Documento Auxiliar do CTe)
@@ -80,7 +81,7 @@ export const GET = withDI(async (
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao gerar DACTE:", error);
+      logger.error("❌ Erro ao gerar DACTE:", error);
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
   });

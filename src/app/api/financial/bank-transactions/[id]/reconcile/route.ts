@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { queryFirst } from "@/lib/db/query-helpers";
@@ -14,10 +15,10 @@ const BodySchema = z.object({
   reconciled: z.enum(["S", "N"]).optional(), // default S
 });
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withDI(async (req: NextRequest, context: RouteContext) => {
   try {
     const ctx = await getTenantContext();
-    const { id } = await params;
+    const { id } = await context.params;
     const txId = Number(id);
     if (!Number.isFinite(txId) || txId <= 0) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
@@ -61,5 +62,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const message = error instanceof Error ? error.message : "Erro ao conciliar";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});
 

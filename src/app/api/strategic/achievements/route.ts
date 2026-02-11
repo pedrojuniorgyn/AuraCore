@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import { ACHIEVEMENTS } from '@/lib/gamification/achievement-definitions';
 import type { UserAchievement } from '@/lib/gamification/gamification-types';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 // Mock user achievements store
 const userAchievementsStore = new Map<string, UserAchievement[]>();
@@ -40,7 +41,7 @@ function initializeMockData(userId: string) {
   userAchievementsStore.set(userId, userAchievements);
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   const ctx = await getTenantContext();
   const userId = ctx.userId;
 
@@ -49,4 +50,4 @@ export async function GET() {
   const achievements = userAchievementsStore.get(userId) || [];
 
   return NextResponse.json({ achievements });
-}
+});

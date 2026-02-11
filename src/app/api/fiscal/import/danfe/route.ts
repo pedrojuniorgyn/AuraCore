@@ -15,7 +15,9 @@ import { auth } from '@/lib/auth';
 import { container } from '@/shared/infrastructure/di';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IImportDANFeUseCase } from '@/modules/fiscal/domain/ports/input';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -48,7 +50,7 @@ const UPLOAD_DIR = 'docker/docling/uploads';
  * console.log('Emitente:', danfe.emitente.razaoSocial);
  * ```
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const POST = withDI(async (request: NextRequest): Promise<NextResponse> => {
   // 1. Autenticação
   const session = await auth();
   if (!session?.user) {
@@ -149,20 +151,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('[POST /api/fiscal/import/danfe] Erro:', message);
+    logger.error('[POST /api/fiscal/import/danfe] Erro:', message);
 
     return NextResponse.json(
       { error: `Erro interno: ${message}` },
       { status: 500 }
     );
   }
-}
+});
 
 // ============================================================================
 // OPTIONS (CORS)
 // ============================================================================
 
-export async function OPTIONS(): Promise<NextResponse> {
+export const OPTIONS = withDI(async (_req: NextRequest): Promise<NextResponse> => {
   return new NextResponse(null, {
     status: 200,
     headers: {
@@ -170,4 +172,4 @@ export async function OPTIONS(): Promise<NextResponse> {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
-}
+});

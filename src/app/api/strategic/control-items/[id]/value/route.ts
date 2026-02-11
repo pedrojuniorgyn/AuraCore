@@ -8,19 +8,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getTenantContext } from '@/lib/auth/context';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const updateValueSchema = z.object({
   value: z.number(),
   observedAt: z.string().transform((s) => new Date(s)).optional(),
   notes: z.string().optional(),
 });
 
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     await getTenantContext(); // Validates auth
-    const { id } = await params;
+    const { id } = await context.params;
 
     const body = await request.json();
     const validation = updateValueSchema.safeParse(body);
@@ -53,7 +55,7 @@ export async function PUT(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PUT /api/strategic/control-items/[id]/value error:', error);
+    logger.error('PUT /api/strategic/control-items/[id]/value error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

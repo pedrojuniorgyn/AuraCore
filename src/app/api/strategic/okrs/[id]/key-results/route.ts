@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { KeyResult } from '@/lib/okrs/okr-types';
 
-export async function GET(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id: okrId } = await params;
+  context: RouteContext
+) => {
+  const { id: okrId } = await context.params;
 
   // Get OKR and return its key results
   const response = await fetch(
@@ -18,13 +20,13 @@ export async function GET(
 
   const okr = await response.json();
   return NextResponse.json({ keyResults: okr.keyResults || [] });
-}
+});
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id: okrId } = await params;
+  context: RouteContext
+) => {
+  const { id: okrId } = await context.params;
 
   try {
     const body = await request.json();
@@ -66,7 +68,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error creating Key Result:', error);
+    logger.error('Error creating Key Result:', error);
     return NextResponse.json({ error: 'Failed to create Key Result' }, { status: 500 });
   }
-}
+});

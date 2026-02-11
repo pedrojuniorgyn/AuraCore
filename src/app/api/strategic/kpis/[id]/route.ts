@@ -17,6 +17,8 @@ import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKP
 import { KPI, type KPIPolarity, type KPIFrequency } from '@/modules/strategic/domain/entities/KPI';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().trim().uuid('Invalid kpi id');
 
 const updateKPISchema = z.object({
@@ -30,16 +32,16 @@ const updateKPISchema = z.object({
 });
 
 // GET /api/strategic/kpis/[id]
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
@@ -85,22 +87,22 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/kpis/[id] error:', error);
+    logger.error('GET /api/strategic/kpis/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // PUT /api/strategic/kpis/[id]
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
@@ -196,22 +198,22 @@ export async function PUT(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('PUT /api/strategic/kpis/[id] error:', error);
+    logger.error('PUT /api/strategic/kpis/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/strategic/kpis/[id]
-export async function DELETE(
+export const DELETE = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'Invalid kpi id' }, { status: 400 });
@@ -237,7 +239,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/kpis/[id] error:', error);
+    logger.error('DELETE /api/strategic/kpis/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

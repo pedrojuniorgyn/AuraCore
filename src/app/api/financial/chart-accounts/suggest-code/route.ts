@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
+import { logger } from '@/shared/infrastructure/logging';
 // Interfaces para queries SQL
 interface MaxCodeResult {
   max_code: number | null;
@@ -20,7 +22,7 @@ interface ParentCodeResult {
  * GET /api/financial/chart-accounts/suggest-code?parentId=123
  * Sugere próximo código significativo baseado no pai
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const ctx = await getTenantContext();
 
@@ -102,13 +104,13 @@ export async function GET(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao sugerir código:", error);
+    logger.error("❌ Erro ao sugerir código:", error);
     return NextResponse.json(
       { error: "Erro ao sugerir código" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

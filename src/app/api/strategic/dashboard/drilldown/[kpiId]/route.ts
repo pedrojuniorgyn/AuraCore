@@ -7,12 +7,14 @@
 import 'reflect-metadata';
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { GetDrilldownQuery } from '@/modules/strategic/application/queries/GetDrilldownQuery';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/strategic/dashboard/drilldown/{kpiId}?months=12
  * Get detailed KPI data with history and action plans
@@ -20,10 +22,10 @@ import '@/modules/strategic/infrastructure/di/StrategicModule';
  * @param kpiId - KPI UUID
  * @param months - Number of months of history to return (default: 12, range: 1-36)
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ kpiId: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -31,7 +33,7 @@ export async function GET(
     }
 
     const params = await context.params;
-    const { kpiId } = params;
+    const kpiId = (params as Record<string, string>).kpiId;
 
     if (!kpiId) {
       return NextResponse.json(
@@ -73,10 +75,10 @@ export async function GET(
       data: result.value,
     });
   } catch (error) {
-    console.error('Error getting KPI detail:', error);
+    logger.error('Error getting KPI detail:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

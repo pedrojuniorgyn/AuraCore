@@ -9,15 +9,17 @@ import { getTenantContext } from '@/lib/auth/context';
 import type { WarRoom } from '@/lib/war-room/war-room-types';
 import { getWarRoom, setWarRoom, deleteWarRoom, hasWarRoom } from '../_store';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
-    const { id } = await params;
+    const { id } = await context.params;
 
     const warRoom = getWarRoom(ctx.organizationId, id);
 
@@ -30,18 +32,18 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/war-room/[id] error:', error);
+    logger.error('GET /api/strategic/war-room/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
-    const { id } = await params;
+    const { id } = await context.params;
 
     const warRoom = getWarRoom(ctx.organizationId, id);
 
@@ -64,18 +66,18 @@ export async function PATCH(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating war room:', error);
+    logger.error('Error updating war room:', error);
     return NextResponse.json({ error: 'Failed to update war room' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
-    const { id } = await params;
+    const { id } = await context.params;
 
     if (!hasWarRoom(ctx.organizationId, id)) {
       return NextResponse.json({ error: 'War Room não encontrada' }, { status: 404 });
@@ -88,7 +90,7 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error deleting war room:', error);
+    logger.error('Error deleting war room:', error);
     return NextResponse.json({ error: 'Failed to delete war room' }, { status: 500 });
   }
-}
+});

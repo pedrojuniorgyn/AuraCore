@@ -10,6 +10,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Tipo para resultado do banco
@@ -34,13 +36,13 @@ const idParamSchema = z.object({
 });
 
 // GET - Obter ciclo PDCA específico
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     
     const validation = idParamSchema.safeParse(resolvedParams);
     if (!validation.success) {
@@ -108,22 +110,22 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/pdca/[id] error:', error);
+    logger.error('GET /api/strategic/pdca/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 // DELETE - Não permitido (histórico de auditoria não pode ser deletado)
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   // Suprimir parâmetros não usados
   void request;
-  void params;
+  void context;
   
   return NextResponse.json(
     { error: 'Ciclos PDCA são registros de auditoria e não podem ser deletados' },
     { status: 403 }
   );
-}
+});

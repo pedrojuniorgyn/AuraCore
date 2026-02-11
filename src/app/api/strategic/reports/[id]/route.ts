@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export const GET = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // TODO: Fetch from database
     // For now, return mock data
@@ -29,19 +31,19 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error fetching report:', error);
+    logger.error('Error fetching report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export const PUT = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     
     // FIX Bug 6: Validar que ID não é undefined
     if (!id || id === 'undefined') {
@@ -51,7 +53,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const config = await request.json();
 
     // TODO: Update in database
-    console.log('Updating report:', id, config);
+    logger.info('Updating report:', id, config);
 
     // FIX Bug 6: SEMPRE retornar o ID no response
     return NextResponse.json({ 
@@ -64,22 +66,22 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating report:', error);
+    logger.error('Error updating report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export const DELETE = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // TODO: Delete from database
-    console.log('Deleting report:', id);
+    logger.info('Deleting report:', id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -87,7 +89,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error deleting report:', error);
+    logger.error('Error deleting report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

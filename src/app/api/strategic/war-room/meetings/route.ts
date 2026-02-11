@@ -17,6 +17,8 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const createMeetingSchema = z.object({
   strategyId: z.string().uuid().optional(),
   meetingType: z.enum(['BOARD', 'DIRECTOR', 'MANAGER', 'TACTICAL', 'EMERGENCY']),
@@ -30,7 +32,7 @@ const createMeetingSchema = z.object({
 });
 
 // GET /api/strategic/war-room/meetings
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
     const { searchParams } = new URL(request.url);
@@ -83,7 +85,7 @@ export async function GET(request: NextRequest) {
       const foundIds = new Set(facilitators.map(f => f.id));
       for (const userId of facilitatorIds) {
         if (!foundIds.has(userId)) {
-          console.warn(`[DATA_CONSISTENCY] Facilitator ID ${userId} não encontrado na tabela users`);
+          logger.warn(`[DATA_CONSISTENCY] Facilitator ID ${userId} não encontrado na tabela users`);
         }
       }
     }
@@ -116,13 +118,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/war-room/meetings error:', error);
+    logger.error('GET /api/strategic/war-room/meetings error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // POST /api/strategic/war-room/meetings
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -203,7 +205,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/war-room/meetings error:', error);
+    logger.error('POST /api/strategic/war-room/meetings error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

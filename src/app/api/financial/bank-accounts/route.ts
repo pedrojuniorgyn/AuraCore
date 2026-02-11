@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db, ensureConnection } from "@/lib/db";
 import { bankAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/financial/bank-accounts
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -30,18 +32,18 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar contas bancárias:", error);
+    logger.error("❌ Erro ao listar contas bancárias:", error);
     return NextResponse.json(
       { error: "Falha ao listar contas", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/financial/bank-accounts
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -83,10 +85,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar conta bancária:", error);
+    logger.error("❌ Erro ao criar conta bancária:", error);
     return NextResponse.json(
       { error: "Falha ao criar conta", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

@@ -10,6 +10,7 @@ import 'reflect-metadata';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
@@ -24,6 +25,7 @@ import type { IApprovalPermissionRepository } from '@/modules/strategic/domain/p
 import type { ApprovalPermissionService } from '@/modules/strategic/application/services/ApprovalPermissionService';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
 const workflowActionSchema = z.object({
   action: z.enum(['submit', 'approve', 'reject', 'requestChanges']),
   userId: z.number().int().positive(),
@@ -35,14 +37,15 @@ const workflowActionSchema = z.object({
  * POST /api/strategic/strategies/{id}/workflow
  * Execute workflow action
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const tenantContext = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
-    const { id: strategyId } = await context.params;
+    const params = await context.params;
+    const strategyId = (params as Record<string, string>).id;
 
     if (!strategyId) {
       return NextResponse.json(
@@ -201,7 +204,7 @@ export async function POST(
       await historyRepo.save(historyEntry);
     } catch (historyError) {
       const errorMsg = historyError instanceof Error ? historyError.message : String(historyError);
-      console.error('❌ Falha ao salvar histórico de aprovação:', errorMsg);
+      logger.error('❌ Falha ao salvar histórico de aprovação:', errorMsg);
       // Estratégia já foi salva - retornar HTTP 200 com warning.
       // Usar success: true porque a operação principal (workflow action) foi bem-sucedida.
       // O warning indica que o audit trail está incompleto, mas a ação foi executada.
@@ -234,7 +237,7 @@ export async function POST(
       branchId
     ).catch((notifError) => {
       // Log error mas não falha a request (notificações são best-effort)
-      console.error('❌ Erro ao enviar notificações de workflow:', notifError);
+      logger.error('❌ Erro ao enviar notificações de workflow:', notifError);
     });
 
     return NextResponse.json({
@@ -250,13 +253,13 @@ export async function POST(
     if (error instanceof NextResponse) {
       return error; // Return original 401/403/400 response
     }
-    console.error('Error executing workflow action:', error);
+    logger.error('Error executing workflow action:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Envia notificações de workflow (email + in-app)
@@ -310,7 +313,7 @@ async function sendWorkflowNotifications(
           });
           
           if (Result.isFail(inAppResult)) {
-            console.warn(`⚠️ Falha ao criar notificação in-app para aprovador ${approverUserId}: ${inAppResult.error}`);
+            logger.warn(`⚠️ Falha ao criar notificação in-app para aprovador ${approverUserId}: ${inAppResult.error}`);
             inAppFailed++;
           } else {
             inAppSuccess++;
@@ -331,7 +334,7 @@ async function sendWorkflowNotifications(
           });
           
           if (!emailResult.success) {
-            console.warn(`⚠️ Falha ao enviar email para ${email}: ${emailResult.error}`);
+            logger.warn(`⚠️ Falha ao enviar email para ${email}: ${emailResult.error}`);
             emailFailed++;
           } else {
             emailSuccess++;
@@ -357,7 +360,7 @@ async function sendWorkflowNotifications(
           });
           
           if (Result.isFail(inAppResult)) {
-            console.warn(`⚠️ Falha ao criar notificação in-app para submitter ${strategy.submittedByUserId}: ${inAppResult.error}`);
+            logger.warn(`⚠️ Falha ao criar notificação in-app para submitter ${strategy.submittedByUserId}: ${inAppResult.error}`);
             inAppFailed++;
           } else {
             inAppSuccess++;
@@ -378,7 +381,7 @@ async function sendWorkflowNotifications(
             });
             
             if (!emailResult.success) {
-              console.warn(`⚠️ Falha ao enviar email para ${submitterEmail}: ${emailResult.error}`);
+              logger.warn(`⚠️ Falha ao enviar email para ${submitterEmail}: ${emailResult.error}`);
               emailFailed++;
             } else {
               emailSuccess++;
@@ -405,7 +408,7 @@ async function sendWorkflowNotifications(
           });
           
           if (Result.isFail(inAppResult)) {
-            console.warn(`⚠️ Falha ao criar notificação in-app para submitter ${strategy.submittedByUserId}: ${inAppResult.error}`);
+            logger.warn(`⚠️ Falha ao criar notificação in-app para submitter ${strategy.submittedByUserId}: ${inAppResult.error}`);
             inAppFailed++;
           } else {
             inAppSuccess++;
@@ -426,7 +429,7 @@ async function sendWorkflowNotifications(
             });
             
             if (!emailResult.success) {
-              console.warn(`⚠️ Falha ao enviar email para ${submitterEmailReject}: ${emailResult.error}`);
+              logger.warn(`⚠️ Falha ao enviar email para ${submitterEmailReject}: ${emailResult.error}`);
               emailFailed++;
             } else {
               emailSuccess++;
@@ -453,7 +456,7 @@ async function sendWorkflowNotifications(
           });
           
           if (Result.isFail(inAppResult)) {
-            console.warn(`⚠️ Falha ao criar notificação in-app para submitter ${strategy.submittedByUserId}: ${inAppResult.error}`);
+            logger.warn(`⚠️ Falha ao criar notificação in-app para submitter ${strategy.submittedByUserId}: ${inAppResult.error}`);
             inAppFailed++;
           } else {
             inAppSuccess++;
@@ -474,7 +477,7 @@ async function sendWorkflowNotifications(
             });
             
             if (!emailResult.success) {
-              console.warn(`⚠️ Falha ao enviar email para ${submitterEmailChanges}: ${emailResult.error}`);
+              logger.warn(`⚠️ Falha ao enviar email para ${submitterEmailChanges}: ${emailResult.error}`);
               emailFailed++;
             } else {
               emailSuccess++;
@@ -487,12 +490,10 @@ async function sendWorkflowNotifications(
 
     // Log resumo das notificações
     if (inAppFailed > 0 || emailFailed > 0) {
-      console.warn(
-        `⚠️ Notificações com falhas: inApp=${inAppSuccess}/${inAppSuccess + inAppFailed}, email=${emailSuccess}/${emailSuccess + emailFailed}`
-      );
+      logger.warn(`⚠️ Notificações com falhas: inApp=${inAppSuccess}/${inAppSuccess + inAppFailed}, email=${emailSuccess}/${emailSuccess + emailFailed}`);
     }
 
-    console.log(`✅ Notificações de workflow enviadas: action=${action}, strategyId=${strategy.id}`);
+    logger.info(`✅ Notificações de workflow enviadas: action=${action}, strategyId=${strategy.id}`);
   } catch (error) {
     // Re-throw para ser capturado pelo caller
     throw error;
@@ -503,14 +504,15 @@ async function sendWorkflowNotifications(
  * GET /api/strategic/strategies/{id}/workflow
  * Get workflow history
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const tenantContext = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, tenantContext);
-    const { id: strategyId } = await context.params;
+    const params = await context.params;
+    const strategyId = (params as Record<string, string>).id;
 
     if (!strategyId) {
       return NextResponse.json(
@@ -548,10 +550,10 @@ export async function GET(
     if (error instanceof NextResponse) {
       return error; // Return original 401/403/400 response
     }
-    console.error('Error getting workflow history:', error);
+    logger.error('Error getting workflow history:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

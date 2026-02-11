@@ -13,6 +13,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { GetDrilldownQuery, type PerspectiveDrilldown, type GoalDrilldown, type KPIDrilldown } from '@/modules/strategic/application/queries/GetDrilldownQuery';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 
+import { logger } from '@/shared/infrastructure/logging';
 const drilldownSchema = z.object({
   level: z.enum(['perspective', 'goal', 'kpi'], { message: 'Invalid level' }),
   strategyId: z.string().trim().min(1, { message: 'strategyId is required' }),
@@ -90,7 +91,7 @@ export const GET = withDI(async (request: Request) => {
       data: result.value,
     });
   } catch (error) {
-    console.error('Error in drilldown:', error);
+    logger.error('Error in drilldown:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -7,6 +7,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 interface StrategicSettings {
@@ -62,7 +64,7 @@ const DEFAULT_SETTINGS: StrategicSettings = {
   warRoom: { autoRefresh: true, refreshInterval: 30, defaultPage: 'war-room' },
 };
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session) {
@@ -81,15 +83,15 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/settings error:', error);
+    logger.error('GET /api/strategic/settings error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(request: Request) {
+export const PUT = withDI(async (request: Request) => {
   try {
     const session = await auth();
     if (!session) {
@@ -117,7 +119,7 @@ export async function PUT(request: Request) {
     // const settingsRepo = container.resolve<IUserSettingsRepository>(STRATEGIC_TOKENS.UserSettingsRepository);
     // await settingsRepo.save(session.user.id, settings);
 
-    console.log('Saving strategic settings for user:', session.user?.id, settings);
+    logger.info('Saving strategic settings for user:', session.user?.id, settings);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -125,10 +127,10 @@ export async function PUT(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('PUT /api/strategic/settings error:', error);
+    logger.error('PUT /api/strategic/settings error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

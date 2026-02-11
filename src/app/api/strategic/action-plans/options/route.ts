@@ -13,9 +13,11 @@ import { container } from '@/shared/infrastructure/di/container';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/output/IStrategicGoalRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session) {
@@ -51,7 +53,7 @@ export async function GET() {
         }));
       }
     } catch (error) {
-      console.warn('[action-plans/options] Error fetching goals:', error);
+      logger.warn('[action-plans/options] Error fetching goals:', error);
     }
 
     // ========================================
@@ -92,7 +94,7 @@ export async function GET() {
       }));
       usersFromDb = true;
     } catch (error) {
-      console.warn('[action-plans/options] Error fetching users:', error);
+      logger.warn('[action-plans/options] Error fetching users:', error);
       // Fallback: tentar buscar do contexto da sessão pelo menos
       if (session.user) {
         users = [{
@@ -132,7 +134,7 @@ export async function GET() {
         departmentsFromDb = true;
       }
     } catch (error) {
-      console.warn('[action-plans/options] Error fetching departments:', error);
+      logger.warn('[action-plans/options] Error fetching departments:', error);
     }
 
     // Fallback se não encontrar departamentos
@@ -173,7 +175,7 @@ export async function GET() {
       }));
       branchesFromDb = true;
     } catch (error) {
-      console.warn('[action-plans/options] Error fetching branches:', error);
+      logger.warn('[action-plans/options] Error fetching branches:', error);
       // Fallback com filial atual
       branches = [{ id: String(branchId), name: 'Filial Atual' }];
     }
@@ -198,10 +200,10 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/action-plans/options error:', error);
+    logger.error('GET /api/strategic/action-plans/options error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

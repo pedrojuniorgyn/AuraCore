@@ -13,6 +13,7 @@ import { inboundInvoices } from '@/lib/db/schema';
 import { eq, and, sql, count } from 'drizzle-orm';
 import { getTenantContext } from '@/lib/auth/context';
 
+import { logger } from '@/shared/infrastructure/logging';
 interface FiscalDocumentSummary {
   total: number;
   pending: number;
@@ -102,7 +103,7 @@ export const GET = withDI(async (_request: NextRequest) => {
     return NextResponse.json(summary);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[Fiscal Documents Summary] Error:', error);
+    logger.error('[Fiscal Documents Summary] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: 'Failed to fetch summary', details: message },

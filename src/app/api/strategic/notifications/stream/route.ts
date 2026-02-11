@@ -7,10 +7,12 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   // Autenticação
   const session = await auth();
   if (!session?.user) {
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
             encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
           );
         } catch (e) {
-          console.error('SSE send error:', e);
+          logger.error('SSE send error:', e);
         }
       };
 
@@ -87,4 +89,4 @@ export async function GET(request: NextRequest) {
       'X-Accel-Buffering': 'no', // Disable nginx buffering
     },
   });
-}
+});

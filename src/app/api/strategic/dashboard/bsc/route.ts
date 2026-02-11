@@ -56,6 +56,8 @@ import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/S
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IGetBSCDashboardUseCase } from '@/modules/strategic/application/queries/GetBSCDashboardQuery';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 registerStrategicModule();
 
 const querySchema = z.object({
@@ -64,7 +66,7 @@ const querySchema = z.object({
   comparison: z.enum(['YoY', 'MoM', 'QoQ', 'NONE']).default('YoY'),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -97,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: result });
   } catch (error) {
-    console.error('[bsc-dashboard] Error:', error);
+    logger.error('[bsc-dashboard] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

@@ -11,6 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 interface KanbanCard {
   id: string;
   code: string;
@@ -103,7 +104,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/action-plans/kanban error:', error);
+    logger.error('GET /api/strategic/action-plans/kanban error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

@@ -17,6 +17,8 @@ import type { AnomalyStatus, AnomalySeverity, AnomalySource } from '@/modules/st
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 registerStrategicModule();
 
 const createAnomalySchema = z.object({
@@ -30,7 +32,7 @@ const createAnomalySchema = z.object({
 });
 
 // GET /api/strategic/anomalies
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -81,13 +83,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/anomalies error:', error);
+    logger.error('GET /api/strategic/anomalies error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // POST /api/strategic/anomalies
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -148,7 +150,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/anomalies error:', error);
+    logger.error('POST /api/strategic/anomalies error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

@@ -22,6 +22,7 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IKPIRepository } from '@/modules/strategic/domain/ports/output/IKPIRepository';
 import { CacheService, CacheTTL } from '@/services/cache.service';
 
+import { logger } from '@/shared/infrastructure/logging';
 const createKPISchema = z.object({
   goalId: z.string().trim().uuid().optional(),
   code: z.string().trim().min(1).max(20),
@@ -129,7 +130,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/kpis error:', error);
+    logger.error('GET /api/strategic/kpis error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
@@ -175,7 +176,7 @@ export const POST = withDI(async (request: Request) => {
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/kpis error:', error);
+    logger.error('POST /api/strategic/kpis error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

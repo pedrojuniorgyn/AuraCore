@@ -8,6 +8,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 interface OnboardingProgress {
   userId: string;
   isTourCompleted: boolean;
@@ -22,7 +24,7 @@ interface OnboardingProgress {
  * GET /api/strategic/onboarding/progress
  * Retorna progresso detalhado do onboarding
  */
-export async function GET() {
+export const GET = withDI(async () => {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -60,13 +62,13 @@ export async function GET() {
     totalItems: checklistItems.length,
     completedItems,
   });
-}
+});
 
 /**
  * PUT /api/strategic/onboarding/progress
  * Atualiza progresso do onboarding
  */
-export async function PUT(request: Request) {
+export const PUT = withDI(async (request: Request) => {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -89,7 +91,7 @@ export async function PUT(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating onboarding progress:', error);
+    logger.error('Error updating onboarding progress:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

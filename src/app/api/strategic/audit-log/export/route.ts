@@ -12,6 +12,8 @@ import { inArray, sql } from 'drizzle-orm';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // Tipo para resultado do banco
@@ -55,7 +57,7 @@ function escapeCsvValue(value: string): string {
   return value;
 }
 
-export async function GET(request: Request) {
+export const GET = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
 
@@ -161,10 +163,10 @@ export async function GET(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/audit-log/export error:', error);
+    logger.error('GET /api/strategic/audit-log/export error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

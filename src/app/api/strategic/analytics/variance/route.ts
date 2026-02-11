@@ -110,6 +110,8 @@ import { z } from 'zod';
 import { getTenantContext } from '@/lib/auth/context';
 import { VarianceAnalysisService } from '@/modules/strategic/application/services/VarianceAnalysisService';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const getSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
   month: z.coerce.number().int().min(1).max(12).optional(),
@@ -127,7 +129,7 @@ const postSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -167,12 +169,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: result });
   } catch (error) {
-    console.error('[variance] Error:', error);
+    logger.error('[variance] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -202,7 +204,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    console.error('[variance] Error:', error);
+    logger.error('[variance] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

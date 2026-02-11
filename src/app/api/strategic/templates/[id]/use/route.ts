@@ -9,17 +9,19 @@ import { auth } from '@/lib/auth';
 import { DEFAULT_TEMPLATES } from '@/lib/templates/default-templates';
 import type { UseTemplateRequest, UseTemplateResult, TemplateItem } from '@/lib/templates/template-types';
 
-export async function POST(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: templateId } = await params;
+    const { id: templateId } = await context.params;
     const body: UseTemplateRequest = await request.json();
     const { variables, selectedItems } = body;
 
@@ -72,7 +74,7 @@ export async function POST(
           name: itemName,
         });
 
-        console.log('Created from template:', {
+        logger.info('Created from template:', {
           templateId,
           itemType: item.type,
           itemName,
@@ -99,7 +101,7 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/templates/[id]/use error:', error);
+    logger.error('POST /api/strategic/templates/[id]/use error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

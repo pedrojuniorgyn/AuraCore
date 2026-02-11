@@ -9,11 +9,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import type { AnalyticsEvent, TrackEventInput } from '@/lib/analytics/analytics-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // In-memory store para desenvolvimento
 // Em produção, usar TimescaleDB, ClickHouse, ou similar
 const eventsStore: AnalyticsEvent[] = [];
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   const session = await auth();
 
   // Permitir tracking anônimo com userId opcional
@@ -54,13 +56,13 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Analytics track error:', error);
+    logger.error('Analytics track error:', error);
     return NextResponse.json({ error: 'Failed to track events' }, { status: 500 });
   }
-}
+});
 
 // Endpoint para ler eventos (apenas para debug)
-export async function GET() {
+export const GET = withDI(async () => {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,4 +72,4 @@ export async function GET() {
     events: eventsStore.slice(-100),
     total: eventsStore.length,
   });
-}
+});

@@ -7,6 +7,8 @@
 import { NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // In-memory storage temporário até implementar persistência
@@ -20,7 +22,7 @@ function getOrgStore(orgId: number): Map<string, Record<string, unknown>> {
   return reportsStoreByOrg.get(orgId)!;
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const ctx = await getTenantContext();
 
@@ -34,12 +36,12 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error fetching reports:', error);
+    logger.error('Error fetching reports:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const ctx = await getTenantContext();
 
@@ -64,10 +66,10 @@ export async function POST(request: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error creating report:', error);
+    logger.error('Error creating report:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
 function calculateNextRun(config: Record<string, unknown>): string | null {
   if (config.frequency === 'manual') return null;

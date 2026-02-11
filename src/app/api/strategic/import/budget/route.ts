@@ -15,6 +15,7 @@ import { BudgetImportService } from '@/modules/strategic/application/services/Bu
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
 const importSchema = z.object({
   type: z.enum(['kpi', 'goal'], { message: 'type must be "kpi" or "goal"' }),
   csv: z.string().trim().min(1, { message: 'csv content is required' }),
@@ -50,7 +51,7 @@ export const GET = withDI(async (request: Request) => {
       },
     });
   } catch (error) {
-    console.error('Error generating template:', error);
+    logger.error('Error generating template:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -117,7 +118,7 @@ export const POST = withDI(async (request: Request) => {
       },
     });
   } catch (error) {
-    console.error('Error importing budget:', error);
+    logger.error('Error importing budget:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

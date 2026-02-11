@@ -13,6 +13,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { 
   getTenantContext,
   validateABACResourceAccess,
@@ -21,19 +22,20 @@ import {
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 const idSchema = z.string().trim().uuid('ID da estratégia inválido');
 
 // GET /api/strategic/strategies/[id]
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
@@ -68,22 +70,22 @@ export async function GET(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/strategies/[id] error:', error);
+    logger.error('GET /api/strategic/strategies/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
 
 // DELETE /api/strategic/strategies/[id]
-export async function DELETE(
+export const DELETE = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
     if (!context) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { id } = await params;
+    const { id } = await routeCtx.params;
     const idResult = idSchema.safeParse(id);
     if (!idResult.success) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
@@ -115,7 +117,7 @@ export async function DELETE(
     return NextResponse.json({ message: 'Estratégia arquivada com sucesso' });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('DELETE /api/strategic/strategies/[id] error:', error);
+    logger.error('DELETE /api/strategic/strategies/[id] error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

@@ -7,6 +7,7 @@ import { sql } from "drizzle-orm";
 import { getSignedDownloadUrl, isS3Configured, uploadBufferToS3 } from "@/lib/storage/s3";
 import { insertDocument } from "@/lib/documents/document-db";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * 📄 POST /api/fiscal/documents/:id/upload-pdf
  * 
@@ -106,7 +107,7 @@ export const POST = withDI(async (
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao fazer upload do PDF:", error);
+    logger.error("❌ Erro ao fazer upload do PDF:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

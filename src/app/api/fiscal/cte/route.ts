@@ -11,6 +11,7 @@ import type { ICreateCteUseCase } from "@/modules/fiscal/domain/ports/input/ICre
 import { Result } from "@/shared/domain";
 import { CreateCteSchema, ListCteQuerySchema } from "@/modules/fiscal/presentation/validators";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/fiscal/cte
  * Lista CTes da organização
@@ -66,7 +67,7 @@ export const GET = withDI(async (req: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar CTes:", error);
+    logger.error("❌ Erro ao buscar CTes:", error);
     return NextResponse.json(
       { error: "Erro ao buscar CTes", details: errorMessage },
       { status: 500 }
@@ -154,7 +155,7 @@ export const POST = withDI(async (req: NextRequest) => {
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao criar CTe:", error);
+      logger.error("❌ Erro ao criar CTe:", error);
       return NextResponse.json(
         { error: "Erro ao criar CTe", details: errorMessage },
         { status: 500 }

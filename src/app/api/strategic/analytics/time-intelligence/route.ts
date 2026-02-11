@@ -74,6 +74,8 @@ import { z } from 'zod';
 import { getTenantContext } from '@/lib/auth/context';
 import { TimeIntelligenceQueries } from '@/shared/infrastructure/time/TimeIntelligenceQueries';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const querySchema = z.object({
   metric: z.enum(['kpi', 'goals', 'action-plans']),
   period: z.enum(['YTD', 'MTD', 'QTD']).default('MTD'),
@@ -82,7 +84,7 @@ const querySchema = z.object({
   granularity: z.enum(['DAY', 'WEEK', 'MONTH']).optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -143,7 +145,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: result });
   } catch (error) {
-    console.error('[time-intelligence] Error:', error);
+    logger.error('[time-intelligence] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

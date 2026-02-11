@@ -11,12 +11,14 @@ import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { GenerateAgendaUseCase } from '@/modules/strategic/application/queries/GenerateAgendaUseCase';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const generateAgendaSchema = z.object({
   meetingType: z.enum(['BOARD', 'DIRECTOR', 'MANAGER']),
   meetingDate: z.string().transform((s) => new Date(s)),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const context = await getTenantContext();
 
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result.value);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/war-room/agenda error:', error);
+    logger.error('POST /api/strategic/war-room/agenda error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

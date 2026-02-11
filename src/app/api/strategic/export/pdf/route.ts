@@ -10,6 +10,8 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { ExportOptions } from '@/lib/export/export-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Extend jsPDF with autoTable
 declare module 'jspdf' {
   interface jsPDF {
@@ -17,7 +19,7 @@ declare module 'jspdf' {
   }
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/export/pdf error:', error);
+    logger.error('POST /api/strategic/export/pdf error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

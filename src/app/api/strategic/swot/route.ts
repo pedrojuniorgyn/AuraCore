@@ -14,6 +14,7 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { ISwotAnalysisRepository } from '@/modules/strategic/domain/ports/output/ISwotAnalysisRepository';
 import type { SwotQuadrant, SwotCategory, SwotStatus } from '@/modules/strategic/domain/entities/SwotItem';
 
+import { logger } from '@/shared/infrastructure/logging';
 const swotQuadrants = ['STRENGTH', 'WEAKNESS', 'OPPORTUNITY', 'THREAT'] as const;
 const isSwotQuadrant = (value: string | undefined): value is SwotQuadrant =>
   !!value && swotQuadrants.includes(value as SwotQuadrant);
@@ -143,7 +144,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/swot error:', error);
+    logger.error('GET /api/strategic/swot error:', error);
     return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
@@ -200,7 +201,7 @@ export const POST = withDI(async (request: Request) => {
     return Response.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/swot error:', error);
+    logger.error('POST /api/strategic/swot error:', error);
     return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

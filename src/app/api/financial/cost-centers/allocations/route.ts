@@ -6,13 +6,15 @@
  */
 
 import { NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { container } from "@/shared/infrastructure/di/container";
 import { ACCOUNTING_TOKENS } from "@/modules/accounting/infrastructure/di/AccountingModule";
 import type { ICostCenterAllocationGateway } from "@/modules/accounting/domain/ports/output/ICostCenterAllocationGateway";
 import { Result } from "@/shared/domain";
 
-export async function POST(req: Request) {
+import { logger } from '@/shared/infrastructure/logging';
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -61,10 +63,10 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar rateio:", error);
+    logger.error("❌ Erro ao criar rateio:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});

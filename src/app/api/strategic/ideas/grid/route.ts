@@ -11,6 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IIdeaBoxRepository } from '@/modules/strategic/domain/ports/output/IIdeaBoxRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Função para gerar votos/comentários mock (TODO: Substituir por dados reais quando implementar tabelas)
 function generateMockEngagement(ideaId: string, status: string, createdAt: Date): {
   votesCount: number;
@@ -134,7 +135,7 @@ export const GET = withDI(async (request: NextRequest) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[Ideas Grid] Error:', error);
+    logger.error('[Ideas Grid] Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

@@ -9,6 +9,7 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { ISefazGateway } from "@/modules/integrations/domain/ports/output/ISefazGateway";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/fiscal/cte/inutilize
  * 🔐 Requer permissão: fiscal.cte.create
@@ -129,7 +130,7 @@ export const POST = withDI(async (request: NextRequest) => {
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao inutilizar:", error);
+      logger.error("❌ Erro ao inutilizar:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }

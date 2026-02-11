@@ -11,6 +11,8 @@ import { auth } from '@/lib/auth';
 import type { Role, Permission } from '@/lib/permissions/permission-types';
 import { SYSTEM_ROLES } from '@/lib/permissions/permission-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
 // In-memory store for development
@@ -30,7 +32,7 @@ if (rolesStore.size === 0) {
   });
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -45,12 +47,12 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('GET /api/strategic/roles error:', error);
+    logger.error('GET /api/strategic/roles error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/roles error:', error);
+    logger.error('POST /api/strategic/roles error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

@@ -1,23 +1,25 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = 'force-dynamic';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(request: Request, { params }: RouteParams) {
+export const POST = withDI(async (request: Request, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     // TODO: Toggle integration status in database
-    console.log('Toggling integration status:', id);
+    logger.info('Toggling integration status:', id);
 
     return NextResponse.json({ 
       success: true, 
@@ -29,7 +31,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error toggling integration:', error);
+    logger.error('Error toggling integration:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

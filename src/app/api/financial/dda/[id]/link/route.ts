@@ -6,14 +6,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { createDdaSyncService } from "@/modules/financial/infrastructure/services/DdaSyncService";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+import { logger } from '@/shared/infrastructure/logging';
+export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const { organizationId, bankAccountId, payableId } = body;
 
@@ -39,13 +38,13 @@ export async function POST(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao vincular DDA:", error);
+    logger.error("❌ Erro ao vincular DDA:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao vincular DDA" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

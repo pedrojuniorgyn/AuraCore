@@ -7,10 +7,12 @@
 import { NextRequest } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   // Validar autenticacao e tenant context antes de abrir stream
   await getTenantContext();
 
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
           // sendEvent('alert', { type: 'KPI_CRITICAL', message: '...' });
           // sendEvent('plan_overdue', { planId: '...', code: 'PA-2026-001' });
         } catch (error) {
-          console.error('War room SSE heartbeat error:', error);
+          logger.error('War room SSE heartbeat error:', error);
           // Para callbacks de streaming, apenas logar o erro
           // O return aqui retornaria do callback, não do handler HTTP
           // Se necessário, limpar recursos:
@@ -63,4 +65,4 @@ export async function GET(request: NextRequest) {
       'X-Accel-Buffering': 'no',
     },
   });
-}
+});

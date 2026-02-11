@@ -14,6 +14,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { eq, and, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const ideaTenantFilter = (
   ctx: { organizationId: number; branchId: number },
   id: string
@@ -56,17 +58,17 @@ const buildUpdatePayload = (data: z.infer<typeof UpdateIdeaSchema>) => {
   return payload;
 };
 
-export async function GET(
+export const GET = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -87,25 +89,25 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao buscar ideia:', error);
+    logger.error('Erro ao buscar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
+export const PUT = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -157,25 +159,25 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao atualizar ideia:', error);
+    logger.error('Erro ao atualizar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -201,10 +203,10 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao deletar ideia:', error);
+    logger.error('Erro ao deletar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});

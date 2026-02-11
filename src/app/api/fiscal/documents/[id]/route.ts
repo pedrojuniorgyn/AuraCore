@@ -6,10 +6,9 @@ import { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { isValidUUID } from '@/modules/fiscal/presentation/validators';
 import { toFiscalDocumentResponseDTO } from '@/modules/fiscal/application/dtos';
-import { initializeFiscalModule } from '@/modules/fiscal/infrastructure/bootstrap';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-// Garantir DI registrado
-initializeFiscalModule();
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * GET /api/fiscal/documents/[id]
@@ -19,11 +18,11 @@ initializeFiscalModule();
  * Multi-tenancy: ✅ organizationId + branchId
  * Validação: ✅ UUID
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+  context: RouteContext
+) => {
+  const { id } = await context.params;
   try {
     // 1. Contexto multi-tenant (OBRIGATÓRIO)
     const ctx = await getTenantContext();
@@ -69,11 +68,11 @@ export async function GET(
       return error;
     }
     
-    console.error('[GET /api/fiscal/documents/[id]]', error);
+    logger.error('[GET /api/fiscal/documents/[id]]', error);
     return NextResponse.json({
       success: false,
       error: 'Erro interno ao buscar documento fiscal',
       details: errorMessage
     }, { status: 500 });
   }
-}
+});

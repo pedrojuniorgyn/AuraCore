@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
 import { accountsPayable } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 // ============================================================================
 // DOMAIN SERVICE (inline)
 // TODO (E9.2): Migrar para src/modules/financial/domain/services/PaymentCalculator.ts
@@ -94,10 +96,7 @@ function calculatePayment(params: PaymentCalculation): PaymentResult {
  * 
  * @since E9 Fase 1 - calculatePayment inlineado (Domain Service candidate)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -108,7 +107,7 @@ export async function GET(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const payableId = parseInt(resolvedParams.id);
     const paymentDate = request.nextUrl.searchParams.get("paymentDate");
 
@@ -146,10 +145,10 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao calcular pagamento:", error);
+    logger.error("❌ Erro ao calcular pagamento:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});

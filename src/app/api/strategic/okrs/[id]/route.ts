@@ -16,6 +16,8 @@ import type { KeyResult as DomainKeyResult } from '@/modules/strategic/okr/domai
 import type { KeyResult as LegacyKeyResult } from '@/lib/okrs/okr-types';
 import { Result } from '@/shared/domain/types/Result';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // Ensure DI container is registered
 registerStrategicModule();
 
@@ -70,12 +72,12 @@ const updateOkrSchema = z.object({
   ownerName: z.string().optional(),
 });
 
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
 
     // Validate ID
     const validation = idParamSchema.safeParse(resolvedParams);
@@ -129,20 +131,20 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error('[GET /api/strategic/okrs/[id]] Error:', error);
+    logger.error('[GET /api/strategic/okrs/[id]] Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch OKR' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function PATCH(
+export const PATCH = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
 
     // Validate ID
     const idValidation = idParamSchema.safeParse(resolvedParams);
@@ -292,20 +294,20 @@ export async function PATCH(
     if (error instanceof Response) {
       return error;
     }
-    console.error('[PATCH /api/strategic/okrs/[id]] Error:', error);
+    logger.error('[PATCH /api/strategic/okrs/[id]] Error:', error);
     return NextResponse.json(
       { error: 'Failed to update OKR' },
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
 
     // Validate ID
     const validation = idParamSchema.safeParse(resolvedParams);
@@ -340,10 +342,10 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error('[DELETE /api/strategic/okrs/[id]] Error:', error);
+    logger.error('[DELETE /api/strategic/okrs/[id]] Error:', error);
     return NextResponse.json(
       { error: 'Failed to delete OKR' },
       { status: 500 }
     );
   }
-}
+});

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { taxCredits, inboundInvoices } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
@@ -6,7 +7,7 @@ import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -52,9 +53,9 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -108,11 +109,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
-
-
-
-
+});
 
 
 

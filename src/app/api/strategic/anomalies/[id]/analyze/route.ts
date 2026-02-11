@@ -15,6 +15,8 @@ import type { IAnomalyRepository } from '@/modules/strategic/domain/ports/output
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 import { registerStrategicModule } from '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 registerStrategicModule();
 
 const uuidSchema = z.string().uuid();
@@ -29,13 +31,13 @@ const analyzeSchema = z.object({
 });
 
 // POST /api/strategic/anomalies/[id]/analyze
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     const context = await getTenantContext();
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // Validar UUID
     const idValidation = uuidSchema.safeParse(id);
@@ -112,7 +114,7 @@ export async function POST(
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/anomalies/[id]/analyze error:', error);
+    logger.error('POST /api/strategic/anomalies/[id]/analyze error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

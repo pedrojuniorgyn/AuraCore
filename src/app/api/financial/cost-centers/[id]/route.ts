@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, sql, asc } from "drizzle-orm";
@@ -7,6 +8,7 @@ import { queryFirst } from "@/lib/db/query-helpers";
 import { z } from "zod";
 import { idParamSchema } from "@/lib/validation/common-schemas";
 
+import { logger } from '@/shared/infrastructure/logging';
 // Interface para queries de contagem SQL
 interface CountResult {
   count: number;
@@ -24,14 +26,11 @@ const updateCostCenterSchema = z.object({
 /**
  * GET /api/financial/cost-centers/:id
  */
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withDI(async (req: Request, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
 
     const paramValidation = idParamSchema.safeParse(resolvedParams);
@@ -63,25 +62,22 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar centro de custo:", error);
+    logger.error("❌ Erro ao buscar centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao buscar centro de custo" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/financial/cost-centers/:id
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withDI(async (req: Request, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
     const updatedBy = ctx.userId;
@@ -233,26 +229,23 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao atualizar centro de custo:", error);
+    logger.error("❌ Erro ao atualizar centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar centro de custo" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/financial/cost-centers/:id
  * Soft delete com validações de integridade
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withDI(async (req: Request, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
     const updatedBy = ctx.userId;
@@ -419,10 +412,10 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao excluir centro de custo:", error);
+    logger.error("❌ Erro ao excluir centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao excluir centro de custo" },
       { status: 500 }
     );
   }
-}
+});

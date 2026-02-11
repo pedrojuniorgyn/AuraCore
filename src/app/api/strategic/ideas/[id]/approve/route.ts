@@ -12,6 +12,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const idSchema = z.string().uuid();
 
 const parseRowsAffected = (result: unknown): number => {
@@ -22,17 +24,17 @@ const parseRowsAffected = (result: unknown): number => {
   return Number(raw ?? 0);
 };
 
-export async function POST(
+export const POST = withDI(async (
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const idValidation = idSchema.safeParse(id);
     if (!idValidation.success) {
@@ -87,10 +89,10 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error('Erro ao aprovar ideia:', error);
+    logger.error('Erro ao aprovar ideia:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});

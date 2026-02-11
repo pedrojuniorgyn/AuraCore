@@ -15,6 +15,7 @@ import { db } from '@/lib/db';
 import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
 import { eq } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Cores por perspectiva BSC
 const PERSPECTIVE_COLORS: Record<string, string> = {
   FIN: '#fbbf24',
@@ -105,14 +106,14 @@ export const GET = withDI(async (request: NextRequest) => {
       const warnMsg =
         `Truncamento: strategy ${strategy.id} tem ${total} goals (${requiredPages} páginas), ` +
         `mas apenas ${MAX_PAGES} páginas serão buscadas (${MAX_PAGES * PAGE_SIZE} goals máximo).`;
-      console.warn(`[GET /api/strategic/map] ${warnMsg}`);
+      logger.warn(`[GET /api/strategic/map] ${warnMsg}`);
       warnings.push(warnMsg);
     }
 
     // Warning se quantidade atípica (>1000 goals)
     if (total > 1000) {
       const warnMsg = `Strategy ${strategy.id} tem ${total} goals. Isso é atípico para BSC - considere verificar dados.`;
-      console.warn(`[GET /api/strategic/map] ${warnMsg}`);
+      logger.warn(`[GET /api/strategic/map] ${warnMsg}`);
       warnings.push(warnMsg);
     }
 
@@ -131,7 +132,7 @@ export const GET = withDI(async (request: NextRequest) => {
         const warnMsg =
           `Paginação inconsistente: página ${page}/${pagesToFetch} retornou 0 items, ` +
           `mas total=${total}. allGoals.length=${allGoals.length}.`;
-        console.warn(`[GET /api/strategic/map] ${warnMsg}`);
+        logger.warn(`[GET /api/strategic/map] ${warnMsg}`);
         warnings.push(warnMsg);
         break;
       }
@@ -165,10 +166,7 @@ export const GET = withDI(async (request: NextRequest) => {
         `Possíveis causas: FK quebrada, perspective deletada, ou goal pertence a outra strategy. ` +
         `IDs afetados: ${invalidGoals.slice(0, 20).map((g) => g.id).join(', ')}` +
         (invalidGoals.length > 20 ? ` (e mais ${invalidGoals.length - 20})` : '');
-      console.warn(
-        `[GET /api/strategic/map] ${warnMsg}. ` +
-          `orgId=${context.organizationId}, branchId=${context.branchId}`
-      );
+      logger.warn(warnMsg, { orgId: context.organizationId, branchId: context.branchId, invalidCount: invalidGoals.length });
       warnings.push(warnMsg);
     }
 
@@ -256,7 +254,7 @@ export const GET = withDI(async (request: NextRequest) => {
           .slice(0, 5)
           .map((e) => `${e.parentId}->${e.childId}`)
           .join(', ')}`;
-      console.warn(`[GET /api/strategic/map] ${warnMsg}`);
+      logger.warn(`[GET /api/strategic/map] ${warnMsg}`);
       warnings.push(warnMsg);
     }
 
@@ -312,7 +310,7 @@ export const GET = withDI(async (request: NextRequest) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/map error:', error);
+    logger.error('GET /api/strategic/map error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

@@ -10,6 +10,7 @@ import type { IGeneratePayableTitle } from '@/modules/financial/domain/ports/inp
 import type { IGenerateReceivableTitle } from '@/modules/financial/domain/ports/input/IGenerateReceivableTitle';
 import type { ExecutionContext } from '@/modules/financial/domain/ports/input';
 
+import { logger } from '@/shared/infrastructure/logging';
 /** Interface comum para outputs de geração de títulos */
 interface GenerateTitleOutput {
   titleIds: string[];
@@ -143,7 +144,7 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
       return error;
     }
     
-    console.error("❌ Erro ao gerar títulos:", error);
+    logger.error("❌ Erro ao gerar títulos:", error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

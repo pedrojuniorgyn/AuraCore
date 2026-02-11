@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db, ensureConnection } from "@/lib/db";
 import { financialCategories } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * PUT /api/financial/categories/[id]
  * Atualiza uma categoria financeira
  */
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export const PUT = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -67,19 +66,16 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao atualizar categoria:", error);
+    logger.error("❌ Erro ao atualizar categoria:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/financial/categories/[id]
  * Soft delete com validações de integridade
  */
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -193,8 +189,8 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao excluir categoria:", error);
+    logger.error("❌ Erro ao excluir categoria:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 

@@ -7,13 +7,15 @@
  * @see E-Agent-Fase-D4
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Result } from '@/shared/domain';
 import { auth } from '@/lib/auth';
 import { container } from '@/shared/infrastructure/di';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { LegislationRAG } from '@/modules/fiscal/application/services/LegislationRAG';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ============================================================================
 // GET /api/fiscal/legislation/documents
 // ============================================================================
@@ -29,7 +31,7 @@ import type { LegislationRAG } from '@/modules/fiscal/application/services/Legis
  * const { documents } = await response.json();
  * ```
  */
-export async function GET(): Promise<NextResponse> {
+export const GET = withDI(async (_req: NextRequest): Promise<NextResponse> => {
   // 1. Autenticação
   const session = await auth();
   if (!session?.user) {
@@ -68,20 +70,20 @@ export async function GET(): Promise<NextResponse> {
       return error as NextResponse;
     }
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('[GET /api/fiscal/legislation/documents] Erro:', message);
+    logger.error('[GET /api/fiscal/legislation/documents] Erro:', message);
 
     return NextResponse.json(
       { error: `Erro interno: ${message}` },
       { status: 500 }
     );
   }
-}
+});
 
 // ============================================================================
 // OPTIONS (CORS)
 // ============================================================================
 
-export async function OPTIONS(): Promise<NextResponse> {
+export const OPTIONS = withDI(async (_req: NextRequest): Promise<NextResponse> => {
   return new NextResponse(null, {
     status: 200,
     headers: {
@@ -89,4 +91,4 @@ export async function OPTIONS(): Promise<NextResponse> {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
-}
+});

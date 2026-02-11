@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bankRemittances } from "@/lib/db/schema";
 import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
 // GET - Buscar remessa específica
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withDI(async (req: NextRequest, context: RouteContext) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -49,21 +48,18 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao buscar remessa:", error);
+    logger.error("Erro ao buscar remessa:", error);
     return NextResponse.json(
       { error: "Erro ao buscar remessa" },
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Soft delete da remessa (apenas se não foi processada)
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withDI(async (req: NextRequest, context: RouteContext) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -131,13 +127,13 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao excluir remessa:", error);
+    logger.error("Erro ao excluir remessa:", error);
     return NextResponse.json(
       { error: "Erro ao excluir remessa" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

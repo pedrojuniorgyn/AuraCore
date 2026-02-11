@@ -14,6 +14,7 @@ import { CreateStrategyUseCase } from '@/modules/strategic/application/commands/
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 // Schema de validação
 const createStrategySchema = z.object({
   name: z.string().trim().min(1, 'Nome é obrigatório').max(200),
@@ -89,7 +90,7 @@ export const GET = withDI(async (request: Request) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/strategic/strategies error:', error);
+    logger.error('GET /api/strategic/strategies error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });
@@ -127,7 +128,7 @@ export const POST = withDI(async (request: Request) => {
     return NextResponse.json(result.value, { status: 201 });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/strategic/strategies error:', error);
+    logger.error('POST /api/strategic/strategies error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 });

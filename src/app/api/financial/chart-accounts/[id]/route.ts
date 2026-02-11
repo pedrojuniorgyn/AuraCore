@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull, sql, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
 // Interface para queries de contagem SQL
 interface CountResult {
   count: number;
@@ -67,7 +69,7 @@ async function logChartAccountChange(data: AuditLogEntry): Promise<void> {
       )
     `);
   } catch (error) {
-    console.error("❌ Erro ao registrar auditoria de Chart Account:", error);
+    logger.error("❌ Erro ao registrar auditoria de Chart Account:", error);
     // Não interrompe a operação principal
   }
 }
@@ -75,14 +77,11 @@ async function logChartAccountChange(data: AuditLogEntry): Promise<void> {
 /**
  * GET /api/financial/chart-accounts/:id
  */
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withDI(async (req: Request, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
     const id = parseInt(resolvedParams.id);
 
@@ -109,25 +108,22 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar conta:", error);
+    logger.error("❌ Erro ao buscar conta:", error);
     return NextResponse.json(
       { error: "Erro ao buscar conta" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/financial/chart-accounts/:id
  */
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withDI(async (req: Request, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
     const updatedBy = ctx.userId;
@@ -290,26 +286,23 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao atualizar conta:", error);
+    logger.error("❌ Erro ao atualizar conta:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar conta" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/financial/chart-accounts/:id
  * Soft delete com validações de integridade
  */
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withDI(async (req: Request, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const ctx = await getTenantContext();
     const organizationId = ctx.organizationId;
     const updatedBy = ctx.userId;
@@ -435,14 +428,12 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao excluir conta:", error);
+    logger.error("❌ Erro ao excluir conta:", error);
     return NextResponse.json(
       { error: "Erro ao excluir conta" },
       { status: 500 }
     );
   }
-}
-
-
+});
 
 

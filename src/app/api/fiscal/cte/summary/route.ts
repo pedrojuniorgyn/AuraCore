@@ -13,6 +13,7 @@ import { cteHeader } from '@/lib/db/schema';
 import { eq, and, sql, count, isNull } from 'drizzle-orm';
 import { getTenantContext } from '@/lib/auth/context';
 
+import { logger } from '@/shared/infrastructure/logging';
 interface CteSummary {
   total: number;
   draft: number;
@@ -103,7 +104,7 @@ export const GET = withDI(async (_request: NextRequest) => {
     return NextResponse.json(summary);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('[CTe Summary] Error:', error);
+    logger.error('[CTe Summary] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: 'Failed to fetch summary', details: message },

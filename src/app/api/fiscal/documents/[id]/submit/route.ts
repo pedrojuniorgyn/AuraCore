@@ -5,10 +5,9 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { SubmitFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases';
 import { Result } from '@/shared/domain';
 import { isValidUUID, getHttpStatusFromError } from '@/modules/fiscal/presentation/validators';
-import { initializeFiscalModule } from '@/modules/fiscal/infrastructure/bootstrap';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 
-// Garantir DI registrado
-initializeFiscalModule();
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * POST /api/fiscal/documents/[id]/submit
@@ -19,11 +18,11 @@ initializeFiscalModule();
  * Validação: ✅ UUID
  * DDD: ✅ Use Case
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+  context: RouteContext
+) => {
+  const { id } = await context.params;
   try {
     // 1. Contexto multi-tenant (OBRIGATÓRIO)
     const ctx = await getTenantContext();
@@ -70,12 +69,12 @@ export async function POST(
       return error;
     }
     
-    console.error('[POST /api/fiscal/documents/[id]/submit]', error);
+    logger.error('[POST /api/fiscal/documents/[id]/submit]', error);
     return NextResponse.json({
       success: false,
       error: 'Erro interno ao submeter documento fiscal',
       details: errorMessage
     }, { status: 500 });
   }
-}
+});
 

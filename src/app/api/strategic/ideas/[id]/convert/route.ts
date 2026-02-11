@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { container } from '@/shared/infrastructure/di/container';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IConvertIdeaUseCase } from '@/modules/strategic/domain/ports/input/IConvertIdeaUseCase';
@@ -22,6 +23,7 @@ import { db } from '@/lib/db';
 import { bscPerspectiveTable } from '@/modules/strategic/infrastructure/persistence/schemas/bsc-perspective.schema';
 import { eq, and } from 'drizzle-orm';
 
+import { logger } from '@/shared/infrastructure/logging';
 const convertIdeaSchema = z.object({
   targetType: z.enum(['ACTION_PLAN', 'GOAL', 'KPI', 'PDCA']),
   // Campos opcionais para ACTION_PLAN (5W2H)
@@ -41,10 +43,10 @@ const convertIdeaSchema = z.object({
   targetValue: z.number().optional(),
 });
 
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     let tenantCtx;
     try {
@@ -54,7 +56,8 @@ export async function POST(
       throw error;
     }
 
-    const { id } = await context.params;
+    const params = await context.params;
+    const id = (params as Record<string, string>).id;
     const body = await request.json();
     
     // Validar payload
@@ -182,13 +185,13 @@ export async function POST(
       targetType,
     });
   } catch (error) {
-    console.error('[POST /api/strategic/ideas/[id]/convert] Error:', error);
+    logger.error('[POST /api/strategic/ideas/[id]/convert] Error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to convert idea' },
       { status: 500 }
     );
   }
-}
+});
 
 // Helper: Converter para Action Plan (usa Use Case existente)
 async function convertToActionPlan(
@@ -225,7 +228,7 @@ async function convertToActionPlan(
 
     return Result.ok(result.value.id);
   } catch (error) {
-    console.error('[convertToActionPlan] Error:', error);
+    logger.error('[convertToActionPlan] Error:', error);
     return Result.fail('Failed to convert to action plan');
   }
 }
@@ -312,7 +315,7 @@ async function convertToGoal(
 
     return Result.ok(goal.id);
   } catch (error) {
-    console.error('[convertToGoal] Error:', error);
+    logger.error('[convertToGoal] Error:', error);
     return Result.fail('Failed to convert to goal');
   }
 }
@@ -364,7 +367,7 @@ async function convertToKpi(
 
     return Result.ok(kpi.id);
   } catch (error) {
-    console.error('[convertToKpi] Error:', error);
+    logger.error('[convertToKpi] Error:', error);
     return Result.fail('Failed to convert to KPI');
   }
 }

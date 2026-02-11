@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
@@ -16,6 +17,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IImportBankStatementUseCase } from '@/modules/financial/domain/ports/input/IImportBankStatementUseCase';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Request validation schema for preview
  */
@@ -30,7 +32,7 @@ const previewSchema = z.object({
  * Preview a bank statement file without saving
  * Accepts multipart/form-data with file
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   // 1. Authenticate
   const context = await getTenantContext();
   if (!context) {
@@ -121,11 +123,11 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('Bank statement preview error:', error);
+    logger.error('Bank statement preview error:', error);
     
     return NextResponse.json(
       { error: `Erro ao processar preview: ${message}` },
       { status: 500 }
     );
   }
-}
+});

@@ -10,6 +10,8 @@ import * as XLSX from 'xlsx';
 import type { ExportEntity } from '@/lib/export/export-types';
 import { KPI_FIELDS, ACTION_PLAN_FIELDS } from '@/lib/export/export-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Mapeamento de nomes de coluna para campos
 const COLUMN_MAPPINGS: Record<string, Record<string, string>> = {
   kpi: {
@@ -66,7 +68,7 @@ const COLUMN_MAPPINGS: Record<string, Record<string, string>> = {
   },
 };
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -124,7 +126,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('POST /api/strategic/import/parse error:', error);
+    logger.error('POST /api/strategic/import/parse error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});

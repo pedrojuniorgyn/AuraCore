@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Dashboard, Widget } from '@/lib/dashboard/dashboard-types';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 // Mock dashboards store
 const dashboardsStore = new Map<string, Dashboard>();
 
@@ -69,7 +71,7 @@ function initializeMockData() {
   dashboardsStore.set(sampleDashboard.id, sampleDashboard);
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   initializeMockData();
 
   const { searchParams } = new URL(request.url);
@@ -98,9 +100,9 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ dashboards });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   initializeMockData();
 
   try {
@@ -138,7 +140,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error creating dashboard:', error);
+    logger.error('Error creating dashboard:', error);
     return NextResponse.json({ error: 'Failed to create dashboard' }, { status: 500 });
   }
-}
+});

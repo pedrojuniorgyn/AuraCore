@@ -4,6 +4,7 @@ import type { RouteContext } from '@/shared/infrastructure/di/with-di';
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -86,7 +87,7 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
     // Por enquanto, apenas criar o registro
     // Em produção: usar webservice NFeDistribuicaoDFe
 
-    console.log(`📜 Manifestação criada: ${eventDescriptions[eventType]} para NFe ${invoice.access_key}`);
+    logger.info(`📜 Manifestação criada: ${eventDescriptions[eventType]} para NFe ${invoice.access_key}`);
 
     return NextResponse.json({
       success: true,
@@ -98,7 +99,7 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao manifestar NFe:", error);
+    logger.error("❌ Erro ao manifestar NFe:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },

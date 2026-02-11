@@ -1,40 +1,32 @@
 /**
- * Use Cases
- * 
- * Exporta casos de uso do módulo Fiscal
+ * @deprecated Import from commands/ or queries/ instead
+ * Backward compatibility re-exports for E16.1 migration
  */
-
-// CRUD Operations
-export { CreateFiscalDocumentUseCase } from './CreateFiscalDocumentUseCase';
-export { AuthorizeFiscalDocumentUseCase } from './AuthorizeFiscalDocumentUseCase';
-export { CancelFiscalDocumentUseCase } from './CancelFiscalDocumentUseCase';
-export { SubmitFiscalDocumentUseCase } from './SubmitFiscalDocumentUseCase';
-export { CalculateTaxesUseCase } from './CalculateTaxesUseCase';
-
-// Tax Reform Use Cases
-export { AuditTaxTransitionUseCase } from './AuditTaxTransitionUseCase';
-export { CalculateIbsCbsUseCase } from './CalculateIbsCbsUseCase';
-export { CompareTaxRegimesUseCase } from './CompareTaxRegimesUseCase';
-export { CalculateCompensationUseCase } from './CalculateCompensationUseCase';
-export { GetTaxRatesUseCase } from './GetTaxRatesUseCase';
-export { SimulateTaxScenarioUseCase } from './SimulateTaxScenarioUseCase';
-export { ValidateIbsCbsGroupUseCase } from './ValidateIbsCbsGroupUseCase';
-
-// Tax Credits
-export { ProcessTaxCreditsUseCase, createProcessTaxCreditsUseCase } from './ProcessTaxCreditsUseCase';
-export type { ProcessTaxCreditsRequest, ProcessTaxCreditsResponse } from './ProcessTaxCreditsUseCase';
-
-// SPED Generation
-export { GenerateSpedFiscalUseCase } from './GenerateSpedFiscalUseCase';
-export { GenerateSpedEcdUseCase } from './GenerateSpedEcdUseCase';
-export { GenerateSpedContributionsUseCase } from './GenerateSpedContributionsUseCase';
-
-// CTe Cancellation / NFe Manifest / XML Import
-export { CancelCteUseCase } from './CancelCteUseCase';
-export { ManifestNfeUseCase } from './ManifestNfeUseCase';
-export { ImportNfeXmlUseCase } from './ImportNfeXmlUseCase';
-
-// CTe Use Cases (E8 Fase 3)
-export { ListCtesUseCase } from './ListCtesUseCase';
-export { GetCteByIdUseCase } from './GetCteByIdUseCase';
-export { UpdateCteUseCase } from './UpdateCteUseCase';
+export { CreateFiscalDocumentUseCase } from '../commands/fiscal/CreateFiscalDocumentUseCase';
+export { SubmitFiscalDocumentUseCase } from '../commands/fiscal/SubmitFiscalDocumentUseCase';
+export { AuthorizeFiscalDocumentUseCase } from '../commands/fiscal/AuthorizeFiscalDocumentUseCase';
+export { CancelFiscalDocumentUseCase } from '../commands/fiscal/CancelFiscalDocumentUseCase';
+export { CreateCteUseCase } from '../commands/cte/CreateCteUseCase';
+export { AuthorizeCteUseCase } from '../commands/cte/AuthorizeCteUseCase';
+export { UpdateCteUseCase } from '../commands/cte/UpdateCteUseCase';
+export { CancelCteUseCase } from '../commands/cte/CancelCteUseCase';
+export { DownloadNfesUseCase } from '../commands/cte/DownloadNfesUseCase';
+export { ImportNfeXmlUseCase } from '../commands/cte/ImportNfeXmlUseCase';
+export { ManifestNfeUseCase } from '../commands/cte/ManifestNfeUseCase';
+export { TransmitToSefazUseCase } from '../commands/fiscal/TransmitToSefazUseCase';
+export { GenerateDanfeUseCase } from '../commands/fiscal/GenerateDanfeUseCase';
+export { CalculateTaxesUseCase } from '../commands/fiscal/CalculateTaxesUseCase';
+export { ProcessTaxCreditsUseCase } from '../commands/fiscal/ProcessTaxCreditsUseCase';
+export { AuditTaxTransitionUseCase } from '../commands/fiscal/AuditTaxTransitionUseCase';
+export { CalculateCompensationUseCase } from '../commands/fiscal/CalculateCompensationUseCase';
+export { ListFiscalDocumentsUseCase } from '../queries/fiscal/ListFiscalDocumentsUseCase';
+export { GetFiscalDocumentByIdUseCase } from '../queries/fiscal/GetFiscalDocumentByIdUseCase';
+export { ListCtesUseCase } from '../queries/cte/ListCtesUseCase';
+export { GetCteByIdUseCase } from '../queries/cte/GetCteByIdUseCase';
+export { QuerySefazStatusUseCase } from '../queries/fiscal/QuerySefazStatusUseCase';
+export { GetTaxRatesUseCase } from '../queries/tax-reform/GetTaxRatesUseCase';
+export { SimulateTaxScenarioUseCase } from '../queries/tax-reform/SimulateTaxScenarioUseCase';
+export { CompareTaxRegimesUseCase } from '../queries/tax-reform/CompareTaxRegimesUseCase';
+export { CalculateIbsCbsUseCase } from '../queries/tax-reform/CalculateIbsCbsUseCase';
+export { ValidateIbsCbsGroupUseCase } from '../queries/tax-reform/ValidateIbsCbsGroupUseCase';
+export { ValidateFiscalDocumentUseCase } from '../queries/fiscal/ValidateFiscalDocumentUseCase';

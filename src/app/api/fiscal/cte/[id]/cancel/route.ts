@@ -12,6 +12,7 @@ import { Result } from "@/shared/domain";
 import { idParamSchema } from "@/lib/validation/common-schemas";
 import { CancelCteSchema } from "@/modules/fiscal/presentation/validators";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/fiscal/cte/:id/cancel
  * 🔐 Requer permissão: fiscal.cte.cancel
@@ -162,7 +163,7 @@ export const POST = withDI(async (
         return error;
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao cancelar CTe:", error);
+      logger.error("❌ Erro ao cancelar CTe:", error);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }

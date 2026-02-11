@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { billingInvoices, billingItems, cteHeader, businessPartners } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
@@ -7,7 +8,7 @@ import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 import { eq, and, isNull, between, desc } from "drizzle-orm";
 
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -45,9 +46,9 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -211,9 +212,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
-
-
+});
 
 
 

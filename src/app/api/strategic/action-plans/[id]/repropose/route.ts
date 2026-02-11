@@ -12,6 +12,8 @@ import { getTenantContext } from '@/lib/auth/context';
 import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import type { IReproposeActionPlanUseCase } from '@/modules/strategic/domain/ports/input/IReproposeActionPlanUseCase';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * Schema de validação do input
  */
@@ -28,10 +30,10 @@ type ReproposeActionPlanBody = z.infer<typeof ReproposeActionPlanSchema>;
  * POST /api/strategic/action-plans/[id]/repropose
  * Reproposição de plano de ação
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  routeCtx: RouteContext
+) => {
   try {
     // 1. Obter contexto do usuário autenticado
     const context = await getTenantContext();
@@ -54,7 +56,7 @@ export async function POST(
     const validatedData = parseResult.data as ReproposeActionPlanBody;
 
     // 3. Resolver parâmetros da rota
-    const { id } = await params;
+    const { id } = await routeCtx.params;
 
     // 4. Executar use case
     const useCase = container.resolve<IReproposeActionPlanUseCase>(
@@ -96,7 +98,7 @@ export async function POST(
       return error;
     }
     
-    console.error('[API] Erro ao repropor plano de ação:', error);
+    logger.error('[API] Erro ao repropor plano de ação:', error);
     return NextResponse.json(
       {
         success: false,
@@ -105,4 +107,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});

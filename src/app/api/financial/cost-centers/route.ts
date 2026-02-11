@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { costCenters } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
@@ -6,6 +7,7 @@ import { getTenantContext } from "@/lib/auth/context";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 import { z } from "zod";
 
+import { logger } from '@/shared/infrastructure/logging';
 // Schemas de validação
 const createCostCenterSchema = z.object({
   code: z.string().min(1, "Código é obrigatório"),
@@ -20,7 +22,7 @@ const createCostCenterSchema = z.object({
  * GET /api/financial/cost-centers
  * Lista todos os centros de custo da organização (com hierarquia)
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -62,19 +64,19 @@ export async function GET(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar centros de custo:", error);
+    logger.error("❌ Erro ao buscar centros de custo:", error);
     return NextResponse.json(
       { error: "Erro ao buscar centros de custo" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/financial/cost-centers
  * Cria um novo centro de custo
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -185,10 +187,10 @@ export async function POST(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar centro de custo:", error);
+    logger.error("❌ Erro ao criar centro de custo:", error);
     return NextResponse.json(
       { error: "Erro ao criar centro de custo" },
       { status: 500 }
     );
   }
-}
+});

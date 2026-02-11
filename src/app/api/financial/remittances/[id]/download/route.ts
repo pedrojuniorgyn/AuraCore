@@ -4,16 +4,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { bankRemittances } from "@/lib/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+import { logger } from '@/shared/infrastructure/logging';
+export const GET = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
 
     // === BUSCAR REMESSA ===
     const [remittance] = await db
@@ -45,13 +44,13 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao baixar remessa:", error);
+    logger.error("❌ Erro ao baixar remessa:", error);
     return NextResponse.json(
       { error: "Falha ao baixar remessa" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

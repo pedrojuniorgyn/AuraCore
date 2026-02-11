@@ -13,6 +13,8 @@ import type { IStrategyRepository } from '@/modules/strategic/domain/ports/outpu
 import type { Strategy } from '@/modules/strategic/domain/entities/Strategy';
 import '@/modules/strategic/infrastructure/di/StrategicModule';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 interface SubmissionItem {
   id: string;
   strategyId: string;
@@ -28,7 +30,7 @@ interface SubmissionItem {
  * GET /api/strategic/workflow/my-submissions
  * Get all strategies submitted by the current user
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -91,10 +93,10 @@ export async function GET() {
       data: mySubmissions,
     });
   } catch (error) {
-    console.error('Error getting my submissions:', error);
+    logger.error('Error getting my submissions:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

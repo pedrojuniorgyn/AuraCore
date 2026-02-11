@@ -6,13 +6,17 @@
  */
 
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { container } from "@/shared/infrastructure/di/container";
 import { FISCAL_TOKENS } from "@/modules/fiscal/infrastructure/di/FiscalModule";
 import type { ITaxCalculatorGateway } from "@/modules/fiscal/domain/ports/output/ITaxCalculatorGateway";
 import { Result } from "@/shared/domain";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET(req: Request) {
+import { logger } from '@/shared/infrastructure/logging';
+
+export const GET = withDI(async (req: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -95,10 +99,10 @@ export async function GET(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao calcular imposto:", error);
+    logger.error("❌ Erro ao calcular imposto:", error);
     return NextResponse.json(
       { error: "Erro ao calcular imposto", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

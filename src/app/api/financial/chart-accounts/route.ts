@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
+import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
 import { chartOfAccounts } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { insertReturning, queryFirst } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * GET /api/financial/chart-accounts
  * Lista todas as contas do plano de contas (com hierarquia)
  */
-export async function GET(req: Request) {
+export const GET = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -50,19 +52,19 @@ export async function GET(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao buscar plano de contas:", error);
+    logger.error("❌ Erro ao buscar plano de contas:", error);
     return NextResponse.json(
       { error: "Erro ao buscar plano de contas" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/financial/chart-accounts
  * Cria uma nova conta
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -202,13 +204,13 @@ export async function POST(req: Request) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar conta:", error);
+    logger.error("❌ Erro ao criar conta:", error);
     return NextResponse.json(
       { error: "Erro ao criar conta" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

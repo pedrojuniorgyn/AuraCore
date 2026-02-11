@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { calculateIbsCbsSchema } from '@/lib/validators/tax-reform';
 import { CalculateIbsCbsUseCase } from '@/modules/fiscal/application/use-cases';
 import { Result } from '@/shared/domain';
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * POST /api/fiscal/tax-reform/calculate
@@ -29,7 +31,7 @@ import { Result } from '@/shared/domain';
  * Response 401: Não autenticado
  * Response 500: Erro interno
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação e Tenant Context
     const ctx = await getTenantContext();
@@ -101,9 +103,7 @@ export async function POST(request: NextRequest) {
       return error;
     }
     // 7. Error Handling
-    console.error('Error in POST /api/fiscal/tax-reform/calculate:', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error('Error in POST /api/fiscal/tax-reform/calculate', error);
     
     if (error instanceof Response) {
       return error; // Preserva NextResponse de helpers
@@ -114,5 +114,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 import { container } from "@/shared/infrastructure/di/container";
@@ -6,6 +7,7 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 import sql from "mssql";
 
+import { logger } from '@/shared/infrastructure/logging';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -13,17 +15,14 @@ export const runtime = "nodejs";
  * POST /api/financial/billing/:id/generate-boleto-btg
  * Gerar boleto BTG para uma fatura
  */
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withDI(async (_request: NextRequest, context: RouteContext) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const billingId = parseInt(resolvedParams.id);
     if (!Number.isFinite(billingId) || billingId <= 0) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
@@ -167,14 +166,14 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao gerar boleto BTG para fatura:", error);
+    logger.error("❌ Erro ao gerar boleto BTG para fatura:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { db, getDbRows } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * 📦 GET /api/financial/payables/:id/items
  * 
  * Retorna itens detalhados de uma Conta a Pagar (Master-Detail)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const payableId = parseInt(resolvedParams.id);
 
     // Buscar conta a pagar
@@ -93,10 +92,10 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar itens:", error);
+    logger.error("❌ Erro ao buscar itens:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});

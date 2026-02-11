@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user) {
@@ -61,7 +63,7 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error fetching report history:', error);
+    logger.error('Error fetching report history:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+});
