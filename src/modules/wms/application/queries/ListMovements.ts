@@ -2,8 +2,8 @@ import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IMovementRepository } from '@/modules/wms/domain/ports/output/IMovementRepository';
 import type { IListMovements, ListMovementsInput, MovementListItem } from '@/modules/wms/domain/ports/input';
-import type { ExecutionContext } from '../../dtos/ExecutionContext';
-import type { PaginatedResponse } from '../../dtos/ListQueryDTO';
+import type { ExecutionContext } from '../dtos/ExecutionContext';
+import type { PaginatedResponse } from '../dtos/ListQueryDTO';
 import type { StockMovement } from '@/modules/wms/domain/entities/StockMovement';
 
 /**

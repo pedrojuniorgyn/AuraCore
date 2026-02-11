@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { CompleteInventoryCount } from '@/modules/wms/application/use-cases/CompleteInventoryCount';
+import { CompleteInventoryCount } from '@/modules/wms/application/commands/CompleteInventoryCount';
 import { CompleteInventoryCountSchema } from '@/modules/wms/application/dtos/InventoryCountDTO';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';

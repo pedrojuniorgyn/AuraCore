@@ -14,5 +14,5 @@ export type {
   PickupOrderCreatedResult,
 } from './IWorkflowAutomatorGateway';
 
-// Re-export existing
-export type { IRomaneioRepository } from '../IRomaneioRepository';
+// Romaneio repository
+export type { IRomaneioRepository, FindRomaneiosFilters } from './IRomaneioRepository';

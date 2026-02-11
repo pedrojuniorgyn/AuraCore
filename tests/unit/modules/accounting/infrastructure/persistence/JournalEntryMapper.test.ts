@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { JournalEntryMapper } from '@/modules/accounting/infrastructure/persistence/JournalEntryMapper';
+import { JournalEntryMapper } from '@/modules/accounting/infrastructure/persistence/mappers/JournalEntryMapper';
 import { JournalEntry } from '@/modules/accounting/domain/entities/JournalEntry';
 import { JournalEntryLine } from '@/modules/accounting/domain/entities/JournalEntryLine';
 import { Money, Result } from '@/shared/domain';
-import type { JournalEntryRow, JournalEntryLineRow } from '@/modules/accounting/infrastructure/persistence/JournalEntrySchema';
+import type { JournalEntryRow, JournalEntryLineRow } from '@/modules/accounting/infrastructure/persistence/schemas/JournalEntrySchema';
 
 /**
  * Helper para extrair valor de Result em testes

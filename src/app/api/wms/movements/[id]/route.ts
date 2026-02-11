@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { GetMovementById } from '@/modules/wms/application/use-cases/queries/GetMovementById';
+import { GetMovementById } from '@/modules/wms/application/queries/GetMovementById';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import type { ExecutionContext } from '@/modules/wms/application/dtos/ExecutionContext';

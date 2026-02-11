@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PostJournalEntryUseCase } from '@/modules/accounting/application/use-cases/PostJournalEntryUseCase';
+import { PostJournalEntryUseCase } from '@/modules/accounting/application/commands/PostJournalEntryUseCase';
 import type { IJournalEntryRepository } from '@/modules/accounting/domain/ports/output/IJournalEntryRepository';
 import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';

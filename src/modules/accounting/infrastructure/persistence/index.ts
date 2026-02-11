@@ -15,7 +15,7 @@ export {
 export { DrizzleJournalEntryRepository } from './DrizzleJournalEntryRepository';
 
 // Schemas
-export * from './JournalEntrySchema';
+export * from './schemas/JournalEntrySchema';
 
 // Mapper
-export { JournalEntryMapper } from './JournalEntryMapper';
+export { JournalEntryMapper } from './mappers/JournalEntryMapper';

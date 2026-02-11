@@ -2,9 +2,9 @@
  * ReceivableMapper - Mapper entre AccountReceivable entity e row do banco
  */
 import { Result, Money } from '@/shared/domain';
-import { AccountReceivable, type ReceivableOrigin } from '../../domain/entities/AccountReceivable';
-import { ReceivableStatus } from '../../domain/value-objects/ReceivableStatus';
-import type { AccountReceivableRow, AccountReceivableInsert } from './ReceivableSchema';
+import { AccountReceivable, type ReceivableOrigin } from '../../../domain/entities/AccountReceivable';
+import { ReceivableStatus } from '../../../domain/value-objects/ReceivableStatus';
+import type { AccountReceivableRow, AccountReceivableInsert } from '../schemas/ReceivableSchema';
 
 export class ReceivableMapper {
   /**

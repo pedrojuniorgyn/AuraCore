@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PayableMapper } from '@/modules/financial/infrastructure/persistence/PayableMapper';
+import { PayableMapper } from '@/modules/financial/infrastructure/persistence/mappers/PayableMapper';
 import { AccountPayable } from '@/modules/financial/domain/entities/AccountPayable';
 import { PaymentTerms } from '@/modules/financial/domain/value-objects/PaymentTerms';
 import { Money, Result } from '@/shared/domain';
-import type { AccountPayableRow, PaymentRow } from '@/modules/financial/infrastructure/persistence/PayableSchema';
+import type { AccountPayableRow, PaymentRow } from '@/modules/financial/infrastructure/persistence/schemas/PayableSchema';
 
 describe('PayableMapper', () => {
   let validPayable: AccountPayable;

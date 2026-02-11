@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { GetLocationById } from '@/modules/wms/application/use-cases/queries/GetLocationById';
-import { UpdateLocation } from '@/modules/wms/application/use-cases/UpdateLocation';
-import { DeleteLocation } from '@/modules/wms/application/use-cases/DeleteLocation';
+import { GetLocationById } from '@/modules/wms/application/queries/GetLocationById';
+import { UpdateLocation } from '@/modules/wms/application/commands/UpdateLocation';
+import { DeleteLocation } from '@/modules/wms/application/commands/DeleteLocation';
 import { UpdateLocationSchema } from '@/modules/wms/application/dtos/UpdateLocationDTO';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';

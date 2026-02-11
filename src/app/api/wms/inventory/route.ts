@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { StartInventoryCount } from '@/modules/wms/application/use-cases/StartInventoryCount';
-import { ListInventoryCounts } from '@/modules/wms/application/use-cases/queries/ListInventoryCounts';
+import { StartInventoryCount } from '@/modules/wms/application/commands/StartInventoryCount';
+import { ListInventoryCounts } from '@/modules/wms/application/queries/ListInventoryCounts';
 import { StartInventoryCountSchema } from '@/modules/wms/application/dtos/InventoryCountDTO';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';

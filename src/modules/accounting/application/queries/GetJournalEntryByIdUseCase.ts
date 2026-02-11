@@ -6,7 +6,7 @@ import type { IJournalEntryRepository } from '../../domain/ports/output/IJournal
 import type { IGetJournalEntryById, GetJournalEntryByIdInput } from '../../domain/ports/input';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
 import { JournalEntryResponseDTO, toJournalEntryResponseDTO } from '../dtos/JournalEntryResponseDTO';
-import { ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from '../use-cases/BaseUseCase';
 
 const GetJournalEntryByIdInputSchema = z.object({
   id: z.string().uuid('Invalid journal entry ID'),

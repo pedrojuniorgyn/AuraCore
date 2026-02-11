@@ -5,7 +5,7 @@ import { Result } from '@/shared/domain';
 import {
   IRomaneioRepository,
   FindRomaneiosFilters,
-} from '../../domain/ports/IRomaneioRepository';
+} from '../../domain/ports/output/IRomaneioRepository';
 import { RomaneioDocument } from '../../domain/entities/RomaneioDocument';
 import { RomaneioItem } from '../../domain/entities/RomaneioItem';
 import {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { container } from '@/shared/infrastructure/di/container';
-import { RegisterStockEntry } from '@/modules/wms/application/use-cases/RegisterStockEntry';
+import { RegisterStockEntry } from '@/modules/wms/application/commands/RegisterStockEntry';
 import { RegisterStockEntrySchema } from '@/modules/wms/application/dtos/RegisterStockEntryDTO';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';

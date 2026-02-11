@@ -7,7 +7,7 @@ import type { IJournalEntryRepository } from '../../domain/ports/output/IJournal
 import type { IAddLineToEntry } from '../../domain/ports/input';
 import { JournalEntryNotFoundError } from '../../domain/errors/AccountingErrors';
 import { AddLineInput, AddLineInputSchema, AddLineOutput } from '../dtos/AddLineDTO';
-import { ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from '../use-cases/BaseUseCase';
 
 /**
  * Use Case: Adicionar Linha ao Lançamento

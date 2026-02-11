@@ -1,6 +1,6 @@
 import { Result } from '@/shared/domain';
-import { RomaneioDocument } from '../entities/RomaneioDocument';
-import { RomaneioStatus } from '../value-objects/RomaneioStatus';
+import { RomaneioDocument } from '../../entities/RomaneioDocument';
+import { RomaneioStatus } from '../../value-objects/RomaneioStatus';
 
 /**
  * Filtros para busca de romaneios

@@ -2,7 +2,7 @@ import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import type { IStockRepository } from '@/modules/wms/domain/ports/output/IStockRepository';
 import type { IGetStockItemById, GetStockItemByIdInput, GetStockItemByIdOutput } from '@/modules/wms/domain/ports/input';
-import type { ExecutionContext } from '../../dtos/ExecutionContext';
+import type { ExecutionContext } from '../dtos/ExecutionContext';
 
 /**
  * GetStockItemById Query - E7.8 WMS Semana 2

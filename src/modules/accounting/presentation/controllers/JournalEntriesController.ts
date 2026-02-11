@@ -4,12 +4,12 @@ import { Result } from '@/shared/domain';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { ExecutionContext } from '../../application/use-cases/BaseUseCase';
-import { CreateJournalEntryUseCase } from '../../application/use-cases/CreateJournalEntryUseCase';
-import { ListJournalEntriesUseCase } from '../../application/use-cases/ListJournalEntriesUseCase';
-import { GetJournalEntryByIdUseCase } from '../../application/use-cases/GetJournalEntryByIdUseCase';
-import { AddLineToEntryUseCase } from '../../application/use-cases/AddLineToEntryUseCase';
-import { PostJournalEntryUseCase } from '../../application/use-cases/PostJournalEntryUseCase';
-import { ReverseJournalEntryUseCase } from '../../application/use-cases/ReverseJournalEntryUseCase';
+import { CreateJournalEntryUseCase } from '../../application/commands/CreateJournalEntryUseCase';
+import { ListJournalEntriesUseCase } from '../../application/queries/ListJournalEntriesUseCase';
+import { GetJournalEntryByIdUseCase } from '../../application/queries/GetJournalEntryByIdUseCase';
+import { AddLineToEntryUseCase } from '../../application/commands/AddLineToEntryUseCase';
+import { PostJournalEntryUseCase } from '../../application/commands/PostJournalEntryUseCase';
+import { ReverseJournalEntryUseCase } from '../../application/commands/ReverseJournalEntryUseCase';
 
 /**
  * Controller para Journal Entries

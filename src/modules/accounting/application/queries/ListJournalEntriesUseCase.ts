@@ -9,7 +9,7 @@ import type {
 } from '../../domain/ports/output/IJournalEntryRepository';
 import type { IListJournalEntries, ListJournalEntriesInput } from '../../domain/ports/input';
 import { PaginatedJournalEntriesDTO, toJournalEntryResponseDTO } from '../dtos/JournalEntryResponseDTO';
-import { ExecutionContext } from './BaseUseCase';
+import { ExecutionContext } from '../use-cases/BaseUseCase';
 
 const ListJournalEntriesInputSchema = z.object({
   status: z.array(z.string()).optional(),

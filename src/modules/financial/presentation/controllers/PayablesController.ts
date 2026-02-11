@@ -2,11 +2,11 @@ import { container } from '@/shared/infrastructure/di/container';
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
-import { CreatePayableUseCase } from '../../application/use-cases/CreatePayableUseCase';
-import { PayAccountPayableUseCase } from '../../application/use-cases/PayAccountPayableUseCase';
-import { CancelPayableUseCase } from '../../application/use-cases/CancelPayableUseCase';
-import { ListPayablesUseCase } from '../../application/use-cases/ListPayablesUseCase';
-import { GetPayableByIdUseCase } from '../../application/use-cases/GetPayableByIdUseCase';
+import { CreatePayableUseCase } from '../../application/commands/CreatePayableUseCase';
+import { PayAccountPayableUseCase } from '../../application/commands/PayAccountPayableUseCase';
+import { CancelPayableUseCase } from '../../application/commands/CancelPayableUseCase';
+import { ListPayablesUseCase } from '../../application/queries/ListPayablesUseCase';
+import { GetPayableByIdUseCase } from '../../application/queries/GetPayableByIdUseCase';
 import type { ExecutionContext } from '../../application/use-cases/BaseUseCase';
 import { Result } from '@/shared/domain';
 

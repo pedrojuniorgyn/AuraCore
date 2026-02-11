@@ -13,13 +13,13 @@ import { eq, and, isNull, sql, desc, asc, or, like } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { Result } from '@/shared/domain';
 import { JournalEntry } from '../../domain/entities/JournalEntry';
-import { JournalEntryMapper } from './JournalEntryMapper';
+import { JournalEntryMapper } from './mappers/JournalEntryMapper';
 import { 
   journalEntriesTable, 
   journalEntryLinesTable,
   JournalEntryRow,
   JournalEntryLineRow 
-} from './JournalEntrySchema';
+} from './schemas/JournalEntrySchema';
 import type {
   IJournalEntryRepository,
   FindJournalEntriesFilter,

@@ -1,13 +1,13 @@
 import { Result, Money } from '@/shared/domain';
-import { AccountPayable } from '../../domain/entities/AccountPayable';
-import { Payment, PaymentMethod, PaymentStatus } from '../../domain/entities/Payment';
-import { PaymentTerms } from '../../domain/value-objects/PaymentTerms';
+import { AccountPayable } from '../../../domain/entities/AccountPayable';
+import { Payment, PaymentMethod, PaymentStatus } from '../../../domain/entities/Payment';
+import { PaymentTerms } from '../../../domain/value-objects/PaymentTerms';
 import { 
   AccountPayableRow, 
   AccountPayableSchemaInsert,
   PaymentRow,
   PaymentInsert 
-} from './PayableSchema';
+} from '../schemas/PayableSchema';
 
 /**
  * Mapper: Converte entre Domain Models e Persistence Models

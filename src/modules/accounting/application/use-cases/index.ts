@@ -1,27 +1,26 @@
 /**
- * Application Use Cases
+ * Application Use Cases - Re-exports from commands/ and queries/
  *
- * Exporta casos de uso do módulo Accounting
- *
- * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
+ * @see ARCH-012: Commands em pasta commands/
+ * @see ARCH-013: Queries em pasta queries/
  */
 
 // Commands
-export { CreateJournalEntryUseCase } from './CreateJournalEntryUseCase';
-export { AddLineToEntryUseCase } from './AddLineToEntryUseCase';
-export { PostJournalEntryUseCase } from './PostJournalEntryUseCase';
-export { ReverseJournalEntryUseCase } from './ReverseJournalEntryUseCase';
+export { CreateJournalEntryUseCase } from '../commands/CreateJournalEntryUseCase';
+export { AddLineToEntryUseCase } from '../commands/AddLineToEntryUseCase';
+export { PostJournalEntryUseCase } from '../commands/PostJournalEntryUseCase';
+export { ReverseJournalEntryUseCase } from '../commands/ReverseJournalEntryUseCase';
 
 // Queries
-export { ListJournalEntriesUseCase } from './ListJournalEntriesUseCase';
-export { GetJournalEntryByIdUseCase } from './GetJournalEntryByIdUseCase';
+export { ListJournalEntriesUseCase } from '../queries/ListJournalEntriesUseCase';
+export { GetJournalEntryByIdUseCase } from '../queries/GetJournalEntryByIdUseCase';
 
 // Legacy (manter para compatibilidade)
-export { GenerateJournalEntryUseCase } from './GenerateJournalEntryUseCase';
+export { GenerateJournalEntryUseCase } from '../commands/GenerateJournalEntryUseCase';
 export type {
   GenerateJournalEntryInput,
   GenerateJournalEntryOutput,
-} from './GenerateJournalEntryUseCase';
+} from '../commands/GenerateJournalEntryUseCase';
 
 // Base
 export type { ExecutionContext, IUseCaseWithContext, IUseCase } from './BaseUseCase';
