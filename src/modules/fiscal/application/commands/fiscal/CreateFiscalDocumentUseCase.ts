@@ -2,17 +2,17 @@ import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
-import { FiscalDocument } from '../../domain/entities/FiscalDocument';
-import { FiscalDocumentItem } from '../../domain/entities/FiscalDocumentItem';
-import { CFOP } from '../../domain/value-objects/CFOP';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
+import { FiscalDocument } from '../../../domain/entities/FiscalDocument';
+import { FiscalDocumentItem } from '../../../domain/entities/FiscalDocumentItem';
+import { CFOP } from '../../../domain/value-objects/CFOP';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import {
   ICreateFiscalDocument,
   CreateFiscalDocumentInput,
   CreateFiscalDocumentOutput,
   ExecutionContext,
-} from '../../domain/ports/input';
+} from '../../../domain/ports/input';
 
 /**
  * Use Case: Create Fiscal Document

@@ -39,6 +39,10 @@ interface ChromaConfig {
   authToken?: string;
   /** Nome da collection (default: auracore_knowledge) */
   collectionName?: string;
+  /** Número máximo de tentativas de conexão (default: 10) */
+  maxRetries?: number;
+  /** Delay entre tentativas em ms (default: 2000) */
+  retryDelayMs?: number;
 }
 
 // Tipo para metadados do ChromaDB (não suporta objetos aninhados)
@@ -88,10 +92,13 @@ export class ChromaVectorStore implements IVectorStore {
 
   /**
    * Aguarda ChromaDB estar disponível com retry
-   * @param maxRetries Número máximo de tentativas (default: 10)
-   * @param delayMs Delay entre tentativas em ms (default: 2000)
+   * @param maxRetries Número máximo de tentativas (default: config.maxRetries ?? 10)
+   * @param delayMs Delay entre tentativas em ms (default: config.retryDelayMs ?? 2000)
    */
-  private async waitForChromaDB(maxRetries = 10, delayMs = 2000): Promise<Result<void, string>> {
+  private async waitForChromaDB(
+    maxRetries = this.config.maxRetries ?? 10,
+    delayMs = this.config.retryDelayMs ?? 2000,
+  ): Promise<Result<void, string>> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.client.heartbeat();

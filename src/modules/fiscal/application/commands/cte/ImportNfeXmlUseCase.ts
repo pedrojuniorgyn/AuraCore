@@ -22,14 +22,14 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 import type {
   IImportNfeXmlUseCase,
   ImportNfeXmlInput,
   ImportNfeXmlOutput,
-} from '../../domain/ports/input/IImportNfeXmlUseCase';
-import type { ExecutionContext } from '../../domain/ports/input/IAuthorizeFiscalDocument';
+} from '../../../domain/ports/input/IImportNfeXmlUseCase';
+import type { ExecutionContext } from '../../../domain/ports/input/IAuthorizeFiscalDocument';
 
 /** Origens válidas de importação */
 const VALID_SOURCES = ['MANUAL', 'SEFAZ', 'EMAIL'] as const;

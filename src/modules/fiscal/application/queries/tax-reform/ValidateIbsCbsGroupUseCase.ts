@@ -6,8 +6,8 @@ import {
   ValidateIbsCbsGroupOutput,
   IbsCbsValidationError,
   ValidationWarning,
-} from '../dtos/ValidateIbsCbsGroupDto';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+} from '../../dtos/ValidateIbsCbsGroupDto';
+import { IUseCaseWithContext, ExecutionContext } from '../../commands/fiscal/BaseUseCase';
 
 /**
  * Use Case: Validar Grupo IBS/CBS

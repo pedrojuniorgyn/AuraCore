@@ -1,13 +1,13 @@
 import { injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import { TaxEngineFactory } from '../../domain/tax/engines/TaxEngineFactory';
+import { TaxEngineFactory } from '../../../domain/tax/engines/TaxEngineFactory';
 import { 
   GetTaxRatesInput,
   GetTaxRatesInputSchema,
   GetTaxRatesOutput,
   TaxRates,
-} from '../dtos/TaxRatesDto';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+} from '../../dtos/TaxRatesDto';
+import { IUseCaseWithContext, ExecutionContext } from '../../commands/fiscal/BaseUseCase';
 
 /**
  * Use Case: Obter Alíquotas Vigentes

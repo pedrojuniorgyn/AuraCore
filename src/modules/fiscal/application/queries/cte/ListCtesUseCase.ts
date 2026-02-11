@@ -12,16 +12,16 @@
 
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type {
   IListCtesUseCase,
   ListCtesInput,
   ListCtesOutput,
   CteListItemDto,
-} from '../../domain/ports/input/IListCtesUseCase';
-import type { ExecutionContext } from '../../domain/ports/input/IAuthorizeFiscalDocument';
-import type { DocumentStatus } from '../../domain/value-objects/DocumentType';
+} from '../../../domain/ports/input/IListCtesUseCase';
+import type { ExecutionContext } from '../../../domain/ports/input/IAuthorizeFiscalDocument';
+import type { DocumentStatus } from '../../../domain/value-objects/DocumentType';
 
 /**
  * Query: Listagem paginada de CTes.

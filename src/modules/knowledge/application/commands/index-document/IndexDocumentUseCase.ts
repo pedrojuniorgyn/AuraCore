@@ -15,64 +15,14 @@ import { DocumentChunker } from '../../../domain/services/DocumentChunker';
 import type { IVectorStore } from '../../../domain/ports/output/IVectorStore';
 import type { IEmbeddingService } from '../../../domain/ports/output/IEmbeddingService';
 import type {
-  DocumentMetadata,
-  DocumentType,
-  LegislationType,
-  ChunkOptions,
-} from '../../../domain/types';
+  IIndexDocumentUseCase,
+  IndexDocumentInput,
+  IndexDocumentOutput,
+} from '../../../domain/ports/input';
+import type { DocumentMetadata } from '../../../domain/types';
 
-// ============================================================================
-// INPUT/OUTPUT
-// ============================================================================
-
-export interface IndexDocumentInput {
-  /** Caminho do arquivo (opcional se content fornecido) */
-  filePath?: string;
-  
-  /** Conteúdo do documento (opcional se filePath fornecido) */
-  content?: string;
-  
-  /** Título do documento */
-  title: string;
-  
-  /** Tipo de documento */
-  type: DocumentType;
-  
-  /** Tipo de legislação (se aplicável) */
-  legislationType?: LegislationType;
-  
-  /** Fonte/origem do documento */
-  source: string;
-  
-  /** Versão do documento */
-  version?: string;
-  
-  /** Data de vigência */
-  effectiveDate?: Date;
-  
-  /** Tags para busca */
-  tags?: string[];
-  
-  /** ID da organização (null = documento global) */
-  organizationId?: number;
-  
-  /** Opções de chunking */
-  chunkOptions?: ChunkOptions;
-}
-
-export interface IndexDocumentOutput {
-  /** ID do documento indexado */
-  documentId: string;
-  
-  /** Número de chunks criados */
-  chunksCreated: number;
-  
-  /** Tamanho total do documento em caracteres */
-  totalCharacters: number;
-  
-  /** Tokens estimados */
-  estimatedTokens: number;
-}
+// Re-export input/output for consumers
+export type { IndexDocumentInput, IndexDocumentOutput };
 
 // ============================================================================
 // USE CASE
@@ -80,13 +30,15 @@ export interface IndexDocumentOutput {
 
 /**
  * Use Case para indexação de documentos
- * 
+ *
  * Pode ser usado via DI ou instanciado diretamente:
  * - Via DI: container.resolve(IndexDocumentUseCase)
  * - Direto: new IndexDocumentUseCase(vectorStore, embeddingService?)
+ *
+ * @implements IIndexDocumentUseCase
  */
 @injectable()
-export class IndexDocumentUseCase {
+export class IndexDocumentUseCase implements IIndexDocumentUseCase {
   constructor(
     @inject(TOKENS.KnowledgeVectorStore) private readonly vectorStore: IVectorStore,
     @inject(TOKENS.KnowledgeEmbeddingService) private readonly embeddingService?: IEmbeddingService

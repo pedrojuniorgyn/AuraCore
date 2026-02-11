@@ -10,6 +10,7 @@ import { container } from 'tsyringe';
 import { ProposalPdfAdapter } from '../adapters/ProposalPdfAdapter';
 import type { IProposalPdfGateway } from '../../domain/ports/output/IProposalPdfGateway';
 
+import { logger } from '@/shared/infrastructure/logging';
 export const COMMERCIAL_TOKENS = {
   ProposalPdfGateway: Symbol.for('IProposalPdfGateway'),
 };
@@ -26,7 +27,7 @@ export function registerCommercialModule(): void {
   );
 
   isRegistered = true;
-  console.log('[Commercial Module] DI configured - 1 gateway');
+  logger.info('[Commercial Module] DI configured - 1 gateway');
 }
 
 export function initializeCommercialModule(): void {

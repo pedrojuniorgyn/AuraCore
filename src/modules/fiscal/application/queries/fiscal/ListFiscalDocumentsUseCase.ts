@@ -1,14 +1,14 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import {
   IListFiscalDocuments,
   ListFiscalDocumentsInput,
   ListFiscalDocumentsOutput,
   ExecutionContext,
-} from '../../domain/ports/input';
-import type { DocumentType, DocumentStatus } from '../../domain/value-objects/DocumentType';
+} from '../../../domain/ports/input';
+import type { DocumentType, DocumentStatus } from '../../../domain/value-objects/DocumentType';
 
 /**
  * Use Case: List Fiscal Documents

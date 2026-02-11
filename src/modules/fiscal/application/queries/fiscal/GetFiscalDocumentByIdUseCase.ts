@@ -1,14 +1,14 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
-import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
+import { FiscalDocumentNotFoundError } from '../../../domain/errors/FiscalErrors';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import {
   IGetFiscalDocumentById,
   GetFiscalDocumentByIdInput,
   FiscalDocumentDto,
   ExecutionContext,
-} from '../../domain/ports/input';
+} from '../../../domain/ports/input';
 
 /**
  * Use Case: Get Fiscal Document By ID

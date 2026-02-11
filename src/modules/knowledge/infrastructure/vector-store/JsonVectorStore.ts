@@ -20,6 +20,7 @@ import type {
   SearchOptions,
   SearchResult,
 } from '../../domain/types';
+import { logger } from '@/shared/infrastructure/logging';
 
 interface StorageData {
   documents: Record<string, DocumentMetadata>;
@@ -80,7 +81,7 @@ export class JsonVectorStore implements IVectorStore {
       fs.writeFileSync(this.storagePath, JSON.stringify(this.data, null, 2));
       this.isDirty = false;
     } catch (error) {
-      console.error('Erro ao salvar vector store:', error);
+      logger.error('Erro ao salvar vector store:', error);
     }
   }
 

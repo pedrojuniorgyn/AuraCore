@@ -6,9 +6,10 @@ import {
   AuditTaxTransitionInput,
   AuditTaxTransitionInputSchema,
   AuditTaxTransitionOutput,
-} from '../dtos/AuditTaxTransitionDto';
+} from '../../dtos/AuditTaxTransitionDto';
 import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Use Case: Auditar Transição Tributária
  * 
@@ -71,7 +72,7 @@ export class AuditTaxTransitionUseCase implements IUseCaseWithContext<AuditTaxTr
     // });
 
     // 6. Log de auditoria
-    console.log(`[AUDIT] Tax transition audit created: ${auditId}`, {
+    logger.info(`[AUDIT] Tax transition audit created: ${auditId}`, {
       fiscalDocumentId: data.fiscalDocumentId,
       calculatedBy: data.calculatedBy,
       currentTaxes: data.currentTaxes,

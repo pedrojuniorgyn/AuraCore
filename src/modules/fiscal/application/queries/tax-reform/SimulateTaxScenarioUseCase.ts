@@ -5,7 +5,7 @@ import {
   SimulateTaxReformInput,
   SimulateTaxReformOutput,
   ExecutionContext,
-} from '../../domain/ports/input';
+} from '../../../domain/ports/input';
 
 /**
  * Use Case: Simular Cenários Tributários

@@ -1,17 +1,18 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
-import type { ISefazService } from '../../domain/ports/output/ISefazService';
-import type { FiscalAccountingIntegration } from '../services/FiscalAccountingIntegration';
-import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
-import { FiscalKey } from '../../domain/value-objects/FiscalKey';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
+import type { ISefazService } from '../../../domain/ports/output/ISefazService';
+import type { FiscalAccountingIntegration } from '../../services/FiscalAccountingIntegration';
+import { FiscalDocumentNotFoundError } from '../../../domain/errors/FiscalErrors';
+import { FiscalKey } from '../../../domain/value-objects/FiscalKey';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import {
   IAuthorizeFiscalDocument,
   AuthorizeFiscalDocumentInput,
   AuthorizeFiscalDocumentOutput,
   ExecutionContext,
-} from '../../domain/ports/input';
+} from '../../../domain/ports/input';
+import { logger } from '@/shared/infrastructure/logging';
 
 /**
  * Use Case: Authorize Fiscal Document
@@ -91,13 +92,9 @@ export class AuthorizeFiscalDocumentUseCase implements IAuthorizeFiscalDocument 
 
       // Log accounting result (não falhamos o Use Case se contabilização falhar)
       if (Result.isFail(accountingResult)) {
-        console.warn(
-          `[AuthorizeFiscalDocumentUseCase] Accounting integration failed for document ${document.id}: ${accountingResult.error}`
-        );
+        logger.warn(`[AuthorizeFiscalDocumentUseCase] Accounting integration failed for document ${document.id}: ${accountingResult.error}`);
       } else {
-        console.log(
-          `[AuthorizeFiscalDocumentUseCase] Journal entry created: ${accountingResult.value}`
-        );
+        logger.info(`[AuthorizeFiscalDocumentUseCase] Journal entry created: ${accountingResult.value}`);
       }
 
       return Result.ok({

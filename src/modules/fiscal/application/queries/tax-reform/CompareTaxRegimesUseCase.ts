@@ -5,7 +5,7 @@ import {
   CompareTaxRegimesInput,
   CompareTaxRegimesOutput,
   ExecutionContext,
-} from '../../domain/ports/input';
+} from '../../../domain/ports/input';
 
 /**
  * Use Case: Comparar Regimes Tributários
