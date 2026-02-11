@@ -275,7 +275,7 @@ export const PUT = withDI(async (req: Request, context: RouteContext) => {
       oldData: existing[0] as unknown as Record<string, unknown>,
       newData: updated as unknown as Record<string, unknown>,
       changedBy: updatedBy,
-    }).catch(console.error);
+    }).catch((err: unknown) => logger.error("Erro ao registrar auditoria de atualização de Chart Account:", err));
 
     return NextResponse.json({
       success: true,
@@ -418,7 +418,7 @@ export const DELETE = withDI(async (req: Request, context: RouteContext) => {
       operation: "DELETE",
       oldData: account,
       changedBy: updatedBy,
-    }).catch(console.error);
+    }).catch((err: unknown) => logger.error("Erro ao registrar auditoria de exclusão de Chart Account:", err));
 
     return NextResponse.json({
       success: true,

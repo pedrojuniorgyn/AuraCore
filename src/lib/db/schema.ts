@@ -1934,6 +1934,7 @@ export const tripCheckpoints = mssqlTable("trip_checkpoints", {
   recordedBy: nvarchar("recorded_by", { length: 255 }),
   
   createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`), // E13.2: SCHEMA-005
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 });
 
