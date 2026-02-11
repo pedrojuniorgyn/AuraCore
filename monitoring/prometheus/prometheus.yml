@@ -39,12 +39,13 @@ scrape_configs:
         target_label: instance
         replacement: 'auracore-agents-native'
 
-  # AuraCore Frontend (Next.js) - se expuser métricas
-  # - job_name: 'auracore-frontend'
-  #   metrics_path: '/api/metrics'
-  #   static_configs:
-  #     - targets: ['host.docker.internal:3000']
-  #   relabel_configs:
-  #     - source_labels: [__address__]
-  #       target_label: instance
-  #       replacement: 'auracore-frontend'
+  # AuraCore ERP (Next.js)
+  - job_name: 'auracore-erp'
+    metrics_path: '/api/metrics'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'auracore-erp'
