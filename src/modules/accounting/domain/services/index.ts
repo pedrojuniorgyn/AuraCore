@@ -10,3 +10,21 @@ export type {
   GenerateJournalLinesOutput,
 } from './JournalEntryGenerator';
 
+export { AccountingEngine } from './AccountingEngine';
+export type {
+  FiscalClassification,
+  AccountingStatus,
+  JournalEntryStatus,
+  DocumentEligibilityInput,
+  CounterpartInput,
+  CounterpartAccountRule,
+  EntryDescriptionInput,
+  PeriodValidationInput,
+  BalanceLine,
+  BalanceValidationResult,
+  AccountValidationInput,
+  JournalItemInput,
+  GeneratedJournalLine,
+  JournalEntryGenerationResult,
+} from './AccountingEngine';
+
