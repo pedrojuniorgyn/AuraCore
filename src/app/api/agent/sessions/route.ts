@@ -14,6 +14,8 @@ import { sessionStore } from '@/agent/persistence';
 import { Result } from '@/shared/domain';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const CreateSessionSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -27,7 +29,7 @@ const ListQuerySchema = z.object({
 /**
  * GET - List user sessions
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -64,18 +66,18 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error listing sessions:', error);
+    logger.error('Error listing sessions:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST - Create new session
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -112,10 +114,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error creating session:', error);
+    logger.error('Error creating session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

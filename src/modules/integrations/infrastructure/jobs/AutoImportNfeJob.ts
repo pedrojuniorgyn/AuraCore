@@ -17,7 +17,7 @@ import { fiscalSettings, branches } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { Result } from '@/shared/domain';
 import { logger } from '@/shared/infrastructure/logging';
-import { notificationService } from '@/services/notification-service';
+import type { IInAppNotificationService } from '@/shared/domain/ports/output/IInAppNotificationService';
 import type { IDownloadNfesUseCase } from '@/modules/fiscal/domain/ports/input/IDownloadNfesUseCase';
 
 export interface IAutoImportNfeJob {
@@ -42,7 +42,9 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
 
   constructor(
     @inject(TOKENS.DownloadNfesUseCase)
-    private readonly downloadNfesUseCase: IDownloadNfesUseCase
+    private readonly downloadNfesUseCase: IDownloadNfesUseCase,
+    @inject(TOKENS.InAppNotificationService)
+    private readonly notificationService: IInAppNotificationService
   ) {}
 
   /**
@@ -151,7 +153,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
 
             // Notificar importação bem-sucedida
             if (data.processing && data.processing.imported > 0) {
-              await notificationService.notifyImportSuccess(
+              await this.notificationService.notifyImportSuccess(
                 setting.organizationId,
                 setting.branchId,
                 data.processing.imported,
@@ -162,7 +164,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
 
             // Verificar se houve erro 656 (Consumo Indevido)
             if (data.message?.includes('656')) {
-              await notificationService.notifySefazError656(setting.organizationId, setting.branchId);
+              await this.notificationService.notifySefazError656(setting.organizationId, setting.branchId);
             }
           } else {
             const errorMsg = importResult.error;
@@ -172,7 +174,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
             result.errors.push(`Filial ${setting.branchId}: ${errorMsg}`);
 
             // Notificar erro na importação
-            await notificationService.notifyImportError(setting.organizationId, setting.branchId, errorMsg);
+            await this.notificationService.notifyImportError(setting.organizationId, setting.branchId, errorMsg);
           }
 
           // Atualizar última importação
@@ -194,7 +196,7 @@ export class AutoImportNfeJob implements IAutoImportNfeJob {
           result.errors.push(`Filial ${setting.branchId}: ${errorMessage}`);
 
           // Notificar erro na importação
-          await notificationService.notifyImportError(setting.organizationId, setting.branchId, errorMessage);
+          await this.notificationService.notifyImportError(setting.organizationId, setting.branchId, errorMessage);
         }
       }
 

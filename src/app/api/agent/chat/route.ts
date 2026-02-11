@@ -34,6 +34,8 @@ import { AuraAgent } from '@/agent';
 import { z } from 'zod';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * Schema de validação do request
  */
@@ -51,7 +53,7 @@ const agentCache = new Map<string, AuraAgent>();
 /**
  * POST /api/agent/chat
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   const startTime = Date.now();
 
   try {
@@ -149,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('❌ Erro no chat do agente:', error);
+    logger.error('❌ Erro no chat do agente:', error);
 
     return NextResponse.json(
       {
@@ -160,12 +162,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/agent/chat - Informações sobre o endpoint
  */
-export async function GET() {
+export const GET = withDI(async () => {
   return NextResponse.json({
     name: 'AuraCore Agent Chat API',
     version: '1.0.0',
@@ -189,4 +191,4 @@ export async function GET() {
       'search_email - Buscar emails no Gmail',
     ],
   });
-}
+});

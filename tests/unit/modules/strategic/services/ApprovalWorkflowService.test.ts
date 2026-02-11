@@ -196,21 +196,33 @@ describe('ApprovalWorkflowService', () => {
   });
 });
 
-// Helper
+// Helper: uses reconstitute() for full control over workflow state
 function createMockStrategy(overrides: Partial<Record<string, unknown>> = {}) {
   const now = new Date();
-  const strategyResult = Strategy.create({
+  const defaults = {
+    id: globalThis.crypto.randomUUID(),
     organizationId: 1,
     branchId: 1,
     name: 'Test Strategy',
+    vision: null,
+    mission: null,
+    values: [],
     startDate: now,
     endDate: new Date(now.getFullYear() + 1, 11, 31),
+    status: 'DRAFT' as const,
+    versionType: 'ACTUAL' as const,
+    isLocked: false,
+    workflowStatus: WorkflowStatus.DRAFT,
     createdBy: 'test',
-    ...overrides,
-  });
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const props = { ...defaults, ...overrides };
+  const strategyResult = Strategy.reconstitute(props as Parameters<typeof Strategy.reconstitute>[0]);
 
   if (!Result.isOk(strategyResult)) {
-    throw new Error('Failed to create mock strategy');
+    throw new Error(`Failed to create mock strategy: ${strategyResult.error}`);
   }
 
   return strategyResult.value;

@@ -4,8 +4,9 @@ import { fuelTransactions } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { insertWithReturningId } from "@/lib/db/query-helpers";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -32,9 +33,9 @@ export async function GET() {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withDI(async (request: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

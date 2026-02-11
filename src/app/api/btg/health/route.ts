@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -12,7 +13,7 @@ export const runtime = "nodejs";
  * 
  * E8 Fase 1.2: Migrado para usar IBtgClient via DI
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
     const healthStatus = await btgClient.healthCheck();
@@ -39,7 +40,7 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
 
 
 

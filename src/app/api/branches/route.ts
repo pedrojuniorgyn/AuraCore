@@ -5,6 +5,8 @@ import { createBranchSchema } from "@/lib/validators/branch";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ilike, or, inArray, desc } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/branches
  * Lista todas as filiais da organização do usuário logado.
@@ -18,7 +20,7 @@ import { eq, and, isNull, ilike, or, inArray, desc } from "drizzle-orm";
  * - search: Busca por nome/documento
  * - status: Filtra por status
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
@@ -78,13 +80,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error fetching branches:", error);
+    logger.error("❌ Error fetching branches:", error);
     return NextResponse.json(
       { error: "Falha ao buscar filiais.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/branches
@@ -96,7 +98,7 @@ export async function GET(request: NextRequest) {
  * - ✅ Validação: Zod schema
  * - ✅ Uniqueness: Valida CNPJ único dentro da organização
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco (necessário para checar colunas auxiliares)
     const { ensureConnection, pool } = await import("@/lib/db");
@@ -183,10 +185,10 @@ export async function POST(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error creating branch:", error);
+    logger.error("❌ Error creating branch:", error);
     return NextResponse.json(
       { error: "Falha ao criar filial.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

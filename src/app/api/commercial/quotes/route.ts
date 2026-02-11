@@ -12,10 +12,12 @@ import { Result } from "@/shared/domain";
 import { getTenantContext, hasAccessToBranch, getBranchScopeFilter } from "@/lib/auth/context";
 import { insertWithReturningId } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/commercial/quotes
  */
-export async function GET(_req: Request) {
+export const GET = withDI(async (_req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -43,18 +45,18 @@ export async function GET(_req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar cotações:", error);
+    logger.error("❌ Erro ao buscar cotações:", error);
     return NextResponse.json(
       { error: "Erro ao buscar cotações", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/commercial/quotes
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
@@ -158,7 +160,7 @@ export async function POST(req: Request) {
         }
       } catch (calcError: unknown) {
         const msg = calcError instanceof Error ? calcError.message : String(calcError);
-        console.warn("⚠️ Erro ao calcular frete:", msg);
+        logger.warn("⚠️ Erro ao calcular frete:", msg);
         // Continua mesmo sem cálculo
       }
     }
@@ -225,13 +227,13 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao criar cotação:", error);
+    logger.error("❌ Erro ao criar cotação:", error);
     return NextResponse.json(
       { error: "Erro ao criar cotação", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -5,6 +5,8 @@ import { Result } from "@/shared/domain";
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IReverseJournalEntry, ReverseJournalEntryOutput } from "@/modules/accounting/domain/ports/input";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * 🔄 POST /api/accounting/journal-entries/:id/reverse
  *
@@ -13,10 +15,10 @@ import type { IReverseJournalEntry, ReverseJournalEntryOutput } from "@/modules/
  * @epic E7.23 - Input Ports Accounting Module
  * @see ARCH-010: Use Cases implementam interface de domain/ports/input/
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
 
@@ -24,7 +26,7 @@ export async function POST(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const journalEntryId = resolvedParams.id;
     const userId = session.user.id;
 
@@ -95,10 +97,10 @@ export async function POST(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao reverter:", error);
+    logger.error("❌ Erro ao reverter:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});

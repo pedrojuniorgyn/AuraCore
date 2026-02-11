@@ -4,6 +4,7 @@ import { DomainEvent } from '@/shared/domain';
 import type { ILogger } from '@/shared/infrastructure';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Interface para handlers de eventos
  */
@@ -77,7 +78,7 @@ export class DomainEventDispatcher implements IEventDispatcher {
         
       default:
         // ✅ Log para eventos desconhecidos (debugging)
-        console.warn(`[DomainEventDispatcher] No handler registered for event type: ${eventType}`);
+        logger.warn(`[DomainEventDispatcher] No handler registered for event type: ${eventType}`);
         handlers = [];
     }
     
@@ -116,7 +117,7 @@ export class DomainEventDispatcher implements IEventDispatcher {
         } catch (error) {
           // Log error but don't fail (fire-and-forget)
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error(`Error handling event ${event.eventType}:`, errorMessage);
+          logger.error(`Error handling event ${event.eventType}:`, errorMessage);
         }
       }
     }

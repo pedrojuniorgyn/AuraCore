@@ -9,6 +9,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -36,7 +38,7 @@ interface HealthCheckResult {
   version: string;
 }
 
-export async function GET() {
+export const GET = withDI(async () => {
   const startTime = Date.now();
 
   try {
@@ -60,7 +62,7 @@ export async function GET() {
       `);
       tablesCheck.locations = true;
     } catch (e) {
-      console.error('WMS health check: locations table error', e);
+      logger.error('WMS health check: locations table error', e);
     }
 
     try {
@@ -70,7 +72,7 @@ export async function GET() {
       `);
       tablesCheck.stockItems = true;
     } catch (e) {
-      console.error('WMS health check: stock_items table error', e);
+      logger.error('WMS health check: stock_items table error', e);
     }
 
     try {
@@ -80,7 +82,7 @@ export async function GET() {
       `);
       tablesCheck.movements = true;
     } catch (e) {
-      console.error('WMS health check: movements table error', e);
+      logger.error('WMS health check: movements table error', e);
     }
 
     try {
@@ -90,7 +92,7 @@ export async function GET() {
       `);
       tablesCheck.inventoryCounts = true;
     } catch (e) {
-      console.error('WMS health check: inventory_counts table error', e);
+      logger.error('WMS health check: inventory_counts table error', e);
     }
 
     // 3. Coletar métricas básicas
@@ -142,7 +144,7 @@ export async function GET() {
         (inventoryResult.recordset?.[0] as Record<string, unknown>)?.count ?? 0
       );
     } catch (e) {
-      console.error('WMS health check: metrics error', e);
+      logger.error('WMS health check: metrics error', e);
     }
 
     // 4. Determinar status geral
@@ -180,7 +182,7 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error('WMS health check failed:', error);
+    logger.error('WMS health check failed:', error);
 
     const errorResult: HealthCheckResult = {
       status: 'unhealthy',
@@ -207,5 +209,5 @@ export async function GET() {
 
     return NextResponse.json(errorResult, { status: 503 });
   }
-}
+});
 

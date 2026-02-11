@@ -5,6 +5,8 @@ import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
 import { ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * PUT /api/branches/[id]/set-nsu
  * 
@@ -12,14 +14,14 @@ import { ensureConnection } from "@/lib/db";
  * 
  * Body: { nsu: string }
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const id = parseInt(resolvedParams.id);
 
     if (isNaN(id)) {
@@ -55,7 +57,7 @@ export async function PUT(
         )
       );
 
-    console.log(`✅ NSU atualizado para: ${cleanNsu}`);
+    logger.info(`✅ NSU atualizado para: ${cleanNsu}`);
 
     return NextResponse.json(
       { message: "NSU atualizado com sucesso!", nsu: cleanNsu },
@@ -66,13 +68,13 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao atualizar NSU:", error);
+    logger.error("❌ Erro ao atualizar NSU:", error);
     return NextResponse.json(
       { error: "Falha ao atualizar NSU.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

@@ -9,6 +9,7 @@ import {
   int,
   datetime2,
   nvarchar,
+  index,
   mssqlTable,
 } from 'drizzle-orm/mssql-core';
 
@@ -36,4 +37,9 @@ export const approvalHistoryTable = mssqlTable('strategic_approval_history', {
     .notNull()
     .default(sql`GETDATE()`),
   deletedAt: datetime2('deleted_at', { precision: 7 }),
-});
+}, (table) => ([
+  // SCHEMA-003: Indice composto multi-tenancy obrigatorio
+  index('idx_approval_history_tenant').on(table.organizationId, table.branchId),
+  // Indice para consultas por estrategia
+  index('idx_approval_history_strategy').on(table.strategyId),
+]));

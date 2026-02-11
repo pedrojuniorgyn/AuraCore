@@ -15,11 +15,12 @@ import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { VoiceEnabledAgent } from '@/agent/core/VoiceEnabledAgent';
 import { agentLogger } from '@/agent/observability';
 import { Result } from '@/shared/domain';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * POST - Processar mensagem de voz completa
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   const timer = agentLogger.startTimer();
 
   try {
@@ -137,12 +138,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET - Documentação do endpoint
  */
-export async function GET() {
+export const GET = withDI(async () => {
   return NextResponse.json({
     endpoint: '/api/agent/voice/conversation',
     method: 'POST',
@@ -194,4 +195,4 @@ export async function GET() {
   https://api.auracore.com/api/agent/voice/conversation`,
     },
   });
-}
+});

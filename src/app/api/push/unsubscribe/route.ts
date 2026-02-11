@@ -7,7 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Validar autenticação
     const context = await getTenantContext();
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
     // TODO: Deletar do banco de dados
     // DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?
     
-    console.log('[Push] Unsubscription received:', {
+    logger.info('[Push] Unsubscription received:', {
       userId: context.userId,
       endpoint,
     });
@@ -42,10 +44,10 @@ export async function POST(request: NextRequest) {
       message: 'Subscription deleted',
     });
   } catch (error) {
-    console.error('[Push] Error deleting subscription:', error);
+    logger.error('[Push] Error deleting subscription:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

@@ -8,4 +8,7 @@ export * from './sefaz';
 export * from './document-import';
 export { CertificateManagerAdapter } from './CertificateManagerAdapter';
 export { SefazClientAdapter } from './SefazClientAdapter';
+export { CteParserAdapter } from './CteParserAdapter';
+export { NcmCategorizationAdapter } from './NcmCategorizationAdapter';
+export { NfeParserAdapter } from './NfeParserAdapter';
 

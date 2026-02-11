@@ -5,6 +5,7 @@ import { db, ensureConnection } from "@/lib/db";
 import { branches } from "@/lib/db/schema";
 import { and, eq, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export const runtime = "nodejs";
  *
  * Body: { branchId: number }
  */
-export async function POST(req: NextRequest) {
+export const POST = withDI(async (req: NextRequest) => {
   try {
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -59,13 +60,13 @@ export async function POST(req: NextRequest) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/tenant/branch
  * Remove a filial ativa do cookie (fallback volta para defaultBranchId).
  */
-export async function DELETE() {
+export const DELETE = withDI(async () => {
   const res = NextResponse.json({ success: true });
   res.cookies.set({
     name: BRANCH_COOKIE_NAME,
@@ -77,7 +78,7 @@ export async function DELETE() {
     maxAge: 0,
   });
   return res;
-}
+});
 
 
 

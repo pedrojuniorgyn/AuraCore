@@ -12,11 +12,13 @@ import { getTenantContext } from '@/lib/auth/context';
 import type { IDepartmentRepository } from '@/shared/domain/ports/output/IDepartmentRepository';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/departments/seed
  * Seed default departments for organization
  */
-export async function POST() {
+export const POST = withDI(async () => {
   try {
     const tenantContext = await getTenantContext();
     if (!tenantContext) {
@@ -50,10 +52,10 @@ export async function POST() {
       })),
     });
   } catch (error) {
-    console.error('Error seeding departments:', error);
+    logger.error('Error seeding departments:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

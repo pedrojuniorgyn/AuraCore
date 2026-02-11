@@ -13,7 +13,9 @@ import type { IFreightCalculatorGateway } from "@/modules/tms/domain/ports/outpu
 import { Result } from "@/shared/domain";
 import { getTenantContext } from "@/lib/auth/context";
 
-export async function POST(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // SECURITY: Validar tenant antes de qualquer operação
     const ctx = await getTenantContext();
@@ -84,10 +86,10 @@ export async function POST(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao calcular frete:", error);
+    logger.error("❌ Erro ao calcular frete:", error);
     return NextResponse.json(
       { error: errorMessage || "Falha ao calcular frete" },
       { status: 500 }
     );
   }
-}
+});

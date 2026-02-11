@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ListCtesUseCase } from '@/modules/fiscal/application/use-cases/ListCtesUseCase';
+import { ListCtesUseCase } from '@/modules/fiscal/application/queries/cte/ListCtesUseCase';
 import type { IFiscalDocumentRepository, PaginatedResult } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import type { ExecutionContext } from '@/modules/fiscal/domain/ports/input/IAuthorizeFiscalDocument';

@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
-import { SubmitFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/SubmitFiscalDocumentUseCase';
+import { SubmitFiscalDocumentUseCase } from '@/modules/fiscal/application/commands/fiscal/SubmitFiscalDocumentUseCase';
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import { FiscalDocumentItem } from '@/modules/fiscal/domain/entities/FiscalDocumentItem';
 import { CFOP } from '@/modules/fiscal/domain/value-objects/CFOP';
 import type { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
-import type { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import type { ExecutionContext } from '@/modules/fiscal/application/commands/fiscal/BaseUseCase';
 
 describe('SubmitFiscalDocumentUseCase', () => {
   let useCase: SubmitFiscalDocumentUseCase;

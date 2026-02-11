@@ -6,6 +6,7 @@ import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IDownloadNfesUseCase } from "@/modules/fiscal/domain/ports/input/IDownloadNfesUseCase";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/sefaz/download-nfes
  * 
@@ -99,7 +100,7 @@ export const POST = withDI(async (request: NextRequest) => {
       return error;
     }
 
-    console.error("❌ Error downloading NFes from Sefaz:", error);
+    logger.error("❌ Error downloading NFes from Sefaz:", error);
     return NextResponse.json(
       { 
         error: "Falha ao consultar Sefaz", 

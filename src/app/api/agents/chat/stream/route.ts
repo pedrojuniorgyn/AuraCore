@@ -15,8 +15,10 @@ import type {
   AgentContext,
   ChatRequest,
 } from "@/modules/integrations/domain/ports/output/IAgentsGateway";
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   // 1. Autenticação
   const session = await auth();
   if (!session?.user) {
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-        console.error("Stream error:", error);
+        logger.error("Stream error:", error);
         controller.enqueue(
           encoder.encode(`data: {"type":"error","error":"Erro no stream"}\n\n`)
         );
@@ -83,4 +85,4 @@ export async function POST(request: NextRequest) {
       Connection: "keep-alive",
     },
   });
-}
+});

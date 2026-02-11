@@ -11,6 +11,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -59,7 +60,7 @@ interface StatsResponse {
 // HANDLER
 // ============================================================================
 
-export async function GET(): Promise<NextResponse<StatsResponse>> {
+export const GET = withDI(async (): Promise<NextResponse<StatsResponse>> => {
   const chromaHost = process.env.CHROMA_HOST ?? 'chromadb';
   const chromaPort = process.env.CHROMA_PORT ?? '8000';
   const chromaUrl = `http://${chromaHost}:${chromaPort}`;
@@ -122,7 +123,7 @@ export async function GET(): Promise<NextResponse<StatsResponse>> {
   }
 
   return NextResponse.json(stats);
-}
+});
 
 // ============================================================================
 // HELPERS

@@ -11,6 +11,7 @@ import { getTenantContext } from '@/lib/auth/context';
 import { resolveBranchIdOrThrow } from '@/lib/auth/branch';
 import { VoiceHandler } from '@/agent/voice/VoiceHandler';
 import { agentLogger } from '@/agent/observability';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 // Singleton do VoiceHandler para manter sessões entre requisições
 const voiceHandler = new VoiceHandler();
@@ -18,7 +19,7 @@ const voiceHandler = new VoiceHandler();
 /**
  * POST - Criar nova sessão de voz
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const ctx = await getTenantContext();
@@ -62,12 +63,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET - Obter detalhes da sessão
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const ctx = await getTenantContext();
@@ -148,12 +149,12 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE - Encerrar sessão
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withDI(async (request: NextRequest) => {
   try {
     // 1. Autenticação
     const ctx = await getTenantContext();
@@ -218,4 +219,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

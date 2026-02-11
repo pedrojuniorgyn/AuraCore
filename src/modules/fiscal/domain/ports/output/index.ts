@@ -99,3 +99,21 @@ export type {
   SefazTransmissionResult,
   SefazStatusResult,
 } from './ISefazClientService';
+
+// ===== PARSER SERVICES (E10 - Legacy Wrapping) =====
+export type {
+  ICteParserService,
+  ParsedCTeData,
+  CteParty,
+  CteIssuer,
+  CteLocation,
+  CteValues,
+  CteCargo,
+} from './ICteParserService';
+
+export type {
+  INcmCategorizationService,
+  NcmCategorization,
+} from './INcmCategorizationService';
+
+export type { INfeParserService } from './INfeParserService';

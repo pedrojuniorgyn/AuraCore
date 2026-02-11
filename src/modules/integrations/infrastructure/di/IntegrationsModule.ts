@@ -28,6 +28,7 @@ import type { IEsgCalculatorGateway } from '../../domain/ports/output/IEsgCalcul
 import type { ICiapEngineGateway } from '../../domain/ports/output/ICiapEngineGateway';
 import type { IClaimsEngineGateway } from '../../domain/ports/output/IClaimsEngineGateway';
 import type { IIntercompanyGateway } from '../../domain/ports/output/IIntercompanyGateway';
+import type { IBtgDdaGateway } from '../../domain/ports/output/IBtgDdaGateway';
 
 // Adapters - Real
 import { SefazGatewayAdapter } from '../adapters/sefaz/SefazGatewayAdapter';
@@ -41,13 +42,15 @@ import { EsgCalculatorAdapter } from '../adapters/EsgCalculatorAdapter';
 import { CiapEngineAdapter } from '../adapters/CiapEngineAdapter';
 import { ClaimsEngineAdapter } from '../adapters/ClaimsEngineAdapter';
 import { IntercompanyAdapter } from '../adapters/IntercompanyAdapter';
+import { BtgDdaAdapter } from '../adapters/banking/BtgDdaAdapter';
 
-// Tokens locais (E9 Fase 2)
+// Tokens locais (E9 Fase 2 + E10)
 export const INTEGRATIONS_TOKENS = {
   EsgCalculatorGateway: Symbol.for('IEsgCalculatorGateway'),
   CiapEngineGateway: Symbol.for('ICiapEngineGateway'),
   ClaimsEngineGateway: Symbol.for('IClaimsEngineGateway'),
   IntercompanyGateway: Symbol.for('IIntercompanyGateway'),
+  BtgDdaGateway: Symbol.for('IBtgDdaGateway'),
 };
 
 // Ports - Legacy Clients
@@ -60,11 +63,12 @@ import { MockBankingGateway } from '../adapters/banking/MockBankingGateway';
 import { MockNotificationService } from '../adapters/notification/MockNotificationService';
 import { MockBankStatementParser } from '../adapters/ofx/MockBankStatementParser';
 
+import { logger } from '@/shared/infrastructure/logging';
 let initialized = false;
 
 export function initializeIntegrationsModule(): void {
   if (initialized) {
-    console.log('⚠️ IntegrationsModule already initialized');
+    logger.info('⚠️ IntegrationsModule already initialized');
     return;
   }
 
@@ -80,22 +84,10 @@ export function initializeIntegrationsModule(): void {
     process.env.USE_MOCK_SEFAZ === undefined &&
     process.env.USE_MOCK_BANKING === undefined
   ) {
-    console.warn(
-      '\n⚠️  [IntegrationsModule] IMPORTANT: No USE_MOCK_* environment variables set.\n' +
-      '   Defaulting to MOCKS for SEFAZ and Banking adapters (LC-896237).\n' +
-      '   This is a SAFE DEFAULT because real adapters have stub methods that will fail.\n' +
-      '\n' +
-      '   Implementation Status:\n' +
-      '     - SefazGatewayAdapter: 1/7 methods (14%) → Using MockSefazGateway\n' +
-      '     - BtgBankingAdapter: 6/11 methods (55%) → Using MockBankingGateway\n' +
-      '\n' +
-      '   To use REAL adapters (not recommended until E7.11):\n' +
-      '     USE_MOCK_SEFAZ=false\n' +
-      '     USE_MOCK_BANKING=false\n' +
-      '\n' +
-      '   To silence this warning:\n' +
-      '     USE_MOCK_SEFAZ=true\n' +
-      '     USE_MOCK_BANKING=true\n'
+    logger.warn(
+      '[IntegrationsModule] No USE_MOCK_* env vars set. ' +
+      'Defaulting to MOCKS for SEFAZ (1/7 methods) and Banking (6/11 methods). ' +
+      'Set USE_MOCK_SEFAZ=true and USE_MOCK_BANKING=true to silence.'
     );
   }
 
@@ -116,13 +108,13 @@ export function initializeIntegrationsModule(): void {
       TOKENS.SefazGateway,
       MockSefazGateway
     );
-    console.log('📝 SEFAZ: Using MockSefazGateway (safe default)');
+    logger.info('📝 SEFAZ: Using MockSefazGateway (safe default)');
   } else {
     container.registerSingleton<ISefazGateway>(
       TOKENS.SefazGateway,
       SefazGatewayAdapter
     );
-    console.warn('⚠️ SEFAZ: Using SefazGatewayAdapter (6/7 methods will fail! Only authorizeCte works)');
+    logger.warn('⚠️ SEFAZ: Using SefazGatewayAdapter (6/7 methods will fail! Only authorizeCte works)');
   }
 
   // === BTG Client (Legacy Wrapper) ===
@@ -142,13 +134,13 @@ export function initializeIntegrationsModule(): void {
       TOKENS.BankingGateway,
       MockBankingGateway
     );
-    console.log('📝 BANKING: Using MockBankingGateway (safe default)');
+    logger.info('📝 BANKING: Using MockBankingGateway (safe default)');
   } else {
     container.registerSingleton<IBankingGateway>(
       TOKENS.BankingGateway,
       BtgBankingAdapter
     );
-    console.warn('⚠️ BANKING: Using BtgBankingAdapter (5/11 methods will fail! Only boletos/pix work)');
+    logger.warn('⚠️ BANKING: Using BtgBankingAdapter (5/11 methods will fail! Only boletos/pix work)');
   }
 
   // === Notification Service ===
@@ -159,13 +151,13 @@ export function initializeIntegrationsModule(): void {
       TOKENS.NotificationService,
       MockNotificationService
     );
-    console.log('📝 NOTIFICATION: Using MockNotificationService');
+    logger.info('📝 NOTIFICATION: Using MockNotificationService');
   } else {
     container.registerSingleton<INotificationService>(
       TOKENS.NotificationService,
       NodemailerAdapter
     );
-    console.log('✅ NOTIFICATION: Using NodemailerAdapter (full implementation)');
+    logger.info('✅ NOTIFICATION: Using NodemailerAdapter (full implementation)');
   }
 
   // === Bank Statement Parser ===
@@ -176,13 +168,13 @@ export function initializeIntegrationsModule(): void {
       TOKENS.BankStatementParser,
       MockBankStatementParser
     );
-    console.log('📝 OFX_PARSER: Using MockBankStatementParser');
+    logger.info('📝 OFX_PARSER: Using MockBankStatementParser');
   } else {
     container.registerSingleton<IBankStatementParser>(
       TOKENS.BankStatementParser,
       OfxParserAdapter
     );
-    console.log('✅ OFX_PARSER: Using OfxParserAdapter (full implementation)');
+    logger.info('✅ OFX_PARSER: Using OfxParserAdapter (full implementation)');
   }
 
   // === Agents Gateway ===
@@ -192,7 +184,7 @@ export function initializeIntegrationsModule(): void {
     TOKENS.AgentsGateway,
     AgentsAdapter
   );
-  console.log('✅ AGENTS: Using AgentsAdapter');
+  logger.info('✅ AGENTS: Using AgentsAdapter');
 
   // === Engine Gateways (E9 Fase 2) ===
   // Wrappers para serviços legados - TODO E10: migrar lógica para Domain Services
@@ -212,8 +204,14 @@ export function initializeIntegrationsModule(): void {
     INTEGRATIONS_TOKENS.IntercompanyGateway,
     IntercompanyAdapter
   );
-  console.log('✅ ENGINE_GATEWAYS: ESG, CIAP, Claims, Intercompany registered');
+  // === BTG DDA Gateway (E10 - Legacy wrapping) ===
+  container.registerSingleton<IBtgDdaGateway>(
+    INTEGRATIONS_TOKENS.BtgDdaGateway,
+    BtgDdaAdapter
+  );
+
+  logger.info('✅ ENGINE_GATEWAYS: ESG, CIAP, Claims, Intercompany, BtgDda registered');
 
   initialized = true;
-  console.log(`✅ IntegrationsModule initialized (useMocks: ${useMocks})`);
+  logger.info(`✅ IntegrationsModule initialized (useMocks: ${useMocks})`);
 }

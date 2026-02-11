@@ -11,6 +11,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -72,7 +74,7 @@ interface ChromaQueryResult {
 // HANDLER: POST
 // ============================================================================
 
-export async function POST(request: NextRequest): Promise<NextResponse<SearchResponse> | Response> {
+export const POST = withDI(async (request: NextRequest): Promise<NextResponse<SearchResponse> | Response> => {
   const startTime = Date.now();
 
   try {
@@ -174,19 +176,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<SearchRes
       );
     }
 
-    console.error('[Knowledge Search] Error:', error);
+    logger.error('[Knowledge Search] Error:', error);
     return NextResponse.json<SearchResponse>(
       { success: false, error: error instanceof Error ? error.message : 'Erro interno' },
       { status: 500 }
     );
   }
-}
+});
 
 // ============================================================================
 // HANDLER: GET (para teste rápido via browser)
 // ============================================================================
 
-export async function GET(request: NextRequest): Promise<NextResponse<SearchResponse> | Response> {
+export const GET = withDI(async (request: NextRequest): Promise<NextResponse<SearchResponse> | Response> => {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
 
@@ -224,7 +226,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<SearchResp
   });
 
   return POST(fakeRequest);
-}
+});
 
 // ============================================================================
 // HELPERS
@@ -248,7 +250,7 @@ async function generateQueryEmbedding(query: string, apiKey: string): Promise<nu
     return embeddingResponse.embedding.values;
   } catch (error: unknown) {
     // Helper functions NÃO usam API-ERR-001 - apenas logar e retornar null
-    console.error('[Knowledge Search] Embedding error:', error);
+    logger.error('[Knowledge Search] Embedding error:', error);
     return null;
   }
 }
@@ -266,7 +268,7 @@ async function getCollection(
     });
 
     if (!response.ok) {
-      console.error('[Knowledge Search] ChromaDB collections error:', response.status);
+      logger.error('[Knowledge Search] ChromaDB collections error:', response.status);
       return null;
     }
 
@@ -274,7 +276,7 @@ async function getCollection(
     return collections.find((c) => c.name === collectionName) ?? null;
   } catch (error: unknown) {
     // Helper functions NÃO usam API-ERR-001 - apenas logar e retornar null
-    console.error('[Knowledge Search] ChromaDB connection error:', error);
+    logger.error('[Knowledge Search] ChromaDB connection error:', error);
     return null;
   }
 }
@@ -301,14 +303,14 @@ async function queryCollection(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Knowledge Search] ChromaDB query error:', errorText);
+      logger.error('[Knowledge Search] ChromaDB query error:', errorText);
       return null;
     }
 
     return (await response.json()) as ChromaQueryResult;
   } catch (error: unknown) {
     // Helper functions NÃO usam API-ERR-001 - apenas logar e retornar null
-    console.error('[Knowledge Search] ChromaDB query error:', error);
+    logger.error('[Knowledge Search] ChromaDB query error:', error);
     return null;
   }
 }

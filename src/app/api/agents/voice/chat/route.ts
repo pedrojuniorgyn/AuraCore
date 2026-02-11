@@ -14,6 +14,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const AGENTS_API_URL = process.env.AGENTS_API_URL || 'http://localhost:8000';
 
 interface VoiceProcessResponse {
@@ -34,7 +36,7 @@ interface VoiceProcessResponse {
  * - audio: File (áudio gravado, formato webm)
  * - respondWithAudio?: string ("true"/"false")
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const POST = withDI(async (request: NextRequest): Promise<NextResponse> => {
   try {
     // 1. Autenticação
     const session = await auth();
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Voice API error:', errorText);
+      logger.error('Voice API error:', errorText);
       return NextResponse.json(
         { error: 'Erro ao processar áudio' },
         { status: response.status }
@@ -109,8 +111,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (error instanceof Response) {
       return error as NextResponse;
     }
-    console.error('Voice chat error:', error);
+    logger.error('Voice chat error:', error);
     const message = error instanceof Error ? error.message : 'Erro interno';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+});

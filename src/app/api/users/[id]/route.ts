@@ -5,15 +5,17 @@ import { users } from "@/lib/db/schema";
 import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // GET - Buscar usuário específico
-export async function GET(
+export const GET = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -67,23 +69,23 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao buscar usuário:", error);
+    logger.error("Erro ao buscar usuário:", error);
     return NextResponse.json(
       { error: "Erro ao buscar usuário" },
       { status: 500 }
     );
   }
-}
+});
 
 // PUT - Atualizar usuário
-export async function PUT(
+export const PUT = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -229,23 +231,23 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao atualizar usuário:", error);
+    logger.error("Erro ao atualizar usuário:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar usuário" },
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Soft delete do usuário
-export async function DELETE(
+export const DELETE = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -313,13 +315,13 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao excluir usuário:", error);
+    logger.error("Erro ao excluir usuário:", error);
     return NextResponse.json(
       { error: "Erro ao excluir usuário" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

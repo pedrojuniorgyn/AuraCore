@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantContext } from '@/lib/auth/context';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const AGENTS_API_URL = process.env.AGENTS_API_URL || 'http://localhost:8000';
 
 export interface RAGQueryRequest {
@@ -28,7 +30,7 @@ export interface RAGQueryResponse {
   collection: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('RAG query error:', error);
+      logger.error('RAG query error:', error);
       return NextResponse.json(
         { error: 'Failed to query RAG' },
         { status: response.status }
@@ -79,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Log apenas erros reais (não auth)
-    console.error('RAG route error:', error);
+    logger.error('RAG route error:', error);
     
     // Retornar erro genérico apenas para erros não-Response
     return NextResponse.json(
@@ -87,4 +89,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

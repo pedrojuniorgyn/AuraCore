@@ -101,6 +101,7 @@ export class StockMovementMapper {
       executedBy: movement.executedBy,
       executedAt: movement.executedAt,
       createdAt: movement.createdAt,
+      updatedAt: new Date(),
       deletedAt: null
     };
   }

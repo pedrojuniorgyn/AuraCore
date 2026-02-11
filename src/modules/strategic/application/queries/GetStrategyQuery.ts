@@ -14,6 +14,7 @@ import type { StrategicGoal } from '../../domain/entities/StrategicGoal';
 import type { KPI } from '../../domain/entities/KPI';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 
+import { logger } from '@/shared/infrastructure/logging';
 export interface GetStrategyInput {
   strategyId: string;
   includeGoals?: boolean;
@@ -205,17 +206,14 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
         `(${requiredPages} páginas), mas MAX_PAGES=${MAX_PAGES}. ` +
         `orgId=${organizationId}, branchId=${branchId}. ` +
         `Considere aumentar MAX_PAGES ou otimizar a query.`;
-      console.error(errorMsg);
+      logger.error('Error occurred', errorMsg);
       // Em vez de retornar parcial silenciosamente, retornamos Result.fail controlado
       return Result.fail(errorMsg);
     }
 
     // Warning se quantidade atípica (>1000 goals)
     if (total > 1000) {
-      console.warn(
-        `[GetStrategyQuery] Strategy ${strategyId} tem ${total} goals. ` +
-          `Isso é atípico para BSC - considere verificar dados.`
-      );
+      logger.warn(`Strategy tem ${total} goals - atípico para BSC, verificar dados`, { strategyId, total, organizationId, branchId });
     }
 
     // 4. Iterar páginas restantes (2 até pagesToFetch) - página 1 já foi buscada
@@ -230,11 +228,7 @@ export class GetStrategyQuery implements IGetStrategyUseCase {
 
       // Proteção contra inconsistência: página vazia antes de completar
       if (items.length === 0) {
-        console.warn(
-          `[GetStrategyQuery] Paginação inconsistente: página ${page}/${pagesToFetch} retornou 0 items, ` +
-            `mas total=${total}. allGoals.length=${allGoals.length}. ` +
-            `strategyId=${strategyId}, orgId=${organizationId}, branchId=${branchId}.`
-        );
+        logger.warn('Paginação inconsistente: página retornou 0 items', { strategyId, organizationId, branchId, page, pagesToFetch, total, currentCount: allGoals.length });
         break;
       }
 

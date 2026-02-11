@@ -3,21 +3,23 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/cost-centers/3d/[id]
  * Busca um Centro de Custo 3D por ID
  */
-export async function GET(
+export const GET = withDI(async (
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const ccId = parseInt(id, 10);
 
     if (isNaN(ccId)) {
@@ -54,26 +56,26 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar CC 3D:", error);
+    logger.error("❌ Erro ao buscar CC 3D:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * PUT /api/cost-centers/3d/[id]
  * Atualiza um Centro de Custo 3D
  */
-export async function PUT(
+export const PUT = withDI(async (
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const ccId = parseInt(id, 10);
 
     if (isNaN(ccId)) {
@@ -147,26 +149,26 @@ export async function PUT(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao atualizar CC 3D:", error);
+    logger.error("❌ Erro ao atualizar CC 3D:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * DELETE /api/cost-centers/3d/[id]
  * Soft delete de um Centro de Custo 3D
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const ccId = parseInt(id, 10);
 
     if (isNaN(ccId)) {
@@ -210,7 +212,7 @@ export async function DELETE(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao excluir CC 3D:", error);
+    logger.error("❌ Erro ao excluir CC 3D:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});

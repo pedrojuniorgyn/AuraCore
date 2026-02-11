@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { mssqlTable, char, int, varchar, decimal, datetime } from 'drizzle-orm/mssql-core';
+import { mssqlTable, char, int, varchar, decimal, datetime, index } from 'drizzle-orm/mssql-core';
 
 /**
  * InventoryCountSchema - E7.8 WMS Semana 2
@@ -34,7 +34,9 @@ export const wmsInventoryCounts = mssqlTable('wms_inventory_counts', {
   createdAt: datetime('created_at', { mode: 'date' }).notNull().default(sql`GETDATE()`),
   updatedAt: datetime('updated_at', { mode: 'date' }).notNull().default(sql`GETDATE()`),
   deletedAt: datetime('deleted_at', { mode: 'date' })
-});
+}, (table) => ([
+  index('idx_wms_inventory_counts_tenant').on(table.organizationId, table.branchId), // E13.2: SCHEMA-003
+]));
 
 export type WmsInventoryCountPersistence = typeof wmsInventoryCounts.$inferSelect;
 export type WmsInventoryCountInsert = typeof wmsInventoryCounts.$inferInsert;

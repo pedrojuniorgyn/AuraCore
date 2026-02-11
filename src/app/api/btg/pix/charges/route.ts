@@ -5,6 +5,8 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -12,7 +14,7 @@ export const runtime = "nodejs";
  * GET /api/btg/pix/charges
  * Lista cobranças Pix BTG
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -36,20 +38,20 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar Pix BTG:", error);
+    logger.error("❌ Erro ao listar Pix BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/btg/pix/charges
  * Criar cobrança Pix BTG
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -130,14 +132,14 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar Pix BTG:", error);
+    logger.error("❌ Erro ao criar Pix BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

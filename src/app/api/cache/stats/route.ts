@@ -16,7 +16,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CacheService } from '@/services/cache.service';
 import { redisCache } from '@/lib/cache';
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // TODO: Adicionar verificação de role admin
     // const session = await getServerSession();
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[Cache Stats] Error:', error);
+    logger.error('[Cache Stats] Error:', error);
     return NextResponse.json(
       { 
         success: false,
@@ -97,4 +99,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

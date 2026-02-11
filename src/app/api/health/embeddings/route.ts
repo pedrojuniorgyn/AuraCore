@@ -11,6 +11,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -48,7 +49,7 @@ interface HealthCheckResult {
 // HANDLER
 // ============================================================================
 
-export async function GET(): Promise<NextResponse<HealthCheckResult>> {
+export const GET = withDI(async (): Promise<NextResponse<HealthCheckResult>> => {
   const results: HealthCheckResult = {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV ?? 'unknown',
@@ -89,7 +90,7 @@ export async function GET(): Promise<NextResponse<HealthCheckResult>> {
   return NextResponse.json(results, {
     status: results.overall === 'healthy' ? 200 : results.overall === 'degraded' ? 200 : 503,
   });
-}
+});
 
 // ============================================================================
 // HELPERS

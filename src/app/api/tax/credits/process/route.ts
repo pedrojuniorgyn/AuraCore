@@ -2,14 +2,16 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { TaxCreditCalculator } from "@/modules/fiscal/domain/services/TaxCreditCalculator";
 import { createTaxCreditRepository } from "@/modules/fiscal/infrastructure/persistence/DrizzleTaxCreditRepository";
-import { createProcessTaxCreditsUseCase } from "@/modules/fiscal/application/use-cases/ProcessTaxCreditsUseCase";
+import { createProcessTaxCreditsUseCase } from "@/modules/fiscal/application/commands/fiscal/ProcessTaxCreditsUseCase";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/tax/credits/process
  * Processa créditos fiscais pendentes (PIS/COFINS)
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
     const organizationId = BigInt(session.user.organizationId);
     const userId = session.user.email || "system";
 
-    console.log("🔍 Processando créditos fiscais pendentes...");
+    logger.info("🔍 Processando créditos fiscais pendentes...");
 
     // Criar dependências
     const calculator = new TaxCreditCalculator();
@@ -56,13 +58,13 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao processar créditos:", error);
+    logger.error("❌ Erro ao processar créditos:", error);
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

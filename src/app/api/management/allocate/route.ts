@@ -12,13 +12,15 @@ import { ACCOUNTING_TOKENS } from "@/modules/accounting/infrastructure/di/Accoun
 import type { IManagementAccountingGateway } from "@/modules/accounting/domain/ports/output/IManagementAccountingGateway";
 import { Result } from "@/shared/domain";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/management/allocate
  * Aloca custos indiretos
  * 
  * Body: { period: "2024-12" }
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log(`📊 Alocando custos indiretos para ${period}...`);
+    logger.info(`📊 Alocando custos indiretos para ${period}...`);
 
     const organizationId = BigInt(session.user.organizationId);
 
@@ -68,7 +70,7 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao alocar custos:", error);
+    logger.error("❌ Erro ao alocar custos:", error);
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});

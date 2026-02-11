@@ -16,6 +16,7 @@ import { ActionPlan } from '../../domain/entities/ActionPlan';
 import { ExecutionStatus } from '../../domain/value-objects/ExecutionStatus';
 import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 
+import { logger } from '@/shared/infrastructure/logging';
 export interface ExecuteFollowUpInput {
   actionPlanId: string;
   followUpDate: Date;
@@ -183,7 +184,7 @@ export class ExecuteFollowUpUseCase implements IExecuteFollowUpUseCase {
     const progressResult = actionPlan.updateProgress(input.executionPercent);
     if (Result.isFail(progressResult)) {
       // Log mas não falha - progresso é secundário
-      console.warn('Falha ao atualizar progresso:', progressResult.error);
+      logger.warn('Falha ao atualizar progresso:', progressResult.error);
     }
 
     // 11. Se foi executado OK e >= 100%, avançar para CHECK (se ainda em DO)
@@ -191,7 +192,7 @@ export class ExecuteFollowUpUseCase implements IExecuteFollowUpUseCase {
       if (currentCycle === 'DO') {
         const advanceResult = actionPlan.advancePDCA();
         if (Result.isFail(advanceResult)) {
-          console.warn('Falha ao avançar PDCA:', advanceResult.error);
+          logger.warn('Falha ao avançar PDCA:', advanceResult.error);
         }
       }
     }

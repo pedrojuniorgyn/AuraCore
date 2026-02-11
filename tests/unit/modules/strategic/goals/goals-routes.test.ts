@@ -2,14 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PATCH as patchGoal } from '@/app/api/strategic/goals/[id]/route';
 import { POST as createGoal } from '@/app/api/strategic/goals/route';
 import { GET as getTree } from '@/app/api/strategic/goals/tree/route';
-import { getTenantContext } from '@/lib/auth/context';
+import { getTenantContext, validateABACBranchAccess } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
+import { db } from '@/lib/db';
 import { createAuthenticatedRequest } from '@/tests/helpers/nextRequestHelper';
 import type { NextRequest } from 'next/server';
 
 vi.mock('@/lib/auth/context', () => ({
   getTenantContext: vi.fn(),
+  validateABACBranchAccess: vi.fn(),
+  abacDeniedResponse: vi.fn(),
+}));
+
+vi.mock('@/lib/db', () => ({
+  db: {
+    select: vi.fn(),
+  },
 }));
 
 vi.mock('@/shared/infrastructure/di/container', () => ({
@@ -34,6 +43,17 @@ vi.mock('@/shared/infrastructure/di/with-di', () => ({
 
 const mockGetTenantContext = getTenantContext as unknown as ReturnType<typeof vi.fn>;
 const mockContainerResolve = container.resolve as unknown as ReturnType<typeof vi.fn>;
+const mockValidateABAC = validateABACBranchAccess as unknown as ReturnType<typeof vi.fn>;
+const mockDbSelect = db.select as unknown as ReturnType<typeof vi.fn>;
+
+const createSelectChain = (result: Array<{ id: string }>) => {
+  const fetch = vi.fn().mockResolvedValue(result);
+  const offset = vi.fn().mockReturnValue({ fetch });
+  const orderBy = vi.fn().mockReturnValue({ offset });
+  const where = vi.fn().mockReturnValue({ orderBy, offset, fetch });
+  const from = vi.fn().mockReturnValue({ where });
+  return { from, where, orderBy, offset, fetch };
+};
 
 const tenant = {
   userId: 'user-1',
@@ -57,6 +77,7 @@ describe('strategic goals routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetTenantContext.mockResolvedValue(tenant);
+    mockValidateABAC.mockReturnValue({ allowed: true, effectiveBranchId: 2 });
   });
 
   it('returns 400 on invalid JSON body for create', async () => {
@@ -88,6 +109,9 @@ describe('strategic goals routes', () => {
   });
 
   it('passes Date objects and returns 201 on create', async () => {
+    // Mock db.select for BUG-001 validation (perspectiveId belongs to strategy)
+    mockDbSelect.mockReturnValue(createSelectChain([{ id: validId }]));
+
     const execute = vi.fn().mockResolvedValue(
       Result.ok({
         id: 'goal-1',
@@ -96,7 +120,14 @@ describe('strategic goals routes', () => {
         cascadeLevel: 'CEO',
       })
     );
-    mockContainerResolve.mockReturnValue({ execute });
+    const mockStrategyRepo = {
+      findById: vi.fn().mockResolvedValue({ id: validId }),
+      findActive: vi.fn(),
+    };
+    mockContainerResolve.mockImplementation((token: unknown) => {
+      if (typeof token === 'symbol') return mockStrategyRepo;
+      return { execute };
+    });
 
     const response = await createGoal(
       makeRequest(
@@ -113,7 +144,8 @@ describe('strategic goals routes', () => {
           startDate: '2024-01-01',
           endDate: '2024-02-01',
         })
-      )    );
+      )
+    );
 
     const json = await response.json();
 

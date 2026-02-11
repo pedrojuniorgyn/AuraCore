@@ -5,6 +5,8 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -14,7 +16,7 @@ export const runtime = "nodejs";
  * 
  * E8 Fase 1.2: Migrado para usar IBtgClient via DI
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -100,14 +102,14 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao realizar pagamento Pix BTG:", error);
+    logger.error("❌ Erro ao realizar pagamento Pix BTG:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

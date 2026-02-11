@@ -3,13 +3,14 @@ import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
 /**
  * 📚 GET /api/accounting/journal-entries
  * 
  * Lista lançamentos contábeis
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
@@ -40,14 +41,14 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 /**
  * 📝 POST /api/accounting/journal-entries
  * 
  * Criar lançamento manual
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-}
+});
 
 
 

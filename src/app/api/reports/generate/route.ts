@@ -13,6 +13,7 @@ import { STRATEGIC_TOKENS } from '@/modules/strategic/infrastructure/di/tokens';
 import { ReportGeneratorService, type ReportType } from '@/modules/strategic/application/services/reports/ReportGeneratorService';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
 const GenerateReportSchema = z.object({
   type: z.enum(['BSC_COMPLETE', 'PERFORMANCE', 'APPROVALS']),
   period: z.object({
@@ -81,7 +82,7 @@ export const POST = withDI(async (request: NextRequest) => {
     });
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/reports/generate error:', error);
+    logger.error('POST /api/reports/generate error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

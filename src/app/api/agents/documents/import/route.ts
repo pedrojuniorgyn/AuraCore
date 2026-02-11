@@ -10,6 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 const AGENTS_API_URL = process.env.AGENTS_API_URL || 'http://localhost:8080';
 
 interface ImportResponse {
@@ -45,7 +47,7 @@ interface ImportResponse {
   message: string;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<ImportResponse | { error: string }>> {
+export const POST = withDI(async (request: NextRequest): Promise<NextResponse<ImportResponse | { error: string }>> => {
   try {
     // 1. Autenticação
     const session = await auth();
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Agents API error:', errorText);
+      logger.error('Agents API error:', errorText);
       return NextResponse.json(
         { error: 'Erro ao processar documento no serviço de agentes' },
         { status: 502 }
@@ -135,20 +137,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<ImportRes
     if (error instanceof Response) {
       return error as unknown as NextResponse<ImportResponse | { error: string }>;
     }
-    console.error('Erro na importação:', error);
+    logger.error('Erro na importação:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/agents/documents/import
  * 
  * Retorna informações sobre os tipos de documentos suportados.
  */
-export async function GET(): Promise<NextResponse> {
+export const GET = withDI(async (): Promise<NextResponse> => {
   return NextResponse.json({
     supported_types: [
       {
@@ -172,4 +174,4 @@ export async function GET(): Promise<NextResponse> {
       text: '95%+',
     },
   });
-}
+});

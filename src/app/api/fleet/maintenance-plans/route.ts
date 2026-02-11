@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -9,7 +11,7 @@ export const runtime = "nodejs";
  * GET /api/fleet/maintenance-plans
  * Lista planos de manutenção
  */
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -35,20 +37,20 @@ export async function GET() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar planos:", error);
+    logger.error("❌ Erro ao listar planos:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/fleet/maintenance-plans
  * Cria novo plano de manutenção
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -95,12 +97,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar plano:", error);
+    logger.error("❌ Erro ao criar plano:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

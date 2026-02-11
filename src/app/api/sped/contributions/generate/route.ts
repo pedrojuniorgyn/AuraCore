@@ -19,6 +19,8 @@ import type { IGenerateSpedContributions } from '@/modules/fiscal/domain/ports/i
 // Garantir que módulo está inicializado
 import '@/modules/fiscal/infrastructure/bootstrap';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/sped/contributions/generate
  * 
@@ -30,7 +32,7 @@ import '@/modules/fiscal/infrastructure/bootstrap';
  * 
  * Response: Arquivo .txt com encoding ISO-8859-1
  */
-export async function POST(req: Request) {
+export const POST = withDI(async (req: Request) => {
   try {
     // 1. Autenticação
     const session = await auth();
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
     const useCase = container.resolve<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase);
 
     // 7. Executar geração
-    console.log(`📄 Gerando SPED Contributions ${competencia} (${finalidade}) para org ${ctx.organizationId}...`);
+    logger.info(`📄 Gerando SPED Contributions ${competencia} (${finalidade}) para org ${ctx.organizationId}...`);
 
     const result = await useCase.execute(
       {
@@ -92,7 +94,7 @@ export async function POST(req: Request) {
 
     // 8. Tratar resultado
     if (Result.isFail(result)) {
-      console.error('❌ Erro ao gerar SPED Contributions:', result.error);
+      logger.error('❌ Erro ao gerar SPED Contributions:', result.error);
       return NextResponse.json(
         { error: result.error },
         { status: 400 }
@@ -100,7 +102,7 @@ export async function POST(req: Request) {
     }
 
     // 9. Retornar arquivo
-    console.log(`✅ SPED Contributions gerado: ${result.value.filename}`);
+    logger.info(`✅ SPED Contributions gerado: ${result.value.filename}`);
 
     return new NextResponse(result.value.content, {
       status: 200,
@@ -117,11 +119,11 @@ export async function POST(req: Request) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('❌ Erro inesperado ao gerar SPED Contributions:', error);
+    logger.error('❌ Erro inesperado ao gerar SPED Contributions:', error);
     return NextResponse.json(
       { error: `Erro interno: ${errorMessage}` },
       { status: 500 }
     );
   }
-}
+});
 

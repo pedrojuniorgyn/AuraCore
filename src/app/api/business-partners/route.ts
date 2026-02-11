@@ -5,6 +5,8 @@ import { createBusinessPartnerSchema } from "@/lib/validators/business-partner";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, ilike, or, desc } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * GET /api/business-partners
  * Lista todos os parceiros de negócio da organização do usuário logado.
@@ -18,7 +20,7 @@ import { eq, and, isNull, ilike, or, desc } from "drizzle-orm";
  * - type: Filtra por tipo (CLIENT/PROVIDER/CARRIER)
  * - status: Filtra por status
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco antes de continuar
     const { ensureConnection } = await import("@/lib/db");
@@ -76,13 +78,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error fetching business partners:", error);
+    logger.error("❌ Error fetching business partners:", error);
     return NextResponse.json(
       { error: "Falha ao buscar parceiros de negócio.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/business-partners
@@ -94,7 +96,7 @@ export async function GET(request: NextRequest) {
  * - ✅ Validação: Zod schema
  * - ✅ Uniqueness: Valida documento único dentro da organização
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     // 🔗 Garante conexão com banco antes de continuar
     const { ensureConnection } = await import("@/lib/db");
@@ -172,10 +174,10 @@ export async function POST(request: NextRequest) {
       return error;
     }
 
-    console.error("❌ Error creating business partner:", error);
+    logger.error("❌ Error creating business partner:", error);
     return NextResponse.json(
       { error: "Falha ao criar parceiro de negócio.", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});

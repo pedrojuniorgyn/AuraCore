@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
-import { AuthorizeFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/AuthorizeFiscalDocumentUseCase';
+import { AuthorizeFiscalDocumentUseCase } from '@/modules/fiscal/application/commands/fiscal/AuthorizeFiscalDocumentUseCase';
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import { FiscalDocumentItem } from '@/modules/fiscal/domain/entities/FiscalDocumentItem';
 import { CFOP } from '@/modules/fiscal/domain/value-objects/CFOP';
 import { FiscalKey } from '@/modules/fiscal/domain/value-objects/FiscalKey';
 import type { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
-import type { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import type { ExecutionContext } from '@/modules/fiscal/application/commands/fiscal/BaseUseCase';
 import type { FiscalAccountingIntegration } from '@/modules/fiscal/application/services/FiscalAccountingIntegration';
 
 describe('AuthorizeFiscalDocumentUseCase', () => {

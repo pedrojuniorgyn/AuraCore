@@ -176,7 +176,12 @@ export class StockItem {
     }
 
     // Invariante: quantity >= reservedQuantity
-    if (this.props.reservedQuantity.isGreaterThan(this.props.quantity)) {
+    // isGreaterThan retorna Result<boolean, string> (S1.3)
+    const isReservedGreaterResult = this.props.reservedQuantity.isGreaterThan(this.props.quantity);
+    if (Result.isFail(isReservedGreaterResult)) {
+      return Result.fail(`Cannot validate invariants: ${isReservedGreaterResult.error}`);
+    }
+    if (isReservedGreaterResult.value) {
       return Result.fail('Reserved quantity cannot exceed total quantity');
     }
 
@@ -461,7 +466,12 @@ export class StockItem {
     }
 
     // Verificar se há quantidade reservada suficiente
-    if (quantity.isGreaterThan(this.props.reservedQuantity)) {
+    // isGreaterThan retorna Result<boolean, string> (S1.3)
+    const isGreaterResult = quantity.isGreaterThan(this.props.reservedQuantity);
+    if (Result.isFail(isGreaterResult)) {
+      return Result.fail(`Cannot compare quantities: ${isGreaterResult.error}`);
+    }
+    if (isGreaterResult.value) {
       return Result.fail('Cannot release more than reserved quantity');
     }
 

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
-import { CalculateIbsCbsUseCase } from '@/modules/fiscal/application/use-cases/CalculateIbsCbsUseCase';
+import { CalculateIbsCbsUseCase } from '@/modules/fiscal/application/queries/tax-reform/CalculateIbsCbsUseCase';
 import { CalculateIbsCbsInput } from '@/modules/fiscal/application/dtos/CalculateIbsCbsDto';
-import { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import { ExecutionContext } from '@/modules/fiscal/application/commands/fiscal/BaseUseCase';
 
 describe('CalculateIbsCbsUseCase', () => {
   let useCase: CalculateIbsCbsUseCase;

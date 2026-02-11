@@ -45,7 +45,7 @@
   ],
   "exclude": [
     "node_modules",
-    "mcp-server",
+    "mcp-server","agents",
     ".next/types/validator.ts",
     "tests/integration/wms/**/*.test.ts",
     "tests/helpers/integration-db.ts",

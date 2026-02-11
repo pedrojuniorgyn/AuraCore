@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { NextRequest } from 'next/server';
 const { insertValues, selectChain, updateChain } = vi.hoisted(() => {
   const chain = {
     from: vi.fn().mockReturnThis(),
@@ -87,7 +88,7 @@ describe('tms/trips routes hardening', () => {
     mockQueryFirst.mockResolvedValue({ id: 1 });
 
     const response = await checkpointPost(
-      new Request('https://app.test/api/tms/trips/1/checkpoint', { method: 'POST', body: 'not-json' }),
+      new Request('https://app.test/api/tms/trips/1/checkpoint', { method: 'POST', body: 'not-json' }) as NextRequest,
       { params: Promise.resolve({ id: '1' }) },
     );
 
@@ -99,7 +100,7 @@ describe('tms/trips routes hardening', () => {
     mockGetTenantContext.mockResolvedValue({ organizationId: 1, branchId: 2, userId: 'user-1' });
 
     const response = await checkpointPost(
-      new Request('https://app.test/api/tms/trips/abc/checkpoint', { method: 'POST', body: JSON.stringify({}) }),
+      new Request('https://app.test/api/tms/trips/abc/checkpoint', { method: 'POST', body: JSON.stringify({}) }) as NextRequest,
       { params: Promise.resolve({ id: 'abc' }) },
     );
 
@@ -111,7 +112,7 @@ describe('tms/trips routes hardening', () => {
     mockGetTenantContext.mockResolvedValue(null);
 
     const response = await checkpointPost(
-      new Request('https://app.test/api/tms/trips/1/checkpoint', { method: 'POST', body: JSON.stringify({}) }),
+      new Request('https://app.test/api/tms/trips/1/checkpoint', { method: 'POST', body: JSON.stringify({}) }) as NextRequest,
       { params: Promise.resolve({ id: '1' }) },
     );
 
@@ -133,7 +134,7 @@ describe('tms/trips routes hardening', () => {
           description: '  reached dock  ',
           recordedAt,
         }),
-      }),
+      }) as NextRequest,
       { params: Promise.resolve({ id: '1' }) },
     );
 
@@ -155,7 +156,7 @@ describe('tms/trips routes hardening', () => {
     mockGetTenantContext.mockResolvedValue({ organizationId: 1, branchId: 2, userId: 'u1', defaultBranchId: 2 });
 
     const response = await tripsPost(
-      new Request('https://app.test/api/tms/trips', { method: 'POST', body: 'not-json' }),
+      new Request('https://app.test/api/tms/trips', { method: 'POST', body: 'not-json' }) as NextRequest,
     );
 
     expect(response.status).toBe(400);
@@ -166,7 +167,7 @@ describe('tms/trips routes hardening', () => {
     mockGetTenantContext.mockResolvedValue({ organizationId: 1, branchId: 2, userId: 'u1' });
 
     const response = await tripPut(
-      new Request('https://app.test/api/tms/trips/1', { method: 'PUT', body: 'not-json' }),
+      new Request('https://app.test/api/tms/trips/1', { method: 'PUT', body: 'not-json' }) as NextRequest,
       { params: Promise.resolve({ id: '1' }) },
     );
 
@@ -178,7 +179,7 @@ describe('tms/trips routes hardening', () => {
     mockGetTenantContext.mockResolvedValue({ organizationId: 1, branchId: 2, userId: 'u1' });
 
     const response = await ssrmPost(
-      new Request('https://app.test/api/tms/trips/ssrm', { method: 'POST', body: 'not-json' }),
+      new Request('https://app.test/api/tms/trips/ssrm', { method: 'POST', body: 'not-json' }) as NextRequest,
     );
 
     expect(response.status).toBe(400);
@@ -198,7 +199,7 @@ describe('tms/trips routes hardening', () => {
           driverType: 'THIRD_PARTY',
           pickupOrderIds: [],
         }),
-      }),
+      }) as NextRequest,
     );
 
     const body = await response.json();

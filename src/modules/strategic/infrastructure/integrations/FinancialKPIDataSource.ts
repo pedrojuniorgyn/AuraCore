@@ -16,6 +16,7 @@ import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import type { IKPIDataSource, KPIDataPoint } from './IKPIDataSource';
 
+import { logger } from '@/shared/infrastructure/logging';
 @injectable()
 export class FinancialKPIDataSource implements IKPIDataSource {
   readonly moduleName = 'financial';
@@ -118,7 +119,7 @@ export class FinancialKPIDataSource implements IKPIDataSource {
     const queryTemplate = this.queries[query];
 
     if (!queryTemplate) {
-      console.warn(`[FinancialKPIDataSource] Query não encontrada: ${query}`);
+      logger.warn(`[FinancialKPIDataSource] Query não encontrada: ${query}`);
       return null;
     }
 
@@ -140,7 +141,7 @@ export class FinancialKPIDataSource implements IKPIDataSource {
         metadata: { query, source: 'financial' },
       };
     } catch (error) {
-      console.error(`[FinancialKPIDataSource] Erro ao executar query ${query}:`, error);
+      logger.error(`[FinancialKPIDataSource] Erro ao executar query ${query}:`, error);
       return null;
     }
   }

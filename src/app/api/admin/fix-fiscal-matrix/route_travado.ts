@@ -3,6 +3,7 @@ import { pool } from "@/lib/db";
 import { readFileSync } from "fs";
 import { join } from "path";
 
+import { logger } from '@/shared/infrastructure/logging';
 export async function POST(request: NextRequest) {
   try {
     // Migration 1: fiscal_tax_matrix
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao executar migrations:", error);
+    logger.error("Erro ao executar migrations:", error);
     return NextResponse.json(
       {
         success: false,

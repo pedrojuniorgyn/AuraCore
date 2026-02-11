@@ -15,18 +15,16 @@ import { sessionStore } from '@/agent/persistence';
 import { Result } from '@/shared/domain';
 import { z } from 'zod';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 const UpdateSessionSchema = z.object({
   title: z.string().min(1).max(255),
 });
 
-interface RouteParams {
-  params: Promise<{ sessionId: string }>;
-}
-
 /**
  * GET - Get session with messages
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export const GET = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -34,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
-    const { sessionId } = await params;
+    const { sessionId } = await context.params;
 
     const sessionResult = await sessionStore.getSession(
       sessionId,
@@ -73,18 +71,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error getting session:', error);
+    logger.error('Error getting session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PATCH - Update session title
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export const PATCH = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -92,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
-    const { sessionId } = await params;
+    const { sessionId } = await context.params;
 
     // Verificar se sessão existe e pertence ao usuário
     const sessionResult = await sessionStore.getSession(
@@ -134,18 +132,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error updating session:', error);
+    logger.error('Error updating session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE - Delete session
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export const DELETE = withDI(async (request: NextRequest, context: RouteContext) => {
   try {
     const ctx = await getTenantContext();
     if (!ctx) {
@@ -153,7 +151,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     const branchId = resolveBranchIdOrThrow(request.headers, ctx);
-    const { sessionId } = await params;
+    const { sessionId } = await context.params;
 
     const result = await sessionStore.deleteSession(
       sessionId,
@@ -171,10 +169,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (error instanceof Response) {
       return error;
     }
-    console.error('Error deleting session:', error);
+    logger.error('Error deleting session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

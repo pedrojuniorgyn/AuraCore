@@ -3,12 +3,14 @@ import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 
-export async function PUT(
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
+export const PUT = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const claimId = parseInt(resolvedParams.id, 10);
     
     if (isNaN(claimId)) {
@@ -49,14 +51,14 @@ export async function PUT(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const claimId = parseInt(resolvedParams.id, 10);
     
     if (isNaN(claimId)) {
@@ -93,18 +95,18 @@ export async function DELETE(
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 /**
  * GET /api/claims/[id]
  * Busca detalhes completos de um sinistro
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const claimId = parseInt(resolvedParams.id, 10);
     
     if (isNaN(claimId)) {
@@ -154,13 +156,13 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao buscar sinistro:", error);
+    logger.error("❌ Erro ao buscar sinistro:", error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

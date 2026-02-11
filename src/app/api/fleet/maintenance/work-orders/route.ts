@@ -4,6 +4,8 @@ import { getTenantContext } from "@/lib/auth/context";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
 import sql from "mssql";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -11,7 +13,7 @@ export const runtime = "nodejs";
  * GET /api/fleet/maintenance/work-orders
  * Lista ordens de serviço
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -50,20 +52,20 @@ export async function GET(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar O.S.:", error);
+    logger.error("❌ Erro ao listar O.S.:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/fleet/maintenance/work-orders
  * Cria nova ordem de serviço
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const ctx = await getTenantContext();
 
@@ -157,12 +159,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar O.S.:", error);
+    logger.error("❌ Erro ao criar O.S.:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

@@ -5,6 +5,8 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IBtgClient } from "@/modules/integrations/domain/ports/output/IBtgClient";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -14,7 +16,7 @@ export const runtime = "nodejs";
  * 
  * E8 Fase 1.2: Migrado para usar IBtgClient via DI
  */
-export async function POST() {
+export const POST = withDI(async () => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -34,7 +36,7 @@ export async function POST() {
       );
     }
 
-    console.log("🔄 Sincronizando DDAs do BTG...", { companyId: btgCompanyId });
+    logger.info("🔄 Sincronizando DDAs do BTG...", { companyId: btgCompanyId });
 
     // 1. Buscar DDAs do BTG usando DI
     const btgClient = container.resolve<IBtgClient>(TOKENS.BtgClient);
@@ -118,7 +120,7 @@ export async function POST() {
       }
     }
 
-    console.log(`✅ Sincronização concluída: ${ddaCount} DDAs, ${debitCount} débitos`);
+    logger.info(`✅ Sincronização concluída: ${ddaCount} DDAs, ${debitCount} débitos`);
 
     return NextResponse.json({
       success: true,
@@ -133,12 +135,12 @@ export async function POST() {
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao sincronizar DDAs:", error);
+    logger.error("❌ Erro ao sincronizar DDAs:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

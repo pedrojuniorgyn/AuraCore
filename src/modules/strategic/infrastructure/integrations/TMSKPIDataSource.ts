@@ -16,6 +16,7 @@ import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import type { IKPIDataSource, KPIDataPoint } from './IKPIDataSource';
 
+import { logger } from '@/shared/infrastructure/logging';
 @injectable()
 export class TMSKPIDataSource implements IKPIDataSource {
   readonly moduleName = 'tms';
@@ -94,7 +95,7 @@ export class TMSKPIDataSource implements IKPIDataSource {
     const queryTemplate = this.queries[query];
 
     if (!queryTemplate) {
-      console.warn(`[TMSKPIDataSource] Query não encontrada: ${query}`);
+      logger.warn(`[TMSKPIDataSource] Query não encontrada: ${query}`);
       return null;
     }
 
@@ -116,7 +117,7 @@ export class TMSKPIDataSource implements IKPIDataSource {
         metadata: { query, source: 'tms' },
       };
     } catch (error) {
-      console.error(`[TMSKPIDataSource] Erro ao executar query ${query}:`, error);
+      logger.error(`[TMSKPIDataSource] Erro ao executar query ${query}:`, error);
       return null;
     }
   }

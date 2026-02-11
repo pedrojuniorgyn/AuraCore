@@ -94,7 +94,7 @@ describe('DocumentChunker', () => {
       const text = 'A'.repeat(1000);
       const docId = 'meu_documento_123';
       
-      const result = DocumentChunker.chunk(docId, text, { maxChunkSize: 200 });
+      const result = DocumentChunker.chunk(docId, text, { maxChunkSize: 200, chunkOverlap: 50 });
       
       expect(Result.isOk(result)).toBe(true);
       if (Result.isOk(result)) {
@@ -105,11 +105,14 @@ describe('DocumentChunker', () => {
     });
 
     it('deve quebrar em separadores de parágrafo quando possível', () => {
-      const text = 'Primeiro parágrafo com conteúdo.\n\nSegundo parágrafo com conteúdo.\n\nTerceiro parágrafo com conteúdo.';
+      // Texto longo o suficiente para exigir múltiplos chunks (maxChunkSize >= 100)
+      const text = 'Primeiro parágrafo com conteúdo detalhado sobre o assunto principal do documento de teste para chunking.\n\n' +
+        'Segundo parágrafo com conteúdo detalhado sobre outro tema relevante para verificar a quebra correta.\n\n' +
+        'Terceiro parágrafo com conteúdo detalhado sobre conclusões e considerações finais do documento.';
       
       const result = DocumentChunker.chunk('doc1', text, { 
-        maxChunkSize: 60, 
-        chunkOverlap: 10 
+        maxChunkSize: 120, 
+        chunkOverlap: 20 
       });
       
       expect(Result.isOk(result)).toBe(true);

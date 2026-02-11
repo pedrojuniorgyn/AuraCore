@@ -11,8 +11,9 @@ import { container } from "@/shared/infrastructure/di/container";
 import { INTEGRATIONS_TOKENS } from "@/modules/integrations/infrastructure/di/IntegrationsModule";
 import type { IEsgCalculatorGateway } from "@/modules/integrations/domain/ports/output/IEsgCalculatorGateway";
 import { Result } from "@/shared/domain";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
@@ -56,4 +57,4 @@ export async function POST(request: NextRequest) {
       error: errorMessage
     }, { status: 500 });
   }
-}
+});

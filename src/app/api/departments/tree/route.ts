@@ -15,6 +15,8 @@ import type { IDepartmentRepository } from '@/shared/domain/ports/output/IDepart
 import type { Department } from '@/shared/domain';
 import { CacheService, CacheTTL } from '@/services/cache.service';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * Estrutura de Department Tree (recursiva)
  */
@@ -84,7 +86,7 @@ interface DepartmentsTreeResponse {
  * - Key: departments:tree:{orgId}:{branchId}:{activeFilter}
  * - Headers: X-Cache (HIT/MISS), X-Cache-Key, X-Cache-TTL
  */
-export async function GET(request: NextRequest) {
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const tenantContext = await getTenantContext();
 
@@ -189,13 +191,13 @@ export async function GET(request: NextRequest) {
     if (error instanceof NextResponse) {
       return error; // Return original 401/403 response
     }
-    console.error('Error building department tree:', error);
+    logger.error('Error building department tree:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Resultado da construção da árvore
@@ -245,9 +247,7 @@ function buildTreeFromArray(departments: Department[]): BuildTreeResult {
       if (parent) {
         // Detectar ciclo usando deptMap para lookup O(1)
         if (detectCycleOptimized(dept.id, dept.parentId, deptMap)) {
-          console.warn(
-            `⚠️ Ciclo detectado: department ${dept.id} → parent ${dept.parentId}. Tratando como root.`
-          );
+          logger.warn(`⚠️ Ciclo detectado: department ${dept.id} → parent ${dept.parentId}. Tratando como root.`);
           roots.push(node);
         } else {
           // Adicionar como filho - level será calculado depois
@@ -312,9 +312,7 @@ function detectCycleOptimized(
   // Se atingiu o limite, há loop infinito nos dados, mas não envolve nodeId
   // Não rejeitar, deixar updateLevelsRecursive lidar com isso
   if (iterations >= maxIterations) {
-    console.warn(
-      `⚠️ Loop infinito detectado na cadeia de ancestors (não envolve node ${nodeId})`
-    );
+    logger.warn(`⚠️ Loop infinito detectado na cadeia de ancestors (não envolve node ${nodeId})`);
   }
 
   return false;
@@ -335,7 +333,7 @@ function updateLevelsRecursive(
   nodes.forEach(node => {
     // Proteção contra ciclos: se já visitamos este node, pular
     if (visited.has(node.id)) {
-      console.warn(`⚠️ updateLevelsRecursive: ciclo detectado em node ${node.id}, pulando.`);
+      logger.warn(`⚠️ updateLevelsRecursive: ciclo detectado em node ${node.id}, pulando.`);
       return;
     }
     
@@ -360,7 +358,7 @@ function sortTreeByCode(nodes: DepartmentTreeNode[], visited: Set<string>): void
   nodes.forEach(node => {
     // Proteção contra ciclos: se já visitamos este node, pular
     if (visited.has(node.id)) {
-      console.warn(`⚠️ sortTreeByCode: ciclo detectado em node ${node.id}, pulando.`);
+      logger.warn(`⚠️ sortTreeByCode: ciclo detectado em node ${node.id}, pulando.`);
       return;
     }
     

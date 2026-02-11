@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 
-export async function GET(request: NextRequest) {
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
+export const GET = withDI(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get("organizationId") || "1";
@@ -34,13 +36,13 @@ export async function GET(request: NextRequest) {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error fetching cost centers:", error);
+    logger.error("Error fetching cost centers:", error);
     return NextResponse.json({
       success: false,
       error: errorMessage
     }, { status: 500 });
   }
-}
+});
 
 
 

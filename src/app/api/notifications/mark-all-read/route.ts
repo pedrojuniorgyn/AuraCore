@@ -13,13 +13,15 @@ import { getTenantContext } from '@/lib/auth/context';
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/notifications/mark-all-read
  * Marca todas as notificações não lidas do usuário como lidas
  * 
  * @returns { success: true, count: number } - número de notificações marcadas
  */
-export async function POST(request: NextRequest) {
+export const POST = withDI(async (request: NextRequest) => {
   try {
     const authContext = await getTenantContext();
 
@@ -47,10 +49,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof NextResponse) {
       return error; // Return original 401/403 response
     }
-    console.error('Error marking all notifications as read:', error);
+    logger.error('Error marking all notifications as read:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
-}
+});

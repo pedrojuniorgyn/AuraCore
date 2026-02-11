@@ -25,6 +25,8 @@ export default defineConfig({
     // E14.6-FIX: Timeouts para operações longas
     testTimeout: 30000,
     hookTimeout: 30000,
+    // E13.1-FIX: Pool forks. Memória via NODE_OPTIONS no package.json (--max-old-space-size=8192)
+    pool: 'forks',
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
@@ -43,16 +45,20 @@ export default defineConfig({
       '**/node_modules/**',
       'mcp-server/node_modules/**',
       '.next/**',
-      'dist/**'
+      'dist/**',
+      // E2E tests use Playwright - must be run via playwright test, not vitest
+      'tests/e2e/**',
     ]
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@tests': path.resolve(__dirname, './tests'),
-      '@modules': path.resolve(__dirname, './src/modules'),
-      '@shared': path.resolve(__dirname, './src/shared')
-    }
+    alias: [
+      // Mais específico primeiro: @/tests antes de @
+      { find: '@/tests', replacement: path.resolve(__dirname, './tests') },
+      { find: '@tests', replacement: path.resolve(__dirname, './tests') },
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      { find: '@modules', replacement: path.resolve(__dirname, './src/modules') },
+      { find: '@shared', replacement: path.resolve(__dirname, './src/shared') },
+    ]
   }
 });
 

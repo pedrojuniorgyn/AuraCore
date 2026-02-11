@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { pool, ensureConnection } from "@/lib/db";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -9,17 +11,17 @@ export const runtime = "nodejs";
  * GET /api/products/:id/unit-conversions
  * Lista conversões de unidade do produto
  */
-export async function GET(
+export const GET = withDI(async (
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const productId = parseInt(resolvedParams.id);
 
     await ensureConnection();
@@ -39,30 +41,30 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao listar conversões:", error);
+    logger.error("❌ Erro ao listar conversões:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/products/:id/unit-conversions
  * Cria nova conversão de unidade
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const productId = parseInt(resolvedParams.id);
 
     const body = await request.json();
@@ -133,12 +135,12 @@ export async function POST(
     if (error instanceof Response) {
       return error;
     }
-    console.error("❌ Erro ao criar conversão:", error);
+    logger.error("❌ Erro ao criar conversão:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 

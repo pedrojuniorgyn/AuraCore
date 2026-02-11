@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Result } from '@/shared/domain';
 import { Money } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';
-import { CreateFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/CreateFiscalDocumentUseCase';
+import { CreateFiscalDocumentUseCase } from '@/modules/fiscal/application/commands/fiscal/CreateFiscalDocumentUseCase';
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/FiscalDocument';
 import { FiscalDocumentItem } from '@/modules/fiscal/domain/entities/FiscalDocumentItem';
 import type { IFiscalDocumentRepository } from '@/modules/fiscal/domain/ports/output/IFiscalDocumentRepository';
-import type { ExecutionContext } from '@/modules/fiscal/application/use-cases/BaseUseCase';
+import type { ExecutionContext } from '@/modules/fiscal/application/commands/fiscal/BaseUseCase';
 
 describe('CreateFiscalDocumentUseCase', () => {
   let useCase: CreateFiscalDocumentUseCase;

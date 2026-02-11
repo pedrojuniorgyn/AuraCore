@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { NextRequest } from 'next/server';
 import { POST as followUpHandler } from '@/app/api/strategic/action-plans/[id]/follow-up/route';
 import { getTenantContext } from '@/lib/auth/context';
 import { container } from '@/shared/infrastructure/di/container';
@@ -51,7 +52,7 @@ describe('action-plans follow-up route', () => {
 
   it('returns 400 when JSON body is invalid', async () => {
     const response = await followUpHandler(
-      makeRequest('not-a-json'),
+      makeRequest('not-a-json') as NextRequest,
       { params: Promise.resolve({ id: actionPlanId }) }
     );
 
@@ -78,7 +79,7 @@ describe('action-plans follow-up route', () => {
           executionStatus: 'EXECUTED_OK',
           executionPercent: 50,
         })
-      ),
+      ) as NextRequest,
       { params: Promise.resolve({ id: actionPlanId }) }
     );
 
@@ -107,7 +108,7 @@ describe('action-plans follow-up route', () => {
           executionStatus: 'EXECUTED_OK',
           executionPercent: 75,
         })
-      ),
+      ) as NextRequest,
       { params: Promise.resolve({ id: actionPlanId }) }
     );
 

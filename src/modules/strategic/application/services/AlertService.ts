@@ -15,6 +15,7 @@ import { STRATEGIC_TOKENS } from '../../infrastructure/di/tokens';
 import { NotificationService } from '@/shared/infrastructure/notifications/NotificationService';
 import type { NotificationType, NotificationEvent } from '@/shared/infrastructure/notifications/types';
 
+import { logger } from '@/shared/infrastructure/logging';
 export interface AlertConfig {
   kpiCriticalThreshold: number;
   kpiWarningThreshold: number;
@@ -63,7 +64,7 @@ function mapAlertTypeToNotificationEvent(alertType: AlertType): NotificationEven
       return 'ACTION_PLAN_STALE'; // Goal stale é similar a action plan stale
     default:
       // Exhaustive check: se chegar aqui, é bug de código
-      console.error(`❌ BUG: AlertType não mapeado: ${alertType}`);
+      logger.error(`❌ BUG: AlertType não mapeado: ${alertType}`);
       // Fallback seguro: usar KPI_WARNING como genérico
       return 'KPI_WARNING';
   }
@@ -316,18 +317,12 @@ export class AlertService {
 
           // Verificar Result (OBRIGATÓRIO - regrasmcp.mdc)
           if (Result.isFail(inAppResult)) {
-            console.error(
-              `❌ Falha ao enviar notificação in-app para user ${userId}: ${inAppResult.error}`,
-              { alertId: alert.id, userId, organizationId, branchId }
-            );
+            logger.error(`Falha ao enviar notificação in-app para user ${userId}: ${inAppResult.error}`, { alertId: alert.id, userId, organizationId, branchId });
             // Continuar para próximo usuário (não bloquear)
           }
         }
       } else {
-        console.warn(
-          `⚠️ Nenhum aprovador configurado para org ${organizationId}, branch ${branchId}. ` +
-          `Notificação in-app não enviada para alerta ${alert.id}.`
-        );
+        logger.warn(`Nenhum aprovador configurado - notificação in-app não enviada`, { organizationId, branchId, alertId: alert.id });
       }
     }
 
@@ -346,10 +341,7 @@ export class AlertService {
 
       // Verificar Result (OBRIGATÓRIO - regrasmcp.mdc)
       if (Result.isFail(emailResult)) {
-        console.error(
-          `❌ Falha ao enviar email para alerta ${alert.id}: ${emailResult.error}`,
-          { alertId: alert.id, recipients: config.emailRecipients, organizationId, branchId }
-        );
+        logger.error(`Falha ao enviar email para alerta ${alert.id}: ${emailResult.error}`, { alertId: alert.id, recipients: config.emailRecipients, organizationId, branchId });
         // Continuar para webhook (não bloquear)
       }
     }
@@ -375,10 +367,7 @@ export class AlertService {
 
       // Verificar Result (OBRIGATÓRIO - regrasmcp.mdc)
       if (Result.isFail(webhookResult)) {
-        console.error(
-          `❌ Falha ao enviar webhook para alerta ${alert.id}: ${webhookResult.error}`,
-          { alertId: alert.id, webhookUrl: config.webhookUrl, organizationId, branchId }
-        );
+        logger.error(`Falha ao enviar webhook para alerta ${alert.id}: ${webhookResult.error}`, { alertId: alert.id, webhookUrl: config.webhookUrl, organizationId, branchId });
         // Continuar (não bloquear fluxo de alertas)
       }
     }

@@ -14,6 +14,7 @@ import type { IStrategicGoalRepository } from '@/modules/strategic/domain/ports/
 import type { IStrategyRepository } from '@/modules/strategic/domain/ports/output/IStrategyRepository';
 import type { IActionPlanRepository } from '@/modules/strategic/domain/ports/output/IActionPlanRepository';
 
+import { logger } from '@/shared/infrastructure/logging';
 export interface PowerBIKPI {
   id: string;
   code: string;
@@ -235,7 +236,7 @@ export const GET = withDI(async (request: NextRequest) => {
     return NextResponse.json(payload);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('GET /api/analytics/export/powerbi error:', error);
+    logger.error('GET /api/analytics/export/powerbi error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

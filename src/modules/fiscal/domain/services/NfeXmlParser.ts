@@ -19,6 +19,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { Result } from '@/shared/domain';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ============================================================================
 // HASH HELPER (ARCH-004 compliant - no Node.js crypto import)
 // ============================================================================
@@ -508,7 +509,7 @@ export class NfeXmlParser {
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('⚠️  Erro ao extrair informações de pagamento:', errorMessage);
+      logger.error('⚠️  Erro ao extrair informações de pagamento:', errorMessage);
       return undefined;
     }
   }

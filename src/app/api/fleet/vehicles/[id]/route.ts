@@ -5,13 +5,15 @@ import { eq, and, isNull, asc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { queryFirst } from "@/lib/db/query-helpers";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 // GET - Buscar veículo específico
-export async function GET(
+export const GET = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -44,21 +46,21 @@ export async function GET(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao buscar veículo:", error);
+    logger.error("Erro ao buscar veículo:", error);
     return NextResponse.json(
       { error: "Erro ao buscar veículo" },
       { status: 500 }
     );
   }
-}
+});
 
 // PUT - Atualizar veículo
-export async function PUT(
+export const PUT = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -173,21 +175,21 @@ export async function PUT(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao atualizar veículo:", error);
+    logger.error("Erro ao atualizar veículo:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar veículo" },
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Soft delete do veículo
-export async function DELETE(
+export const DELETE = withDI(async (
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     const ctx = await getTenantContext();
@@ -244,13 +246,13 @@ export async function DELETE(
     if (error instanceof Response) {
       return error;
     }
-    console.error("Erro ao excluir veículo:", error);
+    logger.error("Erro ao excluir veículo:", error);
     return NextResponse.json(
       { error: "Erro ao excluir veículo" },
       { status: 500 }
     );
   }
-}
+});
 
 
 

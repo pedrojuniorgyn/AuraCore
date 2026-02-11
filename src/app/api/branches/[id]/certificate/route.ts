@@ -5,6 +5,8 @@ import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
 import crypto from "crypto";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 /**
  * POST /api/branches/[id]/certificate
  * 
@@ -20,17 +22,17 @@ import crypto from "crypto";
  * - ✅ Multi-Tenant: Valida organization_id
  * - ✅ RBAC: Apenas ADMIN pode fazer upload
  */
-export async function POST(
+export const POST = withDI(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     // 🔗 Garante conexão com banco
     const { ensureConnection } = await import("@/lib/db");
     await ensureConnection();
     
     const ctx = await getTenantContext();
-    const resolvedParams = await params;
+    const resolvedParams = await context.params;
     const branchId = parseInt(resolvedParams.id);
 
     if (isNaN(branchId)) {
@@ -83,7 +85,7 @@ export async function POST(
     const arrayBuffer = await pfxFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    console.log("📜 Validando certificado digital...");
+    logger.info("📜 Validando certificado digital...");
 
     // Valida o certificado usando crypto do Node.js
     let certificateExpiry: Date | null = null;
@@ -99,17 +101,17 @@ export async function POST(
       certificateExpiry = new Date();
       certificateExpiry.setFullYear(certificateExpiry.getFullYear() + 1);
 
-      console.log("✅ Certificado válido");
+      logger.info("✅ Certificado válido");
     } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("❌ Erro ao validar certificado:", errorMessage);
+      logger.error("❌ Erro ao validar certificado:", errorMessage);
       
       // Tenta validar de outra forma (menos rigorosa)
       // Se o arquivo existe e tem conteúdo, aceita
       if (buffer.length > 0) {
         certificateExpiry = new Date();
         certificateExpiry.setFullYear(certificateExpiry.getFullYear() + 1);
-        console.log("⚠️  Certificado aceito (validação básica)");
+        logger.info("⚠️  Certificado aceito (validação básica)");
       } else {
         return NextResponse.json(
           { error: "Certificado inválido ou senha incorreta" },
@@ -121,7 +123,7 @@ export async function POST(
     // Converte para Base64
     const certificateBase64 = buffer.toString("base64");
 
-    console.log(`📦 Certificado convertido: ${certificateBase64.length} bytes (Base64)`);
+    logger.info(`📦 Certificado convertido: ${certificateBase64.length} bytes (Base64)`);
 
     // Atualiza a branch com o certificado
     await db
@@ -141,7 +143,7 @@ export async function POST(
         )
       );
 
-    console.log(`✅ Certificado salvo para a filial ${branch.name}`);
+    logger.info(`✅ Certificado salvo para a filial ${branch.name}`);
 
     return NextResponse.json({
       success: true,
@@ -159,13 +161,13 @@ export async function POST(
     }
     
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Error uploading certificate:", error);
+    logger.error("❌ Error uploading certificate:", error);
     return NextResponse.json(
       { error: "Falha ao fazer upload do certificado", details: errorMessage },
       { status: 500 }
     );
   }
-}
+});
 
 
 

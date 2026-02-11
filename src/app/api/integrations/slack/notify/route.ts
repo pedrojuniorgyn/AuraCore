@@ -14,6 +14,7 @@ import { SlackNotificationService } from '@/modules/strategic/application/servic
 import { Result } from '@/shared/domain';
 import type { IntegrationEventType } from '@/lib/integrations/integration-types';
 
+import { logger } from '@/shared/infrastructure/logging';
 const NotifySchema = z.object({
   webhookUrl: z.string().url().startsWith('https://hooks.slack.com/'),
   eventType: z.enum([
@@ -138,7 +139,7 @@ export const POST = withDI(async (request: NextRequest) => {
     return NextResponse.json(result.value);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
-    console.error('POST /api/integrations/slack/notify error:', error);
+    logger.error('POST /api/integrations/slack/notify error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

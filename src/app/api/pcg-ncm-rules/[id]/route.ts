@@ -4,16 +4,18 @@ import { getTenantContext } from "@/lib/auth/context";
 import { ensureConnection } from "@/lib/db";
 import sql from "mssql";
 
+import { logger } from '@/shared/infrastructure/logging';
+import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/pcg-ncm-rules/[id]
  * Busca uma regra específica
  */
-export async function GET(
+export const GET = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     await ensureConnection();
     const session = await auth();
@@ -67,22 +69,22 @@ export async function GET(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao buscar regra:", error);
+    logger.error("Erro ao buscar regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao buscar regra" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/pcg-ncm-rules/[id]
  * Atualiza uma regra
  */
-export async function PUT(
+export const PUT = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     await ensureConnection();
     const session = await auth();
@@ -158,22 +160,22 @@ export async function PUT(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao atualizar regra:", error);
+    logger.error("Erro ao atualizar regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao atualizar regra" },
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/pcg-ncm-rules/[id]
  * Deleta (soft delete) uma regra
  */
-export async function DELETE(
+export const DELETE = withDI(async (
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+  context: RouteContext
+) => {
   try {
     await ensureConnection();
     const session = await auth();
@@ -212,15 +214,11 @@ export async function DELETE(
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Erro ao excluir regra:", error);
+    logger.error("Erro ao excluir regra:", error);
     return NextResponse.json(
       { error: errorMessage || "Erro ao excluir regra" },
       { status: 500 }
     );
   }
-}
-
-
-
-
+});
 

@@ -5,6 +5,7 @@ import { branches } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull } from "drizzle-orm";
 
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * POST /api/sefaz/test-connection
  * 
@@ -75,7 +76,7 @@ export const POST = withDI(async (request: NextRequest) => {
       );
     }
 
-    console.log("🔐 Testando conexão Sefaz para filial:", branch.name);
+    logger.info("🔐 Testando conexão Sefaz para filial:", branch.name);
 
     // TODO: Implementar teste real de conexão mTLS com Sefaz
     // Por enquanto, apenas simular sucesso se certificado existe e é válido
@@ -102,7 +103,7 @@ export const POST = withDI(async (request: NextRequest) => {
       return error;
     }
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Erro ao testar conexão Sefaz:", error);
+    logger.error("❌ Erro ao testar conexão Sefaz:", error);
     
     return NextResponse.json(
       {

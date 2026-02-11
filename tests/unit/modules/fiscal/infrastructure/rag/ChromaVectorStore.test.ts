@@ -17,6 +17,14 @@ global.fetch = mockFetch;
 describe('ChromaVectorStore', () => {
   let vectorStore: ChromaVectorStore;
 
+  /** Helper: mock heartbeat that waitForChromaDB() calls before ensureCollection */
+  const mockHeartbeat = () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ nanosecond_heartbeat: Date.now() }),
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vectorStore = new ChromaVectorStore();
@@ -28,6 +36,7 @@ describe('ChromaVectorStore', () => {
 
   describe('upsert', () => {
     it('should upsert chunks successfully', async () => {
+      mockHeartbeat();
       // Mock collection list
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -66,6 +75,7 @@ describe('ChromaVectorStore', () => {
     });
 
     it('should create collection if not exists', async () => {
+      mockHeartbeat();
       // Mock empty collection list
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -87,10 +97,11 @@ describe('ChromaVectorStore', () => {
       const result = await vectorStore.upsert(mockChunksWithEmbedding);
 
       expect(Result.isOk(result)).toBe(true);
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenCalledTimes(4); // heartbeat + list + create + upsert
     });
 
     it('should handle upsert error', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],
@@ -114,6 +125,7 @@ describe('ChromaVectorStore', () => {
 
   describe('search', () => {
     it('should search successfully', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],
@@ -150,6 +162,7 @@ describe('ChromaVectorStore', () => {
     });
 
     it('should filter by minScore', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],
@@ -178,6 +191,7 @@ describe('ChromaVectorStore', () => {
     });
 
     it('should apply filters', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],
@@ -215,6 +229,7 @@ describe('ChromaVectorStore', () => {
 
   describe('deleteByDocumentId', () => {
     it('should delete successfully', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],
@@ -243,6 +258,7 @@ describe('ChromaVectorStore', () => {
 
   describe('listDocuments', () => {
     it('should list documents successfully', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],
@@ -274,6 +290,7 @@ describe('ChromaVectorStore', () => {
 
   describe('count', () => {
     it('should return count', async () => {
+      mockHeartbeat();
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [{ id: 'coll-123', name: 'legislation' }],

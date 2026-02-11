@@ -92,6 +92,15 @@ export class BudgetImportService {
           continue;
         }
 
+        // Validate date format
+        const periodStart = new Date(row.period_start);
+        const periodEnd = new Date(row.period_end);
+        if (isNaN(periodStart.getTime()) || isNaN(periodEnd.getTime())) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.kpi_code || 'UNKNOWN', error: `Invalid date format: ${row.period_start} or ${row.period_end}` });
+          continue;
+        }
+
         try {
           // Find KPI by code
           const kpi = await this.kpiRepository.findByCode(
@@ -112,8 +121,8 @@ export class BudgetImportService {
             organizationId,
             branchId,
             valueType: row.value_type,
-            periodStart: new Date(row.period_start),
-            periodEnd: new Date(row.period_end),
+            periodStart,
+            periodEnd,
             value,
           });
 
@@ -182,6 +191,15 @@ export class BudgetImportService {
           continue;
         }
 
+        // Validate date format
+        const periodStart = new Date(row.period_start);
+        const periodEnd = new Date(row.period_end);
+        if (isNaN(periodStart.getTime()) || isNaN(periodEnd.getTime())) {
+          result.failed++;
+          result.errors.push({ row: rowNum, code: row.goal_code || 'UNKNOWN', error: `Invalid date format: ${row.period_start} or ${row.period_end}` });
+          continue;
+        }
+
         try {
           const goal = await this.goalRepository.findByCode(
             row.goal_code.trim(),
@@ -200,8 +218,8 @@ export class BudgetImportService {
             organizationId,
             branchId,
             valueType: row.value_type,
-            periodStart: new Date(row.period_start),
-            periodEnd: new Date(row.period_end),
+            periodStart,
+            periodEnd,
             targetValue,
           });
 

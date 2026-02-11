@@ -11,8 +11,9 @@ import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";
 import type { IAgentsGateway } from "@/modules/integrations/domain/ports/output/IAgentsGateway";
 import { Result } from "@/shared/domain";
+import { withDI } from '@/shared/infrastructure/di/with-di';
 
-export async function GET() {
+export const GET = withDI(async () => {
   try {
     // Resolver gateway via DI
     const agentsGateway = container.resolve<IAgentsGateway>(TOKENS.AgentsGateway);
@@ -36,4 +37,4 @@ export async function GET() {
       { status: 503 }
     );
   }
-}
+});
