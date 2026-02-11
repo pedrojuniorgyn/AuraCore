@@ -40,8 +40,11 @@ jobs:
       - name: TypeScript strict check (TSG-001)
         run: |
           echo "🔷 TypeScript Gate (TSG-001): HARD mode"
+          # Disable pipefail temporarily so tee doesn't kill the script on tsc failure
+          set +eo pipefail
           npx tsc --noEmit 2>&1 | tee tsc-output.txt
           TSC_EXIT=${PIPESTATUS[0]}
+          set -eo pipefail
           ERROR_COUNT=$(grep -c 'error TS' tsc-output.txt || echo "0")
           echo "## TypeCheck Gate" >> $GITHUB_STEP_SUMMARY
           echo "- Exit code: $TSC_EXIT" >> $GITHUB_STEP_SUMMARY
@@ -124,8 +127,11 @@ jobs:
       - name: Run Unit Tests with Coverage
         run: |
           echo "🧪 Test Gate: All tests must pass"
+          # Disable pipefail temporarily so tee doesn't kill the script on test failure
+          set +eo pipefail
           npm run test:unit -- --coverage --reporter=verbose 2>&1 | tee test-output.txt
           TEST_EXIT=${PIPESTATUS[0]}
+          set -eo pipefail
           echo "## Test Gate" >> $GITHUB_STEP_SUMMARY
           echo "- Exit code: $TEST_EXIT" >> $GITHUB_STEP_SUMMARY
           # Extract test count from output
