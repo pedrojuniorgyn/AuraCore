@@ -65,5 +65,12 @@ COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
+# E13.3: Entrypoint que executa migrations antes de iniciar o servidor
+RUN chmod +x scripts/docker-entrypoint.sh
+
 EXPOSE 3000
-CMD ["node", "server.js"]
+# Usa entrypoint para executar migrations pendentes antes de iniciar o Next.js
+# Variáveis de controle:
+#   SKIP_MIGRATIONS=true    - Pular migrations (debug/emergência)
+#   MIGRATION_OPTIONAL=true - Não falhar se DB indisponível
+CMD ["bash", "scripts/docker-entrypoint.sh"]

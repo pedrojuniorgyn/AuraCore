@@ -53,14 +53,10 @@ Rotas em `src/app/api/strategic/` que retornam dados mock:
 
 ### DEBITO TECNICO - Robustez (P3, baixa severidade)
 
-**ProcessJobsCommand.ts - handleJobError sem try-catch externo**
+**ProcessJobsCommand.ts - handleJobError sem try-catch externo** ✅ RESOLVIDO (E18/Bugbot PR#88)
 - Arquivo: `src/modules/documents/application/commands/ProcessJobsCommand.ts`
-- Linhas: 80-86 (fora do try) e 128-132 (dentro do catch)
-- Problema: Se `handleJobError()` lancar excecao (ex: DB indisponivel), o erro propaga sem tratamento tanto no bloco `!processor` (L82-86) quanto dentro do `catch` (L131).
-- Impacto: Muito baixo. So ocorre se DB estiver completamente fora. Neste cenario toda a execucao de jobs ja esta comprometida.
-- Correcao futura: Envolver todo o corpo do `for` em um unico try-catch, ou adicionar try-catch interno em `handleJobError`.
-- Detectado: Agent Review Cursor, 11/02/2026
-- Prioridade: P3
+- Problema: Se `handleJobError()` lancava excecao (ex: DB indisponivel), o erro propagava sem tratamento.
+- Correcao: Criado `safeHandleJobError()` que envolve `handleJobError` em try-catch. LC-703096
 
 ### MANTER (avisos uteis in-code) - ~212 TODOs
 
