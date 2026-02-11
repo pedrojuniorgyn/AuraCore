@@ -12,10 +12,11 @@ SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
 
--- Add TOTP secret (encrypted, stored as base32)
+-- Add TOTP secret (AES-256-GCM encrypted; format: iv:encrypted:authTag in hex).
+-- Run 0066 after to expand to 500 chars if needed.
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'totp_secret')
 BEGIN
-  ALTER TABLE [users] ADD [totp_secret] VARCHAR(255) NULL;
+  ALTER TABLE [users] ADD [totp_secret] NVARCHAR(255) NULL;
   PRINT 'Added: totp_secret column';
 END
 GO

@@ -23,7 +23,8 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { TotpService } from '@/shared/infrastructure/auth/TotpService';
-
+import { decryptTotpSecret } from '@/lib/crypto';
+import { logger } from '@/shared/infrastructure/logging';
 /**
  * Zod schema for 2FA verification input.
  * Accepts a 6-digit numeric token string.
@@ -85,8 +86,9 @@ export const POST = withDI(async (req: NextRequest) => {
         );
       }
 
-      // 3. Verify TOTP token
-      const isValid = TotpService.verifyToken(currentUser.totpSecret, token);
+      // 3. Verify TOTP token (decrypt secret if encrypted)
+      const secret = decryptTotpSecret(currentUser.totpSecret);
+      const isValid = TotpService.verifyToken(secret, token);
 
       if (!isValid) {
         return NextResponse.json(
@@ -134,7 +136,7 @@ export const POST = withDI(async (req: NextRequest) => {
       }
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error('❌ Erro ao verificar 2FA:', error);
+      logger.error('❌ Erro ao verificar 2FA:', error);
       return NextResponse.json(
         { error: 'Erro ao verificar 2FA', details: errorMessage },
         { status: 500 }
