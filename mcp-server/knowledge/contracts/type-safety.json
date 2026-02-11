@@ -1,6 +1,6 @@
 {
   "id": "type-safety",
-  "version": "2.0.131",
+  "version": "2.0.133",
   "name": "Type Safety Contract",
   "description": "Regras de type safety TypeScript strict",
   "category": "quality",
@@ -2189,6 +2189,41 @@
         "next.config.ts"
       ],
       "pattern_created": "NEXTJS16-WEBPACK-FLAG",
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-703096",
+      "date": "2026-02-11",
+      "epic": "E18",
+      "error": "ProcessJobsCommand.handleJobError could throw when jobRepository.save or documentRepository operations fail (e.g. DB down), causing unhandled promise rejection and breaking the job processing loop",
+      "correction": "Created safeHandleJobError wrapper that catches secondary errors from handleJobError and logs them via documents.job.handle_error_failed. All 3 call sites (no processor, processResult fail, catch block) now use safeHandleJobError instead of handleJobError",
+      "files_affected": [
+        "src/modules/documents/application/commands/ProcessJobsCommand.ts"
+      ],
+      "pattern_created": null,
+      "status": "APPROVED",
+      "must_not_repeat": true
+    },
+    {
+      "id": "LC-315709",
+      "date": "2026-02-11",
+      "epic": "E18",
+      "error": "TOTP plaintext storage (LC-PR88-001), Redis health check connection churn (LC-PR88-004), Metrics timing attack (LC-PR88-005), k6 JSON parse (LC-PR305-002)",
+      "correction": "1) crypto.ts: encryptTotpSecret/decryptTotpSecret AES-256-GCM; 2FA routes use encrypt before save, decrypt before verify. 2) redis-health-client.ts: singleton for health checks. 3) metrics route: constantTimeEqual for token. 4) k6 login-navigation: single json() inside try-catch.",
+      "files_affected": [
+        "src/lib/crypto.ts",
+        "src/lib/redis-health-client.ts",
+        "src/app/api/auth/2fa/setup/route.ts",
+        "src/app/api/auth/2fa/verify/route.ts",
+        "src/app/api/auth/2fa/disable/route.ts",
+        "src/app/api/health/route.ts",
+        "src/app/api/metrics/route.ts",
+        "k6/scenarios/login-navigation.js",
+        "scripts/encrypt-totp-secrets.ts",
+        ".env.example"
+      ],
+      "pattern_created": null,
       "status": "APPROVED",
       "must_not_repeat": true
     }

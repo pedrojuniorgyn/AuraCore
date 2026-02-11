@@ -69,7 +69,7 @@ export const users = mssqlTable("users", {
   defaultBranchId: int("default_branch_id"), // Filial padrão ao logar (FK removida para evitar dependência circular)
   
   // 2FA/TOTP (E11.1 - GAP-SEC-003)
-  totpSecret: nvarchar("totp_secret", { length: 255 }), // Encrypted TOTP secret (base32)
+  totpSecret: nvarchar("totp_secret", { length: 500 }), // AES-256-GCM encrypted (format: iv:encrypted:authTag in hex)
   totpEnabled: bit("totp_enabled").default(false).notNull(), // Whether 2FA is active
   totpBackupCodes: nvarchar("totp_backup_codes", { length: "max" }), // JSON array of hashed backup codes
   totpVerifiedAt: datetime2("totp_verified_at", { precision: 3 }), // When 2FA was successfully set up
@@ -2462,6 +2462,7 @@ export const fuelTransactions = mssqlTable("fuel_transactions", {
   nfeKey: nvarchar("nfe_key", { length: 44 }),
   
   createdAt: datetime2("created_at").default(sql`GETDATE()`),
+  updatedAt: datetime2("updated_at").default(sql`GETDATE()`), // E13.2: SCHEMA-005
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
 }, (table) => ([
   index("idx_fuel_transactions_tenant").on(table.organizationId, table.branchId), // E9.1.1: SCHEMA-003
@@ -2817,7 +2818,9 @@ export const fiscalSettings = mssqlTable("fiscal_settings", {
   updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
   version: int("version").default(1).notNull(),
   deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-});
+}, (table) => ([
+  index("idx_fiscal_settings_tenant").on(table.organizationId, table.branchId), // E13.2: SCHEMA-003
+]));
 
 // ==========================================
 // 🏦 BTG PACTUAL INTEGRATION
