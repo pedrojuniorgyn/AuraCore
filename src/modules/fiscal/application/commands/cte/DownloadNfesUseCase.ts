@@ -21,13 +21,13 @@ import type {
   IDownloadNfesUseCase,
   DownloadNfesInput,
   DownloadNfesOutput,
-} from '../../domain/ports/input/IDownloadNfesUseCase';
+} from '../../../domain/ports/input/IDownloadNfesUseCase';
 import type { ISefazGateway } from '@/modules/integrations/domain/ports/output/ISefazGateway';
 import { logger } from '@/shared/infrastructure/logging';
 
 // Domain Services
-import { SefazDocumentProcessor } from '../../domain/services';
-import { createFiscalDocumentImportAdapter } from '../../infrastructure/adapters';
+import { SefazDocumentProcessor } from '../../../domain/services';
+import { createFiscalDocumentImportAdapter } from '../../../infrastructure/adapters';
 
 // ============================================================================
 // USE CASE

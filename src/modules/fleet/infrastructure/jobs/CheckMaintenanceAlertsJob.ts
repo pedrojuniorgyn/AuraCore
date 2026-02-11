@@ -13,6 +13,7 @@
 import { injectable } from 'tsyringe';
 import { pool, ensureConnection } from '@/lib/db';
 
+import { logger } from '@/shared/infrastructure/logging';
 export interface ICheckMaintenanceAlertsJob {
   execute(): Promise<MaintenanceAlertResult>;
 }
@@ -39,9 +40,7 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
     };
 
     try {
-      console.log(
-        '🔧 [CheckMaintenanceAlertsJob] Verificando planos de manutenção...'
-      );
+      logger.info('🔧 [CheckMaintenanceAlertsJob] Verificando planos de manutenção...');
 
       await ensureConnection();
 
@@ -60,9 +59,7 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
 
       const vehicles = vehiclesResult.recordset;
       result.vehiclesChecked = vehicles.length;
-      console.log(
-        `📊 [CheckMaintenanceAlertsJob] Encontrados ${vehicles.length} veículos ativos`
-      );
+      logger.info(`📊 [CheckMaintenanceAlertsJob] Encontrados ${vehicles.length} veículos ativos`);
 
       // Para cada veículo, verificar planos aplicáveis
       for (const vehicle of vehicles) {
@@ -218,25 +215,18 @@ export class CheckMaintenanceAlertsJob implements ICheckMaintenanceAlertsJob {
             result.alertsCreated++;
             // Sanitizar plate para log
             const sanitizedPlate = String(vehicle.plate).replace(/['"]/g, '');
-            console.log(
-              `⚠️  [CheckMaintenanceAlertsJob] Alerta criado: ${sanitizedPlate} - ${alertMessage}`
-            );
+            logger.info(`⚠️  [CheckMaintenanceAlertsJob] Alerta criado: ${sanitizedPlate} - ${alertMessage}`);
           }
         }
       }
 
-      console.log(
-        `✅ [CheckMaintenanceAlertsJob] Verificação concluída: ${result.alertsCreated} alertas criados`
-      );
+      logger.info(`✅ [CheckMaintenanceAlertsJob] Verificação concluída: ${result.alertsCreated} alertas criados`);
 
       return result;
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error(
-        '❌ [CheckMaintenanceAlertsJob] Erro ao verificar manutenções:',
-        errorMessage
-      );
+      logger.error('❌ [CheckMaintenanceAlertsJob] Erro ao verificar manutenções:', errorMessage);
 
       result.success = false;
       result.error = errorMessage;

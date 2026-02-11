@@ -10,6 +10,7 @@ import { container } from 'tsyringe';
 import { VehicleServiceAdapter } from '../adapters/VehicleServiceAdapter';
 import type { IVehicleServiceGateway } from '../../domain/ports/output/IVehicleServiceGateway';
 
+import { logger } from '@/shared/infrastructure/logging';
 export const FLEET_TOKENS = {
   VehicleServiceGateway: Symbol.for('IVehicleServiceGateway'),
 };
@@ -26,7 +27,7 @@ export function registerFleetModule(): void {
   );
 
   isRegistered = true;
-  console.log('[Fleet Module] DI configured - 1 gateway');
+  logger.info('[Fleet Module] DI configured - 1 gateway');
 }
 
 export function initializeFleetModule(): void {

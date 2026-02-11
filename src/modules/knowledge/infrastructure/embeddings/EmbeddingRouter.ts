@@ -17,6 +17,7 @@
 import { Result } from '@/shared/domain';
 import type { IEmbeddingService } from '../../domain/ports/output/IEmbeddingService';
 
+import { logger } from '@/shared/infrastructure/logging';
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -89,9 +90,7 @@ export class EmbeddingRouter implements IEmbeddingService {
       lastError = result.error;
 
       // Log do erro
-      console.warn(
-        `[EmbeddingRouter] Primary attempt ${attempt + 1}/${this.maxRetries} failed: ${lastError}`
-      );
+      logger.warn(`[EmbeddingRouter] Primary attempt ${attempt + 1}/${this.maxRetries} failed: ${lastError}`);
 
       // Aguardar antes de retry (backoff exponencial)
       if (attempt < this.maxRetries - 1) {
@@ -103,7 +102,7 @@ export class EmbeddingRouter implements IEmbeddingService {
 
     // 2. Tentar fallback se disponível
     if (this.fallback) {
-      console.warn('[EmbeddingRouter] Primary esgotou retries, usando fallback');
+      logger.warn('[EmbeddingRouter] Primary esgotou retries, usando fallback');
 
       const fallbackResult = await this.fallback.generateEmbeddings(texts);
 
@@ -113,7 +112,7 @@ export class EmbeddingRouter implements IEmbeddingService {
       }
 
       this.fallbackFailures++;
-      console.error('[EmbeddingRouter] Fallback também falhou:', fallbackResult.error);
+      logger.error('[EmbeddingRouter] Fallback também falhou:', fallbackResult.error);
 
       return Result.fail(
         `Todos os providers falharam. Primary: ${lastError}. Fallback: ${fallbackResult.error}`

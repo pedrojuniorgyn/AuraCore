@@ -1,54 +1,22 @@
 /**
  * AnalyzeContractUseCase - Application Command
- * 
- * Use case para análise de contratos de frete.
+ *
+ * Use case para análise de contratos genéricos.
  * Recebe texto ou arquivo e retorna análise estruturada.
- * 
+ *
  * @module contracts/application/commands
+ * @implements IAnalyzeContractUseCase
  */
 
 import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { ContractParser } from '../../../domain/services/ContractParser';
-import type { ContractAnalysisResult, ParsedRiskLevel } from '../../../domain/types';
-
-// ============================================================================
-// INPUT/OUTPUT
-// ============================================================================
-
-export interface AnalyzeContractInput {
-  /** Caminho do arquivo (opcional se content fornecido) */
-  filePath?: string;
-  
-  /** Conteúdo textual do contrato */
-  content?: string;
-  
-  /** Nome do arquivo */
-  fileName: string;
-  
-  /** ID da organização */
-  organizationId: number;
-  
-  /** ID da filial */
-  branchId: number;
-}
-
-export interface AnalyzeContractOutput {
-  /** Análise completa do contrato */
-  analysis: ContractAnalysisResult;
-  
-  /** Resumo executivo */
-  summary: {
-    contractType: string;
-    partiesCount: number;
-    clausesCount: number;
-    hasPaymentTerms: boolean;
-    hasPricing: boolean;
-    hasInsurance: boolean;
-    riskLevel: ParsedRiskLevel;
-    confidence: string;
-  };
-}
+import type { ParsedRiskLevel } from '../../../domain/types';
+import type {
+  IAnalyzeContractUseCase,
+  AnalyzeContractInput,
+  AnalyzeContractOutput,
+} from '../../../domain/ports/input';
 
 // ============================================================================
 // USE CASE
@@ -58,7 +26,7 @@ export interface AnalyzeContractOutput {
  * Use Case para análise de contratos
  */
 @injectable()
-export class AnalyzeContractUseCase {
+export class AnalyzeContractUseCase implements IAnalyzeContractUseCase {
   /**
    * Executa a análise do contrato
    */

@@ -12,6 +12,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { AnalyzeContractUseCase } from '../../application/commands/analyze-contract';
 import { AnalyzeFreightContractUseCase } from '../../application/commands/analyze-freight-contract';
 
+import { logger } from '@/shared/infrastructure/logging';
 export function registerContractsModule(): void {
   // ============================================================================
   // USE CASES - Commands
@@ -32,5 +33,5 @@ export function registerContractsModule(): void {
     useClass: AnalyzeFreightContractUseCase,
   });
 
-  console.log('[Contracts Module] DI registrado: 2 use cases');
+  logger.info('[Contracts Module] DI registrado: 2 use cases');
 }

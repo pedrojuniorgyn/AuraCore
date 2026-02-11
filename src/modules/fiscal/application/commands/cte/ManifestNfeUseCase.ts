@@ -21,14 +21,14 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 import type {
   IManifestNfeUseCase,
   ManifestNfeInput,
   ManifestNfeOutput,
-} from '../../domain/ports/input/IManifestNfeUseCase';
-import type { ExecutionContext } from '../../domain/ports/input/IAuthorizeFiscalDocument';
+} from '../../../domain/ports/input/IManifestNfeUseCase';
+import type { ExecutionContext } from '../../../domain/ports/input/IAuthorizeFiscalDocument';
 
 /** Tipos válidos de manifestação */
 const VALID_MANIFEST_TYPES = ['CIENCIA', 'CONFIRMACAO', 'DESCONHECIMENTO', 'NAO_REALIZADA'] as const;

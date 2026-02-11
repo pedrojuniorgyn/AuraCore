@@ -12,15 +12,15 @@
 
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
-import { FiscalDocumentNotFoundError } from '../../domain/errors/FiscalErrors';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
+import { FiscalDocumentNotFoundError } from '../../../domain/errors/FiscalErrors';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type {
   IGetCteByIdUseCase,
   GetCteByIdInput,
   CteDetailDto,
-} from '../../domain/ports/input/IGetCteByIdUseCase';
-import type { ExecutionContext } from '../../domain/ports/input/IAuthorizeFiscalDocument';
+} from '../../../domain/ports/input/IGetCteByIdUseCase';
+import type { ExecutionContext } from '../../../domain/ports/input/IAuthorizeFiscalDocument';
 
 /**
  * Query: Consulta de CTe por ID.

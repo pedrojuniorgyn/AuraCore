@@ -16,48 +16,14 @@ import { LegislationSearchService } from '../../../domain/services/LegislationSe
 import type { IVectorStore } from '../../../domain/ports/output/IVectorStore';
 import type { IEmbeddingService } from '../../../domain/ports/output/IEmbeddingService';
 import type {
-  LegislationType,
-  LegislationAnswer,
-} from '../../../domain/types';
+  ISearchLegislationUseCase,
+  SearchLegislationInput,
+  SearchLegislationOutput,
+} from '../../../domain/ports/input';
 import type { SearchOptionsWithEmbedding } from '../../../infrastructure/vector-store';
 
-// ============================================================================
-// INPUT/OUTPUT
-// ============================================================================
-
-export interface SearchLegislationInput {
-  /** Pergunta ou query de busca */
-  query: string;
-  
-  /** Tipos de legislação para filtrar (auto-detectado se não fornecido) */
-  legislationTypes?: LegislationType[];
-  
-  /** Número máximo de resultados (default: 5) */
-  topK?: number;
-  
-  /** Score mínimo para incluir (default: 0.3) */
-  minScore?: number;
-  
-  /** Incluir documentos revogados */
-  includeRevoked?: boolean;
-  
-  /** ID da organização (para documentos privados) */
-  organizationId?: number;
-}
-
-export interface SearchLegislationOutput extends LegislationAnswer {
-  /** Tipos de legislação detectados */
-  detectedTypes: LegislationType[];
-  
-  /** Número total de resultados encontrados */
-  totalResults: number;
-  
-  /** Tempo de busca em ms */
-  searchTimeMs: number;
-  
-  /** Complexidade da query */
-  queryComplexity: 'simple' | 'moderate' | 'complex';
-}
+// Re-export input/output for consumers
+export type { SearchLegislationInput, SearchLegislationOutput };
 
 // ============================================================================
 // USE CASE
@@ -65,15 +31,17 @@ export interface SearchLegislationOutput extends LegislationAnswer {
 
 /**
  * Use Case para busca em legislação fiscal
- * 
+ *
  * Fluxo:
  * 1. Detectar tipos de legislação na query
  * 2. Gerar embedding da query (se embedding service disponível)
  * 3. Buscar documentos similares no vector store
  * 4. Formatar resposta com fontes e confiança
+ *
+ * @implements ISearchLegislationUseCase
  */
 @injectable()
-export class SearchLegislationUseCase {
+export class SearchLegislationUseCase implements ISearchLegislationUseCase {
   constructor(
     @inject(TOKENS.KnowledgeVectorStore) private readonly vectorStore: IVectorStore,
     @inject(TOKENS.KnowledgeEmbeddingService) private readonly embeddingService: IEmbeddingService

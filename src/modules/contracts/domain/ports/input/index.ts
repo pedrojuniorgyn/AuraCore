@@ -9,3 +9,9 @@ export type {
   AnalyzeFreightContractInput,
   AnalyzeFreightContractOutput,
 } from './IAnalyzeFreightContractUseCase';
+
+export type {
+  IAnalyzeContractUseCase,
+  AnalyzeContractInput,
+  AnalyzeContractOutput,
+} from './IAnalyzeContractUseCase';

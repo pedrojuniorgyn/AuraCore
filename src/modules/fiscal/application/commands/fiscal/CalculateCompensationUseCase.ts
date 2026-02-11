@@ -4,7 +4,7 @@ import {
   CalculateCompensationInput,
   CalculateCompensationInputSchema,
   CalculateCompensationOutput,
-} from '../dtos/TaxRatesDto';
+} from '../../dtos/TaxRatesDto';
 import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
 
 /**

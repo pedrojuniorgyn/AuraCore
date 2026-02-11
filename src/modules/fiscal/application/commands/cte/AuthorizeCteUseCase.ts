@@ -17,9 +17,9 @@ import type {
   IAuthorizeCteUseCase,
   AuthorizeCteInput,
   AuthorizeCteOutput,
-} from '../../domain/ports/input/IAuthorizeCteUseCase';
-import type { ICteBuilderService } from '../../domain/ports/output/ICteBuilderService';
-import type { IXmlSignerService } from '../../domain/ports/output/IXmlSignerService';
+} from '../../../domain/ports/input/IAuthorizeCteUseCase';
+import type { ICteBuilderService } from '../../../domain/ports/output/ICteBuilderService';
+import type { IXmlSignerService } from '../../../domain/ports/output/IXmlSignerService';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 
 // Database access (needed until full DDD migration with repositories)

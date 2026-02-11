@@ -1,14 +1,14 @@
 import { injectable } from '@/shared/infrastructure/di/container';
 import { Result, Money } from '@/shared/domain';
-import { TaxCalculationOrchestrator, CalculationInput } from '../../domain/services/TaxCalculationOrchestrator';
+import { TaxCalculationOrchestrator, CalculationInput } from '../../../domain/services/TaxCalculationOrchestrator';
 import { 
   CalculateIbsCbsInput, 
   CalculateIbsCbsInputSchema, 
   CalculateIbsCbsOutput,
   CalculateIbsCbsItemOutput,
   CalculateTotals,
-} from '../dtos/CalculateIbsCbsDto';
-import { IUseCaseWithContext, ExecutionContext } from './BaseUseCase';
+} from '../../dtos/CalculateIbsCbsDto';
+import { IUseCaseWithContext, ExecutionContext } from '../../commands/fiscal/BaseUseCase';
 
 /**
  * Use Case: Calcular IBS/CBS

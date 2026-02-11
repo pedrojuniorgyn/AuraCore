@@ -27,6 +27,7 @@ import { SearchLegislationUseCase } from '../../application/queries/search-legis
 import type { IEmbeddingService } from '../../domain/ports/output/IEmbeddingService';
 import type { IVectorStore } from '../../domain/ports/output/IVectorStore';
 
+import { logger } from '@/shared/infrastructure/logging';
 export function registerKnowledgeModule(): void {
   // ============================================================================
   // EMBEDDING SERVICE (Gemini + OpenAI Fallback)
@@ -39,7 +40,7 @@ export function registerKnowledgeModule(): void {
 
     // Nenhuma key configurada
     if (!geminiKey && !openaiKey) {
-      console.warn('[Knowledge DI] Nenhuma API key de embedding configurada.');
+      logger.warn('[Knowledge DI] Nenhuma API key de embedding configurada.');
       return {
         generateEmbeddings: async () => Result.fail('Nenhuma API key de embedding configurada'),
         generateEmbedding: async () => Result.fail('Nenhuma API key de embedding configurada'),
@@ -72,7 +73,7 @@ export function registerKnowledgeModule(): void {
 
     // Se fallback habilitado, usar router
     if (fallback) {
-      console.log('[Knowledge DI] EmbeddingRouter: Gemini (primary) + OpenAI (fallback)');
+      logger.info('[Knowledge DI] EmbeddingRouter: Gemini (primary) + OpenAI (fallback)');
       return new EmbeddingRouter({
         primary,
         fallback,
@@ -81,7 +82,7 @@ export function registerKnowledgeModule(): void {
       });
     }
 
-    console.log(`[Knowledge DI] EmbeddingService: ${primary.getModelName()}`);
+    logger.info(`[Knowledge DI] EmbeddingService: ${primary.getModelName()}`);
     return primary;
   };
 
@@ -143,5 +144,5 @@ export function registerKnowledgeModule(): void {
     useClass: SearchLegislationUseCase,
   });
 
-  console.log('[Knowledge Module] DI registrado: 2 services + 2 use cases');
+  logger.info('[Knowledge Module] DI registrado: 2 services + 2 use cases');
 }

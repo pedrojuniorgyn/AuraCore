@@ -98,13 +98,13 @@ export class DocumentChunker {
         chunkIndex++;
       }
 
-      // Mover posição com overlap
-      currentPosition = chunkEnd - overlap;
-      
-      // Evitar loop infinito
-      if (currentPosition >= textLength - overlap / 2) {
+      // Se chegou ao fim do texto, parar (todo conteúdo já foi processado)
+      if (chunkEnd >= textLength) {
         break;
       }
+
+      // Mover posição com overlap, garantindo progresso para frente
+      currentPosition = Math.max(chunkEnd - overlap, currentPosition + 1);
     }
 
     return Result.ok(chunks);

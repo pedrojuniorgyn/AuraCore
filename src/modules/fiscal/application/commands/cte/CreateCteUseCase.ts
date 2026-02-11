@@ -16,9 +16,9 @@ import type {
   ICreateCteUseCase,
   CreateCteInput,
   CreateCteOutput,
-} from '../../domain/ports/input/ICreateCteUseCase';
-import type { ICteBuilderService } from '../../domain/ports/output/ICteBuilderService';
-import type { IInsuranceValidatorService } from '../../domain/ports/output/IInsuranceValidatorService';
+} from '../../../domain/ports/input/ICreateCteUseCase';
+import type { ICteBuilderService } from '../../../domain/ports/output/ICteBuilderService';
+import type { IInsuranceValidatorService } from '../../../domain/ports/output/IInsuranceValidatorService';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 
 // ============================================================================

@@ -20,14 +20,14 @@
 import { inject, injectable } from '@/shared/infrastructure/di/container';
 import { Result } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
-import type { IFiscalDocumentRepository } from '../../domain/ports/output/IFiscalDocumentRepository';
+import type { IFiscalDocumentRepository } from '../../../domain/ports/output/IFiscalDocumentRepository';
 import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 import type {
   ICancelCteUseCase,
   CancelCteInput,
   CancelCteOutput,
-} from '../../domain/ports/input/ICancelCteUseCase';
-import type { ExecutionContext } from '../../domain/ports/input/IAuthorizeFiscalDocument';
+} from '../../../domain/ports/input/ICancelCteUseCase';
+import type { ExecutionContext } from '../../../domain/ports/input/IAuthorizeFiscalDocument';
 
 @injectable()
 export class CancelCteUseCase implements ICancelCteUseCase {
