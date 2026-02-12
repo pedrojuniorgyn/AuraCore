@@ -44,9 +44,9 @@ BEGIN
         deleted_at DATETIME NULL,
         
         CONSTRAINT FK_alert_organization FOREIGN KEY (organization_id) 
-            REFERENCES organization(id),
+            REFERENCES organizations(id),
         CONSTRAINT FK_alert_branch FOREIGN KEY (branch_id) 
-            REFERENCES branch(id)
+            REFERENCES branches(id)
     );
 
     CREATE INDEX IX_alert_organization_branch 
@@ -87,9 +87,9 @@ BEGIN
         created_at DATETIME NOT NULL DEFAULT GETDATE(),
         
         CONSTRAINT FK_approval_organization FOREIGN KEY (organization_id) 
-            REFERENCES organization(id),
+            REFERENCES organizations(id),
         CONSTRAINT FK_approval_branch FOREIGN KEY (branch_id) 
-            REFERENCES branch(id),
+            REFERENCES branches(id),
         CONSTRAINT FK_approval_strategy FOREIGN KEY (strategy_id) 
             REFERENCES strategic_strategy(id)
     );
@@ -158,9 +158,9 @@ BEGIN
         deleted_at DATETIME NULL,
         
         CONSTRAINT FK_department_organization FOREIGN KEY (organization_id) 
-            REFERENCES organization(id),
+            REFERENCES organizations(id),
         CONSTRAINT FK_department_branch FOREIGN KEY (branch_id) 
-            REFERENCES branch(id),
+            REFERENCES branches(id),
         CONSTRAINT FK_department_parent FOREIGN KEY (parent_id) 
             REFERENCES department(id),
         CONSTRAINT UQ_department_code_org_branch 
