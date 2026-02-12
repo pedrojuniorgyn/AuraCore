@@ -1978,23 +1978,29 @@ export const nfeManifestationEvents = mssqlTable("nfe_manifestation_events", {
 export const notifications = mssqlTable("notifications", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
 	organizationId: int("organization_id").notNull(),
+	userId: nvarchar("user_id", { length: 255 }).notNull(),
+	type: nvarchar({ length: 50 }).notNull(),
+	title: nvarchar({ length: 255 }).notNull(),
+	message: nvarchar({ length: 'max' }).notNull(),
+	link: nvarchar({ length: 500 }),
+	isRead: int("is_read").notNull().default(0),
+	priority: nvarchar({ length: 20 }).default(sql`'NORMAL'`),
+	metadata: nvarchar({ length: 'max' }),
+	createdAt: datetime2("created_at", { mode: 'string', precision: 7 }).default(sql`getdate()`),
+	readAt: datetime2("read_at", { mode: 'string', precision: 7 }),
 	branchId: int("branch_id"),
-	userId: nvarchar("user_id", { length: 255 }),
-	type: nvarchar({ length: 20 }).notNull(),
-	event: nvarchar({ length: 100 }).notNull(),
-	title: nvarchar({ length: 200 }).notNull(),
-	message: nvarchar({ length: 'max' }),
+	event: nvarchar({ length: 100 }),
 	data: nvarchar({ length: 'max' }),
 	actionUrl: nvarchar("action_url", { length: 500 }),
-	isRead: int("is_read").default(0),
-	readAt: datetime2("read_at", { mode: 'string', precision: 7 }),
-	createdAt: datetime2("created_at", { mode: 'string', precision: 7 }).default(sql`getdate()`),
+	updatedAt: datetime2("updated_at", { mode: 'string', precision: 7 }).notNull().default(sql`getdate()`),
+	deletedAt: datetime2("deleted_at", { mode: 'string', precision: 7 }),
 }, (table) => [
 	primaryKey({ columns: [table.id], name: "PK__notifica__3213E83FFC2149E0"}),
 	index("idx_notifications_org").on(table.organizationId, table.createdAt),
 	index("idx_notifications_type").on(table.type, table.createdAt),
 	index("idx_notifications_user").on(table.userId, table.isRead, table.createdAt),
-check("CK__notificati__type__04EFA97D", sql`([type]='INFO' OR [type]='WARNING' OR [type]='ERROR' OR [type]='SUCCESS')`),]);
+	check("CK__notificati__type__04EFA97D", sql`([type]='INFO' OR [type]='WARNING' OR [type]='ERROR' OR [type]='SUCCESS')`),
+]);
 
 export const opsHealthRuns = mssqlTable("ops_health_runs", {
 	id: int().identity({ seed: 1 ,increment: 1 }),
