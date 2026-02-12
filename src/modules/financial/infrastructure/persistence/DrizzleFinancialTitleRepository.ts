@@ -15,7 +15,7 @@ import { injectable } from 'tsyringe';
 import { db } from "@/lib/db";
 import { sql, eq, and, isNull } from "drizzle-orm";
 import {
-  fiscalDocuments,
+  inboundInvoices,
   accountsPayable,
   accountsReceivable,
 } from "@/lib/db/schema";
@@ -262,15 +262,15 @@ export class DrizzleFinancialTitleRepository
   ): Promise<Result<void, Error>> {
     try {
       await db
-        .update(fiscalDocuments)
+        .update(inboundInvoices)
         .set({
           financialStatus: status,
           updatedAt: new Date(),
         })
         .where(
           and(
-            eq(fiscalDocuments.id, Number(fiscalDocumentId)),
-            eq(fiscalDocuments.organizationId, Number(organizationId))
+            eq(inboundInvoices.id, Number(fiscalDocumentId)),
+            eq(inboundInvoices.organizationId, Number(organizationId))
           )
         );
 

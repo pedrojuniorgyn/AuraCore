@@ -11,12 +11,11 @@
 import { logger } from "@/shared/infrastructure/logging";
 import { db } from "@/lib/db";
 import {
-  fiscalDocuments,
-  fiscalDocumentItems,
+  inboundInvoices,
+  inboundInvoiceItems,
   businessPartners,
   products,
   branches,
-  inboundInvoices,
   cargoDocuments,
   externalCtes,
 } from "@/lib/db/schema";
@@ -60,12 +59,12 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
       // Verifica duplicata na tabela fiscal_documents
       const [existingDoc] = await db
         .select()
-        .from(fiscalDocuments)
+        .from(inboundInvoices)
         .where(
           and(
-            eq(fiscalDocuments.organizationId, this.organizationId),
-            eq(fiscalDocuments.accessKey, parsedNFe.accessKey),
-            isNull(fiscalDocuments.deletedAt)
+            eq(inboundInvoices.organizationId, this.organizationId),
+            eq(inboundInvoices.accessKey, parsedNFe.accessKey),
+            isNull(inboundInvoices.deletedAt)
           )
         );
 
@@ -105,7 +104,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
       });
 
       // Insere na tabela fiscal_documents
-      const documentData: typeof fiscalDocuments.$inferInsert = {
+      const documentData: typeof inboundInvoices.$inferInsert = {
         organizationId: this.organizationId,
         branchId: this.branchId,
 
@@ -153,27 +152,27 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
         version: 1,
       };
 
-      await db.insert(fiscalDocuments).values(documentData);
+      await db.insert(inboundInvoices).values(documentData);
 
       // Busca documento fiscal criado
       const [newDocument] = await db
         .select()
-        .from(fiscalDocuments)
+        .from(inboundInvoices)
         .where(
           and(
-            eq(fiscalDocuments.organizationId, this.organizationId),
-            eq(fiscalDocuments.accessKey, parsedNFe.accessKey)
+            eq(inboundInvoices.organizationId, this.organizationId),
+            eq(inboundInvoices.accessKey, parsedNFe.accessKey)
           )
         )
-        .orderBy(desc(fiscalDocuments.id));
+        .orderBy(desc(inboundInvoices.id));
 
       if (!newDocument) {
         return Result.fail(new FiscalDocumentError("Falha ao criar registro do documento fiscal"));
       }
 
-      const fiscalDocumentId = newDocument.id;
+      const invoiceId = newDocument.id;
 
-      logger.info("Documento fiscal criado", { fiscalDocumentId, fiscalStatus: newDocument.fiscalStatus });
+      logger.info("Documento fiscal criado", { invoiceId, fiscalStatus: newDocument.fiscalStatus });
 
       // Categorizar itens por NCM (em batch)
       const ncmCodes = parsedNFe.items.map((item) => item.ncm).filter(Boolean);
@@ -204,8 +203,8 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
           productId = existingProduct.id;
         }
 
-        const itemData: typeof fiscalDocumentItems.$inferInsert = {
-          fiscalDocumentId,
+        const itemData: typeof inboundInvoiceItems.$inferInsert = {
+          invoiceId,
           organizationId: this.organizationId,
 
           // Identificação
@@ -241,7 +240,7 @@ export class FiscalDocumentImportAdapter implements DocumentImporter {
           cfop: item.cfop,
         };
 
-        await db.insert(fiscalDocumentItems).values(itemData);
+        await db.insert(inboundInvoiceItems).values(itemData);
       }
 
       logger.info("NFe importada com sucesso", { nfeNumber: parsedNFe.number, itemCount: parsedNFe.items.length });
