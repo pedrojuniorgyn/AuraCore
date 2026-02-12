@@ -143,7 +143,7 @@ export class SpedEcdGenerator {
     const startDate = `0101${input.referenceYear}`;
     const endDate = `3112${input.referenceYear}`;
 
-    // 0000: Abertura do Arquivo Digital
+    // 0000: Abertura do Arquivo Digital (DEVE ser o primeiro registro do arquivo - PVA compliance)
     const reg0000 = SpedRegister.create({
       registerCode: '0000',
       fields: [
@@ -275,13 +275,16 @@ export class SpedEcdGenerator {
     for (const [, { entry, lines }] of journalEntries) {
       const dataLancamento = this.formatDate(entry.entryDate);
 
+      // Calcular valor total do lançamento (soma dos débitos = soma dos créditos)
+      const valorLancamento = lines.reduce((sum, line) => sum + line.debitAmount, 0);
+
       // I200: Lançamento
       const regI200 = SpedRegister.create({
         registerCode: 'I200',
         fields: [
           entry.entryNumber,
           dataLancamento,
-          '0.00', // Valor do lançamento (totalizador)
+          valorLancamento.toFixed(2),
           entry.description,
           '',
           ''
@@ -404,57 +407,44 @@ export class SpedEcdGenerator {
     if (Result.isFail(reg9001)) return reg9001;
     registers.push(reg9001.value);
 
-    // 9900: Totalizadores
-    const reg9900_0000 = SpedRegister.create({ registerCode: '9900', fields: ['0000', '1'] });
-    const reg9900_0001 = SpedRegister.create({ registerCode: '9900', fields: ['0001', '1'] });
-    const reg9900_0990 = SpedRegister.create({ registerCode: '9900', fields: ['0990', '1'] });
-    const reg9900_J001 = SpedRegister.create({ registerCode: '9900', fields: ['J001', '1'] });
-    const reg9900_J990 = SpedRegister.create({ registerCode: '9900', fields: ['J990', '1'] });
-    const reg9900_I001 = SpedRegister.create({ registerCode: '9900', fields: ['I001', '1'] });
-    const reg9900_I990 = SpedRegister.create({ registerCode: '9900', fields: ['I990', '1'] });
-    const reg9900_K001 = SpedRegister.create({ registerCode: '9900', fields: ['K001', '1'] });
-    const reg9900_K990 = SpedRegister.create({ registerCode: '9900', fields: ['K990', '1'] });
-    const reg9900_9001 = SpedRegister.create({ registerCode: '9900', fields: ['9001', '1'] });
-    const reg9900_9900 = SpedRegister.create({ registerCode: '9900', fields: ['9900', '11'] }); // 11 totalizadores
-    const reg9900_9990 = SpedRegister.create({ registerCode: '9900', fields: ['9990', '1'] });
-    const reg9900_9999 = SpedRegister.create({ registerCode: '9900', fields: ['9999', '1'] });
+    // 9900: Totalizadores — contar registros DINAMICAMENTE de todos os blocos
+    const registerCounts = new Map<string, number>();
+    for (const block of blocks) {
+      for (const reg of block.registers) {
+        const regCode = reg.code;
+        registerCounts.set(regCode, (registerCounts.get(regCode) ?? 0) + 1);
+      }
+    }
 
-    if (Result.isFail(reg9900_0000)) return reg9900_0000;
-    if (Result.isFail(reg9900_0001)) return reg9900_0001;
-    if (Result.isFail(reg9900_0990)) return reg9900_0990;
-    if (Result.isFail(reg9900_J001)) return reg9900_J001;
-    if (Result.isFail(reg9900_J990)) return reg9900_J990;
-    if (Result.isFail(reg9900_I001)) return reg9900_I001;
-    if (Result.isFail(reg9900_I990)) return reg9900_I990;
-    if (Result.isFail(reg9900_K001)) return reg9900_K001;
-    if (Result.isFail(reg9900_K990)) return reg9900_K990;
-    if (Result.isFail(reg9900_9001)) return reg9900_9001;
-    if (Result.isFail(reg9900_9900)) return reg9900_9900;
-    if (Result.isFail(reg9900_9990)) return reg9900_9990;
-    if (Result.isFail(reg9900_9999)) return reg9900_9999;
+    // Adicionar os próprios registros do bloco 9 que serão criados
+    registerCounts.set('9001', 1);
+    registerCounts.set('9990', 1);
+    registerCounts.set('9999', 1);
 
-    registers.push(reg9900_0000.value);
-    registers.push(reg9900_0001.value);
-    registers.push(reg9900_0990.value);
-    registers.push(reg9900_J001.value);
-    registers.push(reg9900_J990.value);
-    registers.push(reg9900_I001.value);
-    registers.push(reg9900_I990.value);
-    registers.push(reg9900_K001.value);
-    registers.push(reg9900_K990.value);
-    registers.push(reg9900_9001.value);
-    registers.push(reg9900_9900.value);
-    registers.push(reg9900_9990.value);
-    registers.push(reg9900_9999.value);
+    // Contar quantos 9900 teremos (um por tipo de registro + o próprio 9900)
+    const totalRegisterTypes = registerCounts.size + 1; // +1 para o 9900 referenciando a si mesmo
+    registerCounts.set('9900', totalRegisterTypes);
 
-    // Calcular total de registros em TODOS os blocos
-    // +2 para incluir os próprios registros 9990 e 9999 que serão adicionados
+    // Gerar 9900 em ordem de código de registro
+    const sortedCodes = Array.from(registerCounts.keys()).sort();
+    for (const code of sortedCodes) {
+      const count = registerCounts.get(code) ?? 0;
+      const reg9900 = SpedRegister.create({
+        registerCode: '9900',
+        fields: [code, count.toString()]
+      });
+      if (Result.isFail(reg9900)) return reg9900;
+      registers.push(reg9900.value);
+    }
+
+    // Calcular total de registros em TODOS os blocos + bloco 9
+    // +2 para 9990 e 9999 que serão adicionados
     const totalRegistros = blocks.reduce((sum, block) => sum + block.registerCount, 0) + registers.length + 2;
 
     // 9990: Encerramento do Bloco 9
     const reg9990 = SpedRegister.create({
       registerCode: '9990',
-      fields: [(registers.length + 1).toString()]
+      fields: [(registers.length + 2).toString()] // +2 para incluir 9990 e 9999
     });
     if (Result.isFail(reg9990)) return reg9990;
     registers.push(reg9990.value);

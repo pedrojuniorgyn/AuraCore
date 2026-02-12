@@ -1,10 +1,12 @@
 import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { Result, Money } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';
+import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { AccountPayable } from '../../domain/entities/AccountPayable';
 import { PaymentTerms } from '../../domain/value-objects/PaymentTerms';
 import type { IPayableRepository } from '../../domain/ports/output/IPayableRepository';
+import { publishViaOutbox } from '@/shared/application/helpers/publishViaOutbox';
 import { 
   CreatePayableInput, 
   CreatePayableInputSchema, 
@@ -32,7 +34,8 @@ export class CreatePayableUseCase implements ICreatePayable {
 
   constructor(
     @inject(TOKENS.PayableRepository) payableRepository: IPayableRepository,
-    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator
+    @inject(TOKENS.UuidGenerator) private readonly uuidGenerator: IUuidGenerator,
+    @inject(TOKENS.EventPublisher) private readonly eventPublisher: IEventPublisher
   ) {
     this.payableRepository = payableRepository;
   }
@@ -111,6 +114,9 @@ export class CreatePayableUseCase implements ICreatePayable {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return Result.fail(`Failed to save payable: ${message}`);
     }
+
+    // 7.1. Persistir domain events no outbox (F1.7)
+    await publishViaOutbox(payable, this.eventPublisher);
 
     // 8. Retornar DTO
     return Result.ok({

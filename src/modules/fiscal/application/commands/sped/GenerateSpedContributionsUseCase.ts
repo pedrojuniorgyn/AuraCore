@@ -74,8 +74,13 @@ export class GenerateSpedContributionsUseCase implements IGenerateSpedContributi
       return Result.fail(`Erro ao buscar organização: ${orgResult.error.message}`);
     }
 
+    const org = orgResult.value;
     const companyData: CompanyDataContrib = {
-      document: orgResult.value.document,
+      document: org.document,
+      name: org.name,
+      accountantDocument: org.accountantDocument ?? undefined,
+      accountantName: org.accountantName ?? undefined,
+      accountantCrcState: org.accountantCrcState ?? undefined,
     };
 
     const ctesResult = await this.repository.getCtesForContributions(periodResult.value);

@@ -62,6 +62,10 @@ export class SpedBlock {
     return this.props.blockId;
   }
 
+  get registers(): readonly SpedRegister[] {
+    return this.props.registers;
+  }
+
   get registerCount(): number {
     return this.props.registers.length;
   }

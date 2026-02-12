@@ -26,6 +26,7 @@ import { DrizzleReceiptRepository } from '../persistence/receipt/DrizzleReceiptR
 // SERVICES
 // ============================================================
 import { FinancialTitleGenerator } from '../../application/services/FinancialTitleGenerator';
+import { FinancialAccountingIntegration } from '../../application/services/FinancialAccountingIntegration';
 import { ExpensePolicyService } from '../services/ExpensePolicyService';
 import { ReceiptNumberGenerator } from '../services/ReceiptNumberGenerator';
 
@@ -82,41 +83,70 @@ import { ApproveExpenseReportUseCase } from '../../application/commands/expense/
 import { RejectExpenseReportUseCase } from '../../application/commands/expense/RejectExpenseReportUseCase';
 
 // ============================================================
+// COMMANDS - BILLING (Faturamento) (F1.5)
+// ============================================================
+import { FinalizeBillingInvoiceUseCase } from '../../application/commands/FinalizeBillingInvoiceUseCase';
+
+// ============================================================
+// COMMANDS - NFe/CTe -> Payable (F0.5.2, F0.5.3)
+// ============================================================
+import { CreatePayablesFromNFeUseCase } from '../../application/commands/CreatePayablesFromNFeUseCase';
+import { UpdatePayableUseCase } from '../../application/commands/UpdatePayableUseCase';
+import { SplitPayableUseCase } from '../../application/commands/SplitPayableUseCase';
+import { ReschedulePayableUseCase } from '../../application/commands/ReschedulePayableUseCase';
+import { UpdateReceivableUseCase } from '../../application/commands/UpdateReceivableUseCase';
+import { PartialPaymentUseCase } from '../../application/commands/PartialPaymentUseCase';
+
+// F2.3: Billing
+import { CreateBillingInvoiceUseCase } from '../../application/commands/CreateBillingInvoiceUseCase';
+import { UpdateBillingInvoiceUseCase } from '../../application/commands/UpdateBillingInvoiceUseCase';
+import { CancelBillingInvoiceUseCase } from '../../application/commands/CancelBillingInvoiceUseCase';
+import { SendBillingInvoiceUseCase } from '../../application/commands/SendBillingInvoiceUseCase';
+import { ListBillingInvoicesUseCase } from '../../application/queries/ListBillingInvoicesUseCase';
+import { GetBillingInvoiceByIdUseCase } from '../../application/queries/GetBillingInvoiceByIdUseCase';
+import { GenerateBillingPdfUseCase } from '../../application/queries/GenerateBillingPdfUseCase';
+import { CreatePayableFromExternalCTeUseCase } from '../../application/commands/CreatePayableFromExternalCTeUseCase';
+
+// F2.4: Categories
+import { ListCategoriesUseCase } from '../../application/queries/ListCategoriesUseCase';
+import { CreateCategoryUseCase } from '../../application/commands/CreateCategoryUseCase';
+import { UpdateCategoryUseCase as UpdateCategoryUseCaseImpl } from '../../application/commands/UpdateCategoryUseCase';
+import { DeleteCategoryUseCase } from '../../application/commands/DeleteCategoryUseCase';
+
+// F2.4: Cost Centers
+import { ListCostCentersUseCase } from '../../application/queries/ListCostCentersUseCase';
+import { GetCostCenterByIdUseCase } from '../../application/queries/GetCostCenterByIdUseCase';
+import { CreateCostCenterUseCase } from '../../application/commands/CreateCostCenterUseCase';
+import { UpdateCostCenterUseCase as UpdateCostCenterUseCaseImpl } from '../../application/commands/UpdateCostCenterUseCase';
+import { DeleteCostCenterUseCase } from '../../application/commands/DeleteCostCenterUseCase';
+
+// F2.4: Bank Accounts
+import { ListBankAccountsUseCase } from '../../application/queries/ListBankAccountsUseCase';
+import { CreateBankAccountUseCase } from '../../application/commands/CreateBankAccountUseCase';
+import { UpdateBankAccountUseCase } from '../../application/commands/UpdateBankAccountUseCase';
+
+// F2.4: Reporting (Cash Flow + DRE)
+import { GetCashFlowUseCase } from '../../application/queries/GetCashFlowUseCase';
+import { GetDreUseCase } from '../../application/queries/GetDreUseCase';
+
+// ============================================================
 // USE CASES - BANK STATEMENT (Extrato Bancário)
 // ============================================================
 import { ImportBankStatementUseCase } from '../../application/commands/import-bank-statement/ImportBankStatementUseCase';
 
+// F4: Cross-Module Integration
+import { CreatePayableFromTripUseCase } from '../../application/commands/CreatePayableFromTripUseCase';
+import { CreateDriverReceiptUseCase } from '../../application/commands/CreateDriverReceiptUseCase';
+
+// F6: Auto Reconciliation
+import { AutoReconcileUseCase } from '../../application/commands/AutoReconcileUseCase';
+
 // ============================================================
 // LOCAL TOKENS (para items não registrados em TOKENS compartilhado)
 // ============================================================
-export const FINANCIAL_TOKENS = {
-  // Gateways
-  BillingPdfGateway: Symbol.for('IBillingPdfGateway'),
-  BoletoGateway: Symbol.for('IBoletoGateway'),
-  CnabGateway: Symbol.for('ICnabGateway'),
-  
-  // Use Cases - Payables
-  CreatePayableUseCase: Symbol.for('CreatePayableUseCase'),
-  GetPayableByIdUseCase: Symbol.for('GetPayableByIdUseCase'),
-  ListPayablesUseCase: Symbol.for('ListPayablesUseCase'),
-  PayAccountPayableUseCase: Symbol.for('PayAccountPayableUseCase'),
-  CancelPayableUseCase: Symbol.for('CancelPayableUseCase'),
-  
-  // Use Cases - Receivables
-  CreateReceivableUseCase: Symbol.for('CreateReceivableUseCase'),
-  GetReceivableByIdUseCase: Symbol.for('GetReceivableByIdUseCase'),
-  ListReceivablesUseCase: Symbol.for('ListReceivablesUseCase'),
-  ReceivePaymentUseCase: Symbol.for('ReceivePaymentUseCase'),
-  CancelReceivableUseCase: Symbol.for('CancelReceivableUseCase'),
-  
-  // Use Cases - Expense Reports
-  SubmitExpenseReportUseCase: Symbol.for('SubmitExpenseReportUseCase'),
-  ApproveExpenseReportUseCase: Symbol.for('ApproveExpenseReportUseCase'),
-  RejectExpenseReportUseCase: Symbol.for('RejectExpenseReportUseCase'),
-  
-  // Receivable Repository (não está em TOKENS compartilhado)
-  ReceivableRepository: Symbol.for('ReceivableRepository'),
-};
+// Tokens locais — importados de tokens.ts para evitar dependências circulares
+export { FINANCIAL_TOKENS } from './tokens';
+import { FINANCIAL_TOKENS } from './tokens';
 
 /**
  * Inicializa o módulo Financial no container DI
@@ -178,14 +208,85 @@ export function initializeFinancialModule(): void {
   container.registerSingleton(FINANCIAL_TOKENS.RejectExpenseReportUseCase, RejectExpenseReportUseCase);
   
   // ============================================================
+  // USE CASES - BILLING (F1.5 - Faturamento)
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.FinalizeBillingInvoiceUseCase, FinalizeBillingInvoiceUseCase);
+  
+  // ============================================================
+  // USE CASES - NFe/CTe -> PAYABLE (F0.5.2, F0.5.3)
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.CreatePayablesFromNFeUseCase, CreatePayablesFromNFeUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.CreatePayableFromExternalCTeUseCase, CreatePayableFromExternalCTeUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.UpdatePayableUseCase, UpdatePayableUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.SplitPayableUseCase, SplitPayableUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.ReschedulePayableUseCase, ReschedulePayableUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.UpdateReceivableUseCase, UpdateReceivableUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.PartialPaymentUseCase, PartialPaymentUseCase);
+  
+  // Billing Use Cases (F2.3)
+  container.registerSingleton(FINANCIAL_TOKENS.CreateBillingInvoiceUseCase, CreateBillingInvoiceUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.UpdateBillingInvoiceUseCase, UpdateBillingInvoiceUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.CancelBillingInvoiceUseCase, CancelBillingInvoiceUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.SendBillingInvoiceUseCase, SendBillingInvoiceUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.ListBillingInvoicesUseCase, ListBillingInvoicesUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.GetBillingInvoiceByIdUseCase, GetBillingInvoiceByIdUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.GenerateBillingPdfUseCase, GenerateBillingPdfUseCase);
+
+  // ============================================================
   // USE CASES - BANK STATEMENT (Fase 2 - Extrato Bancário)
   // ============================================================
   container.registerSingleton(TOKENS.ImportBankStatementUseCase, ImportBankStatementUseCase);
   
+  // ============================================================
+  // F2.4: CATEGORIES
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.ListCategoriesUseCase, ListCategoriesUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.CreateCategoryUseCase, CreateCategoryUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.UpdateCategoryUseCase, UpdateCategoryUseCaseImpl);
+  container.registerSingleton(FINANCIAL_TOKENS.DeleteCategoryUseCase, DeleteCategoryUseCase);
+
+  // ============================================================
+  // F2.4: COST CENTERS
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.ListCostCentersUseCase, ListCostCentersUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.GetCostCenterByIdUseCase, GetCostCenterByIdUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.CreateCostCenterUseCase, CreateCostCenterUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.UpdateCostCenterUseCase, UpdateCostCenterUseCaseImpl);
+  container.registerSingleton(FINANCIAL_TOKENS.DeleteCostCenterUseCase, DeleteCostCenterUseCase);
+
+  // ============================================================
+  // F2.4: BANK ACCOUNTS
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.ListBankAccountsUseCase, ListBankAccountsUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.CreateBankAccountUseCase, CreateBankAccountUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.UpdateBankAccountUseCase, UpdateBankAccountUseCase);
+
+  // ============================================================
+  // F2.4: REPORTING (Cash Flow + DRE)
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.GetCashFlowUseCase, GetCashFlowUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.GetDreUseCase, GetDreUseCase);
+
   // ============================================================
   // EVENT DISPATCHER (Domain Events Infrastructure)
   // ============================================================
   // ✅ FIX Bug #3: Register DomainEventDispatcher in DI
   // Allows use cases to inject and dispatch domain events
   container.registerSingleton(TOKENS.EventDispatcher, DomainEventDispatcher);
+  
+  // ============================================================
+  // INTEGRATION SERVICES (F1.2: Financial → Accounting)
+  // ============================================================
+  container.registerSingleton(TOKENS.FinancialAccountingIntegration, FinancialAccountingIntegration);
+
+  // ============================================================
+  // F4: Cross-Module Integration (TMS->Financial, Payment->Receipt)
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.CreatePayableFromTripUseCase, CreatePayableFromTripUseCase);
+  container.registerSingleton(FINANCIAL_TOKENS.CreateDriverReceiptUseCase, CreateDriverReceiptUseCase);
+
+  // ============================================================
+  // F6: AUTO RECONCILIATION (Conciliação Bancária Automática)
+  // ============================================================
+  container.registerSingleton(FINANCIAL_TOKENS.AutoReconcileUseCase, AutoReconcileUseCase);
 }

@@ -16,3 +16,6 @@ export type { IReverseJournalEntry, ReverseJournalEntryInput, ReverseJournalEntr
 // Queries
 export type { IListJournalEntries, ListJournalEntriesInput } from './IListJournalEntries';
 export type { IGetJournalEntryById, GetJournalEntryByIdInput } from './IGetJournalEntryById';
+
+// F2.4: Chart of Accounts
+export * from './IChartOfAccountsUseCases';

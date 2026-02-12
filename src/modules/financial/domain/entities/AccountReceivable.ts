@@ -6,7 +6,7 @@
 import { AggregateRoot, Result, Money } from '@/shared/domain';
 import { ReceivableStatus, type ReceivableStatusType } from '../value-objects/ReceivableStatus';
 
-export type ReceivableOrigin = 'MANUAL' | 'FISCAL_NFE' | 'FISCAL_CTE' | 'SALE' | 'IMPORT';
+export type ReceivableOrigin = 'MANUAL' | 'FISCAL_NFE' | 'FISCAL_CTE' | 'SALE' | 'IMPORT' | 'BILLING';
 
 interface AccountReceivableProps {
   organizationId: number;
@@ -269,6 +269,27 @@ export class AccountReceivable extends AggregateRoot<string> {
     }
 
     this.touch();
+
+    // Emitir domain event (F1.4)
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'ReceivableReceived',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'AccountReceivable',
+      payload: {
+        receivableId: this.id,
+        organizationId: this.props.organizationId,
+        branchId: this.props.branchId,
+        customerId: this.props.customerId,
+        amountReceived: paymentResult.value.amount,
+        currency: paymentResult.value.currency,
+        bankAccountId,
+        receivedAt: new Date().toISOString(),
+        receivedBy: updatedBy,
+      },
+    });
+
     return Result.ok(undefined);
   }
 
@@ -293,6 +314,23 @@ export class AccountReceivable extends AggregateRoot<string> {
     (this.props as { updatedBy: string | null }).updatedBy = cancelledBy;
     (this.props as { version: number }).version++;
     this.touch();
+
+    // Emitir domain event (F1.4)
+    this.addDomainEvent({
+      eventId: globalThis.crypto.randomUUID(),
+      eventType: 'ReceivableCancelled',
+      occurredAt: new Date(),
+      aggregateId: this.id,
+      aggregateType: 'AccountReceivable',
+      payload: {
+        receivableId: this.id,
+        organizationId: this.props.organizationId,
+        branchId: this.props.branchId,
+        cancelledAt: new Date().toISOString(),
+        cancelledBy,
+        reason,
+      },
+    });
 
     return Result.ok(undefined);
   }

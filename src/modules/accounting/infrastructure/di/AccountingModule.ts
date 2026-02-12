@@ -2,6 +2,8 @@ import { container } from '@/shared/infrastructure/di/container';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { DrizzleJournalEntryRepository } from '../persistence/DrizzleJournalEntryRepository';
 import { DrizzleFiscalAccountingRepository } from '../persistence/DrizzleFiscalAccountingRepository';
+import { DrizzleAccountDeterminationRepository } from '../persistence/repositories/DrizzleAccountDeterminationRepository';
+import { DrizzleChartOfAccountsRepository } from '../persistence/repositories/DrizzleChartOfAccountsRepository';
 // Commands (ARCH-012)
 import { CreateJournalEntryUseCase } from '../../application/commands/CreateJournalEntryUseCase';
 import { AddLineToEntryUseCase } from '../../application/commands/AddLineToEntryUseCase';
@@ -18,12 +20,22 @@ import type { IManagementAccountingGateway } from '../../domain/ports/output/IMa
 import { CostCenterAllocationAdapter } from '../adapters/CostCenterAllocationAdapter';
 import type { ICostCenterAllocationGateway } from '../../domain/ports/output/ICostCenterAllocationGateway';
 
+// F2.4: Chart of Accounts Use Cases
+import { ListChartOfAccountsUseCase } from '../../application/queries/ListChartOfAccountsUseCase';
+import { GetChartAccountByIdUseCase } from '../../application/queries/GetChartAccountByIdUseCase';
+import { SuggestChartAccountCodeUseCase } from '../../application/queries/SuggestChartAccountCodeUseCase';
+import { CreateChartAccountUseCase } from '../../application/commands/CreateChartAccountUseCase';
+import { UpdateChartAccountUseCase } from '../../application/commands/UpdateChartAccountUseCase';
+import { DeleteChartAccountUseCase } from '../../application/commands/DeleteChartAccountUseCase';
+
+// F3.5: Accounting Period Use Cases
+import { CloseAccountingPeriodUseCase } from '../../application/commands/CloseAccountingPeriodUseCase';
+import { GenerateTrialBalanceUseCase } from '../../application/queries/GenerateTrialBalanceUseCase';
+
 import { logger } from '@/shared/infrastructure/logging';
-// Tokens locais (E9 Fase 1 + Fase 2)
-export const ACCOUNTING_TOKENS = {
-  ManagementAccountingGateway: Symbol.for('IManagementAccountingGateway'),
-  CostCenterAllocationGateway: Symbol.for('ICostCenterAllocationGateway'),
-};
+// Tokens locais — importados de tokens.ts para evitar dependências circulares
+export { ACCOUNTING_TOKENS } from './tokens';
+import { ACCOUNTING_TOKENS } from './tokens';
 
 /**
  * Registra todas as dependências do módulo Accounting
@@ -48,6 +60,12 @@ export function registerAccountingModule(): void {
   container.registerSingleton(
     TOKENS.FiscalAccountingRepository,
     DrizzleFiscalAccountingRepository
+  );
+
+  // Repository: Determinação de contas contábeis (F1.1)
+  container.registerSingleton(
+    TOKENS.AccountDeterminationRepository,
+    DrizzleAccountDeterminationRepository
   );
 
   // Use Cases (Input Ports)
@@ -98,5 +116,51 @@ export function registerAccountingModule(): void {
     CostCenterAllocationAdapter
   );
 
-  logger.info('[Accounting Module] DI registrado: 2 repos + 6 use cases + 2 gateways');
+  // Repository: Plano de Contas (F1.8 - Integridade Contábil)
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.ChartOfAccountsRepository,
+    DrizzleChartOfAccountsRepository
+  );
+
+  // ============================================================
+  // F2.4: Chart of Accounts Use Cases
+  // ============================================================
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.ListChartOfAccountsUseCase,
+    ListChartOfAccountsUseCase
+  );
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.GetChartAccountByIdUseCase,
+    GetChartAccountByIdUseCase
+  );
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.SuggestChartAccountCodeUseCase,
+    SuggestChartAccountCodeUseCase
+  );
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.CreateChartAccountUseCase,
+    CreateChartAccountUseCase
+  );
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.UpdateChartAccountUseCase,
+    UpdateChartAccountUseCase
+  );
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.DeleteChartAccountUseCase,
+    DeleteChartAccountUseCase
+  );
+
+  // ============================================================
+  // F3.5: Accounting Period Use Cases
+  // ============================================================
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.CloseAccountingPeriodUseCase,
+    CloseAccountingPeriodUseCase
+  );
+  container.registerSingleton(
+    ACCOUNTING_TOKENS.GenerateTrialBalanceUseCase,
+    GenerateTrialBalanceUseCase
+  );
+
+  logger.info('[Accounting Module] DI registrado: 4 repos + 14 use cases + 2 gateways');
 }

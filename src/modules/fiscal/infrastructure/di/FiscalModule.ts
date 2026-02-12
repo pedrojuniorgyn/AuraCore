@@ -5,7 +5,7 @@ import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { DrizzleFiscalDocumentRepository } from '../persistence/DrizzleFiscalDocumentRepository';
 
 // SPED Repository (deve estar no topo, antes de ser usado)
-import { DrizzleSpedDataRepository, createSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
+import { DrizzleSpedDataRepository } from '../persistence/DrizzleSpedDataRepository';
 
 // Gateways (E9 Fase 2)
 import { TaxCalculatorAdapter } from '../adapters/TaxCalculatorAdapter';
@@ -23,17 +23,20 @@ import type { ICteParserService } from '../../domain/ports/output/ICteParserServ
 import type { INcmCategorizationService } from '../../domain/ports/output/INcmCategorizationService';
 import type { INfeParserService } from '../../domain/ports/output/INfeParserService';
 
-// Tokens locais (E9 Fase 2 + E15.3 + E10)
-export const FISCAL_TOKENS = {
-  TaxCalculatorGateway: Symbol.for('ITaxCalculatorGateway'),
-  FiscalClassificationGateway: Symbol.for('IFiscalClassificationGateway'),
-  PcgNcmGateway: Symbol.for('IPcgNcmGateway'),
-  SefazClientService: Symbol.for('ISefazClientService'),
-  CertificateManagerService: Symbol.for('ICertificateManagerService'),
-  CteParserService: Symbol.for('ICteParserService'),
-  NcmCategorizationService: Symbol.for('INcmCategorizationService'),
-  NfeParserService: Symbol.for('INfeParserService'),
-};
+// F3.1: Real SEFAZ HTTP Client
+import { SefazHttpClient } from '../adapters/sefaz/SefazHttpClient';
+
+// F3.3: CFOP Determination
+import { DrizzleCFOPDeterminationRepository } from '../persistence/repositories/DrizzleCFOPDeterminationRepository';
+import { SeedCFOPDeterminationUseCase } from '../../application/commands/SeedCFOPDeterminationUseCase';
+import { DetermineCFOPUseCase } from '../../application/queries/DetermineCFOPUseCase';
+
+// F4: Cross-Module Integration (Billing -> CTe status)
+import { UpdateCteBillingStatusUseCase } from '../../application/commands/UpdateCteBillingStatusUseCase';
+
+// Tokens locais — importados de tokens.ts para evitar dependências circulares
+export { FISCAL_TOKENS } from './tokens';
+import { FISCAL_TOKENS } from './tokens';
 
 // Services
 import { MockSefazService } from '../services/MockSefazService';
@@ -93,14 +96,7 @@ import { GenerateSpedFiscalUseCase as GenerateSpedFiscalUseCaseV2 } from '../../
 import { GenerateSpedEcdUseCase as GenerateSpedEcdUseCaseV2 } from '../../application/commands/sped/GenerateSpedEcdUseCase';
 import { GenerateSpedContributionsUseCase as GenerateSpedContributionsUseCaseV2 } from '../../application/commands/sped/GenerateSpedContributionsUseCase';
 
-// SPED Generators (para factories deprecated)
-import { SpedFiscalGenerator } from '../../domain/services/SpedFiscalGenerator';
-import { GenerateSpedFiscalUseCase } from '../../application/commands/sped/GenerateSpedFiscalUseCaseLegacy';
-import { SpedEcdGenerator } from '../../domain/services/SpedEcdGenerator';
-import { GenerateSpedEcdUseCase } from '../../application/commands/sped/GenerateSpedEcdUseCaseLegacy';
-import { SpedContributionsGenerator } from '../../domain/services/SpedContributionsGenerator';
-import { GenerateSpedContributionsUseCase } from '../../application/commands/sped/GenerateSpedContributionsUseCaseLegacy';
-import { ConsoleLogger } from '@/shared/infrastructure/logging/ConsoleLogger';
+// SPED Generators (imports legacy removidos em F3.5 — APIs agora usam DDD via DI)
 
 /**
  * Fiscal Module: Dependency Injection Registration
@@ -122,6 +118,9 @@ export function registerFiscalModule(): void {
   const sefazAdapter = createSefazGatewayAdapter();
   container.registerInstance(TOKENS.SefazService, sefazAdapter);
   
+  // F3.1: Real SEFAZ HTTP Client (mTLS + signXml + retry)
+  container.registerSingleton(FISCAL_TOKENS.SefazHttpClient, SefazHttpClient);
+
   container.registerSingleton(TOKENS.FiscalDocumentPdfGenerator, MockPdfGenerator);
   container.registerSingleton(TOKENS.FiscalAccountingIntegration, FiscalAccountingIntegration);
 
@@ -194,6 +193,14 @@ export function registerFiscalModule(): void {
     NfeParserAdapter
   );
 
+  // F3.3: CFOP Determination
+  container.registerSingleton(FISCAL_TOKENS.CFOPDeterminationRepository, DrizzleCFOPDeterminationRepository);
+  container.registerSingleton(FISCAL_TOKENS.SeedCFOPDeterminationUseCase, SeedCFOPDeterminationUseCase);
+  container.registerSingleton(FISCAL_TOKENS.DetermineCFOPUseCase, DetermineCFOPUseCase);
+
+  // F4: Cross-Module (Billing -> CTe status)
+  container.registerSingleton(FISCAL_TOKENS.UpdateCteBillingStatusUseCase, UpdateCteBillingStatusUseCase);
+
   // SPED Use Cases (E7.18 Fase 3)
   initializeFiscalSpedModule();
 }
@@ -214,52 +221,7 @@ export function initializeFiscalSpedModule(): void {
   container.registerSingleton<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase, GenerateSpedContributionsUseCaseV2);
 }
 
-/**
- * SPED Module Factories (DEPRECATED - E7.18)
- * 
- * @deprecated Estas factories estão obsoletas. Use container.resolve() com TOKENS.
- * Mantidas para retrocompatibilidade. Serão removidas em v2.0.
- * 
- * @example
- * // ❌ Obsoleto
- * const useCase = createGenerateSpedFiscalUseCase();
- * 
- * // ✅ Use isto
- * import { container } from '@/shared/infrastructure/di/container';
- * import { TOKENS } from '@/shared/infrastructure/di/tokens';
- * const useCase = container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase);
- */
-
-/**
- * @deprecated Use container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase)
- * Mantido para retrocompatibilidade. Será removido em v2.0.
- */
-export function createGenerateSpedFiscalUseCase(): GenerateSpedFiscalUseCase {
-  const repository = createSpedDataRepository();
-  const generator = new SpedFiscalGenerator(repository);
-  const logger = new ConsoleLogger();
-  return new GenerateSpedFiscalUseCase(generator, logger);
-}
-
-
-/**
- * @deprecated Use container.resolve<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase)
- * Mantido para retrocompatibilidade. Será removido em v2.0.
- */
-export function createGenerateSpedEcdUseCase(): GenerateSpedEcdUseCase {
-  const repository = createSpedDataRepository();
-  const generator = new SpedEcdGenerator();
-  return new GenerateSpedEcdUseCase(repository, generator);
-}
-
-
-/**
- * @deprecated Use container.resolve<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase)
- * Mantido para retrocompatibilidade. Será removido em v2.0.
- */
-export function createGenerateSpedContributionsUseCase(): GenerateSpedContributionsUseCase {
-  const repository = createSpedDataRepository();
-  const generator = new SpedContributionsGenerator();
-  return new GenerateSpedContributionsUseCase(repository, generator);
-}
-
+// F3.5: Factory functions deprecated removidas.
+// Usar: container.resolve<IGenerateSpedFiscal>(TOKENS.GenerateSpedFiscalUseCase)
+// Usar: container.resolve<IGenerateSpedEcd>(TOKENS.GenerateSpedEcdUseCase)
+// Usar: container.resolve<IGenerateSpedContributions>(TOKENS.GenerateSpedContributionsUseCase)

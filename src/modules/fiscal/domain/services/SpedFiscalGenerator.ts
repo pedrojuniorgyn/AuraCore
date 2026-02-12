@@ -114,6 +114,14 @@ export class SpedFiscalGenerator {
       }).value!
     );
 
+    // Buscar dados da organização primeiro (usado em 0000, 0005 e 0100)
+    const orgResult = await this.repository.getOrganization(period.organizationId);
+    if (orgResult.isFailure) {
+      return Result.fail(
+        `Organização não encontrada: ID ${period.organizationId}`
+      );
+    }
+
     // 0000: Abertura do Arquivo
     const startDate = this.formatDate(
       new Date(period.referenceYear, period.referenceMonth - 1, 1)
@@ -130,7 +138,7 @@ export class SpedFiscalGenerator {
           '0',    // Tipo de escrituração (0 = original)
           startDate,
           endDate,
-          'AURA CORE TMS',
+          orgResult.value.name || 'AURA CORE TMS',
           '01',   // Finalidade do arquivo
           'A',    // Indicador de situação especial
           period.finality === 'SUBSTITUTION' ? '1' : '0',
@@ -143,12 +151,6 @@ export class SpedFiscalGenerator {
     );
 
     // 0005: Dados Complementares da Empresa
-    const orgResult = await this.repository.getOrganization(period.organizationId);
-    if (orgResult.isFailure) {
-      return Result.fail(
-        `Organização não encontrada: ID ${period.organizationId}`
-      );
-    }
 
     const org = orgResult.value;
     registers.push(
@@ -157,8 +159,8 @@ export class SpedFiscalGenerator {
         fields: [
           org.name,
           org.document,
-          '',  // IE
-          '',  // IM
+          org.ie || '',  // IE
+          org.im || '',  // IM
           '',  // SUFRAMA
           '',  // Logradouro
           '',  // Número
@@ -168,14 +170,20 @@ export class SpedFiscalGenerator {
       }).value!
     );
 
-    // 0100: Dados do Contabilista (Simplificado)
+    // 0100: Dados do Contabilista (usa dados da organização ou defaults)
+    const accountantName = org.accountantName || 'CONTADOR RESPONSAVEL';
+    const accountantDoc = org.accountantDocument || '00000000000';
+    const accountantCrc = org.accountantCrc
+      ? `${org.accountantCrc}/${org.accountantCrcState || 'SP'}`
+      : `00000/${org.accountantCrcState || 'SP'}`;
+
     registers.push(
       SpedRegister.create({
         registerCode: '0100',
         fields: [
-          'CONTADOR RESPONSAVEL',
-          '00000000000',
-          '00000/SP',
+          accountantName,
+          accountantDoc,
+          accountantCrc,
           '',  // CEP
           '',  // Logradouro
           '',  // Número

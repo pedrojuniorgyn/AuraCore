@@ -38,6 +38,16 @@ export const organizations = mssqlTable("organizations", {
   plan: nvarchar("plan", { length: 20 }).default("FREE"), // 'FREE', 'PRO', 'ENTERPRISE'
   stripeCustomerId: nvarchar("stripe_customer_id", { length: 100 }), // Futuro: Stripe
   
+  // Dados Fiscais
+  ie: nvarchar("ie", { length: 20 }), // Inscrição Estadual
+  im: nvarchar("im", { length: 20 }), // Inscrição Municipal
+
+  // Dados do Contabilista (obrigatório para SPED)
+  accountantName: nvarchar("accountant_name", { length: 100 }),
+  accountantDocument: nvarchar("accountant_document", { length: 14 }), // CPF
+  accountantCrcState: nvarchar("accountant_crc_state", { length: 2 }), // UF
+  accountantCrc: nvarchar("accountant_crc", { length: 20 }), // Número do CRC
+
   // Enterprise Base
   status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'SUSPENDED', 'CANCELED'
   createdAt: datetime2("created_at").default(sql`GETDATE()`),
@@ -3107,28 +3117,33 @@ export const notifications = mssqlTable("notifications", {
 });
 
 // ==========================================
-// ACCOUNTING MODULE LEGACY
-// Mantido para: journalEntries, journalEntryLines, fiscalDocuments,
-// fiscalDocumentItems, financialTransactions (bigint IDs).
-// accounting-engine.ts e sefaz-processor.ts usam colunas legacy-específicas
-// (sourceType, debitAmount/creditAmount, chartAccountId) que NÃO existem
-// nos DDD schemas. Serão migrados nas Fases 1 (Accounting) e 3 (Fiscal).
+// ACCOUNTING MODULE LEGACY - REMOVED
+// ⚠️ Legacy schemas (INT bigint) foram substituídos por DDD (UUID char(36)).
+// Este export foi REMOVIDO. Usar schemas DDD:
+//   - @/modules/accounting/infrastructure/persistence/schemas
+// 
+// Arquivo legacy renomeado: src/lib/db/schema/accounting.legacy.disabled.ts
 // ==========================================
-export * from "./schema/accounting";
+// export * from "./schema/accounting"; // REMOVED 2026-02-11
 
 // ==========================================
 // DDD MODULES (Domain-Driven Design)
 // ==========================================
+// Strategic: 100% DDD (em produção: ideas, action-plans, pdca)
+export * from '@/modules/strategic/infrastructure/persistence/schemas';
+
 // Financial: Exporta DDD schemas + aliases backward-compat
 // (accountsPayable → accountsPayableTable, accountsReceivable → accountsReceivableTable)
-// As definições legacy de accountsPayable/accountsReceivable foram removidas
-// deste arquivo (linhas 668-795 anteriores).
 export * from '@/modules/financial/infrastructure/persistence/schemas';
 
-// Outros módulos DDD
-export * from '@/modules/strategic/infrastructure/persistence/schemas';
-export * from '@/modules/documents/infrastructure/persistence/schemas';
+// Accounting: DDD schemas (UUID char(36))
+export * from '@/modules/accounting/infrastructure/persistence/schemas';
+
+// Fiscal: DDD schemas (UUID char(36))
 export * from '@/modules/fiscal/infrastructure/persistence/schemas';
+
+// TMS, WMS, Documents: DDD schemas
+export * from '@/modules/documents/infrastructure/persistence/schemas';
 export * from '@/modules/tms/infrastructure/persistence/schemas';
 export * from '@/modules/wms/infrastructure/persistence/schemas';
 

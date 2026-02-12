@@ -49,3 +49,11 @@ export * from './IImportNfeXmlUseCase';
 export * from './IListCtesUseCase';
 export * from './IGetCteByIdUseCase';
 export * from './IUpdateCteUseCase';
+
+// ===== REFORMA TRIBUTÁRIA 2026 — IBS/CBS (F0.5.1 ARCH-010) =====
+export * from './IAuditTaxTransition';
+export * from './ICalculateCompensation';
+export * from './ICalculateIbsCbs';
+export * from './IGetTaxRates';
+export * from './IProcessTaxCredits';
+export * from './IValidateIbsCbsGroup';

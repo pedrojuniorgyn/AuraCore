@@ -11,3 +11,4 @@
  */
 
 export * from './SplitPaymentSchema';
+export * from './cfop-determination.schema';

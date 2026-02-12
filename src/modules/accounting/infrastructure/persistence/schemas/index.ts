@@ -15,3 +15,5 @@
 
 // DDD schemas (canônicos - char(36) UUID)
 export * from './JournalEntrySchema';
+export * from './AccountDeterminationSchema';
+export * from './accounting-period-closing.schema';

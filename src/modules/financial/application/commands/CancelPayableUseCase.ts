@@ -1,9 +1,11 @@
 import { injectable, inject } from '@/shared/infrastructure/di/container';
 import { z } from 'zod';
 import { Result } from '@/shared/domain';
+import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { IPayableRepository } from '../../domain/ports/output/IPayableRepository';
 import { PayableNotFoundError } from '../../domain/errors/FinancialErrors';
+import { publishViaOutbox } from '@/shared/application/helpers/publishViaOutbox';
 import type {
   ICancelPayable,
   CancelPayableInput,
@@ -27,7 +29,10 @@ const CancelPayableInputSchema = z.object({
 export class CancelPayableUseCase implements ICancelPayable {
   private readonly payableRepository: IPayableRepository;
 
-  constructor(@inject(TOKENS.PayableRepository) payableRepository: IPayableRepository) {
+  constructor(
+    @inject(TOKENS.PayableRepository) payableRepository: IPayableRepository,
+    @inject(TOKENS.EventPublisher) private readonly eventPublisher: IEventPublisher
+  ) {
     this.payableRepository = payableRepository;
   }
 
@@ -71,6 +76,9 @@ export class CancelPayableUseCase implements ICancelPayable {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return Result.fail(`Failed to save payable: ${message}`);
     }
+
+    // 5.1. Persistir domain events no outbox (F1.7)
+    await publishViaOutbox(payable, this.eventPublisher);
 
     // 6. Retornar resultado
     return Result.ok({

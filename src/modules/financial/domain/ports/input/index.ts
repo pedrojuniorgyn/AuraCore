@@ -31,6 +31,35 @@ export * from './IApproveExpenseReport';
 export * from './IRejectExpenseReport';
 export * from './ISubmitExpenseReport';
 
+// F2.3: Billing Use Cases
+export * from './IBillingUseCases';
+
+// F2.2: Receivable behaviors
+export * from './IUpdateReceivable';
+export * from './IPartialPayment';
+
+// F2.1: Payable behaviors
+export * from './IUpdatePayable';
+export * from './ISplitPayable';
+export * from './IReschedulePayable';
+
+// NFe/CTe -> Payable (F0.5.2, F0.5.3)
+export * from './ICreatePayablesFromNFe';
+export * from './ICreatePayableFromExternalCTe';
+
+// F2.4: Categories
+export * from './ICategoryUseCases';
+
+// F2.4: Cost Centers
+export * from './ICostCenterUseCases';
+
+// F2.4: Bank Accounts
+export * from './IBankAccountUseCases';
+
+// F2.4: Reporting
+export * from './ICashFlowUseCases';
+export * from './IDreUseCases';
+
 // Bank Statement Import (Phase D6)
 export type {
   IImportBankStatementUseCase,

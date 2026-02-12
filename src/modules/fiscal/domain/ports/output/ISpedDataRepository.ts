@@ -28,6 +28,12 @@ export interface SpedFiscalPeriod {
 export interface OrganizationData {
   name: string;
   document: string; // CNPJ
+  ie?: string | null; // Inscrição Estadual
+  im?: string | null; // Inscrição Municipal
+  accountantName?: string | null; // Nome do contador
+  accountantDocument?: string | null; // CPF do contador
+  accountantCrcState?: string | null; // UF do CRC
+  accountantCrc?: string | null; // Número do CRC
 }
 
 export interface PartnerData {

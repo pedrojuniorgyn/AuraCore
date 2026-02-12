@@ -24,6 +24,14 @@ export class PaymentCompletedEvent extends BaseDomainEvent {
       paidAmount: number;
       paidAt: string;
       paymentMethod: string;
+      // F1.6: Breakdown dos componentes de baixa
+      interest?: number;
+      fine?: number;
+      discount?: number;
+      bankFee?: number;
+      organizationId?: number;
+      branchId?: number;
+      currency?: string;
     }
   ) {
     super(payableId, 'AccountPayable', 'PaymentCompleted', payload);

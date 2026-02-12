@@ -5,12 +5,14 @@ import { AccountPayable } from '@/modules/financial/domain/entities/AccountPayab
 import { PaymentTerms } from '@/modules/financial/domain/value-objects/PaymentTerms';
 import { Money, Result } from '@/shared/domain';
 import type { IUuidGenerator } from '@/shared/domain';
+import type { IEventPublisher } from '@/shared/domain/ports/IEventPublisher';
 import { ExecutionContext } from '@/modules/financial/application/use-cases/BaseUseCase';
 
 describe('PayAccountPayableUseCase', () => {
   let useCase: PayAccountPayableUseCase;
   let mockRepository: IPayableRepository;
   let mockUuidGenerator: IUuidGenerator;
+  let mockEventPublisher: IEventPublisher;
   let ctx: ExecutionContext;
   let existingPayable: AccountPayable;
 
@@ -59,7 +61,16 @@ describe('PayAccountPayableUseCase', () => {
       generate: vi.fn().mockReturnValue('00000001-0000-4000-8000-000000000000'),
     };
 
-    useCase = new PayAccountPayableUseCase(mockRepository, mockUuidGenerator);
+    // Mock EventPublisher (F1.4)
+    mockEventPublisher = {
+      publish: vi.fn().mockResolvedValue(undefined),
+      publishBatch: vi.fn().mockResolvedValue(undefined),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+      getHandlers: vi.fn().mockReturnValue([]),
+    } as unknown as IEventPublisher;
+
+    useCase = new PayAccountPayableUseCase(mockRepository, mockUuidGenerator, mockEventPublisher);
 
     ctx = {
       userId: 'user-001',

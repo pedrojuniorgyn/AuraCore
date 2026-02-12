@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
-import { withMssqlTransaction } from "@/lib/db/mssql-transaction";
-import sql from "mssql";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
-
+import { container } from 'tsyringe';
+import { FINANCIAL_TOKENS } from '@/modules/financial/infrastructure/di/FinancialModule';
+import type { FinalizeBillingInvoiceUseCase } from '@/modules/financial/application/commands/FinalizeBillingInvoiceUseCase';
+import { Result } from '@/shared/domain';
 import { logger } from '@/shared/infrastructure/logging';
+
 /**
  * POST /api/financial/billing/:id/finalize
- * 🔐 Requer permissão: financial.billing.approve
  * 
- * Finaliza fatura e cria título no Contas a Receber
+ * Finaliza fatura e cria título no Contas a Receber.
+ * Calcula retenções (IRRF/PIS/COFINS/CSLL/ISS).
+ * Emite BillingFinalizedEvent para contabilização automática.
+ * 
+ * Migrado para DDD Use Case (F1.5).
+ * 
+ * @permission financial.billing.approve
  */
 export const POST = withDI(async (request: NextRequest, context: RouteContext) => {
   return withPermission(request, "financial.billing.approve", async (user, ctx) => {
@@ -27,121 +34,42 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
 
     try {
       const tenant = await getTenantContext();
-
       const branchId = resolveBranchIdOrThrow(request.headers, tenant);
 
-      const result = await withMssqlTransaction(async (tx) => {
-        // Buscar fatura com lock
-        const billingRes = await tx
-          .request()
-          .input("billingId", sql.Int, Math.trunc(billingId))
-          .input("orgId", sql.Int, tenant.organizationId)
-          .query(
-            `
-            SELECT TOP 1 *
-            FROM billing_invoices WITH (UPDLOCK, ROWLOCK)
-            WHERE id = @billingId
-              AND organization_id = @orgId
-              AND deleted_at IS NULL
-          `
-          );
+      // Resolver use case via DI
+      const useCase = container.resolve<FinalizeBillingInvoiceUseCase>(
+        FINANCIAL_TOKENS.FinalizeBillingInvoiceUseCase
+      );
 
-        const billing = billingRes.recordset?.[0];
-        if (!billing) {
-          return { status: 404 as const, payload: { error: "Fatura não encontrada" } };
+      const result = await useCase.execute(
+        { billingId },
+        {
+          organizationId: tenant.organizationId,
+          branchId,
+          userId: tenant.userId,
         }
+      );
 
-        if (billing.status === "FINALIZED") {
-          return { status: 400 as const, payload: { error: "Fatura já foi finalizada" } };
-        }
+      if (Result.isFail(result)) {
+        // Determinar HTTP status baseado no erro
+        const errorMsg = result.error;
+        const status = errorMsg.includes('não encontrada') ? 404
+          : errorMsg.includes('já foi finalizada') || errorMsg.includes('Gere o boleto') ? 400
+          : 422;
 
-        if (!billing.barcode_number && !billing.barcodeNumber) {
-          return {
-            status: 400 as const,
-            payload: { error: "Gere o boleto antes de finalizar a fatura" },
-          };
-        }
+        return NextResponse.json({ error: errorMsg }, { status });
+      }
 
-        // Criar título em contas a receber
-        const receivableInsert = await tx
-          .request()
-          .input("orgId", sql.Int, tenant.organizationId)
-          .input("branchId", sql.Int, Number(billing.branch_id ?? billing.branchId))
-          .input("partnerId", sql.Int, Number(billing.customer_id ?? billing.customerId))
-          .input("description", sql.NVarChar(sql.MAX), `Faturamento consolidado - ${billing.total_ctes ?? billing.totalCtes} CTes`)
-          .input("documentNumber", sql.NVarChar(100), String(billing.invoice_number ?? billing.invoiceNumber))
-          .input("issueDate", sql.DateTime2, new Date(billing.issue_date ?? billing.issueDate))
-          .input("dueDate", sql.DateTime2, new Date(billing.due_date ?? billing.dueDate))
-          .input("amount", sql.Decimal(18, 2), Number(billing.net_value ?? billing.netValue))
-          .input("createdBy", sql.NVarChar(255), tenant.userId)
-          .input("updatedBy", sql.NVarChar(255), tenant.userId)
-          .query(
-            `
-            INSERT INTO accounts_receivable (
-              organization_id, branch_id,
-              partner_id,
-              description, document_number,
-              issue_date, due_date,
-              amount,
-              status, origin,
-              created_by, updated_by,
-              created_at, updated_at, deleted_at, version
-            )
-            OUTPUT INSERTED.id
-            VALUES (
-              @orgId, @branchId,
-              @partnerId,
-              @description, @documentNumber,
-              @issueDate, @dueDate,
-              @amount,
-              'OPEN', 'BILLING',
-              @createdBy, @updatedBy,
-              GETDATE(), GETDATE(), NULL, 1
-            )
-          `
-          );
-
-        const receivableId = receivableInsert.recordset?.[0]?.id;
-        if (!receivableId) {
-          throw new Error("Falha ao criar accounts_receivable");
-        }
-
-        // Atualizar fatura
-        await tx
-          .request()
-          .input("billingId", sql.Int, Math.trunc(billingId))
-          .input("orgId", sql.Int, tenant.organizationId)
-          .input("receivableId", sql.Int, Number(receivableId))
-          .input("updatedBy", sql.NVarChar(255), tenant.userId)
-          .query(
-            `
-            UPDATE billing_invoices
-            SET
-              accounts_receivable_id = @receivableId,
-              status = 'FINALIZED',
-              updated_at = GETDATE(),
-              updated_by = @updatedBy
-            WHERE id = @billingId
-              AND organization_id = @orgId
-          `
-          );
-
-        return {
-          status: 200 as const,
-          payload: {
-            success: true,
-            message: "Fatura finalizada com sucesso!",
-            data: { billingId, receivableId },
-          },
-        };
+      return NextResponse.json({
+        success: true,
+        message: "Fatura finalizada com sucesso!",
+        data: result.value,
       });
 
-      return NextResponse.json(result.payload, { status: result.status });
     } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-      // resolveBranchIdOrThrow lança NextResponse (400/403). Preserve.
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (error instanceof Response) return error;
-      logger.error("❌ Erro ao finalizar fatura:", error);
+      logger.error("Erro ao finalizar fatura:", error instanceof Error ? error : undefined);
       return NextResponse.json(
         { error: errorMessage },
         { status: 500 }
@@ -149,18 +77,3 @@ export const POST = withDI(async (request: NextRequest, context: RouteContext) =
     }
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

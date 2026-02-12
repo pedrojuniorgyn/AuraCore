@@ -1,6 +1,27 @@
 /**
- * 📊 ACCOUNTING SCHEMA - Estrutura Contábil do Aura Core
- * * Implementa o padrão Fiscal → Contábil → Financeiro
+ * ⚠️⚠️⚠️ DEPRECATED - LEGACY SCHEMAS (INT bigint) ⚠️⚠️⚠️
+ * 
+ * Este arquivo contém schemas ANTIGOS (INT bigint) que foram substituídos
+ * por schemas DDD com UUID char(36).
+ * 
+ * ❌ NÃO IMPORTAR DESTE ARQUIVO! ❌
+ * 
+ * Schemas DDD equivalentes (UUID char(36)):
+ *   - journalEntries → @/modules/accounting/infrastructure/persistence/schemas/JournalEntrySchema.ts
+ *   - journalEntryLines → (embedded in JournalEntrySchema)
+ *   - financialTransactions → @/modules/financial/infrastructure/persistence/schemas/FinancialTransactionSchema.ts
+ *   - fiscalDocuments → @/modules/fiscal/infrastructure/persistence/schemas/FiscalDocumentSchema.ts
+ * 
+ * Arquivo renomeado em: 2026-02-11
+ * Motivo: Migração 100% DDD (Financial/Fiscal/Accounting F0-F7)
+ * 
+ * Manter temporariamente caso haja referências em código não-migrado.
+ * REMOVER COMPLETAMENTE após validação que nenhum módulo importa daqui.
+ * 
+ * ---
+ * 
+ * 📊 ACCOUNTING SCHEMA - Estrutura Contábil do Aura Core (LEGACY)
+ * * Implementava o padrão Fiscal → Contábil → Financeiro
  * conforme benchmarks de Totvs, SAP e Oracle NetSuite
  */
 

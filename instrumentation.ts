@@ -63,6 +63,24 @@ export async function register() {
     initializeIntegrationsModule();
 
     console.log("[Instrumentation] ✅ All DDD modules initialized successfully");
+
+    // === 1.1. Bootstrap Event Subscriptions (F1.4) ===
+    const { bootstrapEventSubscriptions } = await import("@/shared/infrastructure/events/EventSubscriptionBootstrap");
+    bootstrapEventSubscriptions();
+    console.log("[Instrumentation] ✅ Event subscriptions bootstrapped");
+
+    // === 1.2. Start Outbox Processor (F1.7) ===
+    try {
+      const { container } = await import("tsyringe");
+      const { TOKENS } = await import("@/shared/infrastructure/di/tokens");
+      const { OutboxProcessor } = await import("@/shared/infrastructure/events/outbox");
+      const processor = container.resolve<InstanceType<typeof OutboxProcessor>>(TOKENS.OutboxProcessor);
+      processor.start({ pollingIntervalMs: 5_000, batchSize: 50 });
+      console.log("[Instrumentation] ✅ Outbox processor started (polling every 5s)");
+    } catch (outboxError) {
+      console.error("[Instrumentation] ⚠️ Outbox processor failed to start (non-fatal):", outboxError);
+      // Não fatal: eventos serão publicados diretamente via InMemoryEventPublisher como fallback
+    }
   } catch (error) {
     console.error("[Instrumentation] ❌ Failed to initialize DDD modules:", error);
     throw error; // Falhar startup se DDD não inicializar (CRÍTICO)

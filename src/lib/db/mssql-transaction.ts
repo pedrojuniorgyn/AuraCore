@@ -3,6 +3,18 @@ import { ensureConnection, pool } from "@/lib/db";
 
 export type MssqlTx = sql.Transaction;
 
+/**
+ * @deprecated Use `withTransaction` ou `withAuditedTransaction` de @/shared/infrastructure/persistence/.
+ * Este helper usa o driver raw `mssql` diretamente, bypassando Drizzle ORM.
+ * Rotas V2 DDD devem usar Drizzle transactions.
+ * 
+ * Rotas V1 que ainda usam esta função:
+ * - src/app/api/financial/payables/[id]/pay/route.ts → V2: /api/v2/financial/payables/[id]/pay
+ * - src/app/api/financial/billing/route.ts → V2: /api/v2/financial/billing
+ * - src/app/api/accounting/journal-entries/route.ts → V2: /api/v2/accounting/journal-entries
+ * - src/app/api/wms/inventory/counts/route.ts (fora do escopo Financial/Fiscal)
+ * - src/app/api/fleet/maintenance/work-orders/route.ts (fora do escopo Financial/Fiscal)
+ */
 export async function withMssqlTransaction<T>(
   fn: (tx: MssqlTx) => Promise<T>,
   opts?: { isolationLevel?: number }

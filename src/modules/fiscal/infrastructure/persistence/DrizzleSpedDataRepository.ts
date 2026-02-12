@@ -42,18 +42,33 @@ export class DrizzleSpedDataRepository implements ISpedDataRepository {
   ): Promise<Result<OrganizationData, Error>> {
     try {
       const result = await db.execute(sql`
-        SELECT name, document 
+        SELECT name, document,
+               ie, im,
+               accountant_name AS accountantName,
+               accountant_document AS accountantDocument,
+               accountant_crc_state AS accountantCrcState,
+               accountant_crc AS accountantCrc
         FROM organizations 
         WHERE id = ${organizationId}
       `);
 
-      const rows = (result.recordset || result) as unknown as OrganizationData[];
+      const rows = (result.recordset || result) as unknown as Array<Record<string, unknown>>;
 
       if (rows.length === 0) {
         return Result.fail(new Error(`Organização ${organizationId} não encontrada`));
       }
 
-      return Result.ok(rows[0]);
+      const row = rows[0];
+      return Result.ok({
+        name: String(row.name || ''),
+        document: String(row.document || ''),
+        ie: row.ie != null ? String(row.ie) : null,
+        im: row.im != null ? String(row.im) : null,
+        accountantName: row.accountantName != null ? String(row.accountantName) : null,
+        accountantDocument: row.accountantDocument != null ? String(row.accountantDocument) : null,
+        accountantCrcState: row.accountantCrcState != null ? String(row.accountantCrcState) : null,
+        accountantCrc: row.accountantCrc != null ? String(row.accountantCrc) : null,
+      });
     } catch (error) {
       return Result.fail(
         new Error(

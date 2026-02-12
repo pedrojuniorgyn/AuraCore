@@ -62,7 +62,7 @@ O agente deve se identificar baseado em suas características:
 | **Sonnet 4.5** | Rápido, respostas diretas, sem "thinking" visível |
 | **Sonnet 4.5 Thinking** | Médio, mostra raciocínio em blocos thinking |
 | **Opus 4.5** | Detalhado, contexto amplo, sem "thinking" visível |
-| **Opus 4.5 Thinking** | Lento, raciocínio extenso visível, máxima precisão |
+| **Opus 4.6 Thinking** | Lento, raciocínio extenso visível, máxima precisão |
 | **GPT-5.2** | Rápido, execução direta, bom para tarefas objetivas e rotineiras |
 | **GPT-5.2 Thinking** | Foco em raciocínio profundo (RCA), debugging difícil, trade-offs explícitos |
 | **GPT-5.2 Codex** | Engineering agentic: refactor/migração multi-arquivo, execução sistemática com testes/gates |
@@ -94,10 +94,10 @@ O agente deve se identificar baseado em suas características:
 | HOTFIX (deploy quebrado) | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
 | Código SPED/Fiscal | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
 | Código Financeiro | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
-| Migrations SQL produção | **Opus 4.5** / **GPT-5.2 Thinking** | 🔴 SIM |
-| Debugging complexo / heisenbug | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** | 🟡 |
-| Análise causa raiz (RCA) | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** | 🟡 |
-| Refatoração arquitetural | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** | 🟡 |
+| Migrations SQL produção | **Opus 4.6** / **GPT-5.2 Thinking** | 🔴 SIM |
+| Debugging complexo / heisenbug | **Opus 4.6 Thinking** / **GPT-5.2 Thinking** | 🟡 |
+| Análise causa raiz (RCA) | **Opus 4.6 Thinking** / **GPT-5.2 Thinking** | 🟡 |
+| Refatoração arquitetural | **Opus 4.6 Thinking** / **GPT-5.2 Thinking** | 🟡 |
 | Refactor multi-arquivo / migration refactor | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** | 🟡 |
 | Batch correções simples | **Sonnet 4.5** / **GPT-5.2** | 🟢 |
 | Validação/Verificação | **Sonnet 4.5** / **GPT-5.2** | 🟢 |
@@ -112,9 +112,9 @@ O agente deve se identificar baseado em suas características:
 | "SPED", "NFe", "CTe", "fiscal", "tributário" | **Opus 4.5** / **GPT-5.2 Thinking** |
 | "financeiro", "pagamento", "título", "contábil" | **Opus 4.5** / **GPT-5.2 Thinking** |
 | "migration", "SQL", "produção", "banco" | **Opus 4.5** / **GPT-5.2 Thinking** |
-| "debugging", "causa raiz", "impossível" | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** |
-| "RCA", "root cause", "heisenbug", "regressão" | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** |
-| "arquitetura", "refatoração", "DDD" | **Opus 4.5 Thinking** / **GPT-5.2 Thinking** |
+| "debugging", "causa raiz", "impossível" | **Opus 4.6 Thinking** / **GPT-5.2 Thinking** |
+| "RCA", "root cause", "heisenbug", "regressão" | **Opus 4.6 Thinking** / **GPT-5.2 Thinking** |
+| "arquitetura", "refatoração", "DDD" | **Opus 4.6 Thinking** / **GPT-5.2 Thinking** |
 | "codex", "agentic", "sweep", "large change" | **GPT-5.2 Codex** |
 | "refactor multi-file", "migration refactor", "multi-arquivo" | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** |
 | "batch", "vários arquivos", "repetitivo" | **Sonnet 4.5** / **GPT-5.2** |
@@ -125,14 +125,14 @@ O agente deve se identificar baseado em suas características:
 
 | Módulo | Agente Mínimo |
 |--------|---------------|
-| `src/modules/fiscal/` | **Opus 4.5** / **GPT-5.2 Thinking** |
-| `src/modules/accounting/` | **Opus 4.5** / **GPT-5.2 Thinking** |
-| `src/modules/financial/` | **Opus 4.5** / **GPT-5.2 Thinking** |
+| `src/modules/fiscal/` | **Opus 4.6** / **GPT-5.2 Thinking** |
+| `src/modules/accounting/` | **Opus 4.6** / **GPT-5.2 Thinking** |
+| `src/modules/financial/` | **Opus 4.6** / **GPT-5.2 Thinking** |
 | `src/modules/tms/` | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** |
 | `src/modules/wms/` | **Sonnet 4.5 Thinking** / **GPT-5.2 Codex** |
 | `src/modules/strategic/` | **Sonnet 4.5** / **GPT-5.2** |
 | `src/modules/crm/` | **Sonnet 4.5** / **GPT-5.2** |
-| `drizzle/migrations/` | **Opus 4.5** / **GPT-5.2 Thinking** |
+| `drizzle/migrations/` | **Opus 4.6** / **GPT-5.2 Thinking** |
 
 ---
 

@@ -221,8 +221,15 @@ export class FiscalDocument extends AggregateRoot<string> {
   /**
    * Documento está autorizado?
    */
-  get isAuthrized(): boolean {
+  get isAuthorized(): boolean {
     return this._props.status === 'AUTHORIZED';
+  }
+
+  /**
+   * @deprecated Use isAuthorized (typo corrigido em F1.3)
+   */
+  get isAuthrized(): boolean {
+    return this.isAuthorized;
   }
 
   /**

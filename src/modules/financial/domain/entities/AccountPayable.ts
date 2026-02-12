@@ -494,6 +494,125 @@ export class AccountPayable extends AggregateRoot<string> {
     return Result.ok(undefined);
   }
 
+  // =========================================================================
+  // F2.1: Novos Behaviors
+  // =========================================================================
+
+  /**
+   * Atualiza campos editáveis do payable
+   * 
+   * INVARIANTE: Só pode atualizar em status OPEN ou PARTIAL
+   */
+  update(changes: {
+    description?: string;
+    notes?: string;
+    categoryId?: number;
+    costCenterId?: number;
+    supplierId?: number;
+  }): Result<void, string> {
+    if (this._props.status === 'PAID') {
+      return Result.fail('Cannot update paid payable');
+    }
+    if (this._props.status === 'CANCELLED') {
+      return Result.fail('Cannot update cancelled payable');
+    }
+    if (this._props.status === 'PROCESSING') {
+      return Result.fail('Cannot update payable in processing');
+    }
+
+    if (changes.description !== undefined) {
+      const trimmed = changes.description.trim();
+      if (!trimmed) return Result.fail('Description cannot be empty');
+      this._props.description = trimmed;
+    }
+
+    if (changes.notes !== undefined) {
+      this._props.notes = changes.notes.trim() || undefined;
+    }
+
+    if (changes.categoryId !== undefined) {
+      this._props.categoryId = changes.categoryId;
+    }
+
+    if (changes.costCenterId !== undefined) {
+      this._props.costCenterId = changes.costCenterId;
+    }
+
+    if (changes.supplierId !== undefined) {
+      if (changes.supplierId <= 0) {
+        return Result.fail('Supplier id must be positive');
+      }
+      this._props.supplierId = changes.supplierId;
+    }
+
+    this._props.version++;
+    this.touch();
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Reagenda (altera vencimento) do payable
+   * 
+   * INVARIANTE: Só pode reagendar em status OPEN
+   * O novo vencimento deve ser futuro
+   */
+  reschedule(newDueDate: Date, reason: string): Result<void, string> {
+    if (this._props.status !== 'OPEN') {
+      return Result.fail(`Cannot reschedule payable in status ${this._props.status}. Only OPEN payables can be rescheduled.`);
+    }
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dueDate = new Date(newDueDate);
+    dueDate.setHours(0, 0, 0, 0);
+
+    if (dueDate < now) {
+      return Result.fail('New due date must be today or in the future');
+    }
+
+    // Criar novos PaymentTerms com a nova data
+    const newTermsResult = PaymentTerms.create({
+      dueDate: newDueDate,
+      amount: this._props.terms.amount,
+      discountUntil: undefined, // Perde desconto ao reagendar
+      discountAmount: undefined,
+      fineRate: this._props.terms.fineRate,
+      interestRate: this._props.terms.interestRate,
+    });
+
+    if (Result.isFail(newTermsResult)) {
+      return Result.fail(`Failed to create new terms: ${newTermsResult.error}`);
+    }
+
+    this._props.terms = newTermsResult.value;
+    this._props.notes = (this._props.notes ? this._props.notes + '\n' : '') +
+      `Reagendado em ${new Date().toISOString().split('T')[0]}: ${reason}`;
+    this._props.version++;
+    this.touch();
+
+    return Result.ok(undefined);
+  }
+
+  /**
+   * Retorna dados para split (divisão em parcelas)
+   * 
+   * INVARIANTE: Só pode dividir em status OPEN, sem pagamentos
+   * Não altera o próprio aggregate — o UseCase cria novos payables e cancela este
+   */
+  canSplit(): Result<true, string> {
+    if (this._props.status !== 'OPEN') {
+      return Result.fail(`Cannot split payable in status ${this._props.status}. Only OPEN payables can be split.`);
+    }
+
+    const hasPayments = this._props.payments.length > 0;
+    if (hasPayments) {
+      return Result.fail('Cannot split payable that has payments. Cancel payments first.');
+    }
+
+    return Result.ok(true);
+  }
+
   /**
    * Reconstrói do banco de dados
    */
