@@ -125,13 +125,37 @@ async function runMigrations() {
         } catch (/** @type {any} */ err) {
           const msg = err?.message || String(err);
 
-          // Idempotent: skip "already exists" errors
-          if (
-            msg.includes('already exists') ||
-            msg.includes('There is already an object') ||
-            msg.includes('Column names in each table must be unique') ||
-            msg.includes('already has a column')
-          ) {
+          // Collect all error messages (main + preceding) for idempotent check.
+          // SQL Server wraps "already exists" in precedingErrors and the main
+          // error is a generic "Could not create constraint or index" which we
+          // must also recognise as idempotent.
+          const allMessages = [
+            msg,
+            ...(err?.precedingErrors || []).map(
+              (/** @type {any} */ pe) => pe?.message || String(pe),
+            ),
+          ];
+
+          const idempotentPatterns = [
+            'already exists',
+            'There is already an object',
+            'Column names in each table must be unique',
+            'already has a column',
+            'Cannot drop the index',
+            'Cannot find the object',
+            'is not a constraint',
+            'Cannot insert duplicate key',
+            'Violation of UNIQUE KEY constraint',
+            'Violation of PRIMARY KEY constraint',
+            'Could not create constraint or index',
+            'conflicted with the FOREIGN KEY constraint',
+          ];
+
+          const isIdempotent = allMessages.some((m) =>
+            idempotentPatterns.some((pattern) => m.includes(pattern)),
+          );
+
+          if (isIdempotent) {
             skipCount++;
             // Silent skip for idempotent operations
           } else {
