@@ -70,6 +70,91 @@ function splitByGo(content) {
 }
 
 // ---------------------------------------------------------------------------
+// Connection helpers
+// ---------------------------------------------------------------------------
+
+const MAX_RETRIES = 10;
+const INITIAL_DELAY_MS = 2000;
+const MAX_DELAY_MS = 15000;
+
+/**
+ * Wait for the given number of milliseconds.
+ * @param {number} ms
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Connect to SQL Server with retry + exponential backoff.
+ * Handles the common Docker scenario where the web container starts before
+ * SQL Server is fully ready to accept connections.
+ *
+ * @param {import('mssql').config} config
+ * @returns {Promise<import('mssql').ConnectionPool>}
+ */
+async function connectWithRetry(config) {
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const pool = new sql.ConnectionPool(config);
+      await pool.connect();
+      return pool;
+    } catch (/** @type {any} */ err) {
+      lastError = err;
+      const delayMs = Math.min(INITIAL_DELAY_MS * Math.pow(1.5, attempt - 1), MAX_DELAY_MS);
+      console.log(
+        `  Attempt ${attempt}/${MAX_RETRIES} failed: ${err?.message || err}`,
+      );
+      if (attempt < MAX_RETRIES) {
+        console.log(`  Retrying in ${Math.round(delayMs / 1000)}s...`);
+        await sleep(delayMs);
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Ensure the target database exists. Connects to 'master' and creates the
+ * database if it doesn't already exist. This handles fresh deployments where
+ * the SQL Server volume was reset.
+ */
+async function ensureDatabaseExists() {
+  const dbName = process.env.DB_NAME;
+  if (!dbName) return;
+
+  console.log(`Ensuring database [${dbName}] exists...`);
+
+  const masterConfig = {
+    ...connectionConfig,
+    database: 'master',
+  };
+
+  const masterPool = await connectWithRetry(masterConfig);
+  try {
+    const result = await masterPool
+      .request()
+      .query(`SELECT DB_ID('${dbName}') AS dbId`);
+    const exists = result.recordset[0]?.dbId != null;
+
+    if (!exists) {
+      console.log(`  Database [${dbName}] not found. Creating...`);
+      await masterPool.request().query(`CREATE DATABASE [${dbName}]`);
+      console.log(`  Database [${dbName}] created successfully.`);
+    } else {
+      console.log(`  Database [${dbName}] already exists.`);
+    }
+  } finally {
+    try {
+      await masterPool.close();
+    } catch {
+      // ignore close errors
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -78,10 +163,21 @@ async function runMigrations() {
   console.log(`Target: ${dbHost}:${dbPort}/${process.env.DB_NAME}`);
   console.log('');
 
-  const pool = new sql.ConnectionPool(connectionConfig);
+  try {
+    // Step 0: Ensure database exists (handles fresh volumes)
+    await ensureDatabaseExists();
+
+    console.log('');
+  } catch (/** @type {any} */ err) {
+    console.error('Failed to ensure database exists:', err?.message || err);
+    process.exit(1);
+  }
+
+  // Step 1: Connect to target database with retry
+  console.log(`Connecting to [${process.env.DB_NAME}]...`);
+  const pool = await connectWithRetry(connectionConfig);
 
   try {
-    await pool.connect();
     console.log('Connected to database.\n');
 
     // Discover migration files (sorted alphabetically = chronological order)
@@ -244,9 +340,6 @@ async function runMigrations() {
     }
 
     console.log('All migrations completed successfully.');
-  } catch (err) {
-    console.error('Fatal error running migrations:', err);
-    process.exit(1);
   } finally {
     try {
       await pool.close();
