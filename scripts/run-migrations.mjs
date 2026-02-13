@@ -109,6 +109,9 @@ async function runMigrations() {
     let warnCount = 0;
     let errorCount = 0;
 
+    /** @type {Array<{file: string, stmtIndex: number, stmtTotal: number, preview: string, msg: string}>} */
+    const fatalErrors = [];
+
     for (const file of files) {
       const filePath = path.join(migrationsDir, file);
       const content = fs.readFileSync(filePath, 'utf-8');
@@ -185,8 +188,13 @@ async function runMigrations() {
             // Log but don't block startup
           } else {
             errorCount++;
-            console.error(`  ERROR [${i + 1}/${statements.length}]: ${preview}`);
-            console.error(`         ${msg}`);
+            fatalErrors.push({
+              file,
+              stmtIndex: i + 1,
+              stmtTotal: statements.length,
+              preview,
+              msg,
+            });
           }
         }
       }
@@ -207,7 +215,29 @@ async function runMigrations() {
     }
 
     if (errorCount > 0) {
-      console.error('Some migrations had FATAL errors. Check logs above.');
+      console.error('');
+      console.error(
+        '╔══════════════════════════════════════════════════════════════╗',
+      );
+      console.error(
+        '║              FATAL ERRORS DETAIL                           ║',
+      );
+      console.error(
+        '╚══════════════════════════════════════════════════════════════╝',
+      );
+      for (let idx = 0; idx < fatalErrors.length; idx++) {
+        const fe = fatalErrors[idx];
+        console.error('');
+        console.error(
+          `[${idx + 1}/${fatalErrors.length}] File: ${fe.file} | Statement ${fe.stmtIndex}/${fe.stmtTotal}`,
+        );
+        console.error(`  SQL: ${fe.preview}`);
+        console.error(`  Error: ${fe.msg}`);
+      }
+      console.error('');
+      console.error(
+        'Fix these errors or add matching patterns to idempotentPatterns/nonFatalPatterns.',
+      );
       process.exit(1);
     }
 
