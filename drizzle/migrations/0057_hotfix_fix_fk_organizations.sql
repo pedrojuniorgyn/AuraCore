@@ -5,78 +5,100 @@
 -- Causa: Inconsistência em nomes de tabelas em migrations 0053 e 0054
 -- Impacto: Constraints não criadas (silent fail), integridade referencial comprometida
 -- Data: 2026-02-02
+--
+-- HOTFIX 2026-02-13: Tornada fully idempotent (IF EXISTS checks em todas as tabelas)
+--   para evitar falha quando department ainda não existe (criada por 0076)
 
 -- ========================================
 -- 1. strategic_approval_history → organization
 -- ========================================
-PRINT 'Fixing strategic_approval_history FK...';
-
--- Drop se existir (pode ter falhado na criação)
-IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_approval_history_org')
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'strategic_approval_history')
 BEGIN
-    PRINT '  Dropping existing FK...';
-    ALTER TABLE strategic_approval_history 
-    DROP CONSTRAINT fk_approval_history_org;
+    PRINT 'Fixing strategic_approval_history FK...';
+
+    IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_approval_history_org')
+    BEGIN
+        PRINT '  Dropping existing FK...';
+        ALTER TABLE strategic_approval_history 
+        DROP CONSTRAINT fk_approval_history_org;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_approval_history_org')
+    BEGIN
+        ALTER TABLE strategic_approval_history
+        ADD CONSTRAINT fk_approval_history_org 
+            FOREIGN KEY (organization_id) REFERENCES organization(id);
+        PRINT '  ✓ FK created successfully';
+    END;
+END
+ELSE
+BEGIN
+    PRINT 'SKIP: strategic_approval_history does not exist yet (will be created by 0076)';
 END;
-GO
-
--- Recriar com referência correta
-ALTER TABLE strategic_approval_history
-ADD CONSTRAINT fk_approval_history_org 
-    FOREIGN KEY (organization_id) REFERENCES organization(id);
-GO
-
-PRINT '  ✓ FK created successfully';
 GO
 
 -- ========================================
 -- 2. strategic_approval_delegate → organization
 -- ========================================
-PRINT 'Fixing strategic_approval_delegate FK...';
-
-IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_approval_delegate_org')
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'strategic_approval_delegate')
 BEGIN
-    PRINT '  Dropping existing FK...';
-    ALTER TABLE strategic_approval_delegate 
-    DROP CONSTRAINT fk_approval_delegate_org;
+    PRINT 'Fixing strategic_approval_delegate FK...';
+
+    IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_approval_delegate_org')
+    BEGIN
+        PRINT '  Dropping existing FK...';
+        ALTER TABLE strategic_approval_delegate 
+        DROP CONSTRAINT fk_approval_delegate_org;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'fk_approval_delegate_org')
+    BEGIN
+        ALTER TABLE strategic_approval_delegate
+        ADD CONSTRAINT fk_approval_delegate_org 
+            FOREIGN KEY (organization_id) REFERENCES organization(id);
+        PRINT '  ✓ FK created successfully';
+    END;
+END
+ELSE
+BEGIN
+    PRINT 'SKIP: strategic_approval_delegate does not exist yet';
 END;
-GO
-
-ALTER TABLE strategic_approval_delegate
-ADD CONSTRAINT fk_approval_delegate_org 
-    FOREIGN KEY (organization_id) REFERENCES organization(id);
-GO
-
-PRINT '  ✓ FK created successfully';
 GO
 
 -- ========================================
 -- 3. department → organization
 -- ========================================
-PRINT 'Fixing department FK...';
-
-IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_department_organization')
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'department')
 BEGIN
-    PRINT '  Dropping existing FK...';
-    ALTER TABLE department 
-    DROP CONSTRAINT FK_department_organization;
+    PRINT 'Fixing department FK...';
+
+    IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_department_organization')
+    BEGIN
+        PRINT '  Dropping existing FK...';
+        ALTER TABLE department 
+        DROP CONSTRAINT FK_department_organization;
+    END;
+
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_department_organization')
+    BEGIN
+        ALTER TABLE department
+        ADD CONSTRAINT FK_department_organization
+            FOREIGN KEY (organization_id) REFERENCES organization(id);
+        PRINT '  ✓ FK created successfully';
+    END;
+END
+ELSE
+BEGIN
+    PRINT 'SKIP: department does not exist yet (will be created by 0076)';
 END;
 GO
 
-ALTER TABLE department
-ADD CONSTRAINT FK_department_organization
-    FOREIGN KEY (organization_id) REFERENCES organization(id);
-GO
-
-PRINT '  ✓ FK created successfully';
-GO
-
 -- ========================================
--- Validação Final
+-- Validação Final (informativa, sem RAISERROR)
 -- ========================================
 PRINT '';
 PRINT '========================================';
-PRINT 'Validation: Foreign Keys Created';
+PRINT 'Validation: Foreign Keys Status';
 PRINT '========================================';
 
 SELECT 
@@ -93,7 +115,6 @@ WHERE name IN (
 ORDER BY [Table];
 GO
 
--- Verificar se todas foram criadas (deve retornar 3 linhas)
 DECLARE @count INT;
 SELECT @count = COUNT(*)
 FROM sys.foreign_keys
@@ -104,7 +125,7 @@ WHERE name IN (
 );
 
 IF @count = 3
-    PRINT '✓ All 3 foreign keys created successfully!';
+    PRINT '✓ All 3 foreign keys exist.';
 ELSE
-    RAISERROR('❌ ERROR: Expected 3 FKs, found %d', 16, 1, @count);
+    PRINT '⚠️  Only ' + CAST(@count AS VARCHAR(10)) + '/3 FKs exist. Missing FKs will be created when dependent tables are available.';
 GO
