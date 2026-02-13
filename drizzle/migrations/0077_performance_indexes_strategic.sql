@@ -206,13 +206,13 @@ GO
 -- Forçar atualização de estatísticas para melhor query plan
 -- ============================================
 
-UPDATE STATISTICS [strategic_strategy] WITH FULLSCAN;
-UPDATE STATISTICS [strategic_kpi] WITH FULLSCAN;
-UPDATE STATISTICS [strategic_goal] WITH FULLSCAN;
-UPDATE STATISTICS [strategic_action_plan] WITH FULLSCAN;
-UPDATE STATISTICS [strategic_approval_history] WITH FULLSCAN;
-UPDATE STATISTICS [department] WITH FULLSCAN;
-UPDATE STATISTICS [strategic_bsc_perspective] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'strategic_strategy') UPDATE STATISTICS [strategic_strategy] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'strategic_kpi') UPDATE STATISTICS [strategic_kpi] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'strategic_goal') UPDATE STATISTICS [strategic_goal] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'strategic_action_plan') UPDATE STATISTICS [strategic_action_plan] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'strategic_approval_history') UPDATE STATISTICS [strategic_approval_history] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'department') UPDATE STATISTICS [department] WITH FULLSCAN;
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'strategic_bsc_perspective') UPDATE STATISTICS [strategic_bsc_perspective] WITH FULLSCAN;
 
 PRINT '✅ Statistics updated';
 GO
