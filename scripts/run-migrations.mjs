@@ -166,6 +166,8 @@ async function runMigrations() {
             'Invalid object name',
             'Invalid column name',
             'does not exist or you do not have permissions',
+            'does not exist in the target table or view',
+            'referenced by a FOREIGN KEY constraint',
             'Missing end comment mark',
             'Incorrect syntax near',
           ];

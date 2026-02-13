@@ -162,51 +162,37 @@ GO
 -- Seed data: Criar aprovador admin para org 1
 -- =====================================================
 
--- Verificar se já existe algum aprovador
+-- Seed: Criar aprovador admin para org 1
+-- NOTA: Seed só funciona se users.id for INT e approvers.user_id for INT.
+--       Em ambientes onde users.id é VARCHAR(36)/UUID, o seed é ignorado.
 IF NOT EXISTS (SELECT 1 FROM strategic_approval_approvers WHERE organization_id = 1)
 BEGIN
-  -- Buscar primeiro usuário ativo da org 1 (assumido como admin)
-  DECLARE @AdminUserId INT;
-  
-  -- is_active pode nao existir em todos os ambientes
-  IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'is_active')
+  -- Verificar compatibilidade de tipo: users.id deve ser INT para o seed funcionar
+  IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'id' AND DATA_TYPE = 'int')
   BEGIN
-    EXEC sp_executesql N'SELECT TOP 1 @uid = id FROM users WHERE organization_id = 1 AND is_active = 1 ORDER BY created_at',
-      N'@uid INT OUTPUT', @uid = @AdminUserId OUTPUT;
-  END
-  ELSE
-  BEGIN
+    DECLARE @AdminUserId INT;
     SELECT TOP 1 @AdminUserId = id FROM users WHERE organization_id = 1 ORDER BY created_at;
-  END
-  
-  IF @AdminUserId IS NOT NULL
-  BEGIN
-    INSERT INTO strategic_approval_approvers (
-      id, organization_id, branch_id, user_id, 
-      role, scope, is_active, created_by
-    )
-    VALUES (
-      NEWID(), 
-      1, 
-      1, 
-      @AdminUserId, 
-      'ADMIN', 
-      'ALL', 
-      1, 
-      NULL
-    );
-    
-    PRINT 'Aprovador admin criado para organização 1';
+
+    IF @AdminUserId IS NOT NULL
+    BEGIN
+      INSERT INTO strategic_approval_approvers (
+        id, organization_id, branch_id, user_id, 
+        role, scope, is_active, created_by
+      )
+      VALUES (
+        NEWID(), 1, 1, @AdminUserId, 'ADMIN', 'ALL', 1, NULL
+      );
+      PRINT 'Aprovador admin criado para organização 1';
+    END
+    ELSE
+      PRINT 'Nenhum usuário encontrado para criar aprovador padrão';
   END
   ELSE
-  BEGIN
-    PRINT 'Nenhum usuário encontrado para criar aprovador padrão';
-  END
+    PRINT 'SKIP seed: users.id não é INT (provavelmente UUID/VARCHAR). Seed de aprovador ignorado.';
 END
 ELSE
-BEGIN
   PRINT 'Já existem aprovadores configurados';
-END
 GO
 
 -- =====================================================
