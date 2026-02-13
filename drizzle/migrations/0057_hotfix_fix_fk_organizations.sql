@@ -1,7 +1,7 @@
 -- ========================================
 -- Hotfix 0057: Fix Invalid FK References
 -- ========================================
--- BUG-021: Foreign keys referenciando 'organizations' (plural) em vez de 'organization' (singular)
+-- BUG-021: Foreign keys referenciando 'organization' (singular) em vez de 'organizations' (plural)
 -- Causa: Inconsistência em nomes de tabelas em migrations 0053 e 0054
 -- Impacto: Constraints não criadas (silent fail), integridade referencial comprometida
 -- Data: 2026-02-02
@@ -27,7 +27,7 @@ BEGIN
     BEGIN
         ALTER TABLE strategic_approval_history
         ADD CONSTRAINT fk_approval_history_org 
-            FOREIGN KEY (organization_id) REFERENCES organization(id);
+            FOREIGN KEY (organization_id) REFERENCES organizations(id);
         PRINT '  ✓ FK created successfully';
     END;
 END
@@ -38,7 +38,7 @@ END;
 GO
 
 -- ========================================
--- 2. strategic_approval_delegate → organization
+-- 2. strategic_approval_delegate → organizations
 -- ========================================
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'strategic_approval_delegate')
 BEGIN
@@ -55,7 +55,7 @@ BEGIN
     BEGIN
         ALTER TABLE strategic_approval_delegate
         ADD CONSTRAINT fk_approval_delegate_org 
-            FOREIGN KEY (organization_id) REFERENCES organization(id);
+            FOREIGN KEY (organization_id) REFERENCES organizations(id);
         PRINT '  ✓ FK created successfully';
     END;
 END
@@ -66,7 +66,7 @@ END;
 GO
 
 -- ========================================
--- 3. department → organization
+-- 3. department → organizations
 -- ========================================
 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'department')
 BEGIN
@@ -83,7 +83,7 @@ BEGIN
     BEGIN
         ALTER TABLE department
         ADD CONSTRAINT FK_department_organization
-            FOREIGN KEY (organization_id) REFERENCES organization(id);
+            FOREIGN KEY (organization_id) REFERENCES organizations(id);
         PRINT '  ✓ FK created successfully';
     END;
 END

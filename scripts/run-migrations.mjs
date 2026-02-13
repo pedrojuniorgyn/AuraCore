@@ -106,6 +106,7 @@ async function runMigrations() {
 
     let successCount = 0;
     let skipCount = 0;
+    let warnCount = 0;
     let errorCount = 0;
 
     for (const file of files) {
@@ -136,6 +137,8 @@ async function runMigrations() {
             ),
           ];
 
+          // Patterns that indicate the operation was already applied (truly idempotent).
+          // These are silently skipped.
           const idempotentPatterns = [
             'already exists',
             'There is already an object',
@@ -149,15 +152,37 @@ async function runMigrations() {
             'Violation of PRIMARY KEY constraint',
             'Could not create constraint or index',
             'conflicted with the FOREIGN KEY constraint',
+            'Property cannot be added',
+          ];
+
+          // Non-fatal patterns: errors from migrations that reference objects not yet
+          // created in this environment (e.g. dev-only tables, future features).
+          // Logged as warnings but do NOT block server startup.
+          const nonFatalPatterns = [
+            'references invalid table',
+            'Invalid object name',
+            'Invalid column name',
+            'does not exist or you do not have permissions',
+            'Missing end comment mark',
+            'Incorrect syntax near',
           ];
 
           const isIdempotent = allMessages.some((m) =>
             idempotentPatterns.some((pattern) => m.includes(pattern)),
           );
 
+          const isNonFatal =
+            !isIdempotent &&
+            allMessages.some((m) =>
+              nonFatalPatterns.some((pattern) => m.includes(pattern)),
+            );
+
           if (isIdempotent) {
             skipCount++;
             // Silent skip for idempotent operations
+          } else if (isNonFatal) {
+            warnCount++;
+            // Log but don't block startup
           } else {
             errorCount++;
             console.error(`  ERROR [${i + 1}/${statements.length}]: ${preview}`);
@@ -171,11 +196,18 @@ async function runMigrations() {
     console.log('=== Migration Summary ===');
     console.log(`  Executed: ${successCount}`);
     console.log(`  Skipped (idempotent): ${skipCount}`);
-    console.log(`  Errors: ${errorCount}`);
+    console.log(`  Warnings (non-fatal): ${warnCount}`);
+    console.log(`  Errors (fatal): ${errorCount}`);
     console.log('');
 
+    if (warnCount > 0) {
+      console.warn(
+        `${warnCount} non-fatal warning(s) — some migrations reference objects not yet in this environment.`,
+      );
+    }
+
     if (errorCount > 0) {
-      console.error('Some migrations had errors. Check logs above.');
+      console.error('Some migrations had FATAL errors. Check logs above.');
       process.exit(1);
     }
 

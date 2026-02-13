@@ -168,11 +168,16 @@ BEGIN
   -- Buscar primeiro usuário ativo da org 1 (assumido como admin)
   DECLARE @AdminUserId INT;
   
-  SELECT TOP 1 @AdminUserId = id 
-  FROM users 
-  WHERE organization_id = 1 
-    AND is_active = 1
-  ORDER BY created_at;
+  -- is_active pode nao existir em todos os ambientes
+  IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND COLUMN_NAME = 'is_active')
+  BEGIN
+    EXEC sp_executesql N'SELECT TOP 1 @uid = id FROM users WHERE organization_id = 1 AND is_active = 1 ORDER BY created_at',
+      N'@uid INT OUTPUT', @uid = @AdminUserId OUTPUT;
+  END
+  ELSE
+  BEGIN
+    SELECT TOP 1 @AdminUserId = id FROM users WHERE organization_id = 1 ORDER BY created_at;
+  END
   
   IF @AdminUserId IS NOT NULL
   BEGIN
@@ -208,21 +213,13 @@ GO
 -- Rollback (se necessário)
 -- =====================================================
 
-/*
 -- Para reverter esta migration:
-
--- Tabela strategic_approval_delegate
-DROP INDEX IF EXISTS idx_delegate_delegator_delegate_active ON strategic_approval_delegate;
-DROP INDEX IF EXISTS idx_approval_delegate_tenant ON strategic_approval_delegate;
-DROP TABLE IF EXISTS strategic_approval_delegate;
-GO
-
--- Tabela strategic_approval_approvers
-DROP INDEX IF EXISTS idx_approvers_user ON strategic_approval_approvers;
-DROP INDEX IF EXISTS idx_approvers_org_branch_active ON strategic_approval_approvers;
-DROP TABLE IF EXISTS strategic_approval_approvers;
-GO
-*/
+-- DROP INDEX IF EXISTS idx_delegate_delegator_delegate_active ON strategic_approval_delegate;
+-- DROP INDEX IF EXISTS idx_approval_delegate_tenant ON strategic_approval_delegate;
+-- DROP TABLE IF EXISTS strategic_approval_delegate;
+-- DROP INDEX IF EXISTS idx_approvers_user ON strategic_approval_approvers;
+-- DROP INDEX IF EXISTS idx_approvers_org_branch_active ON strategic_approval_approvers;
+-- DROP TABLE IF EXISTS strategic_approval_approvers;
 
 PRINT 'Migration 0059_add_approval_permissions.sql concluída com sucesso';
 GO
