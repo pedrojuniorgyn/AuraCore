@@ -37,13 +37,15 @@ WHERE deleted_at IS NULL;
 
 -- ========================================
 -- 2. Tabela de histórico de aprovação (Audit Trail)
+-- HOTFIX 2026-02-13: Alterado UNIQUEIDENTIFIER → VARCHAR(36)
+--   para alinhar com Drizzle schema e FK target (strategic_strategy.id = VARCHAR(36))
 -- ========================================
 CREATE TABLE strategic_approval_history (
-    id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    id VARCHAR(36) NOT NULL DEFAULT NEWID(),
     organization_id INT NOT NULL,
     branch_id INT NOT NULL,
 
-    strategy_id UNIQUEIDENTIFIER NOT NULL,
+    strategy_id VARCHAR(36) NOT NULL,
     action VARCHAR(50) NOT NULL CHECK (action IN ('SUBMITTED', 'APPROVED', 'REJECTED', 'CHANGES_REQUESTED', 'DELEGATED')),
     from_status VARCHAR(50) NOT NULL,
     to_status VARCHAR(50) NOT NULL,
@@ -74,9 +76,10 @@ WHERE deleted_at IS NULL;
 
 -- ========================================
 -- 3. Tabela de delegação de aprovação
+-- HOTFIX 2026-02-13: Alterado UNIQUEIDENTIFIER → VARCHAR(36) para alinhar com Drizzle schema
 -- ========================================
 CREATE TABLE strategic_approval_delegate (
-    id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    id VARCHAR(36) NOT NULL DEFAULT NEWID(),
     organization_id INT NOT NULL,
     branch_id INT NOT NULL,
 

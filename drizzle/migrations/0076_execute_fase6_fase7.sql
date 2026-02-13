@@ -71,20 +71,24 @@ PRINT '📋 Migration 0053: Workflow Approval...';
 GO
 
 -- Verifica se tabela já existe
+-- NOTA: Definição alinhada com 0053_add_workflow_approval.sql e Drizzle schema
+-- (colunas: from_status, to_status, created_by, updated_at, deleted_at)
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'strategic_approval_history')
 BEGIN
     CREATE TABLE strategic_approval_history (
-        id VARCHAR(36) PRIMARY KEY,
+        id VARCHAR(36) PRIMARY KEY DEFAULT NEWID(),
         organization_id INT NOT NULL,
         branch_id INT NOT NULL,
         strategy_id VARCHAR(36) NOT NULL,
         action VARCHAR(50) NOT NULL,
+        from_status VARCHAR(50) NOT NULL,
+        to_status VARCHAR(50) NOT NULL,
         actor_user_id INT NOT NULL,
-        previous_status VARCHAR(50) NULL,
-        new_status VARCHAR(50) NOT NULL,
-        comments NVARCHAR(MAX) NULL,
-        metadata NVARCHAR(MAX) NULL,
-        created_at DATETIME NOT NULL DEFAULT GETDATE(),
+        comments NVARCHAR(2000) NULL,
+        created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+        created_by VARCHAR(100) NOT NULL DEFAULT 'system',
+        updated_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+        deleted_at DATETIME2 NULL,
         
         CONSTRAINT FK_approval_organization FOREIGN KEY (organization_id) 
             REFERENCES organizations(id),

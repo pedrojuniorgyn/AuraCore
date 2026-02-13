@@ -7,6 +7,8 @@
 -- 
 -- IMPORTANTE: Testar em ambiente local antes de executar em homolog/prod
 -- Rollback: Comandos DROP INDEX no final do arquivo
+--
+-- HOTFIX 2026-02-13: Corrigido nomes de colunas/tabelas para corresponder ao schema real do banco
 
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
@@ -18,11 +20,12 @@ GO
 -- ============================================
 
 -- Índice para cursor pagination + multi-tenancy
+-- Nota: vision/mission são TEXT e não podem ser INCLUDE em índices SQL Server
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_strategy_tenant_created_desc')
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_strategy_tenant_created_desc]
     ON [strategic_strategy] ([organization_id], [branch_id], [created_at] DESC)
-    INCLUDE ([status], [vision_statement], [mission_statement])
+    INCLUDE ([status], [name])
     WHERE [deleted_at] IS NULL;
     PRINT 'Created: idx_strategy_tenant_created_desc';
 END
@@ -99,12 +102,13 @@ GO
 -- ============================================
 
 -- Índice para cursor pagination ordenado por when_end (ações mais urgentes)
+-- Nota: SQL Server filtered indexes não suportam NOT IN, usando <> em vez disso
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_action_plan_tenant_urgency')
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_action_plan_tenant_urgency]
     ON [strategic_action_plan] ([organization_id], [branch_id], [when_end] ASC, [status])
-    INCLUDE ([code], [what], [completion_percent], [created_at])
-    WHERE [deleted_at] IS NULL AND [status] NOT IN ('COMPLETED', 'CANCELLED');
+    INCLUDE ([code], [completion_percent], [created_at])
+    WHERE [deleted_at] IS NULL AND [status] <> 'COMPLETED' AND [status] <> 'CANCELLED';
     PRINT 'Created: idx_action_plan_tenant_urgency';
 END
 GO
@@ -123,6 +127,8 @@ GO
 -- ============================================
 -- STRATEGIC_APPROVAL_HISTORY INDEXES
 -- Otimização: Relatórios e auditorias
+-- Nota: Tabela criada pelo 0053 com from_status, to_status, deleted_at
+--       (0076 IF NOT EXISTS nunca executa pois 0053 roda primeiro)
 -- ============================================
 
 -- Índice para busca por período (findByPeriod)
@@ -130,25 +136,25 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_approval_history_peri
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_approval_history_period]
     ON [strategic_approval_history] ([organization_id], [branch_id], [created_at] DESC)
-    INCLUDE ([entity_type], [entity_id], [action], [status], [approved_by])
+    INCLUDE ([strategy_id], [action], [to_status], [actor_user_id])
     WHERE [deleted_at] IS NULL;
     PRINT 'Created: idx_approval_history_period';
 END
 GO
 
--- Índice para busca por entidade específica
+-- Índice para busca por estratégia específica
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_approval_history_entity')
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_approval_history_entity]
-    ON [strategic_approval_history] ([entity_id], [created_at] DESC)
-    INCLUDE ([entity_type], [action], [status])
+    ON [strategic_approval_history] ([strategy_id], [created_at] DESC)
+    INCLUDE ([action], [to_status])
     WHERE [deleted_at] IS NULL;
     PRINT 'Created: idx_approval_history_entity';
 END
 GO
 
 -- ============================================
--- STRATEGIC_DEPARTMENTS INDEXES
+-- DEPARTMENT INDEXES (tabela = department, NÃO strategic_department)
 -- Otimização: Cache de árvore de departamentos (TTL: 1h)
 -- ============================================
 
@@ -156,8 +162,8 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_department_tenant_parent')
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_department_tenant_parent]
-    ON [strategic_department] ([organization_id], [branch_id], [parent_id])
-    INCLUDE ([code], [name], [manager_user_id], [level])
+    ON [department] ([organization_id], [branch_id], [parent_id])
+    INCLUDE ([code], [name], [is_active])
     WHERE [deleted_at] IS NULL;
     PRINT 'Created: idx_department_tenant_parent';
 END
@@ -167,8 +173,8 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_department_tenant_root')
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_department_tenant_root]
-    ON [strategic_department] ([organization_id], [branch_id])
-    INCLUDE ([code], [name], [level])
+    ON [department] ([organization_id], [branch_id])
+    INCLUDE ([code], [name])
     WHERE [deleted_at] IS NULL AND [parent_id] IS NULL;
     PRINT 'Created: idx_department_tenant_root';
 END
@@ -177,15 +183,17 @@ GO
 -- ============================================
 -- STRATEGIC_BSC_PERSPECTIVE INDEXES
 -- Otimização: Cache de perspectivas BSC
+-- Nota: Tabela NÃO possui organization_id/branch_id diretos,
+--       usa strategy_id como FK. Também NÃO possui deleted_at.
+--       Coluna de ordenação é order_index (não display_order).
 -- ============================================
 
--- Índice para ordenação por display_order
+-- Índice para ordenação por order_index dentro de uma estratégia
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_bsc_perspective_tenant_order')
 BEGIN
     CREATE NONCLUSTERED INDEX [idx_bsc_perspective_tenant_order]
-    ON [strategic_bsc_perspective] ([organization_id], [branch_id], [display_order] ASC)
-    INCLUDE ([code], [name], [description])
-    WHERE [deleted_at] IS NULL;
+    ON [strategic_bsc_perspective] ([strategy_id], [order_index] ASC)
+    INCLUDE ([code], [name], [description]);
     PRINT 'Created: idx_bsc_perspective_tenant_order';
 END
 GO
@@ -203,7 +211,7 @@ UPDATE STATISTICS [strategic_kpi] WITH FULLSCAN;
 UPDATE STATISTICS [strategic_goal] WITH FULLSCAN;
 UPDATE STATISTICS [strategic_action_plan] WITH FULLSCAN;
 UPDATE STATISTICS [strategic_approval_history] WITH FULLSCAN;
-UPDATE STATISTICS [strategic_department] WITH FULLSCAN;
+UPDATE STATISTICS [department] WITH FULLSCAN;
 UPDATE STATISTICS [strategic_bsc_perspective] WITH FULLSCAN;
 
 PRINT '✅ Statistics updated';
@@ -234,8 +242,8 @@ DROP INDEX IF EXISTS [idx_approval_history_period] ON [strategic_approval_histor
 DROP INDEX IF EXISTS [idx_approval_history_entity] ON [strategic_approval_history];
 
 -- Department
-DROP INDEX IF EXISTS [idx_department_tenant_parent] ON [strategic_department];
-DROP INDEX IF EXISTS [idx_department_tenant_root] ON [strategic_department];
+DROP INDEX IF EXISTS [idx_department_tenant_parent] ON [department];
+DROP INDEX IF EXISTS [idx_department_tenant_root] ON [department];
 
 -- BSC Perspective
 DROP INDEX IF EXISTS [idx_bsc_perspective_tenant_order] ON [strategic_bsc_perspective];
