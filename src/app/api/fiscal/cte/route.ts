@@ -3,7 +3,7 @@ import { withDI } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
-import { cteHeader } from "@/lib/db/schema";
+import { cteHeader } from "@/modules/fiscal/infrastructure/persistence/schemas";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";

@@ -7,7 +7,7 @@ import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import type { ISendBillingInvoice, SendBillingInvoiceInput, SendBillingInvoiceOutput } from '../../domain/ports/input/IBillingUseCases';
 import { db } from '@/lib/db';
-import { billingInvoices } from '@/lib/db/schema';
+import { billingInvoices } from '@/modules/financial/infrastructure/persistence/schemas';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '@/shared/infrastructure/logging';
 

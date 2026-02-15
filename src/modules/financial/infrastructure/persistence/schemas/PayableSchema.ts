@@ -116,3 +116,7 @@ export type AccountPayableSchemaInsert = typeof accountsPayableTable.$inferInser
 export type PaymentRow = typeof paymentsTable.$inferSelect;
 export type PaymentInsert = typeof paymentsTable.$inferInsert;
 
+// Backward-compat aliases (bare names)
+export const accountsPayable = accountsPayableTable;
+export const payments = paymentsTable;
+

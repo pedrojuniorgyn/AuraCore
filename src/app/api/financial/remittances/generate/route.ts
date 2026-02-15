@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
-import { bankAccounts, accountsPayable, bankRemittances, branches } from "@/lib/db/schema";
+import { accountsPayable, bankAccounts, bankRemittances } from "@/modules/financial/infrastructure/persistence/schemas";
+import { branches } from "@/lib/db/schema";
 import { and, eq, inArray, isNull, asc } from "drizzle-orm";
 import { container } from "@/shared/infrastructure/di/container";
 import { FINANCIAL_TOKENS } from "@/modules/financial/infrastructure/di/FinancialModule";

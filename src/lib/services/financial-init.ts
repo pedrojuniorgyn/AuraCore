@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { financialCategories, bankAccounts } from "@/lib/db/schema";
+import { financialCategories, bankAccounts } from "@/modules/financial/infrastructure/persistence/schemas";
 import { eq, and, isNull } from "drizzle-orm";
 
 const DEFAULT_CATEGORIES = {

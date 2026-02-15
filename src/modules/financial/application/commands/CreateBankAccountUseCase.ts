@@ -6,7 +6,7 @@
 import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
-import { bankAccounts } from '@/lib/db/schema';
+import { bankAccounts } from '@/modules/financial/infrastructure/persistence/schemas';
 import { eq, and, isNull } from 'drizzle-orm';
 import type {
   ICreateBankAccount,

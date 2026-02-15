@@ -117,3 +117,8 @@ export type {
 } from './INcmCategorizationService';
 
 export type { INfeParserService } from './INfeParserService';
+
+// Novos repositories DDD (R1.3)
+export type { ICteRepository, CteFilter } from './ICteRepository';
+export type { IMdfeRepository, MdfeFilter } from './IMdfeRepository';
+export type { ITaxRuleRepository, TaxRuleFilter } from './ITaxRuleRepository';

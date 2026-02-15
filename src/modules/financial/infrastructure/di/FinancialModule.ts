@@ -22,6 +22,12 @@ import { DrizzleFinancialTitleRepository } from '../persistence/DrizzleFinancial
 import { DrizzleExpenseReportRepository } from '../persistence/expense/DrizzleExpenseReportRepository';
 import { DrizzleReceiptRepository } from '../persistence/receipt/DrizzleReceiptRepository';
 
+// R1.3: Novos Repositories DDD
+import { DrizzleCategoryRepository } from '../persistence/repositories/DrizzleCategoryRepository';
+import { DrizzlePaymentTermsRepository } from '../persistence/repositories/DrizzlePaymentTermsRepository';
+import { DrizzleBankAccountRepository } from '../persistence/repositories/DrizzleBankAccountRepository';
+import { DrizzleBillingRepository } from '../persistence/repositories/DrizzleBillingRepository';
+
 // ============================================================
 // SERVICES
 // ============================================================
@@ -160,6 +166,12 @@ export function initializeFinancialModule(): void {
   container.registerSingleton(TOKENS.FinancialTitleRepository, DrizzleFinancialTitleRepository);
   container.registerSingleton(TOKENS.ExpenseReportRepository, DrizzleExpenseReportRepository);
   container.registerSingleton(TOKENS.ReceiptRepository, DrizzleReceiptRepository);
+  
+  // R1.3: Novos Repositories DDD
+  container.registerSingleton(FINANCIAL_TOKENS.CategoryRepository, DrizzleCategoryRepository);
+  container.registerSingleton(FINANCIAL_TOKENS.PaymentTermsRepository, DrizzlePaymentTermsRepository);
+  container.registerSingleton(FINANCIAL_TOKENS.BankAccountRepository, DrizzleBankAccountRepository);
+  container.registerSingleton(FINANCIAL_TOKENS.BillingRepository, DrizzleBillingRepository);
   
   // ============================================================
   // SERVICES (Fase 1 - Serviços de Domínio/Aplicação)

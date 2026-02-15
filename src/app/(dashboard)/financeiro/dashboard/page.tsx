@@ -62,9 +62,9 @@ export default function FinancialDashboardPage() {
   const fetchData = useCallback(async () => {
     try {
       const [cashFlowRes, receivablesRes, payablesRes] = await Promise.allSettled([
-        fetch('/api/v2/financial/reports/cash-flow?months=6'),
-        fetch('/api/v2/financial/receivables?pageSize=100'),
-        fetch('/api/v2/financial/payables?pageSize=100'),
+        fetch('/api/financial/cash-flow?months=6'),
+        fetch('/api/financial/receivables?pageSize=100'),
+        fetch('/api/financial/payables?pageSize=100'),
       ]);
 
       // Build KPIs from responses

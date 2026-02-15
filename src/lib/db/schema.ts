@@ -17,6 +17,43 @@ import {
 
 import { type AdapterAccount } from "next-auth/adapters";
 
+// ============================================================================
+// RE-EXPORTS FROM DDD MODULES (Source of Truth)
+// Os módulos DDD são a fonte canônica das definições de schema.
+// Este arquivo re-exporta para manter backward-compat com consumidores legados.
+// ============================================================================
+
+// Financial Module
+import {
+  financialCategories as _financialCategories,
+  bankAccounts as _bankAccounts,
+  bankRemittances as _bankRemittances,
+  financialDdaInbox as _financialDdaInbox,
+  paymentTerms as _paymentTerms,
+  taxCredits as _taxCredits,
+  billingInvoices as _billingInvoices,
+  billingItems as _billingItems,
+  btgBoletos as _btgBoletos,
+  btgPayments as _btgPayments,
+} from '@/modules/financial/infrastructure/persistence/schemas';
+
+// Fiscal Module
+import {
+  cteHeader as _cteHeader,
+  cteCargoDocuments as _cteCargoDocuments,
+  cteValueComponents as _cteValueComponents,
+  cteInutilization as _cteInutilization,
+  cteCorrectionLetters as _cteCorrectionLetters,
+  mdfeHeader as _mdfeHeader,
+  mdfeDocuments as _mdfeDocuments,
+  taxRules as _taxRules,
+  taxMatrix as _taxMatrix,
+  nfeManifestationEvents as _nfeManifestationEvents,
+  fiscalSettings as _fiscalSettings,
+  externalCtes as _externalCtes,
+} from '@/modules/fiscal/infrastructure/persistence/schemas';
+
+
 // ==========================================
 // AURACORE ENTERPRISE BASE PATTERN
 // ==========================================
@@ -545,135 +582,13 @@ export const userBranchesRelations = defineRelations(userBranches as unknown, ({
 
 // ==========================================
 // MÓDULO FINANCEIRO
-// ==========================================
+export const financialCategories = _financialCategories;
 
-// --- CATEGORIAS FINANCEIRAS (Plano de Contas) ---
+export const bankAccounts = _bankAccounts;
 
-export const financialCategories = mssqlTable("financial_categories", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // FK organizations
-  
-  // Dados
-  name: nvarchar("name", { length: 255 }).notNull(), // Ex: "Combustível", "Frete", "Fornecedores"
-  code: nvarchar("code", { length: 50 }), // Ex: "1.01.02" (Plano de Contas)
-  type: nvarchar("type", { length: 20 }).notNull(), // 'INCOME', 'EXPENSE'
-  description: nvarchar("description", { length: "max" }),
-  
-  // DFC (Demonstrativo de Fluxo de Caixa) - NOVOS CAMPOS ✅
-  codigoEstruturado: nvarchar("codigo_estruturado", { length: 20 }),
-  tipoMovimento: nvarchar("tipo_movimento", { length: 20 }), // 'ENTRADA', 'SAIDA', 'TRANSFERENCIA'
-  grupoDfc: nvarchar("grupo_dfc", { length: 20 }), // 'OPERACIONAL', 'INVESTIMENTO', 'FINANCIAMENTO'
-  permiteLancamento: int("permite_lancamento").default(1),
-  
-  // Enterprise Base
-  status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // Soft Delete
-  version: int("version").default(1).notNull(), // Optimistic Locking
-});
+export const bankRemittances = _bankRemittances;
 
-// --- CONTAS BANCÁRIAS ---
-
-export const bankAccounts = mssqlTable("bank_accounts", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // FK organizations
-  branchId: int("branch_id"), // FK branches (Nullable - Conta pode ser compartilhada)
-  
-  // Dados Bancários
-  name: nvarchar("name", { length: 255 }).notNull(), // Ex: "Itaú Principal"
-  bankCode: nvarchar("bank_code", { length: 10 }), // Ex: "341" (Itaú), "208" (BTG)
-  bankName: nvarchar("bank_name", { length: 255 }), // Ex: "Itaú Unibanco", "BTG Pactual"
-  agency: nvarchar("agency", { length: 20 }), // Agência
-  accountNumber: nvarchar("account_number", { length: 50 }), // Número da Conta
-  accountDigit: nvarchar("account_digit", { length: 2 }), // Dígito Verificador
-  accountType: nvarchar("account_type", { length: 50 }), // 'CHECKING', 'SAVINGS', 'INVESTMENT'
-  
-  // CNAB - Dados Técnicos para Remessa/Retorno
-  wallet: nvarchar("wallet", { length: 20 }), // Carteira (Ex: "09" para BTG)
-  agreementNumber: nvarchar("agreement_number", { length: 50 }), // Convênio/Cédente
-  cnabLayout: nvarchar("cnab_layout", { length: 20 }).default("CNAB240"), // 'CNAB240', 'CNAB400'
-  nextRemittanceNumber: int("next_remittance_number").default(1), // Sequencial de Remessa
-  
-  // Saldo
-  initialBalance: decimal("initial_balance", { precision: 18, scale: 2 }).default("0.00"), // Saldo Inicial
-  currentBalance: decimal("current_balance", { precision: 18, scale: 2 }).default("0.00"), // Saldo Atual (Calculado)
-  
-  // Enterprise Base
-  status: nvarchar("status", { length: 20 }).default("ACTIVE"), // 'ACTIVE', 'INACTIVE'
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // Soft Delete
-  version: int("version").default(1).notNull(), // Optimistic Locking
-});
-
-// === BANK REMITTANCES (Histórico de Arquivos CNAB) ===
-export const bankRemittances = mssqlTable("bank_remittances", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // FK organizations
-  bankAccountId: int("bank_account_id").notNull(), // FK bank_accounts
-  
-  // Dados do Arquivo
-  fileName: nvarchar("file_name", { length: 255 }).notNull(), // Ex: "REM20231215001.rem"
-  content: nvarchar("content", { length: "max" }).notNull(), // Conteúdo do arquivo CNAB
-  remittanceNumber: int("remittance_number").notNull(), // Número sequencial
-  
-  // Tipo e Status
-  type: nvarchar("type", { length: 20 }).notNull(), // 'PAYMENT', 'RECEIVABLE'
-  status: nvarchar("status", { length: 50 }).default("GENERATED"), // 'GENERATED', 'SENT', 'PROCESSED_BY_BANK', 'ERROR'
-  
-  // Estatísticas
-  totalRecords: int("total_records").default(0), // Quantidade de títulos
-  totalAmount: decimal("total_amount", { precision: 18, scale: 2 }).default("0.00"), // Valor total
-  
-  // Observações
-  notes: nvarchar("notes", { length: "max" }),
-  processedAt: datetime2("processed_at"), // Data de processamento pelo banco
-  
-  // Enterprise Base (Simplificado - Arquivos não são editáveis)
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(), // FK users
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // Soft Delete
-});
-
-// === FINANCIAL DDA INBOX (Débito Direto Autorizado) ===
-export const financialDdaInbox = mssqlTable("financial_dda_inbox", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(), // FK organizations
-  bankAccountId: int("bank_account_id").notNull(), // FK bank_accounts
-  
-  // Dados do Boleto (vindo do banco)
-  externalId: nvarchar("external_id", { length: 255 }).notNull(), // ID único no banco
-  beneficiaryName: nvarchar("beneficiary_name", { length: 255 }).notNull(), // Nome do Cedente
-  beneficiaryDocument: nvarchar("beneficiary_document", { length: 20 }).notNull(), // CNPJ/CPF do Cedente
-  
-  // Valores e Datas
-  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(), // Valor do boleto
-  dueDate: datetime2("due_date").notNull(), // Data de Vencimento
-  issueDate: datetime2("issue_date"), // Data de Emissão
-  
-  // Código de Barras
-  barcode: nvarchar("barcode", { length: 100 }).notNull(), // Linha digitável
-  digitableLine: nvarchar("digitable_line", { length: 100 }), // Linha digitável formatada
-  
-  // Vinculação e Status
-  status: nvarchar("status", { length: 20 }).default("PENDING"), // 'PENDING', 'LINKED', 'DISMISSED', 'PAID'
-  matchedPayableId: int("matched_payable_id"), // FK accounts_payable (Nullable)
-  matchScore: int("match_score").default(0), // Score de confiança do match (0-100)
-  
-  // Observações
-  notes: nvarchar("notes", { length: "max" }),
-  dismissedReason: nvarchar("dismissed_reason", { length: 255 }), // Motivo da rejeição
-  
-  // Enterprise Base
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"), // Soft Delete
-});
+export const financialDdaInbox = _financialDdaInbox;
 
 // --- CONTAS A PAGAR ---
 // REMOVIDO (Fase 0 F0.2): Schema legacy com INT IDENTITY.
@@ -860,42 +775,7 @@ export const vehicles = mssqlTable("vehicles", {
 
 // ==========================================
 // CADASTROS AUXILIARES
-// ==========================================
-
-// --- CONDIÇÕES DE PAGAMENTO ---
-
-export const paymentTerms = mssqlTable("payment_terms", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  
-  // Identificação
-  code: nvarchar("code", { length: 20 }).notNull(), // Ex: "30/60", "AVISTA"
-  name: nvarchar("name", { length: 100 }).notNull(), // Ex: "30/60/90 dias", "À Vista"
-  description: nvarchar("description", { length: "max" }),
-  
-  // Configuração
-  installments: int("installments").default(1).notNull(), // Número de parcelas
-  daysInterval: int("days_interval").default(0), // Dias entre parcelas
-  firstDueDays: int("first_due_days").default(0), // Dias até primeira parcela
-  
-  // Tipo
-  type: nvarchar("type", { length: 20 }).default("TERM"), // 'TERM' (Prazo), 'CASH' (À Vista), 'CUSTOM' (Personalizado)
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-}, (table) => ([
-  uniqueIndex("payment_terms_code_org_idx")
-    .on(table.code, table.organizationId)
-    .where(sql`deleted_at IS NULL`),
-]));
+export const paymentTerms = _paymentTerms;
 
 // --- UNIDADES DE MEDIDA ---
 
@@ -1001,40 +881,7 @@ export const geoRegions = mssqlTable("geo_regions", {
     .where(sql`deleted_at IS NULL`),
 ]));
 
-// ==========================================
-// COMERCIAL & FISCAL
-// ==========================================
-
-// --- FISCAL: TAX RULES (Regras de ICMS por UF) ---
-
-export const taxRules = mssqlTable("tax_rules", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  
-  // Rota Fiscal
-  originState: nvarchar("origin_state", { length: 2 }).notNull(), // UF origem (ex: SP)
-  destinationState: nvarchar("destination_state", { length: 2 }).notNull(), // UF destino (ex: RJ)
-  
-  // Alíquotas e CFOP
-  icmsRate: decimal("icms_rate", { precision: 5, scale: 2 }).notNull(), // Ex: 12.00 (%)
-  cfopTransport: nvarchar("cfop_transport", { length: 4 }), // Ex: 5352 (Prestação de serviço de transporte)
-  
-  // Observações
-  notes: nvarchar("notes", { length: "max" }),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-}, (table) => ([
-  // Regra única por rota e organização
-  uniqueIndex("tax_rules_route_org_idx")
-    .on(table.originState, table.destinationState, table.organizationId)
-    .where(sql`deleted_at IS NULL`),
-]));
+export const taxRules = _taxRules;
 
 // --- COMERCIAL: FREIGHT TABLES (Tabelas de Frete) ---
 
@@ -1328,56 +1175,7 @@ export const chartOfAccounts = mssqlTable("chart_of_accounts", {
     .where(sql`deleted_at IS NULL`),
 ]));
 
-// ==========================================
-// FISCAL - MATRIZ TRIBUTÁRIA (Expandida)
-// ==========================================
-
-export const taxMatrix = mssqlTable("tax_matrix", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  
-  // Geografia
-  originUf: nvarchar("origin_uf", { length: 2 }).notNull(),
-  destinationUf: nvarchar("destination_uf", { length: 2 }).notNull(),
-  
-  // ICMS
-  icmsRate: decimal("icms_rate", { precision: 5, scale: 2 }).notNull(), // 12.00
-  icmsStRate: decimal("icms_st_rate", { precision: 5, scale: 2 }), // ICMS-ST (se aplicável)
-  icmsReduction: decimal("icms_reduction", { precision: 5, scale: 2 }).default("0.00"), // Redução de base
-  fcpRate: decimal("fcp_rate", { precision: 5, scale: 2 }).default("0.00"), // Fundo de Combate à Pobreza
-  
-  // CFOP
-  cfopInternal: nvarchar("cfop_internal", { length: 4 }), // 5353 (dentro do estado)
-  cfopInterstate: nvarchar("cfop_interstate", { length: 4 }), // 6353 (fora do estado)
-  
-  // CST (Código de Situação Tributária)
-  cst: nvarchar("cst", { length: 2 }).default("00"), // 00, 20, 40, 41, 51, 60, 90
-  
-  // Regime Tributário
-  regime: nvarchar("regime", { length: 30 }).default("NORMAL"), // NORMAL, SIMPLES_NACIONAL
-  
-  // Vigência
-  validFrom: datetime2("valid_from").notNull(),
-  validTo: datetime2("valid_to"),
-  
-  // Observações
-  notes: nvarchar("notes", { length: 500 }),
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).default("ACTIVE"),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-}, (table) => ([
-  uniqueIndex("tax_matrix_route_regime_org_idx")
-    .on(table.originUf, table.destinationUf, table.regime, table.organizationId)
-    .where(sql`deleted_at IS NULL`),
-]));
+export const taxMatrix = _taxMatrix;
 
 // ==========================================
 // COMERCIAL - NOVA ESTRUTURA DE PRICING
@@ -1587,193 +1385,15 @@ export const pickupOrders = mssqlTable("pickup_orders", {
   version: int("version").default(1).notNull(),
 });
 
-// ==========================================
-// FISCAL - CTe (Conhecimento de Transporte Eletrônico)
-// ==========================================
+export const cteHeader = _cteHeader;
 
-export const cteHeader = mssqlTable("cte_header", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull(),
-  
-  // Identificação
-  cteNumber: int("cte_number").notNull(), // Número sequencial
-  serie: nvarchar("serie", { length: 3 }).default("1"),
-  model: nvarchar("model", { length: 2 }).default("57"), // Modelo 57 = CTe
-  cteKey: nvarchar("cte_key", { length: 44 }), // Chave de acesso (44 dígitos)
-  
-  // Datas
-  issueDate: datetime2("issue_date").notNull(),
-  
-  // Vinculação
-  pickupOrderId: int("pickup_order_id"), // FK pickup_orders
-  tripId: int("trip_id"), // FK trips
-  
-  // Partes Envolvidas
-  senderId: int("sender_id"), // FK business_partners (Remetente)
-  recipientId: int("recipient_id"), // FK business_partners (Destinatário)
-  shipperId: int("shipper_id"), // FK business_partners (Expedidor)
-  receiverId: int("receiver_id"), // FK business_partners (Recebedor)
-  takerId: int("taker_id").notNull(), // FK business_partners (Tomador - quem paga)
-  takerType: nvarchar("taker_type", { length: 20 }), // SENDER, RECIPIENT, OTHER
-  
-  // Origem/Destino
-  originUf: nvarchar("origin_uf", { length: 2 }).notNull(),
-  originCityId: int("origin_city_id"),
-  destinationUf: nvarchar("destination_uf", { length: 2 }).notNull(),
-  destinationCityId: int("destination_city_id"),
-  
-  // Valores
-  serviceValue: decimal("service_value", { precision: 18, scale: 2 }).notNull(), // Valor do frete
-  cargoValue: decimal("cargo_value", { precision: 18, scale: 2 }), // Valor da mercadoria
-  totalValue: decimal("total_value", { precision: 18, scale: 2 }).notNull(), // Valor total do CTe
-  receivableValue: decimal("receivable_value", { precision: 18, scale: 2 }), // Valor a receber
-  
-  // ICMS
-  icmsBase: decimal("icms_base", { precision: 18, scale: 2 }),
-  icmsRate: decimal("icms_rate", { precision: 5, scale: 2 }),
-  icmsValue: decimal("icms_value", { precision: 18, scale: 2 }),
-  icmsReduction: decimal("icms_reduction", { precision: 5, scale: 2 }).default("0.00"),
-  
-  // Seguro (OBRIGATÓRIO)
-  insurancePolicy: nvarchar("insurance_policy", { length: 50 }).notNull(),
-  insuranceCertificate: nvarchar("insurance_certificate", { length: 50 }).notNull(),
-  insuranceCompany: nvarchar("insurance_company", { length: 200 }),
-  
-  // Modal
-  modal: nvarchar("modal", { length: 2 }).default("01"), // 01=Rodoviário
-  
-  // Status SEFAZ
-  status: nvarchar("status", { length: 20 }).default("DRAFT"), // DRAFT, SIGNED, SENT, AUTHORIZED, REJECTED, CANCELLED
-  protocolNumber: nvarchar("protocol_number", { length: 20 }),
-  authorizationDate: datetime2("authorization_date"),
-  cancellationDate: datetime2("cancellation_date"),
-  cancellationReason: nvarchar("cancellation_reason", { length: 500 }),
-  
-  // XML
-  xmlSigned: nvarchar("xml_signed", { length: "max" }),
-  xmlAuthorized: nvarchar("xml_authorized", { length: "max" }),
-  
-  // Rejeição
-  rejectionCode: nvarchar("rejection_code", { length: 10 }),
-  rejectionMessage: nvarchar("rejection_message", { length: 500 }),
-  
-  // ✅ ORIGEM DO CTe (OPÇÃO A - Bloco 4: Multicte)
-  cteOrigin: nvarchar("cte_origin", { length: 20 }).notNull().default("INTERNAL"),
-  // 'INTERNAL' - Emitido pelo Aura Core
-  // 'EXTERNAL' - Emitido por cliente (Multicte/bsoft)
-  
-  externalEmitter: nvarchar("external_emitter", { length: 255 }),
-  // Ex: "Sistema Multicte - Unilever"
-  
-  importedAt: datetime2("imported_at"),
-  // Data de importação (se CTe externo)
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-});
+export const cteCargoDocuments = _cteCargoDocuments;
 
-// --- CTe: CARGO DOCUMENTS (Documentos Transportados) ---
+export const cteValueComponents = _cteValueComponents;
 
-export const cteCargoDocuments = mssqlTable("cte_cargo_documents", {
-  id: int("id").primaryKey().identity(),
-  cteHeaderId: int("cte_header_id").notNull(), // FK cte_header
-  
-  documentType: nvarchar("document_type", { length: 10 }).default("NFE"),
-  documentKey: nvarchar("document_key", { length: 44 }),
-  documentNumber: nvarchar("document_number", { length: 20 }),
-  documentSerie: nvarchar("document_serie", { length: 3 }),
-  documentDate: datetime2("document_date"),
-  documentValue: decimal("document_value", { precision: 18, scale: 2 }),
-  
-  // ✅ RASTREABILIDADE (OPÇÃO A - Bloco 3)
-  sourceInvoiceId: int("source_invoice_id").references(() => inboundInvoices.id),
-  // Rastreabilidade: De qual NFe importada veio este documento
-  
-  sourceCargoId: int("source_cargo_id").references(() => cargoDocuments.id),
-  // Rastreabilidade: De qual cargo do repositório veio este documento
-  
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-});
+export const mdfeHeader = _mdfeHeader;
 
-// --- CTe: VALUE COMPONENTS (Componentes de Valor) ---
-
-export const cteValueComponents = mssqlTable("cte_value_components", {
-  id: int("id").primaryKey().identity(),
-  cteHeaderId: int("cte_header_id").notNull(), // FK cte_header
-  
-  componentName: nvarchar("component_name", { length: 50 }), // FRETE_PESO, AD_VALOREM, GRIS, etc.
-  componentValue: decimal("component_value", { precision: 18, scale: 2 }),
-  
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-});
-
-// ==========================================
-// FISCAL - MDFe (Manifesto de Documentos Fiscais Eletrônicos)
-// ==========================================
-
-export const mdfeHeader = mssqlTable("mdfe_header", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull(),
-  
-  // Identificação
-  mdfeNumber: int("mdfe_number").notNull(),
-  serie: nvarchar("serie", { length: 3 }).default("1"),
-  mdfeKey: nvarchar("mdfe_key", { length: 44 }),
-  
-  // Viagem
-  tripId: int("trip_id"), // FK trips
-  vehicleId: int("vehicle_id").notNull(), // FK vehicles
-  driverId: int("driver_id").notNull(), // FK drivers
-  
-  // Percurso
-  originUf: nvarchar("origin_uf", { length: 2 }).notNull(),
-  destinationUf: nvarchar("destination_uf", { length: 2 }).notNull(),
-  route: nvarchar("route", { length: "max" }), // JSON: ["SP", "RJ", "MG"]
-  
-  // CIOT (Obrigatório para terceiros)
-  ciotNumber: nvarchar("ciot_number", { length: 50 }),
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).default("DRAFT"), // DRAFT, AUTHORIZED, CLOSED, CANCELLED
-  issueDate: datetime2("issue_date").notNull(),
-  closeDate: datetime2("close_date"),
-  
-  // SEFAZ
-  protocolNumber: nvarchar("protocol_number", { length: 20 }),
-  authorizationDate: datetime2("authorization_date"),
-  xmlSigned: nvarchar("xml_signed", { length: "max" }),
-  xmlAuthorized: nvarchar("xml_authorized", { length: "max" }),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-});
-
-// --- MDFe: DOCUMENTS (CTes vinculados) ---
-
-export const mdfeDocuments = mssqlTable("mdfe_documents", {
-  id: int("id").primaryKey().identity(),
-  mdfeHeaderId: int("mdfe_header_id").notNull(), // FK mdfe_header
-  cteHeaderId: int("cte_header_id").notNull(), // FK cte_header
-  
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-});
+export const mdfeDocuments = _mdfeDocuments;
 
 // ==========================================
 // TMS - OPERAÇÃO (Viagens)
@@ -1997,81 +1617,9 @@ export const cargoDocuments = mssqlTable("cargo_documents", {
  * 4. Cria título no Contas a Receber
  * 5. Gera boleto bancário
  */
-export const billingInvoices = mssqlTable("billing_invoices", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull(),
-  
-  // Identificação
-  invoiceNumber: nvarchar("invoice_number", { length: 50 }).notNull(),
-  
-  // Cliente
-  customerId: int("customer_id").notNull().references(() => businessPartners.id),
-  
-  // Período
-  periodStart: datetime2("period_start").notNull(),
-  periodEnd: datetime2("period_end").notNull(),
-  
-  // Frequência
-  billingFrequency: nvarchar("billing_frequency", { length: 20 }).notNull(),
-  
-  // Valores
-  totalCtes: int("total_ctes").notNull(),
-  grossValue: decimal("gross_value", { precision: 18, scale: 2 }).notNull(),
-  discountValue: decimal("discount_value", { precision: 18, scale: 2 }).default("0.00"),
-  netValue: decimal("net_value", { precision: 18, scale: 2 }).notNull(),
-  
-  // Vencimento
-  issueDate: datetime2("issue_date").notNull(),
-  dueDate: datetime2("due_date").notNull(),
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).notNull().default("DRAFT"),
-  
-  // Integração Financeira
-  accountsReceivableId: int("accounts_receivable_id"),
-  
-  // Boleto
-  barcodeNumber: nvarchar("barcode_number", { length: 54 }),
-  pixKey: nvarchar("pix_key", { length: 500 }),
-  
-  // Documentos
-  pdfUrl: nvarchar("pdf_url", { length: 500 }),
-  
-  // Envio
-  sentAt: datetime2("sent_at"),
-  sentTo: nvarchar("sent_to", { length: 255 }),
-  
-  // Observações
-  notes: nvarchar("notes", { length: "max" }),
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-});
+export const billingInvoices = _billingInvoices;
 
-export const billingItems = mssqlTable("billing_items", {
-  id: int("id").primaryKey().identity(),
-  
-  billingInvoiceId: int("billing_invoice_id").notNull().references(() => billingInvoices.id, { onDelete: "cascade" }),
-  cteId: int("cte_id").notNull().references(() => cteHeader.id),
-  
-  // Cache
-  cteNumber: int("cte_number").notNull(),
-  cteSeries: nvarchar("cte_series", { length: 3 }),
-  cteKey: nvarchar("cte_key", { length: 44 }),
-  cteIssueDate: datetime2("cte_issue_date").notNull(),
-  cteValue: decimal("cte_value", { precision: 18, scale: 2 }).notNull(),
-  
-  originUf: nvarchar("origin_uf", { length: 2 }),
-  destinationUf: nvarchar("destination_uf", { length: 2 }),
-  
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-});
+export const billingItems = _billingItems;
 
 // ==========================================
 // 📄 FLEET DOCUMENTATION
@@ -2154,75 +1702,11 @@ export const tripOccurrences = mssqlTable("trip_occurrences", {
   version: int("version").default(1).notNull(),
 });
 
-export const taxCredits = mssqlTable("tax_credits", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull(),
-  invoiceId: int("invoice_id").notNull(),
-  taxType: nvarchar("tax_type", { length: 20 }).notNull(),
-  taxBase: decimal("tax_base", { precision: 18, scale: 2 }).notNull(),
-  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull(),
-  taxValue: decimal("tax_value", { precision: 18, scale: 2 }).notNull(),
-  isRecoverable: nvarchar("is_recoverable", { length: 1 }).default("S"),
-  recoverabilityReason: nvarchar("recoverability_reason", { length: 500 }),
-  recoveredAt: datetime2("recovered_at"),
-  recoveredInPeriod: nvarchar("recovered_in_period", { length: 7 }),
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1).notNull(),
-});
+export const taxCredits = _taxCredits;
 
-// ==========================================
-// 📄 CTe INUTILIZAÇÃO
-// ==========================================
+export const cteInutilization = _cteInutilization;
 
-export const cteInutilization = mssqlTable("cte_inutilization", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull(),
-  
-  serie: nvarchar("serie", { length: 3 }).notNull(),
-  numberFrom: int("number_from").notNull(),
-  numberTo: int("number_to").notNull(),
-  year: int("year").notNull(),
-  justification: nvarchar("justification", { length: 500 }).notNull(),
-  
-  // Sefaz
-  protocolNumber: nvarchar("protocol_number", { length: 20 }),
-  status: nvarchar("status", { length: 20 }).default("PENDING"),
-  sefazReturnMessage: nvarchar("sefaz_return_message", { length: 500 }),
-  
-  inutilizedAt: datetime2("inutilized_at"),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-});
-
-// ==========================================
-// 📄 CTe CARTA DE CORREÇÃO (CCe)
-// ==========================================
-
-export const cteCorrectionLetters = mssqlTable("cte_correction_letters", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  cteHeaderId: int("cte_header_id").notNull(),
-  
-  sequenceNumber: int("sequence_number").notNull(), // Pode haver múltiplas CCe
-  corrections: nvarchar("corrections", { length: "max" }).notNull(), // JSON
-  
-  // Sefaz
-  protocolNumber: nvarchar("protocol_number", { length: 20 }),
-  status: nvarchar("status", { length: 20 }).default("PENDING"),
-  sefazReturnMessage: nvarchar("sefaz_return_message", { length: 500 }),
-  
-  xmlEvent: nvarchar("xml_event", { length: "max" }),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-});
+export const cteCorrectionLetters = _cteCorrectionLetters;
 
 // ==========================================
 // 🎯 CRM COMERCIAL (ONDA 3)
@@ -2623,33 +2107,7 @@ export const workOrderMechanics = mssqlTable("work_order_mechanics", {
   notes: nvarchar("notes", { length: 500 }),
 });
 
-// ==========================================
-// 📜 MANIFESTAÇÃO NFE (ONDA 5.2)
-// ==========================================
-
-export const nfeManifestationEvents = mssqlTable("nfe_manifestation_events", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  inboundInvoiceId: int("inbound_invoice_id").notNull(),
-  
-  eventType: nvarchar("event_type", { length: 10 }).notNull(),
-  eventDescription: nvarchar("event_description", { length: 100 }),
-  justification: nvarchar("justification", { length: 500 }),
-  
-  protocolNumber: nvarchar("protocol_number", { length: 20 }),
-  status: nvarchar("status", { length: 20 }).default("PENDING"),
-  sefazReturnCode: nvarchar("sefaz_return_code", { length: 10 }),
-  sefazReturnMessage: nvarchar("sefaz_return_message", { length: 500 }),
-  
-  sentAt: datetime2("sent_at"),
-  confirmedAt: datetime2("confirmed_at"),
-  
-  xmlEvent: nvarchar("xml_event", { length: "max" }),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-});
+export const nfeManifestationEvents = _nfeManifestationEvents;
 
 // ==========================================
 // 📐 CONVERSÃO DE UNIDADE (ONDA 5.3)
@@ -2703,95 +2161,9 @@ export const inventoryAdjustments = mssqlTable("inventory_adjustments", {
   index("idx_inventory_adjustments_tenant").on(table.organizationId, table.branchId), // SCHEMA-003
 ]));
 
-// ==========================================
-// ⚙️ CONFIGURAÇÕES FISCAIS
-// ==========================================
+export const fiscalSettings = _fiscalSettings;
 
-export const fiscalSettings = mssqlTable("fiscal_settings", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  branchId: int("branch_id").notNull(),
-  
-  // Ambiente NFe (Importação Sefaz)
-  nfeEnvironment: nvarchar("nfe_environment", { length: 20 }).notNull().default("production"),
-  // "production" ou "homologacao"
-  
-  // Ambiente CTe (Emissão)
-  cteEnvironment: nvarchar("cte_environment", { length: 20 }).notNull().default("homologacao"),
-  // "production" ou "homologacao"
-  
-  // Série CTe
-  cteSeries: nvarchar("cte_series", { length: 3 }).default("1"),
-  
-  // Importação Automática
-  autoImportEnabled: nvarchar("auto_import_enabled", { length: 1 }).default("S"),
-  // "S" = Ativo, "N" = Desativado
-  autoImportInterval: int("auto_import_interval").default(1),
-  // Intervalo em horas (1, 2, 4, 6, 12, 24)
-  lastAutoImport: datetime2("last_auto_import"),
-  // Última importação automática
-  
-  // Empresa de auditoria
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  version: int("version").default(1).notNull(),
-  deletedAt: datetime2("deleted_at"), // E9.2: Soft delete
-}, (table) => ([
-  index("idx_fiscal_settings_tenant").on(table.organizationId, table.branchId), // E13.2: SCHEMA-003
-]));
-
-// ==========================================
-// 🏦 BTG PACTUAL INTEGRATION
-// ==========================================
-
-// Boletos BTG
-export const btgBoletos = mssqlTable("btg_boletos", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  
-  // Identificação
-  nossoNumero: nvarchar("nosso_numero", { length: 20 }).notNull(),
-  seuNumero: nvarchar("seu_numero", { length: 20 }),
-  
-  // Pagador
-  customerId: int("customer_id"),
-  payerName: nvarchar("payer_name", { length: 255 }).notNull(),
-  payerDocument: nvarchar("payer_document", { length: 18 }).notNull(),
-  
-  // Valores
-  valorNominal: decimal("valor_nominal", { precision: 18, scale: 2 }).notNull(),
-  valorDesconto: decimal("valor_desconto", { precision: 18, scale: 2 }),
-  valorMulta: decimal("valor_multa", { precision: 18, scale: 2 }),
-  valorJuros: decimal("valor_juros", { precision: 18, scale: 2 }),
-  valorPago: decimal("valor_pago", { precision: 18, scale: 2 }),
-  
-  // Datas
-  dataEmissao: datetime2("data_emissao").notNull(),
-  dataVencimento: datetime2("data_vencimento").notNull(),
-  dataPagamento: datetime2("data_pagamento"),
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).default("PENDING"),
-  
-  // Dados BTG
-  btgId: nvarchar("btg_id", { length: 50 }),
-  linhaDigitavel: nvarchar("linha_digitavel", { length: 100 }),
-  codigoBarras: nvarchar("codigo_barras", { length: 100 }),
-  pdfUrl: nvarchar("pdf_url", { length: 500 }),
-  
-  // Vinculação
-  accountsReceivableId: int("accounts_receivable_id"),
-  billingInvoiceId: int("billing_invoice_id"),
-  
-  // Webhook
-  webhookReceivedAt: datetime2("webhook_received_at"),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-});
+export const btgBoletos = _btgBoletos;
 
 // Pix Cobranças BTG
 export const btgPixCharges = mssqlTable("btg_pix_charges", {
@@ -2828,39 +2200,7 @@ export const btgPixCharges = mssqlTable("btg_pix_charges", {
   createdAt: datetime2("created_at").default(sql`GETDATE()`),
 });
 
-// Pagamentos BTG (Pix/TED/DOC)
-export const btgPayments = mssqlTable("btg_payments", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id").notNull(),
-  
-  paymentType: nvarchar("payment_type", { length: 10 }).notNull(),
-  
-  // Favorecido
-  beneficiaryName: nvarchar("beneficiary_name", { length: 255 }).notNull(),
-  beneficiaryDocument: nvarchar("beneficiary_document", { length: 18 }).notNull(),
-  beneficiaryBank: nvarchar("beneficiary_bank", { length: 10 }),
-  beneficiaryAgency: nvarchar("beneficiary_agency", { length: 10 }),
-  beneficiaryAccount: nvarchar("beneficiary_account", { length: 20 }),
-  beneficiaryPixKey: nvarchar("beneficiary_pix_key", { length: 100 }),
-  
-  // Valor
-  amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).default("PENDING"),
-  
-  btgTransactionId: nvarchar("btg_transaction_id", { length: 50 }),
-  errorMessage: nvarchar("error_message", { length: 500 }),
-  
-  scheduledDate: datetime2("scheduled_date"),
-  processedAt: datetime2("processed_at"),
-  
-  // Vinculação
-  accountsPayableId: int("accounts_payable_id"),
-  
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-});
+export const btgPayments = _btgPayments;
 
 /**
  * ============================================================================
@@ -2870,83 +2210,7 @@ export const btgPayments = mssqlTable("btg_payments", {
  * Armazena CTes emitidos por terceiros (Multicte, bsoft, etc) que foram
  * importados automaticamente via SEFAZ DistribuicaoDFe
  */
-export const externalCtes = mssqlTable("external_ctes", {
-  id: int("id").primaryKey().identity(),
-  organizationId: int("organization_id")
-    .notNull()
-    .references(() => organizations.id, { onDelete: "cascade" }),
-  
-  branchId: int("branch_id")
-    .notNull()
-    .references(() => branches.id),
-  
-  // Dados do CTe
-  accessKey: nvarchar("access_key", { length: 44 }).notNull(), // Chave de Acesso
-  cteNumber: nvarchar("cte_number", { length: 20 }),
-  series: nvarchar("series", { length: 10 }),
-  model: nvarchar("model", { length: 2 }).default("57"), // 57=CTe
-  issueDate: datetime2("issue_date").notNull(),
-  
-  // Emitente (Transportadora externa)
-  issuerCnpj: nvarchar("issuer_cnpj", { length: 14 }).notNull(),
-  issuerName: nvarchar("issuer_name", { length: 255 }).notNull(),
-  issuerIe: nvarchar("issuer_ie", { length: 20 }),
-  
-  // Remetente
-  senderCnpj: nvarchar("sender_cnpj", { length: 14 }),
-  senderName: nvarchar("sender_name", { length: 255 }),
-  
-  // Destinatário
-  recipientCnpj: nvarchar("recipient_cnpj", { length: 14 }),
-  recipientName: nvarchar("recipient_name", { length: 255 }),
-  
-  // Expedidor (se diferente do remetente)
-  shipperCnpj: nvarchar("shipper_cnpj", { length: 14 }),
-  shipperName: nvarchar("shipper_name", { length: 255 }),
-  
-  // Recebedor (se diferente do destinatário)
-  receiverCnpj: nvarchar("receiver_cnpj", { length: 14 }),
-  receiverName: nvarchar("receiver_name", { length: 255 }),
-  
-  // Origem e Destino
-  originCity: nvarchar("origin_city", { length: 100 }),
-  originUf: nvarchar("origin_uf", { length: 2 }),
-  destinationCity: nvarchar("destination_city", { length: 100 }),
-  destinationUf: nvarchar("destination_uf", { length: 2 }),
-  
-  // Valores
-  totalValue: decimal("total_value", { precision: 18, scale: 2 }),
-  cargoValue: decimal("cargo_value", { precision: 18, scale: 2 }),
-  icmsValue: decimal("icms_value", { precision: 18, scale: 2 }),
-  
-  // Carga
-  weight: decimal("weight", { precision: 10, scale: 3 }),
-  volume: decimal("volume", { precision: 10, scale: 3 }),
-  
-  // NFe vinculada (chave de acesso da NFe)
-  linkedNfeKey: nvarchar("linked_nfe_key", { length: 44 }),
-  
-  // Vínculo com cargo_documents (se encontrado)
-  cargoDocumentId: int("cargo_document_id").references(() => cargoDocuments.id),
-  
-  // XML Original
-  xmlContent: nvarchar("xml_content", { length: "max" }),
-  xmlHash: nvarchar("xml_hash", { length: 64 }),
-  
-  // Status
-  status: nvarchar("status", { length: 20 }).default("IMPORTED"), // IMPORTED, LINKED, ERROR
-  
-  // Origem da importação
-  importSource: nvarchar("import_source", { length: 50 }).default("SEFAZ_AUTO"), // SEFAZ_AUTO, UPLOAD_MANUAL
-  
-  // Enterprise Base
-  createdBy: nvarchar("created_by", { length: 255 }).notNull(),
-  updatedBy: nvarchar("updated_by", { length: 255 }),
-  createdAt: datetime2("created_at").default(sql`GETDATE()`),
-  updatedAt: datetime2("updated_at").default(sql`GETDATE()`),
-  deletedAt: datetime2("deleted_at"),
-  version: int("version").default(1),
-});
+export const externalCtes = _externalCtes;
 
 // ==========================================
 // TABELAS TRANSACIONAIS (THE ENGINE)

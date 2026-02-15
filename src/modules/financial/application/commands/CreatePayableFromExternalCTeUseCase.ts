@@ -22,7 +22,8 @@ import type {
 } from '../../domain/ports/input/ICreatePayableFromExternalCTe';
 import { saveToOutbox } from '@/shared/infrastructure/events/outbox/saveToOutbox';
 import { db } from '@/lib/db';
-import { cteHeader, businessPartners } from '@/lib/db/schema';
+import { cteHeader } from '@/modules/fiscal/infrastructure/persistence/schemas';
+import { businessPartners } from '@/lib/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { logger } from '@/shared/infrastructure/logging';
 

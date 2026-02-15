@@ -114,3 +114,7 @@ export type AccountReceivableRow = typeof accountsReceivableTable.$inferSelect;
 export type AccountReceivableInsert = typeof accountsReceivableTable.$inferInsert;
 export type ReceivableReceiptRow = typeof receivableReceiptsTable.$inferSelect;
 export type ReceivableReceiptInsert = typeof receivableReceiptsTable.$inferInsert;
+
+// Backward-compat aliases (bare names)
+export const accountsReceivable = accountsReceivableTable;
+export const receivableReceipts = receivableReceiptsTable;

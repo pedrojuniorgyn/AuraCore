@@ -23,7 +23,7 @@ import { WithholdingTaxCalculator, type WithholdingTaxInput } from '../../domain
 import { BillingFinalizedEvent, type BillingFinalizedPayload } from '../../domain/events/BillingFinalizedEvent';
 import { saveToOutbox } from '@/shared/infrastructure/events/outbox/saveToOutbox';
 import { db } from '@/lib/db';
-import { billingInvoices } from '@/lib/db/schema';
+import { billingInvoices } from '@/modules/financial/infrastructure/persistence/schemas';
 import { eq, and, isNull } from 'drizzle-orm';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import { logger } from '@/shared/infrastructure/logging';

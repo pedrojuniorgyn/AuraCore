@@ -3,7 +3,8 @@ import { withDI } from "@/shared/infrastructure/di/with-di";
 import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withAuth } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
-import { cteHeader, businessPartners, cteCargoDocuments, branches } from "@/lib/db/schema";
+import { cteHeader, cteCargoDocuments } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { businessPartners, branches } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import PDFDocument from "pdfkit";
 

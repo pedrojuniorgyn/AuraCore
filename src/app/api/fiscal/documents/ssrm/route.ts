@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
 import { inboundInvoices, businessPartners } from '@/lib/db/schema';
+// NOTE: inboundInvoices e businessPartners são cross-module (não-fiscal), mantidos em @/lib/db/schema
 import { 
   eq, and, like, gte, lte, desc, asc, isNull, isNotNull, count, inArray,
   type SQL 

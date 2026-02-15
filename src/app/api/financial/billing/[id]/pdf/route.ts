@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withAuth } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
-import { billingInvoices } from "@/lib/db/schema";
+import { billingInvoices } from "@/modules/financial/infrastructure/persistence/schemas";
 import { eq } from "drizzle-orm";
 import { writeFile } from "fs/promises";
 import path from "path";

@@ -9,7 +9,8 @@ import type { IUuidGenerator } from '@/shared/domain';
 import { TOKENS } from '@/shared/infrastructure/di/tokens';
 import type { ICreateBillingInvoice, CreateBillingInvoiceInput, CreateBillingInvoiceOutput } from '../../domain/ports/input/IBillingUseCases';
 import { db } from '@/lib/db';
-import { billingInvoices, billingItems, cteHeader } from '@/lib/db/schema';
+import { billingInvoices, billingItems } from '@/modules/financial/infrastructure/persistence/schemas';
+import { cteHeader } from '@/modules/fiscal/infrastructure/persistence/schemas';
 import { eq, and, inArray, isNull, sql } from 'drizzle-orm';
 import { logger } from '@/shared/infrastructure/logging';
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { branches, fiscalSettings } from "@/lib/db/schema";
+import { fiscalSettings } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { branches } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 import { logger } from '@/shared/infrastructure/logging';

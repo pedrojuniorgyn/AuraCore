@@ -82,26 +82,26 @@ export function smokeTest() {
 
   group('Smoke: Financial API V2', () => {
     // 1. List Payables
-    const payables = http.get(`${BASE_URL}/api/v2/financial/payables?pageSize=5`, { headers });
+    const payables = http.get(`${BASE_URL}/api/financial/payables?pageSize=5`, { headers });
     check(payables, {
       'payables status 200': (r) => r.status === 200,
       'payables has data': (r) => r.json() !== null,
     });
 
     // 2. List Receivables
-    const receivables = http.get(`${BASE_URL}/api/v2/financial/receivables?pageSize=5`, { headers });
+    const receivables = http.get(`${BASE_URL}/api/financial/receivables?pageSize=5`, { headers });
     check(receivables, {
       'receivables status 200': (r) => r.status === 200,
     });
 
     // 3. Cash Flow Report
-    const cashFlow = http.get(`${BASE_URL}/api/v2/financial/reports/cash-flow`, { headers });
+    const cashFlow = http.get(`${BASE_URL}/api/financial/reports/cash-flow`, { headers });
     check(cashFlow, {
       'cashFlow status 200': (r) => r.status === 200,
     });
 
     // 4. DRE Report
-    const dre = http.get(`${BASE_URL}/api/v2/financial/reports/dre`, { headers });
+    const dre = http.get(`${BASE_URL}/api/financial/reports/dre`, { headers });
     check(dre, {
       'dre status 200': (r) => r.status === 200,
     });
@@ -131,17 +131,17 @@ export function loadTest() {
   const operations = [
     () => {
       const start = Date.now();
-      const res = http.get(`${BASE_URL}/api/v2/financial/payables?pageSize=20`, { headers });
+      const res = http.get(`${BASE_URL}/api/financial/payables?pageSize=20`, { headers });
       payablesListDuration.add(Date.now() - start);
       errorRate.add(res.status !== 200);
     },
     () => {
-      const res = http.get(`${BASE_URL}/api/v2/financial/receivables?pageSize=20`, { headers });
+      const res = http.get(`${BASE_URL}/api/financial/receivables?pageSize=20`, { headers });
       errorRate.add(res.status !== 200);
     },
     () => {
       const start = Date.now();
-      const res = http.get(`${BASE_URL}/api/v2/financial/reports/cash-flow`, { headers });
+      const res = http.get(`${BASE_URL}/api/financial/reports/cash-flow`, { headers });
       cashFlowDuration.add(Date.now() - start);
       errorRate.add(res.status !== 200);
     },

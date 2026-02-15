@@ -12,7 +12,8 @@
  */
 
 import { db } from "@/lib/db";
-import { cteHeader, pickupOrders } from "@/lib/db/schema";
+import { cteHeader } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { pickupOrders } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export interface InsuranceValidationParams {

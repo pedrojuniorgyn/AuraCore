@@ -15,13 +15,10 @@ import { db } from "@/lib/db";
 import {
   freightQuotes,
   pickupOrders,
-  cteHeader,
-  cteValueComponents,
   trips,
-  mdfeHeader,
-  accountsReceivable,
-  accountsPayable,
 } from "@/lib/db/schema";
+import { cteHeader, cteValueComponents, mdfeHeader } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { accountsReceivable, accountsPayable } from "@/modules/financial/infrastructure/persistence/schemas";
 import { eq } from "drizzle-orm";
 import { queryFirst, insertReturning } from "@/lib/db/query-helpers";
 

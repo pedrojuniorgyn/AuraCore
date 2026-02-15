@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db, ensureConnection } from "@/lib/db";
-import { accountsPayable, businessPartners, financialCategories, bankAccounts, costCenters, chartOfAccounts } from "@/lib/db/schema";
+import { accountsPayable, financialCategories, bankAccounts } from "@/modules/financial/infrastructure/persistence/schemas";
+import { businessPartners, costCenters, chartOfAccounts } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { eq, and, isNull, gte, lte, sql, type SQL } from "drizzle-orm";

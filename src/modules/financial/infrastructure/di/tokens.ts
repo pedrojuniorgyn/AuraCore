@@ -86,4 +86,10 @@ export const FINANCIAL_TOKENS = {
 
   // F6: Auto Reconciliation
   AutoReconcileUseCase: Symbol.for('AutoReconcileUseCase'),
+
+  // R1.3: Repositories DDD
+  CategoryRepository: Symbol.for('ICategoryRepository'),
+  PaymentTermsRepository: Symbol.for('IPaymentTermsRepository'),
+  BankAccountRepository: Symbol.for('IBankAccountRepository'),
+  BillingRepository: Symbol.for('IBillingRepository'),
 };

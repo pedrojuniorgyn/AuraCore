@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
 import { inboundInvoices } from '@/lib/db/schema';
+// NOTE: inboundInvoices é cross-module (não-fiscal), mantido em @/lib/db/schema
 import { eq, and, sql, count } from 'drizzle-orm';
 import { getTenantContext } from '@/lib/auth/context';
 

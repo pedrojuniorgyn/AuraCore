@@ -48,7 +48,7 @@ export class PayablesController {
   }
 
   /**
-   * POST /api/v2/financial/payables
+   * POST /api/financial/payables
    */
   static async create(request: NextRequest): Promise<NextResponse | Response> {
     try {
@@ -72,7 +72,7 @@ export class PayablesController {
   }
 
   /**
-   * GET /api/v2/financial/payables
+   * GET /api/financial/payables
    */
   static async list(request: NextRequest): Promise<NextResponse | Response> {
     try {
@@ -110,7 +110,7 @@ export class PayablesController {
   }
 
   /**
-   * GET /api/v2/financial/payables/[id]
+   * GET /api/financial/payables/[id]
    */
   static async getById(
     request: NextRequest, 
@@ -137,7 +137,7 @@ export class PayablesController {
   }
 
   /**
-   * POST /api/v2/financial/payables/[id]/pay
+   * POST /api/financial/payables/[id]/pay
    */
   static async pay(
     request: NextRequest, 
@@ -170,7 +170,7 @@ export class PayablesController {
   }
 
   /**
-   * POST /api/v2/financial/payables/[id]/cancel
+   * POST /api/financial/payables/[id]/cancel
    */
   static async cancel(
     request: NextRequest, 

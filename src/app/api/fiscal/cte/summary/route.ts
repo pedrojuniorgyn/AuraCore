@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
-import { cteHeader } from '@/lib/db/schema';
+import { cteHeader } from '@/modules/fiscal/infrastructure/persistence/schemas';
 import { eq, and, sql, count, isNull } from 'drizzle-orm';
 import { getTenantContext } from '@/lib/auth/context';
 

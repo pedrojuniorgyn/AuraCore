@@ -3,8 +3,8 @@ import { db } from "@/lib/db";
 import { 
   inboundInvoices, 
   inboundInvoiceItems,
-  externalCtes,
 } from "@/lib/db/schema";
+import { externalCtes } from "@/modules/fiscal/infrastructure/persistence/schemas";
 import { 
   fiscalDocuments,
   fiscalDocumentItems,

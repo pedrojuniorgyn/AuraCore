@@ -17,8 +17,8 @@ import {
   products,
   branches,
   cargoDocuments,
-  externalCtes,
 } from "@/lib/db/schema";
+import { externalCtes } from "@/modules/fiscal/infrastructure/persistence/schemas";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { Result } from "@/shared/domain";
 import { FiscalDocumentError } from "@/modules/fiscal/domain/errors/FiscalDocumentError";

@@ -23,3 +23,8 @@ export type { IBillingPdfGateway, BillingPdfParams } from './IBillingPdfGateway'
 export type { IBoletoGateway, BoletoGenerationParams, BoletoResult } from './IBoletoGateway';
 export type { ICnabGateway, CnabGenerationParams, CnabResult } from './ICnabGateway';
 
+// Novos repositories DDD (R1.3)
+export type { ICategoryRepository, CategoryFilter } from './ICategoryRepository';
+export type { IPaymentTermsRepository, PaymentTermsFilter } from './IPaymentTermsRepository';
+export type { IBankAccountRepository, BankAccountFilter } from './IBankAccountRepository';
+export type { IBillingRepository, BillingInvoiceFilter } from './IBillingRepository';

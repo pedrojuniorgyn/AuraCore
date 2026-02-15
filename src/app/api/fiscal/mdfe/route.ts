@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
-import { mdfeHeader, mdfeDocuments, trips } from "@/lib/db/schema";
+import { mdfeHeader, mdfeDocuments } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { trips } from "@/lib/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { getTenantContext } from "@/lib/auth/context";
 import { CreateMdfeSchema, ListMdfeQuerySchema } from "@/modules/fiscal/presentation/validators";

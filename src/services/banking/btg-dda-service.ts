@@ -17,7 +17,8 @@ import fs from "fs";
 import path from "path";
 import { db } from "@/lib/db";
 import { insertReturning } from "@/lib/db/query-helpers";
-import { financialDdaInbox, accountsPayable, bankAccounts, businessPartners } from "@/lib/db/schema";
+import { financialDdaInbox, accountsPayable, bankAccounts } from "@/modules/financial/infrastructure/persistence/schemas";
+import { businessPartners } from "@/lib/db/schema";
 import { and, eq, isNull, sql, between } from "drizzle-orm";
 
 // ============================================================================

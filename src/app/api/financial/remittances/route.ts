@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
-import { bankRemittances, bankAccounts } from "@/lib/db/schema";
+import { bankRemittances, bankAccounts } from "@/modules/financial/infrastructure/persistence/schemas";
 import { and, eq, isNull, desc } from "drizzle-orm";
 
 import { logger } from '@/shared/infrastructure/logging';

@@ -10,7 +10,9 @@
 
 import PDFDocument from "pdfkit";
 import { db } from "@/lib/db";
-import { billingInvoices, billingItems, businessPartners, cteHeader } from "@/lib/db/schema";
+import { billingInvoices, billingItems } from "@/modules/financial/infrastructure/persistence/schemas";
+import { cteHeader } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { businessPartners } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 export class BillingPDFGenerator {
   /**

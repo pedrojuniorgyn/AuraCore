@@ -24,7 +24,7 @@ import type { ILogger } from '@/shared/infrastructure/logging/ILogger';
 
 // Database access (needed until full DDD migration with repositories)
 import { db } from '@/lib/db';
-import { cteHeader, fiscalSettings } from '@/lib/db/schema';
+import { cteHeader, fiscalSettings } from '@/modules/fiscal/infrastructure/persistence/schemas';
 import { eq, and } from 'drizzle-orm';
 
 // ============================================================================

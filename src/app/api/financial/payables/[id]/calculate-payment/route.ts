@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI, type RouteContext } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
-import { accountsPayable } from "@/lib/db/schema";
+import { accountsPayable } from "@/modules/financial/infrastructure/persistence/schemas";
 import { auth } from "@/lib/auth";
 import { eq, and, isNull } from "drizzle-orm";
 

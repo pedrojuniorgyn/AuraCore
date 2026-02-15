@@ -22,4 +22,8 @@ export const FISCAL_TOKENS = {
   DetermineCFOPUseCase: Symbol.for('DetermineCFOPUseCase'),
   // F4: Cross-Module Integration
   UpdateCteBillingStatusUseCase: Symbol.for('UpdateCteBillingStatusUseCase'),
+  // R1.3: Repositories DDD
+  CteRepository: Symbol.for('ICteRepository'),
+  MdfeRepository: Symbol.for('IMdfeRepository'),
+  TaxRuleRepository: Symbol.for('ITaxRuleRepository'),
 };

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db, getDbRows } from "@/lib/db";
-import { inboundInvoices, accountsPayable, payableItems } from "@/lib/db/schema";
+import { accountsPayable } from "@/modules/financial/infrastructure/persistence/schemas";
+import { inboundInvoices, payableItems } from "@/lib/db/schema";
 import { eq, isNull, sql } from "drizzle-orm";
 
 import { logger } from '@/shared/infrastructure/logging';

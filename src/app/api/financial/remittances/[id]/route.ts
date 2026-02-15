@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withDI, type RouteContext } from "@/shared/infrastructure/di/with-di";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { bankRemittances } from "@/lib/db/schema";
+import { bankRemittances } from "@/modules/financial/infrastructure/persistence/schemas";
 import { eq, and, isNull, asc } from "drizzle-orm";
 import { queryFirst } from "@/lib/db/query-helpers";
 

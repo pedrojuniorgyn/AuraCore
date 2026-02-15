@@ -4,6 +4,8 @@ import { db, ensureConnection } from "@/lib/db";
 import {
   accountsPayable,
   accountsReceivable,
+} from "@/modules/financial/infrastructure/persistence/schemas";
+import {
   costCenters,
   chartOfAccounts,
   vehicles,

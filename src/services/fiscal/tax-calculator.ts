@@ -12,7 +12,7 @@
  */
 
 import { db } from "@/lib/db";
-import { taxMatrix } from "@/lib/db/schema";
+import { taxMatrix } from "@/modules/fiscal/infrastructure/persistence/schemas";
 import { eq, and, isNull, lte, gte, or } from "drizzle-orm";
 
 export interface TaxCalculationParams {

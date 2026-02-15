@@ -3,7 +3,7 @@ import { withDI } from "@/shared/infrastructure/di/with-di";
 import type { RouteContext } from "@/shared/infrastructure/di/with-di";
 import { withPermission } from "@/lib/auth/api-guard";
 import { db } from "@/lib/db";
-import { cteHeader, fiscalSettings } from "@/lib/db/schema";
+import { cteHeader, fiscalSettings } from "@/modules/fiscal/infrastructure/persistence/schemas";
 import { eq, and } from "drizzle-orm";
 import { container } from "@/shared/infrastructure/di/container";
 import { TOKENS } from "@/shared/infrastructure/di/tokens";

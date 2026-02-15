@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from "@/shared/infrastructure/di/with-di";
 import { db } from "@/lib/db";
-import { billingInvoices, billingItems, cteHeader, businessPartners } from "@/lib/db/schema";
+import { billingInvoices, billingItems } from "@/modules/financial/infrastructure/persistence/schemas";
+import { cteHeader } from "@/modules/fiscal/infrastructure/persistence/schemas";
+import { businessPartners } from "@/lib/db/schema";
 import { getTenantContext } from "@/lib/auth/context";
 import { resolveBranchIdOrThrow } from "@/lib/auth/branch";
 import { withMssqlTransaction } from "@/lib/db/mssql-transaction";

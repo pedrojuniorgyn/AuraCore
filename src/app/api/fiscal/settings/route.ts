@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from "@/lib/db";
-import { fiscalSettings } from "@/lib/db/schema";
+import { fiscalSettings } from "@/modules/fiscal/infrastructure/persistence/schemas";
 import { auth } from "@/lib/auth";
 import { eq, and, isNull } from "drizzle-orm";
 

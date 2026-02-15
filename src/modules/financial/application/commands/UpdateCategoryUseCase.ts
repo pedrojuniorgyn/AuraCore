@@ -5,7 +5,7 @@
 import { injectable } from 'tsyringe';
 import { Result } from '@/shared/domain';
 import { db } from '@/lib/db';
-import { financialCategories } from '@/lib/db/schema';
+import { financialCategories } from '@/modules/financial/infrastructure/persistence/schemas';
 import { eq, and, isNull } from 'drizzle-orm';
 import type {
   IUpdateCategory,

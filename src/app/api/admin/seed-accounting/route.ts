@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { chartOfAccounts, financialCategories, autoClassificationRules } from "@/lib/db/schema";
+import { financialCategories } from "@/modules/financial/infrastructure/persistence/schemas";
+import { chartOfAccounts, autoClassificationRules } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 import { logger } from '@/shared/infrastructure/logging';

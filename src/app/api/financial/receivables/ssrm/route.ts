@@ -10,7 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db } from '@/lib/db';
-import { accountsReceivable, businessPartners, financialCategories } from '@/lib/db/schema';
+import { accountsReceivable, financialCategories } from '@/modules/financial/infrastructure/persistence/schemas';
+import { businessPartners } from '@/lib/db/schema';
 import { 
   eq, and, like, gte, lte, desc, asc, isNull, isNotNull, count, inArray,
   type SQL 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withDI } from '@/shared/infrastructure/di/with-di';
 import { db, ensureConnection } from "@/lib/db";
-import { accountsPayable } from "@/lib/db/schema";
+import { accountsPayable } from "@/modules/financial/infrastructure/persistence/schemas";
 import { getTenantContext } from "@/lib/auth/context";
 import { eq, and, isNull, sql } from "drizzle-orm";
 

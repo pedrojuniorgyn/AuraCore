@@ -26,6 +26,11 @@ import type { INfeParserService } from '../../domain/ports/output/INfeParserServ
 // F3.1: Real SEFAZ HTTP Client
 import { SefazHttpClient } from '../adapters/sefaz/SefazHttpClient';
 
+// R1.3: Novos Repositories DDD
+import { DrizzleCteRepository } from '../persistence/repositories/DrizzleCteRepository';
+import { DrizzleMdfeRepository } from '../persistence/repositories/DrizzleMdfeRepository';
+import { DrizzleTaxRuleRepository } from '../persistence/repositories/DrizzleTaxRuleRepository';
+
 // F3.3: CFOP Determination
 import { DrizzleCFOPDeterminationRepository } from '../persistence/repositories/DrizzleCFOPDeterminationRepository';
 import { SeedCFOPDeterminationUseCase } from '../../application/commands/SeedCFOPDeterminationUseCase';
@@ -192,6 +197,11 @@ export function registerFiscalModule(): void {
     FISCAL_TOKENS.NfeParserService,
     NfeParserAdapter
   );
+
+  // R1.3: Novos Repositories DDD
+  container.registerSingleton(FISCAL_TOKENS.CteRepository, DrizzleCteRepository);
+  container.registerSingleton(FISCAL_TOKENS.MdfeRepository, DrizzleMdfeRepository);
+  container.registerSingleton(FISCAL_TOKENS.TaxRuleRepository, DrizzleTaxRuleRepository);
 
   // F3.3: CFOP Determination
   container.registerSingleton(FISCAL_TOKENS.CFOPDeterminationRepository, DrizzleCFOPDeterminationRepository);

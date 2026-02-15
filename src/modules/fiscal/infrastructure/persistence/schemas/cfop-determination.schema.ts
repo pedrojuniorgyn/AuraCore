@@ -12,6 +12,7 @@ export const cfopDeterminationTable = mssqlTable(
   {
     id: varchar('id', { length: 36 }).primaryKey(),
     organizationId: int('organization_id').notNull(),
+    branchId: int('branch_id').notNull(),
     operationType: varchar('operation_type', { length: 50 }).notNull(),
     direction: varchar('direction', { length: 20 }).notNull(), // ENTRY | EXIT
     scope: varchar('scope', { length: 20 }).notNull(), // INTRASTATE | INTERSTATE | FOREIGN
@@ -28,10 +29,10 @@ export const cfopDeterminationTable = mssqlTable(
   },
   (table) => ({
     // SCHEMA-003: Índice composto multi-tenancy
-    tenantIdx: index('idx_cfop_det_tenant').on(table.organizationId),
+    tenantIdx: index('idx_cfop_det_tenant').on(table.organizationId, table.branchId),
     // Índice para lookup rápido
     lookupIdx: index('idx_cfop_det_lookup').on(
-      table.organizationId, table.operationType, table.direction, table.scope
+      table.organizationId, table.branchId, table.operationType, table.direction, table.scope
     ),
   })
 );

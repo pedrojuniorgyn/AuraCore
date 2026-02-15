@@ -9,7 +9,8 @@ import { FINANCIAL_TOKENS } from '../../infrastructure/di/tokens';
 import type { IGenerateBillingPdf, GenerateBillingPdfInput, GenerateBillingPdfOutput } from '../../domain/ports/input/IBillingUseCases';
 import type { IBillingPdfGateway } from '../../domain/ports/output/IBillingPdfGateway';
 import { db } from '@/lib/db';
-import { billingInvoices, billingItems, businessPartners } from '@/lib/db/schema';
+import { billingInvoices, billingItems } from '@/modules/financial/infrastructure/persistence/schemas';
+import { businessPartners } from '@/lib/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { logger } from '@/shared/infrastructure/logging';
 
